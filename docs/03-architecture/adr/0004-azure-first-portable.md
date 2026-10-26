@@ -14,7 +14,7 @@ Proposed — chờ chốt sau khi requirements (docs/02-requirements) được d
 
 | Hạng mục | Lựa chọn | Đáp ứng |
 |---|---|---|
-| Cluster | 2 cluster: `aks-nonprod` (namespace `dev`, `staging`) và `aks-prod`; node pool `system` / `apps` / `ai` (taint riêng); trải 3 availability zone | NFR-D4, A3, S4 |
+| Cluster | **Mỗi môi trường một cluster riêng, ephemeral** (dựng khi test/demo rồi hủy, xem ADR-0009); node pool `system` / `apps` / `ai` (taint riêng); trải 3 availability zone | NFR-D4, A3, S4 |
 | Triển khai | Helm chart chung cho service + **Argo CD** (GitOps); **Argo Rollouts** cho canary có phân tích metric | NFR-A7, D2 |
 | Autoscale | HPA (CPU/RPS) + **KEDA** (độ dài hàng đợi, lịch cron scale trước 07:00) + Cluster Autoscaler | NFR-S1–S3 |
 | Ingress | Ingress controller (NGINX hoặc Application Gateway for Containers) + cert-manager; WAF ở rìa (Front Door) | NFR-SEC3 |
@@ -31,11 +31,11 @@ K8s khác và `kind` trên máy dev.
 ## Phương án đã cân nhắc
 - **Azure Container Apps**: rẻ, có scale-to-zero, ít vận hành; nhưng hạn chế kiểm soát mạng, policy,
   service mesh và GitOps, khó gọi là production-like, và không portable bằng manifest K8s chuẩn.
-- **Một cluster cho mọi môi trường**: rẻ hơn, nhưng sự cố hay thay đổi ở non-prod có thể ảnh hưởng prod (vi phạm NFR-D4).
+- **Một cluster chung, tách namespace theo môi trường**: rẻ hơn khi chạy liên tục, nhưng khi đã ephemeral thì tách cluster không tốn thêm, lại cách ly hoàn toàn (NFR-D4) và kiểm chứng được việc dựng lại từ đầu (NFR-D3).
 - **Chạy DB trong cluster (operator)**: portable hơn, nhưng tự gánh backup/HA, không đáng với nhóm 12 tuần.
 
 ## Hệ quả
-- Chi phí cố định cao hơn Container Apps: cần node pool nhỏ, tắt `aks-nonprod` ngoài giờ, spot node cho
-  `dev` (NFR-C1). Ước tính chi tiết ở báo cáo FinOps.
+- AKS đắt hơn Container Apps khi chạy liên tục; vì vậy cluster chỉ tồn tại trong lúc test/demo (ADR-0009),
+  `dev` dùng spot node. Chi phí tính theo giờ-môi trường trong báo cáo FinOps (NFR-C1).
 - Cần năng lực vận hành K8s: platform (Argo CD, KEDA, Kyverno, OTel, cert-manager) được dựng ở Pha 4 **trước** khi dev vào làm.
 - Số service vẫn giữ theo ADR-0001: production-like nằm ở cách vận hành, không ở số lượng microservice.

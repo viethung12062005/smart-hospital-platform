@@ -14,5 +14,6 @@ nhắc lịch), bảo vệ dữ liệu nhạy cảm, có trợ lý AI và mô h�
 | 1. Business Analysis | [docs/01-business-analysis](docs/01-business-analysis/business-analysis.md) | Draft — chờ G1 |
 | 2. Requirements | [FR](docs/02-requirements/functional-requirements.md) · [NFR](docs/02-requirements/non-functional-requirements.md) · [Phân quyền](docs/02-requirements/access-control-matrix.md) · [Tải](docs/02-requirements/workload-analysis.md) · [Truy vết](docs/02-requirements/traceability.md) | Draft — chờ G2 |
 | 3. Architecture | [Tổng quan](docs/03-architecture/overview.md) · [ADR](docs/03-architecture/adr/README.md) | Proposed — chờ G3 |
-| 4. Platform & DevOps | [Kế hoạch](docs/04-devops/README.md) | Chưa bắt đầu |
+| 4. Platform & DevOps | [Kế hoạch](docs/04-devops/README.md) | Chưa bắt đầu (W2–W5) |
+| Kế hoạch dự án | [Plan](docs/05-plan/project-plan.md) · [Backlog](docs/05-plan/backlog.md) · [CSV](docs/05-plan/backlog.csv) | Draft — chờ duyệt |
 | 5. Phát triển | — | Chưa bắt đầu |

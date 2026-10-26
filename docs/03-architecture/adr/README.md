@@ -12,3 +12,5 @@ Mỗi ADR theo format: Bối cảnh → Quyết định → Phương án đã c�
 | [0006](0006-llm-router-fallback.md) | LLM router đa model với fallback và circuit breaker | Proposed |
 | [0007](0007-no-show-ml-mlops.md) | Mô hình ML dự đoán no-show để thể hiện MLOps | Proposed |
 | [0008](0008-polyglot-persistence.md) | Chọn kho dữ liệu theo đặc tính tải từng service | Proposed |
+| [0009](0009-cicd-ephemeral-environments.md) | GitHub Actions (CI) + Argo CD/Helm (CD), môi trường ephemeral, cổng phê duyệt | Proposed |
+| [0010](0010-repository-strategy.md) | 4 repository: ứng dụng, templates, infra, gitops | Proposed |
