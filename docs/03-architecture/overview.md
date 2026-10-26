@@ -28,13 +28,13 @@ Mọi lần đọc/ghi dữ liệu nhạy cảm ──► audit-service (append-
 | Service | Ngôn ngữ | Sở hữu dữ liệu (FHIR) | Đồng bộ / bất đồng bộ |
 |---|---|---|---|
 | `api-gateway` | .NET (YARP) | — | Định tuyến, xác thực JWT, rate limit |
-| `clinical-service` | .NET | Patient, Practitioner, Encounter, Observation, Condition | REST FHIR |
-| `scheduling-service` | .NET | Schedule, Slot, Appointment | REST FHIR + publish event qua outbox |
-| `document-service` | .NET | DocumentReference, Binary (Blob) | REST + event `DocumentUploaded` |
-| `notification-service` | .NET worker | Communication | Consume event, retry + DLQ |
+| `clinical-service` | .NET | Patient, Practitioner, PractitionerRole, Encounter, Observation, Condition, AllergyIntolerance + liên kết tài khoản + quan hệ điều trị | REST FHIR; nghe event lịch hẹn |
+| `scheduling-service` | .NET | Schedule, Slot, Appointment | REST FHIR + outbox; nghe `encounter-finished` |
+| `document-service` | .NET | DocumentReference + file trên Blob | REST + event `document-uploaded`, `document-released` |
+| `notification-service` | .NET worker | Nhắc lịch (`reminder`), lần gửi, tùy chọn nhận tin | Consume event, retry + DLQ |
 | `audit-service` | .NET worker | AuditEvent (append-only) | Consume event |
 | `ai-service` | Python (FastAPI) | Kho tri thức RAG (AI Search) | REST; gọi các service khác bằng token của người dùng |
-| `ml-service` | Python | Model registry (MLflow) | REST `/predict/no-show` |
+| `ml-service` | Python | Đặc trưng, dự đoán, model registry (MLflow) | Consume event, phát `no-show-scored` |
 
 Nguyên tắc: **mỗi service sở hữu kho dữ liệu riêng, chọn theo đặc tính tải**
 (xem [ADR-0008](adr/0008-polyglot-persistence.md)); không join chéo service, chỉ tham chiếu
@@ -44,10 +44,13 @@ bằng FHIR `Reference` (`Patient/123`).
 |---|---|
 | scheduling | PostgreSQL (ACID, chống double-booking) + Redis (cache slot trống) |
 | clinical | MongoDB API / Cosmos DB for MongoDB vCore (document FHIR, partition theo bệnh nhân) |
-| document | Azure Blob Storage (SAS ngắn hạn, lifecycle Hot→Cool) |
+| notification | PostgreSQL (trạng thái nhắc lịch, `SKIP LOCKED`) |
+| document | MongoDB (metadata) + Azure Blob Storage (SAS ngắn hạn, lifecycle Hot→Cool) |
 | audit | Blob immutable (WORM) + Log Analytics (KQL) |
-| ai | Azure AI Search (hybrid + rerank) |
-| ml | MLflow |
+| ai | Azure AI Search (hybrid + rerank) + MongoDB (hội thoại, job trích xuất) |
+| ml | PostgreSQL (đặc trưng, dự đoán) + MLflow |
+
+Thiết kế chi tiết từng kho dữ liệu, API, event và phân quyền: [detailed-design](detailed-design/README.md).
 
 Ranh giới service dựa trên **khác biệt về tải và yêu cầu phi chức năng**, không chia theo
 từng resource: scheduling có tranh chấp ghi (concurrency), document có I/O file lớn,

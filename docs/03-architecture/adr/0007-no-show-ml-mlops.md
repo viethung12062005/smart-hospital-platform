@@ -7,8 +7,9 @@ Proposed — chờ chốt sau khi requirements (docs/02-requirements) được d
 Muốn có một mô hình ML tự huấn luyện để thể hiện vòng đời MLOps, gắn với nghiệp vụ thật.
 
 ## Quyết định
-Dự đoán **xác suất bệnh nhân không đến khám** cho mỗi Appointment. `notification-service` dùng
-điểm này để gửi thêm nhắc nhở cho lịch hẹn rủi ro cao.
+Dự đoán **xác suất bệnh nhân không đến khám** cho mỗi Appointment. `ml-service` nghe event
+`appointment-booked`, chấm điểm và **phát event `no-show-scored`**; `notification-service` nghe event này để gửi thêm nhắc
+nhở cho lịch hẹn rủi ro cao. Không có lời gọi đồng bộ giữa hai service nên ML lỗi không ảnh hưởng nhắc lịch (AC-15.1).
 
 - Dữ liệu: **sinh tổng hợp** (synthetic) có quy luật cài sẵn (lead time, lịch sử vắng, giờ khám...).
 - Mô hình: Logistic Regression làm baseline → LightGBM.

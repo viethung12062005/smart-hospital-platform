@@ -16,8 +16,11 @@ Building block `SmartHospital.Fhir` chứa phần **không phụ thuộc DB**:
   concurrency), search, outbox event, idempotency, commit.
 
 Mỗi kho dữ liệu là một provider:
-- `SmartHospital.Fhir.Postgres` — resource JSONB + history + bảng search-parameter (cho `scheduling`).
-- `SmartHospital.Fhir.Mongo` — document theo patient compartment (cho `clinical`, làm sau).
+- `SmartHospital.Fhir.Postgres` (cho `scheduling`): **một bảng cho mỗi resource type**, có cột kiểu cho trường tìm kiếm/ràng buộc và `content jsonb` chứa resource đầy đủ; ràng buộc nghiệp vụ nằm ở DB (exclusion constraint, unique partial index).
+- `SmartHospital.Fhir.Mongo` (cho `clinical`, `document`): **một collection cho mỗi resource type**, document gồm phần quản trị, `resource` (FHIR) và `search` (trường chuẩn hóa); shard key `patientId`.
+
+Chọn bảng/collection riêng cho từng resource (thay cho một bảng search-index chung kiểu EAV) vì truy vấn dùng index
+trực tiếp, có ràng buộc DB thật và dễ giải thích. Chi tiết: `03-architecture/detailed-design/02` và `03`.
 
 ## Phương án đã cân nhắc
 - **Azure Health Data Services FHIR**: managed, đầy đủ chuẩn; nhưng khóa vào Azure, không kiểm soát

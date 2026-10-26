@@ -19,10 +19,13 @@ không làm được"**, vì mỗi engine thêm vào là thêm chi phí vận h�
 | `scheduling`: Schedule, Slot, Appointment | Ghi tranh chấp (nhiều người đặt cùng slot), cần ACID | **PostgreSQL** (Azure DB for PostgreSQL Flexible → `postgres:16`) | Transaction gồm slot + appointment + outbox; optimistic concurrency theo dòng; dữ liệu nhỏ, có cấu trúc |
 | `scheduling`: tra slot trống | Đọc rất nhiều, chấp nhận trễ vài giây | **Redis** (Azure Cache for Redis → `redis:7`) | Cache-aside theo schedule/ngày, bị invalidate bởi event `AppointmentBooked/Cancelled` |
 | `clinical`: Patient, Encounter, Observation, Condition... | Tài liệu FHIR lồng nhau, đọc nhiều, luôn truy cập theo bệnh nhân | **MongoDB API** (Azure Cosmos DB for MongoDB vCore → `mongo:8`) | FHIR vốn là JSON document; shard key = patient compartment nên "xem toàn bộ lịch sử bệnh nhân" chỉ đọc một partition; schema linh hoạt cho extension FHIR |
-| `document`: file PDF/ảnh | Blob lớn, ghi một lần đọc ít | **Azure Blob Storage** (lifecycle Hot → Cool sau 30 ngày → MinIO) | Rẻ nhất cho dữ liệu lớn; SAS URL ngắn hạn; metadata nằm ở `DocumentReference` trong clinical |
+| `document`: file PDF/ảnh | Blob lớn, ghi một lần đọc ít | **Azure Blob Storage** (lifecycle Hot → Cool sau 30 ngày → MinIO) | Rẻ nhất cho dữ liệu lớn; SAS URL ngắn hạn; metadata `DocumentReference` do **document service** sở hữu (MongoDB database `document`) |
+| `notification`: nhắc lịch | Lên lịch theo giờ, hủy được, retry, nhiều replica cùng lấy việc | **PostgreSQL** (cùng server với scheduling, database riêng) | `FOR UPDATE SKIP LOCKED` cho hàng đợi việc; hủy nhắc = cập nhật một dòng; không phụ thuộc tính năng riêng của bus |
+| `ml`: đặc trưng, dự đoán | Ghi theo event, đọc để huấn luyện/giám sát | **PostgreSQL** (database `ml`) + MLflow cho model | Dữ liệu có cấu trúc, truy vấn tổng hợp cho drift |
 | `audit` | Chỉ ghi thêm, không được sửa, truy vấn theo thời gian/đối tượng | **Blob immutable (WORM)** làm bản gốc + **Log Analytics (KQL)** để truy vấn (→ MinIO object lock + Loki) | Immutable thật sự ở tầng storage (không ai, kể cả admin DB, sửa được); KQL trả lời ngay "ai đã xem hồ sơ X" |
 | `ai`: kho tri thức RAG | Hybrid search (BM25 + vector) + rerank | **Azure AI Search** (→ OpenSearch) | Có sẵn hybrid + semantic reranker, đúng pipeline Retrieve → Rerank của đề; tách khỏi dữ liệu bệnh nhân |
 | `ml`: experiment, model registry | Metadata nhỏ + artifact | **MLflow** (backend Azure ML → SQLite/file) | Chuẩn MLOps, không cần DB riêng |
+| `ai`: hội thoại, job trích xuất | Tài liệu lồng nhau, TTL | **MongoDB** (database `ai`, cùng cluster với clinical) | Không thêm engine mới; TTL index tự dọn hội thoại |
 
 Mỗi service truy cập kho dữ liệu qua abstraction (`IFhirStore`, `IBlobStore`, `IAuditSink`,
 `IRetriever`), nên đổi engine không phải sửa logic nghiệp vụ.
@@ -54,7 +57,7 @@ Mỗi service truy cập kho dữ liệu qua abstraction (`IFhirStore`, `IBlobSt
 
 ## Hệ quả
 
-- 6 loại kho dữ liệu → phải có backup/restore và giám sát cho từng loại (P4). Chi phí ước tính
+- 7 loại kho dữ liệu (PostgreSQL, MongoDB, Redis, Blob, Log Analytics/Loki, AI Search, MLflow) → phải có backup/restore và giám sát cho từng loại (P4). Chi phí ước tính
   hàng tháng sẽ nằm trong báo cáo FinOps; Azure AI Search Basic là khoản cố định lớn nhất.
 - Không có transaction xuyên kho: đồng bộ bằng event (outbox) và eventual consistency.
 - Thứ tự triển khai: PostgreSQL (scheduling) → MongoDB (clinical) → Blob → audit → AI Search → Redis.
