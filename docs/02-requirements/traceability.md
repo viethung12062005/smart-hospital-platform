@@ -12,5 +12,10 @@ Cột "Kiểm chứng" được điền dần ở Pha 4–6 (tên test, kịch b
 | BP-5 Không có audit | UC-09, UC-10, NFR-SEC2, SEC5 | ADR-0008 (audit WORM + KQL), [ma trận phân quyền](access-control-matrix.md) | Test ma trận phân quyền; demo "ai đã xem hồ sơ X" |
 | BP-6 Nhập tay giấy tờ | UC-13, NFR-P7, AI4 | ADR-0006, xử lý bất đồng bộ + dead-letter | Báo cáo F1; failure test OCR |
 | Đề bài: backup/recovery | UC-16, NFR-A4, A5 | ADR-0008 (PITR, Blob GZRS/WORM) | Biên bản diễn tập khôi phục |
-| Đề bài: cloud ops | NFR-D1–D4, O1–O4, SEC6, SEC7 | ADR-0004 (AKS, GitOps), ADR-0009 (sẽ viết ở Pha 4: CI/CD và môi trường) | Pipeline chạy thật; demo rollback |
+| Đề bài: cloud ops | NFR-D1–D4, O1–O4, SEC6, SEC7 | ADR-0004 (AKS, GitOps), ADR-0009 (CI/CD, môi trường ephemeral, phê duyệt), ADR-0010 (4 repo) | Pipeline chạy thật; demo rollback |
 | Đề bài: cost awareness | NFR-C1–C3 | ADR-0008 (hệ quả chi phí), ADR-0004 | Báo cáo FinOps |
+
+## Truy vết xuống user story và task
+
+Từ mỗi dòng ở trên, truy vết tiếp: **AC của FR → [user story](user-stories.md) → task của từng người** (bảng "Độ phủ" ở đầu `user-stories.md`
+liệt kê AC nào thuộc story nào; mỗi story liệt kê task, người làm, giờ, tuần). Script `tools/plan/build.py` bảo đảm không AC, API hay event nào bị bỏ sót.
