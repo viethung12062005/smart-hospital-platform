@@ -6,22 +6,22 @@ ARC-04,ARC,Sơ đồ C4 mức Context và Container,"2 sơ đồ (Mermaid/PlantU
 ARC-05,ARC,Mô hình dữ liệu từng service,Bảng resource FHIR + SearchParameter cần hỗ trợ cho từng service; owner dữ liệu rõ ràng,SA,6,ARC-03,S0,1,"ADR-0003, ADR-0008"
 ARC-06,ARC,Hợp đồng API (OpenAPI) khung cho 6 service,"File openapi.yaml mỗi service với endpoint, mã lỗi OperationOutcome; lint không lỗi",SA,6,ARC-05,P1,2,P2
 ARC-07,ARC,Hợp đồng sự kiện (JSON Schema),"Schema cho AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; có version",SA,4,ARC-05,P2,3,P2
-ARC-08,ARC,Threat model STRIDE,"Bảng mối đe dọa theo luồng dữ liệu, biện pháp giảm thiểu truy về NFR-SEC",SA,6,ARC-04,P3,4,P3
+ARC-08,ARC,Threat model STRIDE,"Bảng mối đe dọa theo luồng dữ liệu, biện pháp giảm thiểu truy về NFR-SEC",SA,6,ARC-04,S4,7,P3
 ARC-09,ARC,Chuẩn coding & conventions cho service,"Tài liệu: cấu trúc thư mục, lỗi, logging không PII, tracing, cấu hình, versioning API",SA,4,ARC-03,S0,1,NFR-O4
 ARC-10,ARC,"Definition of Ready/Done, quy trình PR, nhánh",Tài liệu trong docs/00; PR template phản ánh DoD,SA,2,ARC-03,S0,1,NFR-D1
 ARC-11,ARC,Đặc tả dữ liệu giả (synthetic),"Quy tắc sinh bệnh nhân, bác sĩ, lịch, lần khám tiếng Việt; không dùng dữ liệu thật",SA,3,ARC-05,S0,1,NFR-SEC9
-ARC-12,ARC,Kế hoạch kiểm thử (test strategy),"Mức test, ngưỡng coverage, kịch bản load/failure test map với NFR",SA,4,ARC-02,P3,4,P4
+ARC-12,ARC,Kế hoạch kiểm thử (test strategy),"Mức test, ngưỡng coverage, kịch bản load/failure test map với NFR",SA,4,ARC-02,S3,6,P4
 GOV-01,GOV,Tạo 4 repo theo ADR-0010,"4 repo tồn tại, README mô tả trách nhiệm, visibility đúng",SA,1,ARC-03,S0,1,ADR-0010
 GOV-02,GOV,Ruleset bảo vệ nhánh main cho 4 repo,"Bắt buộc PR, 1 review, CI xanh, cấm force-push; bot GitOps được bypass ở shp-gitops",SA,2,GOV-01,S0,1,ADR-0009
 GOV-03,GOV,CODEOWNERS + PR template + issue template,PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD,SA,2,GOV-01,S0,1,NFR-D1
-GOV-04,GOV,GitHub Environments và người duyệt,"deploy-dev/staging/prod, infra-<env>, infra-<env>-destroy có reviewer và wait timer theo ADR-0009",SA,2,GOV-01,P1,2,ADR-0009
-GOV-05,GOV,GitHub App bot cho GitOps,App chỉ có quyền contents:write trên shp-gitops; secret lưu ở org/repo secret,SA,2,GOV-01,P1,2,ADR-0010
-GOV-06,GOV,"Dependabot cho actions, nuget, pip, docker, terraform",dependabot.yml ở mỗi repo; action được ghim theo commit SHA,SA,2,GOV-01,P3,4,NFR-SEC6
+GOV-04,GOV,GitHub Environments và người duyệt,"deploy-dev/staging/prod, infra-<env>, infra-<env>-destroy có reviewer và wait timer theo ADR-0009",SA,2,GOV-01,P2,3,ADR-0009
+GOV-05,GOV,GitHub App bot cho GitOps,App chỉ có quyền contents:write trên shp-gitops; secret lưu ở org/repo secret,SA,2,GOV-01,P2,3,ADR-0010
+GOV-06,GOV,"Dependabot cho actions, nuget, pip, docker, terraform",dependabot.yml ở mỗi repo; action được ghim theo commit SHA,SA,2,GOV-01,S3,6,NFR-SEC6
 GOV-07,GOV,GitHub Project + import backlog,"Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import",SA,2,GOV-01,S0,1,PM
 IAC-01,IAC,"Stack bootstrap: RG shared, state storage","Storage account có versioning, soft delete, tắt shared key; state truy cập bằng Entra ID",SA,3,GOV-01,P1,2,NFR-D3
 IAC-02,IAC,Bootstrap: Azure Container Registry,ACR tắt admin user; retention policy; output login server,SA,2,IAC-01,P1,2,ADR-0009
 IAC-03,IAC,Bootstrap: identity OIDC cho GitHub,"Identity plan (read), apply-<env>, acr-push; federated credential theo repo + environment; RBAC tối thiểu",SA,4,IAC-01,P1,2,NFR-SEC4
-IAC-04,IAC,Bootstrap: budget alert + chính sách tag,"Budget cảnh báo 50/80/100%; tag shp-env, created-at, ttl-hours bắt buộc",SA,2,IAC-01,P1,2,"NFR-C1, C3"
+IAC-04,IAC,Bootstrap: budget alert + chính sách tag,"Budget cảnh báo 50/80/100%; tag shp-env, created-at, ttl-hours bắt buộc",SA,2,IAC-01,P2,3,"NFR-C1, C3"
 IAC-05,IAC,Module network,"VNet, subnet AKS/private endpoint/Postgres (delegated), private DNS zones; validate + tflint sạch",SA,5,IAC-01,P2,3,NFR-SEC7
 IAC-06,IAC,Module monitoring,"Log Analytics, Azure Monitor workspace (Prometheus), Managed Grafana, App Insights",SA,4,IAC-05,P2,3,"NFR-O1, O2"
 IAC-07,IAC,Module aks,"Azure CNI overlay + Cilium, Workload Identity, KV CSI, Azure RBAC, tắt local account, 3 node pool, 3 zone",SA,8,"IAC-05, IAC-06",P2,3,ADR-0004
@@ -30,55 +30,55 @@ IAC-09,IAC,Module postgresql,"Flexible Server 16, chỉ Entra auth (không mật
 IAC-10,IAC,Module mongodb (Cosmos DB for MongoDB vCore),"Cluster private endpoint; mật khẩu sinh bằng random_password lưu Key Vault, không nằm trong code",SA,4,"IAC-05, IAC-08",P3,4,ADR-0008
 IAC-11,IAC,Module redis,"Private endpoint, Entra auth, TLS only",SA,2,IAC-05,P3,4,ADR-0008
 IAC-12,IAC,Module storage,"Container documents + audit (immutability WORM), lifecycle Hot->Cool 30 ngày, tắt shared key",SA,4,IAC-05,P3,4,"NFR-A5, SEC5"
-IAC-13,IAC,Module service bus,Namespace tắt local auth; RBAC cho service,SA,2,IAC-05,P3,4,ADR-0001
-IAC-14,IAC,Module ai-search,"Tắt API key (RBAC only), SKU theo biến môi trường",SA,2,IAC-05,P3,4,ADR-0008
+IAC-13,IAC,Module service bus,Namespace tắt local auth; RBAC cho service,SA,2,IAC-05,P4,5,ADR-0001
+IAC-14,IAC,Module ai-search,"Tắt API key (RBAC only), SKU theo biến môi trường",SA,2,IAC-05,P4,5,ADR-0008
 IAC-15,IAC,Module workload identity cho service,Mỗi service một UAMI + federated credential (namespace/serviceaccount) + role tới đúng kho dữ liệu,SA,4,IAC-07,P4,5,NFR-SEC4
 IAC-16,IAC,Module identity ứng dụng (Entra ID),"App registration API + SPA, app roles patient/doctor/nurse/admin/dpo, user thử nghiệm giả",SA,4,IAC-01,P4,5,"UC-08, NFR-SEC1"
 IAC-17,IAC,"Stack envs/dev, staging, prod + sizing",3 stack gọi module; tfvars khác nhau về SKU/HA/spot; plan chạy được,SA,4,IAC-05..IAC-16,P4,5,NFR-D4
 CIT-01,CIT,Reusable workflow .NET CI,"format check, build warn-as-error, test + ngưỡng coverage, quét package lỗ hổng; dùng được từ repo khác",SA,4,GOV-01,P1,2,ADR-0009
-CIT-02,CIT,Reusable workflow Python CI,"ruff lint+format, mypy, pytest + coverage, pip-audit",D3,3,GOV-01,P2,3,ADR-0009
+CIT-02,CIT,Reusable workflow Python CI,"ruff lint+format, mypy, pytest + coverage, pip-audit",SA,3,GOV-01,P3,4,ADR-0009
 CIT-03,CIT,Reusable workflow container,"hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest",SA,5,"IAC-02, IAC-03",P1,2,NFR-SEC6
-CIT-04,CIT,Reusable workflow Helm validate,"helm lint, render từng môi trường, kubeconform strict, Trivy config",D1,3,GOP-01,P2,3,ADR-0009
+CIT-04,CIT,Reusable workflow Helm validate,"helm lint, render từng môi trường, kubeconform strict, Trivy config",SA,3,GOP-01,P3,4,ADR-0009
 CIT-05,CIT,Reusable workflow Terraform checks + plan,"fmt, validate, tflint, Trivy config, plan + tóm tắt vào job summary; plan qua OIDC read-only",SA,4,IAC-03,P1,2,NFR-D3
 CIT-06,CIT,Reusable workflow GitOps update/promote,Cập nhật digest vào shp-gitops; dev commit sau approval; staging/prod mở PR sau approval,SA,4,GOV-05,P2,3,ADR-0009
 CIT-07,CIT,Workflow kiểm tra chung cho mọi PR,"gitleaks, actionlint, dependency review, CodeQL (csharp, python, actions)",SA,3,GOV-01,P2,3,NFR-SEC6
-CIT-08,CIT,Caller workflow mẫu cho service + script sinh,Script tạo svc-<name>.yml từ template với path filter đúng,SA,2,"CIT-01, CIT-02, CIT-03, CIT-06",P2,3,ADR-0009
-CIT-09,CIT,Phát hành templates có version,Tag vX.Y.Z trên shp-platform-templates; chart push OCI lên ACR; CHANGELOG,SA,2,"CIT-01, GOP-01",P3,4,ADR-0010
+CIT-08,CIT,Caller workflow mẫu cho service + script sinh,Script tạo svc-<name>.yml từ template với path filter đúng,SA,2,"CIT-01, CIT-02, CIT-03, CIT-06",P3,4,ADR-0009
+CIT-09,CIT,Phát hành templates có version,Tag vX.Y.Z trên shp-platform-templates; chart push OCI lên ACR; CHANGELOG,SA,2,"CIT-01, GOP-01",S3,6,ADR-0010
 GOP-01,GOP,Helm chart chung microservice,"Deployment/Rollout, Service, HPA/KEDA, PDB, NetworkPolicy, HTTPRoute, ServiceAccount WI, SecretProviderClass; values.schema.json",SA,8,ARC-09,P1,2,ADR-0004
-GOP-02,GOP,Unit test cho chart,helm-unittest cho các tổ hợp values chính; chạy trong CI,D1,3,GOP-01,P2,3,ADR-0009
+GOP-02,GOP,Unit test cho chart,helm-unittest cho các tổ hợp values chính; chạy trong CI,SA,3,GOP-01,S3,6,ADR-0009
 GOP-03,GOP,Chart bootstrap Argo CD,"AppProject, ApplicationSet platform + services theo môi trường; app-of-apps",SA,6,GOP-01,P2,3,ADR-0009
-GOP-04,GOP,"Platform add-on: Argo Rollouts, KEDA, cert-manager",Application ghim version chart; values theo môi trường,D1,3,GOP-03,P2,3,"NFR-A7, S1"
-GOP-05,GOP,Platform add-on: Envoy Gateway (Gateway API),"GatewayClass/Gateway, TLS qua cert-manager",D2,3,GOP-04,P2,3,NFR-SEC3
-GOP-06,GOP,Platform add-on: OpenTelemetry Collector,"Nhận OTLP, xuất sang Azure Monitor; local xuất sang Grafana stack",D2,3,GOP-03,P2,3,NFR-O1
-GOP-07,GOP,Kyverno + policy,"Chỉ image đã ký từ ACR, cấm tag latest, bắt buộc resources/probes, PSS restricted; Enforce",SA,4,GOP-03,P2,3,NFR-SEC6
-GOP-08,GOP,NetworkPolicy default-deny + namespace,Namespace có nhãn PSA restricted; chỉ mở luồng đã thiết kế,SA,2,GOP-03,P2,3,NFR-SEC7
-GOP-09,GOP,Canary prod với Argo Rollouts,"Bước 10%-50%-100%, dừng chờ promote thủ công, rollback tự động khi lỗi",SA,3,GOP-04,P4,5,"NFR-A7, D2"
+GOP-04,GOP,"Platform add-on: Argo Rollouts, KEDA, cert-manager",Application ghim version chart; values theo môi trường,SA,3,GOP-03,P3,4,"NFR-A7, S1"
+GOP-05,GOP,Platform add-on: Envoy Gateway (Gateway API),"GatewayClass/Gateway, TLS qua cert-manager",SA,3,GOP-04,P3,4,NFR-SEC3
+GOP-06,GOP,Platform add-on: OpenTelemetry Collector,"Nhận OTLP, xuất sang Azure Monitor; local xuất sang Grafana stack",SA,3,GOP-03,P3,4,NFR-O1
+GOP-07,GOP,Kyverno + policy,"Chỉ image đã ký từ ACR, cấm tag latest, bắt buộc resources/probes, PSS restricted; Enforce",SA,4,GOP-03,P4,5,NFR-SEC6
+GOP-08,GOP,NetworkPolicy default-deny + namespace,Namespace có nhãn PSA restricted; chỉ mở luồng đã thiết kế,SA,2,GOP-03,P4,5,NFR-SEC7
+GOP-09,GOP,Canary prod với Argo Rollouts,"Bước 10%-50%-100%, dừng chờ promote thủ công, rollback tự động khi lỗi",SA,3,GOP-04,S4,7,"NFR-A7, D2"
 ENV-01,ENV,Workflow env-provision,plan -> approval infra-<env> -> apply -> cài Argo CD + bootstrap -> chờ healthy -> seed dữ liệu giả -> smoke test,SA,6,"IAC-17, GOP-03",P4,5,ADR-0009
 ENV-02,ENV,Workflow env-destroy,"Gõ đúng tên môi trường + approval infra-<env>-destroy; destroy sạch, kiểm tra không còn resource",SA,2,IAC-17,P4,5,ADR-0009
-ENV-03,ENV,Workflow cost-guard,Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy),SA,2,IAC-04,P4,5,NFR-C1
-ENV-04,ENV,Runbook vòng đời môi trường,"Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp",SA,2,"ENV-01, ENV-02",P4,5,NFR-D3
-ENV-05,ENV,Diễn tập G4,Service mẫu đi dev -> staging -> prod chỉ qua pipeline; rollback < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng,SA,4,"ENV-01, LOC-03, LOC-04, GOP-09",P4,5,Gate G4
+ENV-03,ENV,Workflow cost-guard,Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy),SA,2,IAC-04,S3,6,NFR-C1
+ENV-04,ENV,Runbook vòng đời môi trường,"Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp",SA,2,"ENV-01, ENV-02",S3,6,NFR-D3
+ENV-05,ENV,Diễn tập G4,Service mẫu đi dev -> staging -> prod chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng,SA,4,"ENV-01, LOC-03, LOC-04, GOP-07",P4,5,Gate G4
 OBS-01,OBS,Dashboard RED chuẩn cho mọi service,"Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99",SA,3,GOP-06,S3,6,NFR-O2
-OBS-02,OBS,SLO + cảnh báo burn rate,"SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate",SA,3,OBS-01,S3,6,"NFR-O2, O3"
-OBS-03,OBS,Cảnh báo DLQ và lỗi pipeline,"Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded",SA,2,OBS-01,S3,6,NFR-O3
-LOC-01,LOC,Docker compose hạ tầng local,"Postgres, MongoDB, Redis, RabbitMQ, MinIO, Keycloak, OTel + Grafana; một lệnh khởi động",D2,5,ARC-09,S0,1,NFR-I3
-LOC-02,LOC,Keycloak realm local,"Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả",D2,3,LOC-01,P1,2,NFR-SEC1
-LOC-03,LOC,Walking skeleton .NET,"Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template",D1,4,ARC-09,P1,2,Gate G4
-LOC-04,LOC,Walking skeleton Python,"FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template",D3,3,ARC-09,P1,2,Gate G4
-LOC-05,LOC,Cluster local bằng kind,Script dựng kind + cài chart chung cho service mẫu,D1,3,"GOP-01, LOC-03",P2,3,NFR-I3
+OBS-02,OBS,SLO + cảnh báo burn rate,"SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate",SA,3,OBS-01,S4,7,"NFR-O2, O3"
+OBS-03,OBS,Cảnh báo DLQ và lỗi pipeline,"Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded",SA,2,OBS-01,S5,8,NFR-O3
+LOC-01,LOC,Docker compose hạ tầng local,"Postgres, MongoDB, Redis, RabbitMQ, MinIO, Keycloak, OTel + Grafana; một lệnh khởi động",SA,5,ARC-09,S0,1,NFR-I3
+LOC-02,LOC,Keycloak realm local,"Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả",SA,3,LOC-01,P1,2,NFR-SEC1
+LOC-03,LOC,Walking skeleton .NET,"Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template",SA,4,ARC-09,P1,2,Gate G4
+LOC-04,LOC,Walking skeleton Python,"FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template",SA,3,ARC-09,P1,2,Gate G4
+LOC-05,LOC,Cluster local bằng kind,Script dựng kind + cài chart chung cho service mẫu,SA,3,"GOP-01, LOC-03",S3,6,NFR-I3
 LOC-06,LOC,Bộ sinh dữ liệu giả,CLI sinh bệnh nhân/bác sĩ/lịch tiếng Việt theo ARC-11; seed được cả local và cloud,D2,6,ARC-11,P1,2,NFR-SEC9
-LOC-07,LOC,Hướng dẫn onboarding dev,Từ clone repo đến chạy local và mở PR đầu tiên trong < 1 giờ,D1,2,"LOC-01, LOC-03",P2,3,PM
+LOC-07,LOC,Hướng dẫn onboarding dev,Từ clone repo đến chạy local và mở PR đầu tiên trong < 1 giờ,SA,2,"LOC-01, LOC-03",P2,3,PM
 SHR-01,SHR,FHIR JSON + OperationOutcome middleware,Serialize/parse R4; mọi lỗi trả OperationOutcome đúng mã HTTP; unit test,D2,4,ARC-09,P1,2,ADR-0003
 SHR-02,SHR,SearchParameter registry + parser,"Hỗ trợ token, reference, date (eq/ge/gt/le/lt, theo độ chính xác), _count; unit test",D2,6,SHR-01,P2,3,ADR-0003
 SHR-03,SHR,Hợp đồng IFhirStore / IFhirSession,Interface read/create/update có version/search/outbox/idempotency; tài liệu,D2,3,SHR-02,P2,3,ADR-0003
 SHR-04,SHR,Xác thực JWT + CallerContext,"Đọc roles, fhir_user từ Entra ID và Keycloak; test với cả hai định dạng claim",D1,4,LOC-02,P2,3,NFR-SEC1
 SHR-05,SHR,Khung phân quyền RBAC + ABAC,"Policy theo bảng phân quyền, interface kiểm quan hệ điều trị; mặc định từ chối",D1,6,SHR-04,P2,3,NFR-SEC2
-SHR-06,SHR,Observability chuẩn,"OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII",D1,4,LOC-03,P2,3,"NFR-O1, O4"
+SHR-06,SHR,Observability chuẩn,"OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII",SA,4,LOC-03,P2,3,"NFR-O1, O4"
 SHR-07,SHR,Messaging + transactional outbox,MassTransit RabbitMQ (local) / Service Bus (cloud); outbox publisher; test giao hàng ít nhất một lần,D2,6,SHR-03,S1,4,ADR-0005
 SHR-08,SHR,Audit client middleware,Mọi đọc/ghi dữ liệu bệnh nhân và mọi 403 phát AuditRecorded,D2,4,SHR-07,S1,4,NFR-SEC5
 SHR-09,SHR,Test kit dùng chung,"Testcontainers fixture, test auth handler giả lập role, helper ma trận phân quyền",D1,4,SHR-04,P2,3,NFR-SEC2
-SHR-10,SHR,Đóng gói NuGet nội bộ,Thư viện phát hành lên GitHub Packages có version; service tham chiếu theo version,D1,3,SHR-01,S1,4,ADR-0010
-SCH-01,SCH,Scaffold scheduling + pipeline + values,Service từ template; svc-scheduling.yml; values dev/staging/prod,D1,2,"LOC-03, CIT-08",S1,4,ADR-0001
+SHR-10,SHR,Đóng gói NuGet nội bộ,Thư viện phát hành lên GitHub Packages có version; service tham chiếu theo version,SA,3,SHR-01,S4,7,ADR-0010
+SCH-01,SCH,Scaffold scheduling + pipeline + values,Service từ template; svc-scheduling.yml; values dev/staging/prod,SA,2,"LOC-03, CIT-08",S1,4,ADR-0001
 SCH-02,SCH,Provider Postgres: CRUD có version + history,Create/read/update với optimistic concurrency; history mọi phiên bản; integration test,D1,6,SHR-03,S1,4,ADR-0003
 SCH-03,SCH,Provider Postgres: search index,Bảng index token/reference/date; truy vấn dùng index (có EXPLAIN); test,D1,6,SCH-02,S1,4,ADR-0008
 SCH-04,SCH,API Schedule + phân quyền,Nurse/Admin tạo/sửa; Doctor chỉ xem của mình (AC-02.3),D1,4,"SCH-02, SHR-05",S2,5,UC-02
@@ -93,9 +93,9 @@ SCH-12,SCH,Đổi lịch nguyên tử,Đặt mới + hủy cũ trong một trans
 SCH-13,SCH,Test đồng thời 50 request,AC-03.1 chạy trong CI với Postgres thật,D1,3,SCH-08,S3,6,NFR-P2
 SCH-14,SCH,Test ma trận phân quyền scheduling,Mỗi ô của bảng phân quyền liên quan scheduling là một test,D1,4,"SCH-11, SHR-09",S4,7,NFR-SEC2
 SCH-15,SCH,Cache Redis cho tìm slot,Cache-aside theo bác sĩ/ngày; invalidate bằng event; đo hit ratio,D1,5,"SCH-07, SHR-07",S4,7,"ADR-0008, NFR-S2"
-SCH-16,SCH,Script k6 tìm slot + đặt lịch,Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên staging,D1,4,SCH-09,S5,8,"NFR-P1, P2"
-SCH-17,SCH,KEDA cron scale trước 07:00,Values prod/staging scale trước đợt mở slot,D1,1,"SCH-01, GOP-04",S5,8,NFR-S1
-NTF-01,NTF,Scaffold notification worker + pipeline,Service từ template; svc-notification.yml,D1,2,"LOC-03, CIT-08",S3,6,ADR-0001
+SCH-16,SCH,Script k6 tìm slot + đặt lịch,Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên staging,SA,4,SCH-09,S5,8,"NFR-P1, P2"
+SCH-17,SCH,KEDA cron scale trước 07:00,Values prod/staging scale trước đợt mở slot,SA,1,"SCH-01, GOP-04",S5,8,NFR-S1
+NTF-01,NTF,Scaffold notification worker + pipeline,Service từ template; svc-notification.yml,SA,2,"LOC-03, CIT-08",S3,6,ADR-0001
 NTF-02,NTF,"Lên lịch nhắc T-24h, T-2h",Consume AppointmentBooked; scheduled message,D1,5,"NTF-01, SHR-07",S4,7,UC-07
 NTF-03,NTF,Hủy nhắc khi hủy lịch,AC-07.1,D1,4,NTF-02,S4,7,UC-07
 NTF-04,NTF,Kênh email/SMS/push + provider giả,Abstraction kênh; provider giả cho test và demo,D1,4,NTF-01,S4,7,UC-07
@@ -103,10 +103,10 @@ NTF-05,NTF,"Retry, dead-letter, kênh dự phòng",Backoff tối đa 5 lần; DL
 NTF-06,NTF,Consumer idempotent,AC-07.2: không gửi trùng,D1,3,NTF-02,S5,8,UC-07
 NTF-07,NTF,Nhắc thêm cho lịch rủi ro cao,Gọi ML qua circuit breaker; ML lỗi vẫn nhắc bình thường (AC-15.1),D1,4,"NTF-02, ML-04",S6,9,UC-15
 NTF-08,NTF,Metric độ trễ gửi,Histogram để đo NFR-P8,D1,2,NTF-02,S5,8,NFR-P8
-GW-01,GW,API Gateway YARP,Route tới các service; truyền trace context,D1,3,LOC-03,S2,5,ADR-0001
-GW-02,GW,Xác thực + rate limit theo người dùng,Token sai -> 401; vượt hạn mức -> 429,D1,4,"GW-01, SHR-04",S3,6,NFR-S3
+GW-01,GW,API Gateway YARP,Route tới các service; truyền trace context,SA,3,LOC-03,S2,5,ADR-0001
+GW-02,GW,Xác thực + rate limit theo người dùng,Token sai -> 401; vượt hạn mức -> 429,SA,4,"GW-01, SHR-04",S3,6,NFR-S3
 GW-03,GW,Waiting room lúc mở slot (Could),Hàng đợi ảo khi vượt ngưỡng tải 10x,D1,6,GW-02,S6,9,NFR-S3
-CLN-01,CLN,Scaffold clinical + pipeline + values,Service từ template; svc-clinical.yml,D2,2,"LOC-03, CIT-08",S1,4,ADR-0001
+CLN-01,CLN,Scaffold clinical + pipeline + values,Service từ template; svc-clinical.yml,SA,2,"LOC-03, CIT-08",S1,4,ADR-0001
 CLN-02,CLN,Provider MongoDB: CRUD có version + history,Optimistic concurrency theo versionId; collection history; integration test,D2,6,SHR-03,S1,4,ADR-0008
 CLN-03,CLN,Provider MongoDB: search + index,Index theo SearchParameter; partition key patient; test,D2,6,CLN-02,S2,5,ADR-0008
 CLN-04,CLN,Đăng ký bệnh nhân + chống trùng,"AC-01.1, 01.2, 01.3",D2,5,"CLN-03, SHR-05",S2,5,UC-01
@@ -118,20 +118,20 @@ CLN-09,CLN,Tìm bệnh nhân không dấu,AC-06.1,D2,4,CLN-03,S3,6,UC-06
 CLN-10,CLN,Timeline bệnh nhân,"Gộp encounter, chẩn đoán, sinh hiệu, tài liệu theo thời gian; p95 <= 500 ms",D2,5,CLN-08,S4,7,"UC-06, NFR-P3"
 CLN-11,CLN,Break-glass,"Bắt buộc lý do, hiệu lực 60 phút, phát audit đặc biệt (UC-10)",D2,5,"CLN-06, SHR-08",S5,8,UC-10
 CLN-12,CLN,Test ma trận phân quyền clinical,Mỗi ô liên quan clinical là một test,D2,4,"CLN-11, SHR-09",S5,8,NFR-SEC2
-DOC-01,DOC,Scaffold document + pipeline,Service từ template; svc-document.yml,D2,2,"LOC-03, CIT-08",S4,7,ADR-0001
+DOC-01,DOC,Scaffold document + pipeline,Service từ template; svc-document.yml,SA,2,"LOC-03, CIT-08",S4,7,ADR-0001
 DOC-02,DOC,IBlobStore: Azure Blob + MinIO,"Một interface, hai implementation; integration test với MinIO",D2,4,DOC-01,S4,7,ADR-0008
 DOC-03,DOC,Link upload + xác nhận + kiểm tra file,"User delegation SAS; AC-05.1 (loại file, <= 20 MB)",D2,5,DOC-02,S5,8,UC-05
 DOC-04,DOC,Quét mã độc,Defender for Storage trên cloud / ClamAV local; file nhiễm bị cách ly,D2,4,DOC-03,S5,8,UC-05
 DOC-05,DOC,DocumentReference + link tải 5 phút,AC-05.2; mỗi lần xin link có audit,D2,4,"DOC-03, SHR-08",S5,8,BR-08
 DOC-06,DOC,Phát hành tài liệu cho bệnh nhân,AC-05.3,D2,2,DOC-05,S6,9,UC-05
 DOC-07,DOC,Sự kiện DocumentUploaded,Phát qua outbox sau khi quét sạch,D2,2,"DOC-04, SHR-07",S5,8,UC-13
-AUD-01,AUD,Scaffold audit worker + pipeline,Service từ template; svc-audit.yml,D2,2,"LOC-03, CIT-08",S2,5,ADR-0001
+AUD-01,AUD,Scaffold audit worker + pipeline,Service từ template; svc-audit.yml,SA,2,"LOC-03, CIT-08",S2,5,ADR-0001
 AUD-02,AUD,Ghi WORM có chuỗi hash,Batch NDJSON theo giờ vào container immutable; mỗi batch chứa hash batch trước,D2,6,"AUD-01, SHR-07",S3,6,NFR-SEC5
 AUD-03,AUD,Đẩy sang Log Analytics / Loki,Xuất hiện trong công cụ tra cứu <= 1 phút,D2,4,AUD-02,S4,7,NFR-SEC5
 AUD-04,AUD,API tra cứu audit cho DPO,Lọc theo bệnh nhân/người/thời gian; xuất CSV (UC-09),D2,4,AUD-03,S6,9,UC-09
 AUD-05,AUD,Cảnh báo break-glass cho DPO,AC-10.1 <= 5 phút,D2,3,"AUD-03, CLN-11",S6,9,UC-10
 AUD-06,AUD,Kiểm chứng tính bất biến,Test: sửa/xóa blob audit bị từ chối; công cụ kiểm tra chuỗi hash,D2,3,AUD-02,S6,9,AC-09.2
-AI-01,AI,Scaffold ai-service + pipeline + values,FastAPI từ template; svc-ai.yml; node pool ai,D3,2,"LOC-04, CIT-08",S1,4,ADR-0001
+AI-01,AI,Scaffold ai-service + pipeline + values,FastAPI từ template; svc-ai.yml; node pool ai,SA,2,"LOC-04, CIT-08",S1,4,ADR-0001
 AI-02,AI,LLM router: provider + chuỗi fallback,Interface provider; chuỗi model theo tác vụ; timeout; unit test với provider giả,D3,6,AI-01,S1,4,ADR-0006
 AI-03,AI,"Circuit breaker, budget guard, metric theo model",Mở mạch khi lỗi liên tiếp; hạn mức token/ngày; metric fallback,D3,5,AI-02,S2,5,"ADR-0006, NFR-C2"
 AI-04,AI,Redact PII trước provider ngoài Azure,"Che tên, SĐT, mã định danh; test với dữ liệu giả",D3,4,AI-02,S2,5,NFR-SEC8
@@ -149,7 +149,7 @@ ML-01,ML,Sinh dữ liệu lịch hẹn giả có quy luật,"Lead time, lịch s
 ML-02,ML,Train baseline + LightGBM với MLflow,Theo dõi tham số/metric; so sánh với baseline,D3,6,ML-01,P2,3,ADR-0007
 ML-03,ML,Quality gate + model registry,Chỉ đăng ký model khi AUC >= 0.75 và hơn baseline,D3,3,ML-02,S1,4,NFR-AI6
 ML-04,ML,API dự đoán no-show,/predict/no-show trả xác suất + phiên bản model (AC-15.2),D3,4,"ML-03, LOC-04",S2,5,UC-15
-ML-05,ML,Pipeline huấn luyện trong CI,Chạy khi dữ liệu/code đổi; artifact model; canary deploy,D3,4,"ML-03, CIT-02",S3,6,ADR-0007
+ML-05,ML,Pipeline huấn luyện trong CI,Chạy khi dữ liệu/code đổi; artifact model; canary deploy,SA,4,"ML-03, CIT-02",S3,6,ADR-0007
 ML-06,ML,Theo dõi drift,Job hằng tuần so sánh phân phối; cảnh báo,D3,4,ML-04,S6,9,NFR-AI6
 WEB-01,WEB,PWA shell + đăng nhập OIDC + điều hướng theo role,React + Vite; Entra ID và Keycloak; build qua pipeline,D1,6,LOC-02,S2,5,NFR-I2
 WEB-02,WEB,"Bệnh nhân: tìm slot, đặt, xem lịch",Gọi gateway; xử lý 409 và gợi ý slot khác,D1,8,"WEB-01, SCH-09",S4,7,UC-03
@@ -160,10 +160,10 @@ WEB-06,WEB,Upload/xem tài liệu,Upload trực tiếp bằng SAS; xem bằng li
 WEB-07,WEB,"Giao diện AI: trợ lý, tóm tắt, duyệt trích xuất","Hiển thị trích dẫn, nhãn do AI tạo",D3,8,"WEB-01, AI-07",S5,8,UC-11..13
 WEB-08,WEB,Widget chatbot (Could),Hội thoại + bước xác nhận,D3,4,"WEB-07, AI-13",S6,9,UC-14
 WEB-09,WEB,Màn hình audit cho DPO,"Lọc, xuất CSV",D2,4,"WEB-01, AUD-04",S6,9,UC-09
-WEB-10,WEB,Pipeline + chart cho web,Container nginx non-root dùng chart chung,SA,2,"WEB-01, CIT-08",S2,5,ADR-0009
+WEB-10,WEB,Pipeline + chart cho web,Container nginx non-root dùng chart chung,SA,2,"WEB-01, CIT-08",S3,6,ADR-0009
 PRD-01,PRD,Load test 1x/5x/10x + báo cáo,Chạy trên staging ephemeral; so với NFR-P/S,SA,6,"SCH-16, ENV-01",H1,10,"NFR-P1, P2, S2, S3"
 PRD-02,PRD,Failure test,"Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả",SA,6,ENV-01,H1,10,"NFR-A3, A6"
-PRD-03,PRD,Diễn tập backup/restore,PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO,D2,4,ENV-01,H1,10,"UC-16, NFR-A4"
+PRD-03,PRD,Diễn tập backup/restore,PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO,SA,4,ENV-01,H1,10,"UC-16, NFR-A4"
 PRD-04,PRD,Dashboard SLO cuối cùng,Error budget theo NFR-A1,SA,3,OBS-02,H1,10,NFR-O2
 PRD-05,PRD,Báo cáo FinOps,"Chi phí theo giờ-môi trường, dự phóng tháng, khuyến nghị",SA,4,ENV-03,H2,11,NFR-C1..C3
 PRD-06,PRD,Rà soát bảo mật,Checklist theo threat model; kết quả quét; ma trận phân quyền xanh,SA,4,ARC-08,H2,11,P3
