@@ -3,6 +3,7 @@
 > Trạng thái: **Chưa bắt đầu**, chỉ khởi động sau G3 (kiến trúc được duyệt). Task chi tiết: epic GOV, IAC, CIT, GOP, ENV, OBS trong
 > [backlog](../05-plan/backlog.md). Quyết định nền: [ADR-0009](../03-architecture/adr/0009-cicd-ephemeral-environments.md), [ADR-0010](../03-architecture/adr/0010-repository-strategy.md).
 > Mọi môi trường cloud là **ephemeral**: dựng → kiểm thử → hủy.
+> Cài đặt GitHub từng bước (repo, ruleset, environment, OIDC, bot): [github-setup.md](github-setup.md).
 > Mục tiêu: dựng xong **toàn bộ pipeline và môi trường trước** khi đội dev bắt đầu viết service.
 
 ## Đầu ra của pha này
