@@ -1,7 +1,7 @@
 # ADR-0006: LLM router đa model với fallback
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Quyết định
 `ai-service` có một router nhỏ tự viết. Mỗi tác vụ khai báo **chuỗi model theo thứ tự**:

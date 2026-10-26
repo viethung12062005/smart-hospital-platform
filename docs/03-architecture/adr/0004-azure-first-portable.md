@@ -1,7 +1,7 @@
 # ADR-0004: Kubernetes (AKS) làm nền tảng chạy, Azure-first nhưng portable
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 - Nhóm đã có hạ tầng Azure; yêu cầu hệ thống production-like và chạy được trên nền tảng khác (NFR-I3).

@@ -1,7 +1,7 @@
 # ADR-0008: Chọn kho dữ liệu theo đặc tính tải của từng service (polyglot persistence)
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 PoC CareMate (Medplum) đặt mọi thứ vào một PostgreSQL. Mỗi loại dữ liệu trong đề Project 5 lại có

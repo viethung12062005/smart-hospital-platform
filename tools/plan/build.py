@@ -180,7 +180,7 @@ def render_stories(tasks: list[Task]) -> str:
         for s in story_ids(t[1]):
             tasks_by_story[s].append(t)
     prio = {"M": "Must", "S": "Should", "C": "Could"}
-    out = ["# User story", "",
+    out = ["# User story", "", "> Trạng thái: **Approved — G2 qua ngày 2026-10-26**.", "",
            "> Sinh tự động từ `tools/plan/stories.py` và `tools/plan/tasks_*.py` bằng `python3 -I tools/plan/build.py`. "
            "Không sửa tay file này: sửa nguồn rồi chạy lại.",
            "> Mỗi story truy về use case ([FR](functional-requirements.md)), API ([thiết kế chi tiết](../03-architecture/detailed-design/README.md)) "

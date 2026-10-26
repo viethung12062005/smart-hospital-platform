@@ -1,7 +1,7 @@
 # ADR-0001: Ranh giới microservice
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 Đề yêu cầu MVP hướng production, nhưng giảng viên ghi rõ *không* muốn "dozens of microservices".

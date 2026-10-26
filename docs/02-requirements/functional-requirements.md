@@ -1,6 +1,6 @@
 # Pha 2 — Yêu cầu chức năng
 
-> Trạng thái: **Draft — chờ G2**. Ưu tiên theo MoSCoW (M = Must, S = Should, C = Could).
+> Trạng thái: **Approved — G2 qua ngày 2026-10-26**. Ưu tiên theo MoSCoW (M = Must, S = Should, C = Could).
 > Tiêu chí nghiệm thu (AC) viết theo Given/When/Then để chuyển thẳng thành test tự động.
 
 ## Actor

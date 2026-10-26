@@ -1,6 +1,6 @@
 # Kế hoạch dự án
 
-> Trạng thái: **Draft — chờ SA/PM duyệt**. Thứ tự làm việc: BA → Requirements → **User story** → Thiết kế chi tiết → Backlog → Code.
+> Trạng thái: **Approved (2026-10-26)**. Thứ tự làm việc: BA → Requirements → **User story** → Thiết kế chi tiết → Backlog → Code.
 > Chưa có dòng code nào; mọi con số dưới đây sinh từ dữ liệu trong `tools/plan/` bằng `python3 -I tools/plan/build.py`
 > (script tự kiểm tra: mọi AC của FR thuộc một story, mọi API và mọi event có task, task dev ≤ 4 giờ, không task nào xếp trước phụ thuộc, dev ≤ 30 giờ/tuần).
 
@@ -60,11 +60,11 @@ W12  Kịch bản demo, slide, diễn tập trên prod ephemeral
 | G1 | W1 | Phạm vi + KPI chốt | SA (PM) |
 | G2 | W1 | FR có AC, NFR có số, user story được duyệt | SA |
 | G3 | W1 | ADR Accepted + thiết kế chi tiết được duyệt | SA (Architect) |
-| **G4** | **W6** (đề xuất, trước đó là W5) | Pipeline đầy đủ + service mẫu qua 3 môi trường + rollback + chặn image chưa ký | SA (DevOps) |
+| **G4** | **W6** (đã duyệt; trước đó là W5) | Pipeline đầy đủ + service mẫu qua 3 môi trường + rollback + chặn image chưa ký | SA (DevOps) |
 | Feature freeze | cuối W9 | Mọi story Must xong và deploy được | SA |
 
 **Vì sao G4 dời từ W5 sang W6:** khối lượng SA W2–W5 là ~45 giờ/tuần dù đã dời mọi việc không chặn G4 sang sau. Dev vẫn làm việc bình
-thường trước G4 (code, test local và test tích hợp bằng Testcontainers); chỉ việc deploy lên cloud bắt đầu từ W7. **Cần SA xác nhận.**
+thường trước G4 (code, test local và test tích hợp bằng Testcontainers); chỉ việc deploy lên cloud bắt đầu từ W7. Đã được SA xác nhận khi duyệt plan.
 
 ## 4. Tải công việc (giờ/tuần, chi tiết trong [backlog.md](backlog.md))
 

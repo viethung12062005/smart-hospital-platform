@@ -1,6 +1,6 @@
 # Thiết kế chi tiết (Detailed Design)
 
-> Trạng thái: **Draft — chờ duyệt cùng G3**. Không viết code cho tới khi bộ tài liệu này được duyệt.
+> Trạng thái: **Approved — G3 qua ngày 2026-10-26**. Mọi thay đổi sau này đi qua PR có SA duyệt (đổi hợp đồng API/event phải cập nhật tài liệu và task).
 > Kiến trúc tổng quan: [../overview.md](../overview.md). Yêu cầu: [../../02-requirements](../../02-requirements/functional-requirements.md).
 
 | # | Tài liệu | Nội dung |
