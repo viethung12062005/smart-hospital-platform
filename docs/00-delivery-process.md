@@ -24,9 +24,11 @@ Pha 1: Business Analysis ──G1──► Pha 2: Requirements Engineering ─�
 | Môi trường | Mục đích | Ai deploy | Dữ liệu |
 |---|---|---|---|
 | `local` | Dev chạy toàn hệ thống bằng docker compose | Dev | Synthetic, seed tự động |
-| `dev` | Tích hợp liên tục; mỗi merge vào `main` tự deploy | Pipeline | Synthetic, có thể xóa bất cứ lúc nào |
-| `staging` | Giống prod; load test, failure test, UAT | Pipeline + duyệt thủ công | Synthetic quy mô lớn |
-| `prod` | Môi trường demo bảo vệ | Pipeline + duyệt của Architect/DevOps | Synthetic |
+| `dev` | Kiểm thử tích hợp trên cloud | Pipeline + duyệt | Synthetic, seed tự động |
+| `staging` | Giống prod; load test, failure test, UAT | Pipeline + duyệt DevOps | Synthetic quy mô lớn |
+| `prod` | Môi trường demo bảo vệ | Pipeline + duyệt DevOps và Architect | Synthetic |
+
+`dev`, `staging`, `prod` đều **ephemeral**: dựng bằng IaC khi cần, kiểm thử xong thì hủy (ADR-0009).
 
 > Toàn bộ dữ liệu ở mọi môi trường là **dữ liệu giả (synthetic)**. Không dùng dữ liệu bệnh nhân thật.
 
