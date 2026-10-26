@@ -8,12 +8,16 @@
 
 | Mã | Vai trò | Phụ trách chính |
 |---|---|---|
-| **SA** | Solution Architect + PM + DevOps | Kiến trúc, ADR, hạ tầng (Terraform), CI/CD templates, GitOps, môi trường, phê duyệt, theo dõi tiến độ |
-| **D1** | Backend .NET | Thư viện chung (auth, phân quyền, observability), **Scheduling**, **Notification**, **API Gateway**, web phần bệnh nhân/lịch |
-| **D2** | Backend .NET | Thư viện chung (FHIR, messaging, audit), **Clinical**, **Document**, **Audit**, môi trường local, web phần lâm sàng |
-| **D3** | AI/ML (Python) | **AI service** (router, RAG, tóm tắt, trích xuất, chatbot), **ML no-show**, web phần AI |
+| **SA** | Solution Architect + PM + DevOps | **Mọi thứ ngoài logic nghiệp vụ**: kiến trúc, ADR, hợp đồng API, hạ tầng, CI/CD, Helm/GitOps, môi trường local và cloud, scaffold service, gateway, observability, load/failure test, backup, phê duyệt, tiến độ |
+| **D1** | Dev .NET (chỉ logic) | Logic auth/phân quyền dùng chung, **Scheduling**, **Notification**, waiting room, web phần bệnh nhân/lịch |
+| **D2** | Dev .NET (chỉ logic) | Logic FHIR store, messaging/outbox, audit dùng chung, **Clinical**, **Document**, **Audit**, sinh dữ liệu giả, web phần lâm sàng |
+| **D3** | Dev AI/ML Python (chỉ logic) | **AI service** (router, RAG, tóm tắt, trích xuất, chatbot), **ML no-show** (dữ liệu, huấn luyện, serving, drift), web phần AI |
 
-> Nếu team có thêm một dev nữa: giao toàn bộ epic **WEB** cho người đó, D1–D3 giảm khoảng 25–30 giờ mỗi người.
+**Quy tắc phân công:** dev nhận service đã được SA scaffold sẵn (code khung, Dockerfile, pipeline, Helm values, kết nối
+DB/bus/observability) và chỉ viết logic + test của logic. Dev không sửa pipeline, Dockerfile, Helm hay hạ tầng; cần thay đổi
+thì mở issue cho SA.
+
+> Nếu team có thêm một dev nữa: giao toàn bộ epic **WEB** (trừ WEB-10) cho người đó, D1–D3 giảm khoảng 20–30 giờ mỗi người.
 
 ### RACI rút gọn
 
@@ -21,8 +25,8 @@
 |---|---|---|---|---|
 | ADR, hợp đồng API/sự kiện | **A/R** | C | C | C |
 | Terraform, môi trường, Argo CD | **A/R** | I | I | I |
-| CI templates, Helm chart chung | **A/R** | C (R: CIT-04, GOP-02, GOP-04) | C (R: GOP-05, GOP-06) | C (R: CIT-02) |
-| Code service | A (review) | **R** | **R** | **R** |
+| CI/CD, Helm, scaffold service, môi trường local | **A/R** | I | I | I |
+| Logic nghiệp vụ + test | A (review) | **R** | **R** | **R** |
 | Phê duyệt deploy staging/prod, dựng/hủy môi trường | **A/R** | I | I | I |
 
 ## 2. Repository (ADR-0010, chờ duyệt)
@@ -63,12 +67,13 @@ dựng môi trường ephemeral, test xong thì hủy.
 
 | Người | Tổng | Đỉnh | Ghi chú |
 |---|---|---|---|
-| SA | ~237 | 42h (W2–W3) | W1–W5 dồn nặng vì platform phải xong trước; giảm hẳn từ W6 để làm PM/review |
-| D1 | ~168 | 34h (W7), 32h (W3) | W3: thư viện auth/phân quyền + 3 task Helm/CI; W7: đổi lịch, phân quyền, cache, notification |
-| D2 | ~170 | 32h (W8) | Đỉnh ở W8 (document, break-glass) |
-| D3 | ~126 | 22h (W8–W9) | Còn dư, là người hỗ trợ khi D1/D2 chậm |
+| SA | ~314 | 46h (W2–W3), ~40h đến W6 | Toàn bộ phần ngoài logic; platform dồn W1–W6, sau đó chủ yếu review, PM, production engineering |
+| D1 | ~127 | 34h (W7) | W7: đổi lịch, phân quyền scheduling, cache, notification |
+| D2 | ~146 | 32h (W8) | W8: document, break-glass, phân quyền clinical |
+| D3 | ~114 | 22h (W8–W9) | Còn dư, là người hỗ trợ logic khi D1/D2 chậm |
 
 Giả định năng lực: khoảng 25 giờ/tuần cho mỗi dev. Các tuần vượt mức sẽ dùng **W10 (H1) làm vùng đệm**.
+SA ở mức ~40–46 giờ/tuần trong 6 tuần đầu là **rủi ro lớn nhất của kế hoạch** (xem mục 6).
 Task **Could** (GW-03, AI-13, WEB-08) sẽ bị cắt trước nếu trễ.
 
 ## 5. Cách theo dõi
@@ -83,7 +88,7 @@ Task **Could** (GW-03, AI-13, WEB-08) sẽ bị cắt trước nếu trễ.
 
 | Rủi ro | Ảnh hưởng | Giảm thiểu |
 |---|---|---|
-| SA quá tải W2–W5 (một người kiêm 3 vai trò) | G4 trễ, dev bị chặn deploy cloud | Dev vẫn làm local; đã chuyển 5 task cấu hình cho dev; GOP-09 và OBS có thể trễ mà không chặn G4 |
+| SA quá tải W1–W6 (~40–46h/tuần, kiêm 3 vai trò và mọi phần ngoài logic) | G4 trễ, dev bị chặn | Ưu tiên task chặn dev (local env, skeleton, scaffold, hợp đồng API) trước; canary, threat model chi tiết, observability nâng cao dời sau G4; dùng AI coding assistant để viết Terraform/Helm/workflow theo backlog |
 | Dựng môi trường ephemeral mất 20–30 phút, dễ lỗi | Mất thời gian test, tốn chi phí | Dựng theo lịch cố định (ví dụ thứ Năm hằng tuần); runbook ENV-04; cost-guard |
 | Phạm vi AI rộng (4 tính năng + ML) | D3 trễ | Chatbot là Could; eval làm sớm từ S4 |
 | Thiếu kinh nghiệm FHIR/MongoDB | Chậm S1–S2 | Có sẵn spike FHIR store (ADR-0003); D2 làm SHR-01..03 trước |
