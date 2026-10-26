@@ -1,6 +1,6 @@
 # Kiến trúc tổng quan — Smart Hospital Platform
 
-> Trạng thái: **Proposed — chờ G3**, chốt sau khi requirements được duyệt.
+> Trạng thái: **Approved — G3 qua ngày 2026-10-26**.
 >
 > Project 5 — Cloud Application Development. Viết lại từ PoC CareMate (Medplum fork) thành
 > một hệ thống microservice gọn, FHIR-native, chạy trên Azure nhưng không khóa chặt vào Azure.

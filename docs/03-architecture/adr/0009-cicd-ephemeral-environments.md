@@ -1,7 +1,7 @@
 # ADR-0009: CI/CD, môi trường ephemeral và cổng phê duyệt
 
 ## Trạng thái
-Proposed — đã thống nhất định hướng với Solution Architect/DevOps, chờ chốt ở G3.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 - Nhóm không duy trì cluster chạy liên tục (chi phí); hạ tầng chỉ dựng khi cần kiểm thử/demo rồi hủy.

@@ -1,6 +1,6 @@
 # Pha 2 — Yêu cầu phi chức năng (NFR)
 
-> Trạng thái: **Draft — chờ G2**. Mỗi NFR có **con số**, **cách đo** và **môi trường đo**.
+> Trạng thái: **Approved — G2 qua ngày 2026-10-26**. Mỗi NFR có **con số**, **cách đo** và **môi trường đo**.
 > Các con số tính từ [workload-analysis.md](workload-analysis.md).
 
 ## 1. Hiệu năng

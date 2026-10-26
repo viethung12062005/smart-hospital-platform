@@ -1,7 +1,7 @@
 # ADR-0007: Mô hình dự đoán no-show (MLOps)
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 Muốn có một mô hình ML tự huấn luyện để thể hiện vòng đời MLOps, gắn với nghiệp vụ thật.

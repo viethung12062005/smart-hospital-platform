@@ -1,6 +1,6 @@
 # Pha 1 — Phân tích nghiệp vụ (Business Analysis)
 
-> Trạng thái: **Draft — chờ G1**. Bối cảnh bệnh viện dưới đây là **giả định** để có số liệu
+> Trạng thái: **Approved — G1 qua ngày 2026-10-26**. Bối cảnh bệnh viện dưới đây là **giả định** để có số liệu
 > thiết kế; mọi dữ liệu bệnh nhân dùng trong dự án là dữ liệu giả.
 
 ## 1. Bối cảnh tổ chức (giả định)

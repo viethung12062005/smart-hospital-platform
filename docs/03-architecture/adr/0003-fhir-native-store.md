@@ -1,7 +1,7 @@
 # ADR-0003: Tự xây FHIR store, lõi không phụ thuộc DB
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 Nhóm muốn mô hình FHIR-native giống Medplum (chuẩn interoperability y tế). Azure có dịch vụ

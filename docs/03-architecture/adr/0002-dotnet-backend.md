@@ -1,7 +1,7 @@
 # ADR-0002: .NET 10 cho service nghiệp vụ, Python cho AI/ML
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Quyết định
 - Service nghiệp vụ: **.NET 10 (LTS)**, ASP.NET Core Minimal API, Npgsql + Dapper (SQL tường minh,

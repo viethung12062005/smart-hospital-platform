@@ -1,7 +1,7 @@
 # ADR-0005: Chống double-booking và request lặp
 
 ## Trạng thái
-Proposed — chờ chốt sau khi requirements (docs/02-requirements) được duyệt.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 PoC CareMate tạo Appointment mà không khóa Slot → hai bệnh nhân có thể đặt cùng slot. Client

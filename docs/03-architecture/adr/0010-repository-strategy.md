@@ -1,7 +1,7 @@
 # ADR-0010: Chiến lược repository
 
 ## Trạng thái
-Proposed — chờ Solution Architect duyệt trước khi tạo repo.
+Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
 Nhóm 4 người (1 Solution Architect/PM/DevOps, 3 dev), 8 service, yêu cầu pipeline riêng cho từng service,
