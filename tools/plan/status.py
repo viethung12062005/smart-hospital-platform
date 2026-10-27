@@ -17,7 +17,7 @@ STATUS = {
     "SHR-09": ("partial", "c81d3ec", "AuditRecord/AuditRecordBuilder (che IP, chặn giá trị trong resource) + IAuditSink; CHƯA có sink ghi outbox (SHR-07) và chưa có middleware audit riêng cho FHIR search/read ngoài RequireShpAuthz"),
     "SHR-25": ("done", "c81d3ec", "Shp.Web: RequireShpAuthz (filter) + FindUnprotectedEndpoints (test chặn quên phân quyền); 403/404 theo quy ước"),
     "SHR-27": ("done", "c81d3ec", "AuthzAudit.FromDecision + filter ghi audit cho cho-phép, từ-chối, lỗi; mọi hành động ma trận có ánh xạ audit"),
-    "SHR-07": ("partial", "COMMIT", "Shp.Data.Postgres: PostgresOutbox.AddAsync + OutboxRelay (SKIP LOCKED, backoff, đa replica); CHƯA có bản MongoDB và CHƯA có IEventPublisher thật (MassTransit)"),
-    "SHR-08": ("partial", "COMMIT", "PostgresInbox.HandleOnceAsync (đúng một lần, rollback cả dấu inbox khi lỗi); CHƯA có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB"),
-    "SHR-28": ("done", "COMMIT", "PostgresIdempotency: RequireKey, HashBody chuẩn hóa, ClaimAsync (replay, 422 khi khác body, song song, hết hạn 24h); 25 test với PostgreSQL thật"),
+    "SHR-07": ("partial", "b74e54a", "Shp.Data.Postgres: PostgresOutbox.AddAsync + OutboxRelay (SKIP LOCKED, backoff, đa replica); CHƯA có bản MongoDB và CHƯA có IEventPublisher thật (MassTransit)"),
+    "SHR-08": ("partial", "b74e54a", "PostgresInbox.HandleOnceAsync (đúng một lần, rollback cả dấu inbox khi lỗi); CHƯA có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB"),
+    "SHR-28": ("done", "b74e54a", "PostgresIdempotency: RequireKey, HashBody chuẩn hóa, ClaimAsync (replay, 422 khi khác body, song song, hết hạn 24h); 25 test với PostgreSQL thật"),
 }
