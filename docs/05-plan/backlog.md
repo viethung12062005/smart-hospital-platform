@@ -2,25 +2,25 @@
 
 > Sinh tự động bằng `python3 -I tools/plan/build.py` từ `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Không sửa tay. Import vào GitHub Projects bằng [backlog.csv](backlog.csv). Việc theo từng người: [by-person](by-person/).
 
-Tổng: **316 task**, **1063 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
+Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
 
 ## Tải theo người và theo tuần (giờ)
 
 | Tuần | SA | D1 | D2 | D3 |
 |---|---|---|---|---|
-| W1 | 39 |  |  |  |
+| W1 | 42 |  |  |  |
 | W2 | 43 | 28 | 24 | 28 |
 | W3 | **47** | 7 | 27 | 28 |
-| W4 | 45 | 29 | 30 | 29 |
+| W4 | **48** | 29 | 30 | 29 |
 | W5 | 40 | 29 | 29 | 30 |
 | W6 | 27 | 30 | 30 | 29 |
 | W7 | 42 | 30 | 30 | 30 |
-| W8 | 37 | 29 | 30 | 29 |
+| W8 | 34 | 29 | 30 | 29 |
 | W9 | 2 | 26 | 27 | 30 |
-| W10 | 19 | 4 | 8 | 22 |
+| W10 | 23 | 4 | 8 | 22 |
 | W11 | 8 |  |  | 3 |
 | W12 | 9 |  |  |  |
-| **Tổng** | **358** | **212** | **235** | **258** |
+| **Tổng** | **365** | **212** | **235** | **258** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -77,7 +77,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | GOV-03 | US-070 | CODEOWNERS + PR template + issue template | PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD | SA | 2 | GOV-01 | S0 | NFR-D1 |
 | GOV-07 | US-070 | GitHub Project + import backlog | Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import | SA | 2 | GOV-01 | S0 | PM |
 | GOV-05 | US-070 | GitHub App bot cho GitOps | App chỉ có quyền contents:write trên shp-gitops; secret lưu ở org/repo secret | SA | 2 | GOV-01 | P2 | ADR-0010 |
-| GOV-04 | US-070 | GitHub Environments và người duyệt | deploy-dev/staging/prod, infra-<env>, infra-<env>-destroy có reviewer và wait timer theo ADR-0009 | SA | 2 | GOV-01 | P3 | ADR-0009 |
+| GOV-04 | US-070 | GitHub Environments và người duyệt | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009 | SA | 2 | GOV-01 | P3 | ADR-0009 |
 | GOV-06 | US-070 | Dependabot cho actions, nuget, pip, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | SA | 2 | GOV-01 | S4 | NFR-SEC6 |
 
 ## IAC — Hạ tầng Azure bằng Terraform
@@ -96,12 +96,12 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | IAC-10 | US-067 | Module mongodb (Cosmos DB for MongoDB vCore) | Cluster private endpoint; mật khẩu sinh bằng random_password lưu Key Vault, không nằm trong code | SA | 4 | IAC-05, IAC-08 | P4 | ADR-0008 |
 | IAC-11 | ENABLER | Module redis | Private endpoint, Entra auth, TLS only | SA | 2 | IAC-05 | P4 | ADR-0008 |
 | IAC-12 | US-048 | Module storage | Container documents + audit (immutability WORM), lifecycle Hot->Cool 30 ngày, tắt shared key | SA | 4 | IAC-05 | P4 | NFR-A5, SEC5 |
-| IAC-17 | ENABLER | Stack envs/dev, staging, prod (lõi: network, AKS, Key Vault, ACR) + sizing | 3 stack gọi module; tfvars khác nhau về SKU/HA/spot; plan chạy được | SA | 4 | IAC-05, IAC-07, IAC-08 | P4 | NFR-D4 |
+| IAC-17 | ENABLER | Stack envs/uat, prod (lõi: network, AKS, Key Vault, ACR) + sizing | 2 stack gọi module; tfvars khác nhau về SKU/HA/spot; UAT có sizing=prod để đo hiệu năng; plan chạy được | SA | 4 | IAC-05, IAC-07, IAC-08 | P4 | NFR-D4 |
 | IAC-13 | ENABLER | Module service bus | Namespace tắt local auth; RBAC cho service | SA | 2 | IAC-05 | S3 | ADR-0001 |
 | IAC-14 | ENABLER | Module ai-search | Tắt API key (RBAC only), SKU theo biến môi trường | SA | 2 | IAC-05 | S3 | ADR-0008 |
 | IAC-15 | ENABLER | Module workload identity cho service | Mỗi service một UAMI + federated credential (namespace/serviceaccount) + role tới đúng kho dữ liệu | SA | 4 | IAC-07 | S3 | NFR-SEC4 |
 | IAC-16 | US-008, US-066 | Module identity ứng dụng (Entra ID) | App registration API + SPA, app roles patient/doctor/nurse/admin/dpo, user thử nghiệm giả | SA | 4 | IAC-01 | S3 | UC-08, NFR-SEC1 |
-| IAC-20 | US-070 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 3 stack | plan chạy được cho cả 3 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình | SA | 4 | IAC-17, IAC-12, IAC-15 | S3 | NFR-D4 |
+| IAC-20 | US-070 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack | plan chạy được cho cả 2 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình | SA | 4 | IAC-17, IAC-12, IAC-15 | S3 | NFR-D4 |
 | IAC-18 | US-036 | Module Defender for Storage + Event Grid → queue cho kết quả quét | Blob mới được quét; kết quả vào queue để document service xử lý | SA | 3 | IAC-12 | S4 | 05-storage §2 |
 | IAC-19 | US-055 | Module Azure OpenAI + Document Intelligence và các deployment | Deployment chat + embedding; truy cập bằng Managed Identity, không API key | SA | 4 | IAC-05 | S4 | ADR-0006 |
 
@@ -112,7 +112,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | CIT-01 | US-070 | Reusable workflow .NET CI | format check, build warn-as-error, test + ngưỡng coverage, quét package lỗ hổng; dùng được từ repo khác | SA | 4 | GOV-01 | P1 | ADR-0009 |
 | CIT-03 | US-070 | Reusable workflow container | hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest | SA | 5 | IAC-02, IAC-03 | P1 | NFR-SEC6 |
 | CIT-05 | US-070 | Reusable workflow Terraform checks + plan | fmt, validate, tflint, Trivy config, plan + tóm tắt vào job summary; plan qua OIDC read-only | SA | 4 | IAC-03 | P2 | NFR-D3 |
-| CIT-06 | US-070 | Reusable workflow GitOps update/promote | Cập nhật digest vào shp-gitops; dev commit sau approval; staging/prod mở PR sau approval | SA | 4 | GOV-05 | P2 | ADR-0009 |
+| CIT-06 | US-070 | Reusable workflow GitOps update/promote | Cập nhật digest vào shp-gitops; uat commit sau approval; prod mở PR sau approval | SA | 4 | GOV-05 | P2 | ADR-0009 |
 | CIT-02 | US-070 | Reusable workflow Python CI | ruff lint+format, mypy, pytest + coverage, pip-audit | SA | 3 | GOV-01 | P3 | ADR-0009 |
 | CIT-04 | US-070 | Reusable workflow Helm validate | helm lint, render từng môi trường, kubeconform strict, Trivy config | SA | 3 | GOP-01 | P3 | ADR-0009 |
 | CIT-07 | US-070 | Workflow kiểm tra chung cho mọi PR | gitleaks, actionlint, dependency review, CodeQL (csharp, python, actions) | SA | 3 | GOV-01 | P3 | NFR-SEC6 |
@@ -141,9 +141,10 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 |---|---|---|---|---|---|---|---|---|
 | ENV-01 | US-070 | Workflow env-provision | plan -> approval infra-<env> -> apply -> cài Argo CD + bootstrap -> chờ healthy -> seed dữ liệu giả -> smoke test | SA | 6 | IAC-17, GOP-03 | P4 | ADR-0009 |
 | ENV-02 | US-070 | Workflow env-destroy | Gõ đúng tên môi trường + approval infra-<env>-destroy; destroy sạch, kiểm tra không còn resource | SA | 2 | IAC-17 | P4 | ADR-0009 |
-| ENV-05 | US-070 | Diễn tập G4 | Service mẫu đi dev -> staging -> prod chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng | SA | 4 | ENV-01, LOC-03, LOC-04, GOP-07 | S3 | Gate G4 |
+| ENV-05 | US-070 | Diễn tập G4 | Service mẫu đi local -> uat -> prod (dựng tạm) chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng | SA | 4 | ENV-01, LOC-03, LOC-04, GOP-07 | S3 | Gate G4 |
 | ENV-03 | US-070 | Workflow cost-guard | Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy) | SA | 2 | IAC-04 | S5 | NFR-C1 |
 | ENV-04 | US-070 | Runbook vòng đời môi trường | Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp | SA | 2 | ENV-01, ENV-02 | S5 | NFR-D3 |
+| ENV-06 | US-070 | Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ | Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập | SA | 4 | ENV-01, ENV-02, ENV-05 | H1 | ADR-0011 |
 
 ## OBS — Observability nền
 
@@ -158,19 +159,19 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| LOC-01 | ENABLER | Docker compose hạ tầng local | Postgres, MongoDB, Redis, RabbitMQ, MinIO, Keycloak, OTel + Grafana; một lệnh khởi động | SA | 5 | ARC-09 | S0 | NFR-I3 |
+| LOC-01 | ENABLER | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, MinIO, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | SA | 8 | ARC-09 | S0 | ADR-0011, NFR-I3 |
 | LOC-02 | US-008, US-066 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | SA | 3 | LOC-01 | P1 | NFR-SEC1 |
 | LOC-03 | ENABLER | Walking skeleton .NET | Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template | SA | 4 | ARC-09 | P1 | Gate G4 |
 | LOC-04 | ENABLER | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | SA | 3 | ARC-09 | P1 | Gate G4 |
-| LOC-08 | ENABLER | Bổ sung vào docker compose: MongoDB replica set, ClamAV, OpenSearch, Ollama, Loki, MLflow | Một lệnh khởi động đủ hạ tầng cho mọi service local; có healthcheck | SA | 3 | LOC-01 | P1 | NFR-I3 |
+| LOC-08 | ENABLER | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | SA | 3 | LOC-01 | P1 | ADR-0011, NFR-I3 |
+| LOC-05 | ENABLER | Chạy service trên cụm local bằng chart microservice chung (make deploy SVC=...) | Service mẫu build, nạp vào kind và chạy bằng đúng chart dùng cho UAT/prod; có hướng dẫn debug | SA | 3 | GOP-01, LOC-03, LOC-01 | P3 | ADR-0011, NFR-I3 |
 | LOC-07 | ENABLER | Hướng dẫn onboarding dev | Từ clone repo đến chạy local và mở PR đầu tiên trong < 1 giờ | SA | 2 | LOC-01, LOC-03 | P3 | PM |
-| LOC-05 | ENABLER | Cluster local bằng kind | Script dựng kind + cài chart chung cho service mẫu | SA | 3 | GOP-01, LOC-03 | S5 | NFR-I3 |
 
 ## SCF — Scaffold service (SA)
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| SCF-01 | ENABLER | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) | Service từ template; svc-scheduling.yml; values dev/staging/prod | SA | 2 | LOC-03, CIT-08 | S1 | ADR-0001 |
+| SCF-01 | ENABLER | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) | Service từ template; svc-scheduling.yml; values local/uat/prod | SA | 2 | LOC-03, CIT-08 | S1 | ADR-0001 |
 | SCF-02 | ENABLER | Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus) | Service từ template; svc-notification.yml | SA | 2 | LOC-03, CIT-08 | P3 | ADR-0001 |
 | SCF-03 | ENABLER | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) | Service từ template; svc-clinical.yml | SA | 2 | LOC-03, CIT-08 | S1 | ADR-0001 |
 | SCF-04 | ENABLER | Scaffold document service (khung code, pipeline, values, Blob/MongoDB) | Service từ template; svc-document.yml | SA | 2 | LOC-03, CIT-08 | P3 | ADR-0001 |
@@ -199,9 +200,9 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| PRD-10 | US-068 | Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x) | Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên staging | SA | 4 | SCH-14 | S5 | NFR-P1, P2 |
-| PRD-11 | US-068 | KEDA cron scale trước 07:00 + HPA cho scheduling | Values prod/staging scale trước đợt mở slot | SA | 1 | SCF-01, GOP-04 | S5 | NFR-S1 |
-| PRD-01 | US-068 | Load test 1x/5x/10x + báo cáo | Chạy trên staging ephemeral; so với NFR-P/S | SA | 6 | PRD-10, ENV-01 | H1 | NFR-P1, P2, S2, S3 |
+| PRD-10 | US-068 | Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x) | Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên UAT (cỡ prod) | SA | 4 | SCH-14 | S5 | NFR-P1, P2 |
+| PRD-11 | US-068 | KEDA cron scale trước 07:00 + HPA cho scheduling | Values prod/uat scale trước đợt mở slot | SA | 1 | SCF-01, GOP-04 | S5 | NFR-S1 |
+| PRD-01 | US-068 | Load test 1x/5x/10x + báo cáo | Chạy trên UAT ephemeral (cỡ prod); so với NFR-P/S | SA | 6 | PRD-10, ENV-01 | H1 | NFR-P1, P2, S2, S3 |
 | PRD-02 | US-069 | Failure test | Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả | SA | 6 | ENV-01 | H1 | NFR-A3, A6 |
 | PRD-03 | US-067 | Diễn tập backup/restore | PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO | SA | 4 | ENV-01 | H1 | UC-16, NFR-A4 |
 | PRD-04 | ENABLER | Dashboard SLO cuối cùng | Error budget theo NFR-A1 | SA | 3 | OBS-02 | H1 | NFR-O2 |

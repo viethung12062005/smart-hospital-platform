@@ -13,8 +13,8 @@ template dùng chung, GitOps, phân quyền rõ giữa code ứng dụng, hạ t
 |---|---|---|---|
 | `smart-hospital-platform` (repo hiện tại) | Monorepo ứng dụng: `services/*`, `libs/*`, `web/`, `docs/`, workflow caller của từng service | Dev (PR + review) | Ít service, ít người → monorepo giảm chi phí phối hợp; pipeline vẫn tách theo đường dẫn |
 | `shp-platform-templates` | Reusable workflows (CI templates) + Helm chart chung `microservice`, phát hành có version (tag `vX.Y.Z`, chart OCI trên ACR) | DevOps | Template có version: thay đổi template không làm vỡ mọi service cùng lúc; service ghim version |
-| `shp-infra` | Terraform: `bootstrap/`, `modules/`, `envs/{dev,staging,prod}`; workflow `env-provision`, `env-destroy`, `cost-guard` | DevOps | Quyền tạo/hủy hạ tầng tách khỏi dev; identity Azure chỉ trust repo này |
-| `shp-gitops` | Argo CD bootstrap, platform add-on, policy, values từng service theo môi trường | Bot (dev) + DevOps (staging/prod) | Nguồn sự thật của cluster; CI ghi tag image vào đây mà không kích hoạt CI ứng dụng; CODEOWNERS khóa `envs/prod` |
+| `shp-infra` | Terraform: `bootstrap/`, `modules/`, `envs/{uat,prod}`; workflow `env-provision`, `env-destroy`, `cost-guard` | DevOps | Quyền tạo/hủy hạ tầng tách khỏi dev; identity Azure chỉ trust repo này |
+| `shp-gitops` | Argo CD bootstrap, platform add-on, policy, values từng service theo môi trường | Bot (uat) + DevOps (prod) | Nguồn sự thật của cluster; CI ghi tag image vào đây mà không kích hoạt CI ứng dụng; CODEOWNERS khóa `envs/prod` |
 
 ## Phương án đã cân nhắc
 - **Một monorepo cho tất cả**: đơn giản nhất, nhưng bot GitOps commit vào cùng repo gây vòng lặp CI, và không

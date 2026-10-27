@@ -48,8 +48,8 @@ W2   SA: bootstrap Azure, CI templates, Helm chart | Dev: thư viện dùng chun
 W3   SA: network/AKS/monitoring, GitOps | Dev: tiếp tục thư viện, shell web
 W4   SA: scaffold 7 service (scheduling, notification, clinical, document, audit, ai, ml) + platform add-on | Dev bắt đầu service (clinical, audit, notification, AI)
 W5   SA: module dữ liệu, env-provision/destroy | Dev: scheduling, clinical, notification, ML
-W6   ── Gate G4 ── (service mẫu đi commit → dev → staging → prod, rollback ≤ 5 phút, image chưa ký bị chặn)
-W7–W9 Phát triển tính năng; từ sau G4 mỗi service deploy lên dev qua pipeline (dựng môi trường ephemeral theo lịch)
+W6   ── Gate G4 ── (service mẫu đi commit → local → uat → prod (dựng tạm), rollback ≤ 5 phút, image chưa ký bị chặn)
+W7–W9 Phát triển tính năng; dev test trên K8s local; từ sau G4 SA dựng UAT theo lịch (đề xuất thứ Năm) để kiểm thử tích hợp
 W10  Hardening: load test, failure test, backup/restore | Dev: sửa theo kết quả
 W11  Eval AI/ML, FinOps, rà soát bảo mật
 W12  Kịch bản demo, slide, diễn tập trên prod ephemeral
@@ -60,7 +60,7 @@ W12  Kịch bản demo, slide, diễn tập trên prod ephemeral
 | G1 | W1 | Phạm vi + KPI chốt | SA (PM) |
 | G2 | W1 | FR có AC, NFR có số, user story được duyệt | SA |
 | G3 | W1 | ADR Accepted + thiết kế chi tiết được duyệt | SA (Architect) |
-| **G4** | **W6** (đã duyệt; trước đó là W5) | Pipeline đầy đủ + service mẫu qua 3 môi trường + rollback + chặn image chưa ký | SA (DevOps) |
+| **G4** | **W6** (đã duyệt; trước đó là W5) | Pipeline đầy đủ + service mẫu qua UAT và prod (dựng tạm) + rollback + chặn image chưa ký | SA (DevOps) |
 | Feature freeze | cuối W9 | Mọi story Must xong và deploy được | SA |
 
 **Vì sao G4 dời từ W5 sang W6:** khối lượng SA W2–W5 là ~45 giờ/tuần dù đã dời mọi việc không chặn G4 sang sau. Dev vẫn làm việc bình

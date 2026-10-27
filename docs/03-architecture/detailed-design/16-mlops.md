@@ -82,7 +82,7 @@ cảnh báo drift / AUC giảm ─► ML-22 kiểm điều kiện ─► MLO-04 
 
 **AnalysisTemplate (`MLO-03`)** đọc metric Prometheus theo `model_version` (`ML-25`): tỉ lệ lỗi ≤ bản cũ + 0,5%, p95 độ trễ ≤ 100 ms, PSI điểm số < 0,1, tỉ lệ `highRisk` trong ±5 điểm phần trăm so với bản cũ. **Vi phạm bất kỳ chỉ số → tự rollback** về alias `production` cũ và cảnh báo.
 
-`autoPromote` là cấu hình theo môi trường: `true` ở dev/staging (tự đi hết các bước); ở prod mặc định `true` vì dữ liệu giả và rủi ro thấp, đặt `false` nếu muốn dừng chờ phê duyệt (GitHub Environment) trước bước 100%.
+`autoPromote` là cấu hình theo môi trường: `true` ở local/UAT (tự đi hết các bước); ở prod mặc định `true` vì dữ liệu giả và rủi ro thấp, đặt `false` nếu muốn dừng chờ phê duyệt (GitHub Environment) trước bước 100%.
 
 ## 7. Đối chiếu với đề bài
 
