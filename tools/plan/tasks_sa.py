@@ -105,4 +105,8 @@ SA_TASKS = [
     ('GOP-10', 'US-063', 'Chart MLflow (tracking + registry) cho môi trường cluster', 'MLflow chạy với backend lưu trữ bền, truy cập qua Workload Identity', 'SA', 3, 'GOP-03', 'S3', 'ADR-0007'),
     ('SCF-07', 'ENABLER', 'Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối PostgreSQL/bus/MLflow)', 'Service mẫu chạy qua pipeline template', 'SA', 2, 'LOC-04, CIT-08', 'P3', 'ADR-0001'),
     ('IAC-20', 'US-070', 'Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 3 stack', 'plan chạy được cho cả 3 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình', 'SA', 4, 'IAC-17, IAC-12, IAC-15', 'S3', 'NFR-D4'),
+    ('MLO-02', 'US-071', 'Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng', 'Cùng image + dataset hash + seed cho cùng model; image được ký', 'SA', 3, 'MLO-01', 'S5', '16-mlops §2'),
+    ('MLO-03', 'US-073', 'Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback', 'Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường', 'SA', 6, 'GOP-04, SCF-07, ML-25', 'S5', '16-mlops §6'),
+    ('MLO-04', 'US-074', 'Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit', 'Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng', 'SA', 5, 'ML-23, GOP-10', 'S5', '16-mlops §5'),
+    ('MLO-05', 'US-065', 'Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps', 'Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại', 'SA', 3, 'ML-10, OBS-01', 'S5', 'NFR-O3'),
 ]

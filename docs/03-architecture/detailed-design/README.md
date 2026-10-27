@@ -20,6 +20,7 @@
 | 13 | [Event catalog](13-events.md) | CloudEvents, topic, producer/consumer, payload, retry/DLQ |
 | 14 | [Sequence diagram](14-sequences.md) | Các luồng chính end-to-end |
 | 15 | [Thiết kế phân quyền](15-authorization.md) | Cách thực thi ma trận phân quyền, quan hệ điều trị, break-glass, identity link |
+| 16 | [MLOps no-show](16-mlops.md) | Đặc tả dataset giả, huấn luyện tái lập, cổng chất lượng, drift, huấn luyện lại tự động, shadow + canary |
 
 ## Quy ước chung (áp dụng cho mọi tài liệu)
 

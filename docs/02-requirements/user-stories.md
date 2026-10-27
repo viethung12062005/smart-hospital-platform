@@ -5,7 +5,7 @@
 > Sinh tự động từ `tools/plan/stories.py` và `tools/plan/tasks_*.py` bằng `python3 -I tools/plan/build.py`. Không sửa tay file này: sửa nguồn rồi chạy lại.
 > Mỗi story truy về use case ([FR](functional-requirements.md)), API ([thiết kế chi tiết](../03-architecture/detailed-design/README.md)) và các task cụ thể của từng người ([backlog](../05-plan/backlog.md)).
 
-Tổng: **70 story** — Must 49, Should 17, Could 4.
+Tổng: **74 story** — Must 49, Should 22, Could 3.
 
 | ID | Story | Vai trò | MoSCoW | UC | Task | Giờ |
 |---|---|---|---|---|---|---|
@@ -73,7 +73,11 @@ Tổng: **70 story** — Must 49, Should 17, Could 4.
 | [US-062](#us-062) | Bệnh nhân đặt lịch qua chatbot | Bệnh nhân | Could | UC-14 | 5 | 19 |
 | [US-063](#us-063) | Huấn luyện và đăng ký mô hình dự đoán no-show | Nhóm dự án | Should | UC-15 | 9 | 30 |
 | [US-064](#us-064) | Chấm điểm no-show khi đặt lịch | Hệ thống | Should | UC-15 | 6 | 19 |
-| [US-065](#us-065) | Theo dõi drift của mô hình | Nhóm dự án | Could | UC-15 | 1 | 4 |
+| [US-065](#us-065) | Theo dõi drift và hiệu năng thực tế của mô hình | Nhóm dự án | Should | UC-15 | 5 | 17 |
+| [US-071](#us-071) | Dữ liệu huấn luyện có phiên bản và được kiểm tra | Nhóm dự án | Should | UC-15 | 5 | 15 |
+| [US-072](#us-072) | Đánh giá mô hình theo nhóm con và có model card | Nhóm dự án | Should | UC-15 | 2 | 7 |
+| [US-073](#us-073) | Triển khai model mới bằng canary tự động | DevOps | Should | UC-15 | 3 | 12 |
+| [US-074](#us-074) | Huấn luyện lại tự động khi có drift | Hệ thống | Should | UC-15 | 3 | 12 |
 | [US-066](#us-066) | Người dùng đăng nhập và thấy giao diện theo vai trò | Người dùng | Must | UC-08 | 7 | 22 |
 | [US-067](#us-067) | Khôi phục dữ liệu về một thời điểm | Quản trị viên | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | Hệ thống chịu tải mở slot lúc 07:00 | Nhóm dự án | Must | UC-03 | 5 | 19 |
@@ -1099,8 +1103,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | NTF-11 | Consumer document-released, no-show-scored, patient-merged | D1 | 3 | W5 |
-| ML-07 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | D3 | 4 | W6 |
-| ML-12 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch | D3 | 2 | W6 |
+| ML-07 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | D3 | 4 | W7 |
+| ML-12 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch | D3 | 2 | W7 |
 
 ## US-047
 ### Mọi truy cập dữ liệu bệnh nhân đều được ghi audit — Must
@@ -1120,8 +1124,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | AUD-01 | Consumer audit.recorded: validate schema, inbox theo eventId, gom batch 60s/5.000 bản ghi | D2 | 4 | W4 |
+| PY-04 | Audit emitter Python (E11) cho AI/ML | D3 | 2 | W4 |
 | SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR | D2 | 4 | W4 |
-| PY-04 | Audit emitter Python (E11) cho AI/ML | D3 | 2 | W5 |
 | SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) | D1 | 2 | W5 |
 
 ## US-048
@@ -1225,9 +1229,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-01 | Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local) | D3 | 3 | W4 |
 | AI-02 | Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang) | D3 | 3 | W4 |
 | AI-03 | Chunker: 600 token, overlap 80, tách theo tiêu đề mục | D3 | 4 | W4 |
-| AI-04 | Embedding + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W4 |
-| AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | D3 | 4 | W4 |
-| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W6 |
+| AI-04 | Embedding + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W5 |
+| AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | D3 | 4 | W5 |
+| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
 
 ## US-053
@@ -1249,12 +1253,12 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | PY-02 | Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange) | D3 | 3 | W2 |
-| AI-06 | Truy xuất hybrid + semantic rerank + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | D3 | 4 | W4 |
-| AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | D3 | 3 | W4 |
+| AI-06 | Truy xuất hybrid + semantic rerank + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | D3 | 4 | W5 |
+| AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | D3 | 3 | W5 |
 | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | D3 | 4 | W5 |
-| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W5 |
+| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | D3 | 4 | W6 |
-| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W6 |
+| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
 
 ## US-054
@@ -1273,8 +1277,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-10 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit | D3 | 3 | W5 |
-| AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk | D3 | 3 | W5 |
+| AI-10 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit | D3 | 3 | W6 |
+| AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk | D3 | 3 | W6 |
 | AI-17 | Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner | D3 | 4 | W6 |
 
 ## US-055
@@ -1300,7 +1304,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | PY-08 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi | D3 | 4 | W2 |
 | AI-13 | Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách | D3 | 3 | W3 |
 | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model | D3 | 3 | W3 |
-| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W5 |
+| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
 | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | D3 | 3 | W7 |
 | IAC-19 | Module Azure OpenAI + Document Intelligence và các deployment | SA | 4 | W7 |
 | AI-33 | Báo cáo token và chi phí theo tác vụ/model | D3 | 3 | W11 |
@@ -1321,8 +1325,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | D3 | 3 | W6 |
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | D3 | 4 | W6 |
+| AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | D3 | 3 | W7 |
 
 ## US-057
 ### Bộ đánh giá chất lượng RAG — Must
@@ -1341,8 +1345,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | AI-14 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | D3 | 3 | W5 |
-| AI-15 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) | D3 | 3 | W5 |
-| AI-16 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng | D3 | 4 | W5 |
+| AI-15 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) | D3 | 3 | W6 |
+| AI-16 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng | D3 | 4 | W6 |
 | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | D3 | 3 | W7 |
 
 ## US-058
@@ -1367,8 +1371,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-19 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | D3 | 4 | W9 |
 | AI-20 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | D3 | 4 | W9 |
 | AI-21 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline | D3 | 4 | W9 |
-| WEB-32 | Panel tóm tắt hồ sơ: nhãn AI, nguồn bấm được sang bản ghi | D3 | 3 | W9 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
+| WEB-32 | Panel tóm tắt hồ sơ: nhãn AI, nguồn bấm được sang bản ghi | D3 | 3 | W10 |
 
 ## US-059
 ### Hệ thống trích xuất dữ liệu từ tài liệu tải lên — Should
@@ -1455,8 +1459,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | AI-29 | Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây | D3 | 4 | W3 |
-| AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút | D3 | 4 | W7 |
-| AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | D3 | 3 | W7 |
+| AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút | D3 | 4 | W8 |
+| AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | D3 | 3 | W9 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
 | WEB-34 | Widget chatbot đặt lịch có bước xác nhận (Could) | D3 | 4 | W10 |
 
@@ -1483,8 +1487,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | ML-04 | LightGBM + tìm tham số + MLflow tracking | D3 | 4 | W3 |
 | ML-05 | Cổng chất lượng và model registry: AUC ≥ 0,75 và hơn baseline mới được đăng ký alias production | D3 | 3 | W3 |
 | GOP-10 | Chart MLflow (tracking + registry) cho môi trường cluster | SA | 3 | W6 |
-| ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | D3 | 3 | W6 |
-| ML-09 | Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy | D3 | 2 | W6 |
+| ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | D3 | 3 | W7 |
+| ML-09 | Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy | D3 | 2 | W7 |
 | MLO-01 | Pipeline huấn luyện ML trong CI + canary deploy model | SA | 4 | W8 |
 
 ## US-064
@@ -1506,26 +1510,118 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | D3 | 4 | W4 |
 | ML-11 | Migration PostgreSQL ml: attendance_stats, appointment_fact, prediction, inbox, outbox | D3 | 2 | W5 |
 | ML-06 | Consumer E1/E2/E3/E5/E7: ghi appointment_fact, cập nhật outcome và attendance_stats | D3 | 4 | W6 |
-| ML-07 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | D3 | 4 | W6 |
-| ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | D3 | 3 | W6 |
-| ML-12 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch | D3 | 2 | W6 |
+| ML-07 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | D3 | 4 | W7 |
+| ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | D3 | 3 | W7 |
+| ML-12 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch | D3 | 2 | W7 |
 
 ## US-065
-### Theo dõi drift của mô hình — Could
+### Theo dõi drift và hiệu năng thực tế của mô hình — Should
 
-**Là** Nhóm dự án, **tôi muốn** phát hiện mô hình xuống cấp, **để** huấn luyện lại đúng lúc.
+**Là** Nhóm dự án, **tôi muốn** phát hiện mô hình xuống cấp bằng PSI và AUC thực tế, **để** biết khi nào cần huấn luyện lại.
 
 - Use case: UC-15 · API: — · AC của FR: —
 
 **Tiêu chí nghiệm thu**
 
-1. Given job hằng tuần, When so phân phối đặc trưng và AUC thực tế, Then cảnh báo khi vượt ngưỡng
+1. Given job hằng ngày, When so phân phối đặc trưng và điểm dự đoán với dữ liệu huấn luyện, Then tính PSI từng đặc trưng và cảnh báo khi PSI > 0,2 ở ≥ 2 đặc trưng chính
+2. Given kết quả thật từ appointment-status-changed, When có ≥ 500 mẫu có nhãn trong 14 ngày, Then tính AUC thực tế và cảnh báo khi giảm > 0,05 so với lúc đăng ký
+3. Given bộ dữ liệu giả có phân phối đã dịch chuyển, When chạy detector, Then phát hiện đúng drift (kiểm bằng test)
 
 **Task**
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| ML-10 | Job drift hằng tuần: so phân phối đặc trưng và AUC thực tế, cảnh báo | D3 | 4 | W7 |
+| ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) | D3 | 3 | W4 |
+| ML-10 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo | D3 | 3 | W8 |
+| ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện | D3 | 4 | W8 |
+| ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày | D3 | 4 | W8 |
+| MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | SA | 3 | W8 |
+
+## US-071
+### Dữ liệu huấn luyện có phiên bản và được kiểm tra — Should
+
+**Là** Nhóm dự án, **tôi muốn** mỗi lần train biết chính xác dùng dữ liệu nào và dữ liệu đó hợp lệ, **để** tái lập được kết quả và không train trên dữ liệu hỏng.
+
+- Use case: UC-15 · API: — · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given dataset Parquet, When train, Then hash dataset được ghi vào run MLflow và dựng lại được model từ hash đó
+2. Given dữ liệu sai schema, ngoài khoảng, quá nhiều giá trị thiếu hoặc rò rỉ thời gian, When kiểm tra, Then dừng trước khi train
+3. Given cùng code đặc trưng cho huấn luyện và phục vụ, When so sánh đầu ra trên mẫu chuẩn, Then khớp tuyệt đối (không train/serve skew)
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| ML-13 | Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash | D3 | 3 | W4 |
+| ML-15 | Package đặc trưng dùng chung cho huấn luyện và phục vụ | D3 | 3 | W4 |
+| ML-14 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera | D3 | 3 | W5 |
+| ML-16 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường | D3 | 3 | W7 |
+| MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | SA | 3 | W8 |
+
+## US-072
+### Đánh giá mô hình theo nhóm con và có model card — Should
+
+**Là** Nhóm dự án, **tôi muốn** chỉ đăng ký model đạt chất lượng ở mọi nhóm quan trọng, **để** không có nhóm bệnh nhân bị mô hình dự đoán kém hơn hẳn.
+
+- Use case: UC-15 · API: — · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given model ứng viên, When đánh giá, Then đo AUC theo chuyên khoa, nhóm tuổi, kênh đặt; cổng chặn nếu một nhóm thấp hơn AUC tổng > 0,07
+2. Given model ứng viên, When đánh giá, Then kiểm calibration và độ trễ dự đoán p95 ≤ 100 ms
+3. Given model được đăng ký, When hoàn tất, Then sinh model card (dữ liệu, metric, nhóm con, ngưỡng, giới hạn, phiên bản)
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| ML-17 | Đánh giá theo nhóm con (chuyên khoa, nhóm tuổi, kênh) + calibration + độ trễ dự đoán | D3 | 4 | W4 |
+| ML-18 | Sinh model card tự động khi đăng ký model | D3 | 3 | W5 |
+
+## US-073
+### Triển khai model mới bằng canary tự động — Should
+
+**Là** DevOps, **tôi muốn** đưa model mới ra production theo từng bước có phân tích tự động, **để** model xấu bị chặn hoặc rollback mà không cần can thiệp tay.
+
+- Use case: UC-15 · API: — · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given alias candidate, When triển khai, Then chạy shadow (chấm điểm song song, không ảnh hưởng người dùng) rồi canary 10% → 50% → 100%
+2. Given mỗi bước canary, When phân tích, Then so sánh tỉ lệ lỗi, p95 độ trễ, phân phối điểm (PSI so với bản đang chạy < 0,1) và đồng thuận với bản cũ; đạt thì tự tăng tỉ lệ
+3. Given một chỉ số vượt ngưỡng, When phân tích, Then tự rollback về alias production cũ và cảnh báo
+4. Given môi trường prod, When cấu hình autoPromote=false, Then dừng chờ phê duyệt trước bước 100%
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| ML-24 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả | D3 | 3 | W7 |
+| ML-25 | Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản | D3 | 3 | W8 |
+| MLO-03 | Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback | SA | 6 | W8 |
+
+## US-074
+### Huấn luyện lại tự động khi có drift — Should
+
+**Là** Hệ thống, **tôi muốn** tự huấn luyện model mới khi phát hiện drift hoặc hiệu năng giảm, **để** mô hình luôn bám dữ liệu hiện tại.
+
+- Use case: UC-15 · API: — · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given cảnh báo drift hoặc AUC thực tế giảm, When thỏa điều kiện (cooldown 7 ngày, ≥ 500 mẫu mới có nhãn), Then tự chạy pipeline huấn luyện lại
+2. Given model ứng viên, When qua kiểm tra dữ liệu và mọi cổng chất lượng (US-072), Then đăng ký alias candidate; không đạt thì dừng và cảnh báo, model production giữ nguyên
+3. Given candidate đã đăng ký, When cấu hình autoPromote=true, Then tự đi qua canary của US-073; mọi bước có audit và liên kết run MLflow
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| ML-22 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng | D3 | 3 | W8 |
+| ML-23 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production | D3 | 4 | W8 |
+| MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | SA | 5 | W8 |
 
 ## US-066
 ### Người dùng đăng nhập và thấy giao diện theo vai trò — Must

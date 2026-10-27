@@ -10,7 +10,7 @@
 |---|---|
 | Bối cảnh, quy tắc nghiệp vụ | [Business analysis](../01-business-analysis/business-analysis.md) |
 | Yêu cầu, NFR, ma trận phân quyền | [02-requirements](../02-requirements/functional-requirements.md) |
-| **70 user story + tiêu chí nghiệm thu + task của từng story** | [user-stories.md](../02-requirements/user-stories.md) |
+| **74 user story + tiêu chí nghiệm thu + task của từng story** | [user-stories.md](../02-requirements/user-stories.md) |
 | Data model, DB, API, event, sequence, phân quyền | [detailed-design](../03-architecture/detailed-design/README.md) |
 | **Việc từng người theo từng tuần (checklist)** | [SA](by-person/SA.md) · [D1](by-person/D1.md) · [D2](by-person/D2.md) · [D3](by-person/D3.md) |
 | Toàn bộ backlog / import GitHub Projects | [backlog.md](backlog.md) · [backlog.csv](backlog.csv) |
@@ -70,15 +70,16 @@ thường trước G4 (code, test local và test tích hợp bằng Testcontaine
 
 | Người | Tổng | Đỉnh | Nhận xét |
 |---|---|---|---|
-| SA | 341 | 47 (W3), 45 (W4) | Nặng nhất W2–W5; sau W6 nhẹ. Đây là điểm nghẽn lớn nhất của kế hoạch |
+| SA | 358 | 47 (W3), 45 (W4) | Nặng nhất W2–W5; sau W6 nhẹ. Đây là điểm nghẽn lớn nhất của kế hoạch |
 | D1 | 212 | 30 | W3 chỉ 7 giờ vì chờ nền tảng từ D2 |
 | D2 | 235 | 30 | Nhiều nhất, **căng nhất**: clinical + document + audit + lõi FHIR chạy gần như song song |
-| D3 | 216 | 30 | W8 chỉ ~4 giờ do chờ API của D2: dùng làm dự phòng, hỗ trợ D2 |
+| D3 | 258 | 30 | Nặng lên sau khi thêm MLOps đầy đủ (+42 giờ); W10 vẫn còn việc Should/Could của AI |
 
-Tổng 299 task, 1.004 giờ. Dev xếp tối đa 30 giờ/tuần (mặc định coi 25–30 giờ/tuần là năng lực thực). Nếu thực tế thấp hơn, cắt theo thứ tự dưới đây.
+Tổng 316 task. 1.063 giờ. Dev xếp tối đa 30 giờ/tuần (mặc định coi 25–30 giờ/tuần là năng lực thực). Nếu thực tế thấp hơn, cắt theo thứ tự dưới đây.
 
 ### Phạm vi có thể cắt khi trễ (theo thứ tự)
-1. **Could** (~24 giờ dev): US-040 (đánh dấu tài liệu nhập nhầm), US-056 (chấm điểm/lịch sử hội thoại), US-062 (chatbot đặt lịch), US-065 (drift).
+1. **Could** (~20 giờ dev): US-040 (đánh dấu tài liệu nhập nhầm), US-056 (chấm điểm/lịch sử hội thoại), US-062 (chatbot đặt lịch).
+   **MLOps nâng cao** (US-065, US-071..074, ~42 giờ dev + 17 giờ SA) là Should theo yêu cầu bản đầy đủ; nếu buộc phải cắt thì giữ US-071/072 (dữ liệu, cổng chất lượng), bỏ trước canary tự động (US-073) rồi huấn luyện lại tự động (US-074).
 2. **Should** (~126 giờ dev): chọn bỏ trích xuất tài liệu (US-059..061), tóm tắt hồ sơ (US-058), đổi lịch (US-017), gộp hồ sơ (US-004), break-glass (US-034, US-051) nếu thật sự thiếu người. Cần nhắc lại: đề bài chỉ gợi ý **một** tính năng AI nâng cao nhưng bắt buộc có đánh giá chất lượng.
 3. Không cắt: Must (đặt lịch, lâm sàng cơ bản, tài liệu, phân quyền, audit, thông báo, RAG), vì đó là phần bắt buộc của đề.
 
