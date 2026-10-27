@@ -1,0 +1,861 @@
+# SINH BỞI tools/contracts/gen_openapi.py từ docs/03-architecture/detailed-design/08..12. Thêm schema ở dưới các operation.
+openapi: 3.1.0
+info:
+  title: SHP scheduling API
+  version: 1.0.0
+  description: Khung sinh từ tài liệu thiết kế; thêm schema thân request/response khi làm task endpoint.
+servers:
+- url: https://api.{env}.shp.example.org
+  variables:
+    env:
+      default: uat
+security:
+- oidc: []
+paths:
+  /fhir/Schedule:
+    post:
+      operationId: S1
+      summary: Tạo lịch làm việc của bác sĩ
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+    get:
+      operationId: S3
+      summary: Tìm lịch
+      tags:
+      - scheduling
+      x-permission: N, A; D (của mình)
+      x-roles:
+      - nurse
+      - admin
+      - doctor
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Schedule/{id}:
+    get:
+      operationId: S2
+      summary: Đọc lịch
+      tags:
+      - scheduling
+      x-permission: N, A; D (của mình)
+      x-roles:
+      - nurse
+      - admin
+      - doctor
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: S4
+      summary: Sửa lịch (bật/tắt, ghi chú)
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/scheduling/schedules/{id}/templates:
+    put:
+      operationId: S5
+      summary: Đặt mẫu lịch tuần
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: S6
+      summary: Xem mẫu lịch tuần
+      tags:
+      - scheduling
+      x-permission: N, A; D (của mình)
+      x-roles:
+      - nurse
+      - admin
+      - doctor
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/scheduling/schedules/{id}/slots:generate:
+    post:
+      operationId: S7
+      summary: Sinh slot theo mẫu cho khoảng ngày
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Slot:
+    get:
+      operationId: S8
+      summary: Tìm slot
+      tags:
+      - scheduling
+      x-permission: P, N, A, D
+      x-roles:
+      - patient
+      - nurse
+      - admin
+      - doctor
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Slot/{id}/$block:
+    post:
+      operationId: S9
+      summary: Chặn slot
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Slot/{id}/$unblock:
+    post:
+      operationId: S10
+      summary: Bỏ chặn slot
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Appointment/$book:
+    post:
+      operationId: S11
+      summary: Đặt lịch
+      tags:
+      - scheduling
+      x-permission: P (own), N
+      x-roles:
+      - patient
+      - nurse
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Appointment/{id}:
+    get:
+      operationId: S12
+      summary: Đọc lịch hẹn
+      tags:
+      - scheduling
+      x-permission: P (own), D (của mình), N
+      x-roles:
+      - patient
+      - doctor
+      - nurse
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Appointment:
+    get:
+      operationId: S13
+      summary: Tìm lịch hẹn
+      tags:
+      - scheduling
+      x-permission: P (own), D (của mình), N
+      x-roles:
+      - patient
+      - doctor
+      - nurse
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Appointment/{id}/$cancel:
+    post:
+      operationId: S14
+      summary: Hủy lịch
+      tags:
+      - scheduling
+      x-permission: P (own, BR-02), N
+      x-roles:
+      - patient
+      - nurse
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Appointment/{id}/$reschedule:
+    post:
+      operationId: S15
+      summary: Đổi lịch
+      tags:
+      - scheduling
+      x-permission: P (own), N
+      x-roles:
+      - patient
+      - nurse
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Appointment/{id}/$check-in:
+    post:
+      operationId: S16
+      summary: Check-in
+      tags:
+      - scheduling
+      x-permission: N
+      x-roles:
+      - nurse
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Appointment/{id}/_history:
+    get:
+      operationId: S17
+      summary: Lịch sử phiên bản
+      tags:
+      - scheduling
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /internal/v1/appointments/{id}:
+    get:
+      operationId: S18
+      summary: Đọc lịch hẹn (service khác)
+      tags:
+      - scheduling
+      x-permission: service `clinical`, `ml`
+      x-roles: []
+      x-doc: detailed-design/08-api-scheduling.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      x-internal: true
+      security:
+      - workloadIdentity: []
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.org/.well-known/openid-configuration
+    workloadIdentity:
+      type: http
+      scheme: bearer
+      description: Token workload identity của service gọi (nội bộ)

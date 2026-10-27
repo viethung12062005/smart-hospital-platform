@@ -1,0 +1,323 @@
+# SINH BỞI tools/contracts/gen_openapi.py từ docs/03-architecture/detailed-design/08..12. Thêm schema ở dưới các operation.
+openapi: 3.1.0
+info:
+  title: SHP notification API
+  version: 1.0.0
+  description: Khung sinh từ tài liệu thiết kế; thêm schema thân request/response khi làm task endpoint.
+servers:
+- url: https://api.{env}.shp.example.org
+  variables:
+    env:
+      default: uat
+security:
+- oidc: []
+paths:
+  /api/v1/notifications/devices:
+    put:
+      operationId: N1
+      summary: Đăng ký/làm mới token thiết bị
+      tags:
+      - notification
+      x-permission: P, D, N (của mình)
+      x-roles:
+      - patient
+      - doctor
+      - nurse
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/notifications/devices/{tokenId}:
+    delete:
+      operationId: N2
+      summary: Hủy đăng ký
+      tags:
+      - notification
+      x-permission: chủ token
+      x-roles: []
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: tokenId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/notifications/preferences:
+    get:
+      operationId: N3
+      summary: Xem tùy chọn nhận thông báo
+      tags:
+      - notification
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+    put:
+      operationId: N4
+      summary: Đổi kênh/ngôn ngữ/khung giờ yên tĩnh
+      tags:
+      - notification
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/notifications/reminders:
+    get:
+      operationId: N5
+      summary: Xem các lần nhắc của một lịch hẹn
+      tags:
+      - notification
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/notifications/dead-letters:
+    get:
+      operationId: N6
+      summary: Danh sách nhắc lỗi hẳn
+      tags:
+      - notification
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/notifications/dead-letters/{id}/retry:
+    post:
+      operationId: N7
+      summary: Đưa lại hàng đợi
+      tags:
+      - notification
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.org/.well-known/openid-configuration
+    workloadIdentity:
+      type: http
+      scheme: bearer
+      description: Token workload identity của service gọi (nội bộ)

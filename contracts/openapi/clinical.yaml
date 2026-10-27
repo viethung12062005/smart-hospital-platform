@@ -1,0 +1,1124 @@
+# SINH BỞI tools/contracts/gen_openapi.py từ docs/03-architecture/detailed-design/08..12. Thêm schema ở dưới các operation.
+openapi: 3.1.0
+info:
+  title: SHP clinical API
+  version: 1.0.0
+  description: Khung sinh từ tài liệu thiết kế; thêm schema thân request/response khi làm task endpoint.
+servers:
+- url: https://api.{env}.shp.example.org
+  variables:
+    env:
+      default: uat
+security:
+- oidc: []
+paths:
+  /api/v1/registration:
+    post:
+      operationId: C1
+      summary: Bệnh nhân tự đăng ký
+      tags:
+      - clinical
+      x-permission: tài khoản mới (token OIDC chưa có `fhirUser`)
+      x-roles: []
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/me:
+    get:
+      operationId: C2
+      summary: Tôi là ai (role, `fhirUser`)
+      tags:
+      - clinical
+      x-permission: mọi người dùng
+      x-roles: []
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /fhir/Patient:
+    post:
+      operationId: C3
+      summary: Nurse tạo hồ sơ tại quầy
+      tags:
+      - clinical
+      x-permission: N
+      x-roles:
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Patient/{id}:
+    get:
+      operationId: C4
+      summary: Đọc hồ sơ
+      tags:
+      - clinical
+      x-permission: P (own), D (Care/BG), N
+      x-roles:
+      - patient
+      - doctor
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: C5
+      summary: Sửa hồ sơ
+      tags:
+      - clinical
+      x-permission: P (own, trường hành chính), N
+      x-roles:
+      - patient
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Patient/_search:
+    post:
+      operationId: C6
+      summary: Tìm bệnh nhân
+      tags:
+      - clinical
+      x-permission: D, N
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Patient/{id}/_history:
+    get:
+      operationId: C7
+      summary: Lịch sử phiên bản
+      tags:
+      - clinical
+      x-permission: N
+      x-roles:
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Patient/{id}/$merge:
+    post:
+      operationId: C8
+      summary: Gộp hồ sơ trùng
+      tags:
+      - clinical
+      x-permission: N
+      x-roles:
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Practitioner:
+    get:
+      operationId: C9-1
+      summary: Danh bạ bác sĩ
+      tags:
+      - clinical
+      x-permission: mọi người dùng đã đăng nhập
+      x-roles: []
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+    post:
+      operationId: C10-1
+      summary: Quản lý nhân sự
+      tags:
+      - clinical
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/PractitionerRole:
+    get:
+      operationId: C9-2
+      summary: Danh bạ bác sĩ
+      tags:
+      - clinical
+      x-permission: mọi người dùng đã đăng nhập
+      x-roles: []
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+    post:
+      operationId: C10-2
+      summary: Quản lý nhân sự
+      tags:
+      - clinical
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Encounter/{id}/$start:
+    post:
+      operationId: C11
+      summary: Bác sĩ mở lần khám
+      tags:
+      - clinical
+      x-permission: D (Care)
+      x-roles:
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Encounter/{id}:
+    get:
+      operationId: C12-1
+      summary: Đọc/tìm lần khám
+      tags:
+      - clinical
+      x-permission: P (own, đã `finished`), D (Care/BG), N
+      x-roles:
+      - patient
+      - doctor
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: C13
+      summary: Ghi bệnh sử/lý do khám
+      tags:
+      - clinical
+      x-permission: D (Care, trước `finished`)
+      x-roles:
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Encounter:
+    get:
+      operationId: C12-2
+      summary: Đọc/tìm lần khám
+      tags:
+      - clinical
+      x-permission: P (own, đã `finished`), D (Care/BG), N
+      x-roles:
+      - patient
+      - doctor
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/Encounter/{id}/$finish:
+    post:
+      operationId: C14
+      summary: Kết thúc lần khám
+      tags:
+      - clinical
+      x-permission: D (Care)
+      x-roles:
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Encounter/{id}/$addendum:
+    post:
+      operationId: C15
+      summary: Bổ sung sau khi kết thúc
+      tags:
+      - clinical
+      x-permission: D (Care)
+      x-roles:
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Observation:
+    post:
+      operationId: C16-1
+      summary: Sinh hiệu / kết quả
+      tags:
+      - clinical
+      x-permission: 'ghi: D (Care), N; đọc: P (own), D (Care/BG), N'
+      x-roles:
+      - nurse
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /{id}:
+    get:
+      operationId: C16-2
+      summary: Sinh hiệu / kết quả
+      tags:
+      - clinical
+      x-permission: 'ghi: D (Care), N; đọc: P (own), D (Care/BG), N'
+      x-roles:
+      - nurse
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /fhir/Condition:
+    post:
+      operationId: C17
+      summary: Chẩn đoán / bệnh nền
+      tags:
+      - clinical
+      x-permission: 'ghi: D (Care); đọc: P (own), D (Care/BG), N'
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /fhir/AllergyIntolerance:
+    post:
+      operationId: C18
+      summary: Dị ứng
+      tags:
+      - clinical
+      x-permission: 'ghi: D (Care), N; đọc như trên'
+      x-roles:
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/fhir+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/fhir+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/fhir+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/fhir+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/fhir+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/fhir+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/fhir+json: {}
+  /api/v1/clinical/patients/{id}/timeline:
+    get:
+      operationId: C19
+      summary: Timeline bệnh nhân
+      tags:
+      - clinical
+      x-permission: D (Care/BG), N
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/clinical/break-glass:
+    post:
+      operationId: C20
+      summary: Truy cập khẩn cấp
+      tags:
+      - clinical
+      x-permission: D
+      x-roles:
+      - doctor
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/admin/users/{subject}:
+    put:
+      operationId: C21
+      summary: Liên kết/khóa tài khoản
+      tags:
+      - clinical
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: subject
+        in: path
+        required: true
+        schema:
+          type: string
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.org/.well-known/openid-configuration
+    workloadIdentity:
+      type: http
+      scheme: bearer
+      description: Token workload identity của service gọi (nội bộ)

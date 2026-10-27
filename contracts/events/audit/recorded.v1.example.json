@@ -1,0 +1,21 @@
+{
+  "eventId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e11",
+  "occurredAt": "2026-11-20T02:15:00Z",
+  "service": "clinical",
+  "action": "read",
+  "outcome": "success",
+  "actor": {
+    "subject": "kc-doctor-demo",
+    "role": "doctor",
+    "fhirUser": "Practitioner/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03"
+  },
+  "patientId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
+  "resource": "Encounter/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e06",
+  "purposeOfUse": "TREAT",
+  "reason": null,
+  "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "client": {
+    "ip": "10.1.2.x",
+    "userAgent": "Mozilla/5.0"
+  }
+}

@@ -1,5 +1,6 @@
 # Nhật ký dựng Pha 4 (Platform & DevOps) — để review và làm lại
 
+> Chi tiết từng bước theo thứ tự thời gian: [progress-log.md](progress-log.md).
 > Mục đích: ghi lại **từng bước đã làm xong**, lệnh để làm lại, cách kiểm chứng và việc còn lại. Cập nhật mỗi khi xong một bước.
 > Mọi dữ liệu là dữ liệu giả. Không có secret nào trong 4 repo (đăng nhập Azure bằng OIDC, mật khẩu local sinh ngẫu nhiên trên máy).
 > Chưa chạy `terraform apply` hay tạo tài nguyên cloud nào.
