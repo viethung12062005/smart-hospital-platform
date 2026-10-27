@@ -236,11 +236,24 @@ dotnet test libs/dotnet/Shp.Libs.slnx -c Release     # Shp.Authorization 236, Sh
 cd libs/dotnet && dotnet format --verify-no-changes    # không in gì
 ```
    **Đột biến (đã làm, cả 5 bị bắt):** bỏ audit khi từ chối; luôn trả `forbidden` (mất mã `no-care-relationship`); đưa giá trị query vào `resource` audit; tắt kiểm `format` của schema; tắt che IP. Một lần đột biến đầu bị lỗi biên dịch nên không hợp lệ, đã làm lại.
-7. **Lỗi gặp và cách sửa:** `TheoryData` không liệt kê trực tiếp được → tách hàm trả mảng đường dẫn; LogicalName của resource nhúng dùng `%(RecursiveDir)` nên chuẩn hóa dấu `\` thành `/` cho Windows.
+7. **Lỗi gặp và cách sửa:** (a) **kế hoạch bị lỗi sau khi chuyển task** — `build.py` báo `MLO-04 (W8) scheduled before dependency ML-23 (W10)`: task SA bị cố định theo sprint nên không lùi theo task dev đã bị xếp muộn hơn; lúc đó mình đã lỡ commit (`c81d3ec`, `ff09115`) mà chưa kiểm kết quả nên các file sinh trong `docs/05-plan` của hai commit đó **chưa cập nhật**; đã sửa ở bước D3b ngay bên dưới. Bài học: chạy `python3 -I tools/plan/build.py` và dừng nếu in `validation error` **trước** khi commit. (b) `TheoryData` không liệt kê trực tiếp được → tách hàm trả mảng đường dẫn; LogicalName của resource nhúng dùng `%(RecursiveDir)` nên chuẩn hóa dấu `\` thành `/` cho Windows.
 8. **Giới hạn đã biết:**
    - SHR-09 `partial`: chưa có sink ghi outbox (SHR-07, bước kế tiếp) nên audit chưa được lưu bền; chưa có middleware audit riêng cho đọc/tìm kiếm FHIR ngoài `RequireShpAuthz`.
    - IP lấy từ `RemoteIpAddress`: sau gateway cần cấu hình `ForwardedHeaders` (việc nối vào service).
    - Chưa nối thư viện vào 6 service .NET.
+
+## Phần D3b — Sửa bộ xếp lịch của kế hoạch: task SA cũng phải tôn trọng phụ thuộc ✅
+1. **Mục tiêu:** `build.py` chạy lại không lỗi sau khi nhiều task được chuyển giữa dev và SA.
+2. **Nguyên nhân:** `schedule()` cố định tuần của mọi task SA theo sprint, chỉ xếp lại task dev. Khi task dev bị lùi (vì D1/D2/D3 nhẹ/nặng đổi), task SA phụ thuộc vào chúng (MLO-04 phụ thuộc ML-23) rơi vào tuần trước phụ thuộc.
+3. **Thay đổi (commit COMMIT_D3B):**
+
+| File | | Nội dung |
+|---|---|---|
+| `tools/plan/build.py` | M | `schedule()`: mọi task đi vào cùng vòng xếp lịch; task SA bắt đầu ở tuần sprint hoặc khi phụ thuộc cho phép (lấy muộn hơn), **không giới hạn giờ**; SA được phép tới W12 (tuần bảo vệ), dev tới W11; thông báo lỗi nêu đúng giới hạn |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** (gồm cả phần bị bỏ sót ở D3) |
+
+4. **Kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`. Tải còn lại: SA 364h (W4 = 52h, vượt ngưỡng cảnh báo 45h, được in đậm), D1 190h, D2 225h, D3 258h.
+5. **Hệ quả cần lưu ý:** D1 chỉ còn 11h ở W2 và 4h ở W3 (nhiều task nền của D1 đã được SA làm sẵn); lịch dev bắt đầu thực chất từ W4. Có thể cho D1 nhận thêm việc sớm hoặc giữ làm dự phòng (quyết định của PM).
 
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
