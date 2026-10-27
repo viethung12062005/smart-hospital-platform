@@ -132,7 +132,7 @@ cd libs/dotnet && dotnet format --verify-no-changes       # mong đợi: không 
 ## Phần D1b — Cập nhật kế hoạch: chuyển SHR-22/23/24 sang SA và thêm theo dõi trạng thái task ✅
 1. **Mục tiêu:** kế hoạch phản ánh đúng ai làm gì sau D1; có chỗ ghi task nào đã xong (trước đây checkbox luôn `☐`).
 2. **Việc đã làm:** (1) cắt SHR-22/23/24 khỏi `tasks_dev.py`, thêm vào `tasks_sa.py` với owner `SA` (giữ ID, giờ 3/4/3, phụ thuộc); (2) thêm `tools/plan/status.py` (ID → `done|partial`, commit, ghi chú); (3) sửa `build.py` vẽ `☑/◐/☐` và tổng số xong trong `docs/05-plan/by-person/*.md`, báo lỗi nếu `status.py` nhắc task không tồn tại; (4) sinh lại tài liệu.
-3. **Thay đổi:**
+3. **Thay đổi (commit 23bc32a):**
 
 | File | | Nội dung |
 |---|---|---|
