@@ -1,0 +1,82 @@
+{{- if .Values.components.mongo }}
+# MongoDB dạng replica set 1 node (cần cho transaction). Không bật xác thực: chỉ nghe trên 127.0.0.1 của máy dev.
+# Kết nối từ máy dev: mongodb://localhost:27117/?directConnection=true
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  labels: {{- include "shp.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector: { app: mongodb }
+  ports: [{ name: mongo, port: 27017 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-host
+  labels: {{- include "shp.labels" . | nindent 4 }}
+spec:
+  type: NodePort
+  selector: { app: mongodb }
+  ports: [{ name: mongo, port: 27017, targetPort: 27017, nodePort: 30017 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  labels: {{- include "shp.labels" . | nindent 4 }}
+spec:
+  serviceName: mongodb
+  replicas: 1
+  selector:
+    matchLabels: { app: mongodb }
+  template:
+    metadata:
+      labels: { app: mongodb }
+    spec:
+      containers:
+        - name: mongodb
+          image: {{ .Values.images.mongo }}
+          args: ["--replSet", {{ .Values.mongo.replicaSet | quote }}, "--bind_ip_all"]
+          ports: [{ containerPort: 27017 }]
+          readinessProbe:
+            exec: { command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"] }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources: {{- toYaml .Values.resources.mongo | nindent 12 }}
+          volumeMounts:
+            - { name: data, mountPath: /data/db }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: {{ .Values.storage.mongo }} } }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-rs-init
+  labels: {{- include "shp.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 30
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: {{ .Values.images.mongo }}
+          command:
+            - mongosh
+            - --host
+            - mongodb-0.mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017
+            - --quiet
+            - --eval
+            - |
+              try { rs.status().ok } catch (e) {
+                rs.initiate({ _id: "{{ .Values.mongo.replicaSet }}", members: [{ _id: 0, host: "mongodb-0.mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017" }] })
+              }
+{{- end }}

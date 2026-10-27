@@ -1,0 +1,38 @@
+# Mật khẩu KHÔNG nằm ở đây: chart đọc từ Secret `credentialsSecret` do dev/scripts/up.sh sinh ngẫu nhiên.
+credentialsSecret: shp-local-credentials
+
+images:
+  postgres: postgres:16-alpine
+  mongo: mongo:8
+  redis: redis:7-alpine
+  rabbitmq: rabbitmq:4-management
+  azurite: mcr.microsoft.com/azure-storage/azurite:3.37.0
+  keycloak: quay.io/keycloak/keycloak:26.0
+
+# Profile: core = đủ cho phần lớn task. (Profile full: LOC-08.)
+components:
+  postgres: true
+  mongo: true
+  redis: true
+  rabbitmq: true
+  azurite: true
+  keycloak: true
+
+storage:
+  postgres: 2Gi
+  mongo: 2Gi
+
+postgres:
+  user: shp
+  databases: [scheduling, notification, ml]
+
+mongo:
+  replicaSet: rs0
+
+resources:            # giới hạn nhỏ để chạy được trên máy 16 GB
+  postgres: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 512Mi } }
+  mongo:    { requests: { cpu: 100m, memory: 384Mi }, limits: { memory: 768Mi } }
+  redis:    { requests: { cpu: 50m,  memory: 32Mi  }, limits: { memory: 128Mi } }
+  rabbitmq: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 512Mi } }
+  azurite:  { requests: { cpu: 50m,  memory: 64Mi  }, limits: { memory: 256Mi } }
+  keycloak: { requests: { cpu: 200m, memory: 512Mi }, limits: { memory: 1Gi } }

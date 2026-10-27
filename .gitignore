@@ -14,3 +14,6 @@ crash.log
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Dev local: mật khẩu sinh ngẫu nhiên và chuỗi kết nối
+dev/.local/
