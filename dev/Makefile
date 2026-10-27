@@ -1,11 +1,19 @@
 # Bộ công cụ phát triển cục bộ trên Kubernetes nhỏ (kind). Chạy từ thư mục gốc: make -C dev <target>
 SHELL := /usr/bin/env bash
 S := scripts
+export PATH := $(CURDIR)/.local/bin:$(PATH)
+APPS := shp-apps
 
-.PHONY: help doctor up down status env seed-users token psql mongosh redis-cli logs
+.PHONY: help tools quickstart doctor up down status env seed-users token deploy undeploy apps app-logs port-forward psql mongosh redis-cli logs
 
 help: ## Liệt kê lệnh
 	@awk -F':.*## ' '/^[a-z-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+tools: ## Tự cài kind, kubectl, helm vào dev/.local/bin (không cần sudo)
+	@$(S)/install-tools.sh
+
+quickstart: ## Một lệnh: cài công cụ → dựng cụm → người dùng thử → deploy toàn bộ service
+	@$(S)/install-tools.sh && $(S)/up.sh && $(S)/seed-users.sh && $(S)/deploy.sh all
 
 doctor: ## Kiểm tra máy đủ điều kiện (docker, kind, kubectl, helm, RAM, cổng)
 	@$(S)/doctor.sh
@@ -27,6 +35,21 @@ seed-users: ## Tạo người dùng thử (dữ liệu giả) trong Keycloak
 
 token: ## In access token: make token USER=doctor.demo
 	@$(S)/token.sh $(USER)
+
+deploy: ## Build + deploy service lên kind: make deploy SVC=scheduling (hoặc SVC=all)
+	@$(S)/deploy.sh $(SVC)
+
+undeploy: ## Gỡ service: make undeploy SVC=scheduling
+	@helm --kube-context kind-shp-local -n $(APPS) uninstall $(SVC)
+
+apps: ## Trạng thái các service ứng dụng
+	@kubectl --context kind-shp-local -n $(APPS) get pods,svc
+
+app-logs: ## Log service: make app-logs SVC=scheduling
+	@kubectl --context kind-shp-local -n $(APPS) logs -f deploy/$(SVC)
+
+port-forward: ## Mở gateway ở http://localhost:18000
+	@kubectl --context kind-shp-local -n $(APPS) port-forward svc/gateway 18000:80
 
 psql: ## Mở psql: make psql DB=scheduling
 	@kubectl --context kind-shp-local -n shp-deps exec -it statefulset/postgres -- psql -U shp -d $(or $(DB),scheduling)

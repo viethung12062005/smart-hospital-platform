@@ -1,5 +1,5 @@
 {{- if .Values.components.azurite }}
-# Trình giả lập Azure Storage (blob + queue). Chuỗi kết nối chuẩn: "UseDevelopmentStorage=true".
+# Trình giả lập Azure Storage (blob + queue). Tài khoản "shp" với khóa ngẫu nhiên sinh trên từng máy (AZURITE_ACCOUNTS).
 # Khác cloud: SAS ký bằng khóa tài khoản của emulator (không có user delegation SAS), không có immutability/WORM.
 apiVersion: v1
 kind: Service
@@ -41,6 +41,9 @@ spec:
         - name: azurite
           image: {{ .Values.images.azurite }}
           args: ["azurite", "--blobHost", "0.0.0.0", "--queueHost", "0.0.0.0", "--skipApiVersionCheck", "--loose"]
+          env:
+            - name: AZURITE_ACCOUNTS
+              valueFrom: { secretKeyRef: { name: shp-local-credentials, key: azurite-accounts } }
           ports:
             - { containerPort: 10000 }
             - { containerPort: 10001 }

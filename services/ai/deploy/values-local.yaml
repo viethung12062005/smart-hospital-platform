@@ -1,0 +1,7 @@
+# Values cho chart microservice khi chạy trên kind (make deploy SVC=ai).
+image:
+  repository: localhost/shp-ai
+  tag: dev
+replicaCount: 1
+env:
+  OTEL_SERVICE_NAME: ai

@@ -1,0 +1,8 @@
+# Values cho chart microservice khi chạy trên kind (make deploy SVC=notification).
+image:
+  repository: localhost/shp-notification
+  tag: dev
+replicaCount: 1
+env:
+  ASPNETCORE_ENVIRONMENT: Development
+  OTEL_SERVICE_NAME: notification
