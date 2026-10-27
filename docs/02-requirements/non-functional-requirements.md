@@ -74,7 +74,7 @@
 | ID | Yêu cầu | Mục tiêu (chờ nhóm chốt theo hạ tầng Azure đang có) |
 |---|---|---|
 | NFR-C1 | Ngân sách hạ tầng | Không có cluster thường trực. Tài nguyên thường trực (state, ACR) ≤ 10 USD/tháng; mỗi giờ chạy một môi trường đầy đủ ≤ 3 USD (dev) / ≤ 6 USD (prod); tổng ngân sách đồ án do PM chốt |
-| NFR-C2 | Chi phí AI | Trung bình ≤ 0,02 USD/request RAG; có hạn mức token theo ngày và cảnh báo |
+| NFR-C2 | Chi phí AI | Trung bình ≤ 0,005 USD/request RAG (DeepSeek); Gemini chỉ trong free tier; có hạn mức token theo ngày và cảnh báo |
 | NFR-C3 | Minh bạch | Gắn tag chi phí theo môi trường/service; báo cáo chi phí hằng tuần |
 
 ## 8. Chất lượng AI / ML

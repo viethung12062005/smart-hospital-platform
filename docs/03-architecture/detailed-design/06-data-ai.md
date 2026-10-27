@@ -39,18 +39,12 @@ Index: `{status:1, department:1}`.
     { "name": "allowedRoles", "type": "Collection(Edm.String)", "filterable": true },
     { "name": "content", "type": "Edm.String", "searchable": true, "analyzer": "vi.microsoft" },
     { "name": "contentVector", "type": "Collection(Edm.Single)", "searchable": true,
-      "dimensions": 1536, "vectorSearchProfile": "hnsw-cosine" },
+      "dimensions": 1024, "vectorSearchProfile": "hnsw-cosine" },
     { "name": "updatedAt", "type": "Edm.DateTimeOffset", "filterable": true }
   ],
   "vectorSearch": {
     "algorithms": [ { "name": "hnsw", "kind": "hnsw", "hnswParameters": { "metric": "cosine", "m": 16, "efConstruction": 400 } } ],
     "profiles": [ { "name": "hnsw-cosine", "algorithm": "hnsw" } ]
-  },
-  "semantic": {
-    "configurations": [ { "name": "default", "prioritizedFields": {
-      "titleField": { "fieldName": "title" },
-      "prioritizedContentFields": [ { "fieldName": "content" } ],
-      "prioritizedKeywordsFields": [ { "fieldName": "section" } ] } } ]
   }
 }
 ```
@@ -58,10 +52,10 @@ Index: `{status:1, department:1}`.
 | Tham số | Giá trị | Lý do |
 |---|---|---|
 | Chunk | 600 token, overlap 80, tách theo tiêu đề mục trước rồi mới theo độ dài | Giữ nguyên ngữ cảnh mục phác đồ |
-| Embedding | `text-embedding-3-small` (1536 chiều) trên Azure OpenAI | Rẻ, đủ tốt cho tiếng Việt; đổi model = tạo index `v2` và re-index (không trộn vector khác model) |
-| Truy xuất | Hybrid: BM25 + vector (top 50) → semantic reranker → top 5 | Đúng pipeline Retrieve → Rerank của đề |
+| Embedding | `bge-m3` (1024 chiều) chạy local qua Ollama ([ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md)) | Miễn phí, đa ngôn ngữ tốt cho tiếng Việt; đổi model = tạo index `v2` và re-index (không trộn vector khác model) |
+| Truy xuất | Hybrid: BM25 + vector (top 50) → RRF → (tùy chọn) rerank cross-encoder local → top 5 | Đúng pipeline Retrieve → Rerank của đề |
 | Security trimming | `$filter = allowedRoles/any(r: r eq '<role>') and (department eq '<khoa>' or department eq 'hospital-wide')` | Lọc ngay trong truy vấn (UC-11), không lọc sau |
-| Fallback | Embedding lỗi → chỉ BM25 + reranker; reranker lỗi → hybrid không rerank | Xuống cấp có kiểm soát (ADR-0006) |
+| Fallback | Embedding lỗi → chỉ BM25 + reranker; rerank lỗi → hybrid không rerank | Xuống cấp có kiểm soát (ADR-0006) |
 
 ## 2. Hội thoại, câu trả lời và phản hồi
 
@@ -104,25 +98,26 @@ tasks:
     timeoutSeconds: 12
     maxOutputTokens: 800
     chain:
-      - { provider: azure-openai, deployment: gpt-4.1-mini, region: southeastasia }
-      - { provider: anthropic, model: claude-haiku, redactPii: true }
+      - { provider: deepseek, model: deepseek-chat, redactPii: true }
+      - { provider: gemini, model: gemini-flash, redactPii: true }     # free tier, hạn mức thấp
       - { provider: ollama, model: qwen2.5-7b-instruct, redactPii: false }   # chạy trong cluster, node pool ai
     finalFallback: retrieval-only          # trả danh sách tài liệu liên quan
   patient-summary:
     timeoutSeconds: 15
-    chain: [ { provider: azure-openai, deployment: gpt-4.1-mini }, { provider: anthropic, model: claude-haiku, redactPii: true } ]
+    chain: [ { provider: deepseek, model: deepseek-chat, redactPii: true }, { provider: gemini, model: gemini-flash, redactPii: true } ]
     finalFallback: structured-timeline
   extraction:
-    chain: [ { provider: azure-document-intelligence, model: prebuilt-layout }, { provider: azure-openai, deployment: gpt-4.1-mini } ]
+    chain: [ { provider: tesseract-ocr }, { provider: deepseek, model: deepseek-chat, redactPii: true }, { provider: gemini, model: gemini-flash, redactPii: true } ]
     finalFallback: human-review
   booking-agent:
     timeoutSeconds: 10
-    chain: [ { provider: azure-openai, deployment: gpt-4.1-mini, tools: true }, { provider: anthropic, model: claude-haiku, tools: true, redactPii: true } ]
+    chain: [ { provider: deepseek, model: deepseek-chat, tools: true, redactPii: true }, { provider: gemini, model: gemini-flash, tools: true, redactPii: true } ]
     finalFallback: booking-form
+embedding: { provider: ollama, model: bge-m3, dimensions: 1024 }
 circuitBreaker: { failureThreshold: 5, windowSeconds: 60, openSeconds: 30 }
 budget: { dailyTokenLimit: 2000000, alertAtPercent: 80 }
 ```
-Tên model/deployment là giá trị cấu hình, được chốt khi dựng môi trường theo danh mục model sẵn có của Azure/Anthropic lúc đó;
+Tên model là giá trị cấu hình, chốt khi dựng môi trường theo danh mục model sẵn có của DeepSeek/Gemini lúc đó; API key lấy từ Key Vault (không nằm trong ConfigMap). Chuỗi do [ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md) quy định.
 mọi model trong chuỗi đều phải chạy qua bộ eval (NFR-AI7) trước khi đưa vào chuỗi.
 
 Prompt template được version hóa trong repo (`prompts/<task>/v<N>.md`), ID phiên bản prompt được ghi vào `messages` để truy vết.

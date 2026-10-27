@@ -41,7 +41,7 @@ Response 200 (không stream):
   "answer": "Theo phác đồ, chuyển tuyến khi huyết áp ≥ 180/110 mmHg kèm triệu chứng tổn thương cơ quan đích [1].",
   "citations": [ { "index": 1, "documentId": "0192...", "title": "Phác đồ tăng huyết áp 2026", "section": "4.2 Chỉ định chuyển tuyến", "page": 12, "chunkId": "…", "quote": "…chuyển tuyến khi huyết áp ≥ 180/110…" } ],
   "answered": true,
-  "model": { "provider": "azure-openai", "name": "gpt-4.1-mini", "fallbackLevel": 0 },
+  "model": { "provider": "deepseek", "name": "deepseek-chat", "fallbackLevel": 0 },
   "usage": { "inputTokens": 2870, "outputTokens": 96, "costUsd": 0.0007 },
   "disclaimer": "Thông tin tham khảo từ tài liệu nội bộ đã duyệt, không thay thế quyết định của bác sĩ."
 }
@@ -78,7 +78,7 @@ Response:
     "recentVisits": [ { "text": "20/11/2026 Tim mạch: đau ngực khi gắng sức", "sources": ["Encounter/0192..."] } ],
     "abnormalResults": [ { "text": "Đường huyết 7,8 mmol/L (cao) ngày 20/11", "sources": ["Observation/0192..."] } ]
   },
-  "model": { "provider": "azure-openai", "name": "gpt-4.1-mini", "fallbackLevel": 0 }
+  "model": { "provider": "deepseek", "name": "deepseek-chat", "fallbackLevel": 0 }
 }
 ```
 | Tình huống | Hành vi |

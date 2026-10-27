@@ -151,18 +151,18 @@ sequenceDiagram
     actor U as Bác sĩ
     participant AI as AI service
     participant SRCH as AI Search
-    participant M1 as Azure OpenAI (chính)
-    participant M2 as Claude (dự phòng 1)
+    participant M1 as DeepSeek (chính)
+    participant M2 as Gemini free tier (dự phòng 1)
     participant M3 as Ollama (dự phòng 2)
     participant AUD as Audit
 
     U->>AI: POST /assistant/ask
     AI->>AI: kiểm đầu vào (độ dài, mẫu injection)
-    AI->>SRCH: hybrid + semantic rerank, filter role/khoa (security trimming)
+    AI->>SRCH: hybrid (embedding local), filter role/khoa (security trimming)
     alt không có đoạn đạt ngưỡng
         AI-->>U: answered=false (không gọi LLM)
     else có ngữ cảnh
-        AI->>M1: prompt (ngữ cảnh đánh dấu <document>)
+        AI->>M1: prompt đã redact PII (ngữ cảnh đánh dấu <document>)
         alt M1 timeout / 5xx / 429 / circuit mở
             AI->>M2: thử model kế (redact PII)
             alt M2 lỗi
