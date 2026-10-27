@@ -278,7 +278,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | D1 | 3 | W2 |
+| SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | SA | 3 | W2 |
 | CLN-11 | API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity | D2 | 4 | W4 |
 
 ## US-008
@@ -298,7 +298,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
-| SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | D1 | 3 | W2 |
+| SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
 | IAC-16 | Module identity ứng dụng (Entra ID) | SA | 4 | W6 |
 
 ## US-009
@@ -1641,7 +1641,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
 | PY-01 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | D3 | 3 | W2 |
-| SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | D1 | 3 | W2 |
+| SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
 | WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | D1 | 4 | W2 |
 | WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | D1 | 3 | W2 |
 | IAC-16 | Module identity ứng dụng (Entra ID) | SA | 4 | W6 |

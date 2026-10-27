@@ -2,4 +2,6 @@
   <Project Path="Shp.ServiceDefaults/Shp.ServiceDefaults.csproj" />
   <Project Path="Shp.Authorization/Shp.Authorization.csproj" />
   <Project Path="Shp.Authorization.Tests/Shp.Authorization.Tests.csproj" />
+  <Project Path="Shp.Web/Shp.Web.csproj" />
+  <Project Path="Shp.Web.Tests/Shp.Web.Tests.csproj" />
 </Solution>

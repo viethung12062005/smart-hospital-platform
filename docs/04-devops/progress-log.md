@@ -147,10 +147,59 @@ cd libs/dotnet && dotnet format --verify-no-changes       # mong đợi: không 
 5. **Quy ước từ nay:** khi xong một task, thêm một dòng vào `tools/plan/status.py` (kèm commit) rồi chạy lại `build.py`, **cùng commit** với phần việc.
 6. **Lưu ý trung thực:** ARC-06 và ARC-20 chỉ `partial` (OpenAPI chưa có schema thân; ICD-10 mới 12/~300 mã). Các task SA khác đã có sản phẩm từ trước (IaC, workflow, `dev/`) **chưa được đối chiếu và ghi vào status.py**; việc đối chiếu là một bước riêng (D-recon) để không ghi sai.
 
+## Phần D2 — Thư viện .NET dùng chung: lỗi, xác thực JWT, tra danh tính (SHR-02, SHR-20, SHR-21) ✅ / SHR-20 một phần
+1. **Mục tiêu:** mọi service trả lỗi cùng một định dạng, xác thực token cùng một cách (Entra ID cloud, Keycloak local) và tra `fhirUser` theo `sub` có cache 60 giây (AC-08.1) mà dev không phải tự viết.
+2. **Việc đã làm (theo thứ tự):**
+   1. Thêm 2 gói vào `Directory.Packages.props`: `Microsoft.AspNetCore.Authentication.JwtBearer 10.0.14`, `Microsoft.AspNetCore.TestHost 10.0.14`.
+   2. Tạo `libs/dotnet/Shp.Web` (tham chiếu `Shp.Authorization`): `Errors/` (danh mục lỗi, ngoại lệ, bộ ghi lỗi, middleware) và `Auth/` (cấu hình, JWT, resolver, middleware danh tính).
+   3. Tạo `libs/dotnet/Shp.Web.Tests` (19 test) dùng TestServer + token ký cục bộ (không cần Keycloak/Entra).
+   4. Thêm 2 project vào `libs/dotnet/Shp.Libs.slnx`.
+   5. Chuyển SHR-02/20/21 sang SA, ghi trạng thái, đổi cách tính tải tuần (task đã xong không tính giờ).
+3. **Thay đổi (commit COMMIT_D2):**
+
+| File | | Nội dung |
+|---|---|---|
+| `Directory.Packages.props` | M | + JwtBearer, TestHost (10.0.14) |
+| `libs/dotnet/Shp.Web/Errors/ErrorCatalog.cs` | A | 27 mã lỗi: HTTP, loại issue FHIR, thông điệp vi/en; bảng đối chiếu với `07-api-conventions.md §5` |
+| `libs/dotnet/Shp.Web/Errors/ShpException.cs` | A | ném lỗi có mã; mã chưa khai báo → `ArgumentException` ngay khi tạo; `RetryAfter` tùy chọn |
+| `libs/dotnet/Shp.Web/Errors/ErrorWriter.cs` | A | `/fhir/*` → `OperationOutcome` (`application/fhir+json`); còn lại → Problem Details có `code`; `X-Request-Id` = trace id; `Retry-After` cho 429/503; ngôn ngữ theo `Accept-Language` |
+| `libs/dotnet/Shp.Web/Errors/ErrorHandlingMiddleware.cs` | A | `UseShpErrors()`; lỗi lạ → 500 `internal-error` **không lộ nội dung exception** |
+| `libs/dotnet/Shp.Web/Auth/ShpAuthOptions.cs` | A | `Auth:Authority`, `Auth:Audience` (hoặc env `OIDC_AUTHORITY`, `OIDC_AUDIENCE`), `RequireHttpsMetadata`, `RequireMfaForStaff`, `ClockSkew` |
+| `libs/dotnet/Shp.Web/Auth/AuthExtensions.cs` | A | `AddShpAuthentication`: kiểm chữ ký, issuer, audience, hạn; không đổi tên claim; MFA (`amr` chứa `mfa`) bắt buộc với doctor/nurse/admin/dpo (→ 401); challenge/forbidden trả đúng định dạng lỗi |
+| `libs/dotnet/Shp.Web/Auth/Roles.cs` | A | 5 role hợp lệ + nhóm nhân viên |
+| `libs/dotnet/Shp.Web/Auth/IdentityResolver.cs` | A | `IIdentityLinkClient`, `IdentityResolver` (link giữ 60s, "chưa liên kết" giữ 5s), `HttpIdentityLinkClient` gọi `GET /internal/v1/identity/{subject}` |
+| `libs/dotnet/Shp.Web/Auth/IdentityMiddleware.cs` | A | `UseShpIdentity()`: thiếu role hợp lệ → 403; chưa liên kết hoặc bị khóa → 403 (trừ endpoint `[AllowUnlinkedIdentity]` cho đăng ký, nhưng tài khoản bị khóa vẫn 403); tạo `Principal` cho `AuthorizationEngine`; `HttpContext.GetShpPrincipal()` |
+| `libs/dotnet/Shp.Web.Tests/*` | A | 19 test |
+| `libs/dotnet/Shp.Libs.slnx` | M | + Shp.Web, Shp.Web.Tests |
+| `tools/plan/tasks_dev.py`, `tasks_sa.py`, `status.py`, `build.py` | M | SHR-02/20/21 → SA; trạng thái; tải tuần chỉ tính task chưa xong |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** |
+
+4. **Cách dùng cho dev** (trong `Program.cs` của service, theo thứ tự):
+```csharp
+builder.Services.AddShpAuthentication(builder.Configuration);
+builder.Services.AddShpIdentity<TClient>();           // clinical: client đọc DB; service khác: HttpIdentityLinkClient
+...
+app.UseShpErrors(); app.UseRouting(); app.UseAuthentication(); app.UseShpIdentity(); app.UseAuthorization();
+// trong endpoint: var principal = ctx.GetShpPrincipal(); engine.Decide(principal, "Appointment", "cancel", context);
+// lỗi nghiệp vụ: throw new ShpException("slot-unavailable");
+```
+5. **Kiểm chứng:**
+```bash
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release         # mong đợi: Shp.Web.Tests 19 passed; Shp.Authorization.Tests 236 passed
+cd libs/dotnet && dotnet format --verify-no-changes       # không in gì
+```
+   **Kiểm chứng bằng đột biến (đã làm, cả 5 đều bị test bắt):** bỏ kiểm MFA; bỏ kiểm audience; cho phép tài khoản chưa liên kết ở mọi endpoint; bỏ qua cờ `Disabled`; đổi TTL cache 60s → 600s.
+6. **Lỗi gặp và cách sửa:** `JsonSerializer.SerializeAsync` cần thêm `JsonSerializerOptions.Default` trước `CancellationToken`; analyzer CA1018 yêu cầu `[AttributeUsage]`; xunit 2.9.3 dùng `Task` (không phải `ValueTask`) cho `IAsyncLifetime`; lần đầu mutation "bỏ MFA" gây lỗi biên dịch (`if (false)`) nên không hợp lệ, làm lại bằng `hasMfa = true`.
+7. **Giới hạn đã biết (đừng bỏ qua):**
+   - **SHR-20 mới `partial`:** chưa chạy với Keycloak/Entra thật. Cần thử với `make -C dev up` + `make -C dev token` (việc kế tiếp D-int).
+   - Chưa nối thư viện vào 6 service .NET (khung hiện chỉ dùng `Shp.ServiceDefaults`); bước nối cần sửa Dockerfile để `COPY contracts/authz` và `libs/dotnet` đủ.
+   - Endpoint `GET /internal/v1/identity/{subject}` phía clinical là task của dev; token workload identity cho `HttpIdentityLinkClient` chưa có.
+   - Tải kế hoạch: sau khi chuyển các task đã xong, D1 chỉ còn 11h ở W2 và 10h ở W3; người lập lịch có thể kéo việc sớm hơn nếu phụ thuộc cho phép.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
-| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (xem Phần D1)**; còn: xác thực JWT + identity link, audit middleware, outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
+| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (D1), lỗi + JWT + identity ✅ (D2)**; còn: audit emitter, CloudEvents envelope, outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |

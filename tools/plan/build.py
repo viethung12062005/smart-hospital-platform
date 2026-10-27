@@ -215,7 +215,8 @@ def render_stories(tasks: list[Task]) -> str:
 def load_table(tasks: list[Task]):
     load = defaultdict(lambda: defaultdict(int))
     for t in tasks:
-        load[t[4]][wk(t)] += t[5]
+        if STATUS.get(t[0], ("todo",))[0] != "done":  # task đã xong không còn chiếm giờ của tuần
+            load[t[4]][wk(t)] += t[5]
     return load
 
 
@@ -226,7 +227,7 @@ def render_backlog(tasks: list[Task]) -> str:
            "> Sinh tự động bằng `python3 -I tools/plan/build.py` từ `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. "
            "Không sửa tay. Import vào GitHub Projects bằng [backlog.csv](backlog.csv). Việc theo từng người: [by-person](by-person/).", "",
            f"Tổng: **{len(tasks)} task**, **{sum(t[5] for t in tasks)} giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.", "",
-           "## Tải theo người và theo tuần (giờ)", "", "| Tuần | " + " | ".join(owners) + " |", "|---|" + "---|" * len(owners)]
+           "## Tải còn lại theo người và theo tuần (giờ; task đã xong không tính)", "", "| Tuần | " + " | ".join(owners) + " |", "|---|" + "---|" * len(owners)]
     for week in range(1, 13):
         cells = []
         for o in owners:

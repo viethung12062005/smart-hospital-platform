@@ -4,13 +4,13 @@
 
 Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
 
-## Tải theo người và theo tuần (giờ)
+## Tải còn lại theo người và theo tuần (giờ; task đã xong không tính)
 
 | Tuần | SA | D1 | D2 | D3 |
 |---|---|---|---|---|
 | W1 | 42 |  |  |  |
-| W2 | **50** | 17 | 24 | 28 |
-| W3 | **50** | 10 | 27 | 28 |
+| W2 | 42 | 11 | 21 | 28 |
+| W3 | 43 | 10 | 27 | 28 |
 | W4 | **48** | 29 | 30 | 29 |
 | W5 | 40 | 30 | 29 | 30 |
 | W6 | 27 | 29 | 30 | 29 |
@@ -20,7 +20,7 @@ Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 | W10 | 23 | 4 | 8 | 22 |
 | W11 | 8 |  |  | 3 |
 | W12 | 9 |  |  |  |
-| **Tổng** | **375** | **202** | **235** | **258** |
+| **Tổng** | **360** | **196** | **232** | **258** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -216,15 +216,15 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
 | SHR-01 | ENABLER | FHIR R4 JSON serialize/parse (Firely) + test vòng khứ hồi cho resource trong phạm vi | Parse sai trả 400 validation-failed; test từng resource type | D2 | 3 | LOC-03 | P1 | ADR-0003 |
-| SHR-02 | ENABLER | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | D2 | 3 | SHR-01 | P1 | 07 §5 |
+| SHR-02 | ENABLER | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | SA | 3 | SHR-01 | P1 | 07 §5 |
 | SHR-03 | ENABLER | Search parameter registry + parser (token, reference, date theo độ chính xác, _count) | ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400 | D2 | 4 | SHR-01 | P1 | ADR-0003, 07 §4 |
 | SHR-04 | ENABLER | Keyset page token (mờ, ký) + dựng Bundle searchset | Token bị sửa → 400; link next/self đúng | D2 | 3 | SHR-03 | P2 | 07 §4 |
 | SHR-05 | ENABLER | Filter ETag/If-Match (412/428) và Idempotency-Key bắt buộc (428) | Thiếu header → 428; ETag W/"version" trên mọi response | D2 | 2 | SHR-02 | P2 | 07 §3 |
 | SHR-10 | ENABLER | Mongo resource store: create/update với version CAS + history + outbox trong một transaction | Update version cũ khớp 0; transaction rollback toàn phần khi lỗi | D2 | 4 | SHR-03, LOC-08 | P2 | 03 §2.5 |
 | SHR-11 | ENABLER | Mongo search executor: biên dịch tiêu chí search thành truy vấn + dùng index | Kế hoạch truy vấn dùng IXSCAN cho các truy vấn chính | D2 | 3 | SHR-10 | S1 | 03 §2.6 |
 | SHR-12 | US-035 | Idempotency-Key cho MongoDB (document service) | Cùng key → cùng kết quả; khác body 422 | D2 | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
-| SHR-20 | US-008, US-066 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | D1 | 3 | LOC-02 | P1 | 07 §2, 15 §1 |
-| SHR-21 | US-007 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | D1 | 3 | SHR-20 | P1 | 15 §8, C2 |
+| SHR-20 | US-008, US-066 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | SA | 3 | LOC-02 | P1 | 07 §2, 15 §1 |
+| SHR-21 | US-007 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | SA | 3 | SHR-20 | P1 | 15 §8, C2 |
 | SHR-22 | ENABLER | Authz: schema + loader + validator cho contracts/authz/matrix.yaml | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | SA | 3 | ARC-19 | P1 | 15 §3 |
 | SHR-23 | ENABLER | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | SA | 4 | SHR-22 | P1 | 15 §2 |
 | SHR-28 | US-015 | Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay) | Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song | D1 | 4 | SHR-05 | P2 | 02 §3.1, 07 §3 |

@@ -32,15 +32,15 @@ PY-06,PY,US-055,"Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh
 PY-07,PY,US-055,"Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test",Cùng một interface; mô phỏng timeout/429/5xx,D3,4,LOC-04,P2,2,ADR-0006
 PY-08,PY,US-055,"Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi",Ghi fallbackLevel; test mọi nhánh lỗi,D3,4,PY-07,P2,2,06 §4
 SHR-01,SHR,ENABLER,FHIR R4 JSON serialize/parse (Firely) + test vòng khứ hồi cho resource trong phạm vi,Parse sai trả 400 validation-failed; test từng resource type,D2,3,LOC-03,P1,2,ADR-0003
-SHR-02,SHR,ENABLER,Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi,"Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace",D2,3,SHR-01,P1,2,07 §5
+SHR-02,SHR,ENABLER,Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi,"Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace",SA,3,SHR-01,P1,2,07 §5
 SHR-03,SHR,ENABLER,"Search parameter registry + parser (token, reference, date theo độ chính xác, _count)","ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400",D2,4,SHR-01,P1,2,"ADR-0003, 07 §4"
 SHR-04,SHR,ENABLER,"Keyset page token (mờ, ký) + dựng Bundle searchset",Token bị sửa → 400; link next/self đúng,D2,3,SHR-03,P2,2,07 §4
 SHR-05,SHR,ENABLER,Filter ETag/If-Match (412/428) và Idempotency-Key bắt buộc (428),"Thiếu header → 428; ETag W/""version"" trên mọi response",D2,2,SHR-02,P2,2,07 §3
 SHR-10,SHR,ENABLER,Mongo resource store: create/update với version CAS + history + outbox trong một transaction,Update version cũ khớp 0; transaction rollback toàn phần khi lỗi,D2,4,"SHR-03, LOC-08",P2,2,03 §2.5
 SHR-11,SHR,ENABLER,Mongo search executor: biên dịch tiêu chí search thành truy vấn + dùng index,Kế hoạch truy vấn dùng IXSCAN cho các truy vấn chính,D2,3,SHR-10,S1,2,03 §2.6
 SHR-12,SHR,US-035,Idempotency-Key cho MongoDB (document service),Cùng key → cùng kết quả; khác body 422,D2,2,"SHR-05, SHR-10",S1,2,07 §3
-SHR-20,SHR,"US-008, US-066","JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên",Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường,D1,3,LOC-02,P1,2,"07 §2, 15 §1"
-SHR-21,SHR,US-007,"Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây","Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503",D1,3,SHR-20,P1,2,"15 §8, C2"
+SHR-20,SHR,"US-008, US-066","JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên",Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường,SA,3,LOC-02,P1,2,"07 §2, 15 §1"
+SHR-21,SHR,US-007,"Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây","Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503",SA,3,SHR-20,P1,2,"15 §8, C2"
 SHR-22,SHR,ENABLER,Authz: schema + loader + validator cho contracts/authz/matrix.yaml,"Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test",SA,3,ARC-19,P1,2,15 §3
 SHR-23,SHR,ENABLER,"Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care",Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập,SA,4,SHR-22,P1,2,15 §2
 SHR-28,SHR,US-015,"Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay)",Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song,D1,4,SHR-05,P2,2,"02 §3.1, 07 §3"
