@@ -7,6 +7,13 @@ LOCAL_DIR="$DEV_DIR/.local"          # git-ignored: chứa mật khẩu sinh ng�
 CLUSTER_NAME="shp-local"
 NAMESPACE="shp-deps"
 CTX="kind-${CLUSTER_NAME}"
+# shellcheck disable=SC2034  # dùng trong deploy.sh
+TEMPLATES_GIT="${SHP_TEMPLATES_GIT:-https://github.com/viethung12062005/shp-platform-templates-scratch.git}"
+# shellcheck disable=SC2034
+TEMPLATES_REF="${SHP_TEMPLATES_REF:-work/initial-baseline}"
+
+# Công cụ do install-tools.sh cài (dev/.local/bin) được ưu tiên, không cần sửa PATH của máy.
+PATH="$DEV_DIR/.local/bin:$PATH"
 
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
@@ -31,6 +38,8 @@ ensure_credentials() {
       } > "$f" )
     log "Đã sinh mật khẩu ngẫu nhiên vào $f (không commit file này)"
   fi
+  # Bổ sung khóa còn thiếu cho file sinh từ phiên bản cũ.
+  grep -q '^AZURITE_ACCOUNT_KEY=' "$f" || echo "AZURITE_ACCOUNT_KEY=$(openssl rand -base64 64 | tr -d '\n')" >> "$f"
   # shellcheck disable=SC1090
   . "$f"
 }
@@ -41,5 +50,6 @@ apply_credentials_secret() {
     --from-literal=redis-password="$REDIS_PASSWORD" \
     --from-literal=rabbitmq-password="$RABBITMQ_PASSWORD" \
     --from-literal=keycloak-admin-password="$KEYCLOAK_ADMIN_PASSWORD" \
+    --from-literal=azurite-accounts="shp:$AZURITE_ACCOUNT_KEY" \
     --dry-run=client -o yaml | k apply -f - >/dev/null
 }

@@ -1,0 +1,22 @@
+# Values chung cho MỌI service khi deploy lên cụm kind (dev/scripts/deploy.sh). File riêng của service
+# (services/<svc>/deploy/values-local.yaml) nạp sau và ghi đè được.
+replicaCount: 1
+image:
+  pullPolicy: Never          # image nạp bằng `kind load`, không kéo từ registry
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { memory: 512Mi }
+pdb:
+  enabled: false             # 1 replica thì PDB chặn việc drain node
+networkPolicy:
+  enabled: false             # local cho phép mọi luồng; NetworkPolicy được kiểm trên uat/prod
+# Chuỗi kết nối tới phụ thuộc trong namespace shp-deps (Secret do deploy.sh tạo, mật khẩu sinh ngẫu nhiên trên máy).
+secretEnv:
+  - { name: ConnectionStrings__Postgres, secretName: shp-local-conn, key: postgres }
+  - { name: ConnectionStrings__Mongo, secretName: shp-local-conn, key: mongodb }
+  - { name: ConnectionStrings__Redis, secretName: shp-local-conn, key: redis }
+  - { name: ConnectionStrings__RabbitMq, secretName: shp-local-conn, key: rabbitmq }
+  - { name: ConnectionStrings__Blob, secretName: shp-local-conn, key: blob }
+env:
+  OIDC_AUTHORITY: http://keycloak.shp-deps.svc.cluster.local:8080/realms/shp
+  OIDC_AUDIENCE: shp-api

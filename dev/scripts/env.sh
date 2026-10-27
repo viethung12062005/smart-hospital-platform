@@ -16,7 +16,7 @@ MONGODB_URI=mongodb://localhost:27117/?directConnection=true
 REDIS_CONNECTION=localhost:16379,password=${REDIS_PASSWORD}
 RABBITMQ_URL=amqp://shp:${RABBITMQ_PASSWORD}@localhost:15673/
 RABBITMQ_MANAGEMENT_URL=http://localhost:25672
-AZURE_STORAGE_CONNECTION_STRING=UseDevelopmentStorage=true
+AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=shp;AccountKey=${AZURITE_ACCOUNT_KEY};BlobEndpoint=http://localhost:10000/shp;QueueEndpoint=http://localhost:10001/shp
 OIDC_AUTHORITY=http://localhost:18080/realms/shp
 OIDC_AUDIENCE=shp-api
 KEYCLOAK_ADMIN_URL=http://localhost:18080
