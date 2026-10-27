@@ -106,7 +106,7 @@ Thứ tự làm và lý do: phân quyền → event → API → terminology (dev
    3. Nhúng `contracts/authz/matrix.yaml` vào assembly (`EmbeddedResource`), nên service luôn chạy đúng bản đã review.
    4. Tạo `libs/dotnet/Shp.Authorization.Tests` với test **sinh từ chính ma trận** (mỗi rule: cho phép khi đủ điều kiện, từ chối khi thiếu từng điều kiện; mọi cặp role không có rule bị từ chối kể cả khi mọi predicate thỏa).
    5. Tạo `libs/dotnet/Shp.Libs.slnx` gom các thư viện; thêm workflow `libs-dotnet.yml`.
-3. **Thay đổi (commit: xem cuối mục):**
+3. **Thay đổi (commit 4bf82ef; xem bằng `git show --stat 4bf82ef`):**
 
 | File | | Nội dung |
 |---|---|---|
