@@ -20,7 +20,7 @@ Hệ quả cho thiết kế:
 1. **Chỉ còn 2 stack Terraform** (`envs/uat`, `envs/prod`). Cả hai đều ephemeral (dựng bằng `env-provision`, hủy bằng `env-destroy`). Tài nguyên thường trực
    chỉ gồm state, ACR và identity (stack `bootstrap`).
 2. **Dev không cần cluster cloud.** Bộ công cụ `dev/` trong repo ứng dụng (kind + Helm + Makefile) dựng một cụm nhỏ gồm PostgreSQL, MongoDB (replica set),
-   Redis, RabbitMQ, MinIO, Keycloak, OpenSearch (tuỳ chọn), ClamAV, Ollama (tuỳ chọn), MLflow, và chạy service bằng chart `microservice` chung.
+   Redis, RabbitMQ, Azurite (giả lập Azure Blob, cùng SDK với cloud), Keycloak, OpenSearch (tuỳ chọn), ClamAV, Ollama (tuỳ chọn), MLflow, và chạy service bằng chart `microservice` chung.
    Dev test trên cụm này trước khi tạo PR; CI dùng Testcontainers như đã thiết kế.
 3. **UAT là nơi đo NFR.** Load test (NFR-P/S) và failure test (NFR-A) chạy trên UAT. Khi đo hiệu năng, UAT dùng **cùng kích cỡ với prod** (biến `sizing = "prod"`);
    khi chỉ thử tích hợp dùng cỡ nhỏ.
