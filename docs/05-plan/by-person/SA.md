@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **109 task, 365 giờ**.
+Tổng: **112 task, 375 giờ**. Đã xong: **5**, làm một phần: **2** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -24,11 +24,11 @@ Tổng: **109 task, 365 giờ**.
 | ☐ | GOV-07 | GitHub Project + import backlog | Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import | 2 | GOV-01 | US-070 |
 | ☐ | LOC-01 | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | 8 | ARC-09 | ENABLER |
 
-## Tuần 2 — 43 giờ
+## Tuần 2 — 50 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | ARC-19 | Tạo contracts/authz/matrix.yaml đầy đủ từ ma trận phân quyền | Mọi ô của ma trận có dòng quy tắc; schema YAML được validate; dev dùng làm đầu vào cho SHR-22 | 4 | ARC-03 | ENABLER |
+| ☑ | ARC-19 | Tạo contracts/authz/matrix.yaml đầy đủ từ ma trận phân quyền **[xong, commit cd8c789: 64 rule, validator bất biến an toàn, test của validator]** | Mọi ô của ma trận có dòng quy tắc; schema YAML được validate; dev dùng làm đầu vào cho SHR-22 | 4 | ARC-03 | ENABLER |
 | ☐ | CIT-01 | Reusable workflow .NET CI | format check, build warn-as-error, test + ngưỡng coverage, quét package lỗ hổng; dùng được từ repo khác | 4 | GOV-01 | US-070 |
 | ☐ | CIT-03 | Reusable workflow container | hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest | 5 | IAC-02, IAC-03 | US-070 |
 | ☐ | GOP-01 | Helm chart chung microservice | Deployment/Rollout, Service, HPA/KEDA, PDB, NetworkPolicy, HTTPRoute, ServiceAccount WI, SecretProviderClass; values.schema.json | 8 | ARC-09 | US-070 |
@@ -39,14 +39,16 @@ Tổng: **109 task, 365 giờ**.
 | ☐ | LOC-03 | Walking skeleton .NET | Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
 | ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
 | ☐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
+| ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 4bf82ef: libs/dotnet/Shp.Authorization/AuthzMatrix.cs]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
+| ☑ | SHR-23 | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[xong, commit 4bf82ef: Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)]** | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | 4 | SHR-22 | ENABLER |
 
-## Tuần 3 — 47 giờ
+## Tuần 3 — 50 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | ARC-06 | Hợp đồng API (OpenAPI) khung cho 6 service | File openapi.yaml mỗi service với endpoint, mã lỗi OperationOutcome; lint không lỗi | 6 | ARC-05 | ENABLER |
-| ☐ | ARC-07 | Hợp đồng sự kiện (JSON Schema) | Schema cho AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; có version | 4 | ARC-05 | ENABLER |
-| ☐ | ARC-20 | Dữ liệu tham chiếu: ICD-10 (~300 mã), LOINC sinh hiệu/xét nghiệm, CodeSystem chuyên khoa và lý do hủy | File JSON trong contracts/terminology, có script nạp, được CLN-16/CLN-18 dùng | 4 | ARC-03 | ENABLER |
+| ◐ | ARC-06 | Hợp đồng API (OpenAPI) khung cho 6 service **[làm một phần, commit cd8c789: Có khung 83 operation cho 7 service, validator OpenAPI; CHƯA có schema thân request/response (dev thêm khi làm endpoint)]** | File openapi.yaml mỗi service với endpoint, mã lỗi OperationOutcome; lint không lỗi | 6 | ARC-05 | ENABLER |
+| ☑ | ARC-07 | Hợp đồng sự kiện (JSON Schema) **[xong, commit cd8c789: 11 schema event + ví dụ + envelope; validator khớp danh mục E1–E11]** | Schema cho AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; có version | 4 | ARC-05 | ENABLER |
+| ◐ | ARC-20 | Dữ liệu tham chiếu: ICD-10 (~300 mã), LOINC sinh hiệu/xét nghiệm, CodeSystem chuyên khoa và lý do hủy **[làm một phần, commit cd8c789: Có 12 chuyên khoa, 6 lý do hủy, 10 LOINC sinh hiệu, 6 loại tài liệu, 12 ICD-10; CHƯA đủ ~300 mã ICD-10 và chưa đối chiếu nguồn chính thức]** | File JSON trong contracts/terminology, có script nạp, được CLN-16/CLN-18 dùng | 4 | ARC-03 | ENABLER |
 | ☐ | CIT-05 | Reusable workflow Terraform checks + plan | fmt, validate, tflint, Trivy config, plan + tóm tắt vào job summary; plan qua OIDC read-only | 4 | IAC-03 | US-070 |
 | ☐ | CIT-06 | Reusable workflow GitOps update/promote | Cập nhật digest vào shp-gitops; uat commit sau approval; prod mở PR sau approval | 4 | GOV-05 | US-070 |
 | ☐ | GOP-03 | Chart bootstrap Argo CD | AppProject, ApplicationSet platform + services theo môi trường; app-of-apps | 6 | GOP-01 | US-070 |
@@ -54,6 +56,7 @@ Tổng: **109 task, 365 giờ**.
 | ☐ | IAC-05 | Module network | VNet, subnet AKS/private endpoint/Postgres (delegated), private DNS zones; validate + tflint sạch | 5 | IAC-01 | ENABLER |
 | ☐ | IAC-06 | Module monitoring | Log Analytics, Azure Monitor workspace (Prometheus), Managed Grafana, App Insights | 4 | IAC-05 | ENABLER |
 | ☐ | IAC-07 | Module aks | Azure CNI overlay + Cilium, Workload Identity, KV CSI, Azure RBAC, tắt local account, 3 node pool, 3 zone | 8 | IAC-05, IAC-06 | ENABLER |
+| ☑ | SHR-24 | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse **[xong, commit 4bf82ef: AuthorizationEngine.Decide: default-deny, fields, purpose, 236 test]** | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | 3 | SHR-23 | ENABLER |
 
 ## Tuần 4 — 48 giờ
 

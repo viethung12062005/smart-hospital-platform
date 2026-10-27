@@ -153,7 +153,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CLN-02 | Validator profile cho Patient, Practitioner, PractitionerRole (cardinality, value set) | D2 | 4 | W3 |
 | CLN-03 | Patient repository: sinh MRN BN-YYYY-NNNNNN, nameTokens bỏ dấu, chuẩn hóa SĐT E.164 | D2 | 4 | W4 |
 | CLN-04 | Phát hiện trùng hồ sơ theo SĐT + ngày sinh | D2 | 2 | W4 |
-| CLN-05 | API đăng ký bệnh nhân (C1) + tạo identity_links | D2 | 4 | W5 |
+| CLN-05 | API đăng ký bệnh nhân (C1) + tạo identity_links | D2 | 4 | W4 |
 | WEB-27 | Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy | D2 | 4 | W6 |
 
 ## US-002
@@ -218,8 +218,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | NTF-11 | Consumer document-released, no-show-scored, patient-merged | D1 | 3 | W5 |
 | CLN-09 | API gộp hồ sơ (C8) + phát patient-merged | D2 | 4 | W6 |
-| SCH-26 | Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent) | D1 | 2 | W8 |
 | DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W9 |
+| SCH-26 | Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent) | D1 | 2 | W9 |
 
 ## US-005
 ### Bệnh nhân chọn kênh và thiết bị nhận thông báo — Should
@@ -279,7 +279,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | D1 | 3 | W2 |
-| CLN-11 | API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity | D2 | 4 | W3 |
+| CLN-11 | API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity | D2 | 4 | W4 |
 
 ## US-008
 ### Nhân viên bắt buộc dùng MFA — Must
@@ -364,7 +364,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | SCH-01 | Migration V001: schedule, schedule_template, slot (+ extension, exclusion constraint) | D1 | 2 | W5 |
 | SCH-06 | Bộ sinh slot: múi giờ Asia/Ho_Chi_Minh, ON CONFLICT DO NOTHING | D1 | 4 | W6 |
-| SCH-07 | API slots:generate (S7) + giới hạn ngày | D1 | 2 | W7 |
+| SCH-07 | API slots:generate (S7) + giới hạn ngày | D1 | 2 | W6 |
 | SCH-08 | Job sinh slot hằng ngày 01:00 (một replica chạy nhờ advisory lock) | D1 | 2 | W7 |
 | WEB-07 | Lịch slot dạng tuần: sinh slot, chặn/bỏ chặn; bác sĩ xem lịch của mình | D1 | 4 | W9 |
 
@@ -385,7 +385,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-11 | API block/unblock slot (S9, S10) | D1 | 3 | W6 |
+| SCH-11 | API block/unblock slot (S9, S10) | D1 | 3 | W5 |
 | SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
 | WEB-07 | Lịch slot dạng tuần: sinh slot, chặn/bỏ chặn; bác sĩ xem lịch của mình | D1 | 4 | W9 |
 
@@ -485,7 +485,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W8 |
+| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W7 |
 | SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
 | WEB-05 | Màn hình lịch hẹn của tôi: xem, hủy (cảnh báo <2h), đổi lịch | D1 | 4 | W9 |
 
@@ -506,8 +506,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
+| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W8 |
 | SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
-| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W9 |
 | WEB-05 | Màn hình lịch hẹn của tôi: xem, hủy (cảnh báo <2h), đổi lịch | D1 | 4 | W9 |
 
 ## US-018
@@ -549,8 +549,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W6 |
 | SCH-21 | API _history cho Appointment (S17) | D1 | 2 | W6 |
-| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W8 |
-| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W9 |
+| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W7 |
+| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W8 |
 | WEB-08 | Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in | D1 | 4 | W9 |
 
 ## US-020
@@ -588,7 +588,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-20 | API $check-in (S16): cửa sổ -60/+30 phút, chỉ Nurse, outbox appointment-checked-in | D1 | 3 | W7 |
+| SCH-20 | API $check-in (S16): cửa sổ -60/+30 phút, chỉ Nurse, outbox appointment-checked-in | D1 | 3 | W8 |
 | WEB-08 | Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in | D1 | 4 | W9 |
 
 ## US-022
@@ -830,7 +830,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| CLN-12 | API nội bộ: kiểm tra Care, roles của Practitioner, thông tin liên hệ, age-band | D2 | 4 | W3 |
+| CLN-12 | API nội bộ: kiểm tra Care, roles của Practitioner, thông tin liên hệ, age-band | D2 | 4 | W5 |
 | CLN-13 | Consumer appointment-booked/cancelled/rescheduled/status-changed → care_relationships | D2 | 4 | W5 |
 | CLN-27 | Test hợp đồng event E1-E7 cho clinical (consumer đọc được ví dụ, producer sinh đúng schema) | D2 | 3 | W8 |
 
@@ -1004,7 +1004,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | NTF-02 | Consumer appointment-booked → tạo nhắc xác nhận, T-24h, T-2h (bỏ mốc đã qua) | D1 | 3 | W4 |
 | NTF-04 | Logic tùy chọn: thứ tự kênh, ngôn ngữ, khung giờ yên tĩnh (t-2h bỏ qua) | D1 | 3 | W4 |
 | NTF-06 | Abstraction kênh + provider giả + template vi/en (không nhúng PII/chẩn đoán) | D1 | 4 | W4 |
-| NTF-13 | Metric độ trễ gửi để đo NFR-P8 | D1 | 2 | W5 |
+| NTF-13 | Metric độ trễ gửi để đo NFR-P8 | D1 | 2 | W4 |
 
 ## US-042
 ### Nhắc lịch được hủy khi lịch hẹn bị hủy/đổi — Must
@@ -1042,12 +1042,12 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| CLN-12 | API nội bộ: kiểm tra Care, roles của Practitioner, thông tin liên hệ, age-band | D2 | 4 | W3 |
 | NTF-05 | Vòng lấy việc: SKIP LOCKED, locked_until, thu hồi dòng sending bị treo | D1 | 4 | W4 |
 | NTF-06 | Abstraction kênh + provider giả + template vi/en (không nhúng PII/chẩn đoán) | D1 | 4 | W4 |
 | NTF-07 | Bộ gửi: kênh dự phòng, backoff 1/5/15/60 phút, dead-letter lần 5, metric | D1 | 4 | W4 |
-| NTF-08 | Client lấy thông tin liên hệ từ clinical (nội bộ) + audit; không lưu PII | D1 | 2 | W4 |
 | NTF-12 | Adapter thật: push (FCM), email, SMS qua interface kênh | D1 | 4 | W4 |
+| CLN-12 | API nội bộ: kiểm tra Care, roles của Practitioner, thông tin liên hệ, age-band | D2 | 4 | W5 |
+| NTF-08 | Client lấy thông tin liên hệ từ clinical (nội bộ) + audit; không lưu PII | D1 | 2 | W5 |
 | NTF-15 | Test lỗi: nhà cung cấp ngừng, worker bị kill giữa chừng | D1 | 3 | W5 |
 
 ## US-044
@@ -1123,10 +1123,10 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
+| SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR | D2 | 4 | W3 |
+| SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) | D1 | 2 | W3 |
 | AUD-01 | Consumer audit.recorded: validate schema, inbox theo eventId, gom batch 60s/5.000 bản ghi | D2 | 4 | W4 |
 | PY-04 | Audit emitter Python (E11) cho AI/ML | D3 | 2 | W4 |
-| SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR | D2 | 4 | W4 |
-| SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) | D1 | 2 | W5 |
 
 ## US-048
 ### Audit bất biến — Must
@@ -1642,8 +1642,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
 | PY-01 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | D3 | 3 | W2 |
 | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | D1 | 3 | W2 |
-| WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | D1 | 4 | W3 |
-| WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | D1 | 3 | W3 |
+| WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | D1 | 4 | W2 |
+| WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | D1 | 3 | W2 |
 | IAC-16 | Module identity ứng dụng (Entra ID) | SA | 4 | W6 |
 | WEB-10 | Pipeline + chart cho web | SA | 2 | W6 |
 
