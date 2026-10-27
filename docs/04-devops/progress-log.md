@@ -255,6 +255,53 @@ cd libs/dotnet && dotnet format --verify-no-changes    # không in gì
 4. **Kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`. Tải còn lại: SA 364h (W4 = 52h, vượt ngưỡng cảnh báo 45h, được in đậm), D1 190h, D2 225h, D3 258h.
 5. **Hệ quả cần lưu ý:** D1 chỉ còn 11h ở W2 và 4h ở W3 (nhiều task nền của D1 đã được SA làm sẵn); lịch dev bắt đầu thực chất từ W4. Có thể cho D1 nhận thêm việc sớm hoặc giữ làm dự phòng (quyết định của PM).
 
+## Phần D4 — Thư viện .NET dùng chung cho PostgreSQL: outbox, inbox, Idempotency-Key (SHR-07/08/28) — một phần
+1. **Mục tiêu:** event luôn được ghi **cùng transaction** với thay đổi dữ liệu và không bao giờ mất khi bus lỗi; consumer xử lý **đúng một lần** dù bus giao nhiều lần; gửi lại cùng `Idempotency-Key` không tạo trùng. Bản PostgreSQL dùng cho scheduling (theo ADR-0014 đề xuất là service duy nhất còn dùng PostgreSQL).
+2. **Việc đã làm (theo thứ tự):**
+   1. Thử khôi phục gói trước khi dùng: `Npgsql 10.0.3`, `Testcontainers.PostgreSql 4.16.0` (bản 4.6.0 kéo `SSH.NET` có cảnh báo lỗ hổng NU1903 và sẽ làm build đỏ vì cảnh báo = lỗi, nên chọn 4.16.0, đã xác nhận không cảnh báo).
+   2. Tạo `libs/dotnet/Shp.Data.Postgres`: DDL nhúng, `PostgresOutbox`, `OutboxRelay`, `PostgresInbox`, `PostgresIdempotency`, đăng ký DI.
+   3. Tạo `libs/dotnet/Shp.Data.Postgres.Tests` chạy trên **PostgreSQL 16 thật** bằng Testcontainers (25 test).
+   4. Thêm 2 project vào `Shp.Libs.slnx`; chuyển SHR-07/08/28 sang SA và ghi trạng thái.
+3. **Thay đổi (commit COMMIT_D4):**
+
+| File | | Nội dung |
+|---|---|---|
+| `Directory.Packages.props` | M | + `Npgsql 10.0.3`, `Testcontainers.PostgreSql 4.16.0` |
+| `libs/dotnet/Shp.Data.Postgres/Sql/messaging.sql` | A | DDL `outbox`, `inbox`, `idempotency_key` (khớp `02-db-scheduling.md`, chạy lại được) |
+| `.../MessagingSchema.cs` | A | đọc DDL nhúng; `ApplyAsync` |
+| `.../PostgresOutbox.cs` | A | `AddAsync(tx, evt, validate)` ghi vào outbox trong transaction của người gọi; `validate:true` kiểm schema |
+| `.../OutboxRelay.cs` | A | `IEventPublisher`; `OutboxRelay` (BackgroundService): khóa ≤100 dòng `FOR UPDATE SKIP LOCKED`, phát theo thứ tự, đánh dấu `published_at`; bus lỗi → ghi `attempts`/`last_error` (không ghi payload), **dừng lượt để giữ thứ tự**, backoff tối đa 30 giây; metric `shp_outbox_published_total`, `shp_outbox_publish_failures_total` |
+| `.../PostgresInbox.cs` | A | `TryBeginAsync`, `HandleOnceAsync(consumer, evt, handler)`: ghi dấu inbox + chạy handler + commit trong một transaction; handler lỗi → rollback cả dấu |
+| `.../PostgresIdempotency.cs` | A | `RequireKey` (thiếu → 428, sai → 400), `HashBody` (JSON chuẩn hóa: sắp xếp thuộc tính, bỏ khoảng trắng), `ClaimAsync` (xem dưới) |
+| `.../DependencyInjection.cs` | A | `AddShpOutboxRelay()` |
+| `libs/dotnet/Shp.Data.Postgres.Tests/*` | A | fixture Testcontainers + 25 test |
+| `libs/dotnet/Shp.Libs.slnx`, `tools/plan/*`, `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | project mới; SHR-07/08/28 → SA; sinh lại kế hoạch |
+
+4. **Hành vi `ClaimAsync` (để dev biết không phải tự làm):** lần đầu → ghi dòng, cấp sẵn `ResourceId` (UUIDv7); cùng key + cùng thao tác + cùng body → `IsReplay=true` cùng `ResourceId` (service đọc lại kết quả cũ, không xử lý lại); khác body/thao tác → 422 `idempotency-key-reused`; 20 request song song cùng key → đúng 1 request mới; claim rollback → claim lại được; quá 24 giờ → coi như mới; key tách theo người gọi.
+5. **Kiểm chứng:**
+```bash
+# cần Docker. Nếu Docker Hub giới hạn lượt kéo: export SHP_TEST_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:16-alpine
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release      # Shp.Data.Postgres.Tests: 25 passed (cùng 236 + 42 + 29 của các thư viện khác)
+cd libs/dotnet && dotnet format --verify-no-changes
+```
+   **Đột biến (đã làm, cả 3 bị bắt):** bỏ 422 khi khác body; bỏ `SKIP LOCKED` (4 replica phát trùng); inbox ghi đè thay vì bỏ qua.
+   Các kịch bản được kiểm trên DB thật: rollback giữ nguyên cả dữ liệu lẫn outbox; thứ tự theo thời gian; bus chết giữa chừng rồi sống lại vẫn phát đủ và đúng thứ tự (1 phát, 1 lỗi có `attempts=1`, 1 chưa bị chạm); 4 relay × 60 event → mỗi event đúng 1 lần; 20 giao trùng → handler chạy đúng 1 lần.
+6. **Lỗi gặp và cách sửa:** analyzer CA1711 cấm tên lớp kết thúc bằng `Collection` → đổi `PostgresTestGroup`; sau khi **phiên làm việc khởi động lại**, Docker daemon không còn chạy và để lại file pid cũ → xóa `/var/run/docker.pid` rồi bật lại `dockerd`, chạy lại toàn bộ test; Testcontainers cần `TESTCONTAINERS_RYUK_DISABLED=true` trong môi trường dựng này (không kéo được image Ryuk).
+7. **Giới hạn đã biết:** SHR-07 `partial` (chưa có bản MongoDB, chưa có `IEventPublisher` thật); SHR-08 `partial` (chưa có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB). Thứ tự giữa nhiều replica relay chỉ đảm bảo trong từng lượt; consumer phải bỏ qua event có `version` cũ hơn (đã nêu ở 13-events §1). **Nếu ADR-0014 được duyệt, bản MongoDB trở thành bản dùng nhiều nhất (5 service).**
+
+## Phần D4b — Đề xuất ADR-0014: rà soát CSDL từng service (CHƯA áp dụng, chờ duyệt)
+1. **Mục tiêu:** trả lời nhận xét của PM "lúc nào cũng PostgreSQL, phải tối ưu DB" bằng số liệu tải thật, không đổi engine theo cảm tính.
+2. **Việc đã làm:** đọc `workload-analysis.md` và ADR-0008; lập bảng khối lượng thực (notification ~2.000 nhắc/ngày, ml ~900 dự đoán/ngày và ~330k fact/năm); đánh giá từng service với các phương án thay thế; viết ADR; thống kê tệp bị ảnh hưởng.
+3. **Thay đổi (commit COMMIT_D4):**
+
+| File | | Nội dung |
+|---|---|---|
+| `docs/03-architecture/adr/0014-database-per-service-review.md` | A | **Proposed**: scheduling giữ PostgreSQL (ràng buộc DB chống đặt trùng, đã kiểm 50 lượt đồng thời); notification → MongoDB (document + lấy việc nguyên tử `findOneAndUpdate` + TTL); ml → MongoDB (trạng thái đặc trưng + nhật ký dự đoán) + Parquet trên Blob (tập huấn luyện bất biến); bảng tối ưu từng engine và cách đo; rủi ro (time-series collection trên Cosmos vCore chưa kiểm) |
+| `docs/03-architecture/adr/README.md` | M | thêm dòng 0014 (Proposed) |
+
+4. **Cố ý CHƯA làm:** chưa sửa `04-db-notification-ml.md`, DDL, chart local, task NTF/ML/IAC cho tới khi PM duyệt (tránh viết lại thiết kế dựa trên đề xuất chưa chốt).
+5. **Việc cần PM quyết:** duyệt/sửa ADR-0014, đặc biệt (a) notification → MongoDB hay Redis; (b) ml → MongoDB + Parquet; (c) chấp nhận kiểm khả dụng time-series collection trên Cosmos DB vCore trước khi chốt.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
