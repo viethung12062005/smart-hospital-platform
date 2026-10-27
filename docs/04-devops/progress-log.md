@@ -245,7 +245,7 @@ cd libs/dotnet && dotnet format --verify-no-changes    # không in gì
 ## Phần D3b — Sửa bộ xếp lịch của kế hoạch: task SA cũng phải tôn trọng phụ thuộc ✅
 1. **Mục tiêu:** `build.py` chạy lại không lỗi sau khi nhiều task được chuyển giữa dev và SA.
 2. **Nguyên nhân:** `schedule()` cố định tuần của mọi task SA theo sprint, chỉ xếp lại task dev. Khi task dev bị lùi (vì D1/D2/D3 nhẹ/nặng đổi), task SA phụ thuộc vào chúng (MLO-04 phụ thuộc ML-23) rơi vào tuần trước phụ thuộc.
-3. **Thay đổi (commit COMMIT_D3B):**
+3. **Thay đổi (commit 483f2b5):**
 
 | File | | Nội dung |
 |---|---|---|
