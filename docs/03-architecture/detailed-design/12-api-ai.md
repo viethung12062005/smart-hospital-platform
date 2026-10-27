@@ -21,7 +21,7 @@ Quy ước: [07-api-conventions.md](07-api-conventions.md). Dữ liệu: [06-dat
 | AI6 | `POST /api/v1/ai/extractions/{id}/review` | Duyệt/từ chối kết quả trích xuất | D (Care), N | UC-13 |
 | AI7 | `POST /api/v1/ai/booking/chat` | Chatbot đặt lịch | P | UC-14 |
 | AI8 | `POST /api/v1/ai/booking/actions/{actionId}/confirm` | Xác nhận hành động bot | P (chủ hội thoại) | UC-14 |
-| AI9 | `GET/POST/PUT /api/v1/ai/kb/documents`, `POST .../{id}/approve`, `POST .../{id}/retire` | Quản lý kho tri thức | A (tải lên, gỡ), D (duyệt tài liệu khoa mình) | UC-11 |
+| AI9 | `GET /api/v1/ai/kb/documents`, `POST /api/v1/ai/kb/documents`, `PUT /api/v1/ai/kb/documents/{id}`, `POST /api/v1/ai/kb/documents/{id}/approve`, `POST /api/v1/ai/kb/documents/{id}/retire` | Quản lý kho tri thức | A (tải lên, gỡ), D (duyệt tài liệu khoa mình) | UC-11 |
 | AI10 | `GET /api/v1/ai/usage` | Token/chi phí theo ngày, theo tác vụ | A | NFR-C2 |
 
 ## 2. Trợ lý tri thức (RAG)

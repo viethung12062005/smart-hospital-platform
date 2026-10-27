@@ -1,0 +1,11 @@
+{
+  "appointmentId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01",
+  "patientId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
+  "start": "2026-12-03T01:15:00Z",
+  "score": 0.42,
+  "threshold": 0.35,
+  "highRisk": true,
+  "modelName": "no-show",
+  "modelVersion": "3",
+  "scoredAt": "2026-11-20T02:15:00Z"
+}

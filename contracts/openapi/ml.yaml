@@ -1,0 +1,149 @@
+# SINH BỞI tools/contracts/gen_openapi.py từ docs/03-architecture/detailed-design/08..12. Thêm schema ở dưới các operation.
+openapi: 3.1.0
+info:
+  title: SHP ml API
+  version: 1.0.0
+  description: Khung sinh từ tài liệu thiết kế; thêm schema thân request/response khi làm task endpoint.
+servers:
+- url: https://api.{env}.shp.example.org
+  variables:
+    env:
+      default: uat
+security:
+- oidc: []
+paths:
+  /api/v1/ml/predictions:
+    get:
+      operationId: M1
+      summary: Dự đoán đã lưu cho một lịch hẹn
+      tags:
+      - ml
+      x-permission: N, A
+      x-roles:
+      - nurse
+      - admin
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/ml/model:
+    get:
+      operationId: M2
+      summary: Phiên bản model đang chạy, metric lúc đăng ký
+      tags:
+      - ml
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /internal/v1/ml/predict:
+    post:
+      operationId: M3
+      summary: Dự đoán đồng bộ (chỉ để kiểm thử/eval)
+      tags:
+      - ml
+      x-permission: service nội bộ, CI
+      x-roles: []
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      x-internal: true
+      security:
+      - workloadIdentity: []
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.org/.well-known/openid-configuration
+    workloadIdentity:
+      type: http
+      scheme: bearer
+      description: Token workload identity của service gọi (nội bộ)

@@ -1,0 +1,740 @@
+# SINH BỞI tools/contracts/gen_openapi.py từ docs/03-architecture/detailed-design/08..12. Thêm schema ở dưới các operation.
+openapi: 3.1.0
+info:
+  title: SHP ai API
+  version: 1.0.0
+  description: Khung sinh từ tài liệu thiết kế; thêm schema thân request/response khi làm task endpoint.
+servers:
+- url: https://api.{env}.shp.example.org
+  variables:
+    env:
+      default: uat
+security:
+- oidc: []
+paths:
+  /api/v1/ai/assistant/ask:
+    post:
+      operationId: AI1
+      summary: Hỏi trợ lý tri thức (RAG), hỗ trợ stream
+      tags:
+      - ai
+      x-permission: D, N
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/ai/messages/{id}/feedback:
+    post:
+      operationId: AI2
+      summary: Đánh giá câu trả lời
+      tags:
+      - ai
+      x-permission: D, N (chủ hội thoại)
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/conversations:
+    get:
+      operationId: AI3-1
+      summary: Lịch sử hội thoại
+      tags:
+      - ai
+      x-permission: chủ hội thoại
+      x-roles: []
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/ai/conversations/{id}:
+    get:
+      operationId: AI3-2
+      summary: Lịch sử hội thoại
+      tags:
+      - ai
+      x-permission: chủ hội thoại
+      x-roles: []
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/patients/{id}/summary:
+    post:
+      operationId: AI4
+      summary: Tóm tắt hồ sơ
+      tags:
+      - ai
+      x-permission: D (Care/BG)
+      x-roles:
+      - doctor
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/extractions:
+    get:
+      operationId: AI5-1
+      summary: Hàng chờ và chi tiết trích xuất
+      tags:
+      - ai
+      x-permission: D (Care), N
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/ai/extractions/{id}:
+    get:
+      operationId: AI5-2
+      summary: Hàng chờ và chi tiết trích xuất
+      tags:
+      - ai
+      x-permission: D (Care), N
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/extractions/{id}/review:
+    post:
+      operationId: AI6
+      summary: Duyệt/từ chối kết quả trích xuất
+      tags:
+      - ai
+      x-permission: D (Care), N
+      x-roles:
+      - doctor
+      - nurse
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/booking/chat:
+    post:
+      operationId: AI7
+      summary: Chatbot đặt lịch
+      tags:
+      - ai
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/ai/booking/actions/{actionId}/confirm:
+    post:
+      operationId: AI8
+      summary: Xác nhận hành động bot
+      tags:
+      - ai
+      x-permission: P (chủ hội thoại)
+      x-roles:
+      - patient
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: actionId
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/kb/documents:
+    get:
+      operationId: AI9-1
+      summary: Quản lý kho tri thức
+      tags:
+      - ai
+      x-permission: A (tải lên, gỡ), D (duyệt tài liệu khoa mình)
+      x-roles:
+      - admin
+      - doctor
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+    post:
+      operationId: AI9-2
+      summary: Quản lý kho tri thức
+      tags:
+      - ai
+      x-permission: A (tải lên, gỡ), D (duyệt tài liệu khoa mình)
+      x-roles:
+      - admin
+      - doctor
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/ai/kb/documents/{id}:
+    put:
+      operationId: AI9-3
+      summary: Quản lý kho tri thức
+      tags:
+      - ai
+      x-permission: A (tải lên, gỡ), D (duyệt tài liệu khoa mình)
+      x-roles:
+      - admin
+      - doctor
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/kb/documents/{id}/approve:
+    post:
+      operationId: AI9-4
+      summary: Quản lý kho tri thức
+      tags:
+      - ai
+      x-permission: A (tải lên, gỡ), D (duyệt tài liệu khoa mình)
+      x-roles:
+      - admin
+      - doctor
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/kb/documents/{id}/retire:
+    post:
+      operationId: AI9-5
+      summary: Quản lý kho tri thức
+      tags:
+      - ai
+      x-permission: A (tải lên, gỡ), D (duyệt tài liệu khoa mình)
+      x-roles:
+      - admin
+      - doctor
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/ai/usage:
+    get:
+      operationId: AI10
+      summary: Token/chi phí theo ngày, theo tác vụ
+      tags:
+      - ai
+      x-permission: A
+      x-roles:
+      - admin
+      x-doc: detailed-design/12-api-ai.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+components:
+  securitySchemes:
+    oidc:
+      type: openIdConnect
+      openIdConnectUrl: https://login.example.org/.well-known/openid-configuration
+    workloadIdentity:
+      type: http
+      scheme: bearer
+      description: Token workload identity của service gọi (nội bộ)

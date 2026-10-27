@@ -1,0 +1,70 @@
+# Danh mục mã dùng chung (value set). Nguồn: docs/03-architecture/detailed-design/01-domain-model.md §3.
+# - specialty, cancel-reason, booking-channel: do SHP định nghĩa (canonical URL giả định shp.example.org).
+# - LOINC / ICD-10: TẬP CON chọn lọc đủ cho dữ liệu giả của đồ án, không phải toàn bộ danh mục.
+#   Mã LOINC/ICD-10 do SA đối chiếu theo kiến thức chuẩn, chưa đối chiếu bản chính thức: đối chiếu trước khi dùng ngoài đồ án.
+version: 1
+codeSystems:
+  specialty:
+    url: https://shp.example.org/fhir/CodeSystem/specialty
+    concepts:
+      internal-medicine: Nội tổng quát
+      cardiology: Tim mạch
+      pediatrics: Nhi
+      obstetrics-gynecology: Sản phụ khoa
+      dermatology: Da liễu
+      ent: Tai mũi họng
+      ophthalmology: Mắt
+      orthopedics: Chấn thương chỉnh hình
+      neurology: Thần kinh
+      gastroenterology: Tiêu hóa
+      endocrinology: Nội tiết
+      general-surgery: Ngoại tổng quát
+  cancel-reason:
+    url: https://shp.example.org/fhir/CodeSystem/cancel-reason
+    concepts:
+      patient-request: Bệnh nhân yêu cầu
+      practitioner-unavailable: Bác sĩ không có mặt
+      duplicate: Trùng lịch
+      rescheduled: Đã đổi lịch
+      system-noshow-cleanup: Hệ thống dọn dẹp
+      other: Khác
+  booking-channel:
+    url: https://shp.example.org/fhir/CodeSystem/booking-channel
+    concepts: { web: Web, chatbot: Chatbot, staff: Nhân viên đặt }
+  loinc-vital-signs:
+    url: http://loinc.org
+    concepts:
+      8867-4: Heart rate (/min)
+      85354-9: Blood pressure panel (mm[Hg])
+      8480-6: Systolic blood pressure (mm[Hg])
+      8462-4: Diastolic blood pressure (mm[Hg])
+      8310-5: Body temperature (Cel)
+      9279-1: Respiratory rate (/min)
+      59408-5: Oxygen saturation by pulse oximetry (%)
+      29463-7: Body weight (kg)
+      8302-2: Body height (cm)
+      39156-5: Body mass index (kg/m2)
+  loinc-document-types:
+    url: http://loinc.org
+    concepts:
+      11502-2: Laboratory report
+      18748-4: Diagnostic imaging study
+      57833-6: Prescription for medication
+      57133-1: Referral note
+      34133-9: Summarization of episode note
+      51851-4: Administrative note
+  icd10-subset:
+    url: http://hl7.org/fhir/sid/icd-10
+    concepts:
+      A09: Infectious gastroenteritis and colitis, unspecified
+      E11: Type 2 diabetes mellitus
+      E78.5: Hyperlipidaemia, unspecified
+      I10: Essential (primary) hypertension
+      I25.9: Chronic ischaemic heart disease, unspecified
+      J06.9: Acute upper respiratory infection, unspecified
+      J18.9: Pneumonia, unspecified
+      J45: Asthma
+      K29.7: Gastritis, unspecified
+      M54.5: Low back pain
+      N39.0: Urinary tract infection, site not specified
+      R50.9: Fever, unspecified
