@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **104 task, 341 giờ**.
+Tổng: **108 task, 358 giờ**.
 
 ## Tuần 1 — 39 giờ
 
@@ -128,7 +128,7 @@ Tổng: **104 task, 341 giờ**.
 | ☐ | OBS-01 | Dashboard RED chuẩn cho mọi service | Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLO + cảnh báo burn rate | SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate | 3 | OBS-01 | ENABLER |
 
-## Tuần 8 — 20 giờ
+## Tuần 8 — 37 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -137,6 +137,10 @@ Tổng: **104 task, 341 giờ**.
 | ☐ | ENV-04 | Runbook vòng đời môi trường | Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp | 2 | ENV-01, ENV-02 | US-070 |
 | ☐ | LOC-05 | Cluster local bằng kind | Script dựng kind + cài chart chung cho service mẫu | 3 | GOP-01, LOC-03 | ENABLER |
 | ☐ | MLO-01 | Pipeline huấn luyện ML trong CI + canary deploy model | Chạy khi dữ liệu/code đổi; artifact model; canary deploy | 4 | ML-05 | US-063 |
+| ☐ | MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | Cùng image + dataset hash + seed cho cùng model; image được ký | 3 | MLO-01 | US-071 |
+| ☐ | MLO-03 | Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback | Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường | 6 | GOP-04, SCF-07, ML-25 | US-073 |
+| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
+| ☐ | MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại | 3 | ML-10, OBS-01 | US-065 |
 | ☐ | OBS-03 | Cảnh báo DLQ và lỗi pipeline | Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded | 2 | OBS-01 | ENABLER |
 | ☐ | PRD-10 | Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x) | Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên staging | 4 | SCH-14 | US-068 |
 | ☐ | PRD-11 | KEDA cron scale trước 07:00 + HPA cho scheduling | Values prod/staging scale trước đợt mở slot | 1 | SCF-01, GOP-04 | US-068 |
