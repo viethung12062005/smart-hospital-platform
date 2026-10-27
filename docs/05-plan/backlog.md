@@ -159,7 +159,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| LOC-01 | ENABLER | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, MinIO, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | SA | 8 | ARC-09 | S0 | ADR-0011, NFR-I3 |
+| LOC-01 | ENABLER | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | SA | 8 | ARC-09 | S0 | ADR-0011, NFR-I3 |
 | LOC-02 | US-008, US-066 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | SA | 3 | LOC-01 | P1 | NFR-SEC1 |
 | LOC-03 | ENABLER | Walking skeleton .NET | Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template | SA | 4 | ARC-09 | P1 | Gate G4 |
 | LOC-04 | ENABLER | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | SA | 3 | ARC-09 | P1 | Gate G4 |
@@ -355,7 +355,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
 | DOC-01 | US-035 | Bootstrap MongoDB document: collections, validator, index, TTL upload_sessions | Script idempotent | D2 | 2 | SCF-04, SHR-10 | S3 | 03 §3 |
-| DOC-02 | US-035, US-037 | IBlobStore: Azure Blob (user delegation SAS) + MinIO; sinh SAS ghi 10 phút/đọc 5 phút | Test với MinIO; SAS đúng quyền, đúng blob, đúng thời hạn | D2 | 4 | DOC-01 | S3 | 05 §2 |
+| DOC-02 | US-035, US-037 | IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút | Test với Azurite (Testcontainers); SAS đúng quyền, đúng blob, đúng thời hạn | D2 | 4 | DOC-01 | S3 | 05 §2 |
 | DOC-03 | US-035 | API xin upload (D1): kiểm loại, kích thước, Care, Idempotency-Key | 415/413/403/400 đúng; cùng key cùng documentId | D2 | 4 | DOC-02, SHR-12, SHR-25 | S3 | D1, AC-05.1 |
 | DOC-04 | US-035 | API complete (D2): kiểm tồn tại, size, SHA-256, magic bytes | Không khớp → 422 upload-incomplete; 202 scanning | D2 | 4 | DOC-03 | S4 | D2 |
 | DOC-05 | US-036 | Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine | File nhiễm không phát event; quét lỗi retry 3 lần | D2 | 4 | DOC-04, IAC-18 | S4 | E8(pub) |
@@ -377,7 +377,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | AUD-02 | US-048 | Ghi append blob NDJSON vào container WORM kèm chuỗi hash (prevHash, batchHash) | Batch sau chứa hash batch trước; metadata batchHash đúng | D2 | 4 | AUD-01, IAC-12 | S3 | 05 §1.2 |
 | AUD-05 | US-050 | API export audit (A2, A3): job nền xuất CSV, link SAS 5 phút | Khoảng ≤ 366 ngày; tối đa 3 export đồng thời | D2 | 4 | AUD-04 | S4 | A2, A3 |
 | AUD-06 | US-050 | Công cụ + API kiểm tra toàn vẹn chuỗi hash (A4) | Phát hiện batch bị thay đổi/thiếu và báo vị trí | D2 | 4 | AUD-02 | S4 | A4 |
-| AUD-08 | US-048 | Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện | AC-09.2 xanh trong CI (MinIO object lock) | D2 | 3 | AUD-06 | S5 | AC-09.2 |
+| AUD-08 | US-048 | Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện | Chuỗi hash đứt bị phát hiện: xanh trong CI (Azurite); sửa/xóa blob bị từ chối (WORM): smoke test trên UAT | D2 | 3 | AUD-06 | S5 | AC-09.2 |
 | AUD-07 | US-051 | Break-glass review (A5) + phát cảnh báo DPO ≤ 5 phút qua notification | Trạng thái new → acknowledged; cảnh báo gửi email + push | D2 | 4 | AUD-03, CLN-24 | S4 | A5, AC-10.1 |
 
 ## AI — AI service

@@ -22,7 +22,7 @@ Tổng: **109 task, 365 giờ**.
 | ☐ | GOV-02 | Ruleset bảo vệ nhánh main cho 4 repo | Bắt buộc PR, 1 review, CI xanh, cấm force-push; bot GitOps được bypass ở shp-gitops | 2 | GOV-01 | US-070 |
 | ☐ | GOV-03 | CODEOWNERS + PR template + issue template | PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD | 2 | GOV-01 | US-070 |
 | ☐ | GOV-07 | GitHub Project + import backlog | Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import | 2 | GOV-01 | US-070 |
-| ☐ | LOC-01 | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, MinIO, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | 8 | ARC-09 | ENABLER |
+| ☐ | LOC-01 | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | 8 | ARC-09 | ENABLER |
 
 ## Tuần 2 — 43 giờ
 
