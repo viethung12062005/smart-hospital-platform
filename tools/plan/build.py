@@ -75,15 +75,13 @@ def wk(t: Task) -> int:
 
 def schedule(tasks: list[Task]) -> list[str]:
     """Level developer load. A task starts as soon as its dependencies allow (post-freeze H1/H2 tasks keep their
-    sprint as a lower bound) and moves later only when the week is full. SA tasks are fixed (their overload is reported, not hidden)."""
+    sprint as a lower bound) and moves later only when the week is full. SA tasks start at their sprint week or when their
+    dependencies allow, whichever is later; they are NOT capped (SA overload is reported, not hidden)."""
     errs: list[str] = []
     by_id = {t[0]: t for t in tasks}
     story_prio = {s[0]: PRIO[s[5]] for s in STORIES}
     SW.clear()
-    for t in tasks:
-        if t[4] == "SA":
-            SW[t[0]] = WEEK[t[7]]
-    pending = [t for t in tasks if t[4] != "SA"]
+    pending = list(tasks)
 
     def prio(t: Task) -> int:
         ids = story_ids(t[1])
@@ -95,7 +93,7 @@ def schedule(tasks: list[Task]) -> list[str]:
         for t in pending:
             deps = [d.strip() for d in t[6].split(",") if d.strip() and ".." not in d]
             if all(d in SW or d not in by_id for d in deps):
-                lower = WEEK[t[7]] if t[7] in ("H1", "H2", "DEF") else DEV_START
+                lower = WEEK[t[7]] if t[4] == "SA" or t[7] in ("H1", "H2", "DEF") else DEV_START
                 ready.append((t, max([lower] + [SW[d] for d in deps if d in SW])))
         if not ready:
             errs.append("dependency cycle among: " + ", ".join(t[0] for t in pending))
@@ -103,11 +101,12 @@ def schedule(tasks: list[Task]) -> list[str]:
         ready.sort(key=lambda x: (x[1], prio(x[0]), x[0]))
         t, earliest = ready[0]
         w = earliest
-        while load[(t[4], w)] + t[5] > DEV_CAP and w <= LAST_WEEK:
+        while t[4] != "SA" and load[(t[4], w)] + t[5] > DEV_CAP and w <= LAST_WEEK:
             w += 1
-        if w > LAST_WEEK:
-            errs.append(f"{t[0]}: cannot be scheduled by W{LAST_WEEK} within {DEV_CAP}h/week for {t[4]}")
-            w = LAST_WEEK
+        last = 12 if t[4] == "SA" else LAST_WEEK  # SA có thể làm tới W12 (tuần bảo vệ)
+        if w > last:
+            errs.append(f"{t[0]}: cannot be scheduled by W{last} ({t[4]}, cap {DEV_CAP}h/week for developers)")
+            w = last
         SW[t[0]] = w
         load[(t[4], w)] += t[5]
         pending.remove(t)
