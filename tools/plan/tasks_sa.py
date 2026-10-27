@@ -63,7 +63,7 @@ SA_TASKS = [
     ('OBS-01', 'ENABLER', 'Dashboard RED chuẩn cho mọi service', 'Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99', 'SA', 3, 'GOP-06', 'S4', 'NFR-O2'),
     ('OBS-02', 'ENABLER', 'SLO + cảnh báo burn rate', 'SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate', 'SA', 3, 'OBS-01', 'S4', 'NFR-O2, O3'),
     ('OBS-03', 'ENABLER', 'Cảnh báo DLQ và lỗi pipeline', 'Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded', 'SA', 2, 'OBS-01', 'S5', 'NFR-O3'),
-    ('LOC-01', 'ENABLER', 'Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, MinIO, Keycloak; Makefile up/down/status', '`make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README', 'SA', 8, 'ARC-09', 'S0', 'ADR-0011, NFR-I3'),
+    ('LOC-01', 'ENABLER', 'Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status', '`make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README', 'SA', 8, 'ARC-09', 'S0', 'ADR-0011, NFR-I3'),
     ('LOC-02', 'US-008, US-066', 'Keycloak realm local', 'Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả', 'SA', 3, 'LOC-01', 'P1', 'NFR-SEC1'),
     ('LOC-03', 'ENABLER', 'Walking skeleton .NET', 'Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template', 'SA', 4, 'ARC-09', 'P1', 'Gate G4'),
     ('LOC-04', 'ENABLER', 'Walking skeleton Python', 'FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template', 'SA', 3, 'ARC-09', 'P1', 'Gate G4'),

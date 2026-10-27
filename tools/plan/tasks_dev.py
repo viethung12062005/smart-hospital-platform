@@ -233,8 +233,8 @@ D2_TASKS = [
     # ---------------- document service ----------------
     ("DOC-01", "US-035", "Bootstrap MongoDB document: collections, validator, index, TTL upload_sessions",
      "Script idempotent", "D2", 2, "SCF-04, SHR-10", "S3", "03 §3"),
-    ("DOC-02", "US-035, US-037", "IBlobStore: Azure Blob (user delegation SAS) + MinIO; sinh SAS ghi 10 phút/đọc 5 phút",
-     "Test với MinIO; SAS đúng quyền, đúng blob, đúng thời hạn", "D2", 4, "DOC-01", "S3", "05 §2"),
+    ("DOC-02", "US-035, US-037", "IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút",
+     "Test với Azurite (Testcontainers); SAS đúng quyền, đúng blob, đúng thời hạn", "D2", 4, "DOC-01", "S3", "05 §2"),
     ("DOC-03", "US-035", "API xin upload (D1): kiểm loại, kích thước, Care, Idempotency-Key",
      "415/413/403/400 đúng; cùng key cùng documentId", "D2", 4, "DOC-02, SHR-12, SHR-25", "S3", "D1, AC-05.1"),
     ("DOC-04", "US-035", "API complete (D2): kiểm tồn tại, size, SHA-256, magic bytes",
@@ -272,7 +272,7 @@ D2_TASKS = [
     ("AUD-07", "US-051", "Break-glass review (A5) + phát cảnh báo DPO ≤ 5 phút qua notification",
      "Trạng thái new → acknowledged; cảnh báo gửi email + push", "D2", 4, "AUD-03, CLN-24", "S4", "A5, AC-10.1"),
     ("AUD-08", "US-048", "Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện",
-     "AC-09.2 xanh trong CI (MinIO object lock)", "D2", 3, "AUD-06", "S5", "AC-09.2"),
+     "Chuỗi hash đứt bị phát hiện: xanh trong CI (Azurite); sửa/xóa blob bị từ chối (WORM): smoke test trên UAT", "D2", 3, "AUD-06", "S5", "AC-09.2"),
 
     # ---------------- web: lâm sàng ----------------
     ("WEB-20", "US-031", "Màn hình tìm bệnh nhân (POST _search): tên không dấu, SĐT, MRN",

@@ -875,7 +875,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | SHR-12 | Idempotency-Key cho MongoDB (document service) | D2 | 2 | W2 |
 | DOC-01 | Bootstrap MongoDB document: collections, validator, index, TTL upload_sessions | D2 | 2 | W5 |
-| DOC-02 | IBlobStore: Azure Blob (user delegation SAS) + MinIO; sinh SAS ghi 10 phút/đọc 5 phút | D2 | 4 | W6 |
+| DOC-02 | IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút | D2 | 4 | W6 |
 | DOC-03 | API xin upload (D1): kiểm loại, kích thước, Care, Idempotency-Key | D2 | 4 | W7 |
 | DOC-04 | API complete (D2): kiểm tồn tại, size, SHA-256, magic bytes | D2 | 4 | W8 |
 | DOC-11 | Job dọn blob mồ côi và pending-upload > 24 giờ | D2 | 2 | W9 |
@@ -920,7 +920,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| DOC-02 | IBlobStore: Azure Blob (user delegation SAS) + MinIO; sinh SAS ghi 10 phút/đọc 5 phút | D2 | 4 | W6 |
+| DOC-02 | IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút | D2 | 4 | W6 |
 | DOC-06 | API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành) | D2 | 3 | W8 |
 | DOC-07 | API cấp link tải 5 phút (D5) + audit mỗi lần | D2 | 3 | W8 |
 | DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W9 |

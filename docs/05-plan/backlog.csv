@@ -11,7 +11,7 @@ GOV-01,GOV,US-070,Tạo 4 repo theo ADR-0010,"4 repo tồn tại, README mô t�
 GOV-02,GOV,US-070,Ruleset bảo vệ nhánh main cho 4 repo,"Bắt buộc PR, 1 review, CI xanh, cấm force-push; bot GitOps được bypass ở shp-gitops",SA,2,GOV-01,S0,1,ADR-0009
 GOV-03,GOV,US-070,CODEOWNERS + PR template + issue template,PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD,SA,2,GOV-01,S0,1,NFR-D1
 GOV-07,GOV,US-070,GitHub Project + import backlog,"Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import",SA,2,GOV-01,S0,1,PM
-LOC-01,LOC,ENABLER,"Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, MinIO, Keycloak; Makefile up/down/status",`make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README,SA,8,ARC-09,S0,1,"ADR-0011, NFR-I3"
+LOC-01,LOC,ENABLER,"Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status",`make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README,SA,8,ARC-09,S0,1,"ADR-0011, NFR-I3"
 ARC-19,ARC,ENABLER,Tạo contracts/authz/matrix.yaml đầy đủ từ ma trận phân quyền,Mọi ô của ma trận có dòng quy tắc; schema YAML được validate; dev dùng làm đầu vào cho SHR-22,SA,4,ARC-03,P1,2,15-authorization §3
 CIT-01,CIT,US-070,Reusable workflow .NET CI,"format check, build warn-as-error, test + ngưỡng coverage, quét package lỗ hổng; dùng được từ repo khác",SA,4,GOV-01,P1,2,ADR-0009
 CIT-03,CIT,US-070,Reusable workflow container,"hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest",SA,5,"IAC-02, IAC-03",P1,2,NFR-SEC6
@@ -167,11 +167,11 @@ AI-16,AI,US-057,"Harness eval: Recall@5, MRR, groundedness, độ đúng trích 
 AI-17,AI,US-054,Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner,0 lần vượt rào là điều kiện qua CI,D3,4,AI-11,S4,6,NFR-AI3
 ARC-15,ARC,ENABLER,Sprint review + planning S3,"Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn",SA,2,,S3,6,PM
 AUD-06,AUD,US-050,Công cụ + API kiểm tra toàn vẹn chuỗi hash (A4),Phát hiện batch bị thay đổi/thiếu và báo vị trí,D2,4,AUD-02,S4,6,A4
-AUD-08,AUD,US-048,"Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện",AC-09.2 xanh trong CI (MinIO object lock),D2,3,AUD-06,S5,6,AC-09.2
+AUD-08,AUD,US-048,"Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện",Chuỗi hash đứt bị phát hiện: xanh trong CI (Azurite); sửa/xóa blob bị từ chối (WORM): smoke test trên UAT,D2,3,AUD-06,S5,6,AC-09.2
 CLN-09,CLN,US-004,API gộp hồ sơ (C8) + phát patient-merged,"Hồ sơ nguồn active=false, link replaced-by; gộp lại 409",D2,4,CLN-06,S2,6,"C8, E7(pub)"
 CLN-14,CLN,US-023,Consumer appointment-checked-in → tạo Encounter (unique appointmentId),Nhận hai lần chỉ một Encounter,D2,3,CLN-13,S3,6,E4(sub)
 CLN-24,CLN,US-034,"API break-glass (C20): phiên 60 phút TTL, lý do 20-500 ký tự, audit ETREAT, chỉ đọc",Ghi chẩn đoán trong phiên 403; phiên hết hạn tự mất,D2,4,"CLN-13, SHR-09",S4,6,"C20, AC-10.1"
-DOC-02,DOC,"US-035, US-037",IBlobStore: Azure Blob (user delegation SAS) + MinIO; sinh SAS ghi 10 phút/đọc 5 phút,"Test với MinIO; SAS đúng quyền, đúng blob, đúng thời hạn",D2,4,DOC-01,S3,6,05 §2
+DOC-02,DOC,"US-035, US-037","IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút","Test với Azurite (Testcontainers); SAS đúng quyền, đúng blob, đúng thời hạn",D2,4,DOC-01,S3,6,05 §2
 ENV-05,ENV,US-070,Diễn tập G4,Service mẫu đi local -> uat -> prod (dựng tạm) chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng,SA,4,"ENV-01, LOC-03, LOC-04, GOP-07",S3,6,Gate G4
 GOP-10,GOP,US-063,Chart MLflow (tracking + registry) cho môi trường cluster,"MLflow chạy với backend lưu trữ bền, truy cập qua Workload Identity",SA,3,GOP-03,S3,6,ADR-0007
 IAC-13,IAC,ENABLER,Module service bus,Namespace tắt local auth; RBAC cho service,SA,2,IAC-05,S3,6,ADR-0001

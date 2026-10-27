@@ -1,7 +1,7 @@
 # ADR-0012: Đánh giá lại ngôn ngữ cho từng service
 
 ## Trạng thái
-Proposed (2026-10-27) — chờ SA/PM duyệt. Không thay đổi ADR-0002 nếu được duyệt.
+Accepted (2026-10-27) — SA/PM đã duyệt. Giữ nguyên ADR-0002.
 
 ## Bối cảnh
 PM yêu cầu: "nếu có ngôn ngữ nào tối ưu hơn cho service nào đó thì hãy sử dụng". Đánh giá theo đặc tính tải (ADR-0001),

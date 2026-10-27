@@ -88,11 +88,13 @@ Kết quả: 6 × 3 test .NET + 3 test routing gateway xanh; 2 × 3 test Python 
 Kiểm chứng đã làm: shellcheck sạch; `install-tools.sh` chạy thật 2 lần; chart render cho 8 service + `kubeconform --strict`.
 **Chưa chạy được** `make quickstart` trọn vẹn trên kind (môi trường dựng không chạy được kubelet) → người đầu tiên chạy trên máy thật báo lỗi.
 
+## 8b. Quyết định ngày 2026-10-27
+- ADR-0012 **Accepted**: giữ .NET cho 6 service nghiệp vụ, Python cho ai/ml.
+- Local dùng **Azurite** thay MinIO: cùng Azure Blob SDK với cloud. Đã sửa LOC-01, DOC-02, AUD-08 (WORM kiểm trên UAT), ADR-0008/0011.
+
 ## 9. Việc còn lại
 | Việc | Ai | Ghi chú |
 |---|---|---|
-| Duyệt ADR-0012 (giữ .NET + Python) | Bạn | `docs/03-architecture/adr/0012-language-per-service.md` |
-| Xác nhận Azurite thay MinIO cho local | Bạn | sau đó cập nhật task DOC-02, AUD-02, AUD-08 |
 | Cài đặt GitHub (bước 3), bootstrap Azure (bước 5) | Bạn | cần quyền admin GitHub / Azure |
 | Chuyển repo templates/infra sang private | Bạn | đang public |
 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | kế tiếp |
