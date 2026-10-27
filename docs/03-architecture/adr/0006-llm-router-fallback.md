@@ -1,7 +1,7 @@
 # ADR-0006: LLM router đa model với fallback
 
 ## Trạng thái
-Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
+Accepted (2026-10-26). **Bảng chuỗi model bên dưới bị thay bởi [ADR-0013](0013-llm-deepseek-gemini-local-embedding.md)** (2026-10-27); phần còn lại vẫn hiệu lực.
 
 ## Quyết định
 `ai-service` có một router nhỏ tự viết. Mỗi tác vụ khai báo **chuỗi model theo thứ tự**:

@@ -72,7 +72,7 @@ provider lỗi. Xem [ADR-0001](adr/0001-microservice-boundaries.md).
 | Identity | Microsoft Entra ID (OIDC) | Keycloak (OIDC) | JWT Bearer chuẩn OIDC |
 | Secret | Key Vault + Managed Identity | env / K8s Secret | `IConfiguration` |
 | Observability | Azure Monitor / App Insights | Grafana + Tempo + Prometheus | OpenTelemetry (OTLP) |
-| LLM | Azure OpenAI → Claude → model local | Ollama | `ai-service` router |
+| LLM | DeepSeek → Gemini free tier → Ollama (embedding bge-m3 local) | Ollama | `ai-service` router |
 | ML | Azure ML / MLflow | MLflow | MLflow model format |
 
 Xem [ADR-0004](adr/0004-azure-first-portable.md).

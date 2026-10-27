@@ -103,7 +103,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | IAC-16 | US-008, US-066 | Module identity ứng dụng (Entra ID) | App registration API + SPA, app roles patient/doctor/nurse/admin/dpo, user thử nghiệm giả | SA | 4 | IAC-01 | S3 | UC-08, NFR-SEC1 |
 | IAC-20 | US-070 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack | plan chạy được cho cả 2 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình | SA | 4 | IAC-17, IAC-12, IAC-15 | S3 | NFR-D4 |
 | IAC-18 | US-036 | Module Defender for Storage + Event Grid → queue cho kết quả quét | Blob mới được quét; kết quả vào queue để document service xử lý | SA | 3 | IAC-12 | S4 | 05-storage §2 |
-| IAC-19 | US-055 | Module Azure OpenAI + Document Intelligence và các deployment | Deployment chat + embedding; truy cập bằng Managed Identity, không API key | SA | 4 | IAC-05 | S4 | ADR-0006 |
+| IAC-19 | US-055 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values | SA | 4 | IAC-05 | S4 | ADR-0006 |
 
 ## CIT — CI templates (GitHub Actions)
 
@@ -245,7 +245,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | PY-02 | US-053 | Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange) | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | D3 | 3 | PY-01 | P2 | 15 §7 |
 | PY-05 | ENABLER | Problem Details + danh mục mã lỗi cho FastAPI | Khớp 07 §5; test | D3 | 2 | LOC-04 | P1 | 07 §5 |
 | PY-06 | US-055 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) | Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure | D3 | 4 |  | P1 | NFR-SEC8 |
-| PY-07 | US-055 | Giao diện LLM provider + adapter Azure OpenAI, Anthropic, Ollama + provider giả cho test | Cùng một interface; mô phỏng timeout/429/5xx | D3 | 4 | LOC-04 | P2 | ADR-0006 |
+| PY-07 | US-055 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | Cùng một interface; mô phỏng timeout/429/5xx | D3 | 4 | LOC-04 | P2 | ADR-0006 |
 | PY-08 | US-055 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi | Ghi fallbackLevel; test mọi nhánh lỗi | D3 | 4 | PY-07 | P2 | 06 §4 |
 | PY-09 | US-055 | Circuit breaker + hạn mức token/ngày + metric theo model | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | D3 | 3 | PY-08 | S1 | 06 §4, NFR-C2 |
 | PY-03 | US-059, US-064 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | Event trùng xử lý một lần | D3 | 4 | ARC-07 | P2 | 13 §1 |
@@ -389,9 +389,9 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | AI-01 | US-052 | Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local) | Script idempotent; cùng schema cho hai backend | D3 | 3 | SCF-06, LOC-08 | S1 | 06 §1.2 |
 | AI-02 | US-052 | Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang) | Giữ tiêu đề mục và số trang; test với tài liệu mẫu | D3 | 3 | AI-01 | S1 | 06 §1.2 |
 | AI-03 | US-052 | Chunker: 600 token, overlap 80, tách theo tiêu đề mục | Chunk không cắt giữa mục; test độ dài | D3 | 4 | AI-02 | S1 | 06 §1.2 |
-| AI-04 | US-052 | Embedding + upsert/xóa index; thay version không có khoảng trống | Chunk mới index xong mới xóa chunk cũ; test | D3 | 4 | AI-03, PY-07 | S1 | 06 §1.2 |
+| AI-04 | US-052 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống | Chunk mới index xong mới xóa chunk cũ; test | D3 | 4 | AI-03, PY-07 | S1 | 06 §1.2 |
 | AI-05 | US-052 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | draft → approved → indexed → retired; lỗi index retry 3 lần | D3 | 4 | AI-04, PY-01 | S2 | AI9 |
-| AI-06 | US-053 | Truy xuất hybrid + semantic rerank + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | Người không được phép không bao giờ thấy chunk; test lọc | D3 | 4 | AI-04 | S2 | 06 §1.2 |
+| AI-06 | US-053 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | Người không được phép không bao giờ thấy chunk; test lọc | D3 | 4 | AI-04 | S2 | 06 §1.2 |
 | AI-07 | US-053 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | ID phiên bản prompt ghi vào message | D3 | 3 | AI-06 | S2 | 06 §4 |
 | AI-08 | US-053 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | Không có nguồn → không gọi LLM sinh nội dung | D3 | 4 | AI-07, PY-08 | S2 | AC-11.1 |
 | AI-14 | US-057 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | File JSON có kiểm tra schema | D3 | 3 | AI-05 | S3 | NFR-AI1 |
@@ -408,7 +408,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | AI-19 | US-058 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | Không có quyền → 403 trước khi dữ liệu vào prompt | D3 | 4 | PY-02, CLN-23 | S4 | AC-12.1 |
 | AI-20 | US-058 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | Mọi ý có sources trỏ bản ghi thật | D3 | 4 | AI-19, PY-08 | S4 | AC-12.2 |
 | AI-21 | US-058 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline | Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3) | D3 | 4 | AI-20 | S5 | AI4, AC-12.3 |
-| AI-23 | US-059 | Bước OCR: Azure Document Intelligence, dự phòng Tesseract; văn bản lưu Blob | Fallback khi dịch vụ lỗi; test với tài liệu mẫu | D3 | 4 | AI-22, DOC-10 | S5 | D9 |
+| AI-23 | US-059 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | Fallback khi dịch vụ lỗi; test với tài liệu mẫu | D3 | 4 | AI-22, DOC-10 | S5 | D9 |
 | AI-24 | US-059 | Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy | overallConfidence = min các trường bắt buộc; ngưỡng 0,85 | D3 | 4 | AI-23, PY-08 | S5 | 06 §3 |
 | AI-25 | US-059, US-060 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | Lọc theo status/patient; quyền Care/Nurse | D3 | 3 | AI-24 | S6 | AI5 |
 | AI-26 | US-060 | API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields | Chưa xác nhận không có dữ liệu vào hồ sơ; lỗi clinical trả nguyên văn | D3 | 4 | AI-25, PY-02, CLN-17 | S6 | AI6, AC-13.1 |

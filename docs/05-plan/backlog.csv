@@ -29,7 +29,7 @@ PY-01,PY,US-066,"Thư viện Python: xác thực JWT (Entra + Keycloak), depende
 PY-02,PY,US-053,"Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange)","Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả",D3,3,PY-01,P2,2,15 §7
 PY-05,PY,ENABLER,Problem Details + danh mục mã lỗi cho FastAPI,Khớp 07 §5; test,D3,2,LOC-04,P1,2,07 §5
 PY-06,PY,US-055,"Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược)",Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure,D3,4,,P1,2,NFR-SEC8
-PY-07,PY,US-055,"Giao diện LLM provider + adapter Azure OpenAI, Anthropic, Ollama + provider giả cho test",Cùng một interface; mô phỏng timeout/429/5xx,D3,4,LOC-04,P2,2,ADR-0006
+PY-07,PY,US-055,"Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test",Cùng một interface; mô phỏng timeout/429/5xx,D3,4,LOC-04,P2,2,ADR-0006
 PY-08,PY,US-055,"Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi",Ghi fallbackLevel; test mọi nhánh lỗi,D3,4,PY-07,P2,2,06 §4
 SHR-01,SHR,ENABLER,FHIR R4 JSON serialize/parse (Firely) + test vòng khứ hồi cho resource trong phạm vi,Parse sai trả 400 validation-failed; test từng resource type,D2,3,LOC-03,P1,2,ADR-0003
 SHR-02,SHR,ENABLER,Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi,"Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace",D2,3,SHR-01,P1,2,07 §5
@@ -120,9 +120,9 @@ SCF-06,SCF,ENABLER,"Scaffold ai-service FastAPI (khung code, pipeline, values, n
 SCF-07,SCF,ENABLER,"Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối PostgreSQL/bus/MLflow)",Service mẫu chạy qua pipeline template,SA,2,"LOC-04, CIT-08",P3,4,ADR-0001
 SHR-08,SHR,ENABLER,"Consumer nền tảng: inbox idempotent + MassTransit (RabbitMQ local, Service Bus cloud), retry/DLQ",Event trùng chỉ xử lý một lần; 5 lần giao rồi DLQ,D2,4,SHR-06,P2,4,13 §1
 SHR-09,SHR,US-047,"Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR",Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số,D2,4,SHR-06,S1,4,"E11(pub), 05 §1"
-AI-04,AI,US-052,Embedding + upsert/xóa index; thay version không có khoảng trống,Chunk mới index xong mới xóa chunk cũ; test,D3,4,"AI-03, PY-07",S1,5,06 §1.2
+AI-04,AI,US-052,"Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống",Chunk mới index xong mới xóa chunk cũ; test,D3,4,"AI-03, PY-07",S1,5,06 §1.2
 AI-05,AI,US-052,"API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa",draft → approved → indexed → retired; lỗi index retry 3 lần,D3,4,"AI-04, PY-01",S2,5,AI9
-AI-06,AI,US-053,Truy xuất hybrid + semantic rerank + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi,Người không được phép không bao giờ thấy chunk; test lọc,D3,4,AI-04,S2,5,06 §1.2
+AI-06,AI,US-053,"Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi",Người không được phép không bao giờ thấy chunk; test lọc,D3,4,AI-04,S2,5,06 §1.2
 AI-07,AI,US-053,Prompt template có version + lắp ngữ cảnh trong giới hạn token,ID phiên bản prompt ghi vào message,D3,3,AI-06,S2,5,06 §4
 AI-08,AI,US-053,Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false,Không có nguồn → không gọi LLM sinh nội dung,D3,4,"AI-07, PY-08",S2,5,AC-11.1
 AI-14,AI,US-057,Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu,File JSON có kiểm tra schema,D3,3,AI-05,S3,5,NFR-AI1
@@ -214,7 +214,7 @@ GOP-09,GOP,US-070,Canary prod với Argo Rollouts,"Bước 10%-50%-100%, dừng 
 GOV-06,GOV,US-070,"Dependabot cho actions, nuget, pip, docker, terraform",dependabot.yml ở mỗi repo; action được ghim theo commit SHA,SA,2,GOV-01,S4,7,NFR-SEC6
 GW-02,GW,US-068,Xác thực + rate limit theo người dùng,Token sai -> 401; vượt hạn mức -> 429,SA,4,"GW-01, SHR-20",S4,7,NFR-S3
 IAC-18,IAC,US-036,Module Defender for Storage + Event Grid → queue cho kết quả quét,Blob mới được quét; kết quả vào queue để document service xử lý,SA,3,IAC-12,S4,7,05-storage §2
-IAC-19,IAC,US-055,Module Azure OpenAI + Document Intelligence và các deployment,"Deployment chat + embedding; truy cập bằng Managed Identity, không API key",SA,4,IAC-05,S4,7,ADR-0006
+IAC-19,IAC,US-055,"Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault","Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values",SA,4,IAC-05,S4,7,ADR-0006
 ML-07,ML,"US-064, US-046","Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox",AC-15.2 lưu model version và đặc trưng; cùng transaction,D3,4,"ML-06, ML-05",S2,7,"E10(pub), AC-15.2"
 ML-08,ML,"US-063, US-064","API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ)",p95 ≤ 100 ms cho M3; quyền đúng,D3,3,ML-07,S2,7,"M1, M2, M3"
 ML-09,ML,US-063,Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy,Test đổi alias,D3,2,ML-08,S3,7,ADR-0007
@@ -276,7 +276,7 @@ WEB-26,WEB,"US-049, US-050, US-051","Màn hình DPO: tra cứu audit, xuất CSV
 AI-19,AI,US-058,"Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn",Không có quyền → 403 trước khi dữ liệu vào prompt,D3,4,"PY-02, CLN-23",S4,9,AC-12.1
 AI-20,AI,US-058,Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ),Mọi ý có sources trỏ bản ghi thật,D3,4,"AI-19, PY-08",S4,9,AC-12.2
 AI-21,AI,US-058,"API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline",Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3),D3,4,AI-20,S5,9,"AI4, AC-12.3"
-AI-23,AI,US-059,"Bước OCR: Azure Document Intelligence, dự phòng Tesseract; văn bản lưu Blob",Fallback khi dịch vụ lỗi; test với tài liệu mẫu,D3,4,"AI-22, DOC-10",S5,9,D9
+AI-23,AI,US-059,Bước OCR bằng Tesseract (local); văn bản lưu Blob,Fallback khi dịch vụ lỗi; test với tài liệu mẫu,D3,4,"AI-22, DOC-10",S5,9,D9
 AI-24,AI,US-059,Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy,"overallConfidence = min các trường bắt buộc; ngưỡng 0,85",D3,4,"AI-23, PY-08",S5,9,06 §3
 AI-25,AI,"US-059, US-060",API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu,Lọc theo status/patient; quyền Care/Nurse,D3,3,AI-24,S6,9,AI5
 AI-26,AI,US-060,API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields,Chưa xác nhận không có dữ liệu vào hồ sơ; lỗi clinical trả nguyên văn,D3,4,"AI-25, PY-02, CLN-17",S6,9,"AI6, AC-13.1"

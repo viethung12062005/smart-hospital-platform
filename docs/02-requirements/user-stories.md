@@ -1229,7 +1229,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-01 | Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local) | D3 | 3 | W4 |
 | AI-02 | Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang) | D3 | 3 | W4 |
 | AI-03 | Chunker: 600 token, overlap 80, tách theo tiêu đề mục | D3 | 4 | W4 |
-| AI-04 | Embedding + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W5 |
+| AI-04 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W5 |
 | AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | D3 | 4 | W5 |
 | WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
@@ -1253,7 +1253,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | PY-02 | Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange) | D3 | 3 | W2 |
-| AI-06 | Truy xuất hybrid + semantic rerank + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | D3 | 4 | W5 |
+| AI-06 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | D3 | 4 | W5 |
 | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | D3 | 3 | W5 |
 | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | D3 | 4 | W5 |
 | AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
@@ -1300,13 +1300,13 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | PY-06 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) | D3 | 4 | W2 |
-| PY-07 | Giao diện LLM provider + adapter Azure OpenAI, Anthropic, Ollama + provider giả cho test | D3 | 4 | W2 |
+| PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | D3 | 4 | W2 |
 | PY-08 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi | D3 | 4 | W2 |
 | AI-13 | Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách | D3 | 3 | W3 |
 | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model | D3 | 3 | W3 |
 | AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
 | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | D3 | 3 | W7 |
-| IAC-19 | Module Azure OpenAI + Document Intelligence và các deployment | SA | 4 | W7 |
+| IAC-19 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | SA | 4 | W7 |
 | AI-33 | Báo cáo token và chi phí theo tác vụ/model | D3 | 3 | W11 |
 
 ## US-056
@@ -1393,7 +1393,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | D3 | 4 | W4 |
 | AI-22 | Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ | D3 | 4 | W8 |
-| AI-23 | Bước OCR: Azure Document Intelligence, dự phòng Tesseract; văn bản lưu Blob | D3 | 4 | W9 |
+| AI-23 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | D3 | 4 | W9 |
 | AI-24 | Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy | D3 | 4 | W9 |
 | AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | D3 | 3 | W9 |
 | DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W9 |
