@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Npgsql" />
+    <ProjectReference Include="../Shp.Events/Shp.Events.csproj" />
+    <ProjectReference Include="../Shp.Web/Shp.Web.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sql/messaging.sql" LogicalName="messaging.sql" />
+    <InternalsVisibleTo Include="Shp.Data.Postgres.Tests" />
+  </ItemGroup>
+</Project>

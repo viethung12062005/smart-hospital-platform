@@ -17,3 +17,4 @@ Mỗi ADR theo format: Bối cảnh → Quyết định → Phương án đã c�
 | [0011](0011-two-environments-local-kubernetes.md) | 2 môi trường cloud (UAT, prod) + dev trên Kubernetes cục bộ | Accepted |
 | [0012](0012-language-per-service.md) | Đánh giá lại ngôn ngữ từng service: giữ .NET + Python | Accepted |
 | [0013](0013-llm-deepseek-gemini-local-embedding.md) | DeepSeek chính, Gemini free tier dự phòng, embedding local; thay chuỗi model của 0006 | Accepted |
+| [0014](0014-database-per-service-review.md) | Rà soát CSDL từng service: PostgreSQL chỉ cho scheduling; notification và ml chuyển MongoDB (+ Parquet) | **Proposed** |
