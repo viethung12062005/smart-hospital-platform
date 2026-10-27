@@ -155,7 +155,7 @@ cd libs/dotnet && dotnet format --verify-no-changes       # mong đợi: không 
    3. Tạo `libs/dotnet/Shp.Web.Tests` (19 test) dùng TestServer + token ký cục bộ (không cần Keycloak/Entra).
    4. Thêm 2 project vào `libs/dotnet/Shp.Libs.slnx`.
    5. Chuyển SHR-02/20/21 sang SA, ghi trạng thái, đổi cách tính tải tuần (task đã xong không tính giờ).
-3. **Thay đổi (commit COMMIT_D2):**
+3. **Thay đổi (commit 55c56a5):**
 
 | File | | Nội dung |
 |---|---|---|
