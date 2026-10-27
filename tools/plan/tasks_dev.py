@@ -7,12 +7,8 @@ Definition of Done for every task: unit tests green, lint clean, no secrets, PR 
 
 D1_TASKS = [
     # ---------------- shared: authentication / authorization / idempotency ----------------
-    ("SHR-25", "ENABLER", "Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc'",
-     "Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước", "D1", 4, "SHR-24", "P2", "15 §3"),
     ("SHR-26", "ENABLER", "Authz: bộ sinh test từ matrix.yaml (role × điều kiện)",
      "Từ matrix sinh test Allow/Deny cho mọi ô; dùng được trong test của từng service", "D1", 4, "SHR-24", "P2", "15 §3, NFR-SEC2"),
-    ("SHR-27", "US-047", "Authz: phát audit cho mọi quyết định (cho phép và từ chối)",
-     "Mỗi Deny sinh audit outcome=denied kèm mã lý do; test", "D1", 2, "SHR-24, SHR-09", "S1", "05 §1, E11(pub)"),
     ("SHR-28", "US-015", "Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay)",
      "Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song", "D1", 4, "SHR-05", "P2", "02 §3.1, 07 §3"),
 
@@ -145,14 +141,10 @@ D2_TASKS = [
      "Token bị sửa → 400; link next/self đúng", "D2", 3, "SHR-03", "P2", "07 §4"),
     ("SHR-05", "ENABLER", "Filter ETag/If-Match (412/428) và Idempotency-Key bắt buộc (428)",
      "Thiếu header → 428; ETag W/\"version\" trên mọi response", "D2", 2, "SHR-02", "P2", "07 §3"),
-    ("SHR-06", "ENABLER", "CloudEvents envelope + validate JSON Schema + helper test hợp đồng",
-     "Event sai schema bị từ chối; helper dùng cho mọi service", "D2", 3, "ARC-07", "P2", "13 §1"),
     ("SHR-07", "ENABLER", "Outbox relay dùng chung (store PostgreSQL và MongoDB), poll 1 giây, SKIP LOCKED",
      "Bus chết rồi sống lại vẫn phát đủ; nhiều replica không trùng", "D2", 4, "SHR-06", "P2", "13 §1"),
     ("SHR-08", "ENABLER", "Consumer nền tảng: inbox idempotent + MassTransit (RabbitMQ local, Service Bus cloud), retry/DLQ",
      "Event trùng chỉ xử lý một lần; 5 lần giao rồi DLQ", "D2", 4, "SHR-06", "P2", "13 §1"),
-    ("SHR-09", "US-047", "Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR",
-     "Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số", "D2", 4, "SHR-06", "S1", "E11(pub), 05 §1"),
     ("SHR-10", "ENABLER", "Mongo resource store: create/update với version CAS + history + outbox trong một transaction",
      "Update version cũ khớp 0; transaction rollback toàn phần khi lỗi", "D2", 4, "SHR-03, LOC-08", "P2", "03 §2.5"),
     ("SHR-11", "ENABLER", "Mongo search executor: biên dịch tiêu chí search thành truy vấn + dùng index",

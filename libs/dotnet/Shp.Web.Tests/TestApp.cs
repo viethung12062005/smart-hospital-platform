@@ -10,6 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Shp.Authorization;
+using Shp.Events.Audit;
+using Shp.ServiceDefaults;
 using Shp.Web.Auth;
 using Shp.Web.Errors;
 
@@ -24,8 +27,12 @@ internal sealed class TestApp : IAsyncDisposable
 
     private readonly WebApplication _app;
 
-    private TestApp(WebApplication app, HttpClient client, FakeLinkClient links)
+    public IServiceProvider Services => _app.Services;
+
+    private TestApp(WebApplication app, HttpClient client, FakeLinkClient links, InMemoryAuditSink audit, FakeFacts facts)
     {
+        Audit = audit;
+        Facts = facts;
         _app = app;
         Client = client;
         Links = links;
@@ -34,6 +41,10 @@ internal sealed class TestApp : IAsyncDisposable
     public HttpClient Client { get; }
 
     public FakeLinkClient Links { get; }
+
+    public InMemoryAuditSink Audit { get; }
+
+    public FakeFacts Facts { get; }
 
     public static async Task<TestApp> StartAsync(bool requireMfa = true)
     {
@@ -46,9 +57,13 @@ internal sealed class TestApp : IAsyncDisposable
             ["Auth:RequireMfaForStaff"] = requireMfa ? "true" : "false",
         });
         var links = new FakeLinkClient();
+        var audit = new InMemoryAuditSink();
+        var facts = new FakeFacts();
+        builder.Services.AddSingleton<IAuditSink>(audit);
+        builder.Services.AddSingleton(new ServiceInfo("clinical", "test", "sha"));
+        builder.Services.AddShpAuthorization();
         builder.Services.AddShpAuthentication(builder.Configuration);
         builder.Services.AddSingleton<IIdentityLinkClient>(links);
-        builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<IdentityResolver>();
         builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, o =>
         {
@@ -70,12 +85,25 @@ internal sealed class TestApp : IAsyncDisposable
         }).RequireAuthorization();
         app.MapGet("/api/v1/registration", (HttpContext c) => Results.Ok(new { linked = c.GetShpPrincipal().FhirUserId is not null }))
             .RequireAuthorization().WithMetadata(new AllowUnlinkedIdentityAttribute());
+        ValueTask<ResourceContext> PatientFacts(HttpContext c)
+        {
+            var id = (string)c.Request.RouteValues["id"]!;
+            var me = c.GetShpPrincipal().FhirUserId;
+            return ValueTask.FromResult(new ResourceContext { PatientId = id, HasCareRelationship = me is not null && facts.Care.Contains((me, id)) });
+        }
+
+        app.MapGet("/api/v1/patients/{id}", (string id) => Results.Ok(new { id })).RequireShpAuthz("Patient", "read", PatientFacts);
+        app.MapGet("/api/v1/hidden/{id}", (string id) => Results.Ok(new { id })).RequireShpAuthz("Patient", "read", PatientFacts, denyAsNotFound: true);
+        app.MapGet("/api/v1/patients", () => Results.Ok(Array.Empty<string>())).RequireShpAuthz("Patient", "search");
+        app.MapGet("/api/v1/audited-boom", () => { throw new InvalidOperationException("db password=hunter2"); }).RequireShpAuthz("Slot", "read");
+        app.MapGet("/api/v1/audited-conflict", () => { throw new ShpException("slot-unavailable"); }).RequireShpAuthz("Slot", "read");
+        app.MapGet("/api/v1/unprotected", () => Results.Ok());
         app.MapGet("/api/v1/slot", () => { throw new ShpException("slot-unavailable"); });
         app.MapGet("/api/v1/limited", () => { throw new ShpException("rate-limited") { RetryAfter = TimeSpan.FromSeconds(30) }; });
         app.MapGet("/fhir/Patient/x", () => { throw new ShpException("not-found"); });
         app.MapGet("/api/v1/boom", () => { throw new InvalidOperationException("secret patient Nguyen Van A 0901234567"); });
         await app.StartAsync().ConfigureAwait(false);
-        return new TestApp(app, app.GetTestClient(), links);
+        return new TestApp(app, app.GetTestClient(), links, audit, facts);
     }
 
     public static string Token(
@@ -129,6 +157,11 @@ internal sealed class TestApp : IAsyncDisposable
         Client.Dispose();
         await _app.DisposeAsync().ConfigureAwait(false);
     }
+}
+
+internal sealed class FakeFacts
+{
+    public HashSet<(string Practitioner, string Patient)> Care { get; } = [];
 }
 
 internal sealed class FakeLinkClient : IIdentityLinkClient
