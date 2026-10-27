@@ -1,0 +1,6 @@
+apiVersion: v2
+name: shp-local-deps
+description: Phụ thuộc cho phát triển cục bộ trên kind (PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak). Chỉ dùng cho máy dev, KHÔNG dùng cho UAT/prod.
+type: application
+version: 0.1.0
+appVersion: "local"
