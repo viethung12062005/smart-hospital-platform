@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/document/document-uploaded/v1.json",
+  "title": "shp.document.document-uploaded.v1",
+  "description": "E8: tài liệu quét sạch, sẵn sàng. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "documentId",
+    "version",
+    "patientId",
+    "type",
+    "contentType",
+    "size",
+    "uploadedBy",
+    "availableAt"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "encounterId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contentType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "size": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "uploadedBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "availableAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

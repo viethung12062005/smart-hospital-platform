@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/scheduling/appointment-status-changed/v1.json",
+  "title": "shp.scheduling.appointment-status-changed.v1",
+  "description": "E5: no-show (job) hoặc fulfilled (sau E6). Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "appointmentId",
+    "version",
+    "patientId",
+    "previousStatus",
+    "newStatus",
+    "changedAt"
+  ],
+  "properties": {
+    "appointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "previousStatus": {
+      "type": "string",
+      "minLength": 1
+    },
+    "newStatus": {
+      "type": "string",
+      "enum": [
+        "noshow",
+        "fulfilled"
+      ]
+    },
+    "changedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
