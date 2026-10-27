@@ -7,8 +7,8 @@
 
 | ID | Yêu cầu | Mục tiêu | Cách đo |
 |---|---|---|---|
-| NFR-P1 | Tìm slot trống | p95 ≤ 300 ms tại 500 RPS | k6 trên staging, 10 phút |
-| NFR-P2 | Đặt lịch | p95 ≤ 800 ms tại 50 RPS, tỉ lệ lỗi 5xx < 0,1% | k6 trên staging |
+| NFR-P1 | Tìm slot trống | p95 ≤ 300 ms tại 500 RPS | k6 trên UAT (cỡ prod), 10 phút |
+| NFR-P2 | Đặt lịch | p95 ≤ 800 ms tại 50 RPS, tỉ lệ lỗi 5xx < 0,1% | k6 trên UAT (cỡ prod) |
 | NFR-P3 | Mở hồ sơ / timeline bệnh nhân | p95 ≤ 500 ms | k6 + trace |
 | NFR-P4 | Cấp link upload/tải tài liệu | p95 ≤ 300 ms | k6 |
 | NFR-P5 | Trợ lý RAG | token đầu tiên ≤ 3 s, trả lời đủ ≤ 10 s (p95) | eval harness + trace |
@@ -64,10 +64,10 @@
 
 | ID | Yêu cầu | Mục tiêu |
 |---|---|---|
-| NFR-D1 | Lead time | Commit → chạy trên `dev` ≤ 15 phút; → `staging` ≤ 30 phút |
+| NFR-D1 | Lead time | Commit → image đã ký ≤ 15 phút; → chạy trên UAT ≤ 30 phút (sau phê duyệt) |
 | NFR-D2 | Rollback | ≤ 5 phút, bằng một thao tác (GitOps revert) |
 | NFR-D3 | Hạ tầng dưới dạng code | 100% hạ tầng tạo bằng IaC; môi trường mới dựng lại được từ đầu |
-| NFR-D4 | Cách ly môi trường | `prod` tách cluster và subscription/resource group với `dev`/`staging` |
+| NFR-D4 | Cách ly môi trường | `prod` tách cluster và subscription/resource group với `uat`; dev chạy local |
 
 ## 7. Chi phí (FinOps)
 

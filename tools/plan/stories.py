@@ -391,7 +391,7 @@ STORIES = [
     ("US-070", "Triển khai an toàn, có phê duyệt", "DevOps", "mọi thay đổi lên môi trường đi qua pipeline có phê duyệt và rollback được",
      "triển khai không downtime, rollback ≤ 5 phút", "M", [], [], [],
      ["Given commit vào main, When CI chạy, Then qua đủ kiểm tra, image được ký, chỉ image đã ký mới chạy được trên cluster",
-      "Given deploy staging/prod, When thực hiện, Then cần phê duyệt GitHub Environment và PR GitOps",
+      "Given deploy UAT/prod, When thực hiện, Then cần phê duyệt GitHub Environment và PR GitOps",
       "Given sự cố, When rollback bằng revert GitOps, Then ≤ 5 phút"]),
 ]
 

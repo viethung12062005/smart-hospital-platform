@@ -11,7 +11,7 @@ GOV-01,GOV,US-070,Tạo 4 repo theo ADR-0010,"4 repo tồn tại, README mô t�
 GOV-02,GOV,US-070,Ruleset bảo vệ nhánh main cho 4 repo,"Bắt buộc PR, 1 review, CI xanh, cấm force-push; bot GitOps được bypass ở shp-gitops",SA,2,GOV-01,S0,1,ADR-0009
 GOV-03,GOV,US-070,CODEOWNERS + PR template + issue template,PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD,SA,2,GOV-01,S0,1,NFR-D1
 GOV-07,GOV,US-070,GitHub Project + import backlog,"Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import",SA,2,GOV-01,S0,1,PM
-LOC-01,LOC,ENABLER,Docker compose hạ tầng local,"Postgres, MongoDB, Redis, RabbitMQ, MinIO, Keycloak, OTel + Grafana; một lệnh khởi động",SA,5,ARC-09,S0,1,NFR-I3
+LOC-01,LOC,ENABLER,"Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, MinIO, Keycloak; Makefile up/down/status",`make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README,SA,8,ARC-09,S0,1,"ADR-0011, NFR-I3"
 ARC-19,ARC,ENABLER,Tạo contracts/authz/matrix.yaml đầy đủ từ ma trận phân quyền,Mọi ô của ma trận có dòng quy tắc; schema YAML được validate; dev dùng làm đầu vào cho SHR-22,SA,4,ARC-03,P1,2,15-authorization §3
 CIT-01,CIT,US-070,Reusable workflow .NET CI,"format check, build warn-as-error, test + ngưỡng coverage, quét package lỗ hổng; dùng được từ repo khác",SA,4,GOV-01,P1,2,ADR-0009
 CIT-03,CIT,US-070,Reusable workflow container,"hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest",SA,5,"IAC-02, IAC-03",P1,2,NFR-SEC6
@@ -24,7 +24,7 @@ IAC-03,IAC,ENABLER,Bootstrap: identity OIDC cho GitHub,"Identity plan (read), ap
 LOC-02,LOC,"US-008, US-066",Keycloak realm local,"Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả",SA,3,LOC-01,P1,2,NFR-SEC1
 LOC-03,LOC,ENABLER,Walking skeleton .NET,"Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template",SA,4,ARC-09,P1,2,Gate G4
 LOC-04,LOC,ENABLER,Walking skeleton Python,"FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template",SA,3,ARC-09,P1,2,Gate G4
-LOC-08,LOC,ENABLER,"Bổ sung vào docker compose: MongoDB replica set, ClamAV, OpenSearch, Ollama, Loki, MLflow",Một lệnh khởi động đủ hạ tầng cho mọi service local; có healthcheck,SA,3,LOC-01,P1,2,NFR-I3
+LOC-08,LOC,ENABLER,"Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm",`make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết,SA,3,LOC-01,P1,2,"ADR-0011, NFR-I3"
 PY-01,PY,US-066,"Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI",Test token hợp lệ/sai/hết hạn,D3,3,LOC-02,P1,2,07 §2
 PY-02,PY,US-053,"Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange)","Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả",D3,3,PY-01,P2,2,15 §7
 PY-05,PY,ENABLER,Problem Details + danh mục mã lỗi cho FastAPI,Khớp 07 §5; test,D3,2,LOC-04,P1,2,07 §5
@@ -53,7 +53,7 @@ ARC-06,ARC,ENABLER,Hợp đồng API (OpenAPI) khung cho 6 service,"File openapi
 ARC-07,ARC,ENABLER,Hợp đồng sự kiện (JSON Schema),"Schema cho AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; có version",SA,4,ARC-05,P2,3,P2
 ARC-20,ARC,ENABLER,"Dữ liệu tham chiếu: ICD-10 (~300 mã), LOINC sinh hiệu/xét nghiệm, CodeSystem chuyên khoa và lý do hủy","File JSON trong contracts/terminology, có script nạp, được CLN-16/CLN-18 dùng",SA,4,ARC-03,P2,3,01-domain-model §3
 CIT-05,CIT,US-070,Reusable workflow Terraform checks + plan,"fmt, validate, tflint, Trivy config, plan + tóm tắt vào job summary; plan qua OIDC read-only",SA,4,IAC-03,P2,3,NFR-D3
-CIT-06,CIT,US-070,Reusable workflow GitOps update/promote,Cập nhật digest vào shp-gitops; dev commit sau approval; staging/prod mở PR sau approval,SA,4,GOV-05,P2,3,ADR-0009
+CIT-06,CIT,US-070,Reusable workflow GitOps update/promote,Cập nhật digest vào shp-gitops; uat commit sau approval; prod mở PR sau approval,SA,4,GOV-05,P2,3,ADR-0009
 CLN-02,CLN,"US-001, US-006","Validator profile cho Patient, Practitioner, PractitionerRole (cardinality, value set)",Trường ngoài profile bị từ chối; test từng ràng buộc,D2,4,"SHR-01, ARC-20",S1,3,01 §4
 CLN-10,CLN,US-006,"API Practitioner/PractitionerRole (C9, C10): danh bạ cho mọi người dùng, ghi chỉ Admin",Danh bạ không lộ liên hệ cá nhân; mã NV-NNNN,D2,4,"CLN-02, SHR-25",S2,3,"C9, C10"
 CLN-11,CLN,US-007,"API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity",Khóa có hiệu lực ≤ 60 giây; role không khớp PractitionerRole → 422,D2,4,"CLN-10, SHR-21",S2,3,"C2, C21, 15 §8"
@@ -90,9 +90,10 @@ CLN-03,CLN,US-001,"Patient repository: sinh MRN BN-YYYY-NNNNNN, nameTokens bỏ 
 CLN-04,CLN,"US-001, US-003",Phát hiện trùng hồ sơ theo SĐT + ngày sinh,"Trùng → duplicate-patient-suspected, không lộ dữ liệu",D2,2,CLN-03,S1,4,AC-01.2
 GOP-04,GOP,US-070,"Platform add-on: Argo Rollouts, KEDA, cert-manager",Application ghim version chart; values theo môi trường,SA,3,GOP-03,P3,4,"NFR-A7, S1"
 GOP-05,GOP,US-070,Platform add-on: Envoy Gateway (Gateway API),"GatewayClass/Gateway, TLS qua cert-manager",SA,3,GOP-04,P3,4,NFR-SEC3
-GOV-04,GOV,US-070,GitHub Environments và người duyệt,"deploy-dev/staging/prod, infra-<env>, infra-<env>-destroy có reviewer và wait timer theo ADR-0009",SA,2,GOV-01,P3,4,ADR-0009
+GOV-04,GOV,US-070,GitHub Environments và người duyệt,"deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009",SA,2,GOV-01,P3,4,ADR-0009
 IAC-04,IAC,ENABLER,Bootstrap: budget alert + chính sách tag,"Budget cảnh báo 50/80/100%; tag shp-env, created-at, ttl-hours bắt buộc",SA,2,IAC-01,P3,4,"NFR-C1, C3"
 IAC-08,IAC,ENABLER,Module key vault,"RBAC mode, private endpoint, purge protection chỉ ở prod, tên có hậu tố ngẫu nhiên",SA,2,IAC-05,P3,4,NFR-SEC4
+LOC-05,LOC,ENABLER,Chạy service trên cụm local bằng chart microservice chung (make deploy SVC=...),"Service mẫu build, nạp vào kind và chạy bằng đúng chart dùng cho UAT/prod; có hướng dẫn debug",SA,3,"GOP-01, LOC-03, LOC-01",P3,4,"ADR-0011, NFR-I3"
 LOC-07,LOC,ENABLER,Hướng dẫn onboarding dev,Từ clone repo đến chạy local và mở PR đầu tiên trong < 1 giờ,SA,2,"LOC-01, LOC-03",P3,4,PM
 ML-13,ML,US-071,"Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash",Cùng hash + seed → cùng model (kiểm bằng test),D3,3,ML-01,P2,4,16-mlops §2
 ML-15,ML,US-071,Package đặc trưng dùng chung cho huấn luyện và phục vụ,Một nguồn duy nhất cho mọi đặc trưng; có unit test,D3,3,ML-02,P2,4,04 §2.3
@@ -110,7 +111,7 @@ NTF-12,NTF,US-043,"Adapter thật: push (FCM), email, SMS qua interface kênh",C
 OBS-04,OBS,ENABLER,"Thư viện observability chuẩn (OTel, log có trace-id, che PII)","OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII",SA,4,LOC-03,S1,4,"NFR-O1, O4"
 PY-03,PY,"US-059, US-064","Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ",Event trùng xử lý một lần,D3,4,ARC-07,P2,4,13 §1
 PY-04,PY,US-047,Audit emitter Python (E11) cho AI/ML,Không ghi nội dung câu hỏi hay PII; test,D3,2,PY-03,S1,4,"E11(pub), 12 §0"
-SCF-01,SCF,ENABLER,"Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel)",Service từ template; svc-scheduling.yml; values dev/staging/prod,SA,2,"LOC-03, CIT-08",S1,4,ADR-0001
+SCF-01,SCF,ENABLER,"Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel)",Service từ template; svc-scheduling.yml; values local/uat/prod,SA,2,"LOC-03, CIT-08",S1,4,ADR-0001
 SCF-02,SCF,ENABLER,"Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus)",Service từ template; svc-notification.yml,SA,2,"LOC-03, CIT-08",P3,4,ADR-0001
 SCF-03,SCF,ENABLER,"Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus)",Service từ template; svc-clinical.yml,SA,2,"LOC-03, CIT-08",S1,4,ADR-0001
 SCF-04,SCF,ENABLER,"Scaffold document service (khung code, pipeline, values, Blob/MongoDB)",Service từ template; svc-document.yml,SA,2,"LOC-03, CIT-08",P3,4,ADR-0001
@@ -144,7 +145,7 @@ IAC-09,IAC,US-067,Module postgresql,"Flexible Server 16, chỉ Entra auth (khôn
 IAC-10,IAC,US-067,Module mongodb (Cosmos DB for MongoDB vCore),"Cluster private endpoint; mật khẩu sinh bằng random_password lưu Key Vault, không nằm trong code",SA,4,"IAC-05, IAC-08",P4,5,ADR-0008
 IAC-11,IAC,ENABLER,Module redis,"Private endpoint, Entra auth, TLS only",SA,2,IAC-05,P4,5,ADR-0008
 IAC-12,IAC,US-048,Module storage,"Container documents + audit (immutability WORM), lifecycle Hot->Cool 30 ngày, tắt shared key",SA,4,IAC-05,P4,5,"NFR-A5, SEC5"
-IAC-17,IAC,ENABLER,"Stack envs/dev, staging, prod (lõi: network, AKS, Key Vault, ACR) + sizing",3 stack gọi module; tfvars khác nhau về SKU/HA/spot; plan chạy được,SA,4,"IAC-05, IAC-07, IAC-08",P4,5,NFR-D4
+IAC-17,IAC,ENABLER,"Stack envs/uat, prod (lõi: network, AKS, Key Vault, ACR) + sizing",2 stack gọi module; tfvars khác nhau về SKU/HA/spot; UAT có sizing=prod để đo hiệu năng; plan chạy được,SA,4,"IAC-05, IAC-07, IAC-08",P4,5,NFR-D4
 ML-11,ML,US-064,"Migration PostgreSQL ml: attendance_stats, appointment_fact, prediction, inbox, outbox","Chạy sạch; ràng buộc age_band, score",D3,2,SCF-07,S2,5,04 §2.2
 ML-14,ML,US-071,"Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera",Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng,D3,3,ML-13,P2,5,16-mlops §2
 ML-18,ML,US-072,Sinh model card tự động khi đăng ký model,Model card lưu cùng artifact trong MLflow; có đủ mục theo 16-mlops §3,D3,3,"ML-17, ML-05",S1,5,16-mlops §3
@@ -171,13 +172,13 @@ CLN-09,CLN,US-004,API gộp hồ sơ (C8) + phát patient-merged,"Hồ sơ ngu�
 CLN-14,CLN,US-023,Consumer appointment-checked-in → tạo Encounter (unique appointmentId),Nhận hai lần chỉ một Encounter,D2,3,CLN-13,S3,6,E4(sub)
 CLN-24,CLN,US-034,"API break-glass (C20): phiên 60 phút TTL, lý do 20-500 ký tự, audit ETREAT, chỉ đọc",Ghi chẩn đoán trong phiên 403; phiên hết hạn tự mất,D2,4,"CLN-13, SHR-09",S4,6,"C20, AC-10.1"
 DOC-02,DOC,"US-035, US-037",IBlobStore: Azure Blob (user delegation SAS) + MinIO; sinh SAS ghi 10 phút/đọc 5 phút,"Test với MinIO; SAS đúng quyền, đúng blob, đúng thời hạn",D2,4,DOC-01,S3,6,05 §2
-ENV-05,ENV,US-070,Diễn tập G4,Service mẫu đi dev -> staging -> prod chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng,SA,4,"ENV-01, LOC-03, LOC-04, GOP-07",S3,6,Gate G4
+ENV-05,ENV,US-070,Diễn tập G4,Service mẫu đi local -> uat -> prod (dựng tạm) chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng,SA,4,"ENV-01, LOC-03, LOC-04, GOP-07",S3,6,Gate G4
 GOP-10,GOP,US-063,Chart MLflow (tracking + registry) cho môi trường cluster,"MLflow chạy với backend lưu trữ bền, truy cập qua Workload Identity",SA,3,GOP-03,S3,6,ADR-0007
 IAC-13,IAC,ENABLER,Module service bus,Namespace tắt local auth; RBAC cho service,SA,2,IAC-05,S3,6,ADR-0001
 IAC-14,IAC,ENABLER,Module ai-search,"Tắt API key (RBAC only), SKU theo biến môi trường",SA,2,IAC-05,S3,6,ADR-0008
 IAC-15,IAC,ENABLER,Module workload identity cho service,Mỗi service một UAMI + federated credential (namespace/serviceaccount) + role tới đúng kho dữ liệu,SA,4,IAC-07,S3,6,NFR-SEC4
 IAC-16,IAC,"US-008, US-066",Module identity ứng dụng (Entra ID),"App registration API + SPA, app roles patient/doctor/nurse/admin/dpo, user thử nghiệm giả",SA,4,IAC-01,S3,6,"UC-08, NFR-SEC1"
-IAC-20,IAC,US-070,Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 3 stack,plan chạy được cho cả 3 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình,SA,4,"IAC-17, IAC-12, IAC-15",S3,6,NFR-D4
+IAC-20,IAC,US-070,Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack,plan chạy được cho cả 2 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình,SA,4,"IAC-17, IAC-12, IAC-15",S3,6,NFR-D4
 ML-06,ML,US-064,"Consumer E1/E2/E3/E5/E7: ghi appointment_fact, cập nhật outcome và attendance_stats",Event trùng bỏ qua; hủy muộn <24h tính late_cancel,D3,4,"SCF-07, PY-03, ML-11",S2,6,"E1(sub), E2(sub), E3(sub), E5(sub), E7(sub)"
 NTF-14,NTF,"US-044, US-005",Test ma trận phân quyền + hợp đồng event cho notification,Xanh trong CI,D1,3,"NTF-10, SHR-26",S5,6,NFR-SEC2
 SCH-05,SCH,US-010,"Template repository + API S5, S6 với validate (chia hết, không chồng giờ)",Thay toàn bộ mẫu trong một transaction; các trường hợp 400 có test,D1,4,SCH-04,S2,6,"S5, S6"
@@ -248,7 +249,6 @@ DOC-07,DOC,US-037,API cấp link tải 5 phút (D5) + audit mỗi lần,Sau 5 ph
 DOC-08,DOC,US-038,API phát hành (D6) + phát document-released,Phát hành lại 409; chỉ bác sĩ Care,D2,2,DOC-06,S4,8,"D6, E9(pub)"
 ENV-03,ENV,US-070,Workflow cost-guard,Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy),SA,2,IAC-04,S5,8,NFR-C1
 ENV-04,ENV,US-070,Runbook vòng đời môi trường,"Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp",SA,2,"ENV-01, ENV-02",S5,8,NFR-D3
-LOC-05,LOC,ENABLER,Cluster local bằng kind,Script dựng kind + cài chart chung cho service mẫu,SA,3,"GOP-01, LOC-03",S5,8,NFR-I3
 ML-10,ML,US-065,"Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo",Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng,D3,3,"ML-19, ML-20",S6,8,NFR-AI6
 ML-19,ML,US-065,Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện,"Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển",D3,4,"ML-07, ML-21",S2,8,16-mlops §4
 ML-20,ML,US-065,"Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày","Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn",D3,4,"ML-06, ML-07",S2,8,16-mlops §4
@@ -261,8 +261,8 @@ MLO-03,MLO,US-073,"Argo Rollouts canary cho ml-service + AnalysisTemplate (Prome
 MLO-04,MLO,US-074,"Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit",Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng,SA,5,"ML-23, GOP-10",S5,8,16-mlops §5
 MLO-05,MLO,US-065,Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps,"Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại",SA,3,"ML-10, OBS-01",S5,8,NFR-O3
 OBS-03,OBS,ENABLER,Cảnh báo DLQ và lỗi pipeline,"Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded",SA,2,OBS-01,S5,8,NFR-O3
-PRD-10,PRD,US-068,Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x),Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên staging,SA,4,SCH-14,S5,8,"NFR-P1, P2"
-PRD-11,PRD,US-068,KEDA cron scale trước 07:00 + HPA cho scheduling,Values prod/staging scale trước đợt mở slot,SA,1,"SCF-01, GOP-04",S5,8,NFR-S1
+PRD-10,PRD,US-068,Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x),Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên UAT (cỡ prod),SA,4,SCH-14,S5,8,"NFR-P1, P2"
+PRD-11,PRD,US-068,KEDA cron scale trước 07:00 + HPA cho scheduling,Values prod/uat scale trước đợt mở slot,SA,1,"SCF-01, GOP-04",S5,8,NFR-S1
 SCH-18,SCH,"US-016, US-019","API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled","<2h Patient 422, Nurse được; không còn booked → 409; slot trả đúng",D1,4,SCH-13,S4,8,"S14, E2(pub), AC-03.5"
 SCH-23,SCH,US-015,"Relay outbox: bổ sung ageBand từ clinical (cache 24 giờ, lỗi → unknown)",Clinical lỗi không chặn phát event; ageBand=unknown,D1,3,"SCH-13, SHR-07, CLN-12",S4,8,13 §3 E1
 SCH-24,SCH,US-020,Job no-show mỗi 5 phút (SKIP LOCKED) + event status-changed,booked quá end+30' → noshow; hai replica không xử lý trùng,D1,3,SCH-13,S4,8,"E5(pub), 02 §3.3"
@@ -300,7 +300,8 @@ WEB-22,WEB,"US-024, US-025","Form lần khám: bắt đầu, lý do, bệnh sử
 AI-27,AI,US-061,"Bộ tài liệu giả có nhãn cho trích xuất (xét nghiệm, đơn thuốc, chuyển viện)",≥ 60 tài liệu có nhãn trường,D3,4,AI-24,S6,10,NFR-AI4
 AI-28,AI,US-061,Eval F1 mức trường và phân loại + báo cáo,"F1 ≥ 0,85 hoặc giải thích",D3,3,AI-27,H1,10,NFR-AI4
 AI-32,AI,"US-052, US-053, US-058, US-060, US-062",Test ma trận phân quyền và hợp đồng event cho ai-service,Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI,D3,4,"AI-31, AI-26",S6,10,NFR-SEC2
-PRD-01,PRD,US-068,Load test 1x/5x/10x + báo cáo,Chạy trên staging ephemeral; so với NFR-P/S,SA,6,"PRD-10, ENV-01",H1,10,"NFR-P1, P2, S2, S3"
+ENV-06,ENV,US-070,"Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ",Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập,SA,4,"ENV-01, ENV-02, ENV-05",H1,10,ADR-0011
+PRD-01,PRD,US-068,Load test 1x/5x/10x + báo cáo,Chạy trên UAT ephemeral (cỡ prod); so với NFR-P/S,SA,6,"PRD-10, ENV-01",H1,10,"NFR-P1, P2, S2, S3"
 PRD-02,PRD,US-069,Failure test,"Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả",SA,6,ENV-01,H1,10,"NFR-A3, A6"
 PRD-03,PRD,US-067,Diễn tập backup/restore,PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO,SA,4,ENV-01,H1,10,"UC-16, NFR-A4"
 PRD-04,PRD,ENABLER,Dashboard SLO cuối cùng,Error budget theo NFR-A1,SA,3,OBS-02,H1,10,NFR-O2
