@@ -98,10 +98,41 @@ Thứ tự làm và lý do: phân quyền → event → API → terminology (dev
 | `docs/04-devops/progress-log.md` | A | file này |
 | `docs/04-devops/phase4-build-log.md` | M | thêm liên kết tới file này |
 
+## Phần D1 — Thư viện .NET dùng chung: phân quyền (SHR-22, SHR-23, SHR-24) ✅
+1. **Mục tiêu:** dev không phải tự viết logic phân quyền; mọi service dùng một engine đọc đúng `contracts/authz/matrix.yaml` (NFR-SEC2). Chọn làm phần này trước vì là logic thuần, kiểm thử được hoàn toàn và mọi endpoint lâm sàng đều cần.
+2. **Việc đã làm (theo thứ tự):**
+   1. Thêm `YamlDotNet 16.3.0` vào `Directory.Packages.props` (quản lý phiên bản tập trung).
+   2. Tạo `libs/dotnet/Shp.Authorization`: `AuthzMatrix` (nạp YAML + kiểm bất biến an toàn giống `validate_authz.py`), `Model.cs` (`Principal`, `ResourceContext`, `AuthzDecision`, tên predicate), `AuthorizationEngine` (hàm thuần `Decide`).
+   3. Nhúng `contracts/authz/matrix.yaml` vào assembly (`EmbeddedResource`), nên service luôn chạy đúng bản đã review.
+   4. Tạo `libs/dotnet/Shp.Authorization.Tests` với test **sinh từ chính ma trận** (mỗi rule: cho phép khi đủ điều kiện, từ chối khi thiếu từng điều kiện; mọi cặp role không có rule bị từ chối kể cả khi mọi predicate thỏa).
+   5. Tạo `libs/dotnet/Shp.Libs.slnx` gom các thư viện; thêm workflow `libs-dotnet.yml`.
+3. **Thay đổi (commit: xem cuối mục):**
+
+| File | | Nội dung |
+|---|---|---|
+| `Directory.Packages.props` | M | thêm `<PackageVersion Include="YamlDotNet" Version="16.3.0" />` |
+| `libs/dotnet/Shp.Authorization/Shp.Authorization.csproj` | A | tham chiếu YamlDotNet; nhúng matrix.yaml với LogicalName `matrix.yaml` |
+| `libs/dotnet/Shp.Authorization/AuthzMatrix.cs` | A | nạp + kiểm: id trùng, role/predicate/purpose lạ, denyAll, admin/dpo không chạm lâm sàng, dpo chỉ Audit, breakglass chỉ doctor, own chỉ patient, action không có rule |
+| `libs/dotnet/Shp.Authorization/Model.cs` | A | `Principal(Subject, Roles, FhirUserId)`, `ResourceContext` (dữ kiện đã tra cứu), `AuthzDecision(Allowed, RuleId, Purpose, Fields, Hide, DenyReason)` |
+| `libs/dotnet/Shp.Authorization/AuthorizationEngine.cs` | A | quy tắc: mặc định từ chối; rule đầu tiên theo thứ tự file thỏa thì Allow (nên care → purpose TREAT, đứng trước break-glass → ETREAT); thiếu dữ kiện = predicate không thỏa; `before-2h` tính bằng `TimeProvider`; lý do từ chối: `no-rule`, `no-care-relationship`, `unmet-<predicate>`, `role-not-allowed` |
+| `libs/dotnet/Shp.Authorization.Tests/*` | A | 236 test |
+| `libs/dotnet/Shp.Libs.slnx` | A | ServiceDefaults + Authorization + Tests |
+| `.github/workflows/libs-dotnet.yml` | A | gọi `dotnet-ci` (format, build cảnh báo=lỗi, test, coverage ≥ 70%) |
+
+4. **Cách dùng cho dev (task SHR-25 còn lại cho dev):** service tra cứu dữ kiện (quan hệ điều trị, break-glass, trạng thái encounter...) → dựng `ResourceContext` → `engine.Decide(principal, "Appointment", "cancel", ctx)`. Nếu `Allowed=false`: trả 403 và phát audit với `DenyReason`.
+5. **Lệnh làm lại / kiểm chứng:**
+```bash
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release        # mong đợi: Passed 236, Failed 0
+cd libs/dotnet && dotnet format --verify-no-changes       # mong đợi: không in gì
+```
+6. **Kiểm chứng bằng đột biến (đã làm):** tạm sửa engine rồi chạy test: `own` luôn đúng → 10 test đỏ; cửa sổ hủy 2h thành 1h → 2 test đỏ. Đột biến thứ ba (predicate lạ → cho phép) **không bị bắt**, vì bộ nạp đã từ chối predicate lạ trước khi tới engine: đây là nhánh phòng thủ, không thể chạm tới qua ma trận hợp lệ.
+7. **Lỗi gặp và cách sửa:** test `BG-START-DOC` (`not-care`) đỏ vì dựng ngữ cảnh sai (`care` và `not-care` loại trừ nhau) → thêm tham số `notCareFails` cho hàm dựng ngữ cảnh trong test; không sửa engine.
+8. **Ảnh hưởng tới kế hoạch:** SHR-22/23/24 (do dev) đã được SA làm sẵn; dev chỉ còn SHR-25 (endpoint filter), SHR-26 (sinh test cho từng endpoint), SHR-27 (audit mỗi quyết định). Chưa đổi chủ sở hữu trong `tools/plan` (xem mục D-next).
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
-| D1 | Thư viện dùng chung cho dev (`libs/dotnet`): xác thực JWT + role + identity link, thực thi `matrix.yaml`, audit middleware, outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | ⏳ |
+| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (xem Phần D1)**; còn: xác thực JWT + identity link, audit middleware, outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |
