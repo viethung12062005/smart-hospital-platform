@@ -205,7 +205,7 @@ cd libs/dotnet && dotnet format --verify-no-changes       # không in gì
    4. Mở rộng `Shp.Web` (tham chiếu thêm `Shp.Events`, `Shp.ServiceDefaults`): `Auth/AuthzEndpoint.cs`.
    5. Mở rộng `Shp.Web.Tests` (29 test, thêm 10) và `Shp.Libs.slnx`.
    6. Chuyển SHR-06/09/25/27 sang SA, ghi trạng thái.
-3. **Thay đổi (commit COMMIT_D3):**
+3. **Thay đổi (commit c81d3ec):**
 
 | File | | Nội dung |
 |---|---|---|
