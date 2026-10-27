@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Shp.Gateway.Api</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../../libs/dotnet/Shp.ServiceDefaults/Shp.ServiceDefaults.csproj" />
+    <PackageReference Include="Yarp.ReverseProxy" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Shp.Gateway.Tests" />
+  </ItemGroup>
+</Project>

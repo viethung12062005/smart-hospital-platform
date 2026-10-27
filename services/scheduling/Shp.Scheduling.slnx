@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/libs/">
+    <Project Path="../../libs/dotnet/Shp.ServiceDefaults/Shp.ServiceDefaults.csproj" />
+  </Folder>
+  <Project Path="src/Shp.Scheduling.Api/Shp.Scheduling.Api.csproj" />
+  <Project Path="tests/Shp.Scheduling.Tests/Shp.Scheduling.Tests.csproj" />
+</Solution>

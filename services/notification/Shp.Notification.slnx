@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/libs/">
+    <Project Path="../../libs/dotnet/Shp.ServiceDefaults/Shp.ServiceDefaults.csproj" />
+  </Folder>
+  <Project Path="src/Shp.Notification.Api/Shp.Notification.Api.csproj" />
+  <Project Path="tests/Shp.Notification.Tests/Shp.Notification.Tests.csproj" />
+</Solution>
