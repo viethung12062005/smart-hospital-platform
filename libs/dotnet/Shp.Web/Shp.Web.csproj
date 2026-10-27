@@ -3,5 +3,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <ProjectReference Include="../Shp.Authorization/Shp.Authorization.csproj" />
+    <ProjectReference Include="../Shp.Events/Shp.Events.csproj" />
+    <ProjectReference Include="../Shp.ServiceDefaults/Shp.ServiceDefaults.csproj" />
   </ItemGroup>
 </Project>

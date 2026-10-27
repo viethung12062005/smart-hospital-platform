@@ -196,10 +196,56 @@ cd libs/dotnet && dotnet format --verify-no-changes       # không in gì
    - Endpoint `GET /internal/v1/identity/{subject}` phía clinical là task của dev; token workload identity cho `HttpIdentityLinkClient` chưa có.
    - Tải kế hoạch: sau khi chuyển các task đã xong, D1 chỉ còn 11h ở W2 và 10h ở W3; người lập lịch có thể kéo việc sớm hơn nếu phụ thuộc cho phép.
 
+## Phần D3 — Thư viện .NET dùng chung: CloudEvents, audit, filter phân quyền gắn endpoint (SHR-06, SHR-09, SHR-25, SHR-27)
+1. **Mục tiêu:** (a) mọi event dùng cùng một envelope và được kiểm theo schema trong `contracts/events`; (b) mọi truy cập dữ liệu bệnh nhân, **kể cả bị từ chối**, sinh bản ghi audit đúng quy tắc (không PII, IP bị che); (c) dev gắn phân quyền vào endpoint bằng **một dòng**, và quên phân quyền làm test đỏ.
+2. **Việc đã làm (theo thứ tự):**
+   1. Thêm `JsonSchema.Net 7.3.4` vào `Directory.Packages.props` (đã thử khôi phục gói trước khi dùng).
+   2. Tạo `libs/dotnet/Shp.Events` (nhúng toàn bộ schema trong `contracts/events/**`, trừ file ví dụ): `CloudEvent`, `CloudEvents.Create`, `EventSchemas.Validate`, thư mục `Audit/`.
+   3. Tạo `libs/dotnet/Shp.Events.Tests` (42 test).
+   4. Mở rộng `Shp.Web` (tham chiếu thêm `Shp.Events`, `Shp.ServiceDefaults`): `Auth/AuthzEndpoint.cs`.
+   5. Mở rộng `Shp.Web.Tests` (29 test, thêm 10) và `Shp.Libs.slnx`.
+   6. Chuyển SHR-06/09/25/27 sang SA, ghi trạng thái.
+3. **Thay đổi (commit COMMIT_D3):**
+
+| File | | Nội dung |
+|---|---|---|
+| `Directory.Packages.props` | M | + `JsonSchema.Net 7.3.4` |
+| `libs/dotnet/Shp.Events/Shp.Events.csproj` | A | nhúng `contracts/events/**/*.json` (LogicalName `events/<ctx>/<event>.v1.json`) |
+| `libs/dotnet/Shp.Events/CloudEvent.cs` | A | envelope; `CloudEvents.Create(service, type, subject, data)`: id UUIDv7, `source=/services/<service>`, `dataschema` suy từ type, `traceparent` từ Activity, giới hạn 64 KB, bỏ trường null |
+| `libs/dotnet/Shp.Events/EventSchemas.cs` | A | `Validate(evt)`: kiểm envelope + data (có kiểm `format`); type lạ là lỗi; `KnownTypes` |
+| `libs/dotnet/Shp.Events/Audit/AuditRecord.cs` | A | bản ghi E11, hằng số action/outcome; `ToCloudEvent()` |
+| `libs/dotnet/Shp.Events/Audit/AuditRecordBuilder.cs` | A | che IP (IPv4 `a.b.c.x`, IPv6 3 nhóm đầu), rút gọn user-agent (120), `reason` ≤ 200, **`resource` chỉ cho loại/id/TÊN tham số** (giá trị tìm kiếm bị từ chối) |
+| `libs/dotnet/Shp.Events/Audit/IAuditSink.cs` | A | interface + `InMemoryAuditSink` (production sẽ là sink ghi outbox, SHR-07) |
+| `libs/dotnet/Shp.Events/Audit/AuthzAudit.cs` | A | `FromDecision`: ánh xạ hành động ma trận → hành động audit (19 hành động); outcome success/denied/error; role đại diện ưu tiên dpo>admin>doctor>nurse>patient |
+| `libs/dotnet/Shp.Web/Auth/AuthzEndpoint.cs` | A | `AddShpAuthorization()`; `RequireShpAuthz(resource, action, contextFactory?, denyAsNotFound?)`; `GetShpDecision()` (để áp `Fields`/`Hide`); `FindUnprotectedEndpoints()`; `[ShpPublicEndpoint]` |
+| `libs/dotnet/Shp.Web/Shp.Web.csproj` | M | + tham chiếu Shp.Events, Shp.ServiceDefaults |
+| `libs/dotnet/Shp.Events.Tests/*`, `libs/dotnet/Shp.Web.Tests/*`, `libs/dotnet/Shp.Libs.slnx` | A/M | test mới |
+| `tools/plan/*`, `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | SHR-06/09/25/27 → SA; trạng thái; sinh lại |
+
+4. **Hành vi của filter (để dev biết không phải tự làm):** từ chối → ghi audit `denied` + lý do → 403 `forbidden` / `no-care-relationship` (hoặc 404 nếu `denyAsNotFound`); cho phép → chạy handler rồi ghi audit `success` (kể cả khi handler ném lỗi nghiệp vụ 409/422); lỗi bất ngờ → audit `error` rồi 500 không lộ chi tiết; chưa đăng nhập → 401, không audit.
+5. **Dev dùng:**
+```csharp
+builder.Services.AddShpAuthorization();                       // + AddSingleton<IAuditSink, ...>() do service chọn
+app.MapPost("/fhir/Appointment/{id}/$cancel", Cancel).RequireShpAuthz("Appointment", "cancel", LoadAppointmentFacts);
+// test của service:  Assert.Empty(factory.Services.FindUnprotectedEndpoints());
+// test hợp đồng producer: Assert.Empty(EventSchemas.Validate(CloudEvents.Create("scheduling", "shp.scheduling.appointment-booked.v1", subject, payload)));
+```
+6. **Kiểm chứng:**
+```bash
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release     # Shp.Authorization 236, Shp.Events 42, Shp.Web 29: tất cả passed
+cd libs/dotnet && dotnet format --verify-no-changes    # không in gì
+```
+   **Đột biến (đã làm, cả 5 bị bắt):** bỏ audit khi từ chối; luôn trả `forbidden` (mất mã `no-care-relationship`); đưa giá trị query vào `resource` audit; tắt kiểm `format` của schema; tắt che IP. Một lần đột biến đầu bị lỗi biên dịch nên không hợp lệ, đã làm lại.
+7. **Lỗi gặp và cách sửa:** `TheoryData` không liệt kê trực tiếp được → tách hàm trả mảng đường dẫn; LogicalName của resource nhúng dùng `%(RecursiveDir)` nên chuẩn hóa dấu `\` thành `/` cho Windows.
+8. **Giới hạn đã biết:**
+   - SHR-09 `partial`: chưa có sink ghi outbox (SHR-07, bước kế tiếp) nên audit chưa được lưu bền; chưa có middleware audit riêng cho đọc/tìm kiếm FHIR ngoài `RequireShpAuthz`.
+   - IP lấy từ `RemoteIpAddress`: sau gateway cần cấu hình `ForwardedHeaders` (việc nối vào service).
+   - Chưa nối thư viện vào 6 service .NET.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
-| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (D1), lỗi + JWT + identity ✅ (D2)**; còn: audit emitter, CloudEvents envelope, outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
+| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (D1), lỗi + JWT + identity ✅ (D2)**; **CloudEvents + audit + filter phân quyền ✅ (D3)**; còn: outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |

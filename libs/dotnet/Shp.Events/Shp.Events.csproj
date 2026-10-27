@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" />
+    <ProjectReference Include="../Shp.Authorization/Shp.Authorization.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Schema event nhúng vào thư viện: producer và test hợp đồng luôn dùng đúng bản trong contracts/events. -->
+    <EmbeddedResource Include="../../../contracts/events/**/*.json" Exclude="../../../contracts/events/**/*.example.json"
+                      LogicalName="events/%(RecursiveDir)%(Filename)%(Extension)" />
+    <InternalsVisibleTo Include="Shp.Events.Tests" />
+  </ItemGroup>
+</Project>

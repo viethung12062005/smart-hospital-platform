@@ -124,4 +124,13 @@ SA_TASKS = [
      "Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường", "SA", 3, "LOC-02", "P1", "07 §2, 15 §1"),
     ("SHR-21", "US-007", "Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây",
      "Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503", "SA", 3, "SHR-20", "P1", "15 §8, C2"),
+    # Chuyển sang SA: envelope event, audit emitter, filter phân quyền gắn endpoint.
+    ("SHR-06", "ENABLER", "CloudEvents envelope + validate JSON Schema + helper test hợp đồng",
+     "Event sai schema bị từ chối; helper dùng cho mọi service", "SA", 3, "ARC-07", "P2", "13 §1"),
+    ("SHR-09", "US-047", "Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR",
+     "Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số", "SA", 4, "SHR-06", "S1", "E11(pub), 05 §1"),
+    ("SHR-25", "ENABLER", "Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc'",
+     "Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước", "SA", 4, "SHR-24", "P2", "15 §3"),
+    ("SHR-27", "US-047", "Authz: phát audit cho mọi quyết định (cho phép và từ chối)",
+     "Mỗi Deny sinh audit outcome=denied kèm mã lý do; test", "SA", 2, "SHR-24, SHR-09", "S1", "05 §1, E11(pub)"),
 ]

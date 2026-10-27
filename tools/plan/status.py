@@ -13,4 +13,8 @@ STATUS = {
     "SHR-02": ("done", "55c56a5", "libs/dotnet/Shp.Web/Errors: ErrorCatalog (27 mã, test đối chiếu bảng §5 của 07), ShpException, ErrorWriter (OperationOutcome / Problem Details), middleware"),
     "SHR-20": ("partial", "55c56a5", "libs/dotnet/Shp.Web/Auth: JWT Bearer + map roles + MFA nhân viên; test bằng token ký cục bộ; CHƯA thử với Keycloak/Entra thật"),
     "SHR-21": ("done", "55c56a5", "IdentityResolver (cache 60s, miss 5s) + HttpIdentityLinkClient + middleware; chưa có endpoint nội bộ phía clinical (task của dev)"),
+    "SHR-06": ("done", "COMMIT", "libs/dotnet/Shp.Events: CloudEvent + CloudEvents.Create (uuidv7, traceparent, ≤64KB) + EventSchemas.Validate (schema nhúng từ contracts/events); 11 ví dụ hợp đồng được kiểm"),
+    "SHR-09": ("partial", "COMMIT", "AuditRecord/AuditRecordBuilder (che IP, chặn giá trị trong resource) + IAuditSink; CHƯA có sink ghi outbox (SHR-07) và chưa có middleware audit riêng cho FHIR search/read ngoài RequireShpAuthz"),
+    "SHR-25": ("done", "COMMIT", "Shp.Web: RequireShpAuthz (filter) + FindUnprotectedEndpoints (test chặn quên phân quyền); 403/404 theo quy ước"),
+    "SHR-27": ("done", "COMMIT", "AuthzAudit.FromDecision + filter ghi audit cho cho-phép, từ-chối, lỗi; mọi hành động ma trận có ánh xạ audit"),
 }
