@@ -6,6 +6,16 @@
 > Ký hiệu trạng thái: ✅ xong và đã kiểm chứng · 🟡 xong nhưng chưa chạy được ở môi trường thật · ⏳ chưa làm · 👤 cần bạn làm.
 > Chuẩn bị chung để chạy lệnh: Python 3.12+, .NET SDK 10, Docker, `pip install -r tools/contracts/requirements.txt`.
 
+## Mẫu ghi mỗi bước (bắt buộc cho mọi bước từ nay)
+Mỗi bước phải có đủ 7 mục, để truy vết và làm lại được:
+1. **Mục tiêu**: vì sao làm.
+2. **Việc đã làm**: các hành động theo thứ tự.
+3. **Thay đổi**: bảng `File | A/M/D | Nội dung thay đổi` (A thêm, M sửa, D xóa). Mô tả **giá trị cụ thể đổi từ gì sang gì** với file sửa.
+4. **Lệnh làm lại**.
+5. **Kiểm chứng** và kết quả mong đợi.
+6. **Lỗi gặp và cách sửa** (nếu có).
+7. **Commit** và lệnh xem đúng thay đổi: `git show --stat <commit>` (tổng quan), `git show <commit> -- <file>` (chi tiết một file).
+
 ## Phần A — Nền tảng đã dựng trước đó (chi tiết xem build-log)
 | # | Bước | Trạng thái | Commit |
 |---|---|---|---|
@@ -22,6 +32,23 @@
 | B1 | Blob local = Azurite (cùng Azure SDK với cloud); WORM kiểm trên UAT | ADR-0008/0011, task DOC-02, AUD-08, LOC-01 | 621de97 |
 | B2 | ADR-0012 Accepted: giữ .NET + Python | `adr/0012-language-per-service.md` | 621de97 |
 | B3 | ADR-0013: DeepSeek (API gốc) chính, Gemini free tier dự phòng, embedding bge-m3 local trong cluster, bỏ Claude và mọi model Azure | `adr/0013-*.md`, `06-data-ai.md`, `12-api-ai.md`, `14-sequences.md`, NFR-C2, task PY-07/AI-04/AI-06/AI-23/IAC-19 | eb38e94 |
+
+**Thay đổi (commit 621de97 cho B1+B2; eb38e94 cho B3)** — xem bằng `git show --stat 621de97` và `git show --stat eb38e94`
+
+| File | | Nội dung thay đổi |
+|---|---|---|
+| `tools/plan/tasks_sa.py` (LOC-01) | M | "RabbitMQ, MinIO, Keycloak" → "RabbitMQ, Azurite, Keycloak" |
+| `tools/plan/tasks_dev.py` (DOC-02) | M | "Azure Blob (user delegation SAS) + MinIO" → "Azure Blob SDK một code cho local Azurite và cloud; chọn cách ký SAS qua cấu hình"; test "với MinIO" → "với Azurite (Testcontainers)" |
+| `tools/plan/tasks_dev.py` (AUD-08) | M | "xanh trong CI (MinIO object lock)" → chuỗi hash kiểm trong CI với Azurite, WORM kiểm bằng smoke test trên UAT |
+| `docs/03-architecture/adr/0008-…`, `0011-…` | M | bỏ MinIO; blob lifecycle "→ MinIO" → "Cold sau 180 ngày"; local dùng Azurite |
+| `docs/03-architecture/adr/0012-…` | M | `Proposed` → `Accepted (2026-10-27)`; câu "SDK Azure OpenAI" → "client OpenAI-compatible/Gemini" |
+| `docs/03-architecture/adr/0013-llm-deepseek-gemini-local-embedding.md` | A | ADR mới: bảng chuỗi model, redact PII bắt buộc, embedding local |
+| `docs/03-architecture/adr/0006-…` | M | trạng thái ghi rõ bảng chuỗi model bị ADR-0013 thay |
+| `docs/03-architecture/detailed-design/06-data-ai.md` | M | embedding `text-embedding-3-small` 1536 chiều → `bge-m3` 1024 chiều (`dimensions: 1536` → `1024`); bỏ khối `semantic` của AI Search; cấu hình router: azure-openai/anthropic → deepseek/gemini/ollama + `embedding` |
+| `12-api-ai.md`, `14-sequences.md`, `overview.md` | M | tên provider/model trong ví dụ và sơ đồ |
+| `docs/02-requirements/non-functional-requirements.md` | M | NFR-C2: ≤ 0,02 → ≤ 0,005 USD/request RAG, Gemini chỉ trong free tier |
+| `tools/plan/tasks_dev.py`, `tasks_sa.py` | M | PY-07 (adapter DeepSeek/Gemini/Ollama), AI-04 (bge-m3), AI-06 (RRF, bỏ semantic ranker), AI-23 (Tesseract), IAC-19 (node pool `ai` + key LLM trong Key Vault, thay module Azure OpenAI) |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** bằng `python3 -I tools/plan/build.py` (không sửa tay) |
 
 Làm lại B1–B3: sửa các file trên theo ADR, rồi `python3 -I tools/plan/build.py` (phải in `OK: 74 stories, 317 tasks`).
 
@@ -55,6 +82,21 @@ Thứ tự làm và lý do: phân quyền → event → API → terminology (dev
 - `tools/contracts/check_all.sh`: chạy test, 4 bộ kiểm, rồi sinh lại event/OpenAPI và `git diff --exit-code` (phát hiện file sinh bị sửa tay hoặc lệch bộ sinh).
 - `.github/workflows/contracts.yml`: chạy `check_all.sh` khi `contracts/**`, `tools/contracts/**` hoặc thiết kế chi tiết đổi (action ghim theo SHA).
 - **Kiểm chứng:** `tools/contracts/check_all.sh` → `ALL CONTRACT CHECKS PASSED`; `actionlint` sạch.
+
+**Thay đổi cho C1–C5 (commit cd8c789)** — xem bằng `git show --stat cd8c789`
+
+| File / thư mục | | Nội dung |
+|---|---|---|
+| `contracts/authz/matrix.yaml` | A | 64 rule, 16 resource, 9 predicate, 2 denyAll |
+| `contracts/events/envelope.json` + `contracts/events/<ctx>/<event>.v1{,.example}.json` (23 file) | A | **sinh bởi** `gen_events.py` |
+| `contracts/openapi/{scheduling,clinical,document,notification,audit,ml,ai}.yaml` | A | **sinh bởi** `gen_openapi.py` (83 operation) |
+| `contracts/terminology/code-systems.yaml` | A | 6 code system, 49 mã |
+| `tools/contracts/gen_events.py`, `gen_openapi.py` | A | bộ sinh (nguồn sự thật của file sinh) |
+| `tools/contracts/validate_{authz,events,openapi,terminology}.py`, `test_validators.py`, `check_all.sh`, `requirements.txt` | A | bộ kiểm + test của bộ kiểm |
+| `.github/workflows/contracts.yml` | A | CI cho hợp đồng, action ghim SHA |
+| `docs/03-architecture/detailed-design/12-api-ai.md` | M | dòng AI9: `GET/POST/PUT /api/v1/ai/kb/documents`, `POST .../{id}/approve`, `POST .../{id}/retire` → 5 endpoint đầy đủ đường dẫn |
+| `docs/04-devops/progress-log.md` | A | file này |
+| `docs/04-devops/phase4-build-log.md` | M | thêm liên kết tới file này |
 
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
