@@ -16,7 +16,7 @@ NFR (P1–P8, S1, A1) và chi phí vận hành của một nhóm 3 dev.
 | document | Cấp SAS, theo dõi trạng thái quét | Go | Giữ **.NET**: tải nhẹ, Azure SDK .NET đầy đủ |
 | notification | Worker hàng đợi, `SKIP LOCKED`, gửi kênh | Go | Giữ **.NET**: MassTransit (RabbitMQ ↔ Service Bus) không có bản tương đương trong Go |
 | audit | Ghi append-only, chuỗi hash, truy vấn KQL | Go, Rust | Giữ **.NET**: thông lượng thấp, cần chung mô hình event |
-| ai | LLM router, RAG, trích xuất | TypeScript | Giữ **Python**: hệ sinh thái AI/eval, SDK Azure OpenAI/AI Search |
+| ai | LLM router, RAG, trích xuất | TypeScript | Giữ **Python**: hệ sinh thái AI/eval, SDK AI Search, client OpenAI-compatible/Gemini |
 | ml | Huấn luyện, phục vụ mô hình, drift | — | Giữ **Python**: scikit-learn/LightGBM, MLflow, pandera |
 
 ## Quyết định

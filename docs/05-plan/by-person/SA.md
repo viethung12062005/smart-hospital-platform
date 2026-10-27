@@ -125,7 +125,7 @@ Tổng: **109 task, 365 giờ**.
 | ☐ | GOV-06 | Dependabot cho actions, nuget, pip, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | 2 | GOV-01 | US-070 |
 | ☐ | GW-02 | Xác thực + rate limit theo người dùng | Token sai -> 401; vượt hạn mức -> 429 | 4 | GW-01, SHR-20 | US-068 |
 | ☐ | IAC-18 | Module Defender for Storage + Event Grid → queue cho kết quả quét | Blob mới được quét; kết quả vào queue để document service xử lý | 3 | IAC-12 | US-036 |
-| ☐ | IAC-19 | Module Azure OpenAI + Document Intelligence và các deployment | Deployment chat + embedding; truy cập bằng Managed Identity, không API key | 4 | IAC-05 | US-055 |
+| ☐ | IAC-19 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values | 4 | IAC-05 | US-055 |
 | ☐ | OBS-01 | Dashboard RED chuẩn cho mọi service | Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLO + cảnh báo burn rate | SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate | 3 | OBS-01 | ENABLER |
 
