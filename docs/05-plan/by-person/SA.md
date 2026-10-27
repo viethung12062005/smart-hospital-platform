@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **119 task, 397 giờ**. Đã xong: **10**, làm một phần: **4** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -45,7 +45,7 @@ Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑
 | ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 4bf82ef: libs/dotnet/Shp.Authorization/AuthzMatrix.cs]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
 | ☑ | SHR-23 | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[xong, commit 4bf82ef: Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)]** | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | 4 | SHR-22 | ENABLER |
 
-## Tuần 3 — 50 giờ
+## Tuần 3 — 57 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -59,9 +59,11 @@ Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑
 | ☐ | IAC-05 | Module network | VNet, subnet AKS/private endpoint/Postgres (delegated), private DNS zones; validate + tflint sạch | 5 | IAC-01 | ENABLER |
 | ☐ | IAC-06 | Module monitoring | Log Analytics, Azure Monitor workspace (Prometheus), Managed Grafana, App Insights | 4 | IAC-05 | ENABLER |
 | ☐ | IAC-07 | Module aks | Azure CNI overlay + Cilium, Workload Identity, KV CSI, Azure RBAC, tắt local account, 3 node pool, 3 zone | 8 | IAC-05, IAC-06 | ENABLER |
+| ☑ | SHR-06 | CloudEvents envelope + validate JSON Schema + helper test hợp đồng **[xong, commit c81d3ec: libs/dotnet/Shp.Events: CloudEvent + CloudEvents.Create (uuidv7, traceparent, ≤64KB) + EventSchemas.Validate (schema nhúng từ contracts/events); 11 ví dụ hợp đồng được kiểm]** | Event sai schema bị từ chối; helper dùng cho mọi service | 3 | ARC-07 | ENABLER |
 | ☑ | SHR-24 | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse **[xong, commit 4bf82ef: AuthorizationEngine.Decide: default-deny, fields, purpose, 236 test]** | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | 3 | SHR-23 | ENABLER |
+| ☑ | SHR-25 | Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc' **[xong, commit c81d3ec: Shp.Web: RequireShpAuthz (filter) + FindUnprotectedEndpoints (test chặn quên phân quyền); 403/404 theo quy ước]** | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | 4 | SHR-24 | ENABLER |
 
-## Tuần 4 — 48 giờ
+## Tuần 4 — 54 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -85,6 +87,8 @@ Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑
 | ☐ | SCF-05 | Scaffold audit worker (khung code, pipeline, values, Blob WORM/Log Analytics) | Service từ template; svc-audit.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☐ | SCF-06 | Scaffold ai-service FastAPI (khung code, pipeline, values, node pool ai) | FastAPI từ template; svc-ai.yml; node pool ai | 2 | LOC-04, CIT-08 | ENABLER |
 | ☐ | SCF-07 | Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối PostgreSQL/bus/MLflow) | Service mẫu chạy qua pipeline template | 2 | LOC-04, CIT-08 | ENABLER |
+| ◐ | SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR **[làm một phần, commit c81d3ec: AuditRecord/AuditRecordBuilder (che IP, chặn giá trị trong resource) + IAuditSink; CHƯA có sink ghi outbox (SHR-07) và chưa có middleware audit riêng cho FHIR search/read ngoài RequireShpAuthz]** | Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số | 4 | SHR-06 | US-047 |
+| ☑ | SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) **[xong, commit c81d3ec: AuthzAudit.FromDecision + filter ghi audit cho cho-phép, từ-chối, lỗi; mọi hành động ma trận có ánh xạ audit]** | Mỗi Deny sinh audit outcome=denied kèm mã lý do; test | 2 | SHR-24, SHR-09 | US-047 |
 
 ## Tuần 5 — 40 giờ
 
@@ -135,7 +139,7 @@ Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑
 | ☐ | OBS-01 | Dashboard RED chuẩn cho mọi service | Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLO + cảnh báo burn rate | SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate | 3 | OBS-01 | ENABLER |
 
-## Tuần 8 — 34 giờ
+## Tuần 8 — 26 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -145,23 +149,23 @@ Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑
 | ☐ | MLO-01 | Pipeline huấn luyện ML trong CI + canary deploy model | Chạy khi dữ liệu/code đổi; artifact model; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | Cùng image + dataset hash + seed cho cùng model; image được ký | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback | Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường | 6 | GOP-04, SCF-07, ML-25 | US-073 |
-| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
-| ☐ | MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại | 3 | ML-10, OBS-01 | US-065 |
 | ☐ | OBS-03 | Cảnh báo DLQ và lỗi pipeline | Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded | 2 | OBS-01 | ENABLER |
 | ☐ | PRD-10 | Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x) | Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên UAT (cỡ prod) | 4 | SCH-14 | US-068 |
 | ☐ | PRD-11 | KEDA cron scale trước 07:00 + HPA cho scheduling | Values prod/uat scale trước đợt mở slot | 1 | SCF-01, GOP-04 | US-068 |
 
-## Tuần 9 — 2 giờ
+## Tuần 9 — 5 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ARC-18 | Sprint review + planning S6 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
+| ☐ | MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại | 3 | ML-10, OBS-01 | US-065 |
 
-## Tuần 10 — 23 giờ
+## Tuần 10 — 28 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ENV-06 | Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ | Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập | 4 | ENV-01, ENV-02, ENV-05 | US-070 |
+| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
 | ☐ | PRD-01 | Load test 1x/5x/10x + báo cáo | Chạy trên UAT ephemeral (cỡ prod); so với NFR-P/S | 6 | PRD-10, ENV-01 | US-068 |
 | ☐ | PRD-02 | Failure test | Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả | 6 | ENV-01 | US-069 |
 | ☐ | PRD-03 | Diễn tập backup/restore | PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO | 4 | ENV-01 | US-067 |
