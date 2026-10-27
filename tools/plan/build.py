@@ -1,7 +1,7 @@
 """Validate the plan and render docs.
 
 Run:  python3 -I tools/plan/build.py
-Reads stories.py, tasks_sa.py, tasks_dev.py. Writes:
+Reads stories.py, tasks_sa.py, tasks_dev.py, status.py. Writes:
   docs/02-requirements/user-stories.md
   docs/05-plan/backlog.md, docs/05-plan/backlog.csv
   docs/05-plan/by-person/{SA,D1,D2,D3}.md
@@ -17,6 +17,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from stories import ALL_API_IDS, ALL_FR_ACS, STORIES  # noqa: E402
 from tasks_dev import DEV_TASKS  # noqa: E402
+from status import STATUS  # noqa: E402
 from tasks_sa import SA_TASKS  # noqa: E402
 
 ROOT = HERE.parents[1]
@@ -246,18 +247,33 @@ def render_backlog(tasks: list[Task]) -> str:
     return "\n".join(out) + "\n"
 
 
+def mark(task_id: str) -> str:
+    state = STATUS.get(task_id, ("todo",))[0]
+    return {"done": "☑", "partial": "◐"}.get(state, "☐")
+
+
+def status_note(task_id: str) -> str:
+    if task_id not in STATUS:
+        return ""
+    state, commit, note = STATUS[task_id]
+    return f" **[{'xong' if state == 'done' else 'làm một phần'}, commit {commit}: {note}]**"
+
+
 def render_person(owner: str, tasks: list[Task]) -> str:
     mine = [t for t in tasks if t[4] == owner]
+    done_n = sum(1 for t in mine if STATUS.get(t[0], ("todo",))[0] == "done")
+    part_n = sum(1 for t in mine if STATUS.get(t[0], ("todo",))[0] == "partial")
     out = [f"# Việc của {PERSON[owner]}", "",
            "> Sinh tự động bằng `python3 -I tools/plan/build.py`. Mỗi task là một PR (tên nhánh `<ID>-mo-ta-ngan`). "
            "Làm đúng thứ tự tuần; task có phụ thuộc chưa xong thì không bắt đầu.", "",
            "**Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.", "",
-           f"Tổng: **{len(mine)} task, {sum(t[5] for t in mine)} giờ**.", ""]
+           f"Tổng: **{len(mine)} task, {sum(t[5] for t in mine)} giờ**. Đã xong: **{done_n}**, làm một phần: **{part_n}** "
+           "(☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).", ""]
     weeks = sorted({wk(t) for t in mine})
     for week in weeks:
         ws = sorted((t for t in mine if wk(t) == week), key=lambda t: t[0])
         out += [f"## Tuần {week} — {sum(t[5] for t in ws)} giờ", "", "| ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |", "|---|---|---|---|---|---|---|"]
-        out += [f"| ☐ | {t[0]} | {t[2]} | {t[3]} | {t[5]} | {t[6]} | {t[1]} |" for t in ws]
+        out += [f"| {mark(t[0])} | {t[0]} | {t[2]}{status_note(t[0])} | {t[3]} | {t[5]} | {t[6]} | {t[1]} |" for t in ws]
         out.append("")
     return "\n".join(out)
 
@@ -273,6 +289,7 @@ def write_csv(tasks: list[Task]) -> None:
 def main() -> int:
     tasks: list[Task] = list(SA_TASKS) + list(DEV_TASKS)
     errs = schedule(tasks) + validate(tasks)
+    errs += [f"status.py: task không tồn tại: {i}" for i in STATUS if i not in {t[0] for t in tasks}]
     if errs:
         print(f"{len(errs)} validation error(s):")
         for e in errs:

@@ -110,4 +110,11 @@ SA_TASKS = [
     ('MLO-04', 'US-074', 'Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit', 'Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng', 'SA', 5, 'ML-23, GOP-10', 'S5', '16-mlops §5'),
     ('MLO-05', 'US-065', 'Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps', 'Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại', 'SA', 3, 'ML-10, OBS-01', 'S5', 'NFR-O3'),
     ('ENV-06', 'US-070', 'Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ', 'Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập', 'SA', 4, 'ENV-01, ENV-02, ENV-05', 'H1', 'ADR-0011'),
+    # Chuyển từ D1 sang SA (2026-10-27): SA đã làm sẵn engine, dev chỉ còn SHR-25/26/27.
+    ("SHR-22", "ENABLER", "Authz: schema + loader + validator cho contracts/authz/matrix.yaml",
+     "Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test", "SA", 3, "ARC-19", "P1", "15 §3"),
+    ("SHR-23", "ENABLER", "Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care",
+     "Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập", "SA", 4, "SHR-22", "P1", "15 §2"),
+    ("SHR-24", "ENABLER", "Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse",
+     "Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng", "SA", 3, "SHR-23", "P2", "15 §2"),
 ]

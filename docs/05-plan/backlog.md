@@ -9,18 +9,18 @@ Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 | Tuần | SA | D1 | D2 | D3 |
 |---|---|---|---|---|
 | W1 | 42 |  |  |  |
-| W2 | 43 | 28 | 24 | 28 |
-| W3 | **47** | 7 | 27 | 28 |
+| W2 | **50** | 17 | 24 | 28 |
+| W3 | **50** | 10 | 27 | 28 |
 | W4 | **48** | 29 | 30 | 29 |
-| W5 | 40 | 29 | 29 | 30 |
-| W6 | 27 | 30 | 30 | 29 |
-| W7 | 42 | 30 | 30 | 30 |
-| W8 | 34 | 29 | 30 | 29 |
-| W9 | 2 | 26 | 27 | 30 |
+| W5 | 40 | 30 | 29 | 30 |
+| W6 | 27 | 29 | 30 | 29 |
+| W7 | 42 | 29 | 30 | 30 |
+| W8 | 34 | 30 | 30 | 29 |
+| W9 | 2 | 24 | 27 | 30 |
 | W10 | 23 | 4 | 8 | 22 |
 | W11 | 8 |  |  | 3 |
 | W12 | 9 |  |  |  |
-| **Tổng** | **365** | **212** | **235** | **258** |
+| **Tổng** | **375** | **202** | **235** | **258** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -225,16 +225,16 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | SHR-12 | US-035 | Idempotency-Key cho MongoDB (document service) | Cùng key → cùng kết quả; khác body 422 | D2 | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
 | SHR-20 | US-008, US-066 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | D1 | 3 | LOC-02 | P1 | 07 §2, 15 §1 |
 | SHR-21 | US-007 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | D1 | 3 | SHR-20 | P1 | 15 §8, C2 |
-| SHR-22 | ENABLER | Authz: schema + loader + validator cho contracts/authz/matrix.yaml | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | D1 | 3 | ARC-19 | P1 | 15 §3 |
-| SHR-23 | ENABLER | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | D1 | 4 | SHR-22 | P1 | 15 §2 |
-| SHR-24 | ENABLER | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | D1 | 3 | SHR-23 | P2 | 15 §2 |
-| SHR-25 | ENABLER | Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc' | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | D1 | 4 | SHR-24 | P2 | 15 §3 |
-| SHR-26 | ENABLER | Authz: bộ sinh test từ matrix.yaml (role × điều kiện) | Từ matrix sinh test Allow/Deny cho mọi ô; dùng được trong test của từng service | D1 | 4 | SHR-24 | P2 | 15 §3, NFR-SEC2 |
+| SHR-22 | ENABLER | Authz: schema + loader + validator cho contracts/authz/matrix.yaml | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | SA | 3 | ARC-19 | P1 | 15 §3 |
+| SHR-23 | ENABLER | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | SA | 4 | SHR-22 | P1 | 15 §2 |
 | SHR-28 | US-015 | Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay) | Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song | D1 | 4 | SHR-05 | P2 | 02 §3.1, 07 §3 |
 | SHR-06 | ENABLER | CloudEvents envelope + validate JSON Schema + helper test hợp đồng | Event sai schema bị từ chối; helper dùng cho mọi service | D2 | 3 | ARC-07 | P2 | 13 §1 |
 | SHR-07 | ENABLER | Outbox relay dùng chung (store PostgreSQL và MongoDB), poll 1 giây, SKIP LOCKED | Bus chết rồi sống lại vẫn phát đủ; nhiều replica không trùng | D2 | 4 | SHR-06 | P2 | 13 §1 |
 | SHR-08 | ENABLER | Consumer nền tảng: inbox idempotent + MassTransit (RabbitMQ local, Service Bus cloud), retry/DLQ | Event trùng chỉ xử lý một lần; 5 lần giao rồi DLQ | D2 | 4 | SHR-06 | P2 | 13 §1 |
 | SHR-09 | US-047 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR | Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số | D2 | 4 | SHR-06 | S1 | E11(pub), 05 §1 |
+| SHR-24 | ENABLER | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | SA | 3 | SHR-23 | P2 | 15 §2 |
+| SHR-25 | ENABLER | Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc' | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | D1 | 4 | SHR-24 | P2 | 15 §3 |
+| SHR-26 | ENABLER | Authz: bộ sinh test từ matrix.yaml (role × điều kiện) | Từ matrix sinh test Allow/Deny cho mọi ô; dùng được trong test của từng service | D1 | 4 | SHR-24 | P2 | 15 §3, NFR-SEC2 |
 | SHR-27 | US-047 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) | Mỗi Deny sinh audit outcome=denied kèm mã lý do; test | D1 | 2 | SHR-24, SHR-09 | S1 | 05 §1, E11(pub) |
 
 ## PY — Thư viện dùng chung (Python)
@@ -267,32 +267,32 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | SCH-02 | US-015 | Migration V002: appointment, resource_history, outbox, idempotency_key, inbox | Chạy sạch; index unique một lịch hiệu lực mỗi slot tồn tại | D1 | 2 | SCH-01 | S1 | 02 §2 |
 | SCH-03 | US-009 | Schedule repository: tạo/đọc/tìm/sửa với version CAS và history | Sửa với version cũ thất bại; mỗi lần ghi có history; test integration | D1 | 4 | SCH-02, SHR-02 | S1 | 02, ADR-0003 |
 | SCH-04 | US-009, US-013 | API Schedule (S1-S4) + kiểm tra Practitioner/chuyên khoa qua interface (bản giả) + quy tắc authz | 201/400/409/403 đúng; bác sĩ chỉ thấy lịch của mình; thêm quy tắc vào matrix | D1 | 4 | SCH-03, SHR-25 | S1 | S1, S2, S3, S4 |
+| SCH-11 | US-012 | API block/unblock slot (S9, S10) | 409 slot-has-appointment khi slot busy; unblock sai trạng thái 409; If-Match | D1 | 3 | SCH-03, SHR-25 | S3 | S9, S10, AC-02.2 |
 | SCH-05 | US-010 | Template repository + API S5, S6 với validate (chia hết, không chồng giờ) | Thay toàn bộ mẫu trong một transaction; các trường hợp 400 có test | D1 | 4 | SCH-04 | S2 | S5, S6 |
 | SCH-06 | US-011 | Bộ sinh slot: múi giờ Asia/Ho_Chi_Minh, ON CONFLICT DO NOTHING | Mẫu 08:00-11:30 / 15 phút → đúng 14 slot free; chạy lại không trùng | D1 | 4 | SCH-05 | S2 | AC-02.1 |
+| SCH-07 | US-011 | API slots:generate (S7) + giới hạn ngày | to ≤ hôm nay + 30, ≤ 31 ngày, from ≥ hôm nay; kết quả created/skipped | D1 | 2 | SCH-06 | S2 | S7 |
 | SCH-09 | US-014 | Repository tìm slot với keyset pagination (specialty, practitioner, schedule, khoảng ngày) | Dùng ix_slot_free_by_specialty (EXPLAIN); phân trang ổn định | D1 | 4 | SCH-02, SHR-04 | S2 | 02 §4 |
-| SCH-11 | US-012 | API block/unblock slot (S9, S10) | 409 slot-has-appointment khi slot busy; unblock sai trạng thái 409; If-Match | D1 | 3 | SCH-03, SHR-25 | S3 | S9, S10, AC-02.2 |
 | SCH-12 | US-015 | $book bước 1: claim Idempotency-Key, advisory lock theo bệnh nhân, kiểm BR-03 | Bệnh nhân có 3 lịch tương lai → 422; hai request cùng bệnh nhân tuần tự | D1 | 4 | SCH-02, SHR-28 | S3 | 02 §3.1, AC-03.4 |
 | SCH-17 | US-013, US-018, US-019 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | Patient chỉ thấy của mình; bác sĩ chỉ của mình; Nurse tự do; test mọi vai trò | D1 | 4 | SCH-03, SHR-25 | S3 | S12, S13 |
 | SCH-21 | US-019 | API _history cho Appointment (S17) | Trả mọi phiên bản; chỉ Nurse/Admin | D1 | 2 | SCH-03 | S4 | S17 |
 | SCH-33 | US-009 | Nối client thật tới clinical (roles của Practitioner) thay cho bản giả trong SCH-04 | Test hợp đồng với clinical; Practitioner không có role chuyên khoa → 400 | D1 | 2 | SCH-04, CLN-12 | S2 | 09 §4 |
-| SCH-07 | US-011 | API slots:generate (S7) + giới hạn ngày | to ≤ hôm nay + 30, ≤ 31 ngày, from ≥ hôm nay; kết quả created/skipped | D1 | 2 | SCH-06 | S2 | S7 |
 | SCH-08 | US-011 | Job sinh slot hằng ngày 01:00 (một replica chạy nhờ advisory lock) | Hai replica chạy cùng lúc chỉ một thực hiện; test | D1 | 2 | SCH-06 | S2 | 02 §3.3 |
 | SCH-10 | US-014 | API tìm slot (S8): ép status/start cho bệnh nhân, 400 khi thiếu bộ lọc hoặc > 31 ngày | Patient không xem được slot không free; test bộ lọc | D1 | 3 | SCH-09, SHR-25 | S2 | S8 |
 | SCH-13 | US-015 | $book bước 2: compare-and-set slot, BR-04, tạo appointment, history, outbox appointment-booked | Slot busy/ngoài cửa sổ → 409/422; commit gồm history và outbox | D1 | 4 | SCH-12 | S3 | E1(pub), 02 §3.1 |
 | SCH-14 | US-015 | API $book (S11): parse Parameters, kiểm patient=own, gợi ý 3 slot khi 409 | 201/200(replay)/400/403/404/409/422/428 đúng; Nurse ép channel=staff | D1 | 4 | SCH-13, SHR-25 | S3 | S11, AC-03.6 |
 | SCH-15 | US-015 | Test idempotency end-to-end: cùng key+body, cùng key khác body | AC-03.2 và AC-03.3 xanh trong CI | D1 | 3 | SCH-14 | S3 | AC-03.2, AC-03.3 |
 | SCH-16 | US-015 | Test đồng thời: 50 yêu cầu đặt một slot (Testcontainers) | Đúng 1 thành công, 49 nhận 409; không lịch hẹn trùng (AC-03.1) | D1 | 3 | SCH-14 | S3 | AC-03.1, NFR-P2 |
-| SCH-20 | US-021 | API $check-in (S16): cửa sổ -60/+30 phút, chỉ Nurse, outbox appointment-checked-in | Ngoài cửa sổ 422; không phải Nurse 403 | D1 | 3 | SCH-13, SHR-25 | S4 | S16, E4(pub) |
-| SCH-22 | US-022 | API nội bộ đọc lịch hẹn (S18) với service token | Chỉ clinical/ml gọi được; role khác 403; audit actor=system | D1 | 2 | SCH-17 | S4 | S18 |
 | SCH-18 | US-016, US-019 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | <2h Patient 422, Nurse được; không còn booked → 409; slot trả đúng | D1 | 4 | SCH-13 | S4 | S14, E2(pub), AC-03.5 |
+| SCH-22 | US-022 | API nội bộ đọc lịch hẹn (S18) với service token | Chỉ clinical/ml gọi được; role khác 403; audit actor=system | D1 | 2 | SCH-17 | S4 | S18 |
+| SCH-19 | US-017, US-019 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | Lỗi giữa chừng giữ nguyên lịch cũ; phát appointment-rescheduled | D1 | 4 | SCH-18 | S4 | S15, E3(pub) |
+| SCH-20 | US-021 | API $check-in (S16): cửa sổ -60/+30 phút, chỉ Nurse, outbox appointment-checked-in | Ngoài cửa sổ 422; không phải Nurse 403 | D1 | 3 | SCH-13, SHR-25 | S4 | S16, E4(pub) |
 | SCH-23 | US-015 | Relay outbox: bổ sung ageBand từ clinical (cache 24 giờ, lỗi → unknown) | Clinical lỗi không chặn phát event; ageBand=unknown | D1 | 3 | SCH-13, SHR-07, CLN-12 | S4 | 13 §3 E1 |
 | SCH-24 | US-020 | Job no-show mỗi 5 phút (SKIP LOCKED) + event status-changed | booked quá end+30' → noshow; hai replica không xử lý trùng | D1 | 3 | SCH-13 | S4 | E5(pub), 02 §3.3 |
 | SCH-25 | US-022 | Consumer encounter-finished → Appointment fulfilled (inbox, bỏ qua event cũ) | Event trùng/đến muộn không đổi trạng thái; phát status-changed | D1 | 3 | SCH-13, SHR-08 | S4 | E6(sub), E5(pub) |
-| SCH-26 | US-004 | Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent) | Chạy lại không đổi kết quả; test | D1 | 2 | SCH-13, SHR-08 | S5 | E7(sub) |
 | SCH-27 | US-014 | Cache Redis cho tìm slot (TTL 5 giây) + invalidate theo event; Redis lỗi → đọc thẳng DB | Hit ratio đo được; Redis chết không làm lỗi API | D1 | 4 | SCH-10, SHR-08 | S5 | NFR-S2 |
 | SCH-28 | US-015 | Job dọn dẹp: outbox đã phát >7 ngày, idempotency >24h, slot free quá khứ >90 ngày | Không xóa dữ liệu còn cần; test | D1 | 2 | SCH-13 | S5 | 02 §3.3 |
 | SCH-29 | US-009, US-012, US-016, US-017 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | Mọi ô liên quan scheduling xanh; mọi Deny có audit | D1 | 4 | SCH-22, SHR-26 | S5 | NFR-SEC2 |
-| SCH-19 | US-017, US-019 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | Lỗi giữa chừng giữ nguyên lịch cũ; phát appointment-rescheduled | D1 | 4 | SCH-18 | S4 | S15, E3(pub) |
+| SCH-26 | US-004 | Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent) | Chạy lại không đổi kết quả; test | D1 | 2 | SCH-13, SHR-08 | S5 | E7(sub) |
 | SCH-30 | US-015 | Test hợp đồng cho event E1-E5 (producer sinh đúng schema) | Schema JSON validate trong CI | D1 | 3 | SCH-25, SHR-06 | S5 | E1(pub), E2(pub), E3(pub), E4(pub), E5(pub) |
 | SCH-31 | US-014 | EXPLAIN ANALYZE 4 truy vấn nóng trên dữ liệu cỡ năm 1 + chỉnh index nếu cần | Kết quả ghi vào docs; truy vấn tìm slot dùng index | D1 | 3 | SCH-27, DAT-03 | S5 | 02 §4, NFR-P1 |
 | SCH-32 | US-068 | Tinh chỉnh hiệu năng theo kết quả load test (pool, index, truy vấn) | Đạt NFR-P1, P2 hoặc có giải thích | D1 | 4 | PRD-01 | H1 | NFR-P1, P2 |
@@ -308,12 +308,12 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | NTF-05 | US-043 | Vòng lấy việc: SKIP LOCKED, locked_until, thu hồi dòng sending bị treo | Worker chết giữa chừng → dòng được gửi lại; hai worker không trùng | D1 | 4 | NTF-01 | S3 | 04 §1.3 |
 | NTF-06 | US-041, US-043 | Abstraction kênh + provider giả + template vi/en (không nhúng PII/chẩn đoán) | Template có biến doctorName/startTime/place; test render hai ngôn ngữ | D1 | 4 | NTF-01 | S3 | 11 §1 |
 | NTF-07 | US-043 | Bộ gửi: kênh dự phòng, backoff 1/5/15/60 phút, dead-letter lần 5, metric | Mô phỏng lỗi từng kênh; lần 5 → dead-lettered; attempt unique | D1 | 4 | NTF-05, NTF-06 | S4 | AC-07.2 |
-| NTF-08 | US-043 | Client lấy thông tin liên hệ từ clinical (nội bộ) + audit; không lưu PII | Không có SĐT/email trong DB/log; test | D1 | 2 | NTF-06, CLN-12 | S4 | 09 §4 |
 | NTF-12 | US-043 | Adapter thật: push (FCM), email, SMS qua interface kênh | Cấu hình bằng identity/secret store; có chế độ giả cho local | D1 | 4 | NTF-07 | S5 | ADR-0004 |
+| NTF-13 | US-041 | Metric độ trễ gửi để đo NFR-P8 | Histogram từ due_at đến sent; có trong dashboard | D1 | 2 | NTF-07 | S5 | NFR-P8 |
+| NTF-08 | US-043 | Client lấy thông tin liên hệ từ clinical (nội bộ) + audit; không lưu PII | Không có SĐT/email trong DB/log; test | D1 | 2 | NTF-06, CLN-12 | S4 | 09 §4 |
 | NTF-09 | US-005 | API thiết bị và tùy chọn (N1-N4) | Chủ sở hữu lấy từ danh tính; 400 kênh sai; upsert theo token | D1 | 4 | NTF-04, SHR-25 | S4 | N1, N2, N3, N4 |
 | NTF-10 | US-044 | API xem nhắc theo lịch hẹn và dead-letter, retry (N5-N7) | Không trả thông tin liên hệ; retry sau giờ khám 409 | D1 | 3 | NTF-07, SHR-25 | S4 | N5, N6, N7 |
 | NTF-11 | US-045, US-046, US-004 | Consumer document-released, no-show-scored, patient-merged | t-6h-risk chỉ khi highRisk và còn thời gian; result-available nội dung chung chung | D1 | 3 | NTF-02 | S4 | E9(sub), E10(sub), E7(sub) |
-| NTF-13 | US-041 | Metric độ trễ gửi để đo NFR-P8 | Histogram từ due_at đến sent; có trong dashboard | D1 | 2 | NTF-07 | S5 | NFR-P8 |
 | NTF-15 | US-043, US-069 | Test lỗi: nhà cung cấp ngừng, worker bị kill giữa chừng | Không mất và không gửi trùng; ghi kết quả | D1 | 3 | NTF-12 | S5 | NFR-A6 |
 | NTF-14 | US-044, US-005 | Test ma trận phân quyền + hợp đồng event cho notification | Xanh trong CI | D1 | 3 | NTF-10, SHR-26 | S5 | NFR-SEC2 |
 
@@ -323,16 +323,16 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 |---|---|---|---|---|---|---|---|---|
 | CLN-02 | US-001, US-006 | Validator profile cho Patient, Practitioner, PractitionerRole (cardinality, value set) | Trường ngoài profile bị từ chối; test từng ràng buộc | D2 | 4 | SHR-01, ARC-20 | S1 | 01 §4 |
 | CLN-10 | US-006 | API Practitioner/PractitionerRole (C9, C10): danh bạ cho mọi người dùng, ghi chỉ Admin | Danh bạ không lộ liên hệ cá nhân; mã NV-NNNN | D2 | 4 | CLN-02, SHR-25 | S2 | C9, C10 |
-| CLN-11 | US-007 | API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity | Khóa có hiệu lực ≤ 60 giây; role không khớp PractitionerRole → 422 | D2 | 4 | CLN-10, SHR-21 | S2 | C2, C21, 15 §8 |
-| CLN-12 | US-033, US-043 | API nội bộ: kiểm tra Care, roles của Practitioner, thông tin liên hệ, age-band | Chỉ service được phép gọi; contact có audit | D2 | 4 | CLN-11 | S2 | 09 §4 |
 | CLN-16 | US-025 | Validator Observation: LOINC, đơn vị UCUM, khoảng hợp lý, tính interpretation | Nhiệt độ 50 °C → value-out-of-range; huyết áp có 2 component | D2 | 4 | ARC-20, CLN-02 | S3 | 01 §4.7 |
 | CLN-01 | US-002 | Bootstrap MongoDB clinical: collections, $jsonSchema validator, mọi index theo thiết kế | Script idempotent; test validator từ chối document sai | D2 | 4 | SCF-03, SHR-10 | S1 | 03 §2.2, §2.4 |
 | CLN-03 | US-001 | Patient repository: sinh MRN BN-YYYY-NNNNNN, nameTokens bỏ dấu, chuẩn hóa SĐT E.164 | MRN không trùng khi tạo song song; 'Nguyễn' → 'nguyen' | D2 | 4 | CLN-01, CLN-02 | S1 | 03 §2.3 |
 | CLN-04 | US-001, US-003 | Phát hiện trùng hồ sơ theo SĐT + ngày sinh | Trùng → duplicate-patient-suspected, không lộ dữ liệu | D2 | 2 | CLN-03 | S1 | AC-01.2 |
 | CLN-05 | US-001 | API đăng ký bệnh nhân (C1) + tạo identity_links | 201/400/409/422 đúng; MRN trả về; có audit | D2 | 4 | CLN-04, SHR-25, SHR-21 | S1 | C1 |
+| CLN-11 | US-007 | API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity | Khóa có hiệu lực ≤ 60 giây; role không khớp PractitionerRole → 422 | D2 | 4 | CLN-10, SHR-21 | S2 | C2, C21, 15 §8 |
 | CLN-06 | US-002 | API đọc/sửa/lịch sử Patient (C4, C5, C7) với quy tắc trường cho bệnh nhân | Patient sửa name → 403; mỗi sửa có version; hồ sơ người khác 404 | D2 | 4 | CLN-05 | S2 | C4, C5, C7, AC-01.1, AC-01.3 |
 | CLN-07 | US-003 | API Nurse tạo hồ sơ (C3) + forceCreate có lý do và audit | Không forceCreate khi nghi trùng → 422 | D2 | 3 | CLN-05 | S2 | C3 |
 | CLN-08 | US-031 | API tìm bệnh nhân POST _search (C6): tên không dấu, SĐT, MRN, ngày sinh, rút gọn kết quả | 'nguyen va' ra đúng người; bác sĩ không Care chỉ thấy năm sinh; không tham số → 400 | D2 | 4 | CLN-05, SHR-11 | S2 | C6, AC-06.1, AC-06.2 |
+| CLN-12 | US-033, US-043 | API nội bộ: kiểm tra Care, roles của Practitioner, thông tin liên hệ, age-band | Chỉ service được phép gọi; contact có audit | D2 | 4 | CLN-11 | S2 | 09 §4 |
 | CLN-13 | US-033 | Consumer appointment-booked/cancelled/rescheduled/status-changed → care_relationships | Care đến start+365 ngày; hủy hết nguồn thì mất Care; event trùng bỏ qua | D2 | 4 | CLN-12, SHR-08 | S3 | E1(sub), E2(sub), E3(sub), E5(sub), 15 §4 |
 | CLN-09 | US-004 | API gộp hồ sơ (C8) + phát patient-merged | Hồ sơ nguồn active=false, link replaced-by; gộp lại 409 | D2 | 4 | CLN-06 | S2 | C8, E7(pub) |
 | CLN-14 | US-023 | Consumer appointment-checked-in → tạo Encounter (unique appointmentId) | Nhận hai lần chỉ một Encounter | D2 | 3 | CLN-13 | S3 | E4(sub) |

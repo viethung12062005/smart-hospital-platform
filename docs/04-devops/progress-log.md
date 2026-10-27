@@ -129,6 +129,24 @@ cd libs/dotnet && dotnet format --verify-no-changes       # mong đợi: không 
 7. **Lỗi gặp và cách sửa:** test `BG-START-DOC` (`not-care`) đỏ vì dựng ngữ cảnh sai (`care` và `not-care` loại trừ nhau) → thêm tham số `notCareFails` cho hàm dựng ngữ cảnh trong test; không sửa engine.
 8. **Ảnh hưởng tới kế hoạch:** SHR-22/23/24 (do dev) đã được SA làm sẵn; dev chỉ còn SHR-25 (endpoint filter), SHR-26 (sinh test cho từng endpoint), SHR-27 (audit mỗi quyết định). Chưa đổi chủ sở hữu trong `tools/plan` (xem mục D-next).
 
+## Phần D1b — Cập nhật kế hoạch: chuyển SHR-22/23/24 sang SA và thêm theo dõi trạng thái task ✅
+1. **Mục tiêu:** kế hoạch phản ánh đúng ai làm gì sau D1; có chỗ ghi task nào đã xong (trước đây checkbox luôn `☐`).
+2. **Việc đã làm:** (1) cắt SHR-22/23/24 khỏi `tasks_dev.py`, thêm vào `tasks_sa.py` với owner `SA` (giữ ID, giờ 3/4/3, phụ thuộc); (2) thêm `tools/plan/status.py` (ID → `done|partial`, commit, ghi chú); (3) sửa `build.py` vẽ `☑/◐/☐` và tổng số xong trong `docs/05-plan/by-person/*.md`, báo lỗi nếu `status.py` nhắc task không tồn tại; (4) sinh lại tài liệu.
+3. **Thay đổi:**
+
+| File | | Nội dung |
+|---|---|---|
+| `tools/plan/tasks_dev.py` | M | xóa 3 tuple SHR-22/23/24 (owner `D1`) |
+| `tools/plan/tasks_sa.py` | M | thêm 3 tuple đó với owner `SA` ở cuối danh sách |
+| `tools/plan/status.py` | A | 7 mục: ARC-06 (một phần), ARC-07, ARC-19, ARC-20 (một phần), SHR-22/23/24 |
+| `tools/plan/build.py` | M | import `STATUS`; hàm `mark`, `status_note`; dòng tổng "Đã xong/làm một phần"; kiểm status hợp lệ |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** |
+
+   Tải sau khi đổi (giờ/tuần): SA 375h tổng (W2: 50, W3: 50), D1 202h (từ 212h). Các kiểm tra của `build.py` (thứ tự phụ thuộc, ≤ 4h/task dev, ≤ 8h/task SA, ≤ 30h/tuần dev) vẫn qua.
+4. **Lệnh làm lại / kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`; mở `docs/05-plan/by-person/SA.md` thấy `☑ SHR-22`.
+5. **Quy ước từ nay:** khi xong một task, thêm một dòng vào `tools/plan/status.py` (kèm commit) rồi chạy lại `build.py`, **cùng commit** với phần việc.
+6. **Lưu ý trung thực:** ARC-06 và ARC-20 chỉ `partial` (OpenAPI chưa có schema thân; ICD-10 mới 12/~300 mã). Các task SA khác đã có sản phẩm từ trước (IaC, workflow, `dev/`) **chưa được đối chiếu và ghi vào status.py**; việc đối chiếu là một bước riêng (D-recon) để không ghi sai.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
