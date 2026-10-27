@@ -262,7 +262,7 @@ cd libs/dotnet && dotnet format --verify-no-changes    # không in gì
    2. Tạo `libs/dotnet/Shp.Data.Postgres`: DDL nhúng, `PostgresOutbox`, `OutboxRelay`, `PostgresInbox`, `PostgresIdempotency`, đăng ký DI.
    3. Tạo `libs/dotnet/Shp.Data.Postgres.Tests` chạy trên **PostgreSQL 16 thật** bằng Testcontainers (25 test).
    4. Thêm 2 project vào `Shp.Libs.slnx`; chuyển SHR-07/08/28 sang SA và ghi trạng thái.
-3. **Thay đổi (commit COMMIT_D4):**
+3. **Thay đổi (commit b74e54a):**
 
 | File | | Nội dung |
 |---|---|---|
@@ -292,7 +292,7 @@ cd libs/dotnet && dotnet format --verify-no-changes
 ## Phần D4b — Đề xuất ADR-0014: rà soát CSDL từng service (CHƯA áp dụng, chờ duyệt)
 1. **Mục tiêu:** trả lời nhận xét của PM "lúc nào cũng PostgreSQL, phải tối ưu DB" bằng số liệu tải thật, không đổi engine theo cảm tính.
 2. **Việc đã làm:** đọc `workload-analysis.md` và ADR-0008; lập bảng khối lượng thực (notification ~2.000 nhắc/ngày, ml ~900 dự đoán/ngày và ~330k fact/năm); đánh giá từng service với các phương án thay thế; viết ADR; thống kê tệp bị ảnh hưởng.
-3. **Thay đổi (commit COMMIT_D4):**
+3. **Thay đổi (commit b74e54a):**
 
 | File | | Nội dung |
 |---|---|---|
