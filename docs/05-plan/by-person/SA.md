@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **112 task, 375 giờ**. Đã xong: **5**, làm một phần: **2** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **115 task, 384 giờ**. Đã xong: **7**, làm một phần: **3** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -24,7 +24,7 @@ Tổng: **112 task, 375 giờ**. Đã xong: **5**, làm một phần: **2** (☑
 | ☐ | GOV-07 | GitHub Project + import backlog | Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import | 2 | GOV-01 | US-070 |
 | ☐ | LOC-01 | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | 8 | ARC-09 | ENABLER |
 
-## Tuần 2 — 50 giờ
+## Tuần 2 — 59 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -39,6 +39,9 @@ Tổng: **112 task, 375 giờ**. Đã xong: **5**, làm một phần: **2** (☑
 | ☐ | LOC-03 | Walking skeleton .NET | Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
 | ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
 | ☐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
+| ☑ | SHR-02 | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi **[xong, commit COMMIT: libs/dotnet/Shp.Web/Errors: ErrorCatalog (27 mã, test đối chiếu bảng §5 của 07), ShpException, ErrorWriter (OperationOutcome / Problem Details), middleware]** | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | 3 | SHR-01 | ENABLER |
+| ◐ | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên **[làm một phần, commit COMMIT: libs/dotnet/Shp.Web/Auth: JWT Bearer + map roles + MFA nhân viên; test bằng token ký cục bộ; CHƯA thử với Keycloak/Entra thật]** | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | 3 | LOC-02 | US-008, US-066 |
+| ☑ | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây **[xong, commit COMMIT: IdentityResolver (cache 60s, miss 5s) + HttpIdentityLinkClient + middleware; chưa có endpoint nội bộ phía clinical (task của dev)]** | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | 3 | SHR-20 | US-007 |
 | ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 4bf82ef: libs/dotnet/Shp.Authorization/AuthzMatrix.cs]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
 | ☑ | SHR-23 | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[xong, commit 4bf82ef: Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)]** | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | 4 | SHR-22 | ENABLER |
 

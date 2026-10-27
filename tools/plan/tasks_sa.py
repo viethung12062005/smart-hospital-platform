@@ -117,4 +117,11 @@ SA_TASKS = [
      "Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập", "SA", 4, "SHR-22", "P1", "15 §2"),
     ("SHR-24", "ENABLER", "Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse",
      "Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng", "SA", 3, "SHR-23", "P2", "15 §2"),
+    # Chuyển sang SA (2026-10-27): SA làm sẵn lớp lỗi + xác thực + tra danh tính.
+    ("SHR-02", "ENABLER", "Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi",
+     "Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace", "SA", 3, "SHR-01", "P1", "07 §5"),
+    ("SHR-20", "US-008, US-066", "JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên",
+     "Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường", "SA", 3, "LOC-02", "P1", "07 §2, 15 §1"),
+    ("SHR-21", "US-007", "Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây",
+     "Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503", "SA", 3, "SHR-20", "P1", "15 §8, C2"),
 ]

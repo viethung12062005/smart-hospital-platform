@@ -10,4 +10,7 @@ STATUS = {
     "SHR-22": ("done", "4bf82ef", "libs/dotnet/Shp.Authorization/AuthzMatrix.cs"),
     "SHR-23": ("done", "4bf82ef", "Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)"),
     "SHR-24": ("done", "4bf82ef", "AuthorizationEngine.Decide: default-deny, fields, purpose, 236 test"),
+    "SHR-02": ("done", "COMMIT", "libs/dotnet/Shp.Web/Errors: ErrorCatalog (27 mã, test đối chiếu bảng §5 của 07), ShpException, ErrorWriter (OperationOutcome / Problem Details), middleware"),
+    "SHR-20": ("partial", "COMMIT", "libs/dotnet/Shp.Web/Auth: JWT Bearer + map roles + MFA nhân viên; test bằng token ký cục bộ; CHƯA thử với Keycloak/Entra thật"),
+    "SHR-21": ("done", "COMMIT", "IdentityResolver (cache 60s, miss 5s) + HttpIdentityLinkClient + middleware; chưa có endpoint nội bộ phía clinical (task của dev)"),
 }

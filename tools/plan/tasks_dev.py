@@ -7,10 +7,6 @@ Definition of Done for every task: unit tests green, lint clean, no secrets, PR 
 
 D1_TASKS = [
     # ---------------- shared: authentication / authorization / idempotency ----------------
-    ("SHR-20", "US-008, US-066", "JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên",
-     "Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường", "D1", 3, "LOC-02", "P1", "07 §2, 15 §1"),
-    ("SHR-21", "US-007", "Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây",
-     "Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503", "D1", 3, "SHR-20", "P1", "15 §8, C2"),
     ("SHR-25", "ENABLER", "Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc'",
      "Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước", "D1", 4, "SHR-24", "P2", "15 §3"),
     ("SHR-26", "ENABLER", "Authz: bộ sinh test từ matrix.yaml (role × điều kiện)",
@@ -143,8 +139,6 @@ D2_TASKS = [
     # ---------------- shared: FHIR core, Mongo, events, audit emitter ----------------
     ("SHR-01", "ENABLER", "FHIR R4 JSON serialize/parse (Firely) + test vòng khứ hồi cho resource trong phạm vi",
      "Parse sai trả 400 validation-failed; test từng resource type", "D2", 3, "LOC-03", "P1", "ADR-0003"),
-    ("SHR-02", "ENABLER", "Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi",
-     "Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace", "D2", 3, "SHR-01", "P1", "07 §5"),
     ("SHR-03", "ENABLER", "Search parameter registry + parser (token, reference, date theo độ chính xác, _count)",
      "ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400", "D2", 4, "SHR-01", "P1", "ADR-0003, 07 §4"),
     ("SHR-04", "ENABLER", "Keyset page token (mờ, ký) + dựng Bundle searchset",
