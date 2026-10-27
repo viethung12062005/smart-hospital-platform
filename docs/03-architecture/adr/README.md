@@ -14,3 +14,4 @@ Mỗi ADR theo format: Bối cảnh → Quyết định → Phương án đã c�
 | [0008](0008-polyglot-persistence.md) | Chọn kho dữ liệu theo đặc tính tải từng service | Accepted |
 | [0009](0009-cicd-ephemeral-environments.md) | GitHub Actions (CI) + Argo CD/Helm (CD), môi trường ephemeral, cổng phê duyệt | Accepted |
 | [0010](0010-repository-strategy.md) | 4 repository: ứng dụng, templates, infra, gitops | Accepted |
+| [0011](0011-two-environments-local-kubernetes.md) | 2 môi trường cloud (UAT, prod) + dev trên Kubernetes cục bộ | Accepted |

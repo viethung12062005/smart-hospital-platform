@@ -82,7 +82,7 @@ Tổng: **74 story** — Must 49, Should 22, Could 3.
 | [US-067](#us-067) | Khôi phục dữ liệu về một thời điểm | Quản trị viên | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | Hệ thống chịu tải mở slot lúc 07:00 | Nhóm dự án | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | Hệ thống chịu lỗi phụ thuộc | Nhóm dự án | Must |  | 2 | 9 |
-| [US-070](#us-070) | Triển khai an toàn, có phê duyệt | DevOps | Must |  | 32 | 101 |
+| [US-070](#us-070) | Triển khai an toàn, có phê duyệt | DevOps | Must |  | 33 | 105 |
 
 ## Độ phủ tiêu chí nghiệm thu của yêu cầu chức năng
 
@@ -1718,7 +1718,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 **Tiêu chí nghiệm thu**
 
 1. Given commit vào main, When CI chạy, Then qua đủ kiểm tra, image được ký, chỉ image đã ký mới chạy được trên cluster
-2. Given deploy staging/prod, When thực hiện, Then cần phê duyệt GitHub Environment và PR GitOps
+2. Given deploy UAT/prod, When thực hiện, Then cần phê duyệt GitHub Environment và PR GitOps
 3. Given sự cố, When rollback bằng revert GitOps, Then ≤ 5 phút
 
 **Task**
@@ -1749,7 +1749,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | GOP-07 | Kyverno + policy | SA | 4 | W5 |
 | GOP-08 | NetworkPolicy default-deny + namespace | SA | 2 | W5 |
 | ENV-05 | Diễn tập G4 | SA | 4 | W6 |
-| IAC-20 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 3 stack | SA | 4 | W6 |
+| IAC-20 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack | SA | 4 | W6 |
 | CIT-09 | Phát hành templates có version | SA | 2 | W7 |
 | CIT-10 | Đóng gói NuGet nội bộ cho thư viện dùng chung | SA | 3 | W7 |
 | GOP-02 | Unit test cho chart | SA | 3 | W7 |
@@ -1757,3 +1757,4 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | GOV-06 | Dependabot cho actions, nuget, pip, docker, terraform | SA | 2 | W7 |
 | ENV-03 | Workflow cost-guard | SA | 2 | W8 |
 | ENV-04 | Runbook vòng đời môi trường | SA | 2 | W8 |
+| ENV-06 | Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ | SA | 4 | W10 |

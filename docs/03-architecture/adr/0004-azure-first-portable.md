@@ -36,6 +36,6 @@ K8s khác và `kind` trên máy dev.
 
 ## Hệ quả
 - AKS đắt hơn Container Apps khi chạy liên tục; vì vậy cluster chỉ tồn tại trong lúc test/demo (ADR-0009),
-  `dev` dùng spot node. Chi phí tính theo giờ-môi trường trong báo cáo FinOps (NFR-C1).
+  UAT dùng spot node khi không đo hiệu năng. Chi phí tính theo giờ-môi trường trong báo cáo FinOps (NFR-C1).
 - Cần năng lực vận hành K8s: platform (Argo CD, KEDA, Kyverno, OTel, cert-manager) được dựng ở Pha 4 **trước** khi dev vào làm.
 - Số service vẫn giữ theo ADR-0001: production-like nằm ở cách vận hành, không ở số lượng microservice.

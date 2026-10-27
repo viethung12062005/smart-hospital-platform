@@ -1,6 +1,8 @@
 # ADR-0009: CI/CD, môi trường ephemeral và cổng phê duyệt
 
 ## Trạng thái
+> Cập nhật: số môi trường cloud và bảng phê duyệt được thay bởi [ADR-0011](0011-two-environments-local-kubernetes.md) (chỉ UAT và prod). Phần CI/CD, GitOps, Helm, OIDC giữ nguyên.
+
 Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
@@ -12,7 +14,7 @@ Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổ
 ## Quyết định
 
 ### 1. Môi trường ephemeral
-- `dev`, `staging`, `prod` là **3 stack Terraform độc lập, mỗi stack một cluster AKS riêng**, được dựng
+- `uat` và `prod` là **2 stack Terraform độc lập, mỗi stack một cluster AKS riêng** (xem ADR-0011), được dựng
   bằng workflow `env-provision` và hủy bằng `env-destroy`. Không môi trường nào chạy thường trực.
 - Tài nguyên **thường trực** (rẻ, không chứa dữ liệu bệnh nhân): Terraform state, Azure Container Registry,
   managed identity cho GitHub OIDC. Nằm trong stack `bootstrap`.
@@ -44,8 +46,7 @@ Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổ
 | Hành động | Cơ chế | Người duyệt |
 |---|---|---|
 | Merge code | PR + CI xanh + CODEOWNERS review | 1 reviewer (service owner hoặc PM) |
-| Deploy `dev` | GitHub Environment `deploy-dev` | 1 người (PM/DevOps) |
-| Promote `staging` | GitHub Environment `deploy-staging` **và** PR vào repo GitOps | DevOps |
+| Deploy `uat` | GitHub Environment `deploy-uat` **và** PR vào repo GitOps | DevOps |
 | Promote `prod` | GitHub Environment `deploy-prod` (wait timer) **và** PR GitOps **và** promote canary | DevOps + Architect |
 | Dựng môi trường | `env-provision`: plan → Environment `infra-<env>` → apply | DevOps |
 | Hủy môi trường | `env-destroy`: gõ đúng tên môi trường + Environment `infra-<env>-destroy` | DevOps |

@@ -9,8 +9,8 @@
 |---|---|---|
 | `smart-hospital-platform` (đã có dưới tên `smart-hospital-platform-scratch`; đổi tên nếu muốn, GitHub tự chuyển hướng) | private | tài liệu, `tools/plan/` hiện có |
 | `shp-platform-templates` | private | `.github/workflows/` (reusable), `charts/microservice/`, `CHANGELOG.md` |
-| `shp-infra` | private | `bootstrap/`, `modules/`, `envs/{dev,staging,prod}/`, `.github/workflows/` |
-| `shp-gitops` | private | `bootstrap/`, `platform/`, `policies/`, `envs/{dev,staging,prod}/`, `services/` |
+| `shp-infra` | private | `bootstrap/`, `modules/`, `envs/{uat,prod}/`, `.github/workflows/` |
+| `shp-gitops` | private | `bootstrap/`, `platform/`, `policies/`, `envs/{uat,prod}/`, `services/` |
 
 Nhánh mặc định `main`. Bật cho cả 4 repo: **Secret scanning + Push protection**, **Dependabot alerts**, **Private vulnerability reporting**.
 
@@ -22,7 +22,7 @@ Nhánh mặc định `main`. Bật cho cả 4 repo: **Secret scanning + Push pro
 | Status check bắt buộc | app repo: `ci / <service>` của service bị thay đổi, `pr-checks` (gitleaks, actionlint, dependency review, CodeQL); infra: `terraform-checks`; gitops/templates: `helm-validate` |
 | Cấm force-push và xóa nhánh `main` | có |
 | Yêu cầu lịch sử tuyến tính | có (squash merge) |
-| Bypass | chỉ **GitHub App bot GitOps** trên `shp-gitops` cho đường dẫn `envs/dev/**` |
+| Bypass | chỉ **GitHub App bot GitOps** trên `shp-gitops` cho đường dẫn `envs/uat/**` |
 
 ## 3. CODEOWNERS và template (GOV-03)
 
@@ -45,12 +45,12 @@ PR template (`.github/pull_request_template.md`): task ID, story, ảnh hưởng
 
 | Repo | Environment | Reviewer | Wait timer |
 |---|---|---|---|
-| app / gitops | `deploy-dev`, `deploy-staging` | SA | — |
+| app / gitops | `deploy-uat` | SA | — |
 | app / gitops | `deploy-prod` | SA (Architect) + SA (DevOps) | 10 phút |
-| shp-infra | `infra-dev`, `infra-staging`, `infra-prod` | SA | — |
-| shp-infra | `infra-dev-destroy`, `infra-staging-destroy`, `infra-prod-destroy` | SA | 5 phút |
+| shp-infra | `infra-uat`, `infra-prod` | SA | — |
+| shp-infra | `infra-uat-destroy`, `infra-prod-destroy` | SA | 5 phút |
 
-> Khi nhóm chỉ có một người giữ vai trò SA, bật "Prevent self-review" sẽ làm environment không thể duyệt: chấp nhận rủi ro này một cách có chủ đích, hoặc thêm một dev làm người duyệt thứ hai cho `staging`/`prod` (khuyến nghị cho `prod`).
+> Khi nhóm chỉ có một người giữ vai trò SA, bật "Prevent self-review" sẽ làm environment không thể duyệt: chấp nhận rủi ro này một cách có chủ đích, hoặc thêm một dev làm người duyệt thứ hai cho `prod` (khuyến nghị cho `prod`).
 
 ## 5. Actions (GOV-06, CIT-09)
 
@@ -81,6 +81,6 @@ Xoay key mỗi 90 ngày (nhắc trong `cost-guard`/issue định kỳ).
 
 - [ ] Push trực tiếp lên `main` bị chặn ở cả 4 repo
 - [ ] PR thiếu status check hoặc thiếu review không merge được
-- [ ] Workflow `env-provision` dừng chờ approval ở `infra-dev`
+- [ ] Workflow `env-provision` dừng chờ approval ở `infra-uat`
 - [ ] Reusable workflow từ `shp-platform-templates` gọi được từ app repo
 - [ ] Image không ký bị cluster chặn (GOP-07)
