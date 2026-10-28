@@ -4,7 +4,7 @@ S := scripts
 export PATH := $(CURDIR)/.local/bin:$(PATH)
 APPS := shp-apps
 
-.PHONY: help tools quickstart doctor up down status env seed-users token deploy undeploy apps app-logs port-forward psql mongosh redis-cli logs
+.PHONY: pull-models help tools quickstart doctor up down status env seed-users token deploy undeploy apps app-logs port-forward psql mongosh redis-cli logs
 
 help: ## Liệt kê lệnh
 	@awk -F':.*## ' '/^[a-z-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -20,6 +20,9 @@ doctor: ## Kiểm tra máy đủ điều kiện (docker, kind, kubectl, helm, RA
 
 up: ## Dựng cụm kind và cài phụ thuộc (PROFILE=core)
 	@$(S)/up.sh
+
+pull-models: ## (profile full) Kéo model embedding bge-m3 và qwen2.5 vào Ollama
+	@for m in bge-m3 qwen2.5:3b; do kubectl --context kind-shp-local -n shp-deps exec statefulset/ollama -- ollama pull $$m; done
 
 down: ## Xóa cụm local
 	@$(S)/down.sh

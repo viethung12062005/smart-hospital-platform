@@ -94,8 +94,22 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | Mạng công ty chặn tải công cụ | Tự cài kind/kubectl/helm theo phiên bản ở mục 1 rồi bỏ qua `make tools` |
 | Muốn xóa sạch | `make -C dev down && rm -rf dev/.local` |
 
+## 7. Profile `full` (LOC-08)
+Chỉ bật khi task cần: `make -C dev up PROFILE=full` (cụm đã tạo bằng profile `core` trước đây: `make -C dev down` rồi `up` lại để có cổng mới). Cần **Docker ≥ 10 GB RAM** (core ~6 GB + full ~4.5 GB), 25 GB ổ trống. Sau đó `make -C dev pull-models` (một lần, vài GB) để có `bge-m3` và `qwen2.5:3b`.
+
+| Thành phần | Từ máy bạn | Từ service trong cụm | Dùng cho |
+|---|---|---|---|
+| ClamAV | `localhost:13310` (clamd) | `clamav.shp-deps:3310` | document: quét tệp tải lên |
+| OpenSearch 2 (tắt security) | http://localhost:19200 | `http://opensearch.shp-deps:9200` | ai: tìm kiếm |
+| Ollama | http://localhost:21434 | `http://ollama.shp-deps:11434` | ai: embedding/LLM local |
+| MLflow | http://localhost:15000 | `http://mlflow.shp-deps:5000` | ml: tracking + registry |
+| Grafana + Loki | http://localhost:13000 (user `admin`, mật khẩu `GRAFANA_ADMIN_PASSWORD` trong `connection.env`) | Loki `http://loki.shp-deps:3100` | xem log |
+| OTel Collector | — | `http://otel-collector.shp-deps:4318` (OTLP/HTTP) | service gửi trace/metric/log; log vào Loki, trace/metric chỉ in ra log collector |
+
+Biến cho service chạy ngoài cụm nằm trong `dev/.local/connection.env` (khối "Profile full"). Dữ liệu giả cho cụm do `make seed-users` và phần seed của từng service tạo (D3 sinh dữ liệu giả theo ARC-11).
+
 ## Chưa có (backlog)
-- **LOC-08** — profile `full`: OpenSearch, Ollama, ClamAV, MLflow, Loki/Grafana/OTel.
+- **LOC-02** — realm hoàn chỉnh (MFA cho nhân viên, claim bổ sung).
 - **LOC-02** — realm hoàn chỉnh (MFA cho nhân viên, claim bổ sung).
 
 > Trạng thái kiểm chứng: `install-tools.sh` đã chạy thật (tải + kiểm sha256, chạy lại không tải lại); chart render cho cả 8 service qua `kubeconform --strict`;

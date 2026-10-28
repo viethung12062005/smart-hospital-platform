@@ -1,0 +1,235 @@
+# ---------- ClamAV (quét mã độc cho document service) ----------
+{{ include "shp.svc" (dict "name" "clamav" "port" 3310 "portName" "clamd") }}
+---
+{{ include "shp.svc.host" (dict "name" "clamav" "port" 3310 "portName" "clamd" "nodePort" 30310) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: clamav }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: clamav } }
+  template:
+    metadata: { labels: { app: clamav } }
+    spec:
+      containers:
+        - name: clamav
+          image: {{ .Values.images.clamav }}
+          ports: [{ containerPort: 3310 }]
+          readinessProbe:
+            exec: { command: ["clamdcheck.sh"] }
+            initialDelaySeconds: 60     # lần đầu tải CSDL virus
+            periodSeconds: 10
+            failureThreshold: 30
+          resources: {{- toYaml .Values.resources.clamav | nindent 12 }}
+---
+# ---------- OpenSearch (tìm kiếm, 1 node, tắt security vì chỉ chạy local) ----------
+{{ include "shp.svc" (dict "name" "opensearch" "port" 9200 "portName" "http") }}
+---
+{{ include "shp.svc.host" (dict "name" "opensearch" "port" 9200 "portName" "http" "nodePort" 30920) }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: opensearch }
+spec:
+  serviceName: opensearch
+  replicas: 1
+  selector: { matchLabels: { app: opensearch } }
+  template:
+    metadata: { labels: { app: opensearch } }
+    spec:
+      initContainers:
+        - name: fix-perms
+          image: busybox:1.37
+          command: ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data"]
+          volumeMounts: [{ name: data, mountPath: /usr/share/opensearch/data }]
+      containers:
+        - name: opensearch
+          image: {{ .Values.images.opensearch }}
+          env:
+            - { name: discovery.type, value: single-node }
+            - { name: DISABLE_SECURITY_PLUGIN, value: "true" }
+            - { name: DISABLE_INSTALL_DEMO_CONFIG, value: "true" }
+            - { name: OPENSEARCH_JAVA_OPTS, value: "-Xms512m -Xmx512m" }
+          ports: [{ containerPort: 9200 }]
+          readinessProbe:
+            httpGet: { path: "/_cluster/health?wait_for_status=yellow&timeout=1s", port: 9200 }
+            periodSeconds: 10
+            failureThreshold: 30
+          volumeMounts: [{ name: data, mountPath: /usr/share/opensearch/data }]
+          resources: {{- toYaml .Values.resources.opensearch | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: {{ .Values.storage.opensearch }} } }
+---
+# ---------- Ollama (LLM + embedding local). Kéo model: make -C dev pull-models ----------
+{{ include "shp.svc" (dict "name" "ollama" "port" 11434 "portName" "http") }}
+---
+{{ include "shp.svc.host" (dict "name" "ollama" "port" 11434 "portName" "http" "nodePort" 31434) }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: ollama }
+spec:
+  serviceName: ollama
+  replicas: 1
+  selector: { matchLabels: { app: ollama } }
+  template:
+    metadata: { labels: { app: ollama } }
+    spec:
+      containers:
+        - name: ollama
+          image: {{ .Values.images.ollama }}
+          ports: [{ containerPort: 11434 }]
+          readinessProbe:
+            httpGet: { path: /api/tags, port: 11434 }
+            periodSeconds: 5
+          volumeMounts: [{ name: models, mountPath: /root/.ollama }]
+          resources: {{- toYaml .Values.resources.ollama | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata: { name: models }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: {{ .Values.storage.ollama }} } }
+---
+# ---------- MLflow (tracking + registry; SQLite + artifact trên PVC, chỉ cho local) ----------
+{{ include "shp.svc" (dict "name" "mlflow" "port" 5000 "portName" "http") }}
+---
+{{ include "shp.svc.host" (dict "name" "mlflow" "port" 5000 "portName" "http" "nodePort" 30500) }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: mlflow }
+spec:
+  serviceName: mlflow
+  replicas: 1
+  selector: { matchLabels: { app: mlflow } }
+  template:
+    metadata: { labels: { app: mlflow } }
+    spec:
+      securityContext: { fsGroup: 1000 }
+      containers:
+        - name: mlflow
+          image: {{ .Values.images.mlflow }}
+          command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000",
+                    "--backend-store-uri", "sqlite:////mlflow/mlflow.db",
+                    "--default-artifact-root", "/mlflow/artifacts"]
+          ports: [{ containerPort: 5000 }]
+          readinessProbe:
+            httpGet: { path: /health, port: 5000 }
+            periodSeconds: 5
+          volumeMounts: [{ name: data, mountPath: /mlflow }]
+          resources: {{- toYaml .Values.resources.mlflow | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: {{ .Values.storage.mlflow }} } }
+---
+# ---------- Loki ----------
+{{ include "shp.svc" (dict "name" "loki" "port" 3100 "portName" "http") }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: loki }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: loki } }
+  template:
+    metadata: { labels: { app: loki } }
+    spec:
+      containers:
+        - name: loki
+          image: {{ .Values.images.loki }}
+          args: ["-config.file=/etc/loki/local-config.yaml"]
+          ports: [{ containerPort: 3100 }]
+          readinessProbe:
+            httpGet: { path: /ready, port: 3100 }
+            periodSeconds: 5
+          resources: {{- toYaml .Values.resources.loki | nindent 12 }}
+---
+# ---------- OpenTelemetry Collector: nhận OTLP từ service, đẩy log sang Loki ----------
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: otel-collector }
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols: { grpc: { endpoint: 0.0.0.0:4317 }, http: { endpoint: 0.0.0.0:4318 } }
+    processors:
+      batch: {}
+    exporters:
+      otlphttp/loki: { endpoint: http://loki:3100/otlp }
+      debug: { verbosity: basic }
+    service:
+      pipelines:
+        logs:    { receivers: [otlp], processors: [batch], exporters: [otlphttp/loki] }
+        traces:  { receivers: [otlp], processors: [batch], exporters: [debug] }
+        metrics: { receivers: [otlp], processors: [batch], exporters: [debug] }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: otel-collector }
+spec:
+  selector: { app: otel-collector }
+  ports: [{ name: otlp-grpc, port: 4317 }, { name: otlp-http, port: 4318 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: otel-collector }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: otel-collector } }
+  template:
+    metadata: { labels: { app: otel-collector } }
+    spec:
+      containers:
+        - name: otel
+          image: {{ .Values.images.otel }}
+          args: ["--config=/etc/otel/config.yaml"]
+          ports: [{ containerPort: 4317 }, { containerPort: 4318 }]
+          volumeMounts: [{ name: config, mountPath: /etc/otel }]
+          resources: {{- toYaml .Values.resources.otel | nindent 12 }}
+      volumes:
+        - { name: config, configMap: { name: otel-collector } }
+---
+# ---------- Grafana (datasource Loki có sẵn) ----------
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: grafana-datasources }
+data:
+  loki.yaml: |
+    apiVersion: 1
+    datasources:
+      - { name: Loki, type: loki, access: proxy, url: "http://loki:3100", isDefault: true }
+---
+{{ include "shp.svc" (dict "name" "grafana" "port" 3000 "portName" "http") }}
+---
+{{ include "shp.svc.host" (dict "name" "grafana" "port" 3000 "portName" "http" "nodePort" 30300) }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: grafana }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: grafana } }
+  template:
+    metadata: { labels: { app: grafana } }
+    spec:
+      containers:
+        - name: grafana
+          image: {{ .Values.images.grafana }}
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ .Values.credentialsSecret }}, key: grafana-admin-password } }
+          ports: [{ containerPort: 3000 }]
+          readinessProbe:
+            httpGet: { path: /api/health, port: 3000 }
+            periodSeconds: 5
+          volumeMounts: [{ name: ds, mountPath: /etc/grafana/provisioning/datasources }]
+          resources: {{- toYaml .Values.resources.grafana | nindent 12 }}
+      volumes:
+        - { name: ds, configMap: { name: grafana-datasources } }

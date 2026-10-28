@@ -31,6 +31,15 @@ OIDC_AUTHORITY=http://localhost:18080/realms/shp
 OIDC_AUDIENCE=shp-api
 KEYCLOAK_ADMIN_URL=http://localhost:18080
 KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+# --- Profile full (make up PROFILE=full) ---
+CLAMD_HOST=localhost
+CLAMD_PORT=13310
+OPENSEARCH_URL=http://localhost:19200
+OLLAMA_URL=http://localhost:21434
+MLFLOW_TRACKING_URI=http://localhost:15000
+GRAFANA_URL=http://localhost:13000
+GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+# Trong cụm: OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.shp-deps:4318
 EOT
 )
 log "Đã ghi $out"

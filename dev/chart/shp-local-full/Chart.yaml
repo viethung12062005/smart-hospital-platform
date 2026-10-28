@@ -1,0 +1,5 @@
+apiVersion: v2
+name: shp-local-full
+description: Hạ tầng bổ sung cho profile full của dev local (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel Collector). Chạy cạnh shp-local-deps.
+type: application
+version: 0.1.0

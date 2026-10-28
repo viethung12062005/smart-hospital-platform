@@ -1,0 +1,25 @@
+# Mật khẩu KHÔNG nằm ở đây: lấy từ Secret `credentialsSecret` (khóa grafana-admin-password) do dev/scripts/lib.sh sinh.
+credentialsSecret: shp-local-credentials
+
+images:
+  clamav: clamav/clamav:1.4
+  opensearch: opensearchproject/opensearch:2.17.1
+  ollama: ollama/ollama:0.5.4
+  mlflow: ghcr.io/mlflow/mlflow:v2.17.2
+  loki: grafana/loki:3.2.1
+  grafana: grafana/grafana:11.3.0
+  otel: otel/opentelemetry-collector-contrib:0.113.0
+
+storage:
+  ollama: 10Gi     # model bge-m3 + qwen2.5 nhỏ; tăng nếu kéo thêm model
+  mlflow: 1Gi
+  opensearch: 2Gi
+
+resources:          # tổng ~4.5 GB RAM trên nền profile core (~6 GB); cần máy 16 GB
+  clamav:     { requests: { cpu: 100m, memory: 1Gi },   limits: { memory: 2Gi } }
+  opensearch: { requests: { cpu: 200m, memory: 768Mi }, limits: { memory: 1280Mi } }
+  ollama:     { requests: { cpu: 500m, memory: 1Gi },   limits: { memory: 6Gi } }
+  mlflow:     { requests: { cpu: 50m,  memory: 128Mi }, limits: { memory: 384Mi } }
+  loki:       { requests: { cpu: 50m,  memory: 128Mi }, limits: { memory: 384Mi } }
+  grafana:    { requests: { cpu: 50m,  memory: 128Mi }, limits: { memory: 384Mi } }
+  otel:       { requests: { cpu: 50m,  memory: 64Mi },  limits: { memory: 256Mi } }

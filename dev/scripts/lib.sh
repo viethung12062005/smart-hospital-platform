@@ -40,6 +40,7 @@ ensure_credentials() {
   fi
   # Bổ sung khóa còn thiếu cho file sinh từ phiên bản cũ.
   grep -q '^AZURITE_ACCOUNT_KEY=' "$f" || echo "AZURITE_ACCOUNT_KEY=$(openssl rand -base64 64 | tr -d '\n')" >> "$f"
+  grep -q '^GRAFANA_ADMIN_PASSWORD=' "$f" || echo "GRAFANA_ADMIN_PASSWORD=$(rand_hex)" >> "$f"
   # shellcheck disable=SC1090
   . "$f"
 }
@@ -51,5 +52,6 @@ apply_credentials_secret() {
     --from-literal=rabbitmq-password="$RABBITMQ_PASSWORD" \
     --from-literal=keycloak-admin-password="$KEYCLOAK_ADMIN_PASSWORD" \
     --from-literal=azurite-accounts="shp:$AZURITE_ACCOUNT_KEY" \
+    --from-literal=grafana-admin-password="$GRAFANA_ADMIN_PASSWORD" \
     --dry-run=client -o yaml | k apply -f - >/dev/null
 }
