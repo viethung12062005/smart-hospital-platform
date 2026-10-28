@@ -19,7 +19,8 @@ for spec in "patient.demo:patient:Nguyen:Thi Lan" "doctor.demo:doctor:Le:Minh Qu
      -s "lastName=$last" -s "firstName=$first" >/dev/null
   kc set-password -r shp --username "$name" --new-password "$pw"
   kc add-roles -r shp --uusername "$name" --rolename "$role"
-  echo "${name//./_}_PASSWORD=$pw" | tr '[:lower:]' '[:upper:]' >> "$users_file"
+  # Chỉ viết hoa TÊN biến; mật khẩu giữ nguyên chữ thường (viết hoa cả dòng làm token.sh luôn đăng nhập sai).
+  printf '%s_PASSWORD=%s\n' "$(echo "${name//./_}" | tr '[:lower:]' '[:upper:]')" "$pw" >> "$users_file"
   log "Tạo $name (role $role)"
 done
 log "Mật khẩu người dùng thử: $users_file. Lấy token: make token USER=doctor.demo"
