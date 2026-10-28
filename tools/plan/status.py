@@ -31,4 +31,10 @@ STATUS = {
     "SCF-05": ("partial", "c909d5b", "audit: khung + Mongo; CHƯA Blob WORM/Log Analytics, nối bus, values uat/prod"),
     "NTF-01": ("done", "3b7390f", "contracts/db/mongo-notification-ml.js: collection, validator kênh, unique (subjectRef, kind), TTL 90 ngày; make -C dev up tự chạy (c909d5b)"),
     "ML-11": ("partial", "3b7390f", "contracts/db/mongo-notification-ml.js: collection ml, predictions time-series + index (modelVersion, predictedAt), validator ageBand/outcome; CHƯA ràng buộc score (time-series không nhận validator — kiểm ở code)"),
+    "GOP-03": ("done", "gitops 4314a40", "repo shp-gitops: bootstrap Argo CD, AppProject platform/shp-apps, ApplicationSet platform + services theo môi trường (app-of-apps)"),
+    "GOP-04": ("partial", "gitops 4314a40", "ApplicationSet ghim version: argo-rollouts 2.43.7, keda 2.20.2, cert-manager v1.21.2; CHƯA chạy trên AKS thật"),
+    "GOP-05": ("partial", "gitops 4314a40", "envoy-gateway 1.9.3 + GatewayClass/Gateway + ClusterIssuer Let's Encrypt (shp-baseline); CHƯA có tên miền, chưa chạy thật"),
+    "GOP-06": ("partial", "gitops 4314a40", "opentelemetry-collector 0.177.0: OTLP → Azure Monitor; CHƯA có Secret appinsights (ENV-01)"),
+    "GOP-07": ("partial", "gitops 4314a40", "kyverno 3.9.1 + 4 policy Enforce (chỉ ACR, chữ ký cosign keyless, cấm latest, resources/probe); CHƯA kiểm với image ký thật"),
+    "GOP-08": ("done", "gitops 4314a40", "namespace shp-apps PSA restricted + NetworkPolicy default-deny; service mở ingress theo values"),
 }
