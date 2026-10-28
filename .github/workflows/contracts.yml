@@ -1,4 +1,4 @@
-# Kiểm hợp đồng (phân quyền, event, OpenAPI, terminology) mỗi khi hợp đồng hoặc thiết kế đổi.
+# Validate the contracts (authorization, events, OpenAPI, terminology) whenever contracts or design docs change.
 name: contracts
 on:
   pull_request:
