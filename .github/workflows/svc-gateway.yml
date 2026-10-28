@@ -1,4 +1,4 @@
-# Gateway (viết tay, cùng mẫu với tools/scaffold/java_service.py). Pipeline: CI (Maven verify) → image (quét, SBOM, ký) → promote uat (chờ duyệt).
+# Gateway (hand-written, same pattern as tools/scaffold/java_service.py). Pipeline: CI (Maven verify) -> image (scan, SBOM, sign) -> promote to uat (awaits approval).
 name: svc-gateway
 on:
   pull_request:
