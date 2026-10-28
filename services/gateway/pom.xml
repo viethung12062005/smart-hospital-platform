@@ -12,7 +12,7 @@
   <name>gateway — API gateway (Spring Cloud Gateway)</name>
 
   <properties>
-    <spring-cloud.version>2025.1.2</spring-cloud.version>
+    <spring-cloud.version>2025.1.4</spring-cloud.version>
   </properties>
 
   <dependencyManagement>
