@@ -351,7 +351,7 @@ docker exec mtest mongosh --quiet /i.js && docker exec mtest mongosh --quiet /t.
    3. `libs/java/shp-authz`: `AuthzMatrix` (SnakeYAML SafeConstructor + đủ bất biến như bản .NET/Python), `AuthorizationEngine` (dùng `java.time.Clock`), `Principal`, `ResourceContext` (có builder), `AuthzDecision`, `Predicates`; `matrix.yaml` được **copy vào jar** lúc build (`shp/authz/matrix.yaml`).
    4. Chuyển test sinh từ ma trận sang JUnit 5 (`@ParameterizedTest` + `@MethodSource`): **238 test** (bản .NET 236; thêm 2: lý do `role-not-allowed`, bộ nạp báo id trùng/denyAll/thiếu rule).
    5. `libs/java/shp-service-defaults`: auto-configuration nạp `shp-defaults.properties` (độ ưu tiên thấp nhất): `/health/live`, `/health/ready`, `/health`, `/info` (name, version, gitSha), `/prometheus`; tracing 100%, chỉ xuất OTLP khi `SHP_OTLP_EXPORT=true`; virtual threads; tắt máy êm (graceful). 5 test chạy server thật cổng ngẫu nhiên.
-3. **Thay đổi (commit COMMIT_J2):**
+3. **Thay đổi (commit 95d2f74):**
 
 | File | | Nội dung |
 |---|---|---|
