@@ -5,7 +5,7 @@ WORKDIR /src
 COPY . .
 RUN --mount=type=cache,target=/root/.m2 mvn -B -q -pl services/scheduling -am package -DskipTests -Dspotless.check.skip=true -Djacoco.skip=true
 
-FROM gcr.io/distroless/java21-debian12:nonroot
+FROM gcr.io/distroless/java21-debian13:nonroot
 WORKDIR /app
 COPY --from=build /src/services/scheduling/target/app.jar /app/app.jar
 EXPOSE 8080
