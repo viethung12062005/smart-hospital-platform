@@ -33,8 +33,8 @@ Mọi lần đọc/ghi dữ liệu nhạy cảm ──► audit-service (append-
 | `document-service` | Java | DocumentReference + file trên Blob | REST + event `document-uploaded`, `document-released` |
 | `notification-service` | Java worker | Nhắc lịch (`reminder`), lần gửi, tùy chọn nhận tin | Consume event, retry + DLQ |
 | `audit-service` | Java worker | AuditEvent (append-only) | Consume event |
-| `ai-service` | Java (Spring AI) | Kho tri thức RAG (AI Search) | REST; gọi các service khác bằng token của người dùng |
-| `ml-service` | Java (XGBoost4J, DuckDB) | Đặc trưng, dự đoán, model registry (MLflow) | Consume event, phát `no-show-scored` |
+| `ai-service` | Python (FastAPI) | Kho tri thức RAG (AI Search) | REST; gọi các service khác bằng token của người dùng |
+| `ml-service` | Python (LightGBM, MLflow) | Đặc trưng, dự đoán, model registry (MLflow) | Consume event, phát `no-show-scored` |
 
 Nguyên tắc: **mỗi service sở hữu kho dữ liệu riêng, chọn theo đặc tính tải**
 (xem [ADR-0008](adr/0008-polyglot-persistence.md)); không join chéo service, chỉ tham chiếu

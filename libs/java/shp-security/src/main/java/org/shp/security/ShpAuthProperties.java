@@ -1,4 +1,4 @@
-package org.shp.web.auth;
+package org.shp.security;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;

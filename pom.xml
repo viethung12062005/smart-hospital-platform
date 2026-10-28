@@ -22,6 +22,7 @@
     <module>libs/java/shp-service-defaults</module>
     <module>libs/java/shp-authz</module>
     <module>libs/java/shp-events</module>
+    <module>libs/java/shp-security</module>
     <module>libs/java/shp-web</module>
     <module>libs/java/shp-data-postgres</module>
     <module>libs/java/shp-data-mongo</module>
@@ -31,7 +32,6 @@
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Phiên bản tra trên Maven Central ngày 2026-10-28 (docs/04-devops/progress-log.md, Phần J) -->
-    <spring-ai.version>2.0.2</spring-ai.version>
     <hapi-fhir.version>8.12.1</hapi-fhir.version>
     <json-schema-validator.version>3.0.8</json-schema-validator.version>
     <cloudevents.version>5.1.0</cloudevents.version>
@@ -61,6 +61,11 @@
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
+        <artifactId>shp-security</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.shp</groupId>
         <artifactId>shp-web</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -73,13 +78,6 @@
         <groupId>org.shp</groupId>
         <artifactId>shp-data-mongo</artifactId>
         <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.ai</groupId>
-        <artifactId>spring-ai-bom</artifactId>
-        <version>${spring-ai.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>ca.uhn.hapi.fhir</groupId>
