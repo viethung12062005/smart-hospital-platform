@@ -466,7 +466,7 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
    4. Gỡ BOM Spring AI khỏi `pom.xml` gốc (không còn module Java nào dùng).
    5. **Tách `libs/java/shp-security`** (`ShpJwt`, `ShpAuthProperties`, `Roles`; gói `org.shp.security`) khỏi `shp-web`: gateway là WebFlux, không được kéo Spring MVC của `shp-web` vào; cả hai dùng chung một quy tắc JWT. Dùng `git mv` để giữ lịch sử file.
    6. Thêm `PostgresOutboxAuditSink`, `MongoOutboxAuditSink`: ghi audit thành event E11 vào outbox trong **transaction riêng (REQUIRES_NEW)** → audit vẫn được lưu khi giao dịch nghiệp vụ rollback, không mất khi bus lỗi. Mỗi bản 1 test.
-3. **Thay đổi (commit COMMIT_J4B):**
+3. **Thay đổi (commit 638b780):**
 
 | File | | Nội dung |
 |---|---|---|
