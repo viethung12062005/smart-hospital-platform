@@ -8,7 +8,7 @@ CLUSTER_NAME="shp-local"
 NAMESPACE="shp-deps"
 CTX="kind-${CLUSTER_NAME}"
 # shellcheck disable=SC2034  # dùng trong deploy.sh
-TEMPLATES_GIT="${SHP_TEMPLATES_GIT:-https://github.com/viethung12062005/shp-platform-templates-scratch.git}"
+TEMPLATES_GIT="${SHP_TEMPLATES_GIT:-https://github.com/viethung12062005/shp-platform-templates.git}"
 # shellcheck disable=SC2034
 TEMPLATES_REF="${SHP_TEMPLATES_REF:-work/initial-baseline}"
 
