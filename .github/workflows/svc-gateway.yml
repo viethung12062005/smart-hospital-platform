@@ -10,12 +10,12 @@ permissions:
   contents: read
 jobs:
   ci:
-    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@main
+    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@v0.1.0
     with:
       modules: services/gateway
   container:
     needs: ci
-    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@main
+    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@v0.1.0
     permissions:
       contents: read
       id-token: write
@@ -31,7 +31,7 @@ jobs:
   promote-uat:
     if: github.ref == 'refs/heads/main'
     needs: container
-    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@main
+    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.0
     with:
       service: gateway
       environment: uat
