@@ -18,7 +18,7 @@ __pycache__/
 # Dev local: mật khẩu sinh ngẫu nhiên và chuỗi kết nối
 dev/.local/
 
-# Build .NET / Python
+# Build Java (Maven) / Python
 bin/
 obj/
 TestResults/

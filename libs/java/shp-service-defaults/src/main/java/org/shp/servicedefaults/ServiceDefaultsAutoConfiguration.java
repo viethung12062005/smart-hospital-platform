@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Tương đương {@code AddServiceDefaults} của bản .NET: health live/ready, /info, tracing, metric
- * Prometheus. Service chỉ cần có thư viện này trên classpath; không cần code.
+ * Cấu hình chung: health live/ready, /info, tracing, metric Prometheus. Service chỉ cần có thư viện
+ * này trên classpath; không cần code.
  */
 @AutoConfiguration
 public class ServiceDefaultsAutoConfiguration {

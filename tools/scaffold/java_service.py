@@ -425,6 +425,8 @@ def readme(name: str, owner: str, desc: str, db: str) -> str:
 | `make -C dev deploy SVC={name}` | build image và deploy lên cụm kind |
 
 ## Dev viết gì, ở đâu
+- Bố cục gói (`docs/03-architecture/overview.md` §4): `api/` (controller) → `app/` (use case, transaction) → `domain/` (quy tắc, không Spring)
+  → `infra/` (repository, client); `messaging/` (consumer); `config/` của SA.
 - Endpoint: `src/main/java/org/shp/{name}/api/*Controller.java`. **Mọi endpoint** phải có `@RequireShpAuthz(resource, action, context)`
   (test `everyEndpointDeclaresItsAuthorizationRule` đỏ nếu quên). Dữ kiện cho phân quyền: bean `ResourceContextResolver`.
 - Lỗi nghiệp vụ: `throw new ShpException("slot-unavailable")` (mã trong `contracts` + 07 §5).
@@ -486,6 +488,15 @@ jobs:
 """
 
 
+# Bố cục gói chuẩn (docs/03-architecture/overview.md §4); api/ và config/ sinh riêng ở trên.
+LAYERS = {
+    "app": "Use case: nơi duy nhất mở transaction (@Transactional); ghi dữ liệu và outbox.add(...) trong cùng transaction.",
+    "domain": "Model và quy tắc nghiệp vụ; KHÔNG import Spring/JDBC/Mongo (test bằng JUnit thuần).",
+    "infra": "Repository (JDBC/Mongo), client REST nội bộ, Blob — chỉ app/ gọi tới.",
+    "messaging": "Consumer event: mỗi handler bọc trong inbox.handleOnce(...) rồi gọi use case ở app/.",
+}
+
+
 def files(name: str) -> dict[str, str]:
     owner, desc, db = SERVICES[name]
     base = f"services/{name}"
@@ -509,6 +520,7 @@ public class {cls(name)}Application {{
         f"{pkg}/api/package-info.java": f"""/** Controller REST/FHIR của {name}. Mỗi endpoint: {{@code @RequireShpAuthz(...)}} (xem README của service). */
 package org.shp.{name}.api;
 """,
+        **{f"{pkg}/{sub}/package-info.java": f"/** {doc} */\npackage org.shp.{name}.{sub};\n" for sub, doc in LAYERS.items()},
         f"{base}/src/main/resources/application.yml": application_yml(name, db),
         f"{base}/src/test/java/org/shp/{name}/{cls(name)}ApplicationTest.java": test_java(name, db),
         f"{base}/Dockerfile": dockerfile(name),
