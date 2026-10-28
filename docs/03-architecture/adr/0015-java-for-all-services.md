@@ -16,7 +16,7 @@ Các ADR khác (kiến trúc, dữ liệu, AI, CI/CD, môi trường) **giữ ng
 | PostgreSQL (scheduling) | Npgsql + Dapper | **JDBC (`JdbcClient`) + Flyway**, SQL tường minh |
 | MongoDB | MongoDB .NET driver | **Spring Data MongoDB** / driver đồng bộ |
 | Messaging | MassTransit (RabbitMQ / Service Bus) | **Spring Cloud Stream** (binder RabbitMQ local, Azure Service Bus cloud) |
-| Event | CloudEvents tự viết | **CloudEvents Java SDK** + kiểm schema bằng `networknt json-schema-validator` |
+| Event | CloudEvents tự viết | Envelope CloudEvents 1.0 là **record Java** (Jackson 3) + kiểm schema bằng `networknt json-schema-validator` 3.x. *(Sửa 2026-10-28: không dùng CloudEvents Java SDK vì module JSON của nó dùng Jackson 2 trong khi Spring Boot 4 dùng Jackson 3.)* |
 | AI (LLM router, RAG) | Python + SDK OpenAI-compatible | **Spring AI 2.0.x** (DeepSeek qua OpenAI-compatible, Gemini, Ollama, embedding bge-m3 qua Ollama); router + fallback + circuit breaker tự viết như ADR-0006/0013 |
 | ML no-show | scikit-learn / LightGBM, pandas, pandera | **XGBoost4J** (huấn luyện + phục vụ), **DuckDB JDBC** (đọc/ghi Parquet, tính drift bằng SQL), **MLflow Java client** (tracking + registry), kiểm dữ liệu bằng quy tắc Java tự viết thay pandera |
 | OCR | Tesseract (Python) | **Tess4J** (Tesseract qua JNI) |
