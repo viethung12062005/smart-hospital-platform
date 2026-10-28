@@ -22,7 +22,7 @@ bất đồng bộ qua event.
 
 ## Phương án đã cân nhắc
 - **Modular monolith**: rẻ, đơn giản; nhưng không thể scale/deploy AI và document độc lập,
-  và không thể hiện được vận hành phân tán. Giữ làm phương án dự phòng: các service .NET dùng
+  và không thể hiện được vận hành phân tán. Giữ làm phương án dự phòng: các service Java dùng
   chung building block nên có thể gộp lại nếu thiếu thời gian.
 - **Mỗi resource một service**: quá nhiều, vi phạm hướng dẫn của đề.
 

@@ -29,15 +29,15 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☑ | ARC-19 | Tạo contracts/authz/matrix.yaml đầy đủ từ ma trận phân quyền **[xong, commit cd8c789: 64 rule, validator bất biến an toàn, test của validator]** | Mọi ô của ma trận có dòng quy tắc; schema YAML được validate; dev dùng làm đầu vào cho SHR-22 | 4 | ARC-03 | ENABLER |
-| ☐ | CIT-01 | Reusable workflow .NET CI | format check, build warn-as-error, test + ngưỡng coverage, quét package lỗ hổng; dùng được từ repo khác | 4 | GOV-01 | US-070 |
+| ☐ | CIT-01 | Reusable workflow Java CI (Maven) | Spotless check, build -Werror, test + JaCoCo ngưỡng coverage, quét dependency lỗ hổng; dùng được từ repo khác | 4 | GOV-01 | US-070 |
 | ☐ | CIT-03 | Reusable workflow container | hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest | 5 | IAC-02, IAC-03 | US-070 |
 | ☐ | GOP-01 | Helm chart chung microservice | Deployment/Rollout, Service, HPA/KEDA, PDB, NetworkPolicy, HTTPRoute, ServiceAccount WI, SecretProviderClass; values.schema.json | 8 | ARC-09 | US-070 |
 | ☐ | IAC-01 | Stack bootstrap: RG shared, state storage | Storage account có versioning, soft delete, tắt shared key; state truy cập bằng Entra ID | 3 | GOV-01 | ENABLER |
 | ☐ | IAC-02 | Bootstrap: Azure Container Registry | ACR tắt admin user; retention policy; output login server | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-03 | Bootstrap: identity OIDC cho GitHub | Identity plan (read), apply-<env>, acr-push; federated credential theo repo + environment; RBAC tối thiểu | 4 | IAC-01 | ENABLER |
 | ☐ | LOC-02 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | 3 | LOC-01 | US-008, US-066 |
-| ☐ | LOC-03 | Walking skeleton .NET | Service mẫu: health, info, OTel, Dockerfile chiseled non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
-| ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
+| ☐ | LOC-03 | Walking skeleton Java (Spring Boot) | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
+| ☐ | LOC-04 | Walking skeleton Java cho ai/ml | Spring Boot + Spring AI (ai), XGBoost4J + DuckDB (ml): health, info, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
 | ☐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
 | ☑ | SHR-02 | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi **[xong, commit 55c56a5: libs/dotnet/Shp.Web/Errors: ErrorCatalog (27 mã, test đối chiếu bảng §5 của 07), ShpException, ErrorWriter (OperationOutcome / Problem Details), middleware]** | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | 3 | SHR-01 | ENABLER |
 | ◐ | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên **[làm một phần, commit 55c56a5: libs/dotnet/Shp.Web/Auth: JWT Bearer + map roles + MFA nhân viên; test bằng token ký cục bộ; CHƯA thử với Keycloak/Entra thật]** | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | 3 | LOC-02 | US-008, US-066 |
@@ -61,9 +61,9 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | IAC-07 | Module aks | Azure CNI overlay + Cilium, Workload Identity, KV CSI, Azure RBAC, tắt local account, 3 node pool, 3 zone | 8 | IAC-05, IAC-06 | ENABLER |
 | ☑ | SHR-06 | CloudEvents envelope + validate JSON Schema + helper test hợp đồng **[xong, commit c81d3ec: libs/dotnet/Shp.Events: CloudEvent + CloudEvents.Create (uuidv7, traceparent, ≤64KB) + EventSchemas.Validate (schema nhúng từ contracts/events); 11 ví dụ hợp đồng được kiểm]** | Event sai schema bị từ chối; helper dùng cho mọi service | 3 | ARC-07 | ENABLER |
 | ◐ | SHR-07 | Outbox relay dùng chung (store PostgreSQL và MongoDB), poll 1 giây, SKIP LOCKED **[làm một phần, commit b74e54a: Shp.Data.Postgres: PostgresOutbox.AddAsync + OutboxRelay (SKIP LOCKED, backoff, đa replica); CHƯA có bản MongoDB và CHƯA có IEventPublisher thật (MassTransit)]** | Bus chết rồi sống lại vẫn phát đủ; nhiều replica không trùng | 4 | SHR-06 | ENABLER |
-| ◐ | SHR-08 | Consumer nền tảng: inbox idempotent + MassTransit (RabbitMQ local, Service Bus cloud), retry/DLQ **[làm một phần, commit b74e54a: PostgresInbox.HandleOnceAsync (đúng một lần, rollback cả dấu inbox khi lỗi); CHƯA có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB]** | Event trùng chỉ xử lý một lần; 5 lần giao rồi DLQ | 4 | SHR-06 | ENABLER |
+| ◐ | SHR-08 | Consumer nền tảng: inbox idempotent + Spring Cloud Stream (RabbitMQ local, Service Bus cloud), retry/DLQ **[làm một phần, commit b74e54a: PostgresInbox.HandleOnceAsync (đúng một lần, rollback cả dấu inbox khi lỗi); CHƯA có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB]** | Event trùng chỉ xử lý một lần; 5 lần giao rồi DLQ | 4 | SHR-06 | ENABLER |
 | ☑ | SHR-24 | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse **[xong, commit 4bf82ef: AuthorizationEngine.Decide: default-deny, fields, purpose, 236 test]** | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | 3 | SHR-23 | ENABLER |
-| ☑ | SHR-25 | Authz: endpoint filter ASP.NET + test 'mọi endpoint phải có quy tắc' **[xong, commit c81d3ec: Shp.Web: RequireShpAuthz (filter) + FindUnprotectedEndpoints (test chặn quên phân quyền); 403/404 theo quy ước]** | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | 4 | SHR-24 | ENABLER |
+| ☑ | SHR-25 | Authz: filter endpoint Spring + test 'mọi endpoint phải có quy tắc' **[xong, commit c81d3ec: Shp.Web: RequireShpAuthz (filter) + FindUnprotectedEndpoints (test chặn quên phân quyền); 403/404 theo quy ước]** | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | 4 | SHR-24 | ENABLER |
 | ☑ | SHR-28 | Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay) **[xong, commit b74e54a: PostgresIdempotency: RequireKey, HashBody chuẩn hóa, ClaimAsync (replay, 422 khi khác body, song song, hết hạn 24h); 25 test với PostgreSQL thật]** | Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song | 4 | SHR-05 | US-015 |
 
 ## Tuần 4 — 54 giờ
@@ -71,9 +71,9 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ARC-13 | Sprint review + planning S1 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
-| ☐ | CIT-02 | Reusable workflow Python CI | ruff lint+format, mypy, pytest + coverage, pip-audit | 3 | GOV-01 | US-070 |
+| ☐ | CIT-02 | Workflow kiểm hợp đồng + công cụ SA (Python) | tools/contracts/check_all.sh và tools/plan/build.py chạy trong CI | 3 | GOV-01 | US-070 |
 | ☐ | CIT-04 | Reusable workflow Helm validate | helm lint, render từng môi trường, kubeconform strict, Trivy config | 3 | GOP-01 | US-070 |
-| ☐ | CIT-07 | Workflow kiểm tra chung cho mọi PR | gitleaks, actionlint, dependency review, CodeQL (csharp, python, actions) | 3 | GOV-01 | US-070 |
+| ☐ | CIT-07 | Workflow kiểm tra chung cho mọi PR | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python cho công cụ, actions) | 3 | GOV-01 | US-070 |
 | ☐ | CIT-08 | Caller workflow mẫu cho service + script sinh | Script tạo svc-<name>.yml từ template với path filter đúng | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | US-070 |
 | ☐ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager | Application ghim version chart; values theo môi trường | 3 | GOP-03 | US-070 |
 | ☐ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) | GatewayClass/Gateway, TLS qua cert-manager | 3 | GOP-04 | US-070 |
@@ -88,8 +88,8 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | SCF-03 | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) | Service từ template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☐ | SCF-04 | Scaffold document service (khung code, pipeline, values, Blob/MongoDB) | Service từ template; svc-document.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☐ | SCF-05 | Scaffold audit worker (khung code, pipeline, values, Blob WORM/Log Analytics) | Service từ template; svc-audit.yml | 2 | LOC-03, CIT-08 | ENABLER |
-| ☐ | SCF-06 | Scaffold ai-service FastAPI (khung code, pipeline, values, node pool ai) | FastAPI từ template; svc-ai.yml; node pool ai | 2 | LOC-04, CIT-08 | ENABLER |
-| ☐ | SCF-07 | Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối PostgreSQL/bus/MLflow) | Service mẫu chạy qua pipeline template | 2 | LOC-04, CIT-08 | ENABLER |
+| ☐ | SCF-06 | Scaffold ai-service Spring Boot + Spring AI (khung code, pipeline, values, node pool ai) | Spring Boot từ template; svc-ai.yml; node pool ai | 2 | LOC-04, CIT-08 | ENABLER |
+| ☐ | SCF-07 | Scaffold ml-service (khung code Java, Dockerfile, pipeline, values, kết nối MongoDB/bus/MLflow) | Service mẫu chạy qua pipeline template | 2 | LOC-04, CIT-08 | ENABLER |
 | ◐ | SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR **[làm một phần, commit c81d3ec: AuditRecord/AuditRecordBuilder (che IP, chặn giá trị trong resource) + IAuditSink; CHƯA có sink ghi outbox (SHR-07) và chưa có middleware audit riêng cho FHIR search/read ngoài RequireShpAuthz]** | Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số | 4 | SHR-06 | US-047 |
 | ☑ | SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) **[xong, commit c81d3ec: AuthzAudit.FromDecision + filter ghi audit cho cho-phép, từ-chối, lỗi; mọi hành động ma trận có ánh xạ audit]** | Mỗi Deny sinh audit outcome=denied kèm mã lý do; test | 2 | SHR-24, SHR-09 | US-047 |
 
@@ -103,7 +103,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | GOP-06 | Platform add-on: OpenTelemetry Collector | Nhận OTLP, xuất sang Azure Monitor; local xuất sang Grafana stack | 3 | GOP-03 | US-070 |
 | ☐ | GOP-07 | Kyverno + policy | Chỉ image đã ký từ ACR, cấm tag latest, bắt buộc resources/probes, PSS restricted; Enforce | 4 | GOP-03 | US-070 |
 | ☐ | GOP-08 | NetworkPolicy default-deny + namespace | Namespace có nhãn PSA restricted; chỉ mở luồng đã thiết kế | 2 | GOP-03 | US-070 |
-| ☐ | GW-01 | API Gateway YARP | Route tới các service; truyền trace context | 3 | LOC-03 | ENABLER |
+| ☐ | GW-01 | API Gateway Spring Cloud Gateway | Route tới các service; truyền trace context | 3 | LOC-03 | ENABLER |
 | ☐ | IAC-09 | Module postgresql | Flexible Server 16, chỉ Entra auth (không mật khẩu), PITR 7 ngày, HA zone-redundant ở prod | 4 | IAC-05 | US-067 |
 | ☐ | IAC-10 | Module mongodb (Cosmos DB for MongoDB vCore) | Cluster private endpoint; mật khẩu sinh bằng random_password lưu Key Vault, không nằm trong code | 4 | IAC-05, IAC-08 | US-067 |
 | ☐ | IAC-11 | Module redis | Private endpoint, Entra auth, TLS only | 2 | IAC-05 | ENABLER |
@@ -132,10 +132,10 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | ARC-12 | Kế hoạch kiểm thử (test strategy) | Mức test, ngưỡng coverage, kịch bản load/failure test map với NFR | 4 | ARC-02 | ENABLER |
 | ☐ | ARC-16 | Sprint review + planning S4 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | CIT-09 | Phát hành templates có version | Tag vX.Y.Z trên shp-platform-templates; chart push OCI lên ACR; CHANGELOG | 2 | CIT-01, GOP-01 | US-070 |
-| ☐ | CIT-10 | Đóng gói NuGet nội bộ cho thư viện dùng chung | Thư viện phát hành lên GitHub Packages có version; service tham chiếu theo version | 3 | SHR-01 | US-070 |
+| ☐ | CIT-10 | Đóng gói Maven nội bộ cho thư viện dùng chung | Thư viện phát hành lên GitHub Packages (Maven) có version; service tham chiếu theo version | 3 | SHR-01 | US-070 |
 | ☐ | GOP-02 | Unit test cho chart | helm-unittest cho các tổ hợp values chính; chạy trong CI | 3 | GOP-01 | US-070 |
 | ☐ | GOP-09 | Canary prod với Argo Rollouts | Bước 10%-50%-100%, dừng chờ promote thủ công, rollback tự động khi lỗi | 3 | GOP-04 | US-070 |
-| ☐ | GOV-06 | Dependabot cho actions, nuget, pip, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | 2 | GOV-01 | US-070 |
+| ☐ | GOV-06 | Dependabot cho actions, maven, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | 2 | GOV-01 | US-070 |
 | ☐ | GW-02 | Xác thực + rate limit theo người dùng | Token sai -> 401; vượt hạn mức -> 429 | 4 | GW-01, SHR-20 | US-068 |
 | ☐ | IAC-18 | Module Defender for Storage + Event Grid → queue cho kết quả quét | Blob mới được quét; kết quả vào queue để document service xử lý | 3 | IAC-12 | US-036 |
 | ☐ | IAC-19 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values | 4 | IAC-05 | US-055 |
@@ -157,18 +157,18 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | PRD-10 | Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x) | Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên UAT (cỡ prod) | 4 | SCH-14 | US-068 |
 | ☐ | PRD-11 | KEDA cron scale trước 07:00 + HPA cho scheduling | Values prod/uat scale trước đợt mở slot | 1 | SCF-01, GOP-04 | US-068 |
 
-## Tuần 9 — 2 giờ
+## Tuần 9 — 7 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ARC-18 | Sprint review + planning S6 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
+| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
 
-## Tuần 10 — 28 giờ
+## Tuần 10 — 23 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ENV-06 | Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ | Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập | 4 | ENV-01, ENV-02, ENV-05 | US-070 |
-| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
 | ☐ | PRD-01 | Load test 1x/5x/10x + báo cáo | Chạy trên UAT ephemeral (cỡ prod); so với NFR-P/S | 6 | PRD-10, ENV-01 | US-068 |
 | ☐ | PRD-02 | Failure test | Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả | 6 | ENV-01 | US-069 |
 | ☐ | PRD-03 | Diễn tập backup/restore | PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO | 4 | ENV-01 | US-067 |

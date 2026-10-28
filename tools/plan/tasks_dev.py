@@ -75,16 +75,16 @@ D1_TASKS = [
      "Đạt NFR-P1, P2 hoặc có giải thích", "D1", 4, "PRD-01", "H1", "NFR-P1, P2"),
 
     # ---------------- notification service ----------------
-    ("NTF-01", "US-041", "Migration notification: preference, device_token, reminder, delivery_attempt, inbox",
-     "Chạy sạch; ràng buộc kênh, unique (subject_ref, kind)", "D1", 2, "SCF-02", "S2", "04 §1.2"),
+    ("NTF-01", "US-041", "Khởi tạo MongoDB notification (ADR-0014): preferences, device_tokens, reminders (lần gửi nhúng), inbox, outbox",
+     "Script idempotent; unique (appointmentId, kind); TTL dọn nhắc cũ; validator kênh", "D1", 2, "SCF-02", "S2", "04 §1.2"),
     ("NTF-02", "US-041", "Consumer appointment-booked → tạo nhắc xác nhận, T-24h, T-2h (bỏ mốc đã qua)",
      "Event trùng không tạo nhắc trùng; test các mốc thời gian", "D1", 3, "NTF-01, SHR-08", "S3", "E1(sub)"),
     ("NTF-03", "US-042", "Consumer appointment-cancelled/rescheduled: hủy nhắc chưa gửi, tạo nhắc hủy",
      "AC-07.1; reschedule chỉ một thông báo gộp", "D1", 3, "NTF-02", "S3", "E2(sub), E3(sub), AC-07.1"),
     ("NTF-04", "US-005, US-041", "Logic tùy chọn: thứ tự kênh, ngôn ngữ, khung giờ yên tĩnh (t-2h bỏ qua)",
      "Test lùi giờ gửi qua khung yên tĩnh", "D1", 3, "NTF-01", "S3", "04 §1.2"),
-    ("NTF-05", "US-043", "Vòng lấy việc: SKIP LOCKED, locked_until, thu hồi dòng sending bị treo",
-     "Worker chết giữa chừng → dòng được gửi lại; hai worker không trùng", "D1", 4, "NTF-01", "S3", "04 §1.3"),
+    ("NTF-05", "US-043", "Vòng lấy việc: findOneAndUpdate nguyên tử + lockedUntil, thu hồi nhắc sending bị treo",
+     "Worker chết giữa chừng → nhắc được gửi lại; hai worker không trùng (test Testcontainers MongoDB)", "D1", 4, "NTF-01", "S3", "04 §1.3"),
     ("NTF-06", "US-041, US-043", "Abstraction kênh + provider giả + template vi/en (không nhúng PII/chẩn đoán)",
      "Template có biến doctorName/startTime/place; test render hai ngôn ngữ", "D1", 4, "NTF-01", "S3", "11 §1"),
     ("NTF-07", "US-043", "Bộ gửi: kênh dự phòng, backoff 1/5/15/60 phút, dead-letter lần 5, metric",
@@ -127,7 +127,7 @@ D1_TASKS = [
 
 D2_TASKS = [
     # ---------------- shared: FHIR core, Mongo, events, audit emitter ----------------
-    ("SHR-01", "ENABLER", "FHIR R4 JSON serialize/parse (Firely) + test vòng khứ hồi cho resource trong phạm vi",
+    ("SHR-01", "ENABLER", "FHIR R4 JSON serialize/parse (HAPI FHIR) + test vòng khứ hồi cho resource trong phạm vi",
      "Parse sai trả 400 validation-failed; test từng resource type", "D2", 3, "LOC-03", "P1", "ADR-0003"),
     ("SHR-03", "ENABLER", "Search parameter registry + parser (token, reference, date theo độ chính xác, _count)",
      "ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400", "D2", 4, "SHR-01", "P1", "ADR-0003, 07 §4"),
@@ -264,20 +264,20 @@ D2_TASKS = [
 ]
 
 D3_TASKS = [
-    # ---------------- shared Python ----------------
-    ("PY-01", "US-066", "Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI",
-     "Test token hợp lệ/sai/hết hạn", "D3", 3, "LOC-02", "P1", "07 §2"),
+    # ---------------- AI/ML (Java, Spring AI) — ID PY-xx giữ nguyên để truy vết ----------------
+    ("PY-01", "US-066", "Nối shp-web (JWT, identity, RequireShpAuthz) vào ai và ml",
+     "Endpoint ai/ml đều có quy tắc (FindUnprotectedEndpoints rỗng); test token sai/hết hạn", "D3", 1, "LOC-02", "P1", "07 §2"),
     ("PY-02", "US-053", "Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange)",
      "Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả", "D3", 3, "PY-01", "P2", "15 §7"),
-    ("PY-03", "US-059, US-064", "Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ",
-     "Event trùng xử lý một lần", "D3", 4, "ARC-07", "P2", "13 §1"),
-    ("PY-04", "US-047", "Audit emitter Python (E11) cho AI/ML",
+    ("PY-03", "US-059, US-064", "Consumer event cho ai/ml bằng thư viện chung (Spring Cloud Stream + inbox MongoDB)",
+     "Event trùng xử lý một lần; test hợp đồng với contracts/events", "D3", 2, "ARC-07", "P2", "13 §1"),
+    ("PY-04", "US-047", "Audit E11 cho AI/ML bằng shp-events (ai-query, ai-summary)",
      "Không ghi nội dung câu hỏi hay PII; test", "D3", 2, "PY-03", "S1", "E11(pub), 12 §0"),
-    ("PY-05", "ENABLER", "Problem Details + danh mục mã lỗi cho FastAPI",
-     "Khớp 07 §5; test", "D3", 2, "LOC-04", "P1", "07 §5"),
+    ("PY-05", "ENABLER", "Mã lỗi riêng của AI (ai-unavailable, ai-budget-exceeded) qua ShpException của shp-web",
+     "Khớp 07 §5; test", "D3", 1, "LOC-04", "P1", "07 §5"),
     ("PY-06", "US-055", "Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược)",
      "Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure", "D3", 4, "", "P1", "NFR-SEC8"),
-    ("PY-07", "US-055", "Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test",
+    ("PY-07", "US-055", "Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (Spring AI, OpenAI-compatible) + redact PII bắt buộc + provider giả cho test",
      "Cùng một interface; mô phỏng timeout/429/5xx", "D3", 4, "LOC-04", "P2", "ADR-0006"),
     ("PY-08", "US-055", "Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi",
      "Ghi fallbackLevel; test mọi nhánh lỗi", "D3", 4, "PY-07", "P2", "06 §4"),
@@ -299,7 +299,7 @@ D3_TASKS = [
      "Không rò rỉ tương lai; test đặc trưng", "D3", 4, "ML-01", "P2", "04 §2.3"),
     ("ML-03", "US-063", "Baseline Logistic Regression + metric (AUC, precision/recall tại ngưỡng)",
      "Ghi vào MLflow", "D3", 3, "ML-02", "P2", "ADR-0007"),
-    ("ML-04", "US-063", "LightGBM + tìm tham số + MLflow tracking",
+    ("ML-04", "US-063", "XGBoost4J + tìm tham số + MLflow tracking (Java client)",
      "So sánh với baseline; lưu artifact", "D3", 4, "ML-03", "P2", "ADR-0007"),
     ("ML-05", "US-063", "Cổng chất lượng và model registry: AUC ≥ 0,75 và hơn baseline mới được đăng ký alias production",
      "Model kém bị chặn; có test cho cổng", "D3", 3, "ML-04, LOC-08", "S1", "NFR-AI6, M2"),
@@ -315,7 +315,7 @@ D3_TASKS = [
      "Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng", "D3", 3, "ML-19, ML-20", "S6", "NFR-AI6"),
     ("ML-13", "US-071", "Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash",
      "Cùng hash + seed → cùng model (kiểm bằng test)", "D3", 3, "ML-01", "P2", "16-mlops §2"),
-    ("ML-14", "US-071", "Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera",
+    ("ML-14", "US-071", "Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng bộ quy tắc Java (thay pandera)",
      "Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng", "D3", 3, "ML-13", "P2", "16-mlops §2"),
     ("ML-15", "US-071", "Package đặc trưng dùng chung cho huấn luyện và phục vụ",
      "Một nguồn duy nhất cho mọi đặc trưng; có unit test", "D3", 3, "ML-02", "P2", "04 §2.3"),
@@ -339,8 +339,8 @@ D3_TASKS = [
      "Không tăng độ trễ phía người dùng; có metric đồng thuận với bản đang chạy", "D3", 3, "ML-09", "S3", "16-mlops §6"),
     ("ML-25", "US-073", "Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản",
      "Prometheus có đủ metric theo model_version để AnalysisTemplate dùng", "D3", 3, "ML-08", "S3", "16-mlops §6"),
-    ("ML-11", "US-064", "Migration PostgreSQL ml: attendance_stats, appointment_fact, prediction, inbox, outbox",
-     "Chạy sạch; ràng buộc age_band, score", "D3", 2, "SCF-07", "S2", "04 §2.2"),
+    ("ML-11", "US-064", "Khởi tạo MongoDB ml (ADR-0014): patient_stats, appointment_facts, predictions (time-series nếu vCore hỗ trợ), inbox, outbox",
+     "Script idempotent; validator ràng buộc ageBand, score; index (modelVersion, predictedAt)", "D3", 2, "SCF-07", "S2", "04 §2.2"),
     ("ML-12", "US-064, US-046", "Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch",
      "Xanh trong CI; AC-15.1 có test ở notification", "D3", 2, "ML-08, SHR-06", "S3", "E10(pub), AC-15.1"),
 

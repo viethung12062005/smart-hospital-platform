@@ -12,7 +12,7 @@ Dự đoán **xác suất bệnh nhân không đến khám** cho mỗi Appointme
 nhở cho lịch hẹn rủi ro cao. Không có lời gọi đồng bộ giữa hai service nên ML lỗi không ảnh hưởng nhắc lịch (AC-15.1).
 
 - Dữ liệu: **sinh tổng hợp** (synthetic) có quy luật cài sẵn (lead time, lịch sử vắng, giờ khám...).
-- Mô hình: Logistic Regression làm baseline → LightGBM.
+- Mô hình: Logistic Regression làm baseline → XGBoost (XGBoost4J, ADR-0015).
 - Vòng đời: pipeline huấn luyện (CI), theo dõi thí nghiệm + model registry bằng **MLflow**,
   gate chất lượng (AUC, nhóm con, calibration, độ trễ), model card, shadow + canary tự động bằng Argo Rollouts,
   theo dõi drift (PSI) và AUC thực tế, huấn luyện lại tự động khi drift. Chi tiết: `detailed-design/16-mlops.md`.

@@ -9,7 +9,7 @@ managed FHIR (Azure Health Data Services). Các service lại dùng kho dữ li�
 
 ## Quyết định
 Building block `SmartHospital.Fhir` chứa phần **không phụ thuộc DB**:
-- Serialize/parse FHIR R4 (Firely SDK).
+- Serialize/parse FHIR R4 (HAPI FHIR structures, ADR-0015).
 - Định nghĩa SearchParameter và trích giá trị tìm kiếm từ resource (`SearchParameterRegistry`).
 - Phân tích query FHIR (`status=free&start=ge2026-11-01`) thành tiêu chí có kiểu.
 - Hợp đồng `IFhirStore` / `IFhirSession`: read, create, update có `versionId` (optimistic
