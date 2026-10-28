@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES_REPO = "viethung12062005/shp-platform-templates"
-TEMPLATES_REF = "main"
+TEMPLATES_REF = "v0.1.0"
 
 # name -> (owner, mô tả, db: "postgres" | "mongo")
 SERVICES = {
