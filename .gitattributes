@@ -1,0 +1,20 @@
+# Keep line endings as LF everywhere that Linux tools read them. Git on Windows defaults to converting to CRLF,
+# which breaks bash scripts ("bad interpreter: /usr/bin/env bash\r"), Dockerfiles and Makefiles.
+* text=auto eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+Makefile text eol=lf
+Dockerfile text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.java text eol=lf
+*.py text eol=lf
+
+# Binary files: never touch.
+*.jar binary
+*.png binary
+*.jpg binary
+*.pdf binary
+
+# Generated with CRLF line endings by tools/plan/build.py (CSV standard); keep as the generator writes it.
+docs/05-plan/backlog.csv -text

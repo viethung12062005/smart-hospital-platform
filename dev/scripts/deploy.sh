@@ -2,6 +2,7 @@
 # Build image của service và deploy lên cụm kind. Dùng: scripts/deploy.sh <svc|all>
 # Image không đẩy lên registry nào: build bằng Docker rồi nạp thẳng vào node kind.
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+export DOCKER_BUILDKIT=1   # Dockerfile dùng RUN --mount (cache Maven); cần BuildKit kể cả với Docker Engine thuần
 ROOT="$(cd "$DEV_DIR/.." && pwd)"
 APP_NS="shp-apps"
 JAVA="gateway scheduling notification clinical document audit"
