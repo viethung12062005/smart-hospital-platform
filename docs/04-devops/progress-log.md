@@ -511,10 +511,78 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
 3. **Lưu ý:** **lịch sử git** của repo app vẫn còn các commit cũ có chữ này; xóa khỏi lịch sử cần viết lại lịch sử và force-push — chưa làm, chờ PM quyết (khi chuyển sang repo thật bằng cách copy nội dung, lịch sử mới sẽ sạch).
 4. **Commit:** e2558f0 (cùng commit với J5a).
 
+### J5c — 5 service Java còn lại, đóng gói gateway, bộ công cụ dev local chuyển sang Java ✅ / một phần
+1. **Mục tiêu:** mỗi service Java có khung chạy được (build, test, image, deploy local, pipeline) để dev chỉ viết nghiệp vụ; xóa hết phần .NET còn lại.
+2. **Việc đã làm (theo thứ tự):**
+   1. Viết `tools/scaffold/java_service.py` (thay `dotnet_service.py`) và sinh 5 service: `scheduling` (PostgreSQL) và `notification`, `clinical`, `document`, `audit` (MongoDB).
+      Mỗi service có:
+      - `pom.xml` (`finalName app`, `shp-data-*`, Testcontainers) và `*Application`.
+      - `config/PlatformConfig`: bean outbox, inbox, idempotency, audit sink. Với Mongo còn có `MongoTransactionManager` và tạo collection + index lúc khởi động.
+      - `IdentityLinkClient`: clinical đọc thẳng Mongo của mình; service khác gọi `SHP_CLINICAL_URL`.
+      - `application.yml` lấy mọi giá trị nhạy cảm từ biến môi trường.
+      - Test: health công khai, `UnprotectedEndpoints` rỗng, 401 khi không có token; clinical có thêm test liên kết danh tính.
+      - Dockerfile (Maven builder → `distroless/java21:nonroot`), `deploy/values-local.yaml`, README "dev viết gì, ở đâu".
+      - `.github/workflows/svc-<tên>.yml` dùng `java-ci` của repo templates.
+   2. Gateway: thêm `Dockerfile`, `deploy/values-local.yaml`, README, `<finalName>app</finalName>` (bị xóa cùng bản .NET ở J5a).
+   3. **Sửa lệch issuer trên kind:**
+      - Token lấy từ máy dev qua `http://localhost:18080`, nên issuer là `localhost`. Pod không gọi được `localhost` của máy.
+      - Thêm `shp.auth.jwk-set-uri` (`OIDC_JWK_SET_URI`) vào `ShpAuthProperties`. Khi có giá trị, decoder lấy khóa từ URL này (DNS trong cụm), còn issuer vẫn kiểm theo `OIDC_AUTHORITY`. Áp dụng cho cả servlet (`ShpWebAutoConfiguration`) và reactive (`GatewaySecurity`).
+   4. Bộ công cụ dev:
+      - `deploy.sh`: danh sách `JAVA`, context là gốc repo. Secret `shp-local-conn` giờ chứa `postgres-password`, `redis-password`, `rabbitmq-password`, `mongodb`, `rabbitmq`, `blob`.
+      - `app-values-local.yaml`: `SPRING_*` theo quy ước Spring Boot; `MONGODB_URI`/`RABBITMQ_URL` cho Python; OIDC như bước 3; MFA tắt cho user thử.
+      - `env.sh`: biến `SPRING_*` cho chạy ngoài cụm.
+      - Postgres local chỉ còn database `scheduling`.
+      - `up.sh` chạy `contracts/db/mongo-notification-ml.js` sau khi replica set sẵn sàng.
+      - Cập nhật `dev/README.md` (JDK 21 + Maven; bảng biến môi trường).
+   5. Thêm `.dockerignore` gốc: context build Java là cả repo, phải loại `target/` và **`dev/.local` (chứa mật khẩu sinh ngẫu nhiên)**.
+   6. `.editorconfig`: bỏ mục C#, thêm Java/pom thụt 2 (Spotless là nguồn sự thật). Xóa toàn bộ `libs/dotnet`, 5 service .NET, `Directory.*.props`, `global.json`, `libs-dotnet.yml`.
+   7. `tools/plan/status.py`: LOC-03, LOC-05, GW-01, SCF-01..05 = một phần (ghi rõ còn thiếu gì).
+3. **Thay đổi (commit c909d5b, 159 file):**
+
+| File | | Nội dung |
+|---|---|---|
+| `tools/scaffold/dotnet_service.py` → `java_service.py` | D / A | bộ sinh service Java |
+| `services/{scheduling,notification,clinical,document,audit}/**` | D (.NET) / A (Java) | khung Java như bước 2.1 |
+| `services/gateway/{Dockerfile,README.md,deploy/values-local.yaml}`, `pom.xml` | A / M | đóng gói gateway |
+| `libs/java/shp-security/.../ShpAuthProperties.java` | M | 4 → 5 tham số (`jwkSetUri`, mặc định rỗng) |
+| `ShpWebAutoConfiguration.java`, `GatewaySecurity.java` | M | `fromIssuerLocation` → chọn `withJwkSetUri` khi có cấu hình |
+| `10-web-defaults.properties`, `services/gateway/.../application.yml` | M | + `shp.auth.jwk-set-uri=${OIDC_JWK_SET_URI:}` |
+| `dev/scripts/{deploy,env,up}.sh`, `dev/chart/app-values-local.yaml`, `dev/chart/shp-local-deps/values.yaml`, `dev/kind/cluster.yaml`, `dev/README.md` | M | như bước 2.4 |
+| `.dockerignore` | A | loại `target/`, `dev/.local`, cache Python |
+| `.editorconfig` | M | − C#; + Java |
+| `libs/dotnet/**`, `Directory.*.props`, `global.json`, `.github/workflows/libs-dotnet.yml` | D | hết .NET |
+| `.github/workflows/svc-*.yml` | A/M | sinh lại cho Java; `libs-java.yml` mới |
+
+4. **Lệnh làm lại:**
+```bash
+for s in scheduling notification clinical document audit; do python3 -I tools/scaffold/java_service.py $s; done
+mvn -B spotless:apply && mvn -B verify                    # cần Docker cho Testcontainers
+docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
+```
+5. **Kiểm chứng:**
+   - `mvn -B verify` toàn reactor: 14 module, **395 test**, BUILD SUCCESS. `tools/contracts/check_all.sh`: ALL CONTRACT CHECKS PASSED. `tools/plan/build.py`: 317 task, 1070 giờ.
+   - Image gateway, chạy thật: `/health/readiness` → UP; `/info` → `{"name":"gateway",...}`; `/fhir/Patient` → 401; user `nonroot`.
+   - Image scheduling, chạy thật với Postgres 16: readiness UP; Flyway tạo `outbox`, `inbox`, `idempotency_key`; `/fhir/Appointment` → 401.
+   - Lệnh Mongo trong `up.sh` chạy 2 lần liên tiếp trên Mongo 8 replica set: không lỗi, tạo đủ collection notification/ml.
+   - Field mà `MongoOutbox` ghi khớp validator `outbox` của script (`eventType`, `subject`, `payload`, `occurredAt`); tên index trùng nhau.
+   - `helm template` chart `microservice` với values local cho gateway, scheduling, clinical, ai: render đúng `OIDC_JWK_SET_URI` và secret `postgres-password`.
+6. **Lỗi & cách sửa:**
+   - `docker build` trong sandbox: Maven trong container không tin CA của proxy (`PKIX path building failed`). Đây là lỗi môi trường, không phải lỗi Dockerfile; máy dev và GitHub Actions không gặp.
+     Kiểm chứng thay thế: chạy đúng lệnh `mvn ... package` của stage build trên máy, rồi build stage runtime với jar đó.
+   - Gateway thiếu `deploy/values-local.yaml` (bị xóa cùng bản .NET) → `helm template` báo lỗi → đã thêm.
+   - Endpoint quản trị ở `/health`, `/info`, không có `/actuator` (base-path `/` theo `shp-service-defaults`).
+7. **Giới hạn còn lại:**
+   - Chưa có `EventPublisher` thật (Spring Cloud Stream → RabbitMQ/Service Bus), nên relay chưa đẩy event lên bus.
+   - Chưa chạy `make quickstart` trên kind thật.
+   - Chưa chạy pipeline GitHub Actions thật.
+   - Commit: `git show --stat c909d5b`.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
-| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (D1), lỗi + JWT + identity ✅ (D2)**; **CloudEvents + audit + filter phân quyền ✅ (D3)**; còn: outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
+| D1 | Thư viện Java `libs/java` ✅ (J2–J4) + 6 service Java ✅ (J5); còn: `EventPublisher` Spring Cloud Stream + consumer/DLQ, FHIR resource store Mongo (SHR-10) | SA | đang làm |
+| D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ⏳ |
+| D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ⏳ |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |
