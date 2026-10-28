@@ -2,7 +2,7 @@
 
 Đồ án môn Cloud Application Development: **Project 5 — Smart Hospital Platform**.
 Nền tảng hỗ trợ luồng khám ngoại trú (hồ sơ bệnh nhân, lịch bác sĩ, đặt lịch, lần khám, tài liệu lâm sàng,
-nhắc lịch), bảo vệ dữ liệu nhạy cảm, có trợ lý AI và mô hình ML. Viết lại từ PoC CareMate.
+nhắc lịch), bảo vệ dữ liệu nhạy cảm, có trợ lý AI và mô hình ML.
 
 > Chỉ dùng **dữ liệu bệnh nhân giả (synthetic)** ở mọi môi trường.
 
