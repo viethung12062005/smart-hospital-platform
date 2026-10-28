@@ -335,7 +335,7 @@ STORIES = [
     # ------------------------------------------------------------------ ML
     ("US-063", "Huấn luyện và đăng ký mô hình dự đoán no-show", "Nhóm dự án", "huấn luyện mô hình trên dữ liệu giả và đăng ký có kiểm soát chất lượng",
      "có vòng đời MLOps hoàn chỉnh", "S", ["UC-15"], ["M2"], ["AC-15.2"],
-     ["Given dữ liệu giả có quy luật, When huấn luyện baseline và XGBoost, Then ghi tham số/metric vào MLflow",
+     ["Given dữ liệu giả có quy luật, When huấn luyện baseline và LightGBM, Then ghi tham số/metric vào MLflow",
       "Given AUC < 0,75 hoặc không hơn baseline, When đăng ký, Then bị cổng chất lượng chặn",
       "Given đổi alias production, When pod chạy, Then tự nạp model mới trong ≤ 60 giây"]),
     ("US-064", "Chấm điểm no-show khi đặt lịch", "Hệ thống", "chấm điểm mỗi lịch hẹn mới",

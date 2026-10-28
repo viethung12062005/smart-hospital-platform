@@ -18,7 +18,7 @@
 | 6 | CD (GitOps) | Repo/thư mục `deploy/` chứa Helm values theo môi trường; CI cập nhật tag image; Argo CD đồng bộ; `uat` và `prod` qua PR có duyệt; canary + rollback tự động theo metric | NFR-A7, D2 |
 | 7 | Bảo mật pipeline | Đăng nhập Azure bằng OIDC federated credential (không lưu secret trong GitHub); quyền tối thiểu theo môi trường; GitHub Environments có người duyệt | NFR-SEC4 |
 | 8 | Observability nền | Dashboard chuẩn cho mọi service (RED metrics), cảnh báo burn-rate SLO, log không PII | NFR-O1–O4 |
-| 9 | Service template ("walking skeleton") | Một service Java mẫu đi trọn pipeline: commit → local K8s → uat → prod (dựng tạm) → rollback → hủy | Gate G4 |
+| 9 | Service template ("walking skeleton") | Một service Java và một service Python mẫu đi trọn pipeline: commit → local K8s → uat → prod (dựng tạm) → rollback → hủy | Gate G4 |
 | 10 | **Môi trường dev local** | Bộ công cụ `dev/` (kind + Helm + Makefile): toàn bộ phụ thuộc và service chạy trên cụm K8s nhỏ của máy dev + dữ liệu giả seed tự động. Xem [ADR-0011](../03-architecture/adr/0011-two-environments-local-kubernetes.md) | NFR-SEC9 |
 | 11 | FinOps | Tag chi phí + TTL, budget alert, cost-guard báo môi trường sống quá hạn | NFR-C1, C3 |
 

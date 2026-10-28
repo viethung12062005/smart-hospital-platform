@@ -2,7 +2,7 @@
 
 > Sinh tự động bằng `python3 -I tools/plan/build.py` từ `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Không sửa tay. Import vào GitHub Projects bằng [backlog.csv](backlog.csv). Việc theo từng người: [by-person](by-person/).
 
-Tổng: **317 task**, **1065 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
+Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
 
 ## Tải còn lại theo người và theo tuần (giờ; task đã xong không tính)
 
@@ -10,17 +10,17 @@ Tổng: **317 task**, **1065 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 |---|---|---|---|---|
 | W1 | 42 |  |  |  |
 | W2 | 42 | 7 | 19 | 28 |
-| W3 | **51** | 4 | 27 | 30 |
+| W3 | **51** | 4 | 27 | 28 |
 | W4 | **52** | 29 | 29 | 29 |
 | W5 | 40 | 30 | 29 | 30 |
 | W6 | 27 | 29 | 27 | 29 |
-| W7 | 42 | 29 | 29 | 28 |
-| W8 | 29 | 30 | 29 | 28 |
-| W9 | 7 | 24 | 26 | 30 |
-| W10 | 23 | 4 |  | 18 |
+| W7 | 42 | 29 | 29 | 30 |
+| W8 | 29 | 30 | 29 | 30 |
+| W9 | 2 | 24 | 26 | 29 |
+| W10 | 28 | 4 |  | 22 |
 | W11 | 8 |  |  | 3 |
 | W12 | 9 |  |  |  |
-| **Tổng** | **372** | **186** | **215** | **253** |
+| **Tổng** | **372** | **186** | **215** | **258** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -78,7 +78,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | GOV-07 | US-070 | GitHub Project + import backlog | Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import | SA | 2 | GOV-01 | S0 | PM |
 | GOV-05 | US-070 | GitHub App bot cho GitOps | App chỉ có quyền contents:write trên shp-gitops; secret lưu ở org/repo secret | SA | 2 | GOV-01 | P2 | ADR-0010 |
 | GOV-04 | US-070 | GitHub Environments và người duyệt | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009 | SA | 2 | GOV-01 | P3 | ADR-0009 |
-| GOV-06 | US-070 | Dependabot cho actions, maven, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | SA | 2 | GOV-01 | S4 | NFR-SEC6 |
+| GOV-06 | US-070 | Dependabot cho actions, maven, pip, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | SA | 2 | GOV-01 | S4 | NFR-SEC6 |
 
 ## IAC — Hạ tầng Azure bằng Terraform
 
@@ -113,9 +113,9 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | CIT-03 | US-070 | Reusable workflow container | hadolint, buildx build, Trivy chặn High/Critical, SBOM, ký cosign keyless, push ACR chỉ ở main, output digest | SA | 5 | IAC-02, IAC-03 | P1 | NFR-SEC6 |
 | CIT-05 | US-070 | Reusable workflow Terraform checks + plan | fmt, validate, tflint, Trivy config, plan + tóm tắt vào job summary; plan qua OIDC read-only | SA | 4 | IAC-03 | P2 | NFR-D3 |
 | CIT-06 | US-070 | Reusable workflow GitOps update/promote | Cập nhật digest vào shp-gitops; uat commit sau approval; prod mở PR sau approval | SA | 4 | GOV-05 | P2 | ADR-0009 |
-| CIT-02 | US-070 | Workflow kiểm hợp đồng + công cụ SA (Python) | tools/contracts/check_all.sh và tools/plan/build.py chạy trong CI | SA | 3 | GOV-01 | P3 | ADR-0009 |
+| CIT-02 | US-070 | Reusable workflow Python CI | ruff lint+format, mypy, pytest + coverage, pip-audit | SA | 3 | GOV-01 | P3 | ADR-0009 |
 | CIT-04 | US-070 | Reusable workflow Helm validate | helm lint, render từng môi trường, kubeconform strict, Trivy config | SA | 3 | GOP-01 | P3 | ADR-0009 |
-| CIT-07 | US-070 | Workflow kiểm tra chung cho mọi PR | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python cho công cụ, actions) | SA | 3 | GOV-01 | P3 | NFR-SEC6 |
+| CIT-07 | US-070 | Workflow kiểm tra chung cho mọi PR | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python, actions) | SA | 3 | GOV-01 | P3 | NFR-SEC6 |
 | CIT-08 | US-070 | Caller workflow mẫu cho service + script sinh | Script tạo svc-<name>.yml từ template với path filter đúng | SA | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | P3 | ADR-0009 |
 | CIT-09 | US-070 | Phát hành templates có version | Tag vX.Y.Z trên shp-platform-templates; chart push OCI lên ACR; CHANGELOG | SA | 2 | CIT-01, GOP-01 | S4 | ADR-0010 |
 | CIT-10 | US-070 | Đóng gói Maven nội bộ cho thư viện dùng chung | Thư viện phát hành lên GitHub Packages (Maven) có version; service tham chiếu theo version | SA | 3 | SHR-01 | S4 | ADR-0010 |
@@ -162,7 +162,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | LOC-01 | ENABLER | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | SA | 8 | ARC-09 | S0 | ADR-0011, NFR-I3 |
 | LOC-02 | US-008, US-066 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | SA | 3 | LOC-01 | P1 | NFR-SEC1 |
 | LOC-03 | ENABLER | Walking skeleton Java (Spring Boot) | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | SA | 4 | ARC-09 | P1 | Gate G4 |
-| LOC-04 | ENABLER | Walking skeleton Java cho ai/ml | Spring Boot + Spring AI (ai), XGBoost4J + DuckDB (ml): health, info, Dockerfile non-root; chạy qua pipeline template | SA | 3 | ARC-09 | P1 | Gate G4 |
+| LOC-04 | ENABLER | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | SA | 3 | ARC-09 | P1 | Gate G4 |
 | LOC-08 | ENABLER | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | SA | 3 | LOC-01 | P1 | ADR-0011, NFR-I3 |
 | LOC-05 | ENABLER | Chạy service trên cụm local bằng chart microservice chung (make deploy SVC=...) | Service mẫu build, nạp vào kind và chạy bằng đúng chart dùng cho UAT/prod; có hướng dẫn debug | SA | 3 | GOP-01, LOC-03, LOC-01 | P3 | ADR-0011, NFR-I3 |
 | LOC-07 | ENABLER | Hướng dẫn onboarding dev | Từ clone repo đến chạy local và mở PR đầu tiên trong < 1 giờ | SA | 2 | LOC-01, LOC-03 | P3 | PM |
@@ -176,8 +176,8 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | SCF-03 | ENABLER | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) | Service từ template; svc-clinical.yml | SA | 2 | LOC-03, CIT-08 | S1 | ADR-0001 |
 | SCF-04 | ENABLER | Scaffold document service (khung code, pipeline, values, Blob/MongoDB) | Service từ template; svc-document.yml | SA | 2 | LOC-03, CIT-08 | P3 | ADR-0001 |
 | SCF-05 | ENABLER | Scaffold audit worker (khung code, pipeline, values, Blob WORM/Log Analytics) | Service từ template; svc-audit.yml | SA | 2 | LOC-03, CIT-08 | P3 | ADR-0001 |
-| SCF-06 | ENABLER | Scaffold ai-service Spring Boot + Spring AI (khung code, pipeline, values, node pool ai) | Spring Boot từ template; svc-ai.yml; node pool ai | SA | 2 | LOC-04, CIT-08 | S1 | ADR-0001 |
-| SCF-07 | ENABLER | Scaffold ml-service (khung code Java, Dockerfile, pipeline, values, kết nối MongoDB/bus/MLflow) | Service mẫu chạy qua pipeline template | SA | 2 | LOC-04, CIT-08 | P3 | ADR-0001 |
+| SCF-06 | ENABLER | Scaffold ai-service FastAPI (khung code, pipeline, values, node pool ai) | FastAPI từ template; svc-ai.yml; node pool ai | SA | 2 | LOC-04, CIT-08 | S1 | ADR-0001 |
+| SCF-07 | ENABLER | Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối MongoDB/bus/MLflow) | Service mẫu chạy qua pipeline template | SA | 2 | LOC-04, CIT-08 | P3 | ADR-0001 |
 
 ## GW — API Gateway (SA)
 
@@ -237,19 +237,19 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | SHR-09 | US-047 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR | Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số | SA | 4 | SHR-06 | S1 | E11(pub), 05 §1 |
 | SHR-27 | US-047 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) | Mỗi Deny sinh audit outcome=denied kèm mã lý do; test | SA | 2 | SHR-24, SHR-09 | S1 | 05 §1, E11(pub) |
 
-## PY — Nền tảng AI/ML (Java, Spring AI)
+## PY — Thư viện dùng chung (Python, cho ai/ml)
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| PY-01 | US-066 | Nối shp-web (JWT, identity, RequireShpAuthz) vào ai và ml | Endpoint ai/ml đều có quy tắc (FindUnprotectedEndpoints rỗng); test token sai/hết hạn | D3 | 1 | LOC-02 | P1 | 07 §2 |
+| PY-01 | US-066 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | Test token hợp lệ/sai/hết hạn | D3 | 3 | LOC-02 | P1 | 07 §2 |
 | PY-02 | US-053 | Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange) | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | D3 | 3 | PY-01 | P2 | 15 §7 |
-| PY-05 | ENABLER | Mã lỗi riêng của AI (ai-unavailable, ai-budget-exceeded) qua ShpException của shp-web | Khớp 07 §5; test | D3 | 1 | LOC-04 | P1 | 07 §5 |
+| PY-05 | ENABLER | Problem Details + danh mục mã lỗi cho FastAPI | Khớp 07 §5; test | D3 | 2 | LOC-04 | P1 | 07 §5 |
 | PY-06 | US-055 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) | Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure | D3 | 4 |  | P1 | NFR-SEC8 |
-| PY-07 | US-055 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (Spring AI, OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | Cùng một interface; mô phỏng timeout/429/5xx | D3 | 4 | LOC-04 | P2 | ADR-0006 |
+| PY-07 | US-055 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | Cùng một interface; mô phỏng timeout/429/5xx | D3 | 4 | LOC-04 | P2 | ADR-0006 |
 | PY-08 | US-055 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi | Ghi fallbackLevel; test mọi nhánh lỗi | D3 | 4 | PY-07 | P2 | 06 §4 |
 | PY-09 | US-055 | Circuit breaker + hạn mức token/ngày + metric theo model | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | D3 | 3 | PY-08 | S1 | 06 §4, NFR-C2 |
-| PY-03 | US-059, US-064 | Consumer event cho ai/ml bằng thư viện chung (Spring Cloud Stream + inbox MongoDB) | Event trùng xử lý một lần; test hợp đồng với contracts/events | D3 | 2 | ARC-07 | P2 | 13 §1 |
-| PY-04 | US-047 | Audit E11 cho AI/ML bằng shp-events (ai-query, ai-summary) | Không ghi nội dung câu hỏi hay PII; test | D3 | 2 | PY-03 | S1 | E11(pub), 12 §0 |
+| PY-03 | US-059, US-064 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | Event trùng xử lý một lần | D3 | 4 | ARC-07 | P2 | 13 §1 |
+| PY-04 | US-047 | Audit emitter Python (E11) cho AI/ML | Không ghi nội dung câu hỏi hay PII; test | D3 | 2 | PY-03 | S1 | E11(pub), 12 §0 |
 
 ## DAT — Dữ liệu giả
 
@@ -394,14 +394,14 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | AI-06 | US-053 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | Người không được phép không bao giờ thấy chunk; test lọc | D3 | 4 | AI-04 | S2 | 06 §1.2 |
 | AI-07 | US-053 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | ID phiên bản prompt ghi vào message | D3 | 3 | AI-06 | S2 | 06 §4 |
 | AI-08 | US-053 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | Không có nguồn → không gọi LLM sinh nội dung | D3 | 4 | AI-07, PY-08 | S2 | AC-11.1 |
+| AI-14 | US-057 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | File JSON có kiểm tra schema | D3 | 3 | AI-05 | S3 | NFR-AI1 |
 | AI-09 | US-053, US-055 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | Mode retrieval-only khi mọi model lỗi; p95 token đầu ≤ 3s | D3 | 4 | AI-08, PY-09 | S3 | AI1, AC-11.3 |
 | AI-10 | US-054 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit | Mẫu tấn công bị chặn; không chặn nhầm câu hỏi y khoa thường | D3 | 3 | AI-09 | S3 | AC-11.2 |
 | AI-11 | US-054 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk | Vi phạm → thử model kế rồi answered=false | D3 | 3 | AI-09 | S3 | AC-11.2 |
-| AI-12 | US-056 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | Chỉ chủ hội thoại; đánh giá lặp 409 | D3 | 3 | AI-09 | S3 | AI2, AI3 |
-| AI-14 | US-057 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | File JSON có kiểm tra schema | D3 | 3 | AI-05 | S3 | NFR-AI1 |
 | AI-15 | US-057 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) | Tổng ≥ 100 câu, ≥ 15 câu không có đáp án | D3 | 3 | AI-14 | S4 | NFR-AI2 |
 | AI-16 | US-057 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng | Chạy một lệnh, xuất báo cáo Markdown + JSON | D3 | 4 | AI-15 | S4 | NFR-AI1, AI2 |
 | AI-17 | US-054 | Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner | 0 lần vượt rào là điều kiện qua CI | D3 | 4 | AI-11 | S4 | NFR-AI3 |
+| AI-12 | US-056 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | Chỉ chủ hội thoại; đánh giá lặp 409 | D3 | 3 | AI-09 | S3 | AI2, AI3 |
 | AI-18 | US-057, US-055 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | Báo cáo theo model (NFR-AI7) | D3 | 3 | AI-16, IAC-19 | S5 | NFR-AI7 |
 | AI-19 | US-058 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | Không có quyền → 403 trước khi dữ liệu vào prompt | D3 | 4 | PY-02, CLN-23 | S4 | AC-12.1 |
 | AI-20 | US-058 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | Mọi ý có sources trỏ bản ghi thật | D3 | 4 | AI-19, PY-08 | S4 | AC-12.2 |
@@ -425,14 +425,14 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | ML-01 | US-063 | Sinh dữ liệu lịch hẹn có quy luật no-show (lead time, lịch sử vắng, giờ khám, kênh) | Tài liệu mô tả quy luật; tỉ lệ no-show ~18% tổng | D3 | 4 | ARC-11 | P1 | ADR-0007 |
 | ML-02 | US-063 | Feature engineering + chia train/validation theo thời gian | Không rò rỉ tương lai; test đặc trưng | D3 | 4 | ML-01 | P2 | 04 §2.3 |
 | ML-03 | US-063 | Baseline Logistic Regression + metric (AUC, precision/recall tại ngưỡng) | Ghi vào MLflow | D3 | 3 | ML-02 | P2 | ADR-0007 |
-| ML-04 | US-063 | XGBoost4J + tìm tham số + MLflow tracking (Java client) | So sánh với baseline; lưu artifact | D3 | 4 | ML-03 | P2 | ADR-0007 |
+| ML-04 | US-063 | LightGBM + tìm tham số + MLflow tracking | So sánh với baseline; lưu artifact | D3 | 4 | ML-03 | P2 | ADR-0007 |
 | ML-05 | US-063 | Cổng chất lượng và model registry: AUC ≥ 0,75 và hơn baseline mới được đăng ký alias production | Model kém bị chặn; có test cho cổng | D3 | 3 | ML-04, LOC-08 | S1 | NFR-AI6, M2 |
 | ML-13 | US-071 | Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash | Cùng hash + seed → cùng model (kiểm bằng test) | D3 | 3 | ML-01 | P2 | 16-mlops §2 |
-| ML-14 | US-071 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng bộ quy tắc Java (thay pandera) | Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng | D3 | 3 | ML-13 | P2 | 16-mlops §2 |
 | ML-15 | US-071 | Package đặc trưng dùng chung cho huấn luyện và phục vụ | Một nguồn duy nhất cho mọi đặc trưng; có unit test | D3 | 3 | ML-02 | P2 | 04 §2.3 |
 | ML-17 | US-072 | Đánh giá theo nhóm con (chuyên khoa, nhóm tuổi, kênh) + calibration + độ trễ dự đoán | Cổng chặn nếu nhóm thấp hơn AUC tổng > 0,07 hoặc p95 > 100 ms | D3 | 4 | ML-04 | P2 | 16-mlops §3 |
 | ML-21 | US-065 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) | Có tài liệu mô tả mức dịch chuyển; dùng cho test detector và demo | D3 | 3 | ML-01 | P2 | 16-mlops §1 |
 | ML-11 | US-064 | Khởi tạo MongoDB ml (ADR-0014): patient_stats, appointment_facts, predictions (time-series nếu vCore hỗ trợ), inbox, outbox | Script idempotent; validator ràng buộc ageBand, score; index (modelVersion, predictedAt) | D3 | 2 | SCF-07 | S2 | 04 §2.2 |
+| ML-14 | US-071 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera | Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng | D3 | 3 | ML-13 | P2 | 16-mlops §2 |
 | ML-18 | US-072 | Sinh model card tự động khi đăng ký model | Model card lưu cùng artifact trong MLflow; có đủ mục theo 16-mlops §3 | D3 | 3 | ML-17, ML-05 | S1 | 16-mlops §3 |
 | ML-06 | US-064 | Consumer E1/E2/E3/E5/E7: ghi appointment_fact, cập nhật outcome và attendance_stats | Event trùng bỏ qua; hủy muộn <24h tính late_cancel | D3 | 4 | SCF-07, PY-03, ML-11 | S2 | E1(sub), E2(sub), E3(sub), E5(sub), E7(sub) |
 | ML-07 | US-064, US-046 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | AC-15.2 lưu model version và đặc trưng; cùng transaction | D3 | 4 | ML-06, ML-05 | S2 | E10(pub), AC-15.2 |
@@ -440,12 +440,12 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | ML-09 | US-063 | Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy | Test đổi alias | D3 | 2 | ML-08 | S3 | ADR-0007 |
 | ML-12 | US-064, US-046 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch | Xanh trong CI; AC-15.1 có test ở notification | D3 | 2 | ML-08, SHR-06 | S3 | E10(pub), AC-15.1 |
 | ML-16 | US-071 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường | Test xanh trong CI; lệch thì thất bại | D3 | 3 | ML-15, ML-07 | S2 | 16-mlops §2 |
+| ML-24 | US-073 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả | Không tăng độ trễ phía người dùng; có metric đồng thuận với bản đang chạy | D3 | 3 | ML-09 | S3 | 16-mlops §6 |
+| ML-10 | US-065 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo | Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng | D3 | 3 | ML-19, ML-20 | S6 | NFR-AI6 |
 | ML-19 | US-065 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện | Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển | D3 | 4 | ML-07, ML-21 | S2 | 16-mlops §4 |
 | ML-20 | US-065 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày | Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn | D3 | 4 | ML-06, ML-07 | S2 | 16-mlops §4 |
-| ML-10 | US-065 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo | Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng | D3 | 3 | ML-19, ML-20 | S6 | NFR-AI6 |
-| ML-22 | US-074 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng | Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu | D3 | 3 | ML-19, ML-20 | S3 | 16-mlops §5 |
-| ML-24 | US-073 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả | Không tăng độ trễ phía người dùng; có metric đồng thuận với bản đang chạy | D3 | 3 | ML-09 | S3 | 16-mlops §6 |
 | ML-25 | US-073 | Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản | Prometheus có đủ metric theo model_version để AnalysisTemplate dùng | D3 | 3 | ML-08 | S3 | 16-mlops §6 |
+| ML-22 | US-074 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng | Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu | D3 | 3 | ML-19, ML-20 | S3 | 16-mlops §5 |
 | ML-23 | US-074 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production | Không đạt cổng thì dừng và giữ nguyên production; mọi run có liên kết và audit | D3 | 4 | ML-22, ML-05, ML-14, ML-17 | S3 | 16-mlops §5 |
 
 ## WEB — Web app (PWA)
@@ -456,11 +456,11 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | WEB-02 | US-066 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên | D1 | 3 | WEB-01 | S1 | 07 §3, §5 |
 | WEB-10 | US-066 | Pipeline + chart cho web | Container nginx non-root dùng chart chung | SA | 2 | WEB-01 | S3 | ADR-0009 |
 | WEB-30 | US-053, US-056 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | Hiển thị chế độ retrieval-only; trích dẫn mở đúng mục | D3 | 4 | WEB-02, AI-09 | S4 | AI1, AI2 |
-| WEB-31 | US-053, US-052 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | Tải lên, duyệt, gỡ; bảng usage | D3 | 4 | WEB-30, AI-13 | S5 | AI9, AI10 |
 | WEB-06 | US-009, US-010 | Màn hình quản lý lịch bác sĩ: Schedule và mẫu tuần | Nurse/Admin tạo/sửa; lỗi validate hiển thị theo trường | D1 | 4 | WEB-02, SCH-05 | S4 | S1, S5 |
 | WEB-20 | US-031 | Màn hình tìm bệnh nhân (POST _search): tên không dấu, SĐT, MRN | Kết quả rút gọn; Doctor không Care thấy gợi ý break-glass | D2 | 4 | WEB-02, CLN-08 | S5 | C6 |
 | WEB-24 | US-034 | Luồng break-glass: hộp thoại lý do, banner đếm ngược 60 phút | Banner hiển thị suốt phiên | D2 | 2 | WEB-20, CLN-24 | S6 | C20 |
 | WEB-27 | US-001, US-002, US-003 | Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy | Xử lý 422 trùng hồ sơ; field khóa với bệnh nhân | D2 | 4 | WEB-02, CLN-06 | S2 | C1, C4, C5 |
+| WEB-31 | US-053, US-052 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | Tải lên, duyệt, gỡ; bảng usage | D3 | 4 | WEB-30, AI-13 | S5 | AI9, AI10 |
 | WEB-03 | US-014 | Màn hình tìm slot trống: bộ lọc chuyên khoa/bác sĩ/ngày, danh sách phân trang | Chỉ gọi API S8; hiển thị theo múi giờ VN | D1 | 4 | WEB-02, SCH-10 | S3 | S8 |
 | WEB-26 | US-049, US-050, US-051 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | Chỉ DPO/Admin; Admin không thấy reason | D2 | 4 | WEB-02, AUD-07 | S6 | A1, A2, A5 |
 | WEB-04 | US-015 | Màn hình đặt lịch: xác nhận, xử lý 409 (gợi ý slot), 422 BR-03/BR-04, chống bấm đúp | Mỗi lần bấm dùng một Idempotency-Key; gợi ý hiển thị khi 409 | D1 | 4 | WEB-03, SCH-14 | S3 | S11 |
