@@ -310,7 +310,7 @@ cd libs/dotnet && dotnet format --verify-no-changes
 1. **Mục tiêu:** ghi quyết định thành ADR, áp dụng ADR-0014 (PM đã duyệt) vào thiết kế chi tiết, và đổi mọi task/tài liệu đang ghi .NET/Python sang Java trước khi viết code.
 2. **Việc đã làm (theo thứ tự):**
    1. Viết ADR-0015 (bảng ánh xạ từng công nghệ .NET/Python → Java); đánh dấu ADR-0002, ADR-0012 **Superseded**; ADR-0014 → **Accepted**; gạch dòng notification/ml trong ADR-0008.
-   2. Sửa tài liệu kiến trúc còn nhắc .NET/Python/Firely/MassTransit/YARP/LightGBM/pandera (`overview.md`, ADR-0001/0003/0004/0007/0009, `caremate-migration.md`, `13-events.md`, `16-mlops.md`, `04-devops/README.md`).
+   2. Sửa tài liệu kiến trúc còn nhắc .NET/Python/Firely/MassTransit/YARP/LightGBM/pandera (`overview.md`, ADR-0001/0003/0004/0007/0009, `13-events.md`, `16-mlops.md`, `04-devops/README.md`).
    3. **Viết lại `04-db-notification-ml.md` sang MongoDB** (ADR-0014): collection, document mẫu, index (unique chống trùng, partial cho lấy việc, TTL), thao tác lấy việc bằng `findOneAndUpdate`; ml = `patient_stats` + `appointment_facts` + `predictions` (time-series) + Parquet/DuckDB cho huấn luyện.
    4. Viết script khởi tạo `contracts/db/mongo-notification-ml.js` và bộ kiểm `contracts/db/mongo-notification-ml.test.js`; **chạy trên MongoDB 8 thật** (replica set): 12/12 kiểm tra qua, chạy script 2 lần không lỗi.
    5. Sửa kế hoạch: task .NET/Python → Java; các task PY-01/03/04/05 thu nhỏ thành "nối thư viện chung Java" (vì thư viện Java dùng chung đã làm phần đó); NTF-01/05 và ML-11 sang MongoDB; nhãn người D1/D2/D3 thành Dev Java.
@@ -324,7 +324,7 @@ cd libs/dotnet && dotnet format --verify-no-changes
 | `docs/03-architecture/adr/0008-…` | M | dòng notification, ml bị gạch, trỏ sang ADR-0014 |
 | `docs/03-architecture/adr/README.md` | M | trạng thái 0002/0012/0014; thêm 0015 |
 | `docs/03-architecture/overview.md` | M | cột công nghệ 8 service → Java (gateway: Spring Cloud Gateway, ai: Spring AI, ml: XGBoost4J + DuckDB); DB notification/ml → MongoDB; bus: Spring Cloud Stream |
-| `docs/03-architecture/adr/0001,0003,0004,0007,0009`, `caremate-migration.md`, `detailed-design/13-events.md`, `16-mlops.md`, `docs/04-devops/README.md` | M | Firely → HAPI FHIR; MassTransit → Spring Cloud Stream; LightGBM → XGBoost4J; pandera → quy tắc Java; ".NET CI, Python CI" → "Java CI (Maven)" |
+| `docs/03-architecture/adr/0001,0003,0004,0007,0009`, `detailed-design/13-events.md`, `16-mlops.md`, `docs/04-devops/README.md` | M | Firely → HAPI FHIR; MassTransit → Spring Cloud Stream; LightGBM → XGBoost4J; pandera → quy tắc Java; ".NET CI, Python CI" → "Java CI (Maven)" |
 | `docs/03-architecture/detailed-design/04-db-notification-ml.md` | M | **viết lại toàn bộ**: PostgreSQL DDL → collection MongoDB (xem bước 2.3) |
 | `contracts/db/mongo-notification-ml.js`, `contracts/db/mongo-notification-ml.test.js` | A | script khởi tạo idempotent + 12 kiểm tra |
 | `tools/plan/tasks_dev.py` | M | SHR-01 (HAPI), PY-01 (3h→1h), PY-03 (4h→2h), PY-04, PY-05 (2h→1h), PY-07 (Spring AI), ML-04 (XGBoost4J), ML-14 (quy tắc Java), ML-11/NTF-01/NTF-05 (MongoDB) |
@@ -483,10 +483,147 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
 4. **Kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`; `mvn -B verify` → 8 module, **372 test** (5 + 238 + 47 + 31 + 29 + 22), BUILD SUCCESS.
 5. **Ảnh hưởng:** service `ai`, `ml` Python hiện có (FastAPI) được **giữ**, không xóa ở J5; template `python-ci` giữ. Thư viện nền Python cho ai/ml (PY-01..05) vẫn là việc của D3 như kế hoạch gốc.
 
+### J5a — Gateway Java (Spring Cloud Gateway) + sửa cách nạp cấu hình mặc định ✅
+1. **Mục tiêu:** thay gateway .NET (YARP) bằng Spring Cloud Gateway, giữ đúng bảng định tuyến 07 §1 và lớp 1 của 15-authorization (kiểm token ở biên).
+2. **Việc đã làm (theo thứ tự):**
+   1. Kiểm tương thích: `spring-cloud-dependencies` **2025.1.2** (gateway 5.0.2) giải quyết được với Boot 4.1.2 (bản 2026.0 mới ở RC). `git rm -r services/gateway` (bản .NET).
+   2. `services/gateway`: `GatewayApplication`, `GatewaySecurity` (WebFlux: `/internal/**` → từ chối, health/info/prometheus công khai, mọi route khác cần JWT hợp lệ theo **cùng** `ShpJwt.validator` với service; decoder lười `SupplierReactiveJwtDecoder`; lỗi dạng Problem Details), `application.yml` sinh từ bảng route cũ (7 upstream, 32 đường dẫn; địa chỉ đổi bằng `SHP_UPSTREAM_<SERVICE>`).
+   3. Test 7 kịch bản với upstream giả (HTTP server thật trong test): route đúng service và **chuyển nguyên token** (service kiểm lại); 401 khi thiếu/sai audience; nhân viên thiếu MFA bị chặn ở biên; `/internal/**` → 404; đường dẫn lạ → 404; upstream chết → 5xx; health công khai.
+   4. **Phát hiện lỗi tiềm ẩn ở `shp-service-defaults`:** `/info`, `/prometheus` trả 404 ở gateway. Bật báo cáo điều kiện (`-Ddebug=true`): `InfoEndpointAutoConfiguration ... not exposed` — `@PropertySource` trên auto-configuration được nạp **sau** khi Boot đánh giá điều kiện; bản MVC qua test chỉ nhờ thứ tự may mắn. Sửa: `ShpDefaultsEnvironmentPostProcessor` (đăng ký ở `META-INF/spring.factories`, khóa `org.springframework.boot.EnvironmentPostProcessor` của Boot 4) nạp mọi `classpath*:META-INF/shp/*.properties` với độ ưu tiên thấp nhất **trước** auto-configuration; bỏ `@PropertySource` ở cả `shp-service-defaults` và `shp-web`.
+3. **Thay đổi (commit e2558f0):**
+
+| File | | Nội dung |
+|---|---|---|
+| `services/gateway/**` (.NET) | D | YARP, Dockerfile, test .NET |
+| `services/gateway/pom.xml`, `src/main/**`, `src/test/**` | A | gateway Java + 7 test |
+| `pom.xml` | M | + module `services/gateway` |
+| `libs/java/shp-service-defaults/.../ShpDefaultsEnvironmentPostProcessor.java`, `META-INF/spring.factories` | A | nạp mặc định đúng thời điểm |
+| `.../shp-defaults.properties` → `META-INF/shp/00-service-defaults.properties`; `shp-web-defaults.properties` → `META-INF/shp/10-web-defaults.properties` | R | đổi chỗ (git mv) |
+| `ServiceDefaultsAutoConfiguration.java`, `ShpWebAutoConfiguration.java` | M | bỏ `@PropertySource` |
+
+4. **Kiểm chứng:** `mvn -B verify` → 9 module, **379 test** (thêm 7 của gateway), BUILD SUCCESS.
+5. **Lỗi gặp:** hai `ReactiveJwtDecoder` trong test (`@ConditionalOnMissingBean` không đáng tin trong `@Configuration` thường) → bean test `@Primary`.
+6. **Giới hạn:** chưa có rate limit theo `sub` (cần Redis, task GW) và CORS cho web.
+
+### J5b — Gỡ mọi nhắc đến tên PoC cũ khỏi các repo dự án (yêu cầu PM) ✅
+1. **Việc đã làm:** `git grep -i <tên PoC cũ>` trên 4 repo → 13 chỗ, đều ở repo app. Xóa `docs/03-architecture/<tên PoC cũ>-migration.md` và mục 5 của `overview.md` trỏ tới nó; viết lại trung tính: README, `overview.md`, ADR-0002/0005/0008 (nêu "cách làm phổ biến", "ví dụ Medplum" thay vì tên PoC), `phase4-build-log.md`, nhật ký này ("repo PoC cũ").
+2. **Kiểm chứng:** `git grep -i -c <tên PoC cũ>` trên cả 4 repo → 0.
+3. **Lưu ý:** **lịch sử git** của repo app vẫn còn các commit cũ có chữ này; xóa khỏi lịch sử cần viết lại lịch sử và force-push — chưa làm, chờ PM quyết (khi chuyển sang repo thật bằng cách copy nội dung, lịch sử mới sẽ sạch).
+4. **Commit:** e2558f0 (cùng commit với J5a).
+
+### J5c — 5 service Java còn lại, đóng gói gateway, bộ công cụ dev local chuyển sang Java ✅ / một phần
+1. **Mục tiêu:** mỗi service Java có khung chạy được (build, test, image, deploy local, pipeline) để dev chỉ viết nghiệp vụ; xóa hết phần .NET còn lại.
+2. **Việc đã làm (theo thứ tự):**
+   1. Viết `tools/scaffold/java_service.py` (thay `dotnet_service.py`) và sinh 5 service: `scheduling` (PostgreSQL) và `notification`, `clinical`, `document`, `audit` (MongoDB).
+      Mỗi service có:
+      - `pom.xml` (`finalName app`, `shp-data-*`, Testcontainers) và `*Application`.
+      - `config/PlatformConfig`: bean outbox, inbox, idempotency, audit sink. Với Mongo còn có `MongoTransactionManager` và tạo collection + index lúc khởi động.
+      - `IdentityLinkClient`: clinical đọc thẳng Mongo của mình; service khác gọi `SHP_CLINICAL_URL`.
+      - `application.yml` lấy mọi giá trị nhạy cảm từ biến môi trường.
+      - Test: health công khai, `UnprotectedEndpoints` rỗng, 401 khi không có token; clinical có thêm test liên kết danh tính.
+      - Dockerfile (Maven builder → `distroless/java21:nonroot`), `deploy/values-local.yaml`, README "dev viết gì, ở đâu".
+      - `.github/workflows/svc-<tên>.yml` dùng `java-ci` của repo templates.
+   2. Gateway: thêm `Dockerfile`, `deploy/values-local.yaml`, README, `<finalName>app</finalName>` (bị xóa cùng bản .NET ở J5a).
+   3. **Sửa lệch issuer trên kind:**
+      - Token lấy từ máy dev qua `http://localhost:18080`, nên issuer là `localhost`. Pod không gọi được `localhost` của máy.
+      - Thêm `shp.auth.jwk-set-uri` (`OIDC_JWK_SET_URI`) vào `ShpAuthProperties`. Khi có giá trị, decoder lấy khóa từ URL này (DNS trong cụm), còn issuer vẫn kiểm theo `OIDC_AUTHORITY`. Áp dụng cho cả servlet (`ShpWebAutoConfiguration`) và reactive (`GatewaySecurity`).
+   4. Bộ công cụ dev:
+      - `deploy.sh`: danh sách `JAVA`, context là gốc repo. Secret `shp-local-conn` giờ chứa `postgres-password`, `redis-password`, `rabbitmq-password`, `mongodb`, `rabbitmq`, `blob`.
+      - `app-values-local.yaml`: `SPRING_*` theo quy ước Spring Boot; `MONGODB_URI`/`RABBITMQ_URL` cho Python; OIDC như bước 3; MFA tắt cho user thử.
+      - `env.sh`: biến `SPRING_*` cho chạy ngoài cụm.
+      - Postgres local chỉ còn database `scheduling`.
+      - `up.sh` chạy `contracts/db/mongo-notification-ml.js` sau khi replica set sẵn sàng.
+      - Cập nhật `dev/README.md` (JDK 21 + Maven; bảng biến môi trường).
+   5. Thêm `.dockerignore` gốc: context build Java là cả repo, phải loại `target/` và **`dev/.local` (chứa mật khẩu sinh ngẫu nhiên)**.
+   6. `.editorconfig`: bỏ mục C#, thêm Java/pom thụt 2 (Spotless là nguồn sự thật). Xóa toàn bộ `libs/dotnet`, 5 service .NET, `Directory.*.props`, `global.json`, `libs-dotnet.yml`.
+   7. `tools/plan/status.py`: LOC-03, LOC-05, GW-01, SCF-01..05 = một phần (ghi rõ còn thiếu gì).
+3. **Thay đổi (commit c909d5b, 159 file):**
+
+| File | | Nội dung |
+|---|---|---|
+| `tools/scaffold/dotnet_service.py` → `java_service.py` | D / A | bộ sinh service Java |
+| `services/{scheduling,notification,clinical,document,audit}/**` | D (.NET) / A (Java) | khung Java như bước 2.1 |
+| `services/gateway/{Dockerfile,README.md,deploy/values-local.yaml}`, `pom.xml` | A / M | đóng gói gateway |
+| `libs/java/shp-security/.../ShpAuthProperties.java` | M | 4 → 5 tham số (`jwkSetUri`, mặc định rỗng) |
+| `ShpWebAutoConfiguration.java`, `GatewaySecurity.java` | M | `fromIssuerLocation` → chọn `withJwkSetUri` khi có cấu hình |
+| `10-web-defaults.properties`, `services/gateway/.../application.yml` | M | + `shp.auth.jwk-set-uri=${OIDC_JWK_SET_URI:}` |
+| `dev/scripts/{deploy,env,up}.sh`, `dev/chart/app-values-local.yaml`, `dev/chart/shp-local-deps/values.yaml`, `dev/kind/cluster.yaml`, `dev/README.md` | M | như bước 2.4 |
+| `.dockerignore` | A | loại `target/`, `dev/.local`, cache Python |
+| `.editorconfig` | M | − C#; + Java |
+| `libs/dotnet/**`, `Directory.*.props`, `global.json`, `.github/workflows/libs-dotnet.yml` | D | hết .NET |
+| `.github/workflows/svc-*.yml` | A/M | sinh lại cho Java; `libs-java.yml` mới |
+
+4. **Lệnh làm lại:**
+```bash
+for s in scheduling notification clinical document audit; do python3 -I tools/scaffold/java_service.py $s; done
+mvn -B spotless:apply && mvn -B verify                    # cần Docker cho Testcontainers
+docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
+```
+5. **Kiểm chứng:**
+   - `mvn -B verify` toàn reactor: 14 module, **395 test**, BUILD SUCCESS. `tools/contracts/check_all.sh`: ALL CONTRACT CHECKS PASSED. `tools/plan/build.py`: 317 task, 1070 giờ.
+   - Image gateway, chạy thật: `/health/readiness` → UP; `/info` → `{"name":"gateway",...}`; `/fhir/Patient` → 401; user `nonroot`.
+   - Image scheduling, chạy thật với Postgres 16: readiness UP; Flyway tạo `outbox`, `inbox`, `idempotency_key`; `/fhir/Appointment` → 401.
+   - Lệnh Mongo trong `up.sh` chạy 2 lần liên tiếp trên Mongo 8 replica set: không lỗi, tạo đủ collection notification/ml.
+   - Field mà `MongoOutbox` ghi khớp validator `outbox` của script (`eventType`, `subject`, `payload`, `occurredAt`); tên index trùng nhau.
+   - `helm template` chart `microservice` với values local cho gateway, scheduling, clinical, ai: render đúng `OIDC_JWK_SET_URI` và secret `postgres-password`.
+6. **Lỗi & cách sửa:**
+   - `docker build` trong sandbox: Maven trong container không tin CA của proxy (`PKIX path building failed`). Đây là lỗi môi trường, không phải lỗi Dockerfile; máy dev và GitHub Actions không gặp.
+     Kiểm chứng thay thế: chạy đúng lệnh `mvn ... package` của stage build trên máy, rồi build stage runtime với jar đó.
+   - Gateway thiếu `deploy/values-local.yaml` (bị xóa cùng bản .NET) → `helm template` báo lỗi → đã thêm.
+   - Endpoint quản trị ở `/health`, `/info`, không có `/actuator` (base-path `/` theo `shp-service-defaults`).
+7. **Giới hạn còn lại:**
+   - Chưa có `EventPublisher` thật (Spring Cloud Stream → RabbitMQ/Service Bus), nên relay chưa đẩy event lên bus.
+   - Chưa chạy `make quickstart` trên kind thật.
+   - Chưa chạy pipeline GitHub Actions thật.
+   - Commit: `git show --stat c909d5b`.
+
+### J7 — Sơ đồ kiến trúc tổng thể + module; dọn tàn dư .NET ✅
+1. **Mục tiêu:** PM cần sơ đồ tổng thể kiến trúc phần mềm và danh sách module; xóa mọi dấu vết .NET còn sót trong code.
+2. **Việc đã làm (theo thứ tự):**
+   1. `docs/03-architecture/overview.md` thêm 4 mục mới (đánh số lại các mục cũ thành 5–8). Có 5 sơ đồ mermaid:
+      - §1 tổng thể: client → WAF/Ingress → gateway → 6 service Java + 2 Python, bus, kho dữ liệu, LLM, nhà cung cấp tin.
+      - §2.1 event E1–E11 (producer → nhóm event → consumer).
+      - §2.2 REST nội bộ `/internal/v1/**`.
+      - §3 module Maven (phụ thuộc lấy từ `pom.xml` thật), bảng vai trò module và người phụ trách.
+      - §4 bố cục gói bên trong một service Java: `api` → `app` → `domain`; `infra`; `messaging`; `config`.
+   2. §7 (hạ tầng): thay tên .NET/MinIO cũ:
+      - `IFhirStore` → Spring JDBC/Data MongoDB
+      - `StackExchange.Redis` → Spring Data Redis
+      - MinIO → Azurite
+      - `IConfiguration` → biến môi trường/Spring
+   3. Scaffold sinh thêm `package-info` cho `app`, `domain`, `infra`, `messaging` ở 5 service; README service có dòng "Bố cục gói".
+   4. Dọn .NET:
+      - Comment trong `pom.xml`, `ShpJwt`, `ServiceDefaultsAutoConfiguration`, `.gitignore`.
+      - `docs/05-plan/project-plan.md`: "Dev .NET" → "Dev Java", `libs/dotnet` → `libs/java`.
+      - Repo templates: chart `microservice` đặt `SERVER_PORT` thay `ASPNETCORE_URLS` (commit fe5e2f9).
+3. **Thay đổi:**
+
+| File | | Nội dung |
+|---|---|---|
+| `docs/03-architecture/overview.md` | M | + §1–§4 (5 sơ đồ); §7 tên công nghệ Java; catalog + cột Dev |
+| `tools/scaffold/java_service.py`, `services/*/README.md` | M | + `LAYERS`, dòng bố cục gói |
+| `services/{5}/src/main/java/org/shp/*/{app,domain,infra,messaging}/package-info.java` | A | 20 file |
+| `pom.xml`, `.gitignore`, 2 lớp Java, `project-plan.md`, `status.py` | M | bỏ chữ .NET |
+| templates: `charts/microservice/templates/_helpers.tpl` | M | `ASPNETCORE_URLS` → `SERVER_PORT` |
+
+4. **Lệnh làm lại:** `python3 -I tools/scaffold/java_service.py` (chỉ tạo file chưa có). Render sơ đồ:
+   `npx -p @mermaid-js/mermaid-cli@11.12.0 mmdc -i d.mmd -o d.png` (puppeteer trỏ `executablePath` tới Chromium có sẵn).
+5. **Kiểm chứng:**
+   - Cả 5 sơ đồ render được bằng mermaid-cli 11.12.0; đã xem ảnh, và vẽ lại §2 vì bản đầu chồng nhãn.
+   - `mvn -B verify` toàn reactor: BUILD SUCCESS.
+   - `helm lint` chart với 3 bộ values CI: 0 lỗi.
+   - Code và cấu hình (trừ ADR và nhật ký lịch sử) không còn `dotnet`, `.NET` hay `ASPNETCORE`. Kết quả `grep` còn lại chỉ là `java.net` (thư viện chuẩn Java), `com.networknt` và tên miền `*.windows.net`.
+6. **Lỗi & cách sửa:**
+   - Sơ đồ module và sơ đồ event bản đầu rối do nhãn cạnh lặp lại cho mỗi đích. Sửa: event thành nút trung gian; quan hệ với `contracts/` gom thành một cạnh.
+   - Hai khẳng định chưa có trong code được viết lại thành quy tắc cho values uat/prod: egress chỉ mở cho ai/notification; bố cục gói Python.
+7. **Giữ nguyên có chủ đích:** ADR-0002/0012 (đã Superseded) và nhật ký cũ vẫn nhắc .NET, vì đó là lịch sử quyết định.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
-| D1 | Thư viện dùng chung `libs/dotnet`: **phân quyền ✅ (D1), lỗi + JWT + identity ✅ (D2)**; **CloudEvents + audit + filter phân quyền ✅ (D3)**; còn: outbox/inbox + MassTransit, Idempotency-Key, FHIR helper, fixture Testcontainers | SA | đang làm |
+| D1 | Thư viện Java `libs/java` ✅ (J2–J4) + 6 service Java ✅ (J5); còn: `EventPublisher` Spring Cloud Stream + consumer/DLQ, FHIR resource store Mongo (SHR-10) | SA | đang làm |
+| D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ⏳ |
+| D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ✅ |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |
@@ -494,5 +631,5 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
 | D6 | Profile local `full` (OpenSearch, Ollama, ClamAV, MLflow, observability), realm MFA | SA | ⏳ |
 | D7 | Cài GitHub (ruleset, CODEOWNERS, Environments, GitHub App, Variables) theo `github-setup.md` | 👤 bạn | ⏳ |
 | D8 | Bootstrap Azure một lần, điền GitHub Variables | 👤 bạn | ⏳ |
-| D9 | Xoay key bị lộ ở caremate + xóa lịch sử | 👤 bạn | ⏳ |
+| D9 | Xoay key bị lộ ở repo PoC cũ + xóa lịch sử | 👤 bạn | ⏳ |
 | D10 | Chuyển repo templates/infra sang private | 👤 bạn | đang làm |

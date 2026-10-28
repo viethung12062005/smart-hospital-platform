@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **14** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -36,13 +36,13 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | IAC-02 | Bootstrap: Azure Container Registry | ACR tắt admin user; retention policy; output login server | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-03 | Bootstrap: identity OIDC cho GitHub | Identity plan (read), apply-<env>, acr-push; federated credential theo repo + environment; RBAC tối thiểu | 4 | IAC-01 | ENABLER |
 | ☐ | LOC-02 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | 3 | LOC-01 | US-008, US-066 |
-| ☐ | LOC-03 | Walking skeleton Java (Spring Boot) | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
+| ◐ | LOC-03 | Walking skeleton Java (Spring Boot) **[làm một phần, commit c909d5b: 6 service Java: health/info/prometheus, OTel, Dockerfile distroless non-root (đã build + chạy thử gateway, scheduling); CHƯA chạy qua pipeline GitHub Actions thật]** | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
 | ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
 | ☐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
 | ☑ | SHR-02 | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi **[xong, commit 5e423ab: libs/java/shp-web/errors: ErrorCatalog (27 mã, test đối chiếu 07 §5), ShpException, ErrorWriter, ShpExceptionHandler]** | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | 3 | SHR-01 | ENABLER |
 | ◐ | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên **[làm một phần, commit 5e423ab: shp-web ShpJwt + SecurityFilterChain (issuer, audience, hạn, MFA nhân viên); test bằng token HMAC cục bộ; CHƯA thử với Keycloak/Entra thật]** | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | 3 | LOC-02 | US-008, US-066 |
 | ☑ | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây **[xong, commit 5e423ab: shp-web IdentityResolver (cache 60s/5s) + HttpIdentityLinkClient + IdentityInterceptor; endpoint nội bộ phía clinical là task dev]** | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | 3 | SHR-20 | US-007 |
-| ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 95d2f74: libs/java/shp-authz: AuthzMatrix (Java; bản .NET 4bf82ef sẽ bị xóa ở J5)]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
+| ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 95d2f74: libs/java/shp-authz: AuthzMatrix (Java)]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
 | ☑ | SHR-23 | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[xong, commit 95d2f74: Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)]** | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | 4 | SHR-22 | ENABLER |
 
 ## Tuần 3 — 69 giờ
@@ -80,14 +80,14 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | GOV-04 | GitHub Environments và người duyệt | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009 | 2 | GOV-01 | US-070 |
 | ☐ | IAC-04 | Bootstrap: budget alert + chính sách tag | Budget cảnh báo 50/80/100%; tag shp-env, created-at, ttl-hours bắt buộc | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-08 | Module key vault | RBAC mode, private endpoint, purge protection chỉ ở prod, tên có hậu tố ngẫu nhiên | 2 | IAC-05 | ENABLER |
-| ☐ | LOC-05 | Chạy service trên cụm local bằng chart microservice chung (make deploy SVC=...) | Service mẫu build, nạp vào kind và chạy bằng đúng chart dùng cho UAT/prod; có hướng dẫn debug | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |
+| ◐ | LOC-05 | Chạy service trên cụm local bằng chart microservice chung (make deploy SVC=...) **[làm một phần, commit c909d5b: deploy.sh + app-values-local cho Java (SPRING_*, JWKS trong cụm); chart render cho từng service; CHƯA chạy make quickstart trên kind thật]** | Service mẫu build, nạp vào kind và chạy bằng đúng chart dùng cho UAT/prod; có hướng dẫn debug | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |
 | ☐ | LOC-07 | Hướng dẫn onboarding dev | Từ clone repo đến chạy local và mở PR đầu tiên trong < 1 giờ | 2 | LOC-01, LOC-03 | ENABLER |
 | ☐ | OBS-04 | Thư viện observability chuẩn (OTel, log có trace-id, che PII) | OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII | 4 | LOC-03 | ENABLER |
-| ☐ | SCF-01 | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) | Service từ template; svc-scheduling.yml; values local/uat/prod | 2 | LOC-03, CIT-08 | ENABLER |
-| ☐ | SCF-02 | Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus) | Service từ template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
-| ☐ | SCF-03 | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) | Service từ template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
-| ☐ | SCF-04 | Scaffold document service (khung code, pipeline, values, Blob/MongoDB) | Service từ template; svc-document.yml | 2 | LOC-03, CIT-08 | ENABLER |
-| ☐ | SCF-05 | Scaffold audit worker (khung code, pipeline, values, Blob WORM/Log Analytics) | Service từ template; svc-audit.yml | 2 | LOC-03, CIT-08 | ENABLER |
+| ◐ | SCF-01 | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) **[làm một phần, commit c909d5b: scheduling: khung Spring Boot + Flyway + outbox/inbox/idempotency PostgreSQL, Dockerfile, svc-scheduling.yml, values-local; CHƯA nối bus (Spring Cloud Stream), values uat/prod ở repo GitOps]** | Service từ template; svc-scheduling.yml; values local/uat/prod | 2 | LOC-03, CIT-08 | ENABLER |
+| ◐ | SCF-02 | Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus) **[làm một phần, commit c909d5b: notification: khung + Mongo outbox/inbox, collection do make up tạo; CHƯA nối bus, values uat/prod]** | Service từ template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
+| ◐ | SCF-03 | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) **[làm một phần, commit c909d5b: clinical: khung + Mongo + MongoIdentityLinkClient; CHƯA nối bus, values uat/prod]** | Service từ template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
+| ◐ | SCF-04 | Scaffold document service (khung code, pipeline, values, Blob/MongoDB) **[làm một phần, commit c909d5b: document: khung + Mongo; CHƯA Blob client, nối bus, values uat/prod]** | Service từ template; svc-document.yml | 2 | LOC-03, CIT-08 | ENABLER |
+| ◐ | SCF-05 | Scaffold audit worker (khung code, pipeline, values, Blob WORM/Log Analytics) **[làm một phần, commit c909d5b: audit: khung + Mongo; CHƯA Blob WORM/Log Analytics, nối bus, values uat/prod]** | Service từ template; svc-audit.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☐ | SCF-06 | Scaffold ai-service FastAPI (khung code, pipeline, values, node pool ai) | FastAPI từ template; svc-ai.yml; node pool ai | 2 | LOC-04, CIT-08 | ENABLER |
 | ☐ | SCF-07 | Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối MongoDB/bus/MLflow) | Service mẫu chạy qua pipeline template | 2 | LOC-04, CIT-08 | ENABLER |
 | ◐ | SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR **[làm một phần, commit 5e423ab: shp-events AuditRecordBuilder (che IP, chặn giá trị trong resource) + AuditSink; CHƯA có sink ghi outbox]** | Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số | 4 | SHR-06 | US-047 |
@@ -103,7 +103,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **6** (�
 | ☐ | GOP-06 | Platform add-on: OpenTelemetry Collector | Nhận OTLP, xuất sang Azure Monitor; local xuất sang Grafana stack | 3 | GOP-03 | US-070 |
 | ☐ | GOP-07 | Kyverno + policy | Chỉ image đã ký từ ACR, cấm tag latest, bắt buộc resources/probes, PSS restricted; Enforce | 4 | GOP-03 | US-070 |
 | ☐ | GOP-08 | NetworkPolicy default-deny + namespace | Namespace có nhãn PSA restricted; chỉ mở luồng đã thiết kế | 2 | GOP-03 | US-070 |
-| ☐ | GW-01 | API Gateway Spring Cloud Gateway | Route tới các service; truyền trace context | 3 | LOC-03 | ENABLER |
+| ◐ | GW-01 | API Gateway Spring Cloud Gateway **[làm một phần, commit e2558f0: Spring Cloud Gateway: 7 upstream, chặn /internal, JWT ở biên, Dockerfile c909d5b; CHƯA kiểm truyền trace context qua upstream]** | Route tới các service; truyền trace context | 3 | LOC-03 | ENABLER |
 | ☐ | IAC-09 | Module postgresql | Flexible Server 16, chỉ Entra auth (không mật khẩu), PITR 7 ngày, HA zone-redundant ở prod | 4 | IAC-05 | US-067 |
 | ☐ | IAC-10 | Module mongodb (Cosmos DB for MongoDB vCore) | Cluster private endpoint; mật khẩu sinh bằng random_password lưu Key Vault, không nằm trong code | 4 | IAC-05, IAC-08 | US-067 |
 | ☐ | IAC-11 | Module redis | Private endpoint, Entra auth, TLS only | 2 | IAC-05 | ENABLER |

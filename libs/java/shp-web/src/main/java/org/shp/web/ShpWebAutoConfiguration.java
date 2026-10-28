@@ -21,7 +21,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -39,7 +38,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @AutoConfiguration
 @EnableConfigurationProperties(ShpAuthProperties.class)
-@PropertySource("classpath:shp-web-defaults.properties")
 @Import(ShpExceptionHandler.class)
 public class ShpWebAutoConfiguration {
 
@@ -74,7 +72,12 @@ public class ShpWebAutoConfiguration {
     }
     return new SupplierJwtDecoder(
         () -> {
-          var decoder = (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(props.authority());
+          // jwk-set-uri: lấy khóa từ địa chỉ trong cụm khi issuer (localhost) không gọi được từ
+          // pod.
+          var decoder =
+              props.jwkSetUri().isBlank()
+                  ? (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(props.authority())
+                  : NimbusJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
           decoder.setJwtValidator(ShpJwt.validator(props, clock));
           return decoder;
         });

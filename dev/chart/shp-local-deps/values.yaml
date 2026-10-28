@@ -24,7 +24,7 @@ storage:
 
 postgres:
   user: shp
-  databases: [scheduling, notification, ml]
+  databases: [scheduling]   # notification, ml dùng MongoDB (ADR-0014)
 
 mongo:
   replicaSet: rs0

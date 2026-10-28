@@ -124,11 +124,11 @@ class UnitTest {
             .build();
     var strict =
         ShpJwt.validator(
-            new ShpAuthProperties(TestApp.ISSUER, "shp-api", true, Duration.ofSeconds(30)),
+            new ShpAuthProperties(TestApp.ISSUER, "shp-api", true, Duration.ofSeconds(30), ""),
             Clock.systemUTC());
     var local =
         ShpJwt.validator(
-            new ShpAuthProperties(TestApp.ISSUER, "shp-api", false, Duration.ofSeconds(30)),
+            new ShpAuthProperties(TestApp.ISSUER, "shp-api", false, Duration.ofSeconds(30), ""),
             Clock.systemUTC());
     assertThat(strict.validate(jwt).hasErrors()).isTrue();
     assertThat(local.validate(jwt).hasErrors()).isFalse();

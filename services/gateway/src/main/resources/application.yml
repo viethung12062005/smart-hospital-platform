@@ -1,0 +1,46 @@
+# Bảng định tuyến: docs/03-architecture/detailed-design/07-api-conventions.md §1. /internal/* KHÔNG có route.
+# Địa chỉ service đổi được bằng biến môi trường SHP_UPSTREAM_<SERVICE> (local/test).
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: clinical
+              uri: ${SHP_UPSTREAM_CLINICAL:http://clinical}
+              predicates:
+                - Path=/fhir/Patient/**,/fhir/Patient,/fhir/Practitioner/**,/fhir/Practitioner,/fhir/PractitionerRole/**,/fhir/PractitionerRole,/fhir/Encounter/**,/fhir/Encounter,/fhir/Observation/**,/fhir/Observation,/fhir/Condition/**,/fhir/Condition,/fhir/AllergyIntolerance/**,/fhir/AllergyIntolerance,/api/v1/registration,/api/v1/me,/api/v1/clinical/**,/api/v1/admin/**
+            - id: scheduling
+              uri: ${SHP_UPSTREAM_SCHEDULING:http://scheduling}
+              predicates:
+                - Path=/fhir/Schedule/**,/fhir/Schedule,/fhir/Slot/**,/fhir/Slot,/fhir/Appointment/**,/fhir/Appointment,/api/v1/scheduling/**
+            - id: document
+              uri: ${SHP_UPSTREAM_DOCUMENT:http://document}
+              predicates:
+                - Path=/fhir/DocumentReference/**,/fhir/DocumentReference,/api/v1/documents/**
+            - id: notification
+              uri: ${SHP_UPSTREAM_NOTIFICATION:http://notification}
+              predicates:
+                - Path=/api/v1/notifications/**
+            - id: audit
+              uri: ${SHP_UPSTREAM_AUDIT:http://audit}
+              predicates:
+                - Path=/api/v1/audit/**
+            - id: ai
+              uri: ${SHP_UPSTREAM_AI:http://ai}
+              predicates:
+                - Path=/api/v1/ai/**
+            - id: ml
+              uri: ${SHP_UPSTREAM_ML:http://ml}
+              predicates:
+                - Path=/api/v1/ml/**
+server:
+  port: 8080
+shp:
+  auth:
+    authority: ${OIDC_AUTHORITY:}
+    audience: ${OIDC_AUDIENCE:}
+    jwk-set-uri: ${OIDC_JWK_SET_URI:}
+    require-mfa-for-staff: ${SHP_REQUIRE_MFA_FOR_STAFF:true}

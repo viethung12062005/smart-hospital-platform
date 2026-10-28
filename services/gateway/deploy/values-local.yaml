@@ -1,8 +1,7 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=gateway).
+# Values riêng của gateway khi chạy trên kind (make -C dev deploy SVC=gateway); nạp sau dev/chart/app-values-local.yaml.
+# Upstream mặc định http://<svc> (cùng namespace shp-apps), xem src/main/resources/application.yml.
 image:
   repository: localhost/shp-gateway
   tag: dev
-replicaCount: 1
 env:
-  ASPNETCORE_ENVIRONMENT: Development
   OTEL_SERVICE_NAME: gateway

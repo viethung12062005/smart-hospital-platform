@@ -10,13 +10,25 @@ pdb:
   enabled: false             # 1 replica thì PDB chặn việc drain node
 networkPolicy:
   enabled: false             # local cho phép mọi luồng; NetworkPolicy được kiểm trên uat/prod
-# Chuỗi kết nối tới phụ thuộc trong namespace shp-deps (Secret do deploy.sh tạo, mật khẩu sinh ngẫu nhiên trên máy).
+# Mật khẩu/chuỗi kết nối tới phụ thuộc trong namespace shp-deps (Secret do deploy.sh tạo, mật khẩu sinh ngẫu nhiên trên máy).
+# Tên biến theo quy ước Spring Boot (relaxed binding) cho service Java; MONGODB_URI/RABBITMQ_URL cho service Python.
 secretEnv:
-  - { name: ConnectionStrings__Postgres, secretName: shp-local-conn, key: postgres }
-  - { name: ConnectionStrings__Mongo, secretName: shp-local-conn, key: mongodb }
-  - { name: ConnectionStrings__Redis, secretName: shp-local-conn, key: redis }
-  - { name: ConnectionStrings__RabbitMq, secretName: shp-local-conn, key: rabbitmq }
-  - { name: ConnectionStrings__Blob, secretName: shp-local-conn, key: blob }
+  - { name: SPRING_DATASOURCE_PASSWORD, secretName: shp-local-conn, key: postgres-password }
+  - { name: SPRING_RABBITMQ_PASSWORD, secretName: shp-local-conn, key: rabbitmq-password }
+  - { name: SPRING_DATA_REDIS_PASSWORD, secretName: shp-local-conn, key: redis-password }
+  - { name: AZURE_STORAGE_CONNECTION_STRING, secretName: shp-local-conn, key: blob }
+  - { name: MONGODB_URI, secretName: shp-local-conn, key: mongodb }
+  - { name: RABBITMQ_URL, secretName: shp-local-conn, key: rabbitmq }
 env:
-  OIDC_AUTHORITY: http://keycloak.shp-deps.svc.cluster.local:8080/realms/shp
+  # Token lấy từ máy dev qua http://localhost:18080 nên issuer là localhost; pod không gọi được localhost của máy
+  # → khóa ký (JWKS) lấy qua DNS trong cụm, còn issuer vẫn kiểm đúng giá trị localhost.
+  OIDC_AUTHORITY: http://localhost:18080/realms/shp
+  OIDC_JWK_SET_URI: http://keycloak.shp-deps.svc.cluster.local:8080/realms/shp/protocol/openid-connect/certs
   OIDC_AUDIENCE: shp-api
+  SHP_REQUIRE_MFA_FOR_STAFF: "false"   # người dùng thử trong Keycloak local không có MFA
+  SHP_CLINICAL_URL: http://clinical
+  SPRING_RABBITMQ_HOST: rabbitmq.shp-deps.svc.cluster.local
+  SPRING_RABBITMQ_PORT: "5672"
+  SPRING_RABBITMQ_USERNAME: shp
+  SPRING_DATA_REDIS_HOST: redis.shp-deps.svc.cluster.local
+  SPRING_DATA_REDIS_PORT: "6379"

@@ -4,14 +4,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.PropertySource;
 
 /**
- * Tương đương {@code AddServiceDefaults} của bản .NET: health live/ready, /info, tracing, metric
- * Prometheus. Service chỉ cần có thư viện này trên classpath; không cần code.
+ * Cấu hình chung: health live/ready, /info, tracing, metric Prometheus. Service chỉ cần có thư viện
+ * này trên classpath; không cần code.
  */
 @AutoConfiguration
-@PropertySource("classpath:shp-defaults.properties")
 public class ServiceDefaultsAutoConfiguration {
 
   @Bean

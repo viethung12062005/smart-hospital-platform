@@ -1,11 +1,14 @@
 # gateway
 
-API gateway (YARP): định tuyến, xác thực JWT, rate limit. Chủ sở hữu: **SA**.
+Cổng vào duy nhất (Spring Cloud Gateway, WebFlux): định tuyến tới 7 service, xác thực JWT (OIDC), chặn `/internal/**`.
+Chủ sở hữu: **SA**. Dev thường **không cần sửa** service này; thêm route mới thì báo SA.
 
-| Lệnh | Việc |
+| Lệnh (chạy ở gốc repo) | Việc |
 |---|---|
-| `dotnet test services/gateway/Shp.Gateway.slnx` | build + test |
-| `dotnet run --project services/gateway/src/Shp.Gateway.Api` | chạy local (dùng hạ tầng từ `make -C dev up`, biến môi trường từ `dev/scripts/env.sh`) |
+| `mvn -B -pl services/gateway -am verify` | build + test như CI |
+| `set -a; . dev/.local/connection.env; set +a; mvn -pl services/gateway -am spring-boot:run` | chạy local (cổng 8080; upstream đặt qua `SHP_UPSTREAM_<SVC>`) |
 | `make -C dev deploy SVC=gateway` | build image và deploy lên cụm kind |
 
-Endpoint nền có sẵn: `/health/live`, `/health/ready`, `/info`. Dev chỉ thêm logic nghiệp vụ trong `src/`.
+- Bảng route: `src/main/resources/application.yml` (nguồn: `docs/03-architecture/detailed-design/07-api-conventions.md` §1).
+- Bảo mật: `src/main/java/org/shp/gateway/GatewaySecurity.java` — `/internal/**` luôn 403, `/actuator/health/**` và `/actuator/info` công khai,
+  còn lại cần JWT hợp lệ (issuer, audience, MFA cho nhân viên theo `shp.auth.*`). Phân quyền chi tiết nằm ở từng service (`@RequireShpAuthz`).
