@@ -420,6 +420,43 @@ mvn -B verify      # shp-service-defaults 5, shp-authz 238, shp-events 47, shp-w
    - `MockRestServiceServer` không cho thêm kỳ vọng sau khi đã gọi → mỗi kịch bản một server.
 7. **Khác biệt so với bản .NET:** endpoint "công khai có chủ đích" vẫn **phải đăng nhập** (chuỗi bảo mật mặc định chặn mọi đường dẫn trừ health/info/prometheus); `@ShpPublicEndpoint` chỉ nghĩa là "không cần quy tắc ma trận". 405 trả `validation-failed` (400) vì bảng lỗi §5 không có mã riêng.
 
+### J4 — Thư viện dữ liệu: `shp-data-postgres` (chuyển từ .NET) + `shp-data-mongo` (mới, theo ADR-0014) ✅ / một phần
+1. **Mục tiêu:** event luôn ghi cùng transaction với dữ liệu và không mất khi bus lỗi; consumer xử lý đúng một lần; Idempotency-Key không tạo trùng — cho **cả PostgreSQL (scheduling) và MongoDB (clinical, document, ai, notification, ml)**.
+2. **Việc đã làm (theo thứ tự):**
+   1. Thêm `EventPublisher` (interface chung) vào `shp-events`; thêm `IdempotencyKeys` (kiểm header + băm body chuẩn hóa, không phụ thuộc DB) vào `shp-web`.
+   2. Kiểm tên module Testcontainers 2.x trong BOM: `testcontainers-postgresql`, `testcontainers-mongodb` (gói Java mới `org.testcontainers.postgresql` / `org.testcontainers.mongodb`).
+   3. `libs/java/shp-data-postgres`: `PostgresOutbox` (JdbcClient, bắt buộc trong transaction), `OutboxRelay` (`SmartLifecycle`, thread ảo, `FOR UPDATE SKIP LOCKED`, backoff ≤ 30s), `PostgresInbox`, `PostgresIdempotency`, `IdempotencyClaim`; DDL thành **migration Flyway** `db/shp-messaging/postgres/V0_1__shp_messaging.sql` (service thêm vào `spring.flyway.locations`). 28 test trên PostgreSQL 16 thật.
+   4. `libs/java/shp-data-mongo`: `MongoOutbox`, `MongoOutboxRelay` (MongoDB không có `SKIP LOCKED` → **giành từng event bằng `findAndModify`** đặt `lockedUntil`/`lockedBy`, khóa 30s; replica chết thì khóa hết hạn và event được giành lại), `MongoInbox` (`_id = consumer|messageId`), `MongoIdempotency` (`_id = subject|key`), `MongoMessaging.inTransaction` (**thử lại tối đa 8 lần** khi MongoDB báo `TransientTransactionError`/WriteConflict/DuplicateKey — yêu cầu bắt buộc của transaction đa document), `ensureIndexes` (partial index outbox, TTL inbox 14 ngày, TTL idempotency 24 giờ). 21 test trên MongoDB 8 replica set thật.
+3. **Thay đổi (commit COMMIT_J4):**
+
+| File | | Nội dung |
+|---|---|---|
+| `pom.xml` | M | + module/dependencyManagement `shp-web`, `shp-data-postgres`, `shp-data-mongo` |
+| `libs/java/shp-events/.../EventPublisher.java` | A | `void publish(CloudEvent)` |
+| `libs/java/shp-web/.../idempotency/IdempotencyKeys.java` | A | `require(header)` (428/400), `hashBody(bytes)` |
+| `libs/java/shp-data-postgres/**` | A | 5 lớp + migration Flyway + 3 lớp test (28 test) |
+| `libs/java/shp-data-mongo/**` | A | 5 lớp + 3 lớp test (21 test) |
+
+4. **Cách dev dùng:**
+```java
+// PostgreSQL (scheduling) — trong @Transactional:
+var claim = idempotency.claim(principal.subject(), IdempotencyKeys.require(req.getHeader("Idempotency-Key")), "Appointment/$book", IdempotencyKeys.hashBody(body));
+if (claim.replay()) return loadAppointment(claim.resourceId());
+... ghi appointment ...; outbox.add(CloudEvents.create("scheduling", "shp.scheduling.appointment-booked.v1", "Appointment/" + id, payload));
+// MongoDB: bọc toàn bộ bằng MongoMessaging.inTransaction(tx, () -> { ... idempotency.claim(...); ... outbox.add(...); })
+// Consumer: inbox.handleOnce("notification", event, () -> { ... });
+```
+5. **Kiểm chứng:**
+```bash
+# cần Docker; Docker Hub giới hạn lượt kéo thì dùng mirror:
+export SHP_TEST_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:16-alpine SHP_TEST_MONGO_IMAGE=mirror.gcr.io/library/mongo:8
+mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD SUCCESS
+```
+   **Đột biến (tất cả bị bắt):** PostgreSQL — bỏ 422 (1 đỏ), bỏ `SKIP LOCKED` (1), inbox ghi đè (2). MongoDB — bỏ điều kiện khóa của relay (2), khóa inbox không duy nhất (2), bỏ 422 (1), bỏ hết hạn 24h (1).
+   Kịch bản đã kiểm trên DB thật (cả hai engine): rollback giữ nguyên dữ liệu lẫn outbox; thứ tự; bus chết giữa chừng rồi sống lại vẫn phát đủ và đúng thứ tự; 4 relay × 60 event → mỗi event đúng 1 lần; 20 lần giao trùng → commit đúng 1 lần; 20 request song song cùng key → đúng 1 claim mới; rollback claim → claim lại được; key hết hạn sau 24h. Riêng MongoDB: khóa của replica chết hết hạn thì event được phát.
+6. **Lỗi gặp và cách sửa:** Testcontainers yêu cầu khai báo image mirror là bản thay thế (`asCompatibleSubstituteFor("postgres"|"mongo")`); **Testcontainers 2.x không tự bật replica set** cho MongoDB như 1.x → `.withReplicaSet()` (thiếu thì lỗi "Transaction numbers are only allowed on a replica set member"); `ExecutorService.submit(this::claim)` mơ hồ → lambda; một đột biến không khớp chuỗi vì Spotless xuống dòng → dùng regex.
+7. **Giới hạn đã biết:** SHR-07/08 vẫn `partial`: **chưa có `EventPublisher` thật** (Spring Cloud Stream + RabbitMQ/Service Bus) và retry/DLQ phía consumer — bước J5b. SHR-10 (resource store FHIR trên MongoDB: version CAS + history) chưa làm. Với MongoDB, handler trong `inbox.handleOnce` **có thể chạy lại** khi transaction xung đột (chỉ một lần được commit) → handler không được gọi dịch vụ ngoài có tác dụng phụ (gửi SMS...) trực tiếp; phải ghi việc vào DB rồi worker làm sau (đúng thiết kế notification).
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
