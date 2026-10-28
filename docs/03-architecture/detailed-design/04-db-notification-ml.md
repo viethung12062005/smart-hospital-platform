@@ -2,7 +2,7 @@
 
 > Theo [ADR-0014](../adr/0014-database-per-service-review.md) (thay thiết kế PostgreSQL trước đây). Hai database riêng `notification` và `ml`
 > trên cùng cụm MongoDB với clinical/document/ai; mỗi service một user chỉ có quyền trên database của mình, không truy cập chéo.
-> Hiện thực bằng Java (Spring Data MongoDB, [ADR-0015](../adr/0015-java-for-all-services.md)). Script khởi tạo: [§3](#3-script-khởi-tạo-và-kiểm-chứng).
+> notification hiện thực bằng Java (Spring Data MongoDB), ml bằng Python (pymongo) — [ADR-0015](../adr/0015-java-for-all-services.md). Script khởi tạo: [§3](#3-script-khởi-tạo-và-kiểm-chứng).
 
 Quy ước chung (giống [03](03-db-clinical-document.md)): `_id` là UUIDv7 dạng chuỗi; thời gian là `Date` UTC; mọi ghi nghiệp vụ + `outbox` nằm trong
 **một transaction**; `inbox` có `_id = "<consumer>|<messageId>"` và TTL 14 ngày.
@@ -71,7 +71,7 @@ Validator (`$jsonSchema`) bắt buộc `subjectRef`, `patientId`, `kind` ∈ dan
 ### 2.1 Nguyên tắc
 - ML **tự xây dữ liệu** từ event (`appointment-booked`, `appointment-status-changed`, `appointment-cancelled`), không đọc DB service khác.
 - Dữ liệu **trực tuyến** (phục vụ dự đoán, giám sát) ở MongoDB; **tập huấn luyện** là snapshot **Parquet** bất biến trên Blob, băm nội dung
-  ghi vào MLflow ([16-mlops.md](16-mlops.md) §2). Tính drift/AUC thực tế bằng **DuckDB** (thư viện nhúng trong JVM) trên Parquet.
+  ghi vào MLflow ([16-mlops.md](16-mlops.md) §2). Tính drift/AUC thực tế bằng **pandas/DuckDB** (Python) trên Parquet.
 - Không có PII: chỉ ID và nhóm tuổi 10 năm (`ageBand`) do scheduling đưa vào event.
 
 ### 2.2 Collection
@@ -104,7 +104,7 @@ Chia train/validation theo **thời gian** (không xáo trộn) để tránh rò
 
 | Event | Xử lý (một transaction) |
 |---|---|
-| `appointment-booked` | `insert appointment_facts`; đọc `patient_stats`; tính đặc trưng; chạy model (XGBoost4J trong tiến trình); `insert predictions`; `insert outbox` `shp.ml.no-show-scored.v1` |
+| `appointment-booked` | `insert appointment_facts`; đọc `patient_stats`; tính đặc trưng; chạy model (LightGBM trong tiến trình); `insert predictions`; `insert outbox` `shp.ml.no-show-scored.v1` |
 | `appointment-status-changed` (`fulfilled`/`noshow`) | cập nhật `outcome`; `$inc` `patient_stats` |
 | `appointment-cancelled` | `outcome = cancelled`; hủy muộn (< 24 giờ) thì `$inc lateCancelTotal` |
 

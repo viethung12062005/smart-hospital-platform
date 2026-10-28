@@ -67,18 +67,18 @@ Tổng: **74 story** — Must 49, Should 22, Could 3.
 | [US-056](#us-056) | Người dùng đánh giá câu trả lời của trợ lý | Bác sĩ | Could | UC-11 | 2 | 7 |
 | [US-057](#us-057) | Bộ đánh giá chất lượng RAG | Nhóm dự án | Must | UC-11 | 4 | 13 |
 | [US-058](#us-058) | Bác sĩ nhận tóm tắt hồ sơ bệnh nhân | Bác sĩ | Should | UC-12 | 5 | 19 |
-| [US-059](#us-059) | Hệ thống trích xuất dữ liệu từ tài liệu tải lên | Hệ thống | Should | UC-13 | 7 | 24 |
+| [US-059](#us-059) | Hệ thống trích xuất dữ liệu từ tài liệu tải lên | Hệ thống | Should | UC-13 | 7 | 26 |
 | [US-060](#us-060) | Nhân viên duyệt kết quả trích xuất | Điều dưỡng | Should | UC-13 | 4 | 15 |
 | [US-061](#us-061) | Bộ đánh giá trích xuất tài liệu | Nhóm dự án | Should | UC-13 | 2 | 7 |
 | [US-062](#us-062) | Bệnh nhân đặt lịch qua chatbot | Bệnh nhân | Could | UC-14 | 5 | 19 |
 | [US-063](#us-063) | Huấn luyện và đăng ký mô hình dự đoán no-show | Nhóm dự án | Should | UC-15 | 9 | 30 |
-| [US-064](#us-064) | Chấm điểm no-show khi đặt lịch | Hệ thống | Should | UC-15 | 6 | 17 |
+| [US-064](#us-064) | Chấm điểm no-show khi đặt lịch | Hệ thống | Should | UC-15 | 6 | 19 |
 | [US-065](#us-065) | Theo dõi drift và hiệu năng thực tế của mô hình | Nhóm dự án | Should | UC-15 | 5 | 17 |
 | [US-071](#us-071) | Dữ liệu huấn luyện có phiên bản và được kiểm tra | Nhóm dự án | Should | UC-15 | 5 | 15 |
 | [US-072](#us-072) | Đánh giá mô hình theo nhóm con và có model card | Nhóm dự án | Should | UC-15 | 2 | 7 |
 | [US-073](#us-073) | Triển khai model mới bằng canary tự động | DevOps | Should | UC-15 | 3 | 12 |
 | [US-074](#us-074) | Huấn luyện lại tự động khi có drift | Hệ thống | Should | UC-15 | 3 | 12 |
-| [US-066](#us-066) | Người dùng đăng nhập và thấy giao diện theo vai trò | Người dùng | Must | UC-08 | 7 | 20 |
+| [US-066](#us-066) | Người dùng đăng nhập và thấy giao diện theo vai trò | Người dùng | Must | UC-08 | 7 | 22 |
 | [US-067](#us-067) | Khôi phục dữ liệu về một thời điểm | Quản trị viên | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | Hệ thống chịu tải mở slot lúc 07:00 | Nhóm dự án | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | Hệ thống chịu lỗi phụ thuộc | Nhóm dự án | Must |  | 2 | 9 |
@@ -1123,7 +1123,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| PY-04 | Audit E11 cho AI/ML bằng shp-events (ai-query, ai-summary) | D3 | 2 | W4 |
+| PY-04 | Audit emitter Python (E11) cho AI/ML | D3 | 2 | W4 |
 | SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR | SA | 4 | W4 |
 | SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) | SA | 2 | W4 |
 | AUD-01 | Consumer audit.recorded: validate schema, inbox theo eventId, gom batch 60s/5.000 bản ghi | D2 | 4 | W5 |
@@ -1229,9 +1229,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-01 | Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local) | D3 | 3 | W4 |
 | AI-02 | Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang) | D3 | 3 | W4 |
 | AI-03 | Chunker: 600 token, overlap 80, tách theo tiêu đề mục | D3 | 4 | W4 |
-| AI-04 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W4 |
+| AI-04 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W5 |
 | AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | D3 | 4 | W5 |
-| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W6 |
+| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W9 |
 
 ## US-053
@@ -1256,9 +1256,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-06 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | D3 | 4 | W5 |
 | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | D3 | 3 | W5 |
 | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | D3 | 4 | W5 |
-| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W5 |
+| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | D3 | 4 | W6 |
-| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W6 |
+| WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W9 |
 
 ## US-054
@@ -1277,8 +1277,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-10 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit | D3 | 3 | W5 |
-| AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk | D3 | 3 | W5 |
+| AI-10 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit | D3 | 3 | W6 |
+| AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk | D3 | 3 | W6 |
 | AI-17 | Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner | D3 | 4 | W6 |
 
 ## US-055
@@ -1300,11 +1300,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | PY-06 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) | D3 | 4 | W2 |
-| PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (Spring AI, OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | D3 | 4 | W2 |
+| PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | D3 | 4 | W2 |
 | PY-08 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi | D3 | 4 | W2 |
-| PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model | D3 | 3 | W2 |
 | AI-13 | Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách | D3 | 3 | W3 |
-| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W5 |
+| PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model | D3 | 3 | W3 |
+| AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
 | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | D3 | 3 | W7 |
 | IAC-19 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | SA | 4 | W7 |
 | AI-33 | Báo cáo token và chi phí theo tác vụ/model | D3 | 3 | W11 |
@@ -1325,8 +1325,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | D3 | 3 | W6 |
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | D3 | 4 | W6 |
+| AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | D3 | 3 | W7 |
 
 ## US-057
 ### Bộ đánh giá chất lượng RAG — Must
@@ -1344,7 +1344,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-14 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | D3 | 3 | W6 |
+| AI-14 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | D3 | 3 | W5 |
 | AI-15 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) | D3 | 3 | W6 |
 | AI-16 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng | D3 | 4 | W6 |
 | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | D3 | 3 | W7 |
@@ -1391,7 +1391,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| PY-03 | Consumer event cho ai/ml bằng thư viện chung (Spring Cloud Stream + inbox MongoDB) | D3 | 2 | W3 |
+| PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | D3 | 4 | W4 |
 | DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W8 |
 | AI-22 | Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ | D3 | 4 | W9 |
 | AI-23 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | D3 | 4 | W9 |
@@ -1473,7 +1473,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 **Tiêu chí nghiệm thu**
 
-1. Given dữ liệu giả có quy luật, When huấn luyện baseline và XGBoost, Then ghi tham số/metric vào MLflow
+1. Given dữ liệu giả có quy luật, When huấn luyện baseline và LightGBM, Then ghi tham số/metric vào MLflow
 2. Given AUC < 0,75 hoặc không hơn baseline, When đăng ký, Then bị cổng chất lượng chặn
 3. Given đổi alias production, When pod chạy, Then tự nạp model mới trong ≤ 60 giây
 
@@ -1484,7 +1484,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | ML-01 | Sinh dữ liệu lịch hẹn có quy luật no-show (lead time, lịch sử vắng, giờ khám, kênh) | D3 | 4 | W3 |
 | ML-02 | Feature engineering + chia train/validation theo thời gian | D3 | 4 | W3 |
 | ML-03 | Baseline Logistic Regression + metric (AUC, precision/recall tại ngưỡng) | D3 | 3 | W3 |
-| ML-04 | XGBoost4J + tìm tham số + MLflow tracking (Java client) | D3 | 4 | W3 |
+| ML-04 | LightGBM + tìm tham số + MLflow tracking | D3 | 4 | W3 |
 | ML-05 | Cổng chất lượng và model registry: AUC ≥ 0,75 và hơn baseline mới được đăng ký alias production | D3 | 3 | W3 |
 | GOP-10 | Chart MLflow (tracking + registry) cho môi trường cluster | SA | 3 | W6 |
 | ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | D3 | 3 | W7 |
@@ -1507,7 +1507,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| PY-03 | Consumer event cho ai/ml bằng thư viện chung (Spring Cloud Stream + inbox MongoDB) | D3 | 2 | W3 |
+| PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | D3 | 4 | W4 |
 | ML-11 | Khởi tạo MongoDB ml (ADR-0014): patient_stats, appointment_facts, predictions (time-series nếu vCore hỗ trợ), inbox, outbox | D3 | 2 | W5 |
 | ML-06 | Consumer E1/E2/E3/E5/E7: ghi appointment_fact, cập nhật outcome và attendance_stats | D3 | 4 | W6 |
 | ML-07 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | D3 | 4 | W7 |
@@ -1532,9 +1532,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) | D3 | 3 | W4 |
-| ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện | D3 | 4 | W7 |
-| ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày | D3 | 4 | W7 |
 | ML-10 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo | D3 | 3 | W8 |
+| ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện | D3 | 4 | W8 |
+| ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày | D3 | 4 | W8 |
 | MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | SA | 3 | W8 |
 
 ## US-071
@@ -1554,9 +1554,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| ML-13 | Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash | D3 | 3 | W3 |
-| ML-14 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng bộ quy tắc Java (thay pandera) | D3 | 3 | W4 |
+| ML-13 | Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash | D3 | 3 | W4 |
 | ML-15 | Package đặc trưng dùng chung cho huấn luyện và phục vụ | D3 | 3 | W4 |
+| ML-14 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera | D3 | 3 | W5 |
 | ML-16 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường | D3 | 3 | W7 |
 | MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | SA | 3 | W8 |
 
@@ -1598,7 +1598,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| ML-24 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả | D3 | 3 | W8 |
+| ML-24 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả | D3 | 3 | W7 |
 | ML-25 | Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản | D3 | 3 | W8 |
 | MLO-03 | Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback | SA | 6 | W8 |
 
@@ -1619,9 +1619,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| ML-22 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng | D3 | 3 | W8 |
-| ML-23 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production | D3 | 4 | W9 |
-| MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | SA | 5 | W9 |
+| ML-22 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng | D3 | 3 | W9 |
+| ML-23 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production | D3 | 4 | W10 |
+| MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | SA | 5 | W10 |
 
 ## US-066
 ### Người dùng đăng nhập và thấy giao diện theo vai trò — Must
@@ -1640,7 +1640,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
-| PY-01 | Nối shp-web (JWT, identity, RequireShpAuthz) vào ai và ml | D3 | 1 | W2 |
+| PY-01 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | D3 | 3 | W2 |
 | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
 | WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | D1 | 4 | W2 |
 | WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | D1 | 3 | W2 |
@@ -1736,7 +1736,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CIT-06 | Reusable workflow GitOps update/promote | SA | 4 | W3 |
 | GOP-03 | Chart bootstrap Argo CD | SA | 6 | W3 |
 | GOV-05 | GitHub App bot cho GitOps | SA | 2 | W3 |
-| CIT-02 | Workflow kiểm hợp đồng + công cụ SA (Python) | SA | 3 | W4 |
+| CIT-02 | Reusable workflow Python CI | SA | 3 | W4 |
 | CIT-04 | Reusable workflow Helm validate | SA | 3 | W4 |
 | CIT-07 | Workflow kiểm tra chung cho mọi PR | SA | 3 | W4 |
 | CIT-08 | Caller workflow mẫu cho service + script sinh | SA | 2 | W4 |
@@ -1754,7 +1754,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CIT-10 | Đóng gói Maven nội bộ cho thư viện dùng chung | SA | 3 | W7 |
 | GOP-02 | Unit test cho chart | SA | 3 | W7 |
 | GOP-09 | Canary prod với Argo Rollouts | SA | 3 | W7 |
-| GOV-06 | Dependabot cho actions, maven, docker, terraform | SA | 2 | W7 |
+| GOV-06 | Dependabot cho actions, maven, pip, docker, terraform | SA | 2 | W7 |
 | ENV-03 | Workflow cost-guard | SA | 2 | W8 |
 | ENV-04 | Runbook vòng đời môi trường | SA | 2 | W8 |
 | ENV-06 | Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ | SA | 4 | W10 |

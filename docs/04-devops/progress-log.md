@@ -457,6 +457,32 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
 6. **Lỗi gặp và cách sửa:** Testcontainers yêu cầu khai báo image mirror là bản thay thế (`asCompatibleSubstituteFor("postgres"|"mongo")`); **Testcontainers 2.x không tự bật replica set** cho MongoDB như 1.x → `.withReplicaSet()` (thiếu thì lỗi "Transaction numbers are only allowed on a replica set member"); `ExecutorService.submit(this::claim)` mơ hồ → lambda; một đột biến không khớp chuỗi vì Spotless xuống dòng → dùng regex.
 7. **Giới hạn đã biết:** SHR-07/08 vẫn `partial`: **chưa có `EventPublisher` thật** (Spring Cloud Stream + RabbitMQ/Service Bus) và retry/DLQ phía consumer — bước J5b. SHR-10 (resource store FHIR trên MongoDB: version CAS + history) chưa làm. Với MongoDB, handler trong `inbox.handleOnce` **có thể chạy lại** khi transaction xung đột (chỉ một lần được commit) → handler không được gọi dịch vụ ngoài có tác dụng phụ (gửi SMS...) trực tiếp; phải ghi việc vào DB rồi worker làm sau (đúng thiết kế notification).
 
+### J4b — Bổ sung của PM: **ai và ml giữ Python**; tách `shp-security`; audit ghi bền qua outbox ✅
+1. **Mục tiêu:** PM bổ sung (2026-10-28): *"phần nào bắt buộc dùng Python như AI thì vẫn giữ"* → sửa phạm vi ADR-0015 và mọi thứ J1 đã đổi cho ai/ml; đồng thời chuẩn bị cho gateway (WebFlux) và cho audit lưu bền.
+2. **Việc đã làm (theo thứ tự):**
+   1. **ADR-0015** đổi tên và phạm vi: Java cho `gateway, scheduling, notification, clinical, document, audit`; **Python giữ cho `ai`, `ml`** (lý do: LightGBM, pandas, pandera, MLflow, công cụ eval không có bản Java tương đương). Bảng ánh xạ ghi "Giữ Python" cho AI, ML, OCR; hệ quả: hai pipeline CI (`java-ci`, `python-ci`), ai/ml dùng **cùng hợp đồng** trong `contracts/`.
+   2. **Hoàn nguyên** những gì J1 đã đổi sang Java cho ai/ml (lấy nguyên văn từ commit trước J1 bằng `git show 3b7390f^:...`, không gõ lại): task PY-01, PY-03, PY-04, PY-05 (giờ lại cần thư viện Python riêng), ML-04 (LightGBM), ML-14 (pandera), CIT-02 (Python CI), LOC-04 (skeleton Python), SCF-06 (FastAPI); SCF-07 → "khung code Python… kết nối **MongoDB**" (giữ ADR-0014); PY-07 bỏ "Spring AI"; AC của story "LightGBM"; nhãn D3 "Dev Python/AI". Tổng kế hoạch về lại **1.070 giờ**.
+   3. Tài liệu: `overview.md` (ai: Python FastAPI, ml: Python LightGBM/MLflow), ADR-0007 (LightGBM), `16-mlops.md` (pandera, LightGBM), ADR-0009 (Java CI + Python CI), `04-devops/README.md`, `04-db-notification-ml.md` (notification Java, ml Python/pymongo, drift bằng pandas/DuckDB Python).
+   4. Gỡ BOM Spring AI khỏi `pom.xml` gốc (không còn module Java nào dùng).
+   5. **Tách `libs/java/shp-security`** (`ShpJwt`, `ShpAuthProperties`, `Roles`; gói `org.shp.security`) khỏi `shp-web`: gateway là WebFlux, không được kéo Spring MVC của `shp-web` vào; cả hai dùng chung một quy tắc JWT. Dùng `git mv` để giữ lịch sử file.
+   6. Thêm `PostgresOutboxAuditSink`, `MongoOutboxAuditSink`: ghi audit thành event E11 vào outbox trong **transaction riêng (REQUIRES_NEW)** → audit vẫn được lưu khi giao dịch nghiệp vụ rollback, không mất khi bus lỗi. Mỗi bản 1 test.
+3. **Thay đổi (commit COMMIT_J4B):**
+
+| File | | Nội dung |
+|---|---|---|
+| `docs/03-architecture/adr/0015-java-for-all-services.md` | M | tiêu đề, phạm vi, 9 dòng bảng, phương án đã cân nhắc, hệ quả (xem bước 2.1) |
+| `docs/03-architecture/adr/README.md`, `overview.md`, `adr/0007`, `adr/0009`, `detailed-design/16-mlops.md`, `detailed-design/04-db-notification-ml.md`, `docs/04-devops/README.md` | M | ai/ml về Python |
+| `tools/plan/tasks_dev.py`, `tasks_sa.py`, `stories.py`, `build.py` | M | hoàn nguyên task ai/ml (bước 2.2) |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | sinh lại (1.070 giờ) |
+| `pom.xml` | M | − Spring AI BOM; + module `shp-security` |
+| `libs/java/shp-security/**` | A (git mv) | 3 lớp chuyển từ `shp-web/auth`, gói `org.shp.security` |
+| `libs/java/shp-web/pom.xml`, `IdentityInterceptor.java`, `ShpWebAutoConfiguration.java`, test | M | import `org.shp.security.*` |
+| `libs/java/shp-data-postgres/.../PostgresOutboxAuditSink.java` + `AuditSinkTest.java` | A | |
+| `libs/java/shp-data-mongo/.../MongoOutboxAuditSink.java` + `AuditSinkTest.java` | A | |
+
+4. **Kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`; `mvn -B verify` → 8 module, **372 test** (5 + 238 + 47 + 31 + 29 + 22), BUILD SUCCESS.
+5. **Ảnh hưởng:** service `ai`, `ml` Python hiện có (FastAPI) được **giữ**, không xóa ở J5; template `python-ci` giữ. Thư viện nền Python cho ai/ml (PY-01..05) vẫn là việc của D3 như kế hoạch gốc.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|

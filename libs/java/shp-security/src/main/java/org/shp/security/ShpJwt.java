@@ -1,4 +1,4 @@
-package org.shp.web.auth;
+package org.shp.security;
 
 import java.time.Clock;
 import java.util.Collection;

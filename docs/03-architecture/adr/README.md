@@ -18,4 +18,4 @@ Mỗi ADR theo format: Bối cảnh → Quyết định → Phương án đã c�
 | [0012](0012-language-per-service.md) | Đánh giá lại ngôn ngữ từng service: giữ .NET + Python | **Superseded** bởi 0015 |
 | [0013](0013-llm-deepseek-gemini-local-embedding.md) | DeepSeek chính, Gemini free tier dự phòng, embedding local; thay chuỗi model của 0006 | Accepted |
 | [0014](0014-database-per-service-review.md) | Rà soát CSDL từng service: PostgreSQL chỉ cho scheduling; notification và ml chuyển MongoDB (+ Parquet) | Accepted |
-| [0015](0015-java-for-all-services.md) | Java 21 + Spring Boot 4.1 cho toàn bộ 8 service (thay 0002, 0012) | Accepted |
+| [0015](0015-java-for-all-services.md) | Java 21 + Spring Boot 4.1 cho 6 service nghiệp vụ; ai và ml giữ Python (thay 0002, 0012) | Accepted |

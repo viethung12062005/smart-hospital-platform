@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.Optional;
 import org.shp.authz.Principal;
+import org.shp.security.ShpJwt;
 import org.shp.web.errors.ShpException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;

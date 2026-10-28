@@ -41,12 +41,12 @@ EPICS = {
     "CIT": "CI templates (GitHub Actions)", "GOP": "Helm & GitOps (Argo CD)", "ENV": "Vòng đời môi trường ephemeral",
     "OBS": "Observability nền", "LOC": "Môi trường local & walking skeleton", "SCF": "Scaffold service (SA)", "GW": "API Gateway (SA)",
     "MLO": "MLOps pipeline (SA)", "PRD": "Production engineering & bảo vệ",
-    "SHR": "Thư viện dùng chung (Java)", "PY": "Nền tảng AI/ML (Java, Spring AI)", "DAT": "Dữ liệu giả",
+    "SHR": "Thư viện dùng chung (Java)", "PY": "Thư viện dùng chung (Python, cho ai/ml)", "DAT": "Dữ liệu giả",
     "SCH": "Scheduling service", "NTF": "Notification service", "CLN": "Clinical service", "DOC": "Document service",
     "AUD": "Audit service", "AI": "AI service", "ML": "ML no-show", "WEB": "Web app (PWA)",
 }
 PERSON = {"SA": "SA — Solution Architect / PM / DevOps", "D1": "D1 — Dev Java (scheduling, notification, phân quyền, UI đặt lịch)",
-          "D2": "D2 — Dev Java (clinical, document, audit, lõi FHIR, UI lâm sàng)", "D3": "D3 — Dev Java/AI (AI, ML, dữ liệu giả, UI AI)"}
+          "D2": "D2 — Dev Java (clinical, document, audit, lõi FHIR, UI lâm sàng)", "D3": "D3 — Dev Python/AI (AI, ML, dữ liệu giả, UI AI)"}
 EVENTS = [f"E{i}" for i in range(1, 12)]
 HOURS_CAP = {"SA": 8, "D1": 4, "D2": 4, "D3": 4}
 LOAD_WARN = {"SA": 45, "D1": 30, "D2": 30, "D3": 30}
