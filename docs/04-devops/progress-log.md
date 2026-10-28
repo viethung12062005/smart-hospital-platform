@@ -490,7 +490,7 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
    2. `services/gateway`: `GatewayApplication`, `GatewaySecurity` (WebFlux: `/internal/**` → từ chối, health/info/prometheus công khai, mọi route khác cần JWT hợp lệ theo **cùng** `ShpJwt.validator` với service; decoder lười `SupplierReactiveJwtDecoder`; lỗi dạng Problem Details), `application.yml` sinh từ bảng route cũ (7 upstream, 32 đường dẫn; địa chỉ đổi bằng `SHP_UPSTREAM_<SERVICE>`).
    3. Test 7 kịch bản với upstream giả (HTTP server thật trong test): route đúng service và **chuyển nguyên token** (service kiểm lại); 401 khi thiếu/sai audience; nhân viên thiếu MFA bị chặn ở biên; `/internal/**` → 404; đường dẫn lạ → 404; upstream chết → 5xx; health công khai.
    4. **Phát hiện lỗi tiềm ẩn ở `shp-service-defaults`:** `/info`, `/prometheus` trả 404 ở gateway. Bật báo cáo điều kiện (`-Ddebug=true`): `InfoEndpointAutoConfiguration ... not exposed` — `@PropertySource` trên auto-configuration được nạp **sau** khi Boot đánh giá điều kiện; bản MVC qua test chỉ nhờ thứ tự may mắn. Sửa: `ShpDefaultsEnvironmentPostProcessor` (đăng ký ở `META-INF/spring.factories`, khóa `org.springframework.boot.EnvironmentPostProcessor` của Boot 4) nạp mọi `classpath*:META-INF/shp/*.properties` với độ ưu tiên thấp nhất **trước** auto-configuration; bỏ `@PropertySource` ở cả `shp-service-defaults` và `shp-web`.
-3. **Thay đổi (commit COMMIT_J5A):**
+3. **Thay đổi (commit e2558f0):**
 
 | File | | Nội dung |
 |---|---|---|
@@ -509,7 +509,7 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
 1. **Việc đã làm:** `git grep -i caremate` trên 4 repo → 13 chỗ, đều ở repo app. Xóa `docs/03-architecture/caremate-migration.md` và mục 5 của `overview.md` trỏ tới nó; viết lại trung tính: README, `overview.md`, ADR-0002/0005/0008 (nêu "cách làm phổ biến", "ví dụ Medplum" thay vì tên PoC), `phase4-build-log.md`, nhật ký này ("repo PoC cũ").
 2. **Kiểm chứng:** `git grep -i -c caremate` trên cả 4 repo → 0.
 3. **Lưu ý:** **lịch sử git** của repo app vẫn còn các commit cũ có chữ này; xóa khỏi lịch sử cần viết lại lịch sử và force-push — chưa làm, chờ PM quyết (khi chuyển sang repo thật bằng cách copy nội dung, lịch sử mới sẽ sạch).
-4. **Commit:** COMMIT_J5A (cùng commit với J5a).
+4. **Commit:** e2558f0 (cùng commit với J5a).
 
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
