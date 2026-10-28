@@ -20,8 +20,8 @@
 | Mã | Vai trò | Phụ trách |
 |---|---|---|
 | **SA** | Solution Architect + PM + DevOps | **Mọi thứ ngoài logic nghiệp vụ**: kiến trúc, hợp đồng API/event, hạ tầng, CI/CD, Helm/GitOps, môi trường, scaffold service, gateway, observability, load/failure test, backup, phê duyệt, tiến độ |
-| **D1** | Dev .NET (chỉ logic) | Thư viện auth/phân quyền/idempotency · **scheduling** · **notification** · UI đặt lịch và quản lý lịch |
-| **D2** | Dev .NET (chỉ logic) | Lõi FHIR/Mongo/outbox/audit emitter · **clinical** · **document** · **audit** · UI lâm sàng |
+| **D1** | Dev Java (chỉ logic) | Thư viện auth/phân quyền/idempotency · **scheduling** · **notification** · UI đặt lịch và quản lý lịch |
+| **D2** | Dev Java (chỉ logic) | Lõi FHIR/Mongo/outbox/audit emitter · **clinical** · **document** · **audit** · UI lâm sàng |
 | **D3** | Dev Python/AI (chỉ logic) | Thư viện Python · dữ liệu giả · **ML no-show** · **AI service** (RAG, tóm tắt, trích xuất, chatbot, eval) · UI AI |
 
 **Quy tắc:** dev nhận service đã được SA scaffold (khung code, Dockerfile, pipeline, Helm values, kết nối DB/bus/OTel) và chỉ viết logic và test.
@@ -32,7 +32,7 @@ pipeline, Dockerfile, Helm hay hạ tầng; cần thay đổi thì mở issue ch
 
 ```
 services/<scheduling|notification|clinical|document|audit|ai|ml|gateway>/   # mỗi service: src, tests, Dockerfile, deploy/values-<env>.yaml
-libs/dotnet/   libs/python/                    # thư viện dùng chung (SHR-*, PY-*)
+libs/java/     libs/python/                    # thư viện dùng chung (SHR-*, PY-*); libs/java là module Maven của pom.xml gốc
 web/                                           # PWA React
 contracts/{openapi,events,authz,terminology}/  # hợp đồng API, schema event, matrix.yaml, ICD-10/LOINC
 prompts/<task>/v<N>.md   templates/            # prompt AI có version, mẫu thông báo vi/en

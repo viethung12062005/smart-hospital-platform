@@ -131,7 +131,7 @@
           <release>${java.version}</release>
           <parameters>true</parameters>
           <compilerArgs>
-            <!-- Cảnh báo = lỗi (tương đương TreatWarningsAsErrors ở bản .NET) -->
+            <!-- Cảnh báo = lỗi -->
             <arg>-Xlint:all,-processing,-serial,-options</arg>
             <arg>-Werror</arg>
           </compilerArgs>
