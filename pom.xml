@@ -21,6 +21,8 @@
   <modules>
     <module>libs/java/shp-service-defaults</module>
     <module>libs/java/shp-authz</module>
+    <module>libs/java/shp-events</module>
+    <module>libs/java/shp-web</module>
   </modules>
 
   <properties>
@@ -48,6 +50,11 @@
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-authz</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.shp</groupId>
+        <artifactId>shp-events</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

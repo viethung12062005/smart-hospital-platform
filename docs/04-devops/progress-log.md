@@ -377,6 +377,49 @@ mvn -B spotless:apply                           # tự định dạng trước k
    - Context không khởi động: `Health contributor 'db' ... does not exist` → `management.endpoint.health.validate-group-membership=false` để nhóm `ready` tự gồm DB nào service có.
 6. **Khác biệt so với bản .NET:** đường dẫn metric là `/prometheus` (Micrometer) thay vì OTel metrics exporter; OTLP bật bằng `SHP_OTLP_EXPORT` (Helm sẽ đặt ở UAT/prod).
 
+### J3 — `shp-events` + `shp-web` (thay `Shp.Events`, `Shp.Web`) ✅
+1. **Mục tiêu:** chuyển envelope CloudEvents, kiểm schema, audit, lỗi chuẩn, xác thực JWT, tra danh tính và phân quyền gắn endpoint sang Java/Spring, giữ nguyên hành vi đã kiểm ở bản .NET.
+2. **Việc đã làm (theo thứ tự):**
+   1. Đọc POM `json-schema-validator` 3.0.8 → dùng **Jackson 3** (`tools.jackson`), khớp Boot 4; đọc API thật bằng `javap` (`SchemaRegistry`, `Schema.validate(node, ctx -> ctx.executionConfig(c -> c.formatAssertionsEnabled(true)))`).
+   2. **Điều chỉnh ADR-0015:** không dùng CloudEvents Java SDK (module JSON dùng Jackson 2) → envelope là record Java.
+   3. `libs/java/shp-events`: `CloudEvent`, `CloudEvents.create` (UUIDv7 tự viết `Uuids.v7`, `traceparent` từ OpenTelemetry `Span.current()`, ≤ 64 KB, bỏ trường null), `EventSchemas.validate` (schema nhúng vào jar từ `contracts/events`, trừ ví dụ), `audit/` (`AuditRecord`, `AuditRecordBuilder` — che IP **không tra DNS**, `AuditSink`, `InMemoryAuditSink`, `AuthzAudit`). 47 test.
+   4. `libs/java/shp-web` (auto-configuration):
+      - `errors/`: `ErrorCatalog` (27 mã), `ShpException`, `ErrorWriter` (FHIR → OperationOutcome, còn lại → Problem Details), `ShpExceptionHandler` (`@RestControllerAdvice`: ShpException, 400 đầu vào sai, 404 route lạ, 500 không lộ chi tiết).
+      - `auth/`: `ShpAuthProperties` (`shp.auth.*`, mặc định từ `OIDC_AUTHORITY`/`OIDC_AUDIENCE`), `ShpJwt` (validator issuer + audience + hạn có độ lệch + MFA cho nhân viên; đổi `roles` thành quyền), `IdentityResolver` (cache 60s/5s), `HttpIdentityLinkClient` (`RestClient`), `IdentityInterceptor`, `@AllowUnlinkedIdentity`.
+      - `authz/`: `@RequireShpAuthz(resource, action, context, denyAsNotFound)`, `ResourceContextResolver` (bean), `AuthzInterceptor` (từ chối → audit `denied` → 403/404; cho phép → audit `success` sau khi xử lý, `error` nếu 5xx), `@ShpPublicEndpoint`, `UnprotectedEndpoints.find(ctx)`.
+      - `ShpWebAutoConfiguration`: `SecurityFilterChain` (stateless, công khai `/health/**`, `/info`, `/prometheus`), `JwtDecoder` **lười** (`SupplierJwtDecoder`: service khởi động được khi IdP chưa sẵn), engine phân quyền, hai interceptor theo thứ tự danh tính → phân quyền.
+      31 test (25 test tích hợp chạy server thật + token HMAC ký cục bộ; 6 test đơn vị).
+3. **Thay đổi (commit COMMIT_J3):**
+
+| File | | Nội dung |
+|---|---|---|
+| `pom.xml` | M | + module `shp-events`, `shp-web`; + `shp-events` trong dependencyManagement |
+| `libs/java/shp-events/**` | A | 7 lớp chính + `EventTest` (22) + `AuditTest` (25) |
+| `libs/java/shp-web/**` | A | 16 lớp chính, `shp-web-defaults.properties`, `AutoConfiguration.imports`; `TestApp`, `WebTest` (25), `UnitTest` (6) |
+| `docs/03-architecture/adr/0015-java-for-all-services.md` | M | dòng "Event": record Java thay CloudEvents SDK (lý do Jackson 2/3) |
+
+4. **Cách dev dùng (thay hướng dẫn .NET ở D2/D3):**
+```java
+@GetMapping("/fhir/Appointment/{id}")
+@RequireShpAuthz(resource = "Appointment", action = "read", context = "appointmentFacts")
+Appointment read(@PathVariable String id, HttpServletRequest req) { ... }      // throw new ShpException("not-found") khi không có
+@Bean ResourceContextResolver appointmentFacts(...) { return (req, vars, principal) -> ResourceContext.builder().patientId(...).build(); }
+// test của service: assertThat(UnprotectedEndpoints.find(applicationContext)).isEmpty();
+// test hợp đồng: assertThat(EventSchemas.validate(CloudEvents.create("scheduling", "shp.scheduling.appointment-booked.v1", subject, payload))).isEmpty();
+```
+   Service chỉ phải cung cấp bean `IdentityLinkClient` (clinical: đọc DB; khác: `HttpIdentityLinkClient`) và `AuditSink`.
+5. **Kiểm chứng:**
+```bash
+mvn -B verify      # shp-service-defaults 5, shp-authz 238, shp-events 47, shp-web 31 — BUILD SUCCESS, coverage ≥ 70%
+```
+   **Đột biến (đã làm, tất cả bị bắt):** shp-events — tắt kiểm `format` (1 đỏ), tắt che IP (3), bỏ chặn giá trị trong `resource` (5). shp-web — bỏ MFA (2), bỏ audience (1), cho tài khoản chưa liên kết (1), bỏ cờ khóa (1), không audit khi từ chối (3), luôn `forbidden` (1), TTL 600s (1), không ghi `error` khi 5xx (1).
+6. **Lỗi gặp và cách sửa:**
+   - **Lần đầu chạy đột biến shp-events cho kết quả trống — không hợp lệ:** chạy `mvn -pl libs/java/shp-events` thiếu `-am` nên Maven không tìm thấy `shp-authz` (chưa cài vào `~/.m2`) và dừng trước khi test. Làm lại với `-am`. **Bài học:** luôn có dòng "baseline" xanh trước khi tin kết quả đột biến; dùng `-am` (hoặc `mvn install`) cho module có phụ thuộc nội bộ.
+   - Đột biến bằng `sed` không khớp khi Spotless đã xuống dòng → dùng script Python có `assert` để báo "NO MATCH" thay vì im lặng.
+   - javac `-Werror`: try-with-resources không dùng biến → đổi thành `try/finally`.
+   - `MockRestServiceServer` không cho thêm kỳ vọng sau khi đã gọi → mỗi kịch bản một server.
+7. **Khác biệt so với bản .NET:** endpoint "công khai có chủ đích" vẫn **phải đăng nhập** (chuỗi bảo mật mặc định chặn mọi đường dẫn trừ health/info/prometheus); `@ShpPublicEndpoint` chỉ nghĩa là "không cần quy tắc ma trận". 405 trả `validation-failed` (400) vì bảng lỗi §5 không có mã riêng.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
