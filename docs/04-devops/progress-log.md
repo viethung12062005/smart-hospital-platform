@@ -427,7 +427,7 @@ mvn -B verify      # shp-service-defaults 5, shp-authz 238, shp-events 47, shp-w
    2. Kiểm tên module Testcontainers 2.x trong BOM: `testcontainers-postgresql`, `testcontainers-mongodb` (gói Java mới `org.testcontainers.postgresql` / `org.testcontainers.mongodb`).
    3. `libs/java/shp-data-postgres`: `PostgresOutbox` (JdbcClient, bắt buộc trong transaction), `OutboxRelay` (`SmartLifecycle`, thread ảo, `FOR UPDATE SKIP LOCKED`, backoff ≤ 30s), `PostgresInbox`, `PostgresIdempotency`, `IdempotencyClaim`; DDL thành **migration Flyway** `db/shp-messaging/postgres/V0_1__shp_messaging.sql` (service thêm vào `spring.flyway.locations`). 28 test trên PostgreSQL 16 thật.
    4. `libs/java/shp-data-mongo`: `MongoOutbox`, `MongoOutboxRelay` (MongoDB không có `SKIP LOCKED` → **giành từng event bằng `findAndModify`** đặt `lockedUntil`/`lockedBy`, khóa 30s; replica chết thì khóa hết hạn và event được giành lại), `MongoInbox` (`_id = consumer|messageId`), `MongoIdempotency` (`_id = subject|key`), `MongoMessaging.inTransaction` (**thử lại tối đa 8 lần** khi MongoDB báo `TransientTransactionError`/WriteConflict/DuplicateKey — yêu cầu bắt buộc của transaction đa document), `ensureIndexes` (partial index outbox, TTL inbox 14 ngày, TTL idempotency 24 giờ). 21 test trên MongoDB 8 replica set thật.
-3. **Thay đổi (commit COMMIT_J4):**
+3. **Thay đổi (commit 3764d57):**
 
 | File | | Nội dung |
 |---|---|---|
