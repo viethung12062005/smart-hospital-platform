@@ -1,0 +1,17 @@
+# Cập nhật phụ thuộc hằng tuần; PR do SA review (GOV-06).
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: "/"
+    schedule: { interval: weekly }
+    groups:
+      spring: { patterns: ["org.springframework*"] }
+  - package-ecosystem: pip
+    directories: ["/services/ai", "/services/ml", "/tools/contracts"]
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directories: ["/services/*"]
+    schedule: { interval: weekly }
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule: { interval: weekly }

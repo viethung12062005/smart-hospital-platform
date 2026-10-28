@@ -29,4 +29,6 @@ STATUS = {
     "SCF-03": ("partial", "c909d5b", "clinical: khung + Mongo + MongoIdentityLinkClient; CHƯA nối bus, values uat/prod"),
     "SCF-04": ("partial", "c909d5b", "document: khung + Mongo; CHƯA Blob client, nối bus, values uat/prod"),
     "SCF-05": ("partial", "c909d5b", "audit: khung + Mongo; CHƯA Blob WORM/Log Analytics, nối bus, values uat/prod"),
+    "NTF-01": ("done", "3b7390f", "contracts/db/mongo-notification-ml.js: collection, validator kênh, unique (subjectRef, kind), TTL 90 ngày; make -C dev up tự chạy (c909d5b)"),
+    "ML-11": ("partial", "3b7390f", "contracts/db/mongo-notification-ml.js: collection ml, predictions time-series + index (modelVersion, predictedAt), validator ageBand/outcome; CHƯA ràng buộc score (time-series không nhận validator — kiểm ở code)"),
 }

@@ -618,11 +618,48 @@ docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
    - Hai khẳng định chưa có trong code được viết lại thành quy tắc cho values uat/prod: egress chỉ mở cho ai/notification; bố cục gói Python.
 7. **Giữ nguyên có chủ đích:** ADR-0002/0012 (đã Superseded) và nhật ký cũ vẫn nhắc .NET, vì đó là lịch sử quyết định.
 
+### J6 — Onboarding dev: README, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue ✅
+1. **Mục tiêu:** dev clone repo, đọc, nhận task và code được ngay, không cần hỏi SA cách bắt đầu.
+2. **Việc đã làm (theo thứ tự):**
+   1. Merge PR #26 (Java) vào `main`; nhánh làm việc đặt lại từ `main` mới (`1bd0456`).
+   2. `docs/onboarding.md`: 5 bước (cài máy → `make -C dev quickstart` → đọc gì → phần của D1/D2/D3 → PR đầu tiên).
+      Mỗi dev có: service phụ trách, tài liệu thiết kế cần đọc (đã kiểm mọi link tồn tại), task đầu tiên, thư viện dùng sẵn.
+   3. `CONTRIBUTING.md`: 4 nguyên tắc (dữ liệu giả, không secret, hợp đồng trước, dev chỉ viết logic); quy trình task → nhánh `<ID>-...` → PR squash;
+      lệnh kiểm tra như CI; điều kiện CI chặn (đối chiếu `java-ci`/`python-ci`: coverage 70%); quy ước code Java.
+   4. `.github/pull_request_template.md`: task/story, ảnh hưởng hợp đồng, checklist Definition of Done.
+   5. `.github/CODEOWNERS`: mặc định chủ repo; dòng cho D1/D2/D3 để sẵn dạng comment (chưa có tài khoản GitHub; tên không tồn tại làm GitHub bỏ dòng);
+      `libs/`, `contracts/`, `.github/`, `dev/`, Dockerfile, `deploy/`, `config/` luôn cần SA.
+   6. `.github/dependabot.yml`: maven, pip (ai, ml, tools/contracts), docker, github-actions; `github-setup.md` nuget → maven.
+   7. README gốc: mục "Bắt đầu nhanh" + bảng thư mục; cập nhật trạng thái pha 4–5.
+   8. GitHub issue:
+      - Đóng (completed) 8 issue đã xong, nay thuộc SA: #2 SHR-21, #3 SHR-22, #4 SHR-23, #5 SHR-24, #6 SHR-25, #8 SHR-28, #10 SHR-02, #16 SHR-12. Body mỗi issue ghi commit.
+      - #1 SHR-20 chuyển `owner:SA`, giữ mở (một phần).
+      - Sửa tiêu đề #6 (ASP.NET → Spring), #9 (Firely → HAPI FHIR), #23 (Azure OpenAI/Anthropic → DeepSeek/Gemini/Ollama).
+   9. `status.py`:
+      - NTF-01 = xong: script `contracts/db/mongo-notification-ml.js` đạt đủ tiêu chí.
+      - ML-11 = một phần: thiếu ràng buộc `score`, vì collection time-series không nhận validator.
+3. **Thay đổi:**
+
+| File | | Nội dung |
+|---|---|---|
+| `docs/onboarding.md`, `CONTRIBUTING.md` | A | hướng dẫn dev |
+| `.github/{CODEOWNERS,pull_request_template.md,dependabot.yml}` | A | quản trị PR |
+| `README.md` | M | + Bắt đầu nhanh, bảng thư mục, trạng thái |
+| `docs/04-devops/github-setup.md` | M | Dependabot nuget → maven |
+| `tools/plan/status.py`, `docs/05-plan/by-person/*` | M | NTF-01 ☑, ML-11 ◐ |
+| GitHub issue #1–#10, #16, #23 | — | như bước 2.8 |
+
+4. **Kiểm chứng:**
+   - Mọi link tương đối trong `onboarding.md` đều trỏ tới file có thật.
+   - `tools/plan/build.py`: OK.
+   - Lệnh trong CONTRIBUTING đối chiếu với workflow template (`pytest --cov-fail-under=70`, `mvn verify` có Spotless/JaCoCo).
+5. **Việc của bạn (PM):** khi có tài khoản GitHub của D1/D2/D3, bỏ comment các dòng trong `.github/CODEOWNERS` và mời họ làm collaborator; bật ruleset theo `github-setup.md`.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
 | D1 | Thư viện Java `libs/java` ✅ (J2–J4) + 6 service Java ✅ (J5); còn: `EventPublisher` Spring Cloud Stream + consumer/DLQ, FHIR resource store Mongo (SHR-10) | SA | đang làm |
-| D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ⏳ |
+| D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ✅ |
 | D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ✅ |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
