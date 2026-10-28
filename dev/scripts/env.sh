@@ -15,7 +15,7 @@ SPRING_DATA_REDIS_HOST=localhost
 SPRING_DATA_REDIS_PORT=16379
 SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
 SPRING_RABBITMQ_HOST=localhost
-SPRING_RABBITMQ_PORT=15673
+SPRING_RABBITMQ_PORT=35672
 SPRING_RABBITMQ_USERNAME=shp
 SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
 # clinical chạy trong cụm: kubectl --context kind-shp-local -n shp-apps port-forward svc/clinical 18081:80
@@ -24,7 +24,7 @@ SHP_REQUIRE_MFA_FOR_STAFF=false
 # --- Dùng chung / Python ---
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 MONGODB_URI=mongodb://localhost:27117/?directConnection=true
-RABBITMQ_URL=amqp://shp:${RABBITMQ_PASSWORD}@localhost:15673/
+RABBITMQ_URL=amqp://shp:${RABBITMQ_PASSWORD}@localhost:35672/
 RABBITMQ_MANAGEMENT_URL=http://localhost:25672
 AZURE_STORAGE_CONNECTION_STRING=DefaultEndpointsProtocol=http;AccountName=shp;AccountKey=${AZURITE_ACCOUNT_KEY};BlobEndpoint=http://localhost:10000/shp;QueueEndpoint=http://localhost:10001/shp
 OIDC_AUTHORITY=http://localhost:18080/realms/shp

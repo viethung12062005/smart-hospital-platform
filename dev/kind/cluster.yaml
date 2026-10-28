@@ -9,7 +9,7 @@ nodes:
       - { containerPort: 30432, hostPort: 15432, listenAddress: "127.0.0.1" }   # PostgreSQL
       - { containerPort: 30017, hostPort: 27117, listenAddress: "127.0.0.1" }   # MongoDB
       - { containerPort: 30379, hostPort: 16379, listenAddress: "127.0.0.1" }   # Redis
-      - { containerPort: 30672, hostPort: 15673, listenAddress: "127.0.0.1" }   # RabbitMQ AMQP
+      - { containerPort: 30672, hostPort: 35672, listenAddress: "127.0.0.1" }   # RabbitMQ AMQP
       - { containerPort: 30673, hostPort: 25672, listenAddress: "127.0.0.1" }   # RabbitMQ management UI
       - { containerPort: 30100, hostPort: 10000, listenAddress: "127.0.0.1" }   # Azurite blob (cổng mặc định của emulator)
       - { containerPort: 30101, hostPort: 10001, listenAddress: "127.0.0.1" }   # Azurite queue

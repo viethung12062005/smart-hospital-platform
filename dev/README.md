@@ -58,7 +58,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | PostgreSQL 16 (db `scheduling`) | `localhost:15432` | `SPRING_DATASOURCE_URL`/`_USERNAME` (values-local của service) + `SPRING_DATASOURCE_PASSWORD` |
 | MongoDB 8, replica set 1 node (có transaction); db `clinical`, `document`, `audit`, `notification`, `ml`, `ai` | `mongodb://localhost:27117/?directConnection=true` | `SPRING_MONGODB_URI` (Java) · `MONGODB_URI` (Python) |
 | Redis 7 | `localhost:16379` | `SPRING_DATA_REDIS_HOST/PORT/PASSWORD` |
-| RabbitMQ 4 (AMQP / quản trị) | `localhost:15673` / http://localhost:25672 | `SPRING_RABBITMQ_HOST/PORT/USERNAME/PASSWORD` · `RABBITMQ_URL` (Python) |
+| RabbitMQ 4 (AMQP / quản trị) | `localhost:35672` / http://localhost:25672 | `SPRING_RABBITMQ_HOST/PORT/USERNAME/PASSWORD` · `RABBITMQ_URL` (Python) |
 | Azurite (giả lập Blob/Queue, tài khoản `shp`) | `AZURE_STORAGE_CONNECTION_STRING` trong `connection.env` | `AZURE_STORAGE_CONNECTION_STRING` |
 | Keycloak 26, realm `shp` | http://localhost:18080/realms/shp | `OIDC_AUTHORITY` (= issuer localhost), `OIDC_JWK_SET_URI` (khóa lấy qua DNS trong cụm), `OIDC_AUDIENCE` |
 | 8 service ứng dụng (namespace `shp-apps`) | qua gateway: `make port-forward` → `localhost:18000` | `http://<tên service>` (cổng 80) |
