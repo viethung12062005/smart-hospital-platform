@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **14** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **122 task, 409 giờ**. Đã xong: **13**, làm một phần: **18** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -54,7 +54,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **14** (�
 | ◐ | ARC-20 | Dữ liệu tham chiếu: ICD-10 (~300 mã), LOINC sinh hiệu/xét nghiệm, CodeSystem chuyên khoa và lý do hủy **[làm một phần, commit cd8c789: Có 12 chuyên khoa, 6 lý do hủy, 10 LOINC sinh hiệu, 6 loại tài liệu, 12 ICD-10; CHƯA đủ ~300 mã ICD-10 và chưa đối chiếu nguồn chính thức]** | File JSON trong contracts/terminology, có script nạp, được CLN-16/CLN-18 dùng | 4 | ARC-03 | ENABLER |
 | ☐ | CIT-05 | Reusable workflow Terraform checks + plan | fmt, validate, tflint, Trivy config, plan + tóm tắt vào job summary; plan qua OIDC read-only | 4 | IAC-03 | US-070 |
 | ☐ | CIT-06 | Reusable workflow GitOps update/promote | Cập nhật digest vào shp-gitops; uat commit sau approval; prod mở PR sau approval | 4 | GOV-05 | US-070 |
-| ☐ | GOP-03 | Chart bootstrap Argo CD | AppProject, ApplicationSet platform + services theo môi trường; app-of-apps | 6 | GOP-01 | US-070 |
+| ☑ | GOP-03 | Chart bootstrap Argo CD **[xong, commit gitops 4314a40: repo shp-gitops: bootstrap Argo CD, AppProject platform/shp-apps, ApplicationSet platform + services theo môi trường (app-of-apps)]** | AppProject, ApplicationSet platform + services theo môi trường; app-of-apps | 6 | GOP-01 | US-070 |
 | ☐ | GOV-05 | GitHub App bot cho GitOps | App chỉ có quyền contents:write trên shp-gitops; secret lưu ở org/repo secret | 2 | GOV-01 | US-070 |
 | ☐ | IAC-05 | Module network | VNet, subnet AKS/private endpoint/Postgres (delegated), private DNS zones; validate + tflint sạch | 5 | IAC-01 | ENABLER |
 | ☐ | IAC-06 | Module monitoring | Log Analytics, Azure Monitor workspace (Prometheus), Managed Grafana, App Insights | 4 | IAC-05 | ENABLER |
@@ -75,8 +75,8 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **14** (�
 | ☐ | CIT-04 | Reusable workflow Helm validate | helm lint, render từng môi trường, kubeconform strict, Trivy config | 3 | GOP-01 | US-070 |
 | ☐ | CIT-07 | Workflow kiểm tra chung cho mọi PR | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python, actions) | 3 | GOV-01 | US-070 |
 | ☐ | CIT-08 | Caller workflow mẫu cho service + script sinh | Script tạo svc-<name>.yml từ template với path filter đúng | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | US-070 |
-| ☐ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager | Application ghim version chart; values theo môi trường | 3 | GOP-03 | US-070 |
-| ☐ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) | GatewayClass/Gateway, TLS qua cert-manager | 3 | GOP-04 | US-070 |
+| ◐ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager **[làm một phần, commit gitops 4314a40: ApplicationSet ghim version: argo-rollouts 2.43.7, keda 2.20.2, cert-manager v1.21.2; CHƯA chạy trên AKS thật]** | Application ghim version chart; values theo môi trường | 3 | GOP-03 | US-070 |
+| ◐ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) **[làm một phần, commit gitops 4314a40: envoy-gateway 1.9.3 + GatewayClass/Gateway + ClusterIssuer Let's Encrypt (shp-baseline); CHƯA có tên miền, chưa chạy thật]** | GatewayClass/Gateway, TLS qua cert-manager | 3 | GOP-04 | US-070 |
 | ☐ | GOV-04 | GitHub Environments và người duyệt | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009 | 2 | GOV-01 | US-070 |
 | ☐ | IAC-04 | Bootstrap: budget alert + chính sách tag | Budget cảnh báo 50/80/100%; tag shp-env, created-at, ttl-hours bắt buộc | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-08 | Module key vault | RBAC mode, private endpoint, purge protection chỉ ở prod, tên có hậu tố ngẫu nhiên | 2 | IAC-05 | ENABLER |
@@ -100,9 +100,9 @@ Tổng: **122 task, 409 giờ**. Đã xong: **11**, làm một phần: **14** (�
 | ☐ | ARC-14 | Sprint review + planning S2 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | ENV-01 | Workflow env-provision | plan -> approval infra-<env> -> apply -> cài Argo CD + bootstrap -> chờ healthy -> seed dữ liệu giả -> smoke test | 6 | IAC-17, GOP-03 | US-070 |
 | ☐ | ENV-02 | Workflow env-destroy | Gõ đúng tên môi trường + approval infra-<env>-destroy; destroy sạch, kiểm tra không còn resource | 2 | IAC-17 | US-070 |
-| ☐ | GOP-06 | Platform add-on: OpenTelemetry Collector | Nhận OTLP, xuất sang Azure Monitor; local xuất sang Grafana stack | 3 | GOP-03 | US-070 |
-| ☐ | GOP-07 | Kyverno + policy | Chỉ image đã ký từ ACR, cấm tag latest, bắt buộc resources/probes, PSS restricted; Enforce | 4 | GOP-03 | US-070 |
-| ☐ | GOP-08 | NetworkPolicy default-deny + namespace | Namespace có nhãn PSA restricted; chỉ mở luồng đã thiết kế | 2 | GOP-03 | US-070 |
+| ◐ | GOP-06 | Platform add-on: OpenTelemetry Collector **[làm một phần, commit gitops 4314a40: opentelemetry-collector 0.177.0: OTLP → Azure Monitor; CHƯA có Secret appinsights (ENV-01)]** | Nhận OTLP, xuất sang Azure Monitor; local xuất sang Grafana stack | 3 | GOP-03 | US-070 |
+| ◐ | GOP-07 | Kyverno + policy **[làm một phần, commit gitops 4314a40: kyverno 3.9.1 + 4 policy Enforce (chỉ ACR, chữ ký cosign keyless, cấm latest, resources/probe); CHƯA kiểm với image ký thật]** | Chỉ image đã ký từ ACR, cấm tag latest, bắt buộc resources/probes, PSS restricted; Enforce | 4 | GOP-03 | US-070 |
+| ☑ | GOP-08 | NetworkPolicy default-deny + namespace **[xong, commit gitops 4314a40: namespace shp-apps PSA restricted + NetworkPolicy default-deny; service mở ingress theo values]** | Namespace có nhãn PSA restricted; chỉ mở luồng đã thiết kế | 2 | GOP-03 | US-070 |
 | ◐ | GW-01 | API Gateway Spring Cloud Gateway **[làm một phần, commit e2558f0: Spring Cloud Gateway: 7 upstream, chặn /internal, JWT ở biên, Dockerfile c909d5b; CHƯA kiểm truyền trace context qua upstream]** | Route tới các service; truyền trace context | 3 | LOC-03 | ENABLER |
 | ☐ | IAC-09 | Module postgresql | Flexible Server 16, chỉ Entra auth (không mật khẩu), PITR 7 ngày, HA zone-redundant ở prod | 4 | IAC-05 | US-067 |
 | ☐ | IAC-10 | Module mongodb (Cosmos DB for MongoDB vCore) | Cluster private endpoint; mật khẩu sinh bằng random_password lưu Key Vault, không nằm trong code | 4 | IAC-05, IAC-08 | US-067 |
