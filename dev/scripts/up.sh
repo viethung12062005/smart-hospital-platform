@@ -25,5 +25,10 @@ log "Cài phụ thuộc (PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak
 helm --kube-context "$CTX" upgrade --install shp-deps "$DEV_DIR/chart/shp-local-deps" \
   --namespace "$NAMESPACE" --wait --timeout 10m
 
+log "Khởi tạo collection/index/validator của notification và ml (contracts/db/mongo-notification-ml.js, idempotent)"
+k -n "$NAMESPACE" wait --for=condition=complete job/mongodb-rs-init --timeout 5m >/dev/null
+k -n "$NAMESPACE" exec statefulset/mongodb -- mongosh --quiet "mongodb://localhost:27017/?directConnection=true" \
+  --eval "$(cat "$DEV_DIR/../contracts/db/mongo-notification-ml.js")" >/dev/null
+
 "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 log "Xong. Xem chuỗi kết nối: dev/.local/connection.env · Tạo người dùng thử: make seed-users"

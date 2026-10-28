@@ -1,8 +1,7 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=clinical).
+# Values riêng của clinical khi chạy trên kind (make -C dev deploy SVC=clinical); nạp sau dev/chart/app-values-local.yaml.
 image:
   repository: localhost/shp-clinical
   tag: dev
-replicaCount: 1
 env:
-  ASPNETCORE_ENVIRONMENT: Development
   OTEL_SERVICE_NAME: clinical
+  SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true

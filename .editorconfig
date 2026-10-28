@@ -8,12 +8,9 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
-[*.{yml,yaml,json,props,csproj,md}]
+[*.{yml,yaml,json,md}]
 indent_size = 2
 
-[*.cs]
-csharp_style_namespace_declarations = file_scoped:warning
-csharp_using_directive_placement = outside_namespace:warning
-dotnet_sort_system_directives_first = true
-dotnet_diagnostic.CA1707.severity = none
-dotnet_diagnostic.CA1515.severity = none
+# Java: Spotless (google-java-format, thụt 2) là nguồn sự thật; chạy mvn spotless:apply.
+[{*.java,pom.xml}]
+indent_size = 2

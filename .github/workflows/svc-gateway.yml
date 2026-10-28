@@ -1,18 +1,18 @@
-# Sinh bởi tools/scaffold/dotnet_service.py. Pipeline: CI → image (quét, SBOM, ký) → promote uat (chờ duyệt).
+# Gateway (viết tay, cùng mẫu với tools/scaffold/java_service.py). Pipeline: CI (Maven verify) → image (quét, SBOM, ký) → promote uat (chờ duyệt).
 name: svc-gateway
 on:
   pull_request:
-    paths: ["services/gateway/**", "libs/dotnet/**", "Directory.*.props", "global.json", ".github/workflows/svc-gateway.yml"]
+    paths: ["services/gateway/**", "libs/java/**", "contracts/**", "pom.xml", ".github/workflows/svc-gateway.yml"]
   push:
     branches: [main]
-    paths: ["services/gateway/**", "libs/dotnet/**", "Directory.*.props", "global.json", ".github/workflows/svc-gateway.yml"]
+    paths: ["services/gateway/**", "libs/java/**", "contracts/**", "pom.xml", ".github/workflows/svc-gateway.yml"]
 permissions:
   contents: read
 jobs:
   ci:
-    uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/dotnet-ci.yml@work/initial-baseline
+    uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/java-ci.yml@work/initial-baseline
     with:
-      working-directory: services/gateway
+      modules: services/gateway
   container:
     needs: ci
     uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/container.yml@work/initial-baseline
