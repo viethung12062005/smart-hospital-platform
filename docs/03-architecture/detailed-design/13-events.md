@@ -9,7 +9,7 @@
 | Phát | **Transactional outbox** (bảng/collection `outbox` cùng transaction với thay đổi dữ liệu); relay poll mỗi 1 giây và phát lên bus, đánh dấu `publishedAt` |
 | Giao | **Ít nhất một lần**; consumer **bắt buộc idempotent** bằng bảng `inbox` (`consumer`, `messageId` = CloudEvents `id`) |
 | Thứ tự | Bảo đảm theo `subject` (Service Bus: `SessionId = subject`; RabbitMQ: consistent-hash exchange theo `subject`). Ngoài ra payload có `version` (versionId của resource); consumer bỏ qua event có `version` ≤ version đã xử lý |
-| Bus | Cloud: Azure Service Bus, 1 topic `shp-events`, mỗi consumer một subscription có filter theo `type`. Local: RabbitMQ topic exchange `shp-events`, mỗi consumer một queue. Cùng abstraction MassTransit |
+| Bus | Cloud: Azure Service Bus, 1 topic `shp-events`, mỗi consumer một subscription có filter theo `type`. Local: RabbitMQ topic exchange `shp-events`, mỗi consumer một queue. Cùng abstraction Spring Cloud Stream |
 | Retry/DLQ | Tối đa 5 lần giao (backoff 10 giây, 1, 5, 15 phút); vượt → dead-letter queue của subscription; cảnh báo khi DLQ có message (OBS-03); tooling replay do SA cung cấp |
 | Dữ liệu | **Không có PII**: chỉ ID, mã, thời điểm, trạng thái. Không tên, SĐT, email, chẩn đoán, nội dung |
 | Trace | CloudEvents extension `traceparent` mang trace context xuyên bus |

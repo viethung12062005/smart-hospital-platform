@@ -25,7 +25,7 @@ Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổ
 | Dữ liệu stateful | **Ngoài cluster**, dùng dịch vụ managed (PostgreSQL Flexible, Cosmos DB for MongoDB vCore, Redis, Blob); local/portable dùng chart tương ứng | NFR-A4, giảm công vận hành |
 
 Mọi phụ thuộc hạ tầng đi qua giao thức chuẩn hoặc abstraction (OCI, PostgreSQL, MongoDB API, OIDC, OTLP,
-MassTransit Service Bus ↔ RabbitMQ, `IBlobStore`), nên cùng Helm chart chạy được trên AKS, cluster
+Spring Cloud Stream Service Bus ↔ RabbitMQ, `IBlobStore`), nên cùng Helm chart chạy được trên AKS, cluster
 K8s khác và `kind` trên máy dev.
 
 ## Phương án đã cân nhắc

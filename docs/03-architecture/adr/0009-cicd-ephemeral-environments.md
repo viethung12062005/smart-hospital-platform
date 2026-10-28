@@ -23,7 +23,7 @@ Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổ
 - Phát triển hằng ngày chạy **local** (docker compose / kind) với cùng Helm chart.
 
 ### 2. CI bằng GitHub Actions
-- **Reusable workflow** (template chung) cho: .NET CI, Python CI, container (build → scan → SBOM → ký → push),
+- **Reusable workflow** (template chung) cho: Java CI (Maven), container (build → scan → SBOM → ký → push),
   Helm validate, Terraform checks, GitOps update/promote.
 - **Mỗi service một workflow caller** (`svc-<name>.yml`) lọc theo đường dẫn thư mục service, chỉ chạy khi
   service đó thay đổi.
