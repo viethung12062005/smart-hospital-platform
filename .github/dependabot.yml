@@ -12,6 +12,10 @@ updates:
   - package-ecosystem: docker
     directories: ["/services/*"]
     schedule: { interval: weekly }
+    ignore:
+      # Giữ JDK LTS 21 (khớp java.version và distroless java21); không nhảy bản không-LTS.
+      - dependency-name: "library/maven"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule: { interval: weekly }
