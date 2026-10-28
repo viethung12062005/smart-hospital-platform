@@ -26,6 +26,7 @@
     <module>libs/java/shp-web</module>
     <module>libs/java/shp-data-postgres</module>
     <module>libs/java/shp-data-mongo</module>
+    <module>services/gateway</module>
   </modules>
 
   <properties>

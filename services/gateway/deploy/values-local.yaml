@@ -1,8 +1,0 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=gateway).
-image:
-  repository: localhost/shp-gateway
-  tag: dev
-replicaCount: 1
-env:
-  ASPNETCORE_ENVIRONMENT: Development
-  OTEL_SERVICE_NAME: gateway

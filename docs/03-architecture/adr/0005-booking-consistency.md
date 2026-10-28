@@ -4,7 +4,7 @@
 Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
-PoC CareMate tạo Appointment mà không khóa Slot → hai bệnh nhân có thể đặt cùng slot. Client
+Cách làm phổ biến là tạo Appointment mà không khóa Slot → hai bệnh nhân có thể đặt cùng slot. Client
 mobile hay retry khi timeout → tạo lịch trùng.
 
 ## Quyết định
