@@ -9,6 +9,8 @@ Nhận và tra cứu audit, chuỗi hash bất biến. Chủ sở hữu: **D2**.
 | `make -C dev deploy SVC=audit` | build image và deploy lên cụm kind |
 
 ## Dev viết gì, ở đâu
+- Bố cục gói (`docs/03-architecture/overview.md` §4): `api/` (controller) → `app/` (use case, transaction) → `domain/` (quy tắc, không Spring)
+  → `infra/` (repository, client); `messaging/` (consumer); `config/` của SA.
 - Endpoint: `src/main/java/org/shp/audit/api/*Controller.java`. **Mọi endpoint** phải có `@RequireShpAuthz(resource, action, context)`
   (test `everyEndpointDeclaresItsAuthorizationRule` đỏ nếu quên). Dữ kiện cho phân quyền: bean `ResourceContextResolver`.
 - Lỗi nghiệp vụ: `throw new ShpException("slot-unavailable")` (mã trong `contracts` + 07 §5).

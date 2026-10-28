@@ -577,12 +577,53 @@ docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
    - Chưa chạy pipeline GitHub Actions thật.
    - Commit: `git show --stat c909d5b`.
 
+### J7 — Sơ đồ kiến trúc tổng thể + module; dọn tàn dư .NET ✅
+1. **Mục tiêu:** PM cần sơ đồ tổng thể kiến trúc phần mềm và danh sách module; xóa mọi dấu vết .NET còn sót trong code.
+2. **Việc đã làm (theo thứ tự):**
+   1. `docs/03-architecture/overview.md` thêm 4 mục mới (đánh số lại các mục cũ thành 5–8). Có 5 sơ đồ mermaid:
+      - §1 tổng thể: client → WAF/Ingress → gateway → 6 service Java + 2 Python, bus, kho dữ liệu, LLM, nhà cung cấp tin.
+      - §2.1 event E1–E11 (producer → nhóm event → consumer).
+      - §2.2 REST nội bộ `/internal/v1/**`.
+      - §3 module Maven (phụ thuộc lấy từ `pom.xml` thật), bảng vai trò module và người phụ trách.
+      - §4 bố cục gói bên trong một service Java: `api` → `app` → `domain`; `infra`; `messaging`; `config`.
+   2. §7 (hạ tầng): thay tên .NET/MinIO cũ:
+      - `IFhirStore` → Spring JDBC/Data MongoDB
+      - `StackExchange.Redis` → Spring Data Redis
+      - MinIO → Azurite
+      - `IConfiguration` → biến môi trường/Spring
+   3. Scaffold sinh thêm `package-info` cho `app`, `domain`, `infra`, `messaging` ở 5 service; README service có dòng "Bố cục gói".
+   4. Dọn .NET:
+      - Comment trong `pom.xml`, `ShpJwt`, `ServiceDefaultsAutoConfiguration`, `.gitignore`.
+      - `docs/05-plan/project-plan.md`: "Dev .NET" → "Dev Java", `libs/dotnet` → `libs/java`.
+      - Repo templates: chart `microservice` đặt `SERVER_PORT` thay `ASPNETCORE_URLS` (commit fe5e2f9).
+3. **Thay đổi:**
+
+| File | | Nội dung |
+|---|---|---|
+| `docs/03-architecture/overview.md` | M | + §1–§4 (5 sơ đồ); §7 tên công nghệ Java; catalog + cột Dev |
+| `tools/scaffold/java_service.py`, `services/*/README.md` | M | + `LAYERS`, dòng bố cục gói |
+| `services/{5}/src/main/java/org/shp/*/{app,domain,infra,messaging}/package-info.java` | A | 20 file |
+| `pom.xml`, `.gitignore`, 2 lớp Java, `project-plan.md`, `status.py` | M | bỏ chữ .NET |
+| templates: `charts/microservice/templates/_helpers.tpl` | M | `ASPNETCORE_URLS` → `SERVER_PORT` |
+
+4. **Lệnh làm lại:** `python3 -I tools/scaffold/java_service.py` (chỉ tạo file chưa có). Render sơ đồ:
+   `npx -p @mermaid-js/mermaid-cli@11.12.0 mmdc -i d.mmd -o d.png` (puppeteer trỏ `executablePath` tới Chromium có sẵn).
+5. **Kiểm chứng:**
+   - Cả 5 sơ đồ render được bằng mermaid-cli 11.12.0; đã xem ảnh, và vẽ lại §2 vì bản đầu chồng nhãn.
+   - `mvn -B verify` toàn reactor: BUILD SUCCESS.
+   - `helm lint` chart với 3 bộ values CI: 0 lỗi.
+   - Code và cấu hình (trừ ADR và nhật ký lịch sử) không còn `dotnet`, `.NET` hay `ASPNETCORE`. Kết quả `grep` còn lại chỉ là `java.net` (thư viện chuẩn Java), `com.networknt` và tên miền `*.windows.net`.
+6. **Lỗi & cách sửa:**
+   - Sơ đồ module và sơ đồ event bản đầu rối do nhãn cạnh lặp lại cho mỗi đích. Sửa: event thành nút trung gian; quan hệ với `contracts/` gom thành một cạnh.
+   - Hai khẳng định chưa có trong code được viết lại thành quy tắc cho values uat/prod: egress chỉ mở cho ai/notification; bố cục gói Python.
+7. **Giữ nguyên có chủ đích:** ADR-0002/0012 (đã Superseded) và nhật ký cũ vẫn nhắc .NET, vì đó là lịch sử quyết định.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
 | D1 | Thư viện Java `libs/java` ✅ (J2–J4) + 6 service Java ✅ (J5); còn: `EventPublisher` Spring Cloud Stream + consumer/DLQ, FHIR resource store Mongo (SHR-10) | SA | đang làm |
 | D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ⏳ |
-| D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ⏳ |
+| D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ✅ |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
 | D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |

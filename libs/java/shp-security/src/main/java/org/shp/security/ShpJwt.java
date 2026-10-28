@@ -18,7 +18,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 /**
  * Quy tắc JWT dùng chung: issuer, audience, hạn (có độ lệch), MFA cho nhân viên; đổi claim {@code
- * roles} thành quyền. Tương đương {@code AddShpAuthentication} bản .NET.
+ * roles} thành quyền.
  */
 public final class ShpJwt {
   private ShpJwt() {}

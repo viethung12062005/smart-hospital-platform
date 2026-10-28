@@ -7,7 +7,7 @@ STATUS = {
     "ARC-06": ("partial", "cd8c789", "Có khung 83 operation cho 7 service, validator OpenAPI; CHƯA có schema thân request/response (dev thêm khi làm endpoint)"),
     "ARC-19": ("done", "cd8c789", "64 rule, validator bất biến an toàn, test của validator"),
     "ARC-20": ("partial", "cd8c789", "Có 12 chuyên khoa, 6 lý do hủy, 10 LOINC sinh hiệu, 6 loại tài liệu, 12 ICD-10; CHƯA đủ ~300 mã ICD-10 và chưa đối chiếu nguồn chính thức"),
-    "SHR-22": ("done", "95d2f74", "libs/java/shp-authz: AuthzMatrix (Java; bản .NET 4bf82ef sẽ bị xóa ở J5)"),
+    "SHR-22": ("done", "95d2f74", "libs/java/shp-authz: AuthzMatrix (Java)"),
     "SHR-23": ("done", "95d2f74", "Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)"),
     "SHR-24": ("done", "95d2f74", "AuthorizationEngine.decide (Java): default-deny, fields, purpose, 238 test"),
     "SHR-02": ("done", "5e423ab", "libs/java/shp-web/errors: ErrorCatalog (27 mã, test đối chiếu 07 §5), ShpException, ErrorWriter, ShpExceptionHandler"),
