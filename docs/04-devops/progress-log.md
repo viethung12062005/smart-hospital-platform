@@ -389,7 +389,7 @@ mvn -B spotless:apply                           # tự định dạng trước k
       - `authz/`: `@RequireShpAuthz(resource, action, context, denyAsNotFound)`, `ResourceContextResolver` (bean), `AuthzInterceptor` (từ chối → audit `denied` → 403/404; cho phép → audit `success` sau khi xử lý, `error` nếu 5xx), `@ShpPublicEndpoint`, `UnprotectedEndpoints.find(ctx)`.
       - `ShpWebAutoConfiguration`: `SecurityFilterChain` (stateless, công khai `/health/**`, `/info`, `/prometheus`), `JwtDecoder` **lười** (`SupplierJwtDecoder`: service khởi động được khi IdP chưa sẵn), engine phân quyền, hai interceptor theo thứ tự danh tính → phân quyền.
       31 test (25 test tích hợp chạy server thật + token HMAC ký cục bộ; 6 test đơn vị).
-3. **Thay đổi (commit COMMIT_J3):**
+3. **Thay đổi (commit 5e423ab):**
 
 | File | | Nội dung |
 |---|---|---|
