@@ -56,7 +56,7 @@ PR template (`.github/pull_request_template.md`): task ID, story, ảnh hưởng
 
 - `shp-platform-templates` → Settings → Actions → Access: **Accessible from repositories owned by the user** để repo khác gọi reusable workflow và kéo chart.
 - Mọi repo: Actions permissions = chỉ cho phép action từ GitHub và danh sách đã ghim; **ghim theo commit SHA**; `GITHUB_TOKEN` mặc định chỉ đọc, workflow khai báo quyền tối thiểu.
-- Dependabot cho: github-actions, nuget, pip, docker, terraform (GOV-06).
+- Dependabot cho: github-actions, maven, pip, docker, terraform (app repo: `.github/dependabot.yml`) (GOV-06).
 
 ## 6. Đăng nhập Azure bằng OIDC (IAC-03)
 
