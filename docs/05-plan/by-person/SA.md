@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **122 task, 409 giờ**. Đã xong: **13**, làm một phần: **18** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **122 task, 409 giờ**. Đã xong: **18**, làm một phần: **21** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -15,12 +15,12 @@ Tổng: **122 task, 409 giờ**. Đã xong: **13**, làm một phần: **18** (�
 | ☐ | ARC-03 | Duyệt G3: chuyển ADR 0001-0010 sang Accepted | Mỗi ADR truy về FR/NFR; trạng thái Accepted | 3 | ARC-02 | ENABLER |
 | ☐ | ARC-04 | Sơ đồ C4 mức Context và Container | 2 sơ đồ (Mermaid/PlantUML) trong docs/03, khớp service catalog | 4 | ARC-03 | ENABLER |
 | ☐ | ARC-05 | Mô hình dữ liệu từng service | Bảng resource FHIR + SearchParameter cần hỗ trợ cho từng service; owner dữ liệu rõ ràng | 6 | ARC-03 | ENABLER |
-| ☐ | ARC-09 | Chuẩn coding & conventions cho service | Tài liệu: cấu trúc thư mục, lỗi, logging không PII, tracing, cấu hình, versioning API | 4 | ARC-03 | ENABLER |
-| ☐ | ARC-10 | Definition of Ready/Done, quy trình PR, nhánh | Tài liệu trong docs/00; PR template phản ánh DoD | 2 | ARC-03 | ENABLER |
-| ☐ | ARC-11 | Đặc tả dữ liệu giả (synthetic) | Quy tắc sinh bệnh nhân, bác sĩ, lịch, lần khám tiếng Việt; không dùng dữ liệu thật | 3 | ARC-05 | ENABLER |
-| ☐ | GOV-01 | Tạo 4 repo theo ADR-0010 | 4 repo tồn tại, README mô tả trách nhiệm, visibility đúng | 1 | ARC-03 | US-070 |
-| ☐ | GOV-02 | Ruleset bảo vệ nhánh main cho 4 repo | Bắt buộc PR, 1 review, CI xanh, cấm force-push; bot GitOps được bypass ở shp-gitops | 2 | GOV-01 | US-070 |
-| ☐ | GOV-03 | CODEOWNERS + PR template + issue template | PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD | 2 | GOV-01 | US-070 |
+| ☑ | ARC-09 | Chuẩn coding & conventions cho service **[xong, commit PR #14: docs/00-conventions.md: cấu trúc thư mục, lỗi, log không PII, tracing, cấu hình, versioning]** | Tài liệu: cấu trúc thư mục, lỗi, logging không PII, tracing, cấu hình, versioning API | 4 | ARC-03 | ENABLER |
+| ☑ | ARC-10 | Definition of Ready/Done, quy trình PR, nhánh **[xong, commit PR #14: docs/00-workflow.md: DoR/DoD, quy trình PR, main được bảo vệ; PR template đã phản ánh DoD]** | Tài liệu trong docs/00; PR template phản ánh DoD | 2 | ARC-03 | ENABLER |
+| ☑ | ARC-11 | Đặc tả dữ liệu giả (synthetic) **[xong, commit PR #14: docs/00-synthetic-data.md: quy tắc sinh dữ liệu giả tiếng Việt, scale, phân bố, kiểm tự động]** | Quy tắc sinh bệnh nhân, bác sĩ, lịch, lần khám tiếng Việt; không dùng dữ liệu thật | 3 | ARC-05 | ENABLER |
+| ☑ | GOV-01 | Tạo 4 repo theo ADR-0010 **[xong, commit viethung12062005: 4 repo private, nhánh main, squash-only, xóa nhánh sau merge, Dependabot alerts; secret scanning của GitHub không có ở gói hiện tại (thay bằng gitleaks trong CI)]** | 4 repo tồn tại, README mô tả trách nhiệm, visibility đúng | 1 | ARC-03 | US-070 |
+| ☑ | GOV-02 | Ruleset bảo vệ nhánh main cho 4 repo **[xong, commit ruleset protect-main: Cả 4 repo: bắt buộc PR, 1 review + Code Owner, hủy approval khi push mới, resolve thread, lịch sử tuyến tính, cấm force-push/xóa; chỉ chủ repo bypass qua PR]** | Bắt buộc PR, 1 review, CI xanh, cấm force-push; bot GitOps được bypass ở shp-gitops | 2 | GOV-01 | US-070 |
+| ◐ | GOV-03 | CODEOWNERS + PR template + issue template **[làm một phần, commit PR gitops#1, infra#1, templates#1: CODEOWNERS + PR/issue template cho 3 repo (chờ merge); app repo đã có từ trước; CODEOWNERS dev (D1..D3) chờ tài khoản GitHub thật]** | PR vào infra/gitops-prod cần SA duyệt; template có checklist DoD | 2 | GOV-01 | US-070 |
 | ☐ | GOV-07 | GitHub Project + import backlog | Project board có cột Todo/In progress/Review/Done, field Sprint/Owner/Estimate; backlog.csv được import | 2 | GOV-01 | US-070 |
 | ☐ | LOC-01 | Bộ công cụ dev local trên kind (profile core): cụm K8s nhỏ + Helm cho PostgreSQL, MongoDB replica set, Redis, RabbitMQ, Azurite, Keycloak; Makefile up/down/status | `make up` dựng cụm và mọi phụ thuộc cốt lõi trong < 10 phút trên máy 16 GB; `make down` dọn sạch; có README | 8 | ARC-09 | ENABLER |
 
@@ -38,7 +38,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **13**, làm một phần: **18** (�
 | ☐ | LOC-02 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | 3 | LOC-01 | US-008, US-066 |
 | ◐ | LOC-03 | Walking skeleton Java (Spring Boot) **[làm một phần, commit c909d5b: 6 service Java: health/info/prometheus, OTel, Dockerfile distroless non-root (đã build + chạy thử gateway, scheduling); CHƯA chạy qua pipeline GitHub Actions thật]** | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
 | ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
-| ☐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
+| ◐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm **[làm một phần, commit PR #13: chart shp-local-full (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel) + make up PROFILE=full + pull-models; đã helm lint/template; CHƯA chạy trên kind thật]** | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
 | ☑ | SHR-02 | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi **[xong, commit 5e423ab: libs/java/shp-web/errors: ErrorCatalog (27 mã, test đối chiếu 07 §5), ShpException, ErrorWriter, ShpExceptionHandler]** | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | 3 | SHR-01 | ENABLER |
 | ◐ | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên **[làm một phần, commit 5e423ab: shp-web ShpJwt + SecurityFilterChain (issuer, audience, hạn, MFA nhân viên); test bằng token HMAC cục bộ; CHƯA thử với Keycloak/Entra thật]** | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | 3 | LOC-02 | US-008, US-066 |
 | ☑ | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây **[xong, commit 5e423ab: shp-web IdentityResolver (cache 60s/5s) + HttpIdentityLinkClient + IdentityInterceptor; endpoint nội bộ phía clinical là task dev]** | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | 3 | SHR-20 | US-007 |
@@ -77,7 +77,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **13**, làm một phần: **18** (�
 | ☐ | CIT-08 | Caller workflow mẫu cho service + script sinh | Script tạo svc-<name>.yml từ template với path filter đúng | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | US-070 |
 | ◐ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager **[làm một phần, commit gitops 4314a40: ApplicationSet ghim version: argo-rollouts 2.43.7, keda 2.20.2, cert-manager v1.21.2; CHƯA chạy trên AKS thật]** | Application ghim version chart; values theo môi trường | 3 | GOP-03 | US-070 |
 | ◐ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) **[làm một phần, commit gitops 4314a40: envoy-gateway 1.9.3 + GatewayClass/Gateway + ClusterIssuer Let's Encrypt (shp-baseline); CHƯA có tên miền, chưa chạy thật]** | GatewayClass/Gateway, TLS qua cert-manager | 3 | GOP-04 | US-070 |
-| ☐ | GOV-04 | GitHub Environments và người duyệt | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009 | 2 | GOV-01 | US-070 |
+| ◐ | GOV-04 | GitHub Environments và người duyệt **[làm một phần, commit Environments: Đã tạo deploy-uat/prod, infra-uat/prod(+destroy); CHƯA có reviewer/wait timer vì gói GitHub không hỗ trợ cho repo private]** | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) có reviewer và wait timer theo ADR-0009 | 2 | GOV-01 | US-070 |
 | ☐ | IAC-04 | Bootstrap: budget alert + chính sách tag | Budget cảnh báo 50/80/100%; tag shp-env, created-at, ttl-hours bắt buộc | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-08 | Module key vault | RBAC mode, private endpoint, purge protection chỉ ở prod, tên có hậu tố ngẫu nhiên | 2 | IAC-05 | ENABLER |
 | ◐ | LOC-05 | Chạy service trên cụm local bằng chart microservice chung (make deploy SVC=...) **[làm một phần, commit c909d5b: deploy.sh + app-values-local cho Java (SPRING_*, JWKS trong cụm); chart render cho từng service; CHƯA chạy make quickstart trên kind thật]** | Service mẫu build, nạp vào kind và chạy bằng đúng chart dùng cho UAT/prod; có hướng dẫn debug | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |

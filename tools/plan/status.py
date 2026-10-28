@@ -37,4 +37,12 @@ STATUS = {
     "GOP-06": ("partial", "gitops 4314a40", "opentelemetry-collector 0.177.0: OTLP → Azure Monitor; CHƯA có Secret appinsights (ENV-01)"),
     "GOP-07": ("partial", "gitops 4314a40", "kyverno 3.9.1 + 4 policy Enforce (chỉ ACR, chữ ký cosign keyless, cấm latest, resources/probe); CHƯA kiểm với image ký thật"),
     "GOP-08": ("done", "gitops 4314a40", "namespace shp-apps PSA restricted + NetworkPolicy default-deny; service mở ingress theo values"),
+    "ARC-09": ("done", "PR #14", "docs/00-conventions.md: cấu trúc thư mục, lỗi, log không PII, tracing, cấu hình, versioning"),
+    "ARC-10": ("done", "PR #14", "docs/00-workflow.md: DoR/DoD, quy trình PR, main được bảo vệ; PR template đã phản ánh DoD"),
+    "ARC-11": ("done", "PR #14", "docs/00-synthetic-data.md: quy tắc sinh dữ liệu giả tiếng Việt, scale, phân bố, kiểm tự động"),
+    "LOC-08": ("partial", "PR #13", "chart shp-local-full (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel) + make up PROFILE=full + pull-models; đã helm lint/template; CHƯA chạy trên kind thật"),
+    "GOV-01": ("done", "viethung12062005", "4 repo private, nhánh main, squash-only, xóa nhánh sau merge, Dependabot alerts; secret scanning của GitHub không có ở gói hiện tại (thay bằng gitleaks trong CI)"),
+    "GOV-02": ("done", "ruleset protect-main", "Cả 4 repo: bắt buộc PR, 1 review + Code Owner, hủy approval khi push mới, resolve thread, lịch sử tuyến tính, cấm force-push/xóa; chỉ chủ repo bypass qua PR"),
+    "GOV-03": ("partial", "PR gitops#1, infra#1, templates#1", "CODEOWNERS + PR/issue template cho 3 repo (chờ merge); app repo đã có từ trước; CODEOWNERS dev (D1..D3) chờ tài khoản GitHub thật"),
+    "GOV-04": ("partial", "Environments", "Đã tạo deploy-uat/prod, infra-uat/prod(+destroy); CHƯA có reviewer/wait timer vì gói GitHub không hỗ trợ cho repo private"),
 }

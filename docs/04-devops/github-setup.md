@@ -84,3 +84,24 @@ Xoay key mỗi 90 ngày (nhắc trong `cost-guard`/issue định kỳ).
 - [ ] Workflow `env-provision` dừng chờ approval ở `infra-uat`
 - [ ] Reusable workflow từ `shp-platform-templates` gọi được từ app repo
 - [ ] Image không ký bị cluster chặn (GOP-07)
+
+## 9. Trạng thái thực tế và giới hạn gói GitHub (cập nhật 2026-10-28)
+
+Đã áp dụng cho cả 4 repo: ruleset `protect-main` (mục 2), squash-only, xóa nhánh sau merge, Dependabot alerts, Environments (mục 4, chưa có reviewer).
+
+| Mục trong runbook | Thực tế | Cách xử lý |
+|---|---|---|
+| Secret scanning + push protection | Không có ở repo private gói thường | `gitleaks` trong `pr-checks` thay thế; bật lại khi nâng gói |
+| Required reviewers / wait timer cho Environment | Không hỗ trợ ở repo private gói thường | Cổng duyệt = review PR (CODEOWNERS); `envs/prod/` do SA duyệt |
+| `dependency-review`, CodeQL | Cần GitHub Advanced Security | Bỏ qua ở repo private (templates PR #2) |
+| GitHub Project (GOV-07) | Token `gh` thiếu scope `project` | `gh auth refresh -s project,read:project` rồi import `docs/05-plan/backlog.csv` |
+| Bot GitOps (GOV-05) | Chưa tạo GitHub App (cần thao tác trên web) | Xem mục 7 |
+
+### Cho `shp-gitops` đọc được chart ở repo private (deploy key chỉ-đọc)
+```bash
+ssh-keygen -t ed25519 -N "" -C shp-gitops-ci -f ./k
+gh repo deploy-key add ./k.pub -R <owner>/shp-platform-templates -t "gitops-ci (read-only)"
+gh secret set TEMPLATES_DEPLOY_KEY -R <owner>/shp-gitops < ./k
+shred -u ./k ./k.pub   # xóa khóa khỏi máy
+```
+Workflow `validate` của `shp-gitops` đã dùng secret này (`ssh-key`).
