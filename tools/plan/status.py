@@ -17,7 +17,8 @@ STATUS = {
     "SHR-09": ("partial", "5e423ab", "shp-events AuditRecordBuilder (che IP, chặn giá trị trong resource) + AuditSink; CHƯA có sink ghi outbox"),
     "SHR-25": ("done", "5e423ab", "shp-web @RequireShpAuthz + AuthzInterceptor + UnprotectedEndpoints.find (test chặn quên phân quyền)"),
     "SHR-27": ("done", "5e423ab", "AuthzAudit.fromDecision + interceptor ghi audit cho cho-phép, từ-chối, lỗi 5xx"),
-    "SHR-07": ("partial", "b74e54a", "Shp.Data.Postgres: PostgresOutbox.AddAsync + OutboxRelay (SKIP LOCKED, backoff, đa replica); CHƯA có bản MongoDB và CHƯA có IEventPublisher thật (MassTransit)"),
-    "SHR-08": ("partial", "b74e54a", "PostgresInbox.HandleOnceAsync (đúng một lần, rollback cả dấu inbox khi lỗi); CHƯA có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB"),
-    "SHR-28": ("done", "b74e54a", "PostgresIdempotency: RequireKey, HashBody chuẩn hóa, ClaimAsync (replay, 422 khi khác body, song song, hết hạn 24h); 25 test với PostgreSQL thật"),
+    "SHR-07": ("partial", "3764d57", "shp-data-postgres + shp-data-mongo: outbox ghi cùng transaction + relay (SKIP LOCKED / findAndModify có khóa hết hạn); CHƯA có EventPublisher thật (Spring Cloud Stream)"),
+    "SHR-08": ("partial", "3764d57", "PostgresInbox + MongoInbox (đúng một lần, rollback cả dấu inbox); CHƯA có consumer Spring Cloud Stream, retry/DLQ"),
+    "SHR-28": ("done", "3764d57", "shp-data-postgres PostgresIdempotency + shp-web IdempotencyKeys; 28 test với PostgreSQL thật"),
+    "SHR-12": ("done", "3764d57", "shp-data-mongo MongoIdempotency + MongoMessaging.inTransaction (thử lại khi xung đột); 21 test với MongoDB thật"),
 }
