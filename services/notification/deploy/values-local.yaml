@@ -1,8 +1,7 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=notification).
+# Values riêng của notification khi chạy trên kind (make -C dev deploy SVC=notification); nạp sau dev/chart/app-values-local.yaml.
 image:
   repository: localhost/shp-notification
   tag: dev
-replicaCount: 1
 env:
-  ASPNETCORE_ENVIRONMENT: Development
   OTEL_SERVICE_NAME: notification
+  SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true

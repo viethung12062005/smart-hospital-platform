@@ -14,7 +14,7 @@ và các service đều chạy trong một cụm kind trên máy bạn, bằng *
 **Không cần tự cài kind, kubectl, helm**: `make -C dev tools` tải đúng phiên bản ghim (kind v0.29.0, kubectl v1.33.4, helm v3.18.6),
 kiểm sha256 rồi đặt vào `dev/.local/bin` (không cần sudo, không ảnh hưởng máy). Các lệnh `make` tự dùng thư mục này.
 
-Để code (ngoài cụm) cần thêm: **.NET SDK 10** (service .NET) hoặc **Python 3.12** (ai, ml).
+Để code (ngoài cụm) cần thêm: **JDK 21** + **Maven 3.9** (6 service Java) hoặc **Python 3.12** (ai, ml).
 
 ## 2. Chạy toàn bộ bằng một lệnh
 ```bash
@@ -36,8 +36,8 @@ curl -i http://localhost:18000/fhir/Appointment  # đi qua gateway tới schedul
 ## 3. Vòng làm việc hằng ngày
 | Muốn | Lệnh |
 |---|---|
-| Code nhanh, debug trong IDE (khuyên dùng) | `make -C dev up` (chỉ phụ thuộc) → `set -a; . dev/.local/connection.env; set +a` → `dotnet run --project services/scheduling/src/Shp.Scheduling.Api` (hoặc F5 trong IDE) |
-| Chạy test như CI | `dotnet test services/<svc>/Shp.<Svc>.slnx` · Python: xem `services/ai/README.md` |
+| Code nhanh, debug trong IDE (khuyên dùng) | `make -C dev up` (chỉ phụ thuộc) → `set -a; . dev/.local/connection.env; set +a` → `mvn -pl services/scheduling -am spring-boot:run` (hoặc Run `SchedulingApplication` trong IntelliJ/VS Code) |
+| Chạy test như CI | `mvn -pl services/<svc> -am verify` (format, `-Werror`, test Testcontainers, coverage ≥ 70%; cần Docker) · `mvn spotless:apply` để tự format · Python: xem `services/ai/README.md` |
 | Thử service trong cụm sau khi sửa code | `make -C dev deploy SVC=scheduling` (build lại image, nạp vào kind, `helm upgrade`) |
 | Deploy lại tất cả | `make -C dev deploy SVC=all` |
 | Xem log / trạng thái | `make -C dev app-logs SVC=scheduling` · `make -C dev apps` · `make -C dev status` (phụ thuộc) |
@@ -55,17 +55,19 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 ## 4. Bên trong cụm có gì
 | Thành phần | Từ máy bạn | Từ service trong cụm (biến môi trường đã nạp sẵn) |
 |---|---|---|
-| PostgreSQL 16 (db `scheduling`, `notification`, `ml`) | `localhost:15432` | `ConnectionStrings__Postgres` (thêm `;Database=<db>`) |
-| MongoDB 8, replica set 1 node (có transaction) | `mongodb://localhost:27117/?directConnection=true` | `ConnectionStrings__Mongo` |
-| Redis 7 | `localhost:16379` | `ConnectionStrings__Redis` |
-| RabbitMQ 4 (AMQP / quản trị) | `localhost:15673` / http://localhost:25672 | `ConnectionStrings__RabbitMq` |
-| Azurite (giả lập Blob/Queue, tài khoản `shp`) | `AZURE_STORAGE_CONNECTION_STRING` trong `connection.env` | `ConnectionStrings__Blob` |
-| Keycloak 26, realm `shp` | http://localhost:18080/realms/shp | `OIDC_AUTHORITY`, `OIDC_AUDIENCE` |
+| PostgreSQL 16 (db `scheduling`) | `localhost:15432` | `SPRING_DATASOURCE_URL`/`_USERNAME` (values-local của service) + `SPRING_DATASOURCE_PASSWORD` |
+| MongoDB 8, replica set 1 node (có transaction); db `clinical`, `document`, `audit`, `notification`, `ml`, `ai` | `mongodb://localhost:27117/?directConnection=true` | `SPRING_MONGODB_URI` (Java) · `MONGODB_URI` (Python) |
+| Redis 7 | `localhost:16379` | `SPRING_DATA_REDIS_HOST/PORT/PASSWORD` |
+| RabbitMQ 4 (AMQP / quản trị) | `localhost:15673` / http://localhost:25672 | `SPRING_RABBITMQ_HOST/PORT/USERNAME/PASSWORD` · `RABBITMQ_URL` (Python) |
+| Azurite (giả lập Blob/Queue, tài khoản `shp`) | `AZURE_STORAGE_CONNECTION_STRING` trong `connection.env` | `AZURE_STORAGE_CONNECTION_STRING` |
+| Keycloak 26, realm `shp` | http://localhost:18080/realms/shp | `OIDC_AUTHORITY` (= issuer localhost), `OIDC_JWK_SET_URI` (khóa lấy qua DNS trong cụm), `OIDC_AUDIENCE` |
 | 8 service ứng dụng (namespace `shp-apps`) | qua gateway: `make port-forward` → `localhost:18000` | `http://<tên service>` (cổng 80) |
 
 - **Mật khẩu và khóa Azurite** do script sinh ngẫu nhiên trên từng máy, lưu ở `dev/.local/` (quyền 600, gitignore). Repo không chứa mật khẩu nào.
 - Cổng chỉ mở trên `127.0.0.1`. Ở local, NetworkPolicy và PDB tắt, mỗi service 1 replica (`dev/chart/app-values-local.yaml`).
-- Khác biệt với cloud (đã chấp nhận): một user Postgres cho cả 3 database; Azurite không có user delegation SAS và WORM; Mongo không bật xác thực.
+- `make up` tự chạy `contracts/db/mongo-notification-ml.js` (collection, index, validator của notification và ml; chạy lại không lỗi).
+  Collection `outbox`/`inbox`/`idempotency` do service Java tự tạo khi khởi động.
+- Khác biệt với cloud (đã chấp nhận): Postgres chỉ có một user; Azurite không có user delegation SAS và WORM; Mongo không bật xác thực.
   Code phụ thuộc vào những điểm này chỉ lộ lỗi ở UAT: báo SA nếu cần.
 
 ## 5. Các file liên quan (dev không cần sửa, trừ phần đánh dấu)
@@ -97,5 +99,5 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 - **LOC-02** — realm hoàn chỉnh (MFA cho nhân viên, claim bổ sung).
 
 > Trạng thái kiểm chứng: `install-tools.sh` đã chạy thật (tải + kiểm sha256, chạy lại không tải lại); chart render cho cả 8 service qua `kubeconform --strict`;
-> image .NET và Python build và chạy được (non-root, `/info` trả 200); phụ thuộc đã chạy thử bằng Docker. **Chưa chạy `make quickstart` trọn vẹn trên kind thật**
+> image Java (gateway, scheduling) và Python build và chạy được (non-root, `/info` trả 200); phụ thuộc đã chạy thử bằng Docker. **Chưa chạy `make quickstart` trọn vẹn trên kind thật**
 > (môi trường dựng tài liệu không chạy được kind): người đầu tiên chạy trên máy thật hãy báo lỗi cho SA.

@@ -1,0 +1,13 @@
+# Cấu hình service audit. Giá trị nhạy cảm (mật khẩu) KHÔNG đặt ở đây: lấy từ biến môi trường (local: dev/.local/connection.env
+# hoặc Secret do dev/scripts/deploy.sh tạo; cloud: Key Vault qua CSI).
+spring:
+  application:
+    name: audit
+  mongodb:
+    uri: ${SPRING_MONGODB_URI:mongodb://localhost:27117/?directConnection=true}
+    database: audit
+shp:
+  clinical:
+    url: ${SHP_CLINICAL_URL:http://clinical}
+server:
+  port: 8080

@@ -72,7 +72,12 @@ public class ShpWebAutoConfiguration {
     }
     return new SupplierJwtDecoder(
         () -> {
-          var decoder = (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(props.authority());
+          // jwk-set-uri: lấy khóa từ địa chỉ trong cụm khi issuer (localhost) không gọi được từ
+          // pod.
+          var decoder =
+              props.jwkSetUri().isBlank()
+                  ? (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(props.authority())
+                  : NimbusJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
           decoder.setJwtValidator(ShpJwt.validator(props, clock));
           return decoder;
         });
