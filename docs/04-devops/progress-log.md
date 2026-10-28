@@ -343,6 +343,40 @@ docker exec mtest mongosh --quiet /i.js && docker exec mtest mongosh --quiet /t.
 5. **Lỗi gặp và cách sửa:** Docker daemon lại tắt (sau khi phiên khởi động lại) → xóa pid cũ, bật lại; image Mongo lấy từ `mirror.gcr.io` (Docker Hub giới hạn lượt kéo). Câu chữ ban đầu trong tài liệu nói "2 worker song song" trong khi kiểm chứng mongosh là **tuần tự** → đã sửa cho đúng; test song song thật sẽ nằm trong thư viện Java.
 6. **Giới hạn:** chưa kiểm time-series collection và transaction trên **Cosmos DB for MongoDB vCore** (chỉ kiểm được khi dựng UAT). Các trạng thái SHR-xx trong `status.py` vẫn trỏ tới bản .NET; sẽ cập nhật sang commit Java ở J2–J4. Code .NET/Python vẫn còn trong repo cho tới J5.
 
+### J2 — Maven gốc + `shp-service-defaults` + `shp-authz` (thay `Shp.ServiceDefaults`, `Shp.Authorization`) ✅
+1. **Mục tiêu:** có khung build Java chung cho mọi module và chuyển hai thư viện nền đầu tiên, **giữ nguyên hành vi và bộ test** của bản .NET.
+2. **Việc đã làm (theo thứ tự):**
+   1. Thử Maven tải được qua proxy với `spring-boot-starter-parent 4.1.2`; đọc phiên bản Boot quản lý sẵn (Testcontainers 2.0.5, SnakeYAML 2.6, Jackson 3.1.7, OpenTelemetry 1.62.0, Flyway 12.4.0).
+   2. Viết `pom.xml` gốc: parent Spring Boot 4.1.2, Java 21, `-Xlint:all -Werror` (cảnh báo = lỗi), Spotless (google-java-format) chạy `check` ở phase `verify`, JaCoCo ngưỡng line coverage **70%** mỗi module; `.mvn/jvm.config` mở `--add-exports` cho google-java-format trên JDK 21.
+   3. `libs/java/shp-authz`: `AuthzMatrix` (SnakeYAML SafeConstructor + đủ bất biến như bản .NET/Python), `AuthorizationEngine` (dùng `java.time.Clock`), `Principal`, `ResourceContext` (có builder), `AuthzDecision`, `Predicates`; `matrix.yaml` được **copy vào jar** lúc build (`shp/authz/matrix.yaml`).
+   4. Chuyển test sinh từ ma trận sang JUnit 5 (`@ParameterizedTest` + `@MethodSource`): **238 test** (bản .NET 236; thêm 2: lý do `role-not-allowed`, bộ nạp báo id trùng/denyAll/thiếu rule).
+   5. `libs/java/shp-service-defaults`: auto-configuration nạp `shp-defaults.properties` (độ ưu tiên thấp nhất): `/health/live`, `/health/ready`, `/health`, `/info` (name, version, gitSha), `/prometheus`; tracing 100%, chỉ xuất OTLP khi `SHP_OTLP_EXPORT=true`; virtual threads; tắt máy êm (graceful). 5 test chạy server thật cổng ngẫu nhiên.
+3. **Thay đổi (commit COMMIT_J2):**
+
+| File | | Nội dung |
+|---|---|---|
+| `pom.xml` | A | parent + module + BOM (Spring AI 2.0.2, HAPI 8.12.1, networknt 3.0.8, CloudEvents 5.1.0, ArchUnit 1.5.1) + compiler/Spotless/JaCoCo |
+| `.mvn/jvm.config` | A | `--add-exports jdk.compiler/...` (6 dòng) cho Spotless |
+| `.gitignore` | M | + `target/` |
+| `libs/java/shp-authz/pom.xml` | A | SnakeYAML; resource `../../../contracts/authz/matrix.yaml` → `shp/authz/` |
+| `libs/java/shp-authz/src/main/java/org/shp/authz/*.java` | A | 8 lớp (xem bước 2.3) |
+| `libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java` | A | 238 test |
+| `libs/java/shp-service-defaults/pom.xml` | A | actuator, opentelemetry starter, micrometer prometheus, jackson-annotations |
+| `.../src/main/resources/shp-defaults.properties` | A | đường dẫn probe khớp Helm chart; `validate-group-membership=false` |
+| `.../ServiceDefaultsAutoConfiguration.java`, `ServiceInfo.java`, `META-INF/spring/...AutoConfiguration.imports` | A | auto-config + `InfoContributor` |
+| `.../src/test/java/.../ServiceDefaultsTest.java` | A | 5 test |
+
+4. **Lệnh làm lại / kiểm chứng:**
+```bash
+mvn -B verify                                   # BUILD SUCCESS: shp-service-defaults 5 test, shp-authz 238 test, coverage ≥ 70%
+mvn -B spotless:apply                           # tự định dạng trước khi commit (CI chạy spotless:check)
+```
+   **Đột biến (đã làm, cả 3 bị bắt):** `own` luôn đúng → 10 test đỏ; cửa sổ hủy 2h → 1h → 2 test đỏ; `not-care` luôn đúng → 1 test đỏ. (Lần sed đầu của đột biến 2h không khớp vì Spotless đã xuống dòng; đã kiểm `grep -c` rồi làm lại.)
+5. **Lỗi gặp và cách sửa:**
+   - javac cảnh báo `unknown enum constant JsonInclude.Include.NON_EMPTY` (kiểu actuator tham chiếu annotation Jackson không có trên classpath) → thêm `jackson-annotations`.
+   - Context không khởi động: `Health contributor 'db' ... does not exist` → `management.endpoint.health.validate-group-membership=false` để nhóm `ready` tự gồm DB nào service có.
+6. **Khác biệt so với bản .NET:** đường dẫn metric là `/prometheus` (Micrometer) thay vì OTel metrics exporter; OTLP bật bằng `SHP_OTLP_EXPORT` (Helm sẽ đặt ở UAT/prod).
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|

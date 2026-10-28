@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.shp</groupId>
+    <artifactId>shp-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <relativePath>../../../pom.xml</relativePath>
+  </parent>
+  <artifactId>shp-authz</artifactId>
+  <name>shp-authz — ma trận phân quyền và engine quyết định</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <!-- Nhúng ma trận phân quyền đã review: service luôn chạy đúng bản trong contracts/ -->
+      <resource>
+        <directory>${project.basedir}/../../../contracts/authz</directory>
+        <targetPath>shp/authz</targetPath>
+        <includes><include>matrix.yaml</include></includes>
+      </resource>
+    </resources>
+  </build>
+</project>
