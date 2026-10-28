@@ -1,0 +1,25 @@
+# Ai phải review thay đổi ở đâu (docs/04-devops/github-setup.md §3). Dòng sau ghi đè dòng trước.
+# Khi có tài khoản GitHub của D1/D2/D3: bỏ dấu # ở dòng tương ứng và thay @D1/@D2/@D3 bằng tên tài khoản thật
+# (tên không tồn tại làm GitHub bỏ qua cả dòng). Không ghi email hay thông tin cá nhân.
+
+# Mặc định: SA (nền tảng, hợp đồng, pipeline, tài liệu kiến trúc)
+*                           @viethung12062005
+
+# /services/scheduling/     @D1 @viethung12062005
+# /services/notification/   @D1 @viethung12062005
+# /services/clinical/       @D2 @viethung12062005
+# /services/document/       @D2 @viethung12062005
+# /services/audit/          @D2 @viethung12062005
+# /services/ai/             @D3 @viethung12062005
+# /services/ml/             @D3 @viethung12062005
+
+# Luôn cần SA, kể cả khi đã mở các dòng trên
+/libs/                      @viethung12062005
+/contracts/                 @viethung12062005
+/.github/                   @viethung12062005
+/dev/                       @viethung12062005
+/pom.xml                    @viethung12062005
+/services/*/Dockerfile      @viethung12062005
+/services/*/deploy/         @viethung12062005
+/services/*/src/main/java/org/shp/*/config/ @viethung12062005
+/docs/03-architecture/      @viethung12062005
