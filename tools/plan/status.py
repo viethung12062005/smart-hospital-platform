@@ -21,4 +21,12 @@ STATUS = {
     "SHR-08": ("partial", "3764d57", "PostgresInbox + MongoInbox (đúng một lần, rollback cả dấu inbox); CHƯA có consumer Spring Cloud Stream, retry/DLQ"),
     "SHR-28": ("done", "3764d57", "shp-data-postgres PostgresIdempotency + shp-web IdempotencyKeys; 28 test với PostgreSQL thật"),
     "SHR-12": ("done", "3764d57", "shp-data-mongo MongoIdempotency + MongoMessaging.inTransaction (thử lại khi xung đột); 21 test với MongoDB thật"),
+    "LOC-03": ("partial", "c909d5b", "6 service Java: health/info/prometheus, OTel, Dockerfile distroless non-root (đã build + chạy thử gateway, scheduling); CHƯA chạy qua pipeline GitHub Actions thật"),
+    "LOC-05": ("partial", "c909d5b", "deploy.sh + app-values-local cho Java (SPRING_*, JWKS trong cụm); chart render cho từng service; CHƯA chạy make quickstart trên kind thật"),
+    "GW-01": ("partial", "e2558f0", "Spring Cloud Gateway: 7 upstream, chặn /internal, JWT ở biên, Dockerfile c909d5b; CHƯA kiểm truyền trace context qua upstream"),
+    "SCF-01": ("partial", "c909d5b", "scheduling: khung Spring Boot + Flyway + outbox/inbox/idempotency PostgreSQL, Dockerfile, svc-scheduling.yml, values-local; CHƯA nối bus (Spring Cloud Stream), values uat/prod ở repo GitOps"),
+    "SCF-02": ("partial", "c909d5b", "notification: khung + Mongo outbox/inbox, collection do make up tạo; CHƯA nối bus, values uat/prod"),
+    "SCF-03": ("partial", "c909d5b", "clinical: khung + Mongo + MongoIdentityLinkClient; CHƯA nối bus, values uat/prod"),
+    "SCF-04": ("partial", "c909d5b", "document: khung + Mongo; CHƯA Blob client, nối bus, values uat/prod"),
+    "SCF-05": ("partial", "c909d5b", "audit: khung + Mongo; CHƯA Blob WORM/Log Analytics, nối bus, values uat/prod"),
 }
