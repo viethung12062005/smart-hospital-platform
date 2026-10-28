@@ -8,7 +8,7 @@ và các service đều chạy trong một cụm kind trên máy bạn, bằng *
 |---|---|
 | 4 CPU, **16 GB RAM**, 15 GB ổ trống | profile `core` + 8 service dùng ~6 GB |
 | **Docker** | Windows/macOS: Docker Desktop (Settings → Resources: RAM ≥ 6 GB). Linux: Docker Engine |
-| Windows | Làm mọi thứ **trong WSL2 (Ubuntu)**, clone repo vào thư mục của WSL (không phải `/mnt/c`) |
+| Windows | Làm mọi thứ **trong WSL2 (Ubuntu)**, clone repo vào thư mục của WSL (không phải `/mnt/c`). Hướng dẫn từng bước và script cài tự động: [docs/onboarding-windows.md](../docs/onboarding-windows.md) |
 | `git`, `make`, `curl`, `openssl` | có sẵn trên macOS/Ubuntu (`sudo apt install make curl openssl` nếu thiếu) |
 
 **Không cần tự cài kind, kubectl, helm**: `make -C dev tools` tải đúng phiên bản ghim (kind v0.29.0, kubectl v1.33.4, helm v3.18.6),

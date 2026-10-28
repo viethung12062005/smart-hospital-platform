@@ -5,7 +5,7 @@ Mục tiêu: trong **dưới 1 giờ**, bạn clone repo, chạy được hệ t
 ## Bước 1 — Cài máy (15 phút)
 | Cần | Ai |
 |---|---|
-| Docker (Desktop hoặc Engine), RAM cho Docker ≥ 6 GB; Windows dùng **WSL2** | mọi người |
+| Docker (Desktop hoặc Engine), RAM cho Docker ≥ 6 GB; Windows dùng **WSL2** ([hướng dẫn cài từng bước](onboarding-windows.md)) | mọi người |
 | `git`, `make`, `curl`, `openssl` | mọi người |
 | **JDK 21** (Temurin) + **Maven 3.9**; IDE: IntelliJ IDEA hoặc VS Code (Extension Pack for Java) | D1, D2 |
 | **Python 3.12** | D3 |
