@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/audit/recorded/v1.json",
+  "title": "shp.audit.recorded.v1",
+  "description": "E11: bản ghi audit (không chứa nội dung lâm sàng). Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "eventId",
+    "occurredAt",
+    "service",
+    "action",
+    "outcome",
+    "actor",
+    "resource"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "service": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "read",
+        "search",
+        "create",
+        "update",
+        "delete",
+        "download-url",
+        "ai-query",
+        "ai-summary",
+        "break-glass-start",
+        "export",
+        "login"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "denied",
+        "error"
+      ]
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "role"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "patient",
+            "doctor",
+            "nurse",
+            "admin",
+            "dpo",
+            "system"
+          ]
+        },
+        "fhirUser": {
+          "type": "string"
+        }
+      }
+    },
+    "patientId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "resource": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purposeOfUse": {
+      "type": "string",
+      "enum": [
+        "TREAT",
+        "ETREAT",
+        "HOPERAT",
+        "PATRQT"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "traceId": {
+      "type": "string"
+    },
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

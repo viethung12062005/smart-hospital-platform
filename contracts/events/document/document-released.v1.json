@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/document/document-released/v1.json",
+  "title": "shp.document.document-released.v1",
+  "description": "E9: phát hành tài liệu cho bệnh nhân. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "documentId",
+    "patientId",
+    "releasedAt",
+    "type"
+  ],
+  "properties": {
+    "documentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "releasedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

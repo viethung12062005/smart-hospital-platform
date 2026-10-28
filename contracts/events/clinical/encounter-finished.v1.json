@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/clinical/encounter-finished/v1.json",
+  "title": "shp.clinical.encounter-finished.v1",
+  "description": "E6: kết thúc encounter. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "encounterId",
+    "appointmentId",
+    "patientId",
+    "practitionerId",
+    "finishedAt",
+    "version"
+  ],
+  "properties": {
+    "encounterId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "appointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "practitionerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "finishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

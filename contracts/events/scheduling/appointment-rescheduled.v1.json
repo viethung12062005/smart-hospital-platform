@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/scheduling/appointment-rescheduled/v1.json",
+  "title": "shp.scheduling.appointment-rescheduled.v1",
+  "description": "E3: đổi lịch (một event cho cặp hủy + đặt mới). Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "oldAppointmentId",
+    "newAppointmentId",
+    "version",
+    "patientId",
+    "practitionerId",
+    "oldStart",
+    "newStart",
+    "newEnd",
+    "specialty"
+  ],
+  "properties": {
+    "oldAppointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "newAppointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "practitionerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "oldStart": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "newStart": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "newEnd": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "specialty": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "appointmentId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01",
+  "version": 3,
+  "patientId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
+  "practitionerId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03",
+  "specialty": "cardiology",
+  "checkedInAt": "2026-12-03T01:15:00Z"
+}

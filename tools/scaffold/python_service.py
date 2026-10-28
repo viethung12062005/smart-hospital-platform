@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Sinh khung cho service Python (FastAPI): ai, ml.
+
+Dùng: python3 -I tools/scaffold/python_service.py [<name> ...]
+Không ghi đè file đã tồn tại.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+TEMPLATES_REPO = "viethung12062005/shp-platform-templates-scratch"
+TEMPLATES_REF = "work/initial-baseline"
+
+SERVICES = {
+    "ai": ("D3", "Trợ lý RAG, tóm tắt hồ sơ, trích xuất tài liệu, chatbot đặt lịch; LLM router có fallback"),
+    "ml": ("D3", "Mô hình no-show: phục vụ dự đoán, drift, huấn luyện lại tự động"),
+}
+
+
+def files(name: str) -> dict[str, str]:
+    owner, desc = SERVICES[name]
+    pkg = f"shp_{name}"
+    base = f"services/{name}"
+    return {
+        f"{base}/pyproject.toml": f"""[project]
+name = "shp-{name}"
+version = "0.1.0"
+description = "{desc}"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.32,<1",
+  "pydantic-settings>=2.6,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-cov>=6,<8",
+  "httpx>=0.28,<1",
+  "ruff>=0.8,<1",
+  "mypy>=1.13,<2",
+  "pip-audit>=2.7,<3",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "N", "ASYNC"]
+ignore = ["S101"]
+
+[tool.mypy]
+strict = true
+packages = ["{pkg}"]
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+source = ["{pkg}"]
+""",
+        f"{base}/src/{pkg}/__init__.py": f'"""{desc}."""\n',
+        f"{base}/src/{pkg}/settings.py": f'''from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    service_name: str = "{name}"
+    version: str = "0.1.0"
+    git_sha: str = "unknown"
+''',
+        f"{base}/src/{pkg}/main.py": f'''from fastapi import FastAPI
+
+from {pkg}.settings import Settings
+
+settings = Settings()
+app = FastAPI(title="shp-{name}", version=settings.version)
+
+
+@app.get("/health/live")
+def live() -> dict[str, str]:
+    return {{"status": "Healthy"}}
+
+
+@app.get("/health/ready")
+def ready() -> dict[str, str]:
+    # TODO(dev): kiểm kết nối phụ thuộc (DB, broker) khi thêm vào.
+    return {{"status": "Healthy"}}
+
+
+@app.get("/info")
+def info() -> dict[str, str]:
+    return {{"name": settings.service_name, "version": settings.version, "gitSha": settings.git_sha}}
+
+
+# TODO(dev): thêm router nghiệp vụ theo docs/03-architecture/detailed-design (một module/nhóm endpoint).
+''',
+        f"{base}/tests/test_health.py": f'''import pytest
+from fastapi.testclient import TestClient
+
+from {pkg}.main import app
+
+client = TestClient(app)
+
+
+@pytest.mark.parametrize("path", ["/health/live", "/health/ready", "/info"])
+def test_platform_endpoints_return_ok(path: str) -> None:
+    assert client.get(path).status_code == 200
+''',
+        f"{base}/Dockerfile": f"""# syntax=docker/dockerfile:1
+FROM mirror.gcr.io/library/python:3.12-slim AS build
+WORKDIR /src
+COPY pyproject.toml ./
+COPY src/ src/
+RUN pip install --no-cache-dir --prefix=/install .
+
+FROM mirror.gcr.io/library/python:3.12-slim
+RUN useradd --uid 10001 --no-create-home app
+COPY --from=build /install /usr/local
+USER 10001
+EXPOSE 8080
+ENTRYPOINT ["uvicorn", "{pkg}.main:app", "--host", "0.0.0.0", "--port", "8080"]
+""",
+        f"{base}/deploy/values-local.yaml": f"""# Values cho chart microservice khi chạy trên kind (make deploy SVC={name}).
+image:
+  repository: localhost/shp-{name}
+  tag: dev
+replicaCount: 1
+env:
+  OTEL_SERVICE_NAME: {name}
+""",
+        f"{base}/README.md": f"""# {name}
+
+{desc}. Chủ sở hữu: **{owner}**.
+
+| Lệnh | Việc |
+|---|---|
+| `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"` | cài môi trường |
+| `ruff check . && ruff format --check . && mypy . && pytest --cov` | đúng các bước CI chạy |
+| `uvicorn {pkg}.main:app --reload --port 8090` | chạy local |
+| `make -C ../../dev deploy SVC={name}` | build image và deploy lên cụm kind |
+""",
+        f".github/workflows/svc-{name}.yml": f"""# Sinh bởi tools/scaffold/python_service.py. Pipeline: CI → image (quét, SBOM, ký) → promote uat (chờ duyệt).
+name: svc-{name}
+on:
+  pull_request:
+    paths: ["services/{name}/**", ".github/workflows/svc-{name}.yml"]
+  push:
+    branches: [main]
+    paths: ["services/{name}/**", ".github/workflows/svc-{name}.yml"]
+permissions:
+  contents: read
+jobs:
+  ci:
+    uses: {TEMPLATES_REPO}/.github/workflows/python-ci.yml@{TEMPLATES_REF}
+    with:
+      working-directory: services/{name}
+  container:
+    needs: ci
+    uses: {TEMPLATES_REPO}/.github/workflows/container.yml@{TEMPLATES_REF}
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      context: services/{name}
+      image-name: {name}
+      push: ${{{{ github.ref == 'refs/heads/main' }}}}
+      acr-name: ${{{{ vars.ACR_NAME }}}}
+      azure-client-id: ${{{{ vars.AZURE_CLIENT_ID_ACR_PUSH }}}}
+      azure-tenant-id: ${{{{ vars.AZURE_TENANT_ID }}}}
+      azure-subscription-id: ${{{{ vars.AZURE_SUBSCRIPTION_ID }}}}
+  promote-uat:
+    if: github.ref == 'refs/heads/main'
+    needs: container
+    uses: {TEMPLATES_REPO}/.github/workflows/gitops-promote.yml@{TEMPLATES_REF}
+    with:
+      service: {name}
+      environment: uat
+      digest: ${{{{ needs.container.outputs.digest }}}}
+      gitops-owner: viethung12062005
+      gitops-repo: shp-gitops-scratch
+      gitops-app-id: ${{{{ vars.GITOPS_APP_ID }}}}
+      mode: commit
+    secrets:
+      gitops-app-private-key: ${{{{ secrets.GITOPS_APP_PRIVATE_KEY }}}}
+""",
+    }
+
+
+def main(argv: list[str]) -> int:
+    for name in argv or list(SERVICES):
+        if name not in SERVICES:
+            print(f"unknown service: {name}", file=sys.stderr)
+            return 2
+        for rel, content in files(name).items():
+            path = ROOT / rel
+            if path.exists():
+                print(f"skip   {rel}")
+                continue
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            print(f"create {rel}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

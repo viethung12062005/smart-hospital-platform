@@ -1,0 +1,7 @@
+# Values cho chart microservice khi chạy trên kind (make deploy SVC=ml).
+image:
+  repository: localhost/shp-ml
+  tag: dev
+replicaCount: 1
+env:
+  OTEL_SERVICE_NAME: ml

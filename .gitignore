@@ -10,3 +10,24 @@
 *.tfstate.*
 *.tfvars
 crash.log
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Dev local: mật khẩu sinh ngẫu nhiên và chuỗi kết nối
+dev/.local/
+
+# Build .NET / Python
+bin/
+obj/
+TestResults/
+*.egg-info/
+.venv/
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build Java (Maven)
+target/

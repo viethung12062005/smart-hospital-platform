@@ -1,0 +1,121 @@
+# Ma trận phân quyền dạng máy đọc được. Nguồn sự thật cho:
+#   - thư viện chính sách (Shp.Authorization, task SHR-xx): nạp file này để quyết định Allow/Deny
+#   - bộ test sinh tự động (SHR-09): mỗi (resource, action) × 5 role × tổ hợp điều kiện
+# Tài liệu: docs/02-requirements/access-control-matrix.md, docs/03-architecture/detailed-design/15-authorization.md
+# Quy tắc: mặc định TỪ CHỐI. Hành động chỉ được phép khi có một rule khớp và mọi điều kiện `when` thỏa.
+# Đổi file này phải qua PR có SA duyệt (CODEOWNERS) và `python3 -I tools/contracts/validate.py` phải xanh.
+version: 1
+
+roles: [patient, doctor, nurse, admin, dpo]
+
+purposes: [TREAT, ETREAT, HOPERAT, PATRQT]
+
+predicates:
+  own: Resource thuộc chính người gọi (patientId == fhirUser)
+  self-practitioner: practitionerId của resource == fhirUser
+  care: Có quan hệ điều trị còn hiệu lực giữa bác sĩ và bệnh nhân
+  breakglass: Có phiên break-glass chưa hết hạn cho cặp (bác sĩ, bệnh nhân)
+  released: Tài liệu đã phát hành cho bệnh nhân
+  encounter-finished: Encounter của resource ở trạng thái finished
+  unfinished-encounter: Encounter chưa finished
+  before-2h: Giờ khám còn cách hiện tại ít nhất 2 giờ
+  not-care: Bác sĩ không có quan hệ điều trị với bệnh nhân
+
+# Mỗi resource khai báo tập hành động hợp lệ; `clinical: true` nghĩa là dữ liệu lâm sàng (admin/dpo không bao giờ được chạm).
+resources:
+  Patient:         { clinical: true,  actions: [read, create, update, search] }
+  Slot:            { clinical: false, actions: [read, create, update, block] }
+  Appointment:     { clinical: true,  actions: [book, cancel, read] }
+  Encounter:       { clinical: true,  actions: [read, create, update] }
+  Observation:     { clinical: true,  actions: [read, create] }
+  Condition:       { clinical: true,  actions: [create] }
+  Document:        { clinical: true,  actions: [upload, download, release] }
+  Assistant:       { clinical: true,  actions: [ask] }
+  KnowledgeBase:   { clinical: false, actions: [manage] }
+  PatientSummary:  { clinical: true,  actions: [read] }
+  Extraction:      { clinical: true,  actions: [review] }
+  Chatbot:         { clinical: true,  actions: [use] }
+  User:            { clinical: false, actions: [manage] }
+  Audit:           { clinical: false, actions: [read, export, update, delete] }
+  BreakGlass:      { clinical: false, actions: [start] }
+  Backup:          { clinical: false, actions: [run, restore] }
+
+# Hành động cấm tuyệt đối với mọi role (không có rule nào được phép tồn tại).
+denyAll:
+  - { resource: Audit, action: update }
+  - { resource: Audit, action: delete }
+
+rules:
+  # Patient
+  - { id: PAT-READ-OWN,    resource: Patient, action: read,   role: patient, when: [own], purpose: PATRQT }
+  - { id: PAT-READ-DOC,    resource: Patient, action: read,   role: doctor,  when: [care], purpose: TREAT }
+  - { id: PAT-READ-DOC-BG, resource: Patient, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
+  - { id: PAT-READ-NUR,    resource: Patient, action: read,   role: nurse,   when: [], purpose: TREAT }
+  - { id: PAT-CREATE-NUR,  resource: Patient, action: create, role: nurse,   when: [] }
+  - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
+  - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
+  - { id: PAT-SEARCH-DOC,  resource: Patient, action: search, role: doctor,  when: [] }
+  - { id: PAT-SEARCH-NUR,  resource: Patient, action: search, role: nurse,   when: [] }
+  # Schedule / Slot
+  - { id: SLOT-READ-PAT,   resource: Slot, action: read,   role: patient, when: [] }
+  - { id: SLOT-READ-DOC,   resource: Slot, action: read,   role: doctor,  when: [] }
+  - { id: SLOT-READ-NUR,   resource: Slot, action: read,   role: nurse,   when: [] }
+  - { id: SLOT-READ-ADM,   resource: Slot, action: read,   role: admin,   when: [] }
+  - { id: SLOT-CREATE-NUR, resource: Slot, action: create, role: nurse,   when: [] }
+  - { id: SLOT-CREATE-ADM, resource: Slot, action: create, role: admin,   when: [] }
+  - { id: SLOT-UPD-NUR,    resource: Slot, action: update, role: nurse,   when: [] }
+  - { id: SLOT-UPD-ADM,    resource: Slot, action: update, role: admin,   when: [] }
+  - { id: SLOT-BLOCK-NUR,  resource: Slot, action: block,  role: nurse,   when: [] }
+  - { id: SLOT-BLOCK-ADM,  resource: Slot, action: block,  role: admin,   when: [] }
+  # Appointment
+  - { id: APPT-BOOK-OWN,   resource: Appointment, action: book,   role: patient, when: [own] }
+  - { id: APPT-BOOK-NUR,   resource: Appointment, action: book,   role: nurse,   when: [] }
+  - { id: APPT-CANCEL-PAT, resource: Appointment, action: cancel, role: patient, when: [own, before-2h] }
+  - { id: APPT-CANCEL-NUR, resource: Appointment, action: cancel, role: nurse,   when: [] }
+  - { id: APPT-READ-PAT,   resource: Appointment, action: read,   role: patient, when: [own] }
+  - { id: APPT-READ-DOC,   resource: Appointment, action: read,   role: doctor,  when: [self-practitioner] }
+  - { id: APPT-READ-NUR,   resource: Appointment, action: read,   role: nurse,   when: [] }
+  # Encounter
+  - { id: ENC-READ-PAT,    resource: Encounter, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
+  - { id: ENC-READ-DOC,    resource: Encounter, action: read,   role: doctor,  when: [care], purpose: TREAT }
+  - { id: ENC-READ-DOC-BG, resource: Encounter, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
+  - { id: ENC-READ-NUR,    resource: Encounter, action: read,   role: nurse,   when: [], purpose: TREAT }
+  - { id: ENC-CREATE-DOC,  resource: Encounter, action: create, role: doctor,  when: [care] }
+  - { id: ENC-CREATE-NUR,  resource: Encounter, action: create, role: nurse,   when: [] }
+  - { id: ENC-WRITE-DOC,   resource: Encounter, action: update, role: doctor,  when: [care, unfinished-encounter] }
+  - { id: ENC-WRITE-NUR,   resource: Encounter, action: update, role: nurse,   when: [unfinished-encounter] }
+  # Observation
+  - { id: OBS-READ-PAT,    resource: Observation, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
+  - { id: OBS-READ-DOC,    resource: Observation, action: read,   role: doctor,  when: [care], purpose: TREAT }
+  - { id: OBS-READ-DOC-BG, resource: Observation, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
+  - { id: OBS-READ-NUR,    resource: Observation, action: read,   role: nurse,   when: [], purpose: TREAT }
+  - { id: OBS-CREATE-DOC,  resource: Observation, action: create, role: doctor,  when: [care] }
+  - { id: OBS-CREATE-NUR,  resource: Observation, action: create, role: nurse,   when: [] }
+  # Condition (chẩn đoán): chỉ bác sĩ
+  - { id: COND-WRITE-DOC,  resource: Condition, action: create, role: doctor, when: [care] }
+  # Tài liệu
+  - { id: DOC-UP-DOC,      resource: Document, action: upload,   role: doctor,  when: [care] }
+  - { id: DOC-UP-NUR,      resource: Document, action: upload,   role: nurse,   when: [] }
+  - { id: DOC-DL-PAT,      resource: Document, action: download, role: patient, when: [own, released], purpose: PATRQT }
+  - { id: DOC-DL-DOC,      resource: Document, action: download, role: doctor,  when: [care], purpose: TREAT }
+  - { id: DOC-DL-DOC-BG,   resource: Document, action: download, role: doctor,  when: [breakglass], purpose: ETREAT }
+  - { id: DOC-DL-NUR,      resource: Document, action: download, role: nurse,   when: [], purpose: TREAT }
+  - { id: DOC-REL-DOC,     resource: Document, action: release,  role: doctor,  when: [care] }
+  # AI
+  - { id: RAG-ASK-DOC,     resource: Assistant, action: ask, role: doctor, when: [] }
+  - { id: RAG-ASK-NUR,     resource: Assistant, action: ask, role: nurse,  when: [] }
+  - { id: KB-MANAGE-ADM,   resource: KnowledgeBase, action: manage, role: admin, when: [] }
+  - { id: SUM-READ-DOC,    resource: PatientSummary, action: read, role: doctor, when: [care], purpose: TREAT }
+  - { id: SUM-READ-DOC-BG, resource: PatientSummary, action: read, role: doctor, when: [breakglass], purpose: ETREAT }
+  - { id: EXT-REVIEW-DOC,  resource: Extraction, action: review, role: doctor, when: [care] }
+  - { id: EXT-REVIEW-NUR,  resource: Extraction, action: review, role: nurse,  when: [] }
+  - { id: BOT-USE-PAT,     resource: Chatbot, action: use, role: patient, when: [own] }
+  # Quản trị, audit, break-glass, sao lưu
+  - { id: USER-MANAGE-ADM, resource: User, action: manage, role: admin, when: [] }
+  - { id: AUDIT-READ-DPO,  resource: Audit, action: read,   role: dpo,   when: [], purpose: HOPERAT }
+  - { id: AUDIT-EXP-DPO,   resource: Audit, action: export, role: dpo,   when: [], purpose: HOPERAT }
+  - { id: AUDIT-READ-ADM,  resource: Audit, action: read,   role: admin, when: [], hide: [reason] }
+  - { id: AUDIT-EXP-ADM,   resource: Audit, action: export, role: admin, when: [], hide: [reason] }
+  - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
+  - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "qua pipeline vận hành, có duyệt" }
+  - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "qua pipeline vận hành, có duyệt" }
