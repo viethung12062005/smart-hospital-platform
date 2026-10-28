@@ -7,7 +7,7 @@ CareMate là một PoC dựa trên Medplum (monolith Node.js, ~30 package, 15 po
 
 | CareMate | Smart Hospital |
 |---|---|
-| Lưu resource FHIR dạng JSONB + bảng tham số tìm kiếm (Medplum) | `SmartHospital.Fhir`: cùng ý tưởng, viết lại bằng .NET, chỉ các SearchParameter cần dùng |
+| Lưu resource FHIR dạng JSONB + bảng tham số tìm kiếm (Medplum) | `SmartHospital.Fhir`: cùng ý tưởng, viết lại bằng Java (ADR-0015), chỉ các SearchParameter cần dùng |
 | `appointment-bots`, `send-appointment-reminders` | `scheduling-service` + `notification-service` |
 | AccessPolicy theo project | Phân quyền theo role + `fhir_user` claim, ma trận có test |
 | AuditEvent | `audit-service` append-only |

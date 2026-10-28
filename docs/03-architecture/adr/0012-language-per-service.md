@@ -1,7 +1,7 @@
 # ADR-0012: Đánh giá lại ngôn ngữ cho từng service
 
 ## Trạng thái
-Accepted (2026-10-27) — SA/PM đã duyệt. Giữ nguyên ADR-0002.
+**Superseded (2026-10-28)** bởi [ADR-0015](0015-java-for-all-services.md): toàn bộ service chuyển sang Java. Giữ lại để truy vết.
 
 ## Bối cảnh
 PM yêu cầu: "nếu có ngôn ngữ nào tối ưu hơn cho service nào đó thì hãy sử dụng". Đánh giá theo đặc tính tải (ADR-0001),

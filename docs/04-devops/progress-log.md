@@ -302,6 +302,47 @@ cd libs/dotnet && dotnet format --verify-no-changes
 4. **Cố ý CHƯA làm:** chưa sửa `04-db-notification-ml.md`, DDL, chart local, task NTF/ML/IAC cho tới khi PM duyệt (tránh viết lại thiết kế dựa trên đề xuất chưa chốt).
 5. **Việc cần PM quyết:** duyệt/sửa ADR-0014, đặc biệt (a) notification → MongoDB hay Redis; (b) ml → MongoDB + Parquet; (c) chấp nhận kiểm khả dụng time-series collection trên Cosmos DB vCore trước khi chốt.
 
+## Phần J — Chuyển toàn bộ code base sang Java (quyết định PM ngày 2026-10-28)
+> PM: "chuyển toàn bộ code base sang Java… tôi duyệt mọi thiết kế bạn đề ra". Thứ tự làm: J1 quyết định + tài liệu → J2 Maven + thư viện nền đầu tiên → J3 → J4 (chuyển các thư viện .NET đã viết sang Java, giữ nguyên hành vi và test) → J5 (8 service, CI, Docker, bộ công cụ local; xóa .NET/Python).
+> Phiên bản đã tra trực tiếp trên Maven Central ngày 2026-10-28 (không chọn theo trí nhớ): Spring Boot **4.1.2**, Spring AI **2.0.2**, HAPI FHIR **8.12.1**, Testcontainers **2.0.5**, networknt json-schema-validator **3.0.8**, CloudEvents SDK **5.1.0**, Flyway **13.11.1**, JaCoCo **0.8.16**, ArchUnit **1.5.1**, XGBoost4J **3.4.0**, DuckDB JDBC **1.5.6.0**, MLflow client **3.11.1**, Tess4J **5.20.0**, PostgreSQL JDBC **42.7.14**, MongoDB driver **5.14.0**. JDK trong môi trường dựng: **21.0.12**, Maven **3.9.11**.
+
+### J1 — Quyết định Java, duyệt ADR-0014 và cập nhật tài liệu/kế hoạch ✅
+1. **Mục tiêu:** ghi quyết định thành ADR, áp dụng ADR-0014 (PM đã duyệt) vào thiết kế chi tiết, và đổi mọi task/tài liệu đang ghi .NET/Python sang Java trước khi viết code.
+2. **Việc đã làm (theo thứ tự):**
+   1. Viết ADR-0015 (bảng ánh xạ từng công nghệ .NET/Python → Java); đánh dấu ADR-0002, ADR-0012 **Superseded**; ADR-0014 → **Accepted**; gạch dòng notification/ml trong ADR-0008.
+   2. Sửa tài liệu kiến trúc còn nhắc .NET/Python/Firely/MassTransit/YARP/LightGBM/pandera (`overview.md`, ADR-0001/0003/0004/0007/0009, `caremate-migration.md`, `13-events.md`, `16-mlops.md`, `04-devops/README.md`).
+   3. **Viết lại `04-db-notification-ml.md` sang MongoDB** (ADR-0014): collection, document mẫu, index (unique chống trùng, partial cho lấy việc, TTL), thao tác lấy việc bằng `findOneAndUpdate`; ml = `patient_stats` + `appointment_facts` + `predictions` (time-series) + Parquet/DuckDB cho huấn luyện.
+   4. Viết script khởi tạo `contracts/db/mongo-notification-ml.js` và bộ kiểm `contracts/db/mongo-notification-ml.test.js`; **chạy trên MongoDB 8 thật** (replica set): 12/12 kiểm tra qua, chạy script 2 lần không lỗi.
+   5. Sửa kế hoạch: task .NET/Python → Java; các task PY-01/03/04/05 thu nhỏ thành "nối thư viện chung Java" (vì thư viện Java dùng chung đã làm phần đó); NTF-01/05 và ML-11 sang MongoDB; nhãn người D1/D2/D3 thành Dev Java.
+3. **Thay đổi (commit COMMIT_J1):**
+
+| File | | Nội dung |
+|---|---|---|
+| `docs/03-architecture/adr/0015-java-for-all-services.md` | A | Java 21 LTS + Spring Boot 4.1; bảng ánh xạ 14 hạng mục; hệ quả (một pipeline CI, chuyển 1-1 thư viện, công cụ SA giữ Python/Bash) |
+| `docs/03-architecture/adr/0002-…`, `0012-…` | M | `Accepted` → `Superseded (2026-10-28) bởi ADR-0015` |
+| `docs/03-architecture/adr/0014-…` | M | `Proposed` → `Accepted (2026-10-28)` |
+| `docs/03-architecture/adr/0008-…` | M | dòng notification, ml bị gạch, trỏ sang ADR-0014 |
+| `docs/03-architecture/adr/README.md` | M | trạng thái 0002/0012/0014; thêm 0015 |
+| `docs/03-architecture/overview.md` | M | cột công nghệ 8 service → Java (gateway: Spring Cloud Gateway, ai: Spring AI, ml: XGBoost4J + DuckDB); DB notification/ml → MongoDB; bus: Spring Cloud Stream |
+| `docs/03-architecture/adr/0001,0003,0004,0007,0009`, `caremate-migration.md`, `detailed-design/13-events.md`, `16-mlops.md`, `docs/04-devops/README.md` | M | Firely → HAPI FHIR; MassTransit → Spring Cloud Stream; LightGBM → XGBoost4J; pandera → quy tắc Java; ".NET CI, Python CI" → "Java CI (Maven)" |
+| `docs/03-architecture/detailed-design/04-db-notification-ml.md` | M | **viết lại toàn bộ**: PostgreSQL DDL → collection MongoDB (xem bước 2.3) |
+| `contracts/db/mongo-notification-ml.js`, `contracts/db/mongo-notification-ml.test.js` | A | script khởi tạo idempotent + 12 kiểm tra |
+| `tools/plan/tasks_dev.py` | M | SHR-01 (HAPI), PY-01 (3h→1h), PY-03 (4h→2h), PY-04, PY-05 (2h→1h), PY-07 (Spring AI), ML-04 (XGBoost4J), ML-14 (quy tắc Java), ML-11/NTF-01/NTF-05 (MongoDB) |
+| `tools/plan/tasks_sa.py` | M | GOV-06 (maven), CIT-01 (Java CI), CIT-02 (CI cho hợp đồng + công cụ SA), CIT-07 (CodeQL java), LOC-03/04, CIT-10 (Maven packages), GW-01 (Spring Cloud Gateway), SCF-06/07, SHR-25, SHR-08 (Spring Cloud Stream) |
+| `tools/plan/stories.py` | M | AC "LightGBM" → "XGBoost" |
+| `tools/plan/build.py` | M | nhãn epic SHR/PY và người D1–D3 |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** — tổng 1.065 giờ (giảm 5 giờ vì PY-xx thu nhỏ) |
+
+4. **Lệnh làm lại / kiểm chứng:**
+```bash
+python3 -I tools/plan/build.py                       # OK: 74 stories, 317 tasks, 1065h
+docker run -d --name mtest mongo:8 --replSet rs0 && docker exec mtest mongosh --eval 'rs.initiate()'
+docker cp contracts/db/mongo-notification-ml.js mtest:/i.js && docker cp contracts/db/mongo-notification-ml.test.js mtest:/t.js
+docker exec mtest mongosh --quiet /i.js && docker exec mtest mongosh --quiet /t.js   # ALL PASSED
+```
+5. **Lỗi gặp và cách sửa:** Docker daemon lại tắt (sau khi phiên khởi động lại) → xóa pid cũ, bật lại; image Mongo lấy từ `mirror.gcr.io` (Docker Hub giới hạn lượt kéo). Câu chữ ban đầu trong tài liệu nói "2 worker song song" trong khi kiểm chứng mongosh là **tuần tự** → đã sửa cho đúng; test song song thật sẽ nằm trong thư viện Java.
+6. **Giới hạn:** chưa kiểm time-series collection và transaction trên **Cosmos DB for MongoDB vCore** (chỉ kiểm được khi dựng UAT). Các trạng thái SHR-xx trong `status.py` vẫn trỏ tới bản .NET; sẽ cập nhật sang commit Java ở J2–J4. Code .NET/Python vẫn còn trong repo cho tới J5.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|

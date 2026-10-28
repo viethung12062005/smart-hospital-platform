@@ -1,7 +1,7 @@
 # ADR-0002: .NET 10 cho service nghiệp vụ, Python cho AI/ML
 
 ## Trạng thái
-Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
+**Superseded (2026-10-28)** bởi [ADR-0015](0015-java-for-all-services.md): toàn bộ service chuyển sang Java. Giữ lại để truy vết.
 
 ## Quyết định
 - Service nghiệp vụ: **.NET 10 (LTS)**, ASP.NET Core Minimal API, Npgsql + Dapper (SQL tường minh,

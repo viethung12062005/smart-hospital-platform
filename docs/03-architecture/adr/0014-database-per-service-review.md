@@ -1,7 +1,7 @@
 # ADR-0014: Rà soát lại CSDL từng service — PostgreSQL chỉ giữ cho scheduling
 
 ## Trạng thái
-**Proposed (2026-10-27)** — chờ SA/PM duyệt. Nếu được duyệt, thay các dòng `notification` và `ml` của [ADR-0008](0008-polyglot-persistence.md). Chưa sửa thiết kế chi tiết, DDL hay task trước khi duyệt.
+**Accepted (2026-10-28)** — PM duyệt ("duyệt mọi thiết kế bạn đề ra"). Thay các dòng `notification` và `ml` của [ADR-0008](0008-polyglot-persistence.md). Hiện thực bằng Java theo [ADR-0015](0015-java-for-all-services.md).
 
 ## Bối cảnh
 PM nhận xét: "lúc nào cũng PostgreSQL, phải tối ưu DB". Hiện PostgreSQL phục vụ 3 service (scheduling, notification, ml) và các thư viện dùng chung vừa viết (outbox, inbox, idempotency) cũng chỉ có bản PostgreSQL.

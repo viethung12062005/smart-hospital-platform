@@ -21,7 +21,7 @@ Không dùng dataset no-show công khai vì chúng bắt nguồn từ dữ liệ
 ## 2. Huấn luyện có kiểm soát và tái lập
 
 ```
-dataset Parquet (hash) ─► kiểm tra dữ liệu (pandera) ─► feature package dùng chung ─► train (baseline LR, LightGBM)
+dataset Parquet (hash) ─► kiểm tra dữ liệu (bộ quy tắc Java) ─► feature package dùng chung ─► train (baseline LR, XGBoost4J)
         ─► MLflow run (tham số, metric, hash dataset, git SHA, image digest) ─► cổng chất lượng ─► đăng ký candidate
 ```
 
