@@ -1,4 +1,4 @@
-# Cập nhật phụ thuộc hằng tuần; PR do SA review (GOV-06).
+# Weekly dependency updates; PRs are reviewed by the SA (GOV-06).
 version: 2
 updates:
   - package-ecosystem: maven
@@ -13,7 +13,7 @@ updates:
     directories: ["/services/*"]
     schedule: { interval: weekly }
     ignore:
-      # Giữ JDK LTS 21 (khớp java.version và distroless java21); không nhảy bản không-LTS.
+      # Stay on LTS JDK 21 (matches java.version and distroless java21); do not jump to non-LTS releases.
       - dependency-name: "library/maven"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions

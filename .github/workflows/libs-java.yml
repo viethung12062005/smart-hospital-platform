@@ -1,4 +1,4 @@
-# CI cho thư viện Java dùng chung (libs/java). Hợp đồng (contracts/) được nhúng vào thư viện nên đổi hợp đồng cũng chạy lại.
+# CI for the shared Java libraries (libs/java). Contracts (contracts/) are embedded in the libraries, so contract changes also re-run it.
 name: libs-java
 on:
   pull_request:
