@@ -505,9 +505,9 @@ mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD S
 5. **Lỗi gặp:** hai `ReactiveJwtDecoder` trong test (`@ConditionalOnMissingBean` không đáng tin trong `@Configuration` thường) → bean test `@Primary`.
 6. **Giới hạn:** chưa có rate limit theo `sub` (cần Redis, task GW) và CORS cho web.
 
-### J5b — Gỡ mọi nhắc đến "caremate" khỏi các repo dự án (yêu cầu PM) ✅
-1. **Việc đã làm:** `git grep -i caremate` trên 4 repo → 13 chỗ, đều ở repo app. Xóa `docs/03-architecture/caremate-migration.md` và mục 5 của `overview.md` trỏ tới nó; viết lại trung tính: README, `overview.md`, ADR-0002/0005/0008 (nêu "cách làm phổ biến", "ví dụ Medplum" thay vì tên PoC), `phase4-build-log.md`, nhật ký này ("repo PoC cũ").
-2. **Kiểm chứng:** `git grep -i -c caremate` trên cả 4 repo → 0.
+### J5b — Gỡ mọi nhắc đến tên PoC cũ khỏi các repo dự án (yêu cầu PM) ✅
+1. **Việc đã làm:** `git grep -i <tên PoC cũ>` trên 4 repo → 13 chỗ, đều ở repo app. Xóa `docs/03-architecture/<tên PoC cũ>-migration.md` và mục 5 của `overview.md` trỏ tới nó; viết lại trung tính: README, `overview.md`, ADR-0002/0005/0008 (nêu "cách làm phổ biến", "ví dụ Medplum" thay vì tên PoC), `phase4-build-log.md`, nhật ký này ("repo PoC cũ").
+2. **Kiểm chứng:** `git grep -i -c <tên PoC cũ>` trên cả 4 repo → 0.
 3. **Lưu ý:** **lịch sử git** của repo app vẫn còn các commit cũ có chữ này; xóa khỏi lịch sử cần viết lại lịch sử và force-push — chưa làm, chờ PM quyết (khi chuyển sang repo thật bằng cách copy nội dung, lịch sử mới sẽ sạch).
 4. **Commit:** e2558f0 (cùng commit với J5a).
 
