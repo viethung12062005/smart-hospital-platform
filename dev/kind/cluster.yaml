@@ -14,3 +14,9 @@ nodes:
       - { containerPort: 30100, hostPort: 10000, listenAddress: "127.0.0.1" }   # Azurite blob (cổng mặc định của emulator)
       - { containerPort: 30101, hostPort: 10001, listenAddress: "127.0.0.1" }   # Azurite queue
       - { containerPort: 30080, hostPort: 18080, listenAddress: "127.0.0.1" }   # Keycloak
+      # Profile full (LOC-08): đổi file này chỉ có tác dụng khi tạo cụm mới (make down && make up PROFILE=full)
+      - { containerPort: 30310, hostPort: 13310, listenAddress: "127.0.0.1" }   # ClamAV clamd
+      - { containerPort: 30920, hostPort: 19200, listenAddress: "127.0.0.1" }   # OpenSearch
+      - { containerPort: 31434, hostPort: 21434, listenAddress: "127.0.0.1" }   # Ollama
+      - { containerPort: 30500, hostPort: 15000, listenAddress: "127.0.0.1" }   # MLflow
+      - { containerPort: 30300, hostPort: 13000, listenAddress: "127.0.0.1" }   # Grafana
