@@ -1,16 +1,13 @@
 # syntax=docker/dockerfile:1
 # Build context = gốc repo:  docker build -f services/notification/Dockerfile .
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mirror.gcr.io/library/maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
-COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
-COPY libs/dotnet/ libs/dotnet/
-COPY services/notification/src/ services/notification/src/
-RUN dotnet publish services/notification/src/Shp.Notification.Api/Shp.Notification.Api.csproj -c Release -o /app --no-self-contained
+COPY . .
+RUN --mount=type=cache,target=/root/.m2 mvn -B -q -pl services/notification -am package -DskipTests -Dspotless.check.skip=true -Djacoco.skip=true
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
+FROM gcr.io/distroless/java21-debian12:nonroot
 WORKDIR /app
-COPY --from=build /app .
-ENV ASPNETCORE_HTTP_PORTS=8080
+COPY --from=build /src/services/notification/target/app.jar /app/app.jar
 EXPOSE 8080
-USER $APP_UID
-ENTRYPOINT ["dotnet", "Shp.Notification.Api.dll"]
+USER nonroot
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]

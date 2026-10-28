@@ -1,8 +1,7 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=audit).
+# Values riêng của audit khi chạy trên kind (make -C dev deploy SVC=audit); nạp sau dev/chart/app-values-local.yaml.
 image:
   repository: localhost/shp-audit
   tag: dev
-replicaCount: 1
 env:
-  ASPNETCORE_ENVIRONMENT: Development
   OTEL_SERVICE_NAME: audit
+  SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true

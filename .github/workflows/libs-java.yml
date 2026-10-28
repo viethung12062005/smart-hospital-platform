@@ -1,0 +1,15 @@
+# CI cho thư viện Java dùng chung (libs/java). Hợp đồng (contracts/) được nhúng vào thư viện nên đổi hợp đồng cũng chạy lại.
+name: libs-java
+on:
+  pull_request:
+    paths: ["libs/java/**", "contracts/**", "pom.xml", ".mvn/**", ".github/workflows/libs-java.yml"]
+  push:
+    branches: [main]
+    paths: ["libs/java/**", "contracts/**", "pom.xml", ".mvn/**"]
+permissions:
+  contents: read
+jobs:
+  ci:
+    uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/java-ci.yml@work/initial-baseline
+    with:
+      modules: libs/java/shp-service-defaults,libs/java/shp-authz,libs/java/shp-events,libs/java/shp-security,libs/java/shp-web,libs/java/shp-data-postgres,libs/java/shp-data-mongo

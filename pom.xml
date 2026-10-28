@@ -27,6 +27,11 @@
     <module>libs/java/shp-data-postgres</module>
     <module>libs/java/shp-data-mongo</module>
     <module>services/gateway</module>
+    <module>services/scheduling</module>
+    <module>services/notification</module>
+    <module>services/clinical</module>
+    <module>services/document</module>
+    <module>services/audit</module>
   </modules>
 
   <properties>

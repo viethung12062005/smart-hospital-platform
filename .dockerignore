@@ -1,0 +1,13 @@
+# Build context của image Java là gốc repo: loại bỏ thứ không cần để build nhanh và không lọt bí mật local vào context.
+.git
+**/target
+dev/.local
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/node_modules
+.idea
+.vscode
+*.iml

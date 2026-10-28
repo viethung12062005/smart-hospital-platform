@@ -4,7 +4,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 ROOT="$(cd "$DEV_DIR/.." && pwd)"
 APP_NS="shp-apps"
-DOTNET="gateway scheduling notification clinical document audit"
+JAVA="gateway scheduling notification clinical document audit"
 PYTHON="ai ml"
 CHART="${SHP_CHART_DIR:-$LOCAL_DIR/templates/charts/microservice}"
 
@@ -20,19 +20,21 @@ fi
 
 ensure_credentials
 k create namespace "$APP_NS" --dry-run=client -o yaml | k apply -f - >/dev/null
-# Chuỗi kết nối TRONG cụm (tên DNS service của shp-deps), đưa vào Secret; values chung nạp bằng secretEnv.
+# Mật khẩu + chuỗi kết nối TRONG cụm (tên DNS service của shp-deps), đưa vào Secret; values chung nạp bằng secretEnv.
+# Host/user/URL không bí mật nằm ở dev/chart/app-values-local.yaml và services/<svc>/deploy/values-local.yaml.
 d="$NAMESPACE.svc.cluster.local"
 k -n "$APP_NS" create secret generic shp-local-conn \
-  --from-literal=postgres="Host=postgres.$d;Port=5432;Username=shp;Password=$POSTGRES_PASSWORD" \
+  --from-literal=postgres-password="$POSTGRES_PASSWORD" \
+  --from-literal=redis-password="$REDIS_PASSWORD" \
+  --from-literal=rabbitmq-password="$RABBITMQ_PASSWORD" \
   --from-literal=mongodb="mongodb://mongodb.$d:27017/?directConnection=true" \
-  --from-literal=redis="redis.$d:6379,password=$REDIS_PASSWORD" \
   --from-literal=rabbitmq="amqp://shp:$RABBITMQ_PASSWORD@rabbitmq.$d:5672/" \
   --from-literal=blob="DefaultEndpointsProtocol=http;AccountName=shp;AccountKey=$AZURITE_ACCOUNT_KEY;BlobEndpoint=http://azurite.$d:10000/shp;QueueEndpoint=http://azurite.$d:10001/shp" \
   --dry-run=client -o yaml | k apply -f - >/dev/null
 
 deploy_one() {
   local svc="$1" ctx file
-  case " $DOTNET " in
+  case " $JAVA " in
     *" $svc "*) ctx="$ROOT"; file="$ROOT/services/$svc/Dockerfile" ;;
     *) case " $PYTHON " in *" $svc "*) ctx="$ROOT/services/$svc"; file="$ctx/Dockerfile" ;; *) die "Service không tồn tại: $svc" ;; esac ;;
   esac
@@ -48,5 +50,5 @@ deploy_one() {
   log "[$svc] chạy OK"
 }
 
-if [ "$target" = all ]; then for s in $DOTNET $PYTHON; do deploy_one "$s"; done; else deploy_one "$target"; fi
+if [ "$target" = all ]; then for s in $JAVA $PYTHON; do deploy_one "$s"; done; else deploy_one "$target"; fi
 log "Gọi thử qua gateway: make port-forward  rồi  curl http://localhost:18000/info"

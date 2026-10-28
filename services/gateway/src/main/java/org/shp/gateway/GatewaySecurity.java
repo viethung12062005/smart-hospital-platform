@@ -44,7 +44,10 @@ class GatewaySecurity {
     return new SupplierReactiveJwtDecoder(
         () -> {
           var d =
-              (NimbusReactiveJwtDecoder) ReactiveJwtDecoders.fromIssuerLocation(props.authority());
+              props.jwkSetUri().isBlank()
+                  ? (NimbusReactiveJwtDecoder)
+                      ReactiveJwtDecoders.fromIssuerLocation(props.authority())
+                  : NimbusReactiveJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
           d.setJwtValidator(ShpJwt.validator(props, clock));
           return d;
         });

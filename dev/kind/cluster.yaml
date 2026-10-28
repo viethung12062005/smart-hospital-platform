@@ -1,5 +1,5 @@
 # Cụm Kubernetes cục bộ cho dev: 1 node. Cổng của phụ thuộc được mở ra localhost (chỉ 127.0.0.1)
-# để chạy service từ IDE hoặc `dotnet run`/`uvicorn` trên máy mà vẫn dùng đúng phụ thuộc trong cụm.
+# để chạy service từ IDE hoặc `mvn spring-boot:run`/`uvicorn` trên máy mà vẫn dùng đúng phụ thuộc trong cụm.
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: shp-local

@@ -1,0 +1,17 @@
+# Cấu hình service scheduling. Giá trị nhạy cảm (mật khẩu) KHÔNG đặt ở đây: lấy từ biến môi trường (local: dev/.local/connection.env
+# hoặc Secret do dev/scripts/deploy.sh tạo; cloud: Key Vault qua CSI).
+spring:
+  application:
+    name: scheduling
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:15432/scheduling}
+    username: ${SPRING_DATASOURCE_USERNAME:shp}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  flyway:
+    # Bảng nền tảng (outbox, inbox, idempotency_key) đến từ shp-data-postgres; migration của service đặt ở db/migration (V1+).
+    locations: classpath:db/migration,classpath:db/shp-messaging/postgres
+shp:
+  clinical:
+    url: ${SHP_CLINICAL_URL:http://clinical}
+server:
+  port: 8080

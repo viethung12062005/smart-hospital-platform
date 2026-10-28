@@ -38,3 +38,9 @@ spring:
                 - Path=/api/v1/ml/**
 server:
   port: 8080
+shp:
+  auth:
+    authority: ${OIDC_AUTHORITY:}
+    audience: ${OIDC_AUDIENCE:}
+    jwk-set-uri: ${OIDC_JWK_SET_URI:}
+    require-mfa-for-staff: ${SHP_REQUIRE_MFA_FOR_STAFF:true}
