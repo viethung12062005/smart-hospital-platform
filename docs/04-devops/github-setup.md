@@ -7,7 +7,7 @@
 
 | Repo | Visibility | Nội dung ban đầu |
 |---|---|---|
-| `smart-hospital-platform` (đã có dưới tên `smart-hospital-platform-scratch`; đổi tên nếu muốn, GitHub tự chuyển hướng) | private | tài liệu, `tools/plan/` hiện có |
+| `smart-hospital-platform` (đã có dưới tên `smart-hospital-platform`; đổi tên nếu muốn, GitHub tự chuyển hướng) | private | tài liệu, `tools/plan/` hiện có |
 | `shp-platform-templates` | private | `.github/workflows/` (reusable), `charts/microservice/`, `CHANGELOG.md` |
 | `shp-infra` | private | `bootstrap/`, `modules/`, `envs/{uat,prod}/`, `.github/workflows/` |
 | `shp-gitops` | private | `bootstrap/`, `platform/`, `policies/`, `envs/{uat,prod}/`, `services/` |

@@ -10,12 +10,12 @@ permissions:
   contents: read
 jobs:
   ci:
-    uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/java-ci.yml@work/initial-baseline
+    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@main
     with:
       modules: services/clinical
   container:
     needs: ci
-    uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/container.yml@work/initial-baseline
+    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@main
     permissions:
       contents: read
       id-token: write
@@ -31,13 +31,13 @@ jobs:
   promote-uat:
     if: github.ref == 'refs/heads/main'
     needs: container
-    uses: viethung12062005/shp-platform-templates-scratch/.github/workflows/gitops-promote.yml@work/initial-baseline
+    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@main
     with:
       service: clinical
       environment: uat
       digest: ${{ needs.container.outputs.digest }}
       gitops-owner: viethung12062005
-      gitops-repo: shp-gitops-scratch
+      gitops-repo: shp-gitops
       gitops-app-id: ${{ vars.GITOPS_APP_ID }}
       mode: commit
     secrets:

@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TEMPLATES_REPO = "viethung12062005/shp-platform-templates-scratch"
+TEMPLATES_REPO = "viethung12062005/shp-platform-templates"
 TEMPLATES_REF = "work/initial-baseline"
 
 # name -> (owner, mô tả, db: "postgres" | "mongo")
@@ -480,7 +480,7 @@ jobs:
       environment: uat
       digest: ${{{{ needs.container.outputs.digest }}}}
       gitops-owner: viethung12062005
-      gitops-repo: shp-gitops-scratch
+      gitops-repo: shp-gitops
       gitops-app-id: ${{{{ vars.GITOPS_APP_ID }}}}
       mode: commit
     secrets:

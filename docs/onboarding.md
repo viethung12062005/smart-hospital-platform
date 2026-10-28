@@ -14,7 +14,7 @@ Không cần cài kind, kubectl hay helm: `make -C dev tools` tự tải đúng 
 
 ## Bước 2 — Chạy hệ thống (20 phút)
 ```bash
-git clone https://github.com/viethung12062005/smart-hospital-platform-scratch.git && cd smart-hospital-platform-scratch
+git clone https://github.com/viethung12062005/smart-hospital-platform.git && cd smart-hospital-platform
 make -C dev quickstart        # dựng cụm kind + DB/bus/Keycloak + deploy 8 service (lần đầu 10–15 phút)
 make -C dev apps              # mọi pod Running
 make -C dev port-forward      # để mở; cửa sổ khác:
