@@ -2,8 +2,7 @@
 
 > Trạng thái: **Approved — G3 qua ngày 2026-10-26**.
 >
-> Project 5 — Cloud Application Development. Viết lại từ PoC CareMate (Medplum fork) thành
-> một hệ thống microservice gọn, FHIR-native, chạy trên Azure nhưng không khóa chặt vào Azure.
+> Project 5 — Cloud Application Development. Một hệ thống microservice gọn, FHIR-native, chạy trên Azure nhưng không khóa chặt vào Azure.
 > Chỉ dùng **dữ liệu bệnh nhân giả (synthetic)**.
 
 ## 1. Luồng nghiệp vụ end-to-end (vertical slice chính)
@@ -87,6 +86,3 @@ Xem [ADR-0004](adr/0004-azure-first-portable.md).
 - AI: redact PII trước khi gửi tới provider ngoài Azure, chống prompt injection, giới hạn
   tool theo quyền của người gọi.
 
-## 5. Khác biệt so với PoC CareMate
-
-Xem [caremate-migration.md](caremate-migration.md).

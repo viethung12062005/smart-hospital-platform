@@ -11,8 +11,8 @@
 ## Phương án đã cân nhắc
 - **Spring Boot + HAPI FHIR**: HAPI rất trưởng thành, nhưng .NET tích hợp tự nhiên với Azure
   (Managed Identity, App Insights) và image nhỏ, khởi động nhanh (quan trọng khi HPA/KEDA scale lúc 07:00).
-- **Node.js như CareMate**: tái dùng code cũ, nhưng mục tiêu là viết lại và tối ưu, và kiểu
-  tĩnh mạnh giúp ít lỗi hơn với dữ liệu y tế.
+- **Node.js/TypeScript**: hệ sinh thái FHIR tốt (Medplum), nhưng kiểu
+  tĩnh mạnh hơn giúp ít lỗi hơn với dữ liệu y tế.
 - **EF Core** thay Dapper: tiện, nhưng truy vấn JSONB/search index cần SQL thủ công.
 
 ## Hệ quả

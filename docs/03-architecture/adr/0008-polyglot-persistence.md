@@ -4,7 +4,7 @@
 Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
 
 ## Bối cảnh
-PoC CareMate (Medplum) đặt mọi thứ vào một PostgreSQL. Mỗi loại dữ liệu trong đề Project 5 lại có
+Cách làm phổ biến của các FHIR server (ví dụ Medplum) là đặt mọi thứ vào một PostgreSQL. Mỗi loại dữ liệu trong đề Project 5 lại có
 kiểu truy cập rất khác nhau: lịch hẹn cần giao dịch và tranh chấp ghi, hồ sơ lâm sàng là tài liệu
 FHIR lồng nhau đọc theo bệnh nhân, audit chỉ ghi thêm và không được sửa, RAG cần tìm kiếm
 vector + từ khóa + rerank.

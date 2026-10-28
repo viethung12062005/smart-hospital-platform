@@ -103,4 +103,4 @@ Kiểm chứng đã làm: shellcheck sạch; `install-tools.sh` chạy thật 2 
 | Hợp đồng: `contracts/authz/matrix.yaml`, JSON schema event, OpenAPI, terminology | SA | ARC-06/07/19/20 |
 | Thư viện dùng chung cho dev: auth (JWT + role + identity link), outbox/MassTransit, FHIR helper, test fixture Testcontainers | SA | để dev chỉ viết logic |
 | Profile local `full` (LOC-08), realm MFA (LOC-02) | SA | |
-| Xoay key bị lộ ở caremate + xóa lịch sử | Bạn | cần cho phép force-push `main` |
+| Xoay key bị lộ ở repo PoC cũ + xóa lịch sử | Bạn | ngoài phạm vi các repo dự án |
