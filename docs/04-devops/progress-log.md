@@ -655,6 +655,35 @@ docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
    - Lệnh trong CONTRIBUTING đối chiếu với workflow template (`pytest --cov-fail-under=70`, `mvn verify` có Spotless/JaCoCo).
 5. **Việc của bạn (PM):** khi có tài khoản GitHub của D1/D2/D3, bỏ comment các dòng trong `.github/CODEOWNERS` và mời họ làm collaborator; bật ruleset theo `github-setup.md`.
 
+### G1 — Repo GitOps (`shp-gitops-scratch`) ✅ / một phần
+1. **Mục tiêu:** Argo CD biết phải chạy gì trên cụm `uat`/`prod`. Khớp với pipeline `gitops-promote` (ghi `envs/<env>/<svc>/values.yaml`).
+2. **Việc đã làm (theo thứ tự):**
+   1. `bootstrap/`: values cài Argo CD (chart 10.11.5; tắt admin cục bộ, UI không mở ra ngoài) và root Application cho mỗi môi trường.
+   2. `clusters/<env>/`:
+      - AppProject `platform` và `shp-apps` (service chỉ vào namespace `shp-apps`, không tạo tài nguyên cấp cụm).
+      - ApplicationSet add-on, ghim version: cert-manager v1.21.2, kyverno 3.9.1, argo-rollouts 2.43.7, keda 2.20.2, envoy-gateway 1.9.3, otel-collector 0.177.0.
+        Version lấy từ `helm search repo`, chọn bản liền trước bản mới nhất.
+      - ApplicationSet service, có post-selector bỏ qua service chưa có digest (chart từ chối render khi thiếu digest).
+   3. `platform/charts/shp-baseline`:
+      - Namespace PSA restricted + NetworkPolicy default-deny.
+      - 4 ClusterPolicy Kyverno: chỉ ACR, chữ ký cosign keyless của `container.yml`, cấm `:latest`, bắt buộc resources/probe.
+      - GatewayClass/Gateway + ClusterIssuer.
+   4. `envs/`: values chung + theo môi trường + 8 service × 2 môi trường. Gateway chỉ nhận từ `envoy-gateway-system`; service khác nhận trong namespace.
+   5. `tools/validate.sh` + workflow `validate`:
+      - YAML hợp lệ; `clusters/uat` ≡ `prod` (bỏ comment); render; kubeconform kèm schema CRD.
+      - Liệt kê ô bắt buộc còn trống (`--strict` thì báo lỗi).
+   6. Tạo nhánh `main` của repo GitOps từ nhánh làm việc (Argo CD và bot promote dùng `main`).
+3. **Kiểm chứng:** `tools/validate.sh` → OK. kubeconform: 106 tài nguyên, 0 lỗi, 0 bỏ qua. Sơ đồ README render được.
+4. **Lỗi & cách sửa:**
+   - Bước so sánh uat/prod báo lệch do comment chứa chữ "uat" → bỏ comment trước khi so.
+   - Push lỗi mạng một lần → thử lại thành công.
+5. **Chưa làm:**
+   - ENV-01 (cài Argo CD bằng workflow, tạo Secret từ Key Vault).
+   - Kết nối DB/bus của service trên cloud (chờ IaC dữ liệu).
+   - Ghim chart theo tag (CIT-09).
+   - Các ô cấu hình để trống (ACR, tên miền, OIDC) phải điền trước khi dựng môi trường.
+   - Chưa chạy trên AKS thật.
+
 ## Phần D — Kế tiếp (theo thứ tự)
 | # | Bước | Ai | Trạng thái |
 |---|---|---|---|
@@ -662,7 +691,7 @@ docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
 | D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ✅ |
 | D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ✅ |
 | D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
-| D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ⏳ |
+| D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ✅ (G1) |
 | D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |
 | D5 | Module IaC dữ liệu (IAC-09..16), node pool `ai` cho Ollama + secret key LLM | SA | ⏳ |
 | D6 | Profile local `full` (OpenSearch, Ollama, ClamAV, MLflow, observability), realm MFA | SA | ⏳ |
