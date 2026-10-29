@@ -33,3 +33,6 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule: { interval: weekly }
+    groups:
+      # One PR for all action bumps instead of one per action.
+      actions: { patterns: ["*"] }
