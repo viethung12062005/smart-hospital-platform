@@ -1,0 +1,59 @@
+# Promote one service to prod: read the image digest that runs in uat (shp-gitops envs/uat/<service>/values.yaml) and
+# open a PR in shp-gitops that sets the same digest in envs/prod. Merging that PR is the approval; Argo CD then deploys.
+# Only the repository owner may run it (the private-repo plan has no Environment reviewers).
+name: promote-prod
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Service to promote with the image it runs in uat"
+        type: choice
+        options: [audit, clinical, document, gateway, notification, scheduling, ai, ml, web]
+        required: true
+permissions:
+  contents: read
+jobs:
+  uat-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      digest: ${{ steps.read.outputs.digest }}
+    steps:
+      - name: Only the repository owner may run this workflow
+        env:
+          ACTOR: ${{ github.triggering_actor }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          [ "$ACTOR" = "$OWNER" ] || { echo "::error::$ACTOR may not run this workflow; only $OWNER can."; exit 1; }
+      - id: app
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1.12.0
+        with:
+          app-id: ${{ vars.GITOPS_APP_ID }}
+          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: shp-gitops
+      - id: read
+        name: Read the digest running in uat
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+          SERVICE: ${{ inputs.service }}
+        run: |
+          set -euo pipefail
+          digest=$(gh api -H "Accept: application/vnd.github.raw" "repos/$OWNER/shp-gitops/contents/envs/uat/$SERVICE/values.yaml" | yq '.image.digest')
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "::error::$SERVICE has no image in uat yet (image.digest is '$digest')"; exit 1; }
+          echo "Promoting $SERVICE $digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+  promote:
+    needs: uat-digest
+    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.5
+    with:
+      service: ${{ inputs.service }}
+      environment: prod
+      digest: ${{ needs.uat-digest.outputs.digest }}
+      gitops-owner: viethung12062005
+      gitops-repo: shp-gitops
+      gitops-app-id: ${{ vars.GITOPS_APP_ID }}
+      mode: pr
+    secrets:
+      gitops-app-private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
