@@ -1,0 +1,15 @@
+# Builds/refreshes the OWASP Dependency-Check vulnerability database every night and stores it in the Actions cache.
+# The dependency-check job of pr-checks reads it with --noupdate, so PRs never download the NVD data themselves.
+# First time: Actions tab -> dependency-check-db -> Run workflow (the full download takes about an hour).
+name: dependency-check-db
+on:
+  schedule:
+    - cron: "0 19 * * *"   # 02:00 Vietnam time
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-db:
+    uses: viethung12062005/shp-platform-templates/.github/workflows/dependency-check-db.yml@v0.1.5
+    secrets:
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
