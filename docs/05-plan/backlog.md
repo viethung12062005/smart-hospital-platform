@@ -9,8 +9,8 @@ Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 | Tuần | SA | D1 | D2 | D3 |
 |---|---|---|---|---|
 | W1 | 30 |  |  |  |
-| W2 | 42 | 7 | 19 | 28 |
-| W3 | 45 | 4 | 27 | 28 |
+| W2 | 42 |  | 19 | 28 |
+| W3 | **49** | 4 | 27 | 28 |
 | W4 | **52** | 27 | 29 | 29 |
 | W5 | 38 | 30 | 29 | 30 |
 | W6 | 27 | 29 | 27 | 29 |
@@ -20,7 +20,7 @@ Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 | W10 | 28 | 4 |  | 22 |
 | W11 | 8 |  |  | 3 |
 | W12 | 9 |  |  |  |
-| **Tổng** | **352** | **184** | **215** | **258** |
+| **Tổng** | **356** | **177** | **215** | **258** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -452,8 +452,8 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| WEB-01 | US-066 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline | D1 | 4 | LOC-02, SHR-20 | P2 | NFR-I2 |
-| WEB-02 | US-066 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên | D1 | 3 | WEB-01 | S1 | 07 §3, §5 |
+| WEB-01 | US-066 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline | SA | 4 | LOC-02, SHR-20 | P2 | NFR-I2 |
+| WEB-02 | US-066 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên | SA | 3 | WEB-01 | S1 | 07 §3, §5 |
 | WEB-10 | US-066 | Pipeline + chart cho web | Container nginx non-root dùng chart chung | SA | 2 | WEB-01 | S3 | ADR-0009 |
 | WEB-30 | US-053, US-056 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | Hiển thị chế độ retrieval-only; trích dẫn mở đúng mục | D3 | 4 | WEB-02, AI-09 | S4 | AI1, AI2 |
 | WEB-06 | US-009, US-010 | Màn hình quản lý lịch bác sĩ: Schedule và mẫu tuần | Nurse/Admin tạo/sửa; lỗi validate hiển thị theo trường | D1 | 4 | WEB-02, SCH-05 | S4 | S1, S5 |

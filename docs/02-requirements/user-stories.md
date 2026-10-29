@@ -1642,8 +1642,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
 | PY-01 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | D3 | 3 | W2 |
 | SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
-| WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | D1 | 4 | W2 |
-| WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | D1 | 3 | W2 |
+| WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | SA | 4 | W3 |
+| WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | SA | 3 | W4 |
 | IAC-16 | Module identity ứng dụng (Entra ID) | SA | 4 | W6 |
 | WEB-10 | Pipeline + chart cho web | SA | 2 | W6 |
 

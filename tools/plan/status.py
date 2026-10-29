@@ -45,4 +45,7 @@ STATUS = {
     "GOV-02": ("done", "ruleset protect-main", "Cả 4 repo: bắt buộc PR, 1 review + Code Owner, hủy approval khi push mới, resolve thread, lịch sử tuyến tính, cấm force-push/xóa; chỉ chủ repo bypass qua PR"),
     "GOV-03": ("partial", "gitops 3ce293d, infra 124859b, templates 97aea24", "CODEOWNERS + PR/issue template cho 3 repo (chờ merge); app repo đã có từ trước; CODEOWNERS dev (D1..D3) chờ tài khoản GitHub thật"),
     "GOV-04": ("partial", "Environments", "Đã tạo deploy-uat/prod, infra-uat/prod(+destroy); CHƯA có reviewer/wait timer vì gói GitHub không hỗ trợ cho repo private"),
+    "WEB-01": ("partial", "nhánh WEB-01-frontend-base", "web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), route/menu theo vai trò, i18n vi/en, ErrorBoundary, hệ thiết kế + AppShell chuyển từ portal PoC (Apache-2.0); 6 màn hình mẫu chạy với MSW; CHƯA thử đăng nhập Keycloak thật trên trình duyệt"),
+    "WEB-02": ("done", "nhánh WEB-01-frontend-base", "web/src/api/client.ts: token, Accept-Language, Idempotency-Key, If-Match/ETag, OperationOutcome/Problem Details + slot gợi ý 409; test"),
+    "WEB-10": ("partial", "nhánh WEB-01-frontend-base; shp-gitops nhánh WEB-10-web-app; templates v0.1.5", "Dockerfile nginx non-root (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, values uat/prod; CHƯA chạy pipeline thật và chưa deploy lên cụm"),
 }

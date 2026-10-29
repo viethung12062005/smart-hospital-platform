@@ -11,3 +11,4 @@ dev/.local
 .idea
 .vscode
 *.iml
+**/dist

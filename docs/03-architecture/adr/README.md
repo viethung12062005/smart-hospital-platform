@@ -19,3 +19,4 @@ Mỗi ADR theo format: Bối cảnh → Quyết định → Phương án đã c�
 | [0013](0013-llm-deepseek-gemini-local-embedding.md) | DeepSeek chính, Gemini free tier dự phòng, embedding local; thay chuỗi model của 0006 | Accepted |
 | [0014](0014-database-per-service-review.md) | Rà soát CSDL từng service: PostgreSQL chỉ cho scheduling; notification và ml chuyển MongoDB (+ Parquet) | Accepted |
 | [0015](0015-java-for-all-services.md) | Java 21 + Spring Boot 4.1 cho 6 service nghiệp vụ; ai và ml giữ Python (thay 0002, 0012) | Accepted |
+| [0016](0016-frontend-web-app.md) | Một web app PWA (React + TypeScript + Vite + Mantine 7) trong repo ứng dụng; tái dùng có chọn lọc portal PoC | Proposed |
