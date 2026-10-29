@@ -10,7 +10,7 @@ CTX="kind-${CLUSTER_NAME}"
 # shellcheck disable=SC2034  # dùng trong deploy.sh
 TEMPLATES_GIT="${SHP_TEMPLATES_GIT:-https://github.com/viethung12062005/shp-platform-templates.git}"
 # shellcheck disable=SC2034
-TEMPLATES_REF="${SHP_TEMPLATES_REF:-v0.1.3}"
+TEMPLATES_REF="${SHP_TEMPLATES_REF:-v0.1.5}"
 
 # Công cụ do install-tools.sh cài (dev/.local/bin) được ưu tiên, không cần sửa PATH của máy.
 PATH="$DEV_DIR/.local/bin:$PATH"
