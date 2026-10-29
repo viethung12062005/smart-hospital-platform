@@ -19,7 +19,7 @@ Nhánh mặc định `main`. Bật cho cả 4 repo: **Secret scanning + Push pro
 | Quy tắc | Giá trị |
 |---|---|
 | Bắt buộc Pull Request | có; tối thiểu **1 review**; hủy approval khi có commit mới; yêu cầu review của Code Owners |
-| Status check bắt buộc | app repo: `ci / <service>` của service bị thay đổi, `pr-checks` (gitleaks, actionlint, dependency review, CodeQL); infra: `terraform-checks`; gitops/templates: `helm-validate` |
+| Status check bắt buộc | app repo: chỉ `pr-gate` (workflow `pr-gate.yml` tổng hợp kết quả `pr-checks`, `contracts`, `libs-java`, mọi `svc-*`; các workflow này lọc theo đường dẫn nên không bắt buộc riêng được); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
 | Cấm force-push và xóa nhánh `main` | có |
 | Yêu cầu lịch sử tuyến tính | có (squash merge) |
 | Bypass | chỉ **GitHub App bot GitOps** trên `shp-gitops` cho đường dẫn `envs/uat/**` |
@@ -81,7 +81,7 @@ Xoay key mỗi 90 ngày (nhắc trong `cost-guard`/issue định kỳ).
 
 - [ ] Push trực tiếp lên `main` bị chặn ở cả 4 repo
 - [ ] PR thiếu status check hoặc thiếu review không merge được
-- [ ] Workflow `env-provision` dừng chờ approval ở `infra-uat`
+- [ ] Workflow `env-provision`/`env-destroy` do người khác chủ repo bấm thì dừng ngay ở bước kiểm tra người chạy
 - [ ] Reusable workflow từ `shp-platform-templates` gọi được từ app repo
 - [ ] Image không ký bị cluster chặn (GOP-07)
 
@@ -92,7 +92,9 @@ Xoay key mỗi 90 ngày (nhắc trong `cost-guard`/issue định kỳ).
 | Mục trong runbook | Thực tế | Cách xử lý |
 |---|---|---|
 | Secret scanning + push protection | Không có ở repo private gói thường | `gitleaks` trong `pr-checks` thay thế; bật lại khi nâng gói |
-| Required reviewers / wait timer cho Environment | Không hỗ trợ ở repo private gói thường | Cổng duyệt = review PR (CODEOWNERS); `envs/prod/` do SA duyệt |
+| Required reviewers / wait timer cho Environment | Không hỗ trợ ở repo private gói thường | Cổng duyệt = review PR (CODEOWNERS); `envs/prod/` do SA duyệt. Workflow hạ tầng (`env-provision`, `env-destroy`) tự kiểm tra `github.triggering_actor` là chủ repo |
+| Đẩy image khi chưa có Azure | `svc-*` trên `main` chỉ push khi biến `ACR_NAME` có giá trị | Chưa có biến: job `not-pushed` ghi chú vào Summary, `promote-uat` bỏ qua, `main` xanh |
+| Bot GitOps commit thẳng `envs/uat/**` | Ruleset `protect-main` của `shp-gitops` chưa có App trong danh sách bypass | Khi tạo App GitOps: thêm App vào bypass của ruleset `shp-gitops`, nếu không `promote-uat` (mode `commit`) bị chặn |
 | `dependency-review`, CodeQL | Cần GitHub Advanced Security | Bỏ qua ở repo private (templates PR #2) |
 | GitHub Project (GOV-07) | Token `gh` thiếu scope `project` | `gh auth refresh -s project,read:project` rồi import `docs/05-plan/backlog.csv` |
 | Bot GitOps (GOV-05) | Chưa tạo GitHub App (cần thao tác trên web) | Xem mục 7 |
