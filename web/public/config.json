@@ -1,0 +1,7 @@
+{
+  "authMode": "oidc",
+  "authority": "http://localhost:18080/realms/shp",
+  "clientId": "shp-web",
+  "scope": "openid profile email",
+  "apiBase": ""
+}

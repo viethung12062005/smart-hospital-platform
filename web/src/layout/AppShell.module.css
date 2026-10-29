@@ -1,0 +1,109 @@
+/* Chuyển thể từ Medplum AppShell (Apache-2.0), màu nền theo hệ thiết kế SHP. */
+.main {
+  flex: 1;
+  background-color: var(--shp-bg);
+  min-height: 100vh;
+}
+
+.header {
+  background: var(--shp-mint);
+  border-bottom: 1px solid #c6dcd2;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  color: var(--shp-teal-d);
+  letter-spacing: -0.02em;
+  font-size: 15px;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.brand:hover {
+  background-color: rgba(15, 109, 98, 0.08);
+}
+
+.mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--shp-teal);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.user {
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: #3d5a52;
+  font-size: 12.5px;
+}
+
+.user:hover,
+.userActive {
+  background-color: rgba(15, 109, 98, 0.08);
+}
+
+.userName {
+  font-weight: 600;
+
+  @media (max-width: $mantine-breakpoint-xs) {
+    display: none;
+  }
+}
+
+.menuTitle {
+  margin: 18px 0 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--shp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 13px;
+  color: #455a64;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+
+  &:hover {
+    background-color: var(--shp-teal-soft);
+    color: var(--shp-teal);
+    text-decoration: none;
+  }
+
+  & svg {
+    color: var(--shp-muted);
+    margin-right: 10px;
+    stroke-width: 1.6;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.linkActive {
+  color: var(--shp-teal);
+  background-color: var(--shp-teal-soft);
+  border-left-color: var(--shp-teal);
+  font-weight: 600;
+
+  & svg {
+    color: var(--shp-teal);
+  }
+}

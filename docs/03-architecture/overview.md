@@ -37,7 +37,8 @@ flowchart LR
     WAF["Front Door + WAF<br/>(chỉ cloud)"] --> ING["Ingress TLS"]
   end
 
-  GW["api-gateway<br/>Spring Cloud Gateway<br/>route · kiểm JWT · chặn /internal"]
+  WEBAPP["web — SPA trên nginx<br/>React · TypeScript · Mantine<br/>HTTPRoute /"]
+  GW["api-gateway<br/>Spring Cloud Gateway<br/>/fhir · /api · kiểm JWT · chặn /internal"]
 
   subgraph JAVA["Service nghiệp vụ — Java 21 · Spring Boot 4"]
     direction TB
@@ -76,7 +77,8 @@ flowchart LR
 
   USERS --> WAF
   USERS -. đăng nhập .-> IDP
-  ING --> GW
+  ING -- "/" --> WEBAPP
+  ING -- "/fhir, /api" --> GW
   GW -. JWKS .-> IDP
   GW --> SCH & CLI & DOC & NTF & AUD & AI & ML
 
@@ -96,6 +98,8 @@ flowchart LR
 ```
 
 Ghi chú về sơ đồ:
+- **Giao diện web** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` chỉ phục vụ file tĩnh (SPA). Trình duyệt tải SPA từ `/`, đăng nhập OIDC (PKCE) với Keycloak/Entra,
+  rồi gọi API cùng origin qua `/fhir`, `/api` → gateway (không cần CORS). Menu theo vai trò chỉ để điều hướng; quyền thật do backend kiểm.
 - **Ranh giới tin cậy.** Mọi request từ ngoài đi qua WAF (cloud), Ingress, rồi gateway.
   - Gateway kiểm token ở biên.
   - Từng service **kiểm lại token** và phân quyền chi tiết theo [ma trận](detailed-design/15-authorization.md).

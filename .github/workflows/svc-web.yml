@@ -1,0 +1,46 @@
+# Web app (web/). Pipeline: CI (format, lint, type check, tests + coverage, build, npm audit)
+# -> image (hadolint, Trivy, SBOM, sign) -> promote to uat (awaits approval).
+# The image build context is the repo root because the app reads contracts/terminology at build time.
+name: svc-web
+on:
+  pull_request:
+    paths: ["web/**", "contracts/terminology/**", ".github/workflows/svc-web.yml"]
+  push:
+    branches: [main]
+    paths: ["web/**", "contracts/terminology/**", ".github/workflows/svc-web.yml"]
+permissions:
+  contents: read
+jobs:
+  ci:
+    uses: viethung12062005/shp-platform-templates/.github/workflows/node-ci.yml@v0.1.5
+    with:
+      working-directory: web
+  container:
+    needs: ci
+    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@v0.1.5
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      context: .
+      dockerfile: web/Dockerfile
+      image-name: web
+      push: ${{ github.ref == 'refs/heads/main' }}
+      acr-name: ${{ vars.ACR_NAME }}
+      azure-client-id: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
+      azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
+      azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  promote-uat:
+    if: github.ref == 'refs/heads/main'
+    needs: container
+    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.5
+    with:
+      service: web
+      environment: uat
+      digest: ${{ needs.container.outputs.digest }}
+      gitops-owner: viethung12062005
+      gitops-repo: shp-gitops
+      gitops-app-id: ${{ vars.GITOPS_APP_ID }}
+      mode: commit
+    secrets:
+      gitops-app-private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}

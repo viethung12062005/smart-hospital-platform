@@ -13,13 +13,17 @@ MAVEN_VERSION="3.9.16"
 # SHA-512 của apache-maven-3.9.16-bin.tar.gz, lấy từ https://archive.apache.org/dist/maven/maven-3/3.9.16/binaries/
 MAVEN_SHA512="831a8591fe20c8243b1dbe7d71e3244f31d1665b0804b2e825e38cbbe5ce0cafb8338851f90780735568773e0a6cd07bbec107cda0b896b008b861075358b6f6"
 MAVEN_HOME_DIR="/opt/apache-maven-${MAVEN_VERSION}"
+# Node.js LTS cho web app (web/). SHA-256 lấy từ https://nodejs.org/dist/v22.23.4/SHASUMS256.txt
+NODE_VERSION="22.23.4"
+NODE_SHA256_X64="1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce"
+NODE_SHA256_ARM64="6287aa46b6c375d816e63ae66d024fbbfd70404825aabdfdf898a970871d2f4b"
 
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 ok()   { printf '\033[1;32m ok\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m !!\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
-[ "$(uname -s)" = Linux ] || die "Script này dành cho Ubuntu/WSL2. Trên macOS hãy cài JDK 21, Maven 3.9, Python 3.12 bằng Homebrew."
+[ "$(uname -s)" = Linux ] || die "Script này dành cho Ubuntu/WSL2. Trên macOS hãy cài JDK 21, Maven 3.9, Python 3.12, Node.js 22 bằng Homebrew."
 grep -qi ubuntu /etc/os-release 2>/dev/null || warn "Không phải Ubuntu: script dùng apt, có thể không chạy đúng."
 
 SUDO=""
@@ -34,11 +38,11 @@ case "$PWD" in
 esac
 
 # ---- 2. Gói hệ thống ------------------------------------------------------------------------------------------------
-log "Cài gói hệ thống (git, make, curl, openssl, jq, unzip, Python 3, JDK 21)"
+log "Cài gói hệ thống (git, make, curl, openssl, jq, unzip, xz, Python 3, JDK 21)"
 export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update -qq
 $SUDO apt-get install -y -qq --no-install-recommends \
-  ca-certificates curl git make openssl jq unzip zip build-essential \
+  ca-certificates curl git make openssl jq unzip zip xz-utils build-essential \
   python3 python3-venv python3-pip "$JAVA_PKG" >/dev/null
 ok "gói hệ thống"
 
@@ -54,6 +58,26 @@ else
   ok "Maven $MAVEN_VERSION"
 fi
 $SUDO ln -sfn "$MAVEN_HOME_DIR/bin/mvn" /usr/local/bin/mvn
+
+# ---- 3b. Node.js LTS (web app). Bản của apt quá cũ: dùng bản chính thức, kiểm SHA-256 -------------------------------
+case "$(uname -m)" in
+  x86_64|amd64) node_arch=x64; node_sha="$NODE_SHA256_X64" ;;
+  aarch64|arm64) node_arch=arm64; node_sha="$NODE_SHA256_ARM64" ;;
+  *) die "CPU không hỗ trợ cho Node.js: $(uname -m)" ;;
+esac
+NODE_HOME_DIR="/opt/node-v${NODE_VERSION}-linux-${node_arch}"
+if [ -x "$NODE_HOME_DIR/bin/node" ]; then
+  ok "Node.js $NODE_VERSION đã có"
+else
+  log "Tải Node.js $NODE_VERSION (kiểm SHA-256)"
+  ntmp="$(mktemp -d)"
+  curl -fsSL -o "$ntmp/node.tar.xz" "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz"
+  echo "${node_sha}  $ntmp/node.tar.xz" | sha256sum -c - >/dev/null || die "Sai checksum Node.js: tải lại hoặc báo SA."
+  $SUDO tar -xJf "$ntmp/node.tar.xz" -C /opt
+  rm -rf "$ntmp"
+  ok "Node.js $NODE_VERSION"
+fi
+for b in node npm npx; do $SUDO ln -sfn "$NODE_HOME_DIR/bin/$b" "/usr/local/bin/$b"; done
 
 # ---- 4. GitHub CLI (đăng nhập GitHub + git credential) ---------------------------------------------------------------
 if [ -z "${SKIP_GH:-}" ] && ! command -v gh >/dev/null 2>&1; then
@@ -125,6 +149,7 @@ log "Phiên bản đã cài"
 printf '  java    %s\n' "$(java -version 2>&1 | head -1)"
 printf '  mvn     %s\n' "$(mvn -v 2>/dev/null | head -1)"
 printf '  python  %s\n' "$(python3 --version)"
+printf '  node    %s (npm %s)\n' "$(node --version)" "$(npm --version)"
 printf '  git     %s\n' "$(git --version)"
 command -v gh >/dev/null 2>&1 && printf '  gh      %s\n' "$(gh --version | head -1)"
 
