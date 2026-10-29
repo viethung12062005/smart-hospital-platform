@@ -13,9 +13,10 @@ updates:
     directories: ["/services/*", "/web"]
     schedule: { interval: weekly }
     ignore:
-      # Stay on LTS JDK 21 (matches java.version and distroless java21); do not jump to non-LTS releases.
+      # Builder image: stay on LTS JDK 21 (matches java.version and distroless java21). Dependabot sees
+      # 3.9-eclipse-temurin-21 -> -26 as a suffix change, not a major bump, so an update-types rule cannot stop it.
+      # Ignore the image entirely: the rolling tag 3.9-eclipse-temurin-21 already brings Maven and JDK 21 patches on each build.
       - dependency-name: "library/maven"
-        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: "/web"
     schedule: { interval: weekly }
@@ -33,6 +34,21 @@ updates:
       - dependency-name: "@types/react*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@mantine/*"
+        update-types: ["version-update:semver-major"]
+      # Build and test toolchain moves together (Vite <-> plugin-react <-> Vitest; MSW 3 changed its API): upgrade as one planned change.
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitejs/plugin-react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "msw"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsdom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@testing-library/jest-dom"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
