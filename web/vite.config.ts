@@ -7,8 +7,10 @@ import { defineConfig } from 'vite';
 // nên không cần CORS ở gateway khi phát triển.
 const GATEWAY = process.env.SHP_GATEWAY_URL ?? 'http://localhost:18000';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  // `npm run dev:mock` (vite --mode mock): bật MSW + đăng nhập giả. Đặt ở đây thay vì file .env.mock vì repo bỏ qua mọi .env.*.
+  define: mode === 'mock' ? { 'import.meta.env.VITE_MOCK': JSON.stringify('true') } : {},
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
@@ -39,4 +41,4 @@ export default defineConfig({
       thresholds: { lines: 70, statements: 70, functions: 60, branches: 60 },
     },
   },
-});
+}));
