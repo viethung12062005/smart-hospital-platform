@@ -30,6 +30,7 @@ Commit message ngắn, ở thì hiện tại, nói việc làm. Ví dụ: `Creat
 |---|---|
 | Service Java | `mvn -B spotless:apply` rồi `mvn -B -pl services/<svc> -am verify` (cần Docker cho Testcontainers) |
 | Service Python | trong `services/ai` hoặc `services/ml`: `ruff check . && ruff format --check . && mypy . && pytest --cov` |
+| Web app | trong `web/`: `npm run format:check && npm run lint -- --max-warnings=0 && npm run typecheck && npm run test -- --coverage` (xem `web/README.md`) |
 | Hợp đồng (nếu sửa `contracts/`) | `pip install -r tools/contracts/requirements.txt && tools/contracts/check_all.sh` |
 | Chạy thử trong cụm | `make -C dev deploy SVC=<svc>` (xem `dev/README.md`) |
 

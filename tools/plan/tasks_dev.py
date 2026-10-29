@@ -108,9 +108,9 @@ D1_TASKS = [
 
     # ---------------- web: shell + đặt lịch + quản lý lịch ----------------
     ("WEB-01", "US-066", "Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en",
-     "Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline", "D1", 4, "LOC-02, SHR-20", "P2", "NFR-I2"),
+     "Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline", "SA", 4, "LOC-02, SHR-20", "P2", "NFR-I2"),
     ("WEB-02", "US-066", "Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp",
-     "Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên", "D1", 3, "WEB-01", "S1", "07 §3, §5"),
+     "Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên", "SA", 3, "WEB-01", "S1", "07 §3, §5"),
     ("WEB-03", "US-014", "Màn hình tìm slot trống: bộ lọc chuyên khoa/bác sĩ/ngày, danh sách phân trang",
      "Chỉ gọi API S8; hiển thị theo múi giờ VN", "D1", 4, "WEB-02, SCH-10", "S3", "S8"),
     ("WEB-04", "US-015", "Màn hình đặt lịch: xác nhận, xử lý 409 (gợi ý slot), 422 BR-03/BR-04, chống bấm đúp",

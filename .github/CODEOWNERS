@@ -12,6 +12,7 @@
 # /services/audit/          @D2 @viethung12062005
 # /services/ai/             @D3 @viethung12062005
 # /services/ml/             @D3 @viethung12062005
+# /web/src/pages/           @D1 @D2 @D3 @viethung12062005
 
 # Luôn cần SA, kể cả khi đã mở các dòng trên
 /libs/                      @viethung12062005
@@ -23,3 +24,11 @@
 /services/*/deploy/         @viethung12062005
 /services/*/src/main/java/org/shp/*/config/ @viethung12062005
 /docs/03-architecture/      @viethung12062005
+# Nền web app (đăng nhập, client API, khung giao diện, image): luôn cần SA
+/web/src/api/               @viethung12062005
+/web/src/auth/              @viethung12062005
+/web/src/layout/            @viethung12062005
+/web/Dockerfile             @viethung12062005
+/web/nginx.conf             @viethung12062005
+/web/package.json           @viethung12062005
+/web/package-lock.json      @viethung12062005
