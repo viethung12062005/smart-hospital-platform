@@ -65,5 +65,8 @@
     "workerDirectory": [
       "public"
     ]
+  },
+  "overrides": {
+    "tinypool": "2.2.0"
   }
 }
