@@ -9,8 +9,9 @@ Mục tiêu: trong **dưới 1 giờ**, bạn clone repo, chạy được hệ t
 | `git`, `make`, `curl`, `openssl` | mọi người |
 | **JDK 21** (Temurin) + **Maven 3.9**; IDE: IntelliJ IDEA hoặc VS Code (Extension Pack for Java) | D1, D2 |
 | **Python 3.12** | D3 |
+| **Node.js 22** (cho màn hình web, task WEB-*) | D1, D2, D3 |
 
-Không cần cài kind, kubectl hay helm: `make -C dev tools` tự tải đúng phiên bản.
+Không cần cài kind, kubectl hay helm: `make -C dev tools` tự tải đúng phiên bản. Trên Ubuntu/WSL2, `bash dev/scripts/setup-ubuntu.sh` cài đủ JDK, Maven, Python, Node.js.
 
 ## Bước 2 — Chạy hệ thống (20 phút)
 ```bash
@@ -74,6 +75,14 @@ Hướng dẫn đầy đủ và cách xử lý sự cố: [dev/README.md](../dev
   - Key DeepSeek/Gemini **không bao giờ** nằm trong repo; ở local đặt bằng biến môi trường trên máy.
   - Mọi văn bản gửi ra LLM bên ngoài phải qua bộ che PII.
   - Collection MongoDB của `ml` đã được `make -C dev up` tạo sẵn.
+
+### Màn hình web (cả D1, D2, D3)
+Mỗi người làm màn hình cho phần backend của mình: D1 đặt lịch và lịch bác sĩ (WEB-03..08), D2 bệnh nhân, lần khám, tài liệu, DPO (WEB-20..27),
+D3 giao diện AI (WEB-30..34). Khung đã có sẵn: đăng nhập, menu theo vai trò, client API, hệ thiết kế, 6 màn hình mẫu.
+- **Đọc:** [web/README.md](../web/README.md) (cách chạy, cấu trúc, 8 quy tắc), [ADR-0016](03-architecture/adr/0016-frontend-web-app.md).
+- **Chạy nhanh không cần backend:** `cd web && npm ci && npm run dev:mock`, mở http://localhost:5173 và chọn vai trò.
+- **Bắt đầu từ màn hình mẫu gần nhất:** đặt lịch (`pages/patient/BookAppointmentPage.tsx`), hàng đợi (`pages/staff/QueuePage.tsx`),
+  hồ sơ bệnh nhân (`pages/clinical/PatientDetailPage.tsx`). Endpoint backend chưa có thì thêm handler trong `src/mocks/handlers.ts` theo đúng hợp đồng.
 
 ## Bước 5 — PR đầu tiên
 Chọn task đầu tiên trong danh sách của bạn và làm theo [CONTRIBUTING.md](../CONTRIBUTING.md#quy-trình-một-task):

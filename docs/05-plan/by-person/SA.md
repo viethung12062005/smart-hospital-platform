@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **122 task, 409 giờ**. Đã xong: **18**, làm một phần: **21** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **124 task, 416 giờ**. Đã xong: **19**, làm một phần: **23** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -45,7 +45,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **18**, làm một phần: **21** (�
 | ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 95d2f74: libs/java/shp-authz: AuthzMatrix (Java)]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
 | ☑ | SHR-23 | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[xong, commit 95d2f74: Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)]** | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | 4 | SHR-22 | ENABLER |
 
-## Tuần 3 — 69 giờ
+## Tuần 3 — 73 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -65,8 +65,9 @@ Tổng: **122 task, 409 giờ**. Đã xong: **18**, làm một phần: **21** (�
 | ☑ | SHR-24 | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse **[xong, commit 95d2f74: AuthorizationEngine.decide (Java): default-deny, fields, purpose, 238 test]** | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | 3 | SHR-23 | ENABLER |
 | ☑ | SHR-25 | Authz: filter endpoint Spring + test 'mọi endpoint phải có quy tắc' **[xong, commit 5e423ab: shp-web @RequireShpAuthz + AuthzInterceptor + UnprotectedEndpoints.find (test chặn quên phân quyền)]** | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | 4 | SHR-24 | ENABLER |
 | ☑ | SHR-28 | Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay) **[xong, commit 3764d57: shp-data-postgres PostgresIdempotency + shp-web IdempotencyKeys; 28 test với PostgreSQL thật]** | Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song | 4 | SHR-05 | US-015 |
+| ◐ | WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en **[làm một phần, commit PR WEB-01-frontend-base: web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), route/menu theo vai trò, i18n vi/en, ErrorBoundary, hệ thiết kế + AppShell chuyển từ portal PoC (Apache-2.0); 6 màn hình mẫu chạy với MSW; CHƯA thử đăng nhập Keycloak thật trên trình duyệt]** | Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline | 4 | LOC-02, SHR-20 | US-066 |
 
-## Tuần 4 — 54 giờ
+## Tuần 4 — 57 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -92,6 +93,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **18**, làm một phần: **21** (�
 | ☐ | SCF-07 | Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối MongoDB/bus/MLflow) | Service mẫu chạy qua pipeline template | 2 | LOC-04, CIT-08 | ENABLER |
 | ◐ | SHR-09 | Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR **[làm một phần, commit 5e423ab: shp-events AuditRecordBuilder (che IP, chặn giá trị trong resource) + AuditSink; CHƯA có sink ghi outbox]** | Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số | 4 | SHR-06 | US-047 |
 | ☑ | SHR-27 | Authz: phát audit cho mọi quyết định (cho phép và từ chối) **[xong, commit 5e423ab: AuthzAudit.fromDecision + interceptor ghi audit cho cho-phép, từ-chối, lỗi 5xx]** | Mỗi Deny sinh audit outcome=denied kèm mã lý do; test | 2 | SHR-24, SHR-09 | US-047 |
+| ☑ | WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp **[xong, commit PR WEB-01-frontend-base: web/src/api/client.ts: token, Accept-Language, Idempotency-Key, If-Match/ETag, OperationOutcome/Problem Details + slot gợi ý 409; test]** | Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên | 3 | WEB-01 | US-066 |
 
 ## Tuần 5 — 40 giờ
 
@@ -122,7 +124,7 @@ Tổng: **122 task, 409 giờ**. Đã xong: **18**, làm một phần: **21** (�
 | ☐ | IAC-15 | Module workload identity cho service | Mỗi service một UAMI + federated credential (namespace/serviceaccount) + role tới đúng kho dữ liệu | 4 | IAC-07 | ENABLER |
 | ☐ | IAC-16 | Module identity ứng dụng (Entra ID) | App registration API + SPA, app roles patient/doctor/nurse/admin/dpo, user thử nghiệm giả | 4 | IAC-01 | US-008, US-066 |
 | ☐ | IAC-20 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack | plan chạy được cho cả 2 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình | 4 | IAC-17, IAC-12, IAC-15 | US-070 |
-| ☐ | WEB-10 | Pipeline + chart cho web | Container nginx non-root dùng chart chung | 2 | WEB-01 | US-066 |
+| ◐ | WEB-10 | Pipeline + chart cho web **[làm một phần, commit PR WEB-01-frontend-base, gitops#5, templates#14: Dockerfile nginx non-root (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, values uat/prod; CHƯA chạy pipeline thật và chưa deploy lên cụm]** | Container nginx non-root dùng chart chung | 2 | WEB-01 | US-066 |
 
 ## Tuần 7 — 42 giờ
 

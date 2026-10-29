@@ -14,3 +14,7 @@ indent_size = 2
 # Java: Spotless (google-java-format, thụt 2) là nguồn sự thật; chạy mvn spotless:apply.
 [{*.java,pom.xml}]
 indent_size = 2
+
+# Web app: Prettier (web/.prettierrc.json, thụt 2) là nguồn sự thật; chạy npm run format.
+[web/**.{ts,tsx,js,cjs,css,html}]
+indent_size = 2

@@ -43,8 +43,6 @@ SHR-20,SHR,"US-008, US-066","JWT bearer cho Entra ID và Keycloak: map claim rol
 SHR-21,SHR,US-007,"Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây","Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503",SA,3,SHR-20,P1,2,"15 §8, C2"
 SHR-22,SHR,ENABLER,Authz: schema + loader + validator cho contracts/authz/matrix.yaml,"Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test",SA,3,ARC-19,P1,2,15 §3
 SHR-23,SHR,ENABLER,"Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care",Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập,SA,4,SHR-22,P1,2,15 §2
-WEB-01,WEB,US-066,"Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en","Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline",D1,4,"LOC-02, SHR-20",P2,2,NFR-I2
-WEB-02,WEB,US-066,"Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp",Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên,D1,3,WEB-01,S1,2,"07 §3, §5"
 AI-13,AI,US-055,Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách,Báo cáo theo tác vụ/model/ngày,D3,3,PY-09,S3,3,"AI10, NFR-C2"
 AI-29,AI,US-062,"Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây",Tool lạ bị từ chối; tham số sai bị chặn,D3,4,"PY-08, PY-02",S6,3,AC-14.2
 ARC-06,ARC,ENABLER,Hợp đồng API (OpenAPI) khung cho 6 service,"File openapi.yaml mỗi service với endpoint, mã lỗi OperationOutcome; lint không lỗi",SA,6,ARC-05,P2,3,P2
@@ -77,6 +75,7 @@ SHR-24,SHR,ENABLER,"Authz: decision engine default-deny, ràng buộc trường 
 SHR-25,SHR,ENABLER,Authz: filter endpoint Spring + test 'mọi endpoint phải có quy tắc',Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước,SA,4,SHR-24,P2,3,15 §3
 SHR-26,SHR,ENABLER,Authz: bộ sinh test từ matrix.yaml (role × điều kiện),Từ matrix sinh test Allow/Deny cho mọi ô; dùng được trong test của từng service,D1,4,SHR-24,P2,3,"15 §3, NFR-SEC2"
 SHR-28,SHR,US-015,"Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay)",Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song,SA,4,SHR-05,P2,3,"02 §3.1, 07 §3"
+WEB-01,WEB,US-066,"Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en","Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline",SA,4,"LOC-02, SHR-20",P2,3,NFR-I2
 AI-01,AI,US-052,Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local),Script idempotent; cùng schema cho hai backend,D3,3,"SCF-06, LOC-08",S1,4,06 §1.2
 AI-02,AI,US-052,"Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang)",Giữ tiêu đề mục và số trang; test với tài liệu mẫu,D3,3,AI-01,S1,4,06 §1.2
 AI-03,AI,US-052,"Chunker: 600 token, overlap 80, tách theo tiêu đề mục",Chunk không cắt giữa mục; test độ dài,D3,4,AI-02,S1,4,06 §1.2
@@ -126,6 +125,7 @@ SCF-06,SCF,ENABLER,"Scaffold ai-service FastAPI (khung code, pipeline, values, n
 SCF-07,SCF,ENABLER,"Scaffold ml-service (khung code Python, Dockerfile, pipeline, values, kết nối MongoDB/bus/MLflow)",Service mẫu chạy qua pipeline template,SA,2,"LOC-04, CIT-08",P3,4,ADR-0001
 SHR-09,SHR,US-047,"Thư viện audit emitter: dựng audit.recorded (schema 05), che IP, chặn PII, middleware FHIR",Audit không chứa nội dung lâm sàng; search chỉ ghi tên tham số,SA,4,SHR-06,S1,4,"E11(pub), 05 §1"
 SHR-27,SHR,US-047,Authz: phát audit cho mọi quyết định (cho phép và từ chối),Mỗi Deny sinh audit outcome=denied kèm mã lý do; test,SA,2,"SHR-24, SHR-09",S1,4,"05 §1, E11(pub)"
+WEB-02,WEB,US-066,"Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp",Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên,SA,3,WEB-01,S1,4,"07 §3, §5"
 AI-04,AI,US-052,"Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống",Chunk mới index xong mới xóa chunk cũ; test,D3,4,"AI-03, PY-07",S1,5,06 §1.2
 AI-05,AI,US-052,"API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa",draft → approved → indexed → retired; lỗi index retry 3 lần,D3,4,"AI-04, PY-01",S2,5,AI9
 AI-06,AI,US-053,"Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi",Người không được phép không bao giờ thấy chunk; test lọc,D3,4,AI-04,S2,5,06 §1.2

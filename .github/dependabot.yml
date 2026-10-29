@@ -10,11 +10,29 @@ updates:
     directories: ["/services/ai", "/services/ml", "/tools/contracts"]
     schedule: { interval: weekly }
   - package-ecosystem: docker
-    directories: ["/services/*"]
+    directories: ["/services/*", "/web"]
     schedule: { interval: weekly }
     ignore:
       # Stay on LTS JDK 21 (matches java.version and distroless java21); do not jump to non-LTS releases.
       - dependency-name: "library/maven"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: npm
+    directory: "/web"
+    schedule: { interval: weekly }
+    groups:
+      # One PR per family keeps related packages in step.
+      mantine: { patterns: ["@mantine/*"] }
+      testing: { patterns: ["vitest", "@vitest/*", "@testing-library/*", "jsdom", "msw"] }
+      lint: { patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint", "prettier", "globals"] }
+    ignore:
+      # React 19 / Mantine 8 / Vite 7+ are major moves decided in ADR-0016; upgrade deliberately, not via Dependabot.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@mantine/*"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"

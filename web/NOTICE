@@ -1,0 +1,14 @@
+SHP web app
+Copyright 2026 nhóm Smart Hospital Platform
+
+Thư mục web/ có mã chuyển thể từ phần mềm của bên thứ ba sau:
+
+Medplum (https://github.com/medplum/medplum)
+Copyright Orangebot, Inc. và các tác giả Medplum
+Giấy phép Apache License 2.0, xem licenses/Apache-2.0.txt
+
+  Các file chuyển thể (mỗi file có ghi chú nguồn và các thay đổi ở đầu file):
+    src/layout/AppShell.tsx
+    src/layout/AppShell.module.css
+    src/layout/Header.tsx
+    src/layout/Navbar.tsx
