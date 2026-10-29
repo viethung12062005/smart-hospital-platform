@@ -10,6 +10,6 @@ permissions:
   contents: read
 jobs:
   ci:
-    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@v0.1.3
+    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@v0.1.5
     with:
       modules: libs/java/shp-service-defaults,libs/java/shp-authz,libs/java/shp-events,libs/java/shp-security,libs/java/shp-web,libs/java/shp-data-postgres,libs/java/shp-data-mongo
