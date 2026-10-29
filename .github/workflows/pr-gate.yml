@@ -1,0 +1,44 @@
+# Merge gate for pull requests. The service workflows only run when their paths change, so none of them can be a
+# required check on its own (a required check that never runs blocks the PR forever). This workflow runs each time one
+# of them finishes and writes a single commit status, "pr-gate", on the PR's head commit:
+#   pending  while any workflow for that commit is still running
+#   failure  if any of them failed, was cancelled or timed out
+#   success  otherwise (skipped jobs count as success)
+# The protect-main ruleset requires only "pr-gate". pr-checks runs on every PR, so the status always gets written.
+name: pr-gate
+on:
+  workflow_run:
+    workflows: [pr-checks, contracts, libs-java, svc-ai, svc-audit, svc-clinical, svc-document, svc-gateway, svc-ml, svc-notification, svc-scheduling, svc-web]
+    types: [completed]
+permissions:
+  actions: read
+  statuses: write
+jobs:
+  gate:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: pr-gate-${{ github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
+    steps:
+      - name: Compute and publish the gate status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          runs=$(gh api --paginate "repos/$REPO/actions/runs?head_sha=$SHA&event=pull_request&per_page=100" \
+            --jq '.workflow_runs[] | select(.name != "pr-gate") | "\(.name)\t\(.status)\t\(.conclusion // "")"')
+          echo "$runs"
+          running=$(awk -F'\t' '$2 != "completed" {print $1}' <<<"$runs" | sort -u | paste -sd, -)
+          failed=$(awk -F'\t' '$2 == "completed" && $3 ~ /^(failure|cancelled|timed_out|action_required|startup_failure)$/ {print $1}' <<<"$runs" | sort -u | paste -sd, -)
+          if [ -n "$failed" ]; then state=failure; desc="Failed: $failed"
+          elif [ -n "$running" ]; then state=pending; desc="Waiting for: $running"
+          else state=success; desc="All checks passed"
+          fi
+          echo "$state: $desc"
+          gh api "repos/$REPO/statuses/$SHA" -f state="$state" -f context=pr-gate \
+            -f description="${desc:0:140}" -f target_url="$RUN_URL" >/dev/null
