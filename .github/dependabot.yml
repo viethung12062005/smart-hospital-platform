@@ -26,29 +26,9 @@ updates:
       testing: { patterns: ["vitest", "@vitest/*", "@testing-library/*", "jsdom", "msw"] }
       lint: { patterns: ["eslint", "@eslint/*", "eslint-plugin-*", "typescript-eslint", "prettier", "globals"] }
     ignore:
-      # React 19 / Mantine 8 / Vite 7+ are major moves decided in ADR-0016; upgrade deliberately, not via Dependabot.
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@types/react*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@mantine/*"
-        update-types: ["version-update:semver-major"]
-      # Build and test toolchain moves together (Vite <-> plugin-react <-> Vitest; MSW 3 changed its API): upgrade as one planned change.
-      - dependency-name: "vite"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@vitejs/plugin-react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "vitest"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@vitest/*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "msw"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "jsdom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@testing-library/jest-dom"
+      # Major versions are planned changes (ADR-0016): the toolchain moves together (Vite <-> plugin-react <-> Vitest,
+      # MSW API changes) and Dependabot merging them one by one breaks the build. Only minor and patch updates here.
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
