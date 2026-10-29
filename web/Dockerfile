@@ -9,7 +9,7 @@ COPY web/ ./
 # Bản build thật không chứa máy chủ giả (MSW chỉ nạp ở chế độ mock); bỏ luôn file service worker của nó.
 RUN npm run build && rm -f dist/mockServiceWorker.js
 
-FROM mirror.gcr.io/library/nginx:1.30-alpine
+FROM mirror.gcr.io/library/nginx:1.31-alpine
 # Vá gói Alpine còn lỗi đã có bản sửa (Trivy chặn HIGH/CRITICAL), gỡ curl không dùng lúc chạy,
 # bỏ entrypoint mặc định (cần quyền ghi /etc/nginx) để chạy được với user không phải root.
 # hadolint ignore=DL3017,DL3018
