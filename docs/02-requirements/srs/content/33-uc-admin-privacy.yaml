@@ -1,0 +1,310 @@
+# Chương 3 – Module Quyền riêng tư, audit và quản trị (services audit, notification, clinical/admin; vận hành).
+modules:
+  - key: privacy-admin
+    name: Quyền riêng tư, audit và quản trị
+    intro: >-
+      Quyền của bệnh nhân với dữ liệu của mình (Nghị định 13/2023/NĐ-CP), nhật ký truy cập bất biến, quản lý tài khoản
+      nhân viên, xử lý thông báo lỗi, sao lưu và khôi phục.
+    sections:
+      - name: Cổng bệnh nhân – Quyền riêng tư và thông báo
+        use_cases:
+          - key: view-my-access-log
+            name: Xem ai đã truy cập hồ sơ của tôi
+            type: Basic
+            actors: [patient]
+            trace: [UC-09, AC-09.1, NFR-SEC5, "Nghị định 13/2023 – quyền được biết"]
+            objective: Cho bệnh nhân biết ai (vai trò, khoa), khi nào, với mục đích gì đã truy cập hồ sơ của mình.
+            trigger: Bệnh nhân mở [[SCR:my-access-log]].
+            pre: ["Bệnh nhân đã đăng nhập."]
+            post: ["Danh sách truy cập 12 tháng gần nhất được hiển thị."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Mở “Lịch sử truy cập hồ sơ”"}
+              - {n: 2, lane: 1, text: "Lấy bản ghi audit có\n[Bệnh nhân] = mình", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc hiển thị
+                lines:
+                  - "Mỗi dòng: thời điểm, vai trò và khoa của người truy cập, tên nhân viên y tế, hành động (xem, sửa, tải tài liệu), mục đích (“điều trị”, “truy cập khẩn cấp”)."
+                  - "Không hiển thị IP, thiết bị, nội dung đã xem; truy cập khẩn cấp được làm nổi bật kèm trạng thái rà soát của DPO."
+                  - "Bộ lọc [Bệnh nhân] luôn bị ép bằng <Người dùng hiện tại>."
+            acceptance:
+              - ["AC-AL.1", "Given bác sĩ đã mở hồ sơ của bệnh nhân lúc 09:02, Then bệnh nhân thấy dòng truy cập đó trong ≤ 1 phút."]
+
+          - key: manage-consent
+            name: Quản lý đồng ý xử lý dữ liệu
+            actors: [patient]
+            trace: [NFR-SEC, "Nghị định 13/2023 – đồng ý và rút đồng ý", UC-12, UC-13, UC-15]
+            objective: Bệnh nhân đồng ý hoặc rút đồng ý cho việc xử lý dữ liệu sức khỏe bằng AI (tóm tắt, trích xuất, dự đoán).
+            trigger: Bệnh nhân bật/tắt tùy chọn trên [[SCR:privacy]].
+            pre: ["Bệnh nhân đã đăng nhập."]
+            post: ["Trạng thái đồng ý mới có hiệu lực ngay; lịch sử đồng ý được lưu."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bật / tắt “Cho phép xử lý\ndữ liệu bằng AI”"}
+              - {n: 2, lane: 1, text: "Hiển thị giải thích phạm vi\nvà xác nhận (khi rút)"}
+              - {n: 3, lane: 0, text: "Xác nhận"}
+              - {n: 4, lane: 1, text: "Lưu đồng ý mới, phát sự kiện,\nghi audit", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc giải thích
+                lines:
+                  - "Hiển thị rõ: AI nào dùng dữ liệu gì, dữ liệu có được gửi ra nhà cung cấp bên ngoài không (có, sau khi che định danh), lưu bao lâu; rút đồng ý dùng [[MSG:confirm-withdraw-consent]]."
+              - step: "(4)"
+                title: Quy tắc hiệu lực
+                lines:
+                  - "Đồng ý được lưu kèm phiên bản điều khoản và thời điểm; rút đồng ý có hiệu lực cho mọi yêu cầu AI mới ngay lập tức."
+                  - "Khi rút: dữ liệu của bệnh nhân không được dùng cho tóm tắt, trích xuất mới và dự đoán; dữ liệu không bị đưa vào tập huấn luyện tiếp theo."
+                  - "Không ảnh hưởng tới các chức năng không dùng AI (đặt lịch, khám, nhắc lịch theo giờ cố định)."
+            acceptance:
+              - ["AC-CS.1", "Given bệnh nhân rút đồng ý lúc T, When bác sĩ yêu cầu tóm tắt sau T, Then bị từ chối “consent-required”."]
+
+          - key: export-my-data
+            name: Yêu cầu trích xuất dữ liệu cá nhân
+            actors: [patient]
+            trace: ["Nghị định 13/2023 – quyền truy cập, quyền yêu cầu cung cấp dữ liệu"]
+            objective: Bệnh nhân yêu cầu nhận bản sao dữ liệu cá nhân và dữ liệu sức khỏe của mình.
+            trigger: Bệnh nhân bấm “Yêu cầu bản sao dữ liệu” trên [[SCR:privacy]].
+            pre: ["Bệnh nhân đã đăng nhập và xác thực lại trong 15 phút gần nhất."]
+            post: ["Yêu cầu được ghi nhận và chuyển tới Cán bộ bảo vệ dữ liệu ([[UC:process-data-request]])."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Yêu cầu bản sao\ndữ liệu”"}
+              - {n: 2, lane: 1, kind: decision, text: "Đã có yêu cầu\nđang xử lý?", branches: [{to: 3, label: Không}, {to: 4, label: Có}]}
+              - {n: 3, lane: 1, text: "Ghi nhận yêu cầu,\nbáo DPO", end: true}
+              - {n: 4, lane: 1, text: "Hiển thị yêu cầu đang\nxử lý", end: true}
+            rules:
+              - step: "(3)"
+                title: Quy tắc ghi nhận
+                lines: ["Tối đa một yêu cầu đang xử lý mỗi bệnh nhân; hiển thị [[MSG:request-received]]; ghi audit."]
+            acceptance:
+              - ["AC-EX.1", "Given bệnh nhân đã có yêu cầu đang xử lý, When gửi thêm, Then không tạo yêu cầu mới."]
+
+          - key: notification-preferences
+            name: Cài đặt nhận thông báo
+            type: Basic
+            actors: [patient]
+            trace: [UC-07, "API N3, N4"]
+            objective: Chọn kênh nhận nhắc lịch (push, email, SMS), ngôn ngữ và khung giờ yên tĩnh.
+            trigger: Bệnh nhân mở [[SCR:notification-preferences]].
+            pre: ["Bệnh nhân đã đăng nhập."]
+            post: ["Tùy chọn mới áp dụng cho các lần nhắc được lên lịch sau đó."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn kênh, ngôn ngữ,\nkhung giờ yên tĩnh, bấm “Lưu”"}
+              - {n: 2, lane: 1, text: "Lưu tùy chọn", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc tùy chọn
+                lines:
+                  - "Phải giữ ít nhất một kênh; khung giờ yên tĩnh không áp dụng cho lần nhắc T-2h."
+                  - "Kênh SMS chỉ dùng số điện thoại trong hồ sơ; thay số điện thoại phải qua [[UC:update-profile]]."
+            acceptance:
+              - ["AC-NP.1", "Given bệnh nhân tắt mọi kênh, When lưu, Then báo lỗi."]
+
+      - name: Cổng nội bộ – Audit và bảo vệ dữ liệu
+        use_cases:
+          - key: search-audit
+            name: Tra cứu audit truy cập
+            type: Basic
+            actors: [dpo, admin]
+            trace: [UC-09, AC-09.1, AC-09.2, BR-07, NFR-SEC5, "API audit"]
+            objective: Lọc bản ghi audit theo bệnh nhân, người truy cập, thời gian, hành động, kết quả, mục đích.
+            trigger: Người dùng mở [[SCR:audit]] và bấm “Tìm”.
+            pre: ["Người dùng là DPO hoặc Quản trị viên (MFA)."]
+            post: ["Danh sách bản ghi audit khớp điều kiện; chính truy vấn này cũng được ghi audit."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập điều kiện lọc, bấm “Tìm”"}
+              - {n: 2, lane: 1, text: "Truy vấn kho audit,\nghi audit truy vấn"}
+              - {n: 3, lane: 1, text: "Hiển thị kết quả", end: true}
+            rules:
+              - step: "(2)"
+                key: audit-query
+                title: Quy tắc truy vấn
+                lines:
+                  - "Khoảng thời gian tối đa 92 ngày mỗi truy vấn; bản ghi xuất hiện trong kho tra cứu ≤ 1 phút sau sự kiện (NFR-SEC5)."
+                  - "Kho audit chỉ cho thêm; không có API hay giao diện sửa/xóa, kể cả với Quản trị viên (AC-09.2)."
+                  - "Truy vấn của DPO/QT cũng được ghi audit (ai tra cứu bệnh nhân nào)."
+              - step: "(3)"
+                title: Quy tắc hiển thị
+                lines:
+                  - "Quản trị viên thấy siêu dữ liệu (ai, khi nào, hành động, tài nguyên, kết quả) nhưng không thấy nội dung lâm sàng; IP hiển thị đã che octet cuối."
+                  - "Truy cập khẩn cấp có cột trạng thái rà soát; DPO đánh dấu “đã rà soát” kèm ghi chú."
+            acceptance:
+              - ["AC-09.1", "Given mọi thao tác đọc/ghi dữ liệu bệnh nhân trong UC-01, 04, 05, 06, 10, 11–13, Then mỗi thao tác có một bản ghi audit (ai, khi nào, cái gì, kết quả, từ đâu)."]
+              - ["AC-09.2", "Given quản trị viên, When cố sửa hoặc xóa bản ghi audit (API, giao diện, kho lưu trữ), Then không thực hiện được."]
+
+          - key: export-audit
+            name: Xuất báo cáo audit
+            actors: [dpo, admin]
+            trace: [UC-09]
+            objective: Xuất kết quả tra cứu audit thành tệp CSV để báo cáo.
+            trigger: Người dùng bấm “Xuất CSV” trên [[SCR:audit]].
+            pre: ["Đã có kết quả tra cứu."]
+            post: ["Tệp CSV được tạo và tải qua link 5 phút; việc xuất được ghi audit."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Xuất CSV”, nhập\nmục đích xuất"}
+              - {n: 2, lane: 1, text: "Tạo tệp, cấp link 5 phút,\nghi audit “export”", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc xuất
+                lines:
+                  - "[Mục đích xuất] bắt buộc; tối đa 100.000 dòng mỗi lần; tệp không chứa nội dung lâm sàng; tệp tự xóa sau 24 giờ."
+            acceptance:
+              - ["AC-EA.1", "Given xuất báo cáo, Then có bản ghi audit “export” với mục đích đã nhập."]
+
+          - key: process-data-request
+            name: Xử lý yêu cầu của chủ thể dữ liệu
+            actors: [dpo]
+            trace: ["Nghị định 13/2023", UC-17]
+            objective: DPO xác minh và xử lý yêu cầu cung cấp bản sao dữ liệu của bệnh nhân.
+            trigger: DPO mở yêu cầu trên [[SCR:audit]] (tab “Yêu cầu của bệnh nhân”).
+            pre: ["Có yêu cầu đang chờ xử lý."]
+            post: ["Bệnh nhân nhận link tải bản sao dữ liệu, hoặc yêu cầu bị từ chối kèm lý do."]
+            lanes: [Cán bộ bảo vệ dữ liệu, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Mở yêu cầu, xác minh"}
+              - {n: 2, lane: 0, kind: decision, text: "Chấp nhận?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
+              - {n: 3, lane: 1, text: "Tạo gói dữ liệu (FHIR JSON\n+ PDF tóm tắt), mã hóa"}
+              - {n: 4, lane: 1, text: "Gửi link tải 24 giờ\ncho bệnh nhân, ghi audit", end: true}
+              - {n: 5, lane: 1, text: "Ghi lý do từ chối,\nthông báo bệnh nhân", end: true}
+            rules:
+              - step: "(3)"
+                title: Quy tắc gói dữ liệu
+                lines:
+                  - "Gồm hồ sơ hành chính, lịch hẹn, lần khám đã kết thúc, sinh hiệu, chẩn đoán, tài liệu đã phát hành, lịch sử đồng ý, lịch sử truy cập; không gồm ghi chú nội bộ chưa phát hành."
+                  - "Gói được mã hóa bằng mật khẩu một lần gửi qua kênh riêng (SMS); link chỉ dùng được bởi chính bệnh nhân sau khi đăng nhập."
+              - step: "(4)"
+                title: Quy tắc thời hạn
+                lines: ["Thời hạn xử lý theo quy định hiện hành; hệ thống nhắc DPO khi yêu cầu chờ quá 48 giờ."]
+            acceptance:
+              - ["AC-DR.1", "Given gói dữ liệu đã tạo, Then link chỉ mở được bởi tài khoản của chính bệnh nhân và hết hạn sau 24 giờ."]
+
+      - name: Cổng nội bộ – Quản trị
+        use_cases:
+          - key: invite-staff
+            name: Mời nhân viên và gán vai trò
+            actors: [admin]
+            trace: [UC-08, AC-08.2, NFR-SEC1, "API C21"]
+            objective: Tạo tài khoản nhân viên với vai trò Bác sĩ, Điều dưỡng, Quản trị viên hoặc Cán bộ bảo vệ dữ liệu.
+            trigger: Quản trị viên bấm “Mời nhân viên” trên [[SCR:users]].
+            pre: ["Quản trị viên đã đăng nhập (MFA)."]
+            post: ["Lời mời được gửi; tài khoản chỉ hoạt động sau khi nhân viên đăng ký MFA."]
+            lanes: [Quản trị viên, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập email, họ tên, vai trò,\nbấm “Mời”"}
+              - {n: 2, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 3, label: Có}, {to: 1, label: Không}]}
+              - {n: 3, lane: 1, text: "Tạo tài khoản chờ kích hoạt,\ngửi lời mời, ghi audit", end: true}
+            rules:
+              - step: "(2)"
+                key: staff-validate
+                title: Quy tắc kiểm tra
+                lines:
+                  - "Email thuộc tên miền của bệnh viện; mỗi tài khoản một vai trò chính; không tự gán vai trò cho chính mình."
+                  - "Gán vai trò Quản trị viên hoặc DPO cần hai người: người thứ hai (Quản trị viên khác) phê duyệt."
+              - step: "(3)"
+                title: Quy tắc kích hoạt
+                lines: ["Lời mời hết hạn sau 72 giờ; nhân viên phải đăng ký MFA ở lần đăng nhập đầu tiên, nếu không tài khoản không truy cập được dữ liệu (AC-08.2)."]
+            acceptance:
+              - ["AC-08.2", "Given nhân viên chưa đăng ký MFA, When đăng nhập, Then không truy cập được dữ liệu bệnh nhân."]
+              - ["AC-IS.1", "Given quản trị viên tự gán vai trò DPO cho mình, Then bị từ chối."]
+
+          - key: lock-account
+            name: Khóa / mở khóa tài khoản
+            actors: [admin]
+            trace: [UC-08, AC-08.1, "API C21"]
+            objective: Khóa tài khoản nhân viên nghỉ việc hoặc nghi bị lộ; mở lại khi cần.
+            trigger: Quản trị viên bấm “Khóa” trên [[SCR:users]].
+            pre: ["Tài khoản đích không phải chính quản trị viên đang thao tác."]
+            post: ["Tài khoản bị khóa; token hiện tại bị từ chối trong ≤ 5 phút."]
+            lanes: [Quản trị viên, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Khóa”, nhập lý do"}
+              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận"}
+              - {n: 3, lane: 0, text: "Xác nhận"}
+              - {n: 4, lane: 1, text: "Khóa tại hệ thống và tại\nnhà cung cấp định danh, ghi audit", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc xác nhận
+                lines: ["Hiển thị [[MSG:confirm-lock]]; [Lý do] bắt buộc."]
+              - step: "(4)"
+                key: lock-effect
+                title: Quy tắc hiệu lực
+                lines:
+                  - "Đánh dấu tài khoản “disabled”; mọi service kiểm tra trạng thái này qua bộ nhớ đệm tối đa 60 giây, nên token còn hạn bị từ chối trong ≤ 5 phút (AC-08.1)."
+                  - "Vô hiệu phiên tại nhà cung cấp định danh; người dùng thấy [[MSG:account-locked]]."
+                  - "Không được khóa tài khoản Quản trị viên cuối cùng còn hoạt động."
+            acceptance:
+              - ["AC-08.1", "Given tài khoản bị khóa lúc T, When dùng token cũ lúc T + 5 phút, Then bị từ chối."]
+
+          - key: link-practitioner
+            name: Liên kết tài khoản bác sĩ với hồ sơ bác sĩ
+            actors: [admin]
+            trace: [UC-08, "API C10, C21"]
+            objective: Gắn tài khoản đăng nhập của bác sĩ với hồ sơ Practitioner và chuyên khoa để phân quyền theo quan hệ điều trị.
+            trigger: Quản trị viên bấm “Liên kết” trên [[SCR:users]].
+            pre: ["Tài khoản có vai trò Bác sĩ; hồ sơ Practitioner tồn tại."]
+            post: ["Tài khoản liên kết đúng một Practitioner."]
+            lanes: [Quản trị viên, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn hồ sơ bác sĩ,\nbấm “Liên kết”"}
+              - {n: 2, lane: 1, text: "Lưu liên kết, xóa bộ nhớ\nđệm danh tính, ghi audit", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc liên kết
+                lines: ["Một Practitioner chỉ gắn với một tài khoản và ngược lại; đổi liên kết có hiệu lực trong ≤ 60 giây."]
+            acceptance:
+              - ["AC-LP.1", "Given Practitioner đã gắn tài khoản A, When gắn cho tài khoản B, Then bị từ chối."]
+
+          - key: manage-dead-letters
+            name: Xử lý thông báo gửi lỗi
+            type: Basic
+            actors: [admin]
+            trace: [UC-07, AC-07.2, OBS-03, "API N6, N7"]
+            objective: Xem các lần nhắc gửi lỗi hẳn và đưa lại hàng đợi sau khi khắc phục.
+            trigger: Quản trị viên mở [[SCR:dead-letters]] hoặc nhận cảnh báo hàng lỗi có tin.
+            pre: ["Quản trị viên đã đăng nhập (MFA)."]
+            post: ["Lần nhắc được đưa lại hàng đợi hoặc đóng."]
+            lanes: [Quản trị viên, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn mục lỗi, bấm “Gửi lại”"}
+              - {n: 2, lane: 1, kind: decision, text: "Lịch hẹn còn\nhiệu lực?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Đưa lại hàng đợi", end: true}
+              - {n: 4, lane: 1, text: "Đóng mục, không gửi", end: true}
+            rules:
+              - step: "(1)"
+                title: Quy tắc hiển thị
+                lines: ["Danh sách chỉ hiển thị mã lịch hẹn, kênh, lỗi, số lần thử; không hiển thị nội dung tin, SĐT hay email đầy đủ."]
+              - step: "(2)"
+                title: Quy tắc gửi lại
+                lines: ["Không gửi lại nếu lịch hẹn đã hủy hoặc đã qua giờ khám; vẫn bảo đảm không gửi trùng cho cùng một lần nhắc (AC-07.2)."]
+            acceptance:
+              - ["AC-DL.1", "Given lịch hẹn đã hủy, When gửi lại mục lỗi, Then không có tin nào được gửi."]
+
+          - key: backup-restore
+            name: Sao lưu và khôi phục dữ liệu
+            actors: [admin]
+            trace: [UC-16, AC-16.1, AC-16.2, NFR-A4, NFR-A5]
+            objective: Bảo đảm khôi phục được dữ liệu lịch hẹn, hồ sơ, tài liệu về một thời điểm trong 7 ngày qua.
+            trigger: Sự cố mất/hỏng dữ liệu, hoặc lịch diễn tập định kỳ.
+            pre: ["Quy trình khôi phục được phê duyệt bởi người thứ hai; chạy qua pipeline vận hành, không thao tác tay trên CSDL."]
+            post: ["Dữ liệu được khôi phục; thời gian thực tế được ghi lại so với RTO."]
+            lanes: [Quản trị viên, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn thời điểm khôi phục,\ngửi yêu cầu"}
+              - {n: 2, lane: 0, kind: decision, text: "Người thứ hai\nphê duyệt?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
+              - {n: 3, lane: 1, text: "Khôi phục vào môi trường\nmới, kiểm tra toàn vẹn"}
+              - {n: 4, lane: 1, text: "Chuyển lưu lượng, ghi thời gian\nvà kết quả, ghi audit", end: true}
+              - {n: 5, lane: 1, text: "Hủy yêu cầu", end: true}
+            rules:
+              - step: "(3)"
+                title: Quy tắc khôi phục
+                lines:
+                  - "PostgreSQL và MongoDB khôi phục theo thời điểm (PITR) trong 7 ngày; tệp tài liệu có versioning và xóa mềm 14 ngày; bản sao lưu được mã hóa và lưu dư thừa theo vùng."
+                  - "RPO ≤ 5 phút, RTO ≤ 1 giờ cho lịch hẹn và dữ liệu lâm sàng (NFR-A4); RPO = 0 cho tài liệu và audit đã xác nhận ghi (NFR-A5)."
+                  - "Audit (WORM) không bị ghi đè khi khôi phục."
+            acceptance:
+              - ["AC-16.1", "Given dữ liệu bị xóa nhầm lúc T, When khôi phục về T − 1 phút, Then dữ liệu lịch hẹn và hồ sơ khớp trạng thái tại thời điểm đó."]
+              - ["AC-16.2", "Given diễn tập khôi phục, Then biên bản ghi thời gian thực tế và so với RTO 1 giờ."]

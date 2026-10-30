@@ -1,0 +1,175 @@
+# Use case dùng chung và quy tắc nghiệp vụ dùng chung (Chương 3).
+common_use_cases:
+  - key: login
+    name: Đăng nhập
+    actor: Mọi người dùng
+    objective: Xác thực người dùng qua nhà cung cấp định danh (OIDC, PKCE) và thiết lập phiên.
+    trigger: Người dùng mở hệ thống khi chưa đăng nhập, hoặc phiên đã hết hạn.
+    pre: ["N/A"]
+    post: ["Người dùng có phiên hợp lệ với vai trò từ token; được chuyển tới trang chủ theo vai trò."]
+    lanes: [Người dùng, Hệ thống, Nhà cung cấp định danh]
+    steps:
+      - {n: 1, lane: 0, text: "Bấm “Đăng nhập”"}
+      - {n: 2, lane: 1, text: "Chuyển tới nhà cung cấp\nđịnh danh (PKCE)"}
+      - {n: 3, lane: 2, kind: decision, text: "Xác thực đạt\n(MFA với nhân viên)?", branches: [{to: 4, label: Có}, {to: 6, label: Không}]}
+      - {n: 4, lane: 1, kind: decision, text: "Token hợp lệ,\ntài khoản không khóa?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
+      - {n: 5, lane: 1, text: "Tạo phiên, chuyển tới\ntrang chủ theo vai trò", end: true}
+      - {n: 6, lane: 1, text: "Từ chối, hiển thị lỗi,\nghi audit đăng nhập thất bại", end: true}
+    rules:
+      - step: "(2)"
+        key: login-flow
+        title: Quy tắc đăng nhập
+        lines:
+          - "Dùng luồng Authorization Code + PKCE; hệ thống không bao giờ nhận hay lưu mật khẩu."
+          - "Token truy cập hết hạn ≤ 15 phút (NFR-SEC1), lưu trong bộ nhớ phiên của trình duyệt (không lưu localStorage); làm mới bằng refresh token xoay vòng."
+      - step: "(3)"
+        title: Quy tắc MFA và khóa tạm
+        lines:
+          - "Nhân viên (Bác sĩ, Điều dưỡng, Quản trị viên, DPO) bắt buộc MFA; token không có claim MFA bị từ chối khi truy cập dữ liệu → [[MSG:mfa-required]]."
+          - "5 lần đăng nhập sai liên tiếp → khóa tạm 15 phút tại nhà cung cấp định danh."
+      - step: "(4)"
+        title: Quy tắc kiểm tra token
+        lines:
+          - "Kiểm tra chữ ký, issuer, audience, thời hạn; tài khoản bị khóa → [[MSG:account-locked]]; vai trò lấy từ claim “roles”, không lấy từ dữ liệu client gửi."
+
+  - key: session
+    name: Đăng xuất và hết phiên
+    actor: Mọi người dùng
+    objective: Kết thúc phiên chủ động hoặc tự động khi không hoạt động.
+    trigger: Người dùng bấm “Đăng xuất”, hoặc không thao tác quá thời gian cho phép.
+    pre: ["Người dùng đang có phiên."]
+    post: ["Phiên và token bị hủy ở trình duyệt và nhà cung cấp định danh; dữ liệu nhạy cảm trên màn hình bị xóa."]
+    rules:
+      - step: "(N/A)"
+        key: session-timeout
+        title: Quy tắc hết phiên
+        lines:
+          - "Nhân viên: tự đăng xuất sau 15 phút không thao tác (máy dùng chung tại phòng khám); bệnh nhân: 30 phút. Cảnh báo trước 1 phút, hết phiên hiển thị [[MSG:session-expired]]."
+          - "Đăng xuất xóa token và mọi dữ liệu đã cache trong trình duyệt (bộ nhớ, sessionStorage); nút Back không hiển thị lại dữ liệu bệnh nhân."
+
+  - key: view-list
+    name: Xem danh sách
+    actor: Tham chiếu use case dùng use case dùng chung này.
+    objective: Hiển thị danh sách bản ghi của một đối tượng theo quyền của người dùng.
+    trigger: Người dùng mở màn hình danh sách.
+    pre: ["Người dùng có quyền xem đối tượng."]
+    post: ["Danh sách được hiển thị theo bộ lọc mặc định."]
+    lanes: [Người dùng, Hệ thống]
+    steps:
+      - {n: 1, lane: 0, text: "Mở màn hình danh sách"}
+      - {n: 2, lane: 1, text: "Lấy bản ghi trong phạm vi\nquyền, áp dụng bộ lọc mặc định"}
+      - {n: 3, lane: 0, text: "Tìm kiếm / lọc / sắp xếp /\nchuyển trang"}
+      - {n: 4, lane: 1, text: "Làm mới danh sách", end: true}
+    rules:
+      - step: "(2)"
+        title: Quy tắc phạm vi và hiển thị
+        lines:
+          - "Phạm vi dữ liệu được áp dụng ở server theo [[CBR:authz]], không dựa vào bộ lọc của client."
+          - "Hiển thị theo [[CBR:pagination]]; cột dài cắt bớt và có tooltip."
+  - key: view-item
+    name: Xem chi tiết
+    actor: Tham chiếu use case dùng use case dùng chung này.
+    objective: Xem chi tiết một bản ghi.
+    trigger: Người dùng chọn một bản ghi.
+    pre: ["Người dùng có quyền xem bản ghi."]
+    post: ["Bản ghi được hiển thị ở chế độ xem."]
+    rules:
+      - step: "(N/A)"
+        title: Quy tắc hiển thị
+        lines: ["Không có quyền → [[MSG:not-found]]; truy cập dữ liệu bệnh nhân được ghi audit theo [[CBR:audit]]."]
+  - key: create-item
+    name: Tạo bản ghi
+    actor: Tham chiếu use case dùng use case dùng chung này.
+    objective: Tạo một bản ghi mới.
+    trigger: Người dùng bấm “Tạo mới”.
+    pre: ["Người dùng có quyền tạo."]
+    post: ["Bản ghi mới được lưu."]
+    lanes: [Người dùng, Hệ thống]
+    steps:
+      - {n: 1, lane: 0, text: "Bấm “Tạo mới”"}
+      - {n: 2, lane: 1, text: "Hiển thị form ở chế độ tạo"}
+      - {n: 3, lane: 0, text: "Nhập dữ liệu, bấm “Lưu”"}
+      - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+      - {n: 5, lane: 1, text: "Lưu, ghi vết, quay lại\nmàn hình trước", end: true}
+    rules:
+      - step: "(4)"
+        title: Quy tắc kiểm tra
+        lines: ["Kiểm tra mọi trường bắt buộc và định dạng ở cả client và server ([[CBR:validation]]); thiếu → [[MSG:required]] dưới trường tương ứng."]
+      - step: "(5)"
+        title: Quy tắc tạo
+        lines: ["Lưu dữ liệu đã nhập; ghi [[CBR:record-trail]]; hiển thị [[MSG:saved]]."]
+  - key: update-item
+    name: Cập nhật bản ghi
+    actor: Tham chiếu use case dùng use case dùng chung này.
+    objective: Sửa một bản ghi đã có.
+    trigger: Người dùng bấm “Sửa”.
+    pre: ["Người dùng có quyền sửa; bản ghi ở trạng thái cho phép sửa."]
+    post: ["Bản ghi được cập nhật thành phiên bản mới."]
+    rules:
+      - step: "(N/A)"
+        title: Quy tắc cập nhật
+        lines:
+          - "Áp dụng quy tắc kiểm tra như khi tạo; phiên bản đang sửa phải là mới nhất → nếu không [[MSG:version-conflict]]."
+          - "Lưu phiên bản cũ; ghi [[CBR:record-trail]]."
+  - key: disable-item
+    name: Vô hiệu hóa bản ghi
+    actor: Tham chiếu use case dùng use case dùng chung này.
+    objective: Ngừng sử dụng một bản ghi danh mục mà không xóa (giữ truy vết).
+    trigger: Người dùng bấm “Vô hiệu hóa”.
+    pre: ["Người dùng có quyền; bản ghi đang hoạt động."]
+    post: ["Bản ghi “inactive”, không còn xuất hiện trong lựa chọn mới; dữ liệu cũ tham chiếu vẫn hiển thị đúng."]
+    rules:
+      - step: "(N/A)"
+        title: Quy tắc vô hiệu hóa
+        lines: ["Hệ thống không xóa vật lý dữ liệu nghiệp vụ hay lâm sàng; chỉ vô hiệu hóa hoặc đánh dấu nhập nhầm."]
+
+common_rules:
+  - key: authz
+    title: Quy tắc kiểm tra quyền (mặc định từ chối)
+    lines:
+      - "Mọi API kiểm tra quyền tại service sở hữu dữ liệu theo ma trận phân quyền (contracts/authz/matrix.yaml): vai trò từ token + quan hệ với bệnh nhân (sở hữu, quan hệ điều trị, truy cập khẩn cấp, đã phát hành). Hành động không có trong ma trận bị từ chối."
+      - "Gateway chỉ xác thực token, không quyết định quyền. Giao diện ẩn nút không có quyền nhưng không thay cho kiểm tra ở server."
+      - "Dữ liệu của bệnh nhân khác mà người dùng không có quyền: trả “không tìm thấy” (404) thay vì “bị cấm” (403), không làm lộ sự tồn tại; trường hợp người dùng đã biết bản ghi tồn tại (ví dụ bác sĩ thấy trong kết quả tìm kiếm) trả [[MSG:no-care]]."
+      - "Mọi endpoint mới phải có quy tắc trong ma trận; test tự động thất bại nếu có endpoint không được bảo vệ."
+  - key: audit
+    title: Quy tắc ghi audit
+    lines:
+      - "Ghi một bản ghi audit cho mọi thao tác đọc/ghi dữ liệu bệnh nhân và mọi quyết định phân quyền, cả cho phép lẫn từ chối: thời điểm, người thực hiện (subject, vai trò, Practitioner), hành động, loại và mã tài nguyên, mã bệnh nhân, kết quả, mục đích (“treatment”, “break-glass”, “patient-access”, “operations”), lý do (break-glass), trace-id, IP đã che octet cuối."
+      - "Bản ghi audit không chứa giá trị dữ liệu lâm sàng (không chẩn đoán, không nội dung tài liệu)."
+      - "Ghi audit cùng giao dịch với thao tác (outbox); kho audit bất biến (WORM), xuất hiện trong công cụ tra cứu ≤ 1 phút (NFR-SEC5)."
+  - key: no-pii
+    title: Quy tắc không để lộ dữ liệu cá nhân ngoài phạm vi cần thiết
+    lines:
+      - "Không ghi họ tên, SĐT, email, địa chỉ, ngày sinh, chẩn đoán, nội dung tài liệu vào log ứng dụng, metric, trace, sự kiện, URL hay thông báo lỗi; chỉ dùng mã định danh."
+      - "Không đặt dữ liệu cá nhân trong query string; link chia sẻ/tải luôn ngắn hạn và chỉ cho đúng một tài nguyên."
+      - "Thông điệp lỗi gửi người dùng không chứa stack trace hay chi tiết kỹ thuật."
+      - "Môi trường dev/test chỉ dùng dữ liệu giả; cấm sao chép dữ liệu thật về máy cá nhân."
+  - key: record-trail
+    title: Quy tắc vết thay đổi bản ghi
+    lines:
+      - "Khi tạo: [Người tạo] = <Người dùng hiện tại>, [Tạo lúc] = <Bây giờ>. Khi tạo hoặc sửa: [Người sửa cuối], [Sửa lúc], tăng [Phiên bản]."
+      - "Bản ghi lâm sàng và hồ sơ bệnh nhân giữ toàn bộ phiên bản cũ; xem được lịch sử phiên bản theo quyền."
+  - key: validation
+    title: Quy tắc kiểm tra dữ liệu đầu vào
+    lines:
+      - "Mọi dữ liệu đầu vào được kiểm tra ở server (kiểu, độ dài, định dạng, value set) dù client đã kiểm tra; trường lạ bị từ chối."
+      - "Văn bản tự do được lưu nguyên dạng và mã hóa khi hiển thị (chống XSS); không dựng câu truy vấn bằng nối chuỗi."
+  - key: pagination
+    title: Quy tắc phân trang
+    lines:
+      - "Mặc định 20 dòng/trang (tối đa 100); phân trang theo con trỏ cho dữ liệu lớn; tìm kiếm mới hoặc đổi số dòng/trang thì quay về trang đầu."
+  - key: event-processing
+    title: Quy tắc xử lý sự kiện
+    lines:
+      - "Sự kiện theo CloudEvents 1.0, giao ít nhất một lần; consumer ghi mã sự kiện vào inbox và bỏ qua sự kiện đã xử lý."
+      - "Thứ tự bảo đảm theo đối tượng (subject); sự kiện có [version] ≤ phiên bản đã xử lý thì bỏ qua."
+      - "Lỗi xử lý: thử lại tối đa 5 lần (10 giây, 1, 5, 15 phút), sau đó vào hàng lỗi (dead-letter) và cảnh báo vận hành."
+      - "Sự kiện không chứa dữ liệu cá nhân ([[CBR:no-pii]]); tối đa 64 KB."
+  - key: ai-safety
+    title: Quy tắc an toàn khi dùng AI
+    lines:
+      - "Trước khi gửi bất kỳ văn bản nào tới nhà cung cấp mô hình bên ngoài: thay họ tên, SĐT, email, địa chỉ, ngày sinh đầy đủ, mã định danh bằng mã giả; bản đồ ngược chỉ tồn tại trong bộ nhớ của yêu cầu; có test chặn yêu cầu chứa dữ liệu định danh."
+      - "Chỉ dùng nhà cung cấp có cam kết không dùng dữ liệu để huấn luyện; embedding và OCR chạy trong cụm."
+      - "AI truy cập dữ liệu bằng token của người dùng (on-behalf-of), không có quyền riêng rộng hơn; dữ liệu của bệnh nhân chưa đồng ý xử lý bằng AI không được dùng."
+      - "Kết quả AI luôn có nhãn “Do AI tạo, cần kiểm tra”; AI không chẩn đoán, không chỉ định điều trị, không tự ghi vào hồ sơ (BR-09, BR-10)."
+      - "Hạn mức token/chi phí theo ngày; circuit breaker ngắt model lỗi 5 lần trong 60 giây; mọi lời gọi model được ghi metric (không ghi nội dung)."

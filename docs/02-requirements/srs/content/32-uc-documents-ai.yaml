@@ -1,0 +1,350 @@
+# Chương 3 – Module Tài liệu lâm sàng (service document) và Trợ lý AI (service ai).
+modules:
+  - key: documents
+    name: Tài liệu lâm sàng
+    intro: >-
+      Kết quả xét nghiệm, đơn thuốc, giấy chuyển viện, ảnh chụp giấy tờ. Tệp nằm trên kho lưu trữ đối tượng, không bao giờ
+      đi qua API; người dùng chỉ upload/tải qua link ngắn hạn cấp cho đúng một tệp.
+    sections:
+      - name: Cổng nội bộ và cổng bệnh nhân – Tài liệu
+        use_cases:
+          - key: upload-document
+            name: Upload tài liệu lâm sàng
+            actors: [nurse, doctor]
+            trace: [UC-05, AC-05.1, NFR-P4, NFR-SEC3, "API D1, D2", "Sự kiện E8"]
+            objective: Đưa tệp lâm sàng vào hồ sơ bệnh nhân an toàn.
+            trigger: Người dùng bấm “Tải lên tài liệu” trên [[SCR:timeline]] hoặc [[SCR:encounter]].
+            pre: ["Điều dưỡng; hoặc Bác sĩ có quan hệ điều trị với bệnh nhân."]
+            post: ["Tài liệu “pending-scan”; sau khi quét sạch thì “available” và sự kiện “đã upload tài liệu” được phát."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn loại tài liệu và tệp,\nbấm “Tải lên”"}
+              - {n: 2, lane: 1, kind: decision, text: "Có quyền, đúng loại,\n≤ 20 MB?", branches: [{to: 3, label: Có}, {to: 7, label: Không}]}
+              - {n: 3, lane: 1, text: "Cấp link upload 10 phút\ncho đúng một tệp"}
+              - {n: 4, lane: 0, text: "Trình duyệt upload tệp\ntrực tiếp lên kho"}
+              - {n: 5, lane: 1, kind: decision, text: "Kiểm tra lại tệp,\nquét mã độc sạch?", branches: [{to: 6, label: Sạch}, {to: 8, label: Không}]}
+              - {n: 6, lane: 1, text: "Tài liệu “available”,\nphát sự kiện, ghi audit", end: true}
+              - {n: 7, lane: 1, text: "Từ chối, báo lỗi", end: true}
+              - {n: 8, lane: 1, text: "Cách ly tệp, “quarantined”,\nbáo người upload", end: true}
+            rules:
+              - step: "(2)"
+                key: upload-validate
+                title: Quy tắc kiểm tra trước khi upload
+                lines:
+                  - "Loại tệp: PDF, JPEG, PNG (khai báo của client) → nếu không [[MSG:invalid-file-type]]; kích thước ≤ 20 MB → nếu không [[MSG:file-too-large]] (AC-05.1)."
+                  - "[Loại tài liệu] bắt buộc, chọn từ bộ mã loại tài liệu."
+              - step: "(3)"
+                title: Quy tắc link upload
+                lines:
+                  - "Link chỉ cho phép ghi đúng một đối tượng, đúng Content-Type đã khai báo, hiệu lực 10 phút; tên tệp trên kho do hệ thống sinh, không chứa tên bệnh nhân."
+              - step: "(5)"
+                key: upload-verify
+                title: Quy tắc xác minh sau upload
+                lines:
+                  - "Hệ thống kiểm tra lại kích thước thật và chữ ký nội dung (magic bytes) – không tin khai báo của client; sai → xóa tệp, [[MSG:invalid-file-type]]."
+                  - "Tệp được quét mã độc; nhiễm → chuyển vùng cách ly, [Trạng thái] = “quarantined”, hiển thị [[MSG:file-infected]], cảnh báo vận hành. Tệp cách ly không dùng cho trích xuất, không ai ngoài quản trị bảo mật tải được."
+              - step: "(6)"
+                title: Quy tắc hoàn tất
+                lines:
+                  - "Tạo DocumentReference “available”, chưa phát hành cho bệnh nhân; phát “shp.document.document-uploaded.v1” (chỉ chứa mã tài liệu, mã bệnh nhân, loại) để kích hoạt [[UC:extract-document]]; hiển thị [[MSG:uploaded]]."
+            acceptance:
+              - ["AC-05.1", "Given tệp .exe đổi tên thành .pdf, When upload, Then bị từ chối sau bước kiểm tra chữ ký nội dung."]
+              - ["AC-UD.1", "Given tệp 21 MB, When xin link upload, Then bị từ chối “file-too-large”."]
+              - ["AC-UD.2", "Given tệp chứa mẫu EICAR, When upload, Then tài liệu “quarantined” và không phát sự kiện."]
+
+          - key: release-document
+            name: Phát hành tài liệu cho bệnh nhân
+            actors: [doctor]
+            trace: [UC-05, AC-05.3, "API D6", "Sự kiện E9"]
+            objective: Cho phép bệnh nhân xem một tài liệu sau khi bác sĩ đã xem xét.
+            trigger: Bác sĩ bấm “Phát hành cho bệnh nhân” trên tài liệu.
+            pre: ["Tài liệu “available”; bác sĩ có quan hệ điều trị."]
+            post: ["Tài liệu được đánh dấu đã phát hành; bệnh nhân nhận thông báo."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Phát hành”"}
+              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận"}
+              - {n: 3, lane: 0, text: "Xác nhận"}
+              - {n: 4, lane: 1, text: "Đánh dấu đã phát hành,\nphát sự kiện, gửi thông báo", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc xác nhận
+                lines: ["Hiển thị [[MSG:confirm-release]]. Phát hành là thao tác một chiều; muốn thu hồi phải đánh dấu nhập nhầm ([[UC:void-document]])."]
+              - step: "(4)"
+                title: Quy tắc phát hành
+                lines:
+                  - "Lưu người phát hành và thời điểm; phát “shp.document.document-released.v1”; gửi [[ET:document-released]] – nội dung chỉ báo có tài liệu mới, không ghi loại hay kết quả."
+            acceptance:
+              - ["AC-05.3", "Given tài liệu chưa phát hành, When bệnh nhân tải, Then không thấy tài liệu (404)."]
+
+          - key: download-document
+            name: Tải tài liệu
+            actors: [patient, doctor, nurse]
+            trace: [UC-05, AC-05.2, AC-05.3, BR-08, NFR-P4, "API D5"]
+            objective: Xem/tải tài liệu qua link có hiệu lực ngắn.
+            trigger: Người dùng bấm “Xem” trên [[SCR:my-documents]] hoặc [[SCR:timeline]].
+            pre: ["Người dùng có quyền với tài liệu theo ma trận phân quyền."]
+            post: ["Link tải 5 phút được cấp; lần cấp được ghi audit."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Xem”"}
+              - {n: 2, lane: 1, kind: decision, text: "Được phép?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
+              - {n: 3, lane: 1, text: "Cấp link đọc 5 phút,\nghi audit “download-url”"}
+              - {n: 4, lane: 0, text: "Trình duyệt mở tệp", end: true}
+              - {n: 5, lane: 1, text: "Trả “không tìm thấy”,\nghi audit “deny”", end: true}
+            rules:
+              - step: "(2)"
+                key: download-authz
+                title: Quy tắc quyền tải
+                lines:
+                  - "Bệnh nhân: chỉ tài liệu của mình và đã phát hành; Bác sĩ: quan hệ điều trị hoặc truy cập khẩn cấp; Điều dưỡng: mọi tài liệu “available”."
+                  - "Không có quyền → trả “không tìm thấy” ([[MSG:not-found]]) để không lộ sự tồn tại của tài liệu; ghi audit “deny”."
+                  - "Tài liệu “quarantined” hoặc “entered-in-error” không cấp link (trừ quản trị bảo mật với tệp cách ly)."
+              - step: "(3)"
+                title: Quy tắc link tải
+                lines:
+                  - "Link chỉ đọc đúng một tệp, hiệu lực 5 phút (BR-08), kèm Content-Disposition attachment; hết hạn thì trả lỗi và giao diện hiển thị [[MSG:link-expired]] (AC-05.2)."
+                  - "Link không được ghi vào log ứng dụng; mỗi lần cấp đều ghi audit (người, tài liệu, thời điểm, IP đã che)."
+            acceptance:
+              - ["AC-05.2", "Given link đã cấp 6 phút trước, When mở, Then bị từ chối (403)."]
+              - ["AC-05.3", "Given bệnh nhân A, When xin link tài liệu của bệnh nhân B, Then nhận 404 và có audit “deny”."]
+
+          - key: void-document
+            name: Đánh dấu tài liệu nhập nhầm
+            actors: [doctor]
+            trace: [UC-05, "API D7", BR-11]
+            objective: Thu hồi tài liệu upload nhầm bệnh nhân hoặc sai nội dung mà không xóa dữ liệu.
+            trigger: Bác sĩ (người đã upload hoặc có quan hệ điều trị) bấm “Đánh dấu nhập nhầm”.
+            pre: ["Tài liệu “available”."]
+            post: ["Tài liệu “entered-in-error”; ẩn khỏi danh sách mặc định; tệp gốc vẫn được lưu theo quy định lưu trữ."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Đánh dấu nhập nhầm”,\nnhập lý do"}
+              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận"}
+              - {n: 3, lane: 0, text: "Xác nhận"}
+              - {n: 4, lane: 1, text: "Chuyển “entered-in-error”,\nghi audit", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc thu hồi
+                lines:
+                  - "Hiển thị [[MSG:confirm-void]]; [Lý do] bắt buộc. Không có chức năng xóa tài liệu lâm sàng (BR-11: lưu trữ dài hạn)."
+                  - "Nếu tài liệu đã phát hành, bệnh nhân không còn thấy tài liệu và nhận thông báo “một tài liệu đã được bác sĩ thu hồi”."
+            acceptance:
+              - ["AC-VD.1", "Given tài liệu bị đánh dấu nhập nhầm, Then không xuất hiện trong danh sách mặc định nhưng vẫn truy vết được trong audit."]
+
+  - key: ai
+    name: Trợ lý AI
+    intro: >-
+      Trợ lý tri thức (RAG), tóm tắt hồ sơ, duyệt trích xuất, chatbot đặt lịch. Nguyên tắc chung cho mọi tính năng AI:
+      AI không chẩn đoán hay chỉ định thay bác sĩ (BR-09); dữ liệu định danh cá nhân được che trước khi gửi tới nhà cung cấp
+      mô hình bên ngoài ([[CBR:ai-safety]]); AI chỉ truy cập dữ liệu bằng quyền của chính người dùng; mọi kết quả AI có nhãn
+      “do AI tạo, cần kiểm tra”.
+    sections:
+      - name: Cổng nội bộ – Trợ lý AI
+        use_cases:
+          - key: ask-assistant
+            name: Hỏi trợ lý tri thức y tế
+            actors: [doctor, nurse]
+            trace: [UC-11, AC-11.1, AC-11.2, AC-11.3, BR-09, NFR-P5, "API AI1"]
+            objective: Trả lời câu hỏi về phác đồ, quy trình nội bộ dựa trên tài liệu đã duyệt, luôn kèm trích dẫn.
+            trigger: Người dùng nhập câu hỏi trên [[SCR:assistant]] và bấm “Gửi”.
+            pre: ["Người dùng là Bác sĩ hoặc Điều dưỡng; kho tri thức có tài liệu đã duyệt."]
+            post: ["Câu trả lời có trích dẫn, hoặc thông báo không có thông tin trong tài liệu; hội thoại được lưu 30 ngày."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập câu hỏi, bấm “Gửi”"}
+              - {n: 2, lane: 1, kind: decision, text: "Qua kiểm tra\nđầu vào?", branches: [{to: 3, label: Có}, {to: 8, label: Không}]}
+              - {n: 3, lane: 1, text: "Tìm đoạn tài liệu người dùng\nđược phép xem (hybrid)"}
+              - {n: 4, lane: 1, kind: decision, text: "Có đoạn\nliên quan?", branches: [{to: 5, label: Có}, {to: 7, label: Không}]}
+              - {n: 5, lane: 1, text: "Sinh câu trả lời qua chuỗi model,\nkiểm tra trích dẫn và đầu ra"}
+              - {n: 6, lane: 1, text: "Hiển thị (stream) câu trả lời\nkèm trích dẫn và nhãn AI", end: true}
+              - {n: 7, lane: 1, text: "Trả “không có thông tin\ntrong tài liệu”", end: true}
+              - {n: 8, lane: 1, text: "Từ chối, ghi audit", end: true}
+            alternatives:
+              - "Model chính lỗi hoặc quá thời gian: chuyển sang model kế tiếp trong chuỗi; hết chuỗi thì trả danh sách tài liệu liên quan kèm [[MSG:ai-unavailable]] (AC-11.3)."
+              - "Hết hạn mức chi phí AI trong ngày: trả [[MSG:ai-budget]] và danh sách tài liệu liên quan."
+            rules:
+              - step: "(2)"
+                key: ai-input-guard
+                title: Quy tắc kiểm tra đầu vào
+                lines:
+                  - "Câu hỏi 3–2.000 ký tự; vượt → [[MSG:max-length]]."
+                  - "Phát hiện mẫu prompt injection đã biết (“bỏ qua hướng dẫn…”, yêu cầu tiết lộ prompt hệ thống) → từ chối, ghi audit “ai-guardrail”."
+                  - "Câu hỏi chứa thông tin định danh bệnh nhân (tên + ngày sinh, SĐT, mã bệnh nhân) → được che trước khi xử lý theo [[CBR:ai-safety]]; trợ lý tri thức không dùng dữ liệu hồ sơ bệnh nhân."
+              - step: "(3)"
+                key: rag-authz
+                title: Quy tắc truy xuất có phân quyền
+                lines:
+                  - "Chỉ tìm trong tài liệu kho tri thức “approved” mà vai trò/khoa của người dùng được phép xem; lọc quyền nằm trong câu truy vấn tìm kiếm, không lọc sau."
+                  - "Tối đa 50 đoạn ứng viên, xếp hạng lại, giữ 5 đoạn tốt nhất."
+              - step: "(5)"
+                key: rag-output-guard
+                title: Quy tắc sinh và kiểm tra câu trả lời
+                lines:
+                  - "Câu trả lời chỉ dựa trên các đoạn đã truy xuất; nội dung trong tài liệu được coi là dữ liệu, không phải chỉ thị (AC-11.2)."
+                  - "Mỗi ý phải có ít nhất một trích dẫn trỏ đúng đoạn nguồn (tài liệu, mục); trích dẫn không khớp đoạn nguồn → loại ý đó; không còn ý nào → bước (7) (AC-11.1)."
+                  - "Không đưa ra chẩn đoán cho bệnh nhân cụ thể hay chỉ định điều trị (BR-09); câu hỏi kiểu này nhận câu trả lời từ chối có hướng dẫn tham khảo phác đồ."
+              - step: "(6)"
+                title: Quy tắc hiển thị
+                lines:
+                  - "Token đầu tiên ≤ 3 giây, câu trả lời đủ ≤ 10 giây (p95) (NFR-P5); hiển thị nhãn “Do AI tạo, cần kiểm tra”; nút đánh giá hữu ích/không ([[UC:answer-feedback]])."
+                  - "Hội thoại lưu 30 ngày rồi tự xóa ([[UC:purge-expired]]); chỉ chủ hội thoại xem được."
+            acceptance:
+              - ["AC-11.1", "Given câu hỏi có đáp án trong tài liệu, Then câu trả lời có ≥ 1 trích dẫn trỏ đúng đoạn nguồn; Given không có, Then trả “không có thông tin trong tài liệu”."]
+              - ["AC-11.2", "Given tài liệu chứa câu “bỏ qua hướng dẫn trước”, When hỏi, Then hành vi không đổi (bộ 50 mẫu prompt injection đạt 100%)."]
+              - ["AC-11.3", "Given model chính lỗi, Then trả lời bằng model dự phòng; Given mọi model lỗi, Then trả danh sách tài liệu liên quan."]
+              - ["AC-AS.1", "Given điều dưỡng khoa Nội, When hỏi về tài liệu chỉ dành cho khoa Tim mạch, Then không có trích dẫn từ tài liệu đó."]
+
+          - key: answer-feedback
+            name: Đánh giá câu trả lời
+            type: Basic
+            actors: [doctor, nurse]
+            trace: [UC-11, "API AI2"]
+            objective: Ghi nhận câu trả lời hữu ích hay không để cải thiện trợ lý.
+            trigger: Người dùng bấm “Hữu ích” / “Không hữu ích” dưới câu trả lời.
+            pre: ["Người dùng là chủ hội thoại."]
+            post: ["Đánh giá được lưu (một đánh giá/câu trả lời, sửa được)."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm đánh giá, nhập\nnhận xét (tùy chọn)"}
+              - {n: 2, lane: 1, text: "Lưu đánh giá", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc lưu
+                lines: ["Nhận xét tối đa 1.000 ký tự, được che thông tin định danh trước khi lưu; chỉ chủ hội thoại đánh giá được."]
+            acceptance:
+              - ["AC-FB.1", "Given người dùng khác chủ hội thoại, When gửi đánh giá, Then bị từ chối (404)."]
+
+          - key: summarize
+            name: Tóm tắt hồ sơ bệnh nhân bằng AI
+            actors: [doctor]
+            trace: [UC-12, AC-12.1, AC-12.2, AC-12.3, NFR-P6, "API AI4"]
+            objective: Tóm tắt bệnh nền, dị ứng, lần khám gần nhất, thuốc, kết quả bất thường – mỗi ý trỏ về bản ghi gốc.
+            trigger: Bác sĩ bấm “Tóm tắt” trên [[SCR:timeline]].
+            pre: ["Bác sĩ có quan hệ điều trị hoặc truy cập khẩn cấp; bệnh nhân đã đồng ý xử lý dữ liệu bằng AI."]
+            post: ["Bản tóm tắt có liên kết nguồn và nhãn AI được hiển thị (không lưu vào hồ sơ)."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Tóm tắt”"}
+              - {n: 2, lane: 1, kind: decision, text: "Có quyền và\nbệnh nhân đồng ý?", branches: [{to: 3, label: Có}, {to: 6, label: Không}]}
+              - {n: 3, lane: 1, text: "Lấy dữ liệu bằng token\ncủa bác sĩ, che định danh"}
+              - {n: 4, lane: 1, text: "Sinh tóm tắt, loại ý\nkhông có nguồn hợp lệ"}
+              - {n: 5, lane: 1, text: "Hiển thị tóm tắt, liên kết\nnguồn, nhãn AI", end: true}
+              - {n: 6, lane: 1, text: "Từ chối, hiển thị lý do;\nđề nghị timeline có cấu trúc", end: true}
+            rules:
+              - step: "(2)"
+                key: ai-consent
+                title: Quy tắc quyền và đồng ý
+                lines:
+                  - "Áp dụng [[BR:timeline-authz]] cho bác sĩ."
+                  - "Bệnh nhân chưa đồng ý hoặc đã rút đồng ý xử lý dữ liệu bằng AI ([[UC:manage-consent]]) → [[MSG:consent-required]]; giao diện vẫn có timeline có cấu trúc."
+              - step: "(3)"
+                title: Quy tắc thu thập dữ liệu
+                lines:
+                  - "Service AI gọi service lâm sàng bằng token của bác sĩ (on-behalf-of) – không có quyền rộng hơn bác sĩ (AC-12.1)."
+                  - "Trước khi gửi tới nhà cung cấp mô hình bên ngoài: thay họ tên, SĐT, email, địa chỉ, mã định danh bằng mã giả; bản đồ ngược chỉ nằm trong bộ nhớ của yêu cầu ([[CBR:ai-safety]])."
+              - step: "(4)"
+                title: Quy tắc kiểm tra kết quả
+                lines:
+                  - "Mỗi ý phải trích dẫn mã bản ghi nguồn có trong dữ liệu đã thu thập; ý không có nguồn hợp lệ bị loại (AC-12.2)."
+                  - "Kết quả ≤ 15 giây (p95) (NFR-P6); cache 10 phút cho cùng bác sĩ và cùng phiên bản dữ liệu."
+              - step: "(5)"
+                title: Quy tắc hiển thị
+                lines: ["Nhãn “Do AI tạo, cần kiểm tra” luôn hiển thị (AC-12.3); tóm tắt không được lưu vào hồ sơ bệnh nhân; mỗi lần tóm tắt ghi audit."]
+            acceptance:
+              - ["AC-12.1", "Given bác sĩ không có quyền xem một lần khám, Then tóm tắt không chứa thông tin từ lần khám đó."]
+              - ["AC-12.2", "Given tóm tắt, Then mỗi ý có liên kết tới bản ghi gốc mở được."]
+              - ["AC-SM.1", "Given bệnh nhân đã rút đồng ý AI, When bác sĩ bấm “Tóm tắt”, Then bị từ chối “consent-required”."]
+              - ["AC-SM.2", "Given yêu cầu gửi tới nhà cung cấp mô hình, Then không chứa họ tên, SĐT, email, địa chỉ của bệnh nhân (kiểm bằng test chặn mạng giả lập)."]
+
+          - key: review-extraction
+            name: Duyệt kết quả trích xuất tài liệu
+            actors: [nurse, doctor]
+            trace: [UC-13, AC-13.1, BR-10, "API AI5, AI6"]
+            objective: Xác nhận, sửa hoặc từ chối từng trường AI đã trích từ tài liệu trước khi ghi vào hồ sơ.
+            trigger: Người dùng mở một mục trên [[SCR:extraction-review]].
+            pre: ["Kết quả trích xuất “needs-review”; bác sĩ phải có quan hệ điều trị."]
+            post: ["Các trường đã xác nhận được ghi vào hồ sơ (Observation…) bằng quyền của người duyệt; kết quả “accepted” hoặc “rejected”."]
+            lanes: [Người duyệt, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Mở mục cần duyệt"}
+              - {n: 2, lane: 1, text: "Hiển thị tài liệu, vùng tô và\ngiá trị trích xuất, độ tin cậy"}
+              - {n: 3, lane: 0, text: "Xác nhận / sửa / bỏ từng\ntrường, bấm “Lưu kết quả”"}
+              - {n: 4, lane: 1, kind: decision, text: "Giá trị hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, text: "Ghi trường đã xác nhận vào hồ sơ,\nlưu trường đã sửa, ghi audit", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc hiển thị
+                lines: ["Trường có độ tin cậy dưới ngưỡng (mặc định 0,85) được tô màu cảnh báo; mọi trường đều mặc định “chưa xác nhận” – không có nút “chấp nhận tất cả” (AC-13.1)."]
+              - step: "(4)"
+                title: Quy tắc kiểm tra
+                lines: ["Giá trị sau khi sửa phải qua kiểm tra như nhập tay (đơn vị, khoảng hợp lý – [[BR:vital-ranges]])."]
+              - step: "(5)"
+                title: Quy tắc ghi vào hồ sơ
+                lines:
+                  - "Chỉ trường được xác nhận mới được ghi; ghi bằng token của người duyệt (on-behalf-of), nguồn ghi = “AI extraction, người xác nhận <Tên>”; lưu danh sách trường đã sửa."
+                  - "Từ chối toàn bộ → “rejected”, không ghi gì vào hồ sơ."
+            acceptance:
+              - ["AC-13.1", "Given kết quả trích xuất chưa được xác nhận, Then không trường nào xuất hiện trong hồ sơ bệnh nhân."]
+              - ["AC-RE.1", "Given bác sĩ không có quan hệ điều trị, When mở mục duyệt, Then bị từ chối."]
+
+          - key: manage-kb
+            name: Quản lý kho tri thức
+            type: Basic
+            actors: [admin]
+            trace: [UC-11, "API AI9"]
+            objective: Thêm, duyệt, thay phiên bản, gỡ tài liệu nguồn của trợ lý; đặt phạm vi xem theo vai trò/khoa.
+            trigger: Quản trị viên mở [[SCR:kb]].
+            pre: ["Quản trị viên đã đăng nhập (MFA)."]
+            post: ["Tài liệu được lập chỉ mục (sau khi duyệt) hoặc bị gỡ khỏi chỉ mục."]
+            alternatives:
+              - "Áp dụng [[CMUC:view-list]], [[CMUC:view-item]], [[CMUC:create-item]], [[CMUC:update-item]], [[CMUC:disable-item]] cho đối tượng Tài liệu kho tri thức."
+            rules:
+              - step: "(N/A)"
+                title: Quy tắc riêng
+                lines:
+                  - "Chỉ tài liệu “approved” được lập chỉ mục; thay phiên bản không có khoảng thời gian thiếu chỉ mục (lập chỉ mục bản mới xong mới gỡ bản cũ)."
+                  - "Tài liệu kho tri thức không được chứa dữ liệu bệnh nhân; khi tải lên hệ thống quét mẫu thông tin định danh và từ chối nếu phát hiện."
+                  - "[Phạm vi xem] bắt buộc (vai trò và/hoặc khoa)."
+            acceptance:
+              - ["AC-KB.1", "Given tài liệu ở “draft”, When hỏi trợ lý, Then không có trích dẫn từ tài liệu đó."]
+
+      - name: Cổng bệnh nhân – Chatbot
+        use_cases:
+          - key: chatbot-booking
+            name: Chatbot đặt lịch
+            actors: [patient]
+            trace: [UC-14, AC-14.1, AC-14.2, AC-14.3, "API AI7, AI8"]
+            objective: Đặt hoặc hủy lịch bằng hội thoại; mọi hành động phải được bệnh nhân xác nhận rõ ràng.
+            trigger: Bệnh nhân mở [[SCR:chatbot]] và nhập yêu cầu.
+            pre: ["Bệnh nhân đã đăng nhập."]
+            post: ["Lịch hẹn được đặt/hủy sau xác nhận, hoặc không có thay đổi."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập yêu cầu (ví dụ “khám tim\nmạch sáng thứ 5”)"}
+              - {n: 2, lane: 1, text: "Hiểu ý định, tìm slot bằng\nquyền của bệnh nhân"}
+              - {n: 3, lane: 1, text: "Đề xuất hành động,\nyêu cầu xác nhận"}
+              - {n: 4, lane: 0, kind: decision, text: "Xác nhận?", branches: [{to: 5, label: Có}, {to: 7, label: Không}]}
+              - {n: 5, lane: 1, text: "Thực hiện đặt / hủy theo\nquy tắc của UC đặt / hủy lịch"}
+              - {n: 6, lane: 1, text: "Báo kết quả", end: true}
+              - {n: 7, lane: 1, text: "Hủy đề xuất, không thay đổi", end: true}
+            alternatives: ["Mọi model lỗi hoặc bot không hiểu sau 3 lượt: chuyển bệnh nhân sang [[SCR:find-doctor]] với bộ lọc đã hiểu được (AC-14.3)."]
+            rules:
+              - step: "(2)"
+                title: Quy tắc giới hạn bot
+                lines:
+                  - "Bot chỉ có 4 công cụ: tìm slot, xem lịch hẹn của tôi, đề xuất đặt, đề xuất hủy; tối đa 6 vòng gọi công cụ, 10 giây mỗi lượt."
+                  - "Bot gọi API bằng token của chính bệnh nhân nên không truy cập được dữ liệu của bệnh nhân khác (AC-14.2); không trả lời câu hỏi chuyên môn y tế."
+              - step: "(3)"
+                key: bot-confirm
+                title: Quy tắc xác nhận hành động
+                lines:
+                  - "Bot không bao giờ đặt/hủy trực tiếp: tạo một hành động chờ xác nhận, hiển thị [[MSG:confirm-bot-action]] với nút “Xác nhận” do giao diện vẽ (không phải văn bản do model sinh)."
+                  - "Hành động chờ hết hạn sau 5 phút → [[MSG:confirmation-expired]] (AC-14.1)."
+              - step: "(5)"
+                title: Quy tắc thực hiện
+                lines: ["Áp dụng nguyên vẹn [[UC:book]] / [[UC:cancel]] (kể cả BR-02, BR-03, idempotency) với [Kênh đặt] = “chatbot”."]
+            acceptance:
+              - ["AC-14.1", "Given bot đề xuất đặt lịch, When bệnh nhân không bấm xác nhận, Then không có lịch hẹn nào được tạo."]
+              - ["AC-14.2", "Given bệnh nhân hỏi về lịch hẹn của người khác, Then bot không trả về dữ liệu của người đó."]
+              - ["AC-14.3", "Given mọi model lỗi, Then giao diện chuyển sang form đặt lịch."]

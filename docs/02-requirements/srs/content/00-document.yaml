@@ -1,0 +1,91 @@
+# Thông tin tài liệu và Chương 1 (Giới thiệu).
+document:
+  system: Smart Hospital Platform
+  subtitle: Nền tảng đặt lịch khám, hồ sơ lâm sàng, tài liệu bệnh nhân và trợ lý AI cho bệnh viện
+  version: "0.9"
+  team: Nhóm 12
+  prepared_by: Business Analyst – Nhóm 12
+  date_text: Tháng 10/2026
+  approval_text: >-
+    Chữ ký trên tài liệu này thể hiện sự thống nhất giữa nhóm phát triển và người phê duyệt về nội dung “Đặc tả yêu cầu
+    phần mềm Smart Hospital Platform”. Mọi thay đổi sau khi phê duyệt phải đi qua yêu cầu thay đổi và được ghi vào bảng
+    Lịch sử thay đổi.
+  approvals:
+    - ["Người soạn", "Business Analyst (Nhóm 12)"]
+    - ["Người review", "Kiến trúc sư hệ thống / Trưởng nhóm"]
+    - ["Người review", "Đại diện nhóm phát triển"]
+    - ["Người phê duyệt", "Giảng viên hướng dẫn"]
+  history:
+    - {date: "26/10/2026", version: "0.5", author: "BA", change: "Tài liệu yêu cầu Pha 2 (functional-requirements.md, non-functional-requirements.md, user-stories.md) – gate G2"}
+    - {date: "30/10/2026", version: "0.9", author: "BA", change: "Chuyển toàn bộ yêu cầu sang mẫu SRS: use case chi tiết có activity diagram và quy tắc nghiệp vụ, ma trận phân quyền, site map, danh sách màn hình, NFR có cách đo, danh sách thông điệp và mẫu thông báo. Bản để review nội bộ."}
+    - {date: "", version: "1.0", author: "", change: "Bản chính thức sau review (baseline). Mọi thay đổi sau đó đi qua yêu cầu thay đổi."}
+
+introduction:
+  purpose: >-
+    Đặc tả yêu cầu phần mềm (SRS) này là tuyên bố chính thức về các yêu cầu chức năng và phi chức năng của Smart Hospital
+    Platform. Tài liệu mô tả những khả năng hệ thống phải cung cấp và những ràng buộc hệ thống phải tuân thủ, làm cơ sở
+    thống nhất giữa nhóm phát triển, người review và người phê duyệt về cách hệ thống hoạt động.
+  purpose_points:
+    - Xác định phạm vi mục tiêu nghiệp vụ, chức năng và cấu trúc của hệ thống.
+    - Xác định các quy trình nghiệp vụ mà hệ thống hỗ trợ.
+    - Tạo hiểu biết chung về yêu cầu chức năng cho mọi bên liên quan.
+    - Làm cơ sở để xây dựng kế hoạch kiểm thử và tiêu chí nghiệm thu (mỗi quy tắc nghiệp vụ và tiêu chí nghiệm thu được truy vết sang test case).
+  overview:
+    - >-
+      Smart Hospital Platform là nền tảng cloud-native phục vụ khám ngoại trú của một bệnh viện đa khoa tư nhân quy mô vừa
+      (giả định: 300 giường, 40 phòng khám chuyên khoa, 120 bác sĩ, khoảng 1.500 lượt khám/ngày, 50.000 bệnh nhân năm đầu).
+      Hệ thống giải quyết 6 vấn đề nghiệp vụ: tổng đài đặt lịch quá tải, tỉ lệ bệnh nhân không đến khám khoảng 18%, hồ sơ
+      và kết quả rời rạc, tra cứu phác đồ thủ công, không truy vết được ai đã xem hồ sơ, và nhập tay dữ liệu từ giấy tờ.
+    - >-
+      Phạm vi gồm: đặt/hủy/đổi lịch khám và quản lý lịch làm việc bác sĩ; hồ sơ bệnh nhân, tiếp đón, ghi nhận lần khám theo
+      chuẩn FHIR R4; upload, phát hành và tải tài liệu lâm sàng; nhắc lịch tự động; ghi nhật ký (audit) mọi truy cập dữ liệu
+      bệnh nhân và truy cập khẩn cấp; trợ lý tri thức y tế (RAG) có trích dẫn, tóm tắt hồ sơ, trích xuất dữ liệu từ tài liệu,
+      chatbot đặt lịch và mô hình dự đoán nguy cơ không đến khám.
+    - >-
+      Ngoài phạm vi: thanh toán và viện phí, nội trú, kê đơn và cấp phát thuốc, tích hợp với hệ thống của Bộ Y tế/BHXH,
+      ứng dụng di động riêng (giao diện web có responsive). Toàn bộ dữ liệu bệnh nhân dùng trong dự án là dữ liệu giả.
+  audience:
+    - "Nhóm phát triển: thiết kế chi tiết, hiện thực, kiểm thử đơn vị, tích hợp và hệ thống."
+    - "Nhóm kiểm thử: xây dựng kế hoạch kiểm thử, test case và tiêu chí nghiệm thu từ các quy tắc nghiệp vụ và tiêu chí Given/When/Then."
+    - "Kiến trúc sư / DevOps: đối chiếu yêu cầu phi chức năng với kiến trúc, hạ tầng và kịch bản đo."
+    - "Giảng viên và người review: đánh giá phạm vi, mức độ đầy đủ và khả năng kiểm chứng của yêu cầu."
+  reading: >-
+    Chương 2 cho cái nhìn tổng quan (đối tượng, quy trình, trạng thái, use case, phân quyền, site map). Chương 3 là đặc tả
+    chi tiết từng use case: mỗi use case có bảng tóm tắt, activity diagram với các bước đánh số, và bảng quy tắc nghiệp vụ
+    tham chiếu đúng số bước. Chương 4 mô tả màn hình. Chương 5 là yêu cầu phi chức năng có chỉ số và cách đo. Phụ lục liệt kê
+    thông điệp và mẫu thông báo. Mã trong ngoặc như UC-03, AC-03.1, BR-02, NFR-P1, US-012 trỏ về tài liệu yêu cầu gốc trong repo.
+  glossary:
+    - ["SRS", "Software Requirements Specification – Đặc tả yêu cầu phần mềm"]
+    - ["UC", "Use case"]
+    - ["CMUC", "Common use case – use case dùng chung"]
+    - ["BR", "Business rule – quy tắc nghiệp vụ (trong use case)"]
+    - ["CBR", "Common business rule – quy tắc nghiệp vụ dùng chung"]
+    - ["ET", "Mẫu thông báo (email/SMS/push)"]
+    - ["EMSG / IEM / CFD / SMSG", "Thông điệp lỗi / lỗi tại trường / hộp thoại xác nhận / thông báo thành công"]
+    - ["NFR", "Non-functional requirement – yêu cầu phi chức năng"]
+    - ["AC", "Acceptance criteria – tiêu chí nghiệm thu dạng Given/When/Then"]
+    - ["FHIR", "Fast Healthcare Interoperability Resources (HL7 FHIR R4) – chuẩn dữ liệu y tế"]
+    - ["RAG", "Retrieval-Augmented Generation – sinh câu trả lời dựa trên tài liệu truy xuất được"]
+    - ["OIDC / MFA", "OpenID Connect / xác thực nhiều yếu tố"]
+    - ["DPO", "Data Protection Officer – cán bộ bảo vệ dữ liệu"]
+    - ["Break-glass", "Truy cập khẩn cấp vào hồ sơ khi không có quan hệ điều trị, bắt buộc lý do và bị giám sát"]
+    - ["Quan hệ điều trị (Care)", "Bác sĩ có lịch hẹn/lần khám với bệnh nhân trong 12 tháng gần nhất hoặc có lịch hẹn tương lai"]
+    - ["Slot", "Khung giờ khám của một bác sĩ (mặc định 15 phút)"]
+    - ["No-show", "Bệnh nhân không đến khám theo lịch hẹn"]
+    - ["Idempotency-Key", "Khóa do client sinh để gửi lại yêu cầu mà không tạo bản ghi trùng"]
+    - ["N/A", "Không áp dụng / không có"]
+    - ["TBU", "To be updated – sẽ cập nhật"]
+    - ["[Trường]", "Quy ước khi nhắc tới một trường dữ liệu, ví dụ [Trạng thái]"]
+    - ["“Giá trị”", "Quy ước khi nhắc tới một giá trị, ví dụ “booked”"]
+    - ["<Giá trị đặc biệt>", "Giá trị do hệ thống xác định lúc chạy, ví dụ <Hôm nay>, <Người dùng hiện tại>"]
+    - ["<<Trường>>", "Giá trị của trường trong mẫu thông báo"]
+  references:
+    - ["Phân tích nghiệp vụ (G1)", "docs/01-business-analysis/business-analysis.md", "Bối cảnh, vấn đề BP-1..6, stakeholder, quy trình as-is/to-be, quy tắc BR-01..11"]
+    - ["Yêu cầu chức năng (G2)", "docs/02-requirements/functional-requirements.md", "16 use case nghiệp vụ UC-01..16 với tiêu chí nghiệm thu"]
+    - ["Yêu cầu phi chức năng (G2)", "docs/02-requirements/non-functional-requirements.md", "49 NFR có chỉ số và cách đo"]
+    - ["User stories", "docs/02-requirements/user-stories.md", "74 user story US-001..074"]
+    - ["Ma trận phân quyền", "docs/02-requirements/access-control-matrix.md; contracts/authz/matrix.yaml", "Quyền theo vai trò và quan hệ điều trị; bản máy đọc được dùng trong code và test"]
+    - ["Thiết kế chi tiết", "docs/03-architecture/detailed-design/", "Mô hình dữ liệu, API từng service, danh mục sự kiện, phân quyền chi tiết"]
+    - ["Hợp đồng API", "contracts/openapi/*.yaml", "OpenAPI 3 của 7 service"]
+    - ["HL7 FHIR R4", "https://hl7.org/fhir/R4/", "Chuẩn tài nguyên Patient, Appointment, Slot, Encounter, Observation, DocumentReference…"]
+    - ["Luật/Nghị định bảo vệ dữ liệu cá nhân", "Nghị định 13/2023/NĐ-CP", "Dữ liệu sức khỏe là dữ liệu cá nhân nhạy cảm – cơ sở cho audit, DPO, che PII"]
