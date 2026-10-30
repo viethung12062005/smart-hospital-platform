@@ -1,0 +1,347 @@
+# Chương 2 – Yêu cầu mức tổng quan.
+high_level:
+  intro: >-
+    Chương này mô tả tổng quan chức năng và quy trình nghiệp vụ qua các sơ đồ: loại người dùng, quyền của họ trên từng
+    chức năng và trình tự các bước để hoàn thành một quy trình. Đây là mức tổng quan; đặc tả chi tiết nằm ở Chương 3.
+  ord:
+    intro: >-
+      Sơ đồ thể hiện quan hệ tĩnh giữa actor và đối tượng dữ liệu, giữa các đối tượng với nhau và với hệ thống bên ngoài.
+      Đối tượng là một thực thể dữ liệu trong hệ thống; mỗi service sở hữu dữ liệu của mình và là nơi duy nhất quyết định
+      quyền trên dữ liệu đó.
+    nodes:
+      - {key: a-dpo, label: Cán bộ bảo vệ dữ liệu, kind: actor, col: 0, row: 0}
+      - {key: a-nurse, label: Điều dưỡng, kind: actor, col: 1, row: 0}
+      - {key: a-patient, label: Bệnh nhân, kind: actor, col: 2, row: 0}
+      - {key: a-doctor, label: Bác sĩ, kind: actor, col: 3, row: 1}
+      - {key: a-admin, label: Quản trị viên, kind: actor, col: 7, row: 2}
+      - {key: audit, label: Bản ghi audit, kind: object, col: 0, row: 1}
+      - {key: patient, label: Bệnh nhân (Patient), kind: object, col: 1, row: 1}
+      - {key: appointment, label: Lịch hẹn, kind: object, col: 2, row: 1}
+      - {key: slot, label: Slot, kind: object, col: 4, row: 1}
+      - {key: schedule, label: Lịch làm việc, kind: object, col: 5, row: 1}
+      - {key: practitioner, label: Bác sĩ (Practitioner), kind: object, col: 6, row: 1}
+      - {key: consent, label: Đồng ý xử lý dữ liệu, kind: object, col: 0, row: 2}
+      - {key: reminder, label: Lần nhắc lịch, kind: object, col: 1, row: 2}
+      - {key: encounter, label: Lần khám, kind: object, col: 2, row: 2}
+      - {key: prediction, label: Dự đoán no-show, kind: object, col: 3, row: 2}
+      - {key: account, label: Tài khoản, kind: object, col: 6, row: 2}
+      - {key: messaging, label: Nhà cung cấp gửi tin, kind: external, col: 0, row: 3}
+      - {key: observation, label: Sinh hiệu / kết quả, kind: object, col: 1, row: 3}
+      - {key: document, label: Tài liệu lâm sàng, kind: object, col: 2, row: 3}
+      - {key: condition, label: Chẩn đoán / dị ứng, kind: object, col: 3, row: 3}
+      - {key: idp, label: Nhà cung cấp định danh, kind: external, col: 6, row: 3}
+      - {key: malware, label: Quét mã độc, kind: external, col: 1, row: 4}
+      - {key: extraction, label: Kết quả trích xuất, kind: object, col: 2, row: 4}
+      - {key: llm, label: Mô hình ngôn ngữ, kind: external, col: 3, row: 4}
+      - {key: conversation, label: Hội thoại trợ lý, kind: object, col: 4, row: 4}
+      - {key: kb, label: Kho tri thức, kind: object, col: 5, row: 4}
+    links:
+      - {from: a-patient, to: appointment, label: "đặt / hủy"}
+      - {from: a-nurse, to: patient, label: "tạo / gộp"}
+      - {from: a-doctor, to: encounter, label: ghi nhận}
+      - {from: a-admin, to: account, label: quản lý}
+      - {from: a-dpo, to: audit, label: tra cứu}
+      - {from: appointment, to: patient, label: của}
+      - {from: appointment, to: slot, label: chiếm}
+      - {from: slot, to: schedule, label: thuộc}
+      - {from: schedule, to: practitioner, label: của}
+      - {from: consent, to: patient, label: của}
+      - {from: encounter, to: appointment, label: từ}
+      - {from: observation, to: encounter, label: thuộc}
+      - {from: condition, to: encounter, label: thuộc}
+      - {from: account, to: practitioner, label: liên kết}
+      - {from: account, to: idp, label: định danh}
+      - {from: reminder, to: appointment, label: nhắc}
+      - {from: reminder, to: messaging, label: gửi qua}
+      - {from: document, to: encounter, label: đính kèm}
+      - {from: document, to: malware, label: quét}
+      - {from: extraction, to: document, label: trích từ}
+      - {from: extraction, to: llm, label: phân loại}
+      - {from: prediction, to: appointment, label: cho}
+      - {from: audit, to: patient, label: ghi truy cập}
+      - {from: conversation, to: llm, label: sinh trả lời}
+      - {from: conversation, to: kb, label: trích dẫn}
+
+  workflow_intro: >-
+    Phần này mô tả trình tự công việc của từng actor để hoàn thành một quy trình nghiệp vụ, cùng điều kiện để chuyển sang
+    bước tiếp theo hoặc quay lại bước trước.
+  workflows:
+    - key: outpatient
+      name: Quy trình khám ngoại trú
+      lanes: [Bệnh nhân, Điều dưỡng, Bác sĩ, Hệ thống]
+      steps:
+        - {n: 1, lane: 0, text: "Tìm khung giờ trống và đặt lịch\n(hoặc điều dưỡng đặt thay)"}
+        - {n: 2, lane: 3, text: "Tạo lịch hẹn “booked”,\nlên lịch nhắc, dự đoán no-show"}
+        - {n: 3, lane: 3, kind: decision, text: "Đến giờ khám?", branches: [{to: 4, label: "Có, bệnh nhân đến"}, {to: 10, label: "Quá giờ, không đến"}]}
+        - {n: 4, lane: 1, text: "Check-in, đo sinh hiệu"}
+        - {n: 5, lane: 2, text: "Mở lần khám, ghi bệnh sử,\nchẩn đoán"}
+        - {n: 6, lane: 1, text: "Upload kết quả, giấy tờ"}
+        - {n: 7, lane: 2, text: "Kết thúc lần khám,\nphát hành tài liệu cần thiết"}
+        - {n: 8, lane: 3, text: "Lần khám “finished”,\nlịch hẹn “fulfilled”"}
+        - {n: 9, lane: 0, text: "Xem tài liệu đã phát hành", end: true}
+        - {n: 10, lane: 3, text: "Đánh dấu “noshow”, giải phóng\nslot, cập nhật dữ liệu ML", end: true}
+      explanation:
+        - "Bệnh nhân tự đặt lịch trên cổng bệnh nhân hoặc điều dưỡng đặt thay tại quầy/qua điện thoại. Hệ thống kiểm tra BR-01..04, tạo lịch hẹn và phát sự kiện “đã đặt lịch”."
+        - "Từ sự kiện đó, hệ thống lên lịch nhắc T-24h và T-2h, tính nguy cơ không đến khám; nguy cơ cao thì thêm lần nhắc T-6h và đánh dấu cho điều dưỡng."
+        - "Bệnh nhân có thể hủy hoặc đổi lịch đến 2 giờ trước giờ khám; sau mốc đó chỉ điều dưỡng thực hiện được. Hủy lịch thì hủy luôn các lần nhắc."
+        - "Khi bệnh nhân đến, điều dưỡng check-in (lịch hẹn “arrived”, tạo lần khám) và đo sinh hiệu; bác sĩ mở lần khám, ghi bệnh sử, chẩn đoán, có thể xem tóm tắt hồ sơ và hỏi trợ lý tri thức."
+        - "Kết thúc lần khám thì hồ sơ lần khám bị khóa sửa; muốn bổ sung phải tạo bản ghi bổ sung. Tài liệu chỉ hiện với bệnh nhân sau khi bác sĩ phát hành."
+        - "Nếu quá giờ khám 30 phút mà chưa check-in, job định kỳ đánh dấu lịch hẹn “noshow”."
+    - key: documents
+      name: Quy trình tài liệu và trích xuất dữ liệu
+      lanes: [Điều dưỡng / Bác sĩ, Hệ thống, Người duyệt (ĐD / BS), Bệnh nhân]
+      steps:
+        - {n: 1, lane: 0, text: "Chọn tệp, xin quyền upload"}
+        - {n: 2, lane: 1, text: "Kiểm tra quyền, cấp link\nupload ngắn hạn"}
+        - {n: 3, lane: 0, text: "Upload tệp trực tiếp\nlên kho lưu trữ"}
+        - {n: 4, lane: 1, kind: decision, text: "Đúng loại, ≤ 20 MB,\nsạch mã độc?", branches: [{to: 5, label: Có}, {to: 9, label: Không}]}
+        - {n: 5, lane: 1, text: "Tài liệu “available”;\nOCR, phân loại, trích trường"}
+        - {n: 6, lane: 2, text: "Xác nhận / sửa / từ chối\ntừng trường trích xuất"}
+        - {n: 7, lane: 1, text: "Ghi trường đã xác nhận vào hồ sơ,\nghi audit"}
+        - {n: 8, lane: 3, text: "Tải tài liệu đã phát hành\nqua link 5 phút", end: true}
+        - {n: 9, lane: 1, text: "Từ chối hoặc cách ly tệp,\nbáo người upload", end: true}
+      explanation:
+        - "Người upload không gửi tệp qua API mà nhận một link upload chỉ ghi được đúng một tệp, hiệu lực 10 phút."
+        - "Tệp sai loại, quá 20 MB hoặc nhiễm mã độc bị từ chối/cách ly và không bao giờ được dùng cho trích xuất hay hiển thị."
+        - "Kết quả trích xuất không bao giờ tự ghi vào hồ sơ: người có quyền phải xác nhận từng trường (BR-10)."
+        - "Bệnh nhân chỉ thấy tài liệu của mình đã được bác sĩ phát hành; mỗi lần cấp link tải đều được ghi audit."
+    - key: break-glass
+      name: Quy trình truy cập khẩn cấp và giám sát
+      lanes: [Bác sĩ, Hệ thống, Cán bộ bảo vệ dữ liệu]
+      steps:
+        - {n: 1, lane: 0, text: "Mở hồ sơ bệnh nhân\nkhông có quan hệ điều trị"}
+        - {n: 2, lane: 1, text: "Từ chối, đề nghị\ntruy cập khẩn cấp"}
+        - {n: 3, lane: 0, text: "Nhập lý do, xác nhận"}
+        - {n: 4, lane: 1, text: "Cấp quyền 60 phút,\nghi audit mục đích “break-glass”"}
+        - {n: 5, lane: 2, text: "Nhận cảnh báo ≤ 5 phút,\nrà soát lý do", end: true}
+      explanation:
+        - "Truy cập khẩn cấp chỉ dành cho bác sĩ, bắt buộc nhập lý do tối thiểu 10 ký tự, quyền có hiệu lực 60 phút với đúng một bệnh nhân."
+        - "Mọi thao tác trong thời gian này được ghi audit với mục đích “break-glass”; DPO nhận cảnh báo và phải rà soát."
+
+  state_intro: >-
+    Phần này mô tả hành vi của hệ thống qua thay đổi trạng thái của đối tượng dữ liệu. Ô bo tròn là trạng thái; mũi tên
+    nối hai trạng thái là hành động gây ra chuyển trạng thái, thường do một actor kích hoạt. Chuyển trạng thái không có
+    trong sơ đồ bị từ chối với lỗi “invalid-state-transition”.
+  state_machines:
+    - key: appointment
+      name: Trạng thái lịch hẹn
+      initial: booked
+      finals: [fulfilled, cancelled, noshow]
+      states:
+        - {key: booked, label: booked, col: 1, row: 0, meaning: Đã đặt, slot bị chiếm}
+        - {key: arrived, label: arrived, col: 1, row: 1, meaning: Bệnh nhân đã check-in, lần khám đã tạo}
+        - {key: fulfilled, label: fulfilled, col: 1, row: 2, meaning: Lần khám đã kết thúc}
+        - {key: cancelled, label: cancelled, col: 0, row: 1, meaning: Đã hủy; slot trở về free; các lần nhắc bị hủy}
+        - {key: noshow, label: noshow, col: 2, row: 1, meaning: Quá giờ 30 phút chưa check-in}
+      transitions:
+        - {from: booked, to: arrived, label: "Check-in (ĐD)"}
+        - {from: arrived, to: fulfilled, label: "Kết thúc lần khám (BS)"}
+        - {from: booked, to: cancelled, label: "Hủy (BN ≥ 2h / ĐD)\nhoặc đổi lịch"}
+        - {from: booked, to: noshow, label: "Job: quá giờ 30 phút"}
+    - key: slot
+      name: Trạng thái slot
+      initial: free
+      finals: []
+      states:
+        - {key: free, label: free, col: 0, row: 0, meaning: Còn trống, đặt được}
+        - {key: busy, label: busy, col: 2, row: 0, meaning: Đã có lịch hẹn đang hiệu lực}
+        - {key: blocked, label: busy-unavailable, col: 1, row: 1, meaning: Bị chặn (nghỉ phép, họp); không đặt được}
+      transitions:
+        - {from: free, to: busy, label: Đặt lịch}
+        - {from: busy, to: free, label: "Hủy / đổi lịch"}
+        - {from: free, to: blocked, label: Chặn slot}
+        - {from: blocked, to: free, label: Mở chặn}
+    - key: encounter
+      name: Trạng thái lần khám
+      initial: arrived
+      finals: [finished]
+      states:
+        - {key: arrived, label: arrived, col: 0, row: 0, meaning: Đã check-in, chờ khám}
+        - {key: in-progress, label: in-progress, col: 1, row: 0, meaning: Bác sĩ đang khám; sửa được bệnh sử, chẩn đoán}
+        - {key: finished, label: finished, col: 2, row: 0, meaning: Đã kết thúc; chỉ đọc, chỉ thêm bản ghi bổ sung}
+      transitions:
+        - {from: arrived, to: in-progress, label: "Mở lần khám (BS)"}
+        - {from: in-progress, to: finished, label: "Kết thúc (BS)"}
+    - key: document
+      name: Trạng thái tài liệu
+      initial: pending
+      finals: [entered-in-error]
+      states:
+        - {key: pending, label: pending-scan, col: 0, row: 0, meaning: Đã upload, đang quét mã độc}
+        - {key: available, label: available, col: 1, row: 0, meaning: Sạch, dùng được; bệnh nhân chưa thấy}
+        - {key: released, label: "available + released", col: 2, row: 0, meaning: Đã phát hành cho bệnh nhân}
+        - {key: quarantined, label: quarantined, col: 0, row: 1, meaning: Nhiễm mã độc; chỉ quản trị bảo mật xem được}
+        - {key: entered-in-error, label: entered-in-error, col: 1, row: 1, meaning: Đánh dấu nhập nhầm; không hiển thị mặc định, không xóa}
+      transitions:
+        - {from: pending, to: available, label: Quét sạch}
+        - {from: pending, to: quarantined, label: Phát hiện mã độc}
+        - {from: available, to: released, label: "Phát hành (BS)"}
+        - {from: available, to: entered-in-error, label: "Đánh dấu nhập nhầm"}
+        - {from: released, to: entered-in-error, label: "Đánh dấu nhập nhầm"}
+    - key: extraction
+      name: Trạng thái trích xuất tài liệu
+      initial: queued
+      finals: [accepted, rejected, failed]
+      states:
+        - {key: queued, label: queued, col: 0, row: 0, meaning: Chờ xử lý}
+        - {key: processing, label: processing, col: 1, row: 0, meaning: OCR, phân loại, trích trường}
+        - {key: review, label: needs-review, col: 2, row: 0, meaning: Chờ người xác nhận}
+        - {key: accepted, label: accepted, col: 2, row: 1, meaning: Các trường đã xác nhận được ghi vào hồ sơ}
+        - {key: rejected, label: rejected, col: 3, row: 1, meaning: Người duyệt từ chối toàn bộ}
+        - {key: failed, label: failed (dead-letter), col: 1, row: 1, meaning: Lỗi sau 5 lần thử; không chặn upload}
+      transitions:
+        - {from: queued, to: processing, label: Worker nhận việc}
+        - {from: processing, to: review, label: Trích xong}
+        - {from: processing, to: failed, label: "Lỗi quá 5 lần"}
+        - {from: review, to: accepted, label: "Xác nhận"}
+        - {from: review, to: rejected, label: "Từ chối"}
+    - key: reminder
+      name: Trạng thái lần nhắc lịch
+      initial: scheduled
+      finals: [sent, cancelled, failed]
+      states:
+        - {key: scheduled, label: scheduled, col: 1, row: 0, meaning: Đã lên lịch gửi}
+        - {key: sent, label: sent, col: 0, row: 1, meaning: Nhà cung cấp đã nhận}
+        - {key: cancelled, label: cancelled, col: 1, row: 1, meaning: Lịch hẹn bị hủy/đổi trước giờ nhắc}
+        - {key: failed, label: failed (dead-letter), col: 2, row: 1, meaning: Lỗi sau 5 lần thử và hết kênh dự phòng}
+      transitions:
+        - {from: scheduled, to: sent, label: Gửi thành công}
+        - {from: scheduled, to: cancelled, label: "Lịch hẹn hủy / đổi"}
+        - {from: scheduled, to: failed, label: "Hết lượt thử"}
+        - {from: failed, to: scheduled, label: "QT gửi lại"}
+
+  uc_intro: >-
+    Sơ đồ use case (chuẩn UML) cho biết actor tương tác với hệ thống để đạt mục tiêu gì. Hình elip trong khung hệ thống là
+    use case; hình người là actor; đường nối nghĩa là actor thực hiện được use case đó. Phạm vi dữ liệu cụ thể (chỉ của
+    mình, chỉ bệnh nhân có quan hệ điều trị) nằm ở ma trận phân quyền.
+
+  site_maps:
+    - key: patient
+      name: Site map cổng bệnh nhân
+      tree:
+        label: Trang chủ bệnh nhân
+        children:
+          - label: Đặt lịch khám
+            children: [{label: Tìm bác sĩ & khung giờ}, {label: Xác nhận đặt lịch}, {label: Chatbot đặt lịch}]
+          - label: Lịch hẹn của tôi
+            children: [{label: Chi tiết lịch hẹn}, {label: Đổi lịch}]
+          - label: Tài liệu của tôi
+          - label: Tài khoản
+            children: [{label: Thông tin cá nhân}, {label: Thông báo}, {label: Quyền riêng tư}, {label: Lịch sử truy cập hồ sơ}]
+      pages:
+        - ["Trang chủ bệnh nhân", "Lịch hẹn sắp tới, lối tắt đặt lịch, tài liệu mới được phát hành.", "Bệnh nhân"]
+        - ["Tìm bác sĩ & khung giờ", "Lọc theo chuyên khoa, bác sĩ, ngày; xem khung giờ trống. Liên kết [[SCR:find-doctor]].", "Bệnh nhân, Điều dưỡng"]
+        - ["Xác nhận đặt lịch", "Xác nhận slot và lý do khám. Liên kết [[SCR:book]].", "Bệnh nhân, Điều dưỡng"]
+        - ["Chatbot đặt lịch", "Đặt lịch bằng hội thoại. Liên kết [[SCR:chatbot]].", "Bệnh nhân"]
+        - ["Lịch hẹn của tôi", "Danh sách lịch hẹn, hủy và đổi lịch. Liên kết [[SCR:my-appointments]].", "Bệnh nhân"]
+        - ["Tài liệu của tôi", "Tài liệu đã phát hành, tải về. Liên kết [[SCR:my-documents]].", "Bệnh nhân"]
+        - ["Thông tin cá nhân", "Cập nhật thông tin hành chính. Liên kết [[SCR:my-profile]].", "Bệnh nhân"]
+        - ["Thông báo", "Kênh nhận nhắc lịch, khung giờ yên tĩnh. Liên kết [[SCR:notification-preferences]].", "Bệnh nhân"]
+        - ["Quyền riêng tư", "Đồng ý xử lý dữ liệu bằng AI, yêu cầu trích xuất dữ liệu. Liên kết [[SCR:privacy]].", "Bệnh nhân"]
+        - ["Lịch sử truy cập hồ sơ", "Ai đã xem hồ sơ của tôi, khi nào, với mục đích gì. Liên kết [[SCR:my-access-log]].", "Bệnh nhân"]
+    - key: internal
+      name: Site map cổng nội bộ
+      tree:
+        label: Trang chủ nhân viên
+        children:
+          - label: Tiếp đón
+            children: [{label: Hàng đợi hôm nay}, {label: Đặt lịch thay}, {label: Hồ sơ bệnh nhân}]
+          - label: Lịch làm việc
+            children: [{label: Lịch & mẫu tuần}, {label: Slot}]
+          - label: Bệnh nhân
+            children: [{label: Tìm kiếm}, {label: Timeline}, {label: Lần khám}, {label: Tài liệu}]
+          - label: Trợ lý AI
+            children: [{label: Hỏi trợ lý}, {label: Duyệt trích xuất}, {label: Kho tri thức}]
+          - label: Quản trị
+            children: [{label: Người dùng}, {label: Audit}, {label: Thông báo lỗi}]
+      pages:
+        - ["Trang chủ nhân viên", "Nội dung theo vai trò: hàng đợi (ĐD), lịch khám hôm nay (BS), cảnh báo (QT/DPO).", "Mọi nhân viên"]
+        - ["Hàng đợi hôm nay", "Lịch hẹn trong ngày, check-in, đánh dấu nguy cơ không đến. Liên kết [[SCR:queue]].", "Điều dưỡng"]
+        - ["Lịch & mẫu tuần, Slot", "Tạo lịch, mẫu tuần, sinh và chặn slot. Liên kết [[SCR:schedule]].", "Điều dưỡng, Quản trị viên; Bác sĩ chỉ xem lịch của mình"]
+        - ["Hồ sơ bệnh nhân", "Tạo/sửa/gộp hồ sơ. Liên kết [[SCR:patient-form]].", "Điều dưỡng"]
+        - ["Tìm kiếm bệnh nhân", "Tìm theo tên không dấu, SĐT, mã, ngày sinh. Liên kết [[SCR:patient-search]].", "Bác sĩ, Điều dưỡng"]
+        - ["Timeline, Lần khám, Tài liệu", "Lịch sử khám, sinh hiệu, chẩn đoán, tài liệu. Liên kết [[SCR:timeline]], [[SCR:encounter]].", "Bác sĩ (quan hệ điều trị / khẩn cấp), Điều dưỡng"]
+        - ["Hỏi trợ lý", "Hỏi đáp có trích dẫn. Liên kết [[SCR:assistant]].", "Bác sĩ, Điều dưỡng"]
+        - ["Duyệt trích xuất", "Hàng chờ và màn hình duyệt. Liên kết [[SCR:extraction-review]].", "Bác sĩ (quan hệ điều trị), Điều dưỡng"]
+        - ["Kho tri thức", "Quản lý tài liệu nguồn của trợ lý. Liên kết [[SCR:kb]].", "Quản trị viên"]
+        - ["Người dùng", "Mời, gán vai trò, khóa, liên kết bác sĩ. Liên kết [[SCR:users]].", "Quản trị viên"]
+        - ["Audit", "Tra cứu và xuất báo cáo truy cập. Liên kết [[SCR:audit]].", "Cán bộ bảo vệ dữ liệu, Quản trị viên"]
+        - ["Thông báo lỗi", "Nhắc lịch gửi lỗi hẳn, gửi lại. Liên kết [[SCR:dead-letters]].", "Quản trị viên"]
+
+uc_diagrams:
+  - key: patient-portal
+    name: Use case cổng bệnh nhân
+    actors_left: [Bệnh nhân]
+    actors_right: [Điều dưỡng]
+    cases: [register, update-profile, find-slot, book, cancel, reschedule, my-appointments, download-document, chatbot-booking, notification-preferences, manage-consent, view-my-access-log, export-my-data]
+  - key: schedule-reception
+    name: Use case lịch làm việc và tiếp đón
+    actors_left: [Điều dưỡng, Quản trị viên]
+    actors_right: [Bác sĩ]
+    cases: [schedule-template, generate-slots, block-slot, view-own-schedule, create-patient, merge-patient, check-in]
+  - key: clinical
+    name: Use case khám bệnh và hồ sơ
+    actors_left: [Bác sĩ]
+    actors_right: [Điều dưỡng]
+    cases: [record-vitals, start-encounter, record-diagnosis, finish-encounter, addendum, search-patient, view-timeline, break-glass, upload-document, release-document, void-document]
+  - key: ai
+    name: Use case trợ lý AI
+    actors_left: [Bác sĩ, Điều dưỡng]
+    actors_right: [Quản trị viên]
+    cases: [ask-assistant, answer-feedback, summarize, review-extraction, manage-kb]
+  - key: admin-privacy
+    name: Use case quản trị và bảo vệ dữ liệu
+    actors_left: [Quản trị viên]
+    actors_right: [Cán bộ bảo vệ dữ liệu]
+    cases: [invite-staff, lock-account, link-practitioner, search-audit, export-audit, process-data-request, manage-dead-letters, backup-restore]
+  - key: system
+    name: Use case tác vụ tự động
+    actors_left: [Hệ thống]
+    actors_right: []
+    cases: [schedule-reminders, send-reminder, cancel-reminders, predict-noshow, mark-noshow, extract-document, break-glass-alert, purge-expired]
+
+permissions:
+  intro: >-
+    Ma trận ánh xạ chức năng với vai trò. Quyền được kiểm tra tại service sở hữu dữ liệu, mặc định từ chối; bản máy đọc
+    được của ma trận (contracts/authz/matrix.yaml) là nguồn duy nhất cho code và test tự động – mỗi ô có ít nhất một test.
+  legend:
+    - "“O”: có quyền. Chi tiết hành vi xem use case tương ứng."
+    - "“O*”: chỉ trên dữ liệu của chính mình (bệnh nhân: hồ sơ, lịch hẹn, tài liệu của mình; bác sĩ: lịch của mình)."
+    - "“Care”: chỉ với bệnh nhân có quan hệ điều trị (lịch hẹn/lần khám trong 12 tháng hoặc lịch hẹn tương lai)."
+    - "“Care/BG”: như Care, hoặc qua truy cập khẩn cấp đang hiệu lực."
+    - "“X”: không có quyền. Yêu cầu bị từ chối và được ghi audit."
+  rows:
+    - {function: Đăng ký tài khoản bệnh nhân, uc: [register], grant: {patient: O}}
+    - {function: Xem / sửa thông tin hành chính, uc: [update-profile, create-patient], grant: {patient: "O*", nurse: O}}
+    - {function: Gộp hồ sơ trùng, uc: [merge-patient], grant: {nurse: O}}
+    - {function: Tìm bác sĩ và slot trống, uc: [find-slot], grant: {patient: O, doctor: O, nurse: O, admin: O}}
+    - {function: Đặt lịch khám, uc: [book], grant: {patient: "O*", nurse: O}}
+    - {function: Hủy / đổi lịch khám, uc: [cancel, reschedule], grant: {patient: "O* (≥ 2h)", nurse: O}}
+    - {function: Xem lịch hẹn, uc: [my-appointments, view-own-schedule], grant: {patient: "O*", doctor: "O*", nurse: O}}
+    - {function: "Tạo lịch, mẫu tuần, sinh / chặn slot", uc: [schedule-template, generate-slots, block-slot], grant: {nurse: O, admin: O}}
+    - {function: Check-in, uc: [check-in], grant: {nurse: O}}
+    - {function: Ghi sinh hiệu, uc: [record-vitals], grant: {doctor: Care, nurse: O}}
+    - {function: "Mở lần khám, ghi bệnh sử và chẩn đoán, kết thúc, bổ sung", uc: [start-encounter, record-diagnosis, finish-encounter, addendum], grant: {doctor: Care}}
+    - {function: Tìm kiếm bệnh nhân (tên, năm sinh), uc: [search-patient], grant: {doctor: O, nurse: O}}
+    - {function: Xem hồ sơ / timeline bệnh nhân, uc: [view-timeline], grant: {patient: "O* (đã kết thúc)", doctor: Care/BG, nurse: O}}
+    - {function: Truy cập khẩn cấp, uc: [break-glass], grant: {doctor: "O (lý do, 60 phút)"}}
+    - {function: Upload tài liệu, uc: [upload-document], grant: {doctor: Care, nurse: O}}
+    - {function: Tải tài liệu, uc: [download-document], grant: {patient: "O* (đã phát hành)", doctor: Care/BG, nurse: O}}
+    - {function: "Phát hành / đánh dấu nhập nhầm tài liệu", uc: [release-document, void-document], grant: {doctor: Care}}
+    - {function: Hỏi trợ lý tri thức, uc: [ask-assistant, answer-feedback], grant: {doctor: O, nurse: O}}
+    - {function: Tóm tắt hồ sơ bằng AI, uc: [summarize], grant: {doctor: Care/BG}}
+    - {function: Duyệt kết quả trích xuất, uc: [review-extraction], grant: {doctor: Care, nurse: O}}
+    - {function: Quản lý kho tri thức, uc: [manage-kb], grant: {admin: O}}
+    - {function: Chatbot đặt lịch, uc: [chatbot-booking], grant: {patient: "O*"}}
+    - {function: "Tùy chọn thông báo, đồng ý xử lý dữ liệu, xem lịch sử truy cập hồ sơ của mình", uc: [notification-preferences, manage-consent, view-my-access-log], grant: {patient: "O*"}}
+    - {function: Yêu cầu trích xuất dữ liệu cá nhân, uc: [export-my-data, process-data-request], grant: {patient: "O* (gửi yêu cầu)", dpo: "O (xử lý)"}}
+    - {function: "Quản lý người dùng, vai trò, liên kết bác sĩ", uc: [invite-staff, lock-account, link-practitioner], grant: {admin: O}}
+    - {function: Xem / xuất audit, uc: [search-audit, export-audit], grant: {admin: "O (không nội dung lâm sàng)", dpo: O}}
+    - {function: Sửa / xóa audit, uc: [], grant: {}}
+    - {function: Xử lý thông báo gửi lỗi, uc: [manage-dead-letters], grant: {admin: O}}
+    - {function: Sao lưu / khôi phục, uc: [backup-restore], grant: {admin: "O (qua quy trình có duyệt)"}}
+  notes:
+    - "Không vai trò nào sửa hoặc xóa được bản ghi audit, kể cả Quản trị viên (dòng “Sửa / xóa audit” toàn X)."
+    - "Quản trị viên và Cán bộ bảo vệ dữ liệu không đọc được nội dung lâm sàng (chẩn đoán, sinh hiệu, tài liệu)."
+    - "Các tính năng AI gọi service khác bằng chính token của người dùng (on-behalf-of), nên không bao giờ có quyền rộng hơn người dùng."
+    - "Truy cập tới dữ liệu của bệnh nhân khác mà không có quyền trả về “không tồn tại” (404) thay vì “bị cấm”, để không làm lộ sự tồn tại của hồ sơ; quyết định vẫn được ghi audit là “deny”."

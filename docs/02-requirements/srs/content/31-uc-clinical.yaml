@@ -1,0 +1,393 @@
+# Chương 3 – Module Hồ sơ bệnh nhân và khám bệnh (service clinical, FHIR R4 trên MongoDB).
+modules:
+  - key: clinical
+    name: Hồ sơ bệnh nhân và khám bệnh
+    intro: >-
+      Hồ sơ hành chính, tiếp đón, ghi nhận lần khám, tra cứu và truy cập khẩn cấp. Đây là dữ liệu sức khỏe – dữ liệu cá
+      nhân nhạy cảm: mọi lần đọc và ghi đều được kiểm tra quyền theo vai trò và quan hệ điều trị, và được ghi audit.
+    sections:
+      - name: Cổng bệnh nhân – Hồ sơ
+        use_cases:
+          - key: register
+            name: Đăng ký tài khoản bệnh nhân
+            actors: [patient]
+            trace: [UC-01, AC-01.2, "API C1", NFR-SEC1]
+            objective: Cho phép người dùng mới tạo tài khoản và hồ sơ bệnh nhân của chính mình.
+            trigger: Người dùng bấm “Đăng ký” trên trang đăng nhập.
+            pre: ["Người dùng đã tạo danh tính tại nhà cung cấp định danh (email đã xác minh) nhưng chưa có hồ sơ bệnh nhân."]
+            post: ["Hồ sơ bệnh nhân “active” được tạo và liên kết với tài khoản; hoặc yêu cầu xác minh tại quầy nếu nghi trùng."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Đăng nhập lần đầu qua\nnhà cung cấp định danh"}
+              - {n: 2, lane: 1, text: "Hiển thị form đăng ký\nvà điều khoản xử lý dữ liệu"}
+              - {n: 3, lane: 0, text: "Nhập thông tin, đồng ý\nđiều khoản, bấm “Đăng ký”"}
+              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, kind: decision, text: "Trùng SĐT +\nngày sinh?", branches: [{to: 6, label: Không}, {to: 7, label: Có}]}
+              - {n: 6, lane: 1, text: "Tạo hồ sơ, liên kết\ntài khoản, ghi đồng ý", end: true}
+              - {n: 7, lane: 1, text: "Không tạo hồ sơ, yêu cầu\nxác minh tại quầy", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc hiển thị
+                lines:
+                  - "Tải [[SCR:register]]. Điều khoản xử lý dữ liệu cá nhân (mục đích, thời hạn lưu, quyền của chủ thể dữ liệu) hiển thị đầy đủ; ô đồng ý bắt buộc và không được tích sẵn."
+                  - "Đồng ý xử lý dữ liệu bằng AI là lựa chọn riêng, mặc định không đồng ý ([[UC:manage-consent]])."
+              - step: "(4)"
+                key: patient-validate
+                title: Quy tắc kiểm tra
+                lines:
+                  - "Bắt buộc: [Họ và tên] (2–100 ký tự), [Ngày sinh] (không ở tương lai → [[MSG:dob-future]]), [Giới tính], [Số điện thoại] (định dạng Việt Nam → [[MSG:invalid-phone]])."
+                  - "[Email] lấy từ nhà cung cấp định danh, không sửa ở đây. Thiếu trường bắt buộc → [[MSG:required]]."
+                  - "Không thu thập CCCD, số BHYT ở giai đoạn này (tối thiểu hóa dữ liệu)."
+              - step: "(5)"
+                key: duplicate-check
+                title: Quy tắc phát hiện trùng hồ sơ
+                lines:
+                  - "Nếu đã có hồ sơ “active” cùng [Số điện thoại] (chuẩn hóa) và cùng [Ngày sinh] → không tạo hồ sơ, hiển thị [[MSG:duplicate-patient]] (AC-01.2)."
+                  - "Thông báo không tiết lộ thông tin của hồ sơ đã có (không hiển thị tên, mã bệnh nhân)."
+              - step: "(6)"
+                title: Quy tắc tạo hồ sơ
+                lines:
+                  - "Tạo [Bệnh nhân] với [Mã bệnh nhân] = “BN-” + năm + “-” + 6 chữ số, [Trạng thái] = “active”; liên kết subject của tài khoản với hồ sơ; ghi [[CBR:record-trail]]."
+                  - "Lưu bản ghi đồng ý điều khoản (phiên bản điều khoản, thời điểm)."
+            acceptance:
+              - ["AC-01.2", "Given đã có hồ sơ cùng SĐT + ngày sinh, When đăng ký, Then không tạo hồ sơ mới và thông báo cần xác minh, không lộ thông tin hồ sơ cũ."]
+              - ["AC-RG.1", "Given không tích ô đồng ý điều khoản, When đăng ký, Then không gửi được."]
+
+          - key: update-profile
+            name: Cập nhật thông tin hành chính
+            actors: [patient]
+            trace: [UC-01, AC-01.1, AC-01.3, BR-05, "API C5"]
+            objective: Cho phép bệnh nhân xem và sửa thông tin hành chính của chính mình.
+            trigger: Bệnh nhân bấm “Sửa” trên [[SCR:my-profile]].
+            pre: ["Bệnh nhân đã đăng nhập và có hồ sơ “active”."]
+            post: ["Hồ sơ được cập nhật thành phiên bản mới; phiên bản cũ vẫn được lưu."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Sửa”"}
+              - {n: 2, lane: 1, text: "Hiển thị form ở chế độ sửa"}
+              - {n: 3, lane: 0, text: "Sửa thông tin, bấm “Lưu”"}
+              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ và chưa bị\nngười khác sửa?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, text: "Lưu phiên bản mới", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc trường được sửa
+                lines:
+                  - "Bệnh nhân chỉ sửa được: số điện thoại, địa chỉ, người liên hệ khẩn cấp, ngôn ngữ ưu tiên. Họ tên, ngày sinh, giới tính chỉ Điều dưỡng sửa được tại quầy (có đối chiếu giấy tờ)."
+              - step: "(4)"
+                title: Quy tắc kiểm tra và xung đột
+                lines:
+                  - "Áp dụng [[BR:patient-validate]] cho các trường được sửa."
+                  - "Phiên bản đang sửa phải là phiên bản mới nhất; nếu người khác đã sửa trước → [[MSG:version-conflict]]."
+              - step: "(5)"
+                title: Quy tắc lưu
+                lines: ["Lưu phiên bản mới, giữ nguyên các phiên bản cũ (AC-01.3); ghi [[CBR:record-trail]]; hiển thị [[MSG:saved]]."]
+            acceptance:
+              - ["AC-01.1", "Given bệnh nhân đã đăng nhập, When xem hồ sơ, Then chỉ thấy hồ sơ của mình."]
+              - ["AC-01.3", "Given hồ sơ được sửa 2 lần, Then xem được 3 phiên bản."]
+              - ["AC-UP.1", "Given bệnh nhân gửi yêu cầu sửa ngày sinh, Then bị từ chối, dữ liệu không đổi."]
+
+      - name: Cổng nội bộ – Tiếp đón
+        use_cases:
+          - key: create-patient
+            name: Tạo và sửa hồ sơ bệnh nhân tại quầy
+            actors: [nurse]
+            trace: [UC-01, AC-01.2, "API C3, C5"]
+            objective: Cho phép điều dưỡng tạo hồ sơ cho bệnh nhân chưa có tài khoản hoặc sửa thông tin sau khi đối chiếu giấy tờ.
+            trigger: Điều dưỡng bấm “Tạo hồ sơ” hoặc “Sửa” trên [[SCR:patient-form]].
+            pre: ["Điều dưỡng đã đăng nhập (MFA)."]
+            post: ["Hồ sơ được tạo hoặc cập nhật thành phiên bản mới."]
+            lanes: [Điều dưỡng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Tạo hồ sơ”"}
+              - {n: 2, lane: 1, text: "Hiển thị form hồ sơ"}
+              - {n: 3, lane: 0, text: "Nhập thông tin, đối chiếu\ngiấy tờ, bấm “Lưu”"}
+              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, kind: decision, text: "Nghi trùng?", branches: [{to: 6, label: Không}, {to: 7, label: Có}]}
+              - {n: 6, lane: 1, text: "Lưu hồ sơ", end: true}
+              - {n: 7, lane: 1, text: "Hiển thị hồ sơ nghi trùng,\nđề nghị gộp", end: true}
+            rules:
+              - step: "(4)"
+                title: Quy tắc kiểm tra
+                lines: ["Áp dụng [[BR:patient-validate]]; Điều dưỡng sửa được mọi trường hành chính."]
+              - step: "(5)"
+                title: Quy tắc trùng hồ sơ
+                lines:
+                  - "Áp dụng tiêu chí trùng của [[BR:duplicate-check]]; khác với bệnh nhân tự đăng ký, Điều dưỡng được xem tóm tắt hồ sơ nghi trùng (tên, năm sinh, SĐT che 4 số giữa) để quyết định gộp ([[UC:merge-patient]])."
+            acceptance:
+              - ["AC-CP.1", "Given hồ sơ nghi trùng, When điều dưỡng lưu, Then hệ thống hiển thị hồ sơ trùng thay vì tạo mới."]
+
+          - key: merge-patient
+            name: Gộp hồ sơ trùng
+            actors: [nurse]
+            trace: [UC-01, "API C8", "Sự kiện E7"]
+            objective: Gộp hồ sơ trùng của cùng một người vào một hồ sơ duy nhất.
+            trigger: Điều dưỡng bấm “Gộp hồ sơ” sau khi phát hiện trùng.
+            pre: ["Điều dưỡng đã xác minh giấy tờ của bệnh nhân; hai hồ sơ đều “active”."]
+            post: ["Hồ sơ nguồn “merged” trỏ tới hồ sơ đích; mọi service cập nhật dữ liệu sang hồ sơ đích."]
+            lanes: [Điều dưỡng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn hồ sơ nguồn và đích,\nbấm “Gộp”"}
+              - {n: 2, lane: 1, text: "Hiển thị so sánh hai hồ sơ\nvà hộp thoại xác nhận"}
+              - {n: 3, lane: 0, text: "Xác nhận gộp"}
+              - {n: 4, lane: 1, text: "Đánh dấu nguồn “merged”,\nphát sự kiện “đã gộp”", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc xác nhận
+                lines: ["Hiển thị [[MSG:confirm-merge]]; ghi rõ thao tác không hoàn tác được trên giao diện."]
+              - step: "(4)"
+                title: Quy tắc gộp
+                lines:
+                  - "Hồ sơ nguồn: [Trạng thái] = “merged”, liên kết tới hồ sơ đích; tài khoản đăng nhập (nếu có) chuyển sang hồ sơ đích."
+                  - "Phát “shp.clinical.patient-merged.v1”; scheduling, notification, ml, document thay mã bệnh nhân bằng job nền, có thể chạy lại an toàn."
+                  - "Ghi audit cả hai hồ sơ với hành động “merge”."
+            acceptance:
+              - ["AC-MG.1", "Given gộp A vào B, Then lịch hẹn và tài liệu của A hiện dưới B, và mở hồ sơ A chuyển hướng tới B."]
+
+          - key: check-in
+            name: Check-in bệnh nhân
+            actors: [nurse]
+            trace: [UC-04, "API S16", "Sự kiện E4"]
+            objective: Ghi nhận bệnh nhân đã đến và tạo lần khám.
+            trigger: Điều dưỡng bấm “Check-in” trên [[SCR:queue]].
+            pre: ["Lịch hẹn “booked” của ngày hôm nay."]
+            post: ["Lịch hẹn “arrived”; lần khám được tạo ở trạng thái “arrived”."]
+            lanes: [Điều dưỡng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Đối chiếu danh tính,\nbấm “Check-in”"}
+              - {n: 2, lane: 1, kind: decision, text: "Lịch hẹn hôm nay\nvà “booked”?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Lịch hẹn “arrived”,\ntạo lần khám", end: true}
+              - {n: 4, lane: 1, text: "Báo lỗi trạng thái", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc check-in
+                lines:
+                  - "Chỉ check-in lịch hẹn “booked” có ngày khám = <Hôm nay>; sớm hơn 60 phút so với giờ khám vẫn được phép. Khác → [[MSG:invalid-state]]."
+                  - "Phát “shp.scheduling.appointment-checked-in.v1”; clinical tạo lần khám “arrived” gắn với lịch hẹn và bác sĩ; hiển thị [[MSG:checked-in]]."
+            acceptance:
+              - ["AC-CI.1", "Given lịch hẹn ngày mai, When check-in hôm nay, Then bị từ chối."]
+
+      - name: Cổng nội bộ – Khám bệnh
+        use_cases:
+          - key: record-vitals
+            name: Ghi sinh hiệu
+            actors: [nurse, doctor]
+            trace: [UC-04, "API C16", NFR-SEC2]
+            objective: Ghi huyết áp, mạch, nhiệt độ, SpO2, cân nặng, chiều cao cho lần khám.
+            trigger: Người dùng bấm “Ghi sinh hiệu” trên [[SCR:encounter]].
+            pre: ["Lần khám ở “arrived” hoặc “in-progress”; bác sĩ phải có quan hệ điều trị."]
+            post: ["Các Observation sinh hiệu được lưu, gắn với lần khám."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập các chỉ số, bấm “Lưu”"}
+              - {n: 2, lane: 1, kind: decision, text: "Trong khoảng\nhợp lý?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Lưu sinh hiệu, ghi audit", end: true}
+              - {n: 4, lane: 1, text: "Báo lỗi tại trường", next: 1}
+            rules:
+              - step: "(2)"
+                key: vital-ranges
+                title: Quy tắc khoảng giá trị
+                lines:
+                  - "Huyết áp tâm thu 50–260, tâm trương 30–160 mmHg; mạch 20–250 lần/phút; nhiệt độ 30–43 °C; SpO2 50–100 %; cân nặng 0,5–300 kg; chiều cao 30–250 cm. Ngoài khoảng → [[MSG:vital-range]]."
+                  - "Giá trị trong khoảng nhưng bất thường (ví dụ SpO2 < 92 %) được lưu và gắn cờ “bất thường” để hiển thị nổi bật trên timeline."
+            acceptance:
+              - ["AC-VT.1", "Given SpO2 = 120, When lưu, Then báo lỗi tại trường, không lưu."]
+              - ["AC-VT.2", "Given bác sĩ không có quan hệ điều trị, When ghi sinh hiệu, Then bị từ chối và ghi audit “deny”."]
+
+          - key: start-encounter
+            name: Mở lần khám
+            actors: [doctor]
+            trace: [UC-04, AC-04.1, "API C11"]
+            objective: Bác sĩ bắt đầu khám, lần khám chuyển “in-progress”.
+            trigger: Bác sĩ bấm “Bắt đầu khám” trên danh sách khám hôm nay.
+            pre: ["Lần khám “arrived” của bệnh nhân có lịch hẹn với chính bác sĩ."]
+            post: ["Lần khám “in-progress”, ghi người khám và thời điểm."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Bắt đầu khám”"}
+              - {n: 2, lane: 1, kind: decision, text: "Có quan hệ\nđiều trị?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Lần khám “in-progress”,\nmở màn hình lần khám", end: true}
+              - {n: 4, lane: 1, text: "Từ chối, ghi audit “deny”", end: true}
+            rules:
+              - step: "(2)"
+                key: care-relationship
+                title: Quy tắc quan hệ điều trị
+                lines:
+                  - "Bác sĩ có quan hệ điều trị với bệnh nhân khi: có lịch hẹn hoặc lần khám với bệnh nhân trong 12 tháng gần nhất, hoặc có lịch hẹn tương lai (BR-06)."
+                  - "Không có quan hệ điều trị → [[MSG:no-care]]; giao diện đề nghị [[UC:break-glass]] nếu là cấp cứu."
+            acceptance:
+              - ["AC-04.1", "Given bác sĩ không có quan hệ điều trị, When ghi chẩn đoán, Then bị từ chối."]
+
+          - key: record-diagnosis
+            name: Ghi bệnh sử và chẩn đoán
+            actors: [doctor]
+            trace: [UC-04, AC-04.1, "API C13, C17, C18"]
+            objective: Ghi lý do khám, bệnh sử, khám lâm sàng, chẩn đoán ICD-10, bệnh nền và dị ứng.
+            trigger: Bác sĩ nhập trên [[SCR:encounter]] và bấm “Lưu”.
+            pre: ["Lần khám “in-progress”; bác sĩ có quan hệ điều trị."]
+            post: ["Bệnh sử và Condition được lưu; dị ứng được cập nhật."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập bệnh sử, chọn mã\nICD-10, bấm “Lưu”"}
+              - {n: 2, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Lưu, ghi audit", end: true}
+              - {n: 4, lane: 1, text: "Báo lỗi tại trường", next: 1}
+            rules:
+              - step: "(2)"
+                title: Quy tắc kiểm tra
+                lines:
+                  - "Mã chẩn đoán phải có trong danh mục ICD-10 của hệ thống → nếu không [[MSG:icd-invalid]]; ít nhất một chẩn đoán chính trước khi kết thúc lần khám."
+                  - "Lần khám đã “finished” → [[MSG:invalid-state]] (phải dùng [[UC:addendum]])."
+                  - "Bệnh sử tối đa 10.000 ký tự; nội dung không được ghi ra log hay sự kiện."
+            acceptance:
+              - ["AC-DX.1", "Given mã “X99.99” không có trong danh mục, When lưu, Then báo lỗi tại trường."]
+
+          - key: finish-encounter
+            name: Kết thúc lần khám
+            actors: [doctor]
+            trace: [UC-04, AC-04.2, "API C14", "Sự kiện E6"]
+            objective: Đóng lần khám; sau đó không sửa được.
+            trigger: Bác sĩ bấm “Kết thúc khám” trên [[SCR:encounter]].
+            pre: ["Lần khám “in-progress”, có ít nhất một chẩn đoán chính."]
+            post: ["Lần khám “finished”; lịch hẹn “fulfilled”."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Kết thúc khám”"}
+              - {n: 2, lane: 1, text: "Hiển thị hộp thoại\nxác nhận"}
+              - {n: 3, lane: 0, text: "Xác nhận"}
+              - {n: 4, lane: 1, text: "Lần khám “finished”,\nphát sự kiện, lịch hẹn “fulfilled”", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc xác nhận
+                lines: ["Thiếu chẩn đoán chính → [[MSG:required]] tại khu vực chẩn đoán; đủ thì hiển thị [[MSG:confirm-finish]]."]
+              - step: "(4)"
+                title: Quy tắc kết thúc
+                lines:
+                  - "[Trạng thái] = “finished”, [Kết thúc lúc] = <Bây giờ>; từ đây mọi yêu cầu sửa bị từ chối (AC-04.2)."
+                  - "Phát “shp.clinical.encounter-finished.v1”; scheduling chuyển lịch hẹn sang “fulfilled”."
+            acceptance:
+              - ["AC-04.2", "Given lần khám “finished”, When sửa bệnh sử, Then bị từ chối; dữ liệu cũ giữ nguyên."]
+
+          - key: addendum
+            name: Bổ sung lần khám đã kết thúc
+            actors: [doctor]
+            trace: [UC-04, AC-04.2, "API C15"]
+            objective: Thêm ghi chú bổ sung cho lần khám đã kết thúc mà không sửa bản gốc.
+            trigger: Bác sĩ bấm “Thêm bổ sung” trên lần khám đã kết thúc.
+            pre: ["Lần khám “finished”; bác sĩ có quan hệ điều trị."]
+            post: ["Bản ghi bổ sung được lưu kèm người viết, thời điểm, lý do; bản gốc không đổi."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập nội dung và lý do\nbổ sung, bấm “Lưu”"}
+              - {n: 2, lane: 1, text: "Lưu bản bổ sung,\nghi audit", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc bổ sung
+                lines:
+                  - "[Nội dung] và [Lý do] bắt buộc. Bản bổ sung hiển thị ngay dưới lần khám, đánh dấu rõ là “Bổ sung”; không có thao tác sửa/xóa bản bổ sung."
+            acceptance:
+              - ["AC-AD.1", "Given lần khám “finished”, When thêm bổ sung, Then bản gốc không đổi và bản bổ sung hiển thị với người viết và thời điểm."]
+
+      - name: Cổng nội bộ – Tra cứu hồ sơ
+        use_cases:
+          - key: search-patient
+            name: Tìm kiếm bệnh nhân
+            type: Basic
+            actors: [doctor, nurse]
+            trace: [UC-06, AC-06.1, AC-06.2, "API C6"]
+            objective: Tìm bệnh nhân theo tên (không dấu), SĐT, mã bệnh nhân hoặc ngày sinh.
+            trigger: Người dùng nhập điều kiện trên [[SCR:patient-search]] và bấm “Tìm”.
+            pre: ["Người dùng là Bác sĩ hoặc Điều dưỡng (MFA)."]
+            post: ["Danh sách bệnh nhân khớp điều kiện được hiển thị với lượng thông tin tối thiểu."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập điều kiện, bấm “Tìm”"}
+              - {n: 2, lane: 1, kind: decision, text: "Đủ điều kiện\ntối thiểu?", branches: [{to: 3, label: Có}, {to: 1, label: Không}]}
+              - {n: 3, lane: 1, text: "Trả kết quả tối đa 50 dòng,\nghi audit truy vấn", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc điều kiện tìm
+                lines:
+                  - "Cần ít nhất 3 ký tự tên, hoặc SĐT đầy đủ, hoặc mã bệnh nhân, hoặc tên + năm sinh; không cho liệt kê toàn bộ bệnh nhân."
+                  - "Tìm theo tên không phân biệt dấu và hoa thường (“nguyen van” khớp “Nguyễn Văn”) (AC-06.1)."
+              - step: "(3)"
+                key: search-minimise
+                title: Quy tắc tối thiểu hóa kết quả
+                lines:
+                  - "Kết quả chỉ gồm: họ tên, năm sinh, giới tính, mã bệnh nhân, SĐT che 4 số giữa. Không có chẩn đoán hay địa chỉ."
+                  - "Bác sĩ thấy được kết quả tìm nhưng chỉ mở được timeline của bệnh nhân có quan hệ điều trị (AC-06.2)."
+                  - "Mỗi truy vấn tìm kiếm ghi audit (người tìm, điều kiện đã che, số kết quả)."
+            acceptance:
+              - ["AC-06.1", "Given bệnh nhân “Nguyễn Văn An”, When tìm “nguyen van”, Then có trong kết quả."]
+              - ["AC-SP.1", "Given điều kiện “ng” (2 ký tự), When tìm, Then bị từ chối, không trả danh sách."]
+
+          - key: view-timeline
+            name: Xem hồ sơ và timeline bệnh nhân
+            type: Basic
+            actors: [doctor, nurse, patient]
+            trace: [UC-06, AC-06.2, BR-05, BR-06, "API C4, C12, C19"]
+            objective: Xem lịch sử lần khám, chẩn đoán, sinh hiệu, dị ứng, tài liệu theo thời gian.
+            trigger: Người dùng chọn một bệnh nhân trên [[SCR:patient-search]] (nhân viên) hoặc mở hồ sơ của mình (bệnh nhân).
+            pre: ["Người dùng có quyền theo ma trận phân quyền."]
+            post: ["Timeline được hiển thị theo phạm vi quyền; lần truy cập được ghi audit."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn bệnh nhân"}
+              - {n: 2, lane: 1, kind: decision, text: "Được phép xem?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Hiển thị timeline,\nghi audit “read”", end: true}
+              - {n: 4, lane: 1, text: "Từ chối, ghi audit “deny”,\nđề nghị truy cập khẩn cấp (BS)", end: true}
+            rules:
+              - step: "(2)"
+                key: timeline-authz
+                title: Quy tắc phạm vi xem
+                lines:
+                  - "Bác sĩ: chỉ bệnh nhân có quan hệ điều trị ([[BR:care-relationship]]) hoặc đang có truy cập khẩn cấp hiệu lực; nếu không → [[MSG:no-care]] (AC-06.2)."
+                  - "Điều dưỡng: xem được mọi bệnh nhân; mục đích truy cập mặc định “treatment”."
+                  - "Bệnh nhân: chỉ hồ sơ của mình, chỉ lần khám đã “finished” và tài liệu đã phát hành (BR-05)."
+                  - "Quản trị viên và Cán bộ bảo vệ dữ liệu: không xem được timeline."
+              - step: "(3)"
+                title: Quy tắc hiển thị
+                lines:
+                  - "Mặc định 12 tháng gần nhất, mới nhất trên cùng; lọc theo loại dữ liệu và khoảng thời gian; sinh hiệu bất thường được tô nổi."
+                  - "Màn hình hiển thị biểu ngữ “Truy cập khẩn cấp đến <Giờ hết hạn>” khi đang dùng quyền khẩn cấp."
+                  - "Không cho phép tải hàng loạt hay in toàn bộ hồ sơ từ giao diện (giảm rủi ro rò rỉ)."
+            acceptance:
+              - ["AC-06.2", "Given bác sĩ không có quan hệ điều trị, When mở timeline, Then bị từ chối (trừ break-glass) và có audit “deny”."]
+              - ["AC-TL.1", "Given bệnh nhân có lần khám “in-progress”, When bệnh nhân xem timeline, Then không thấy lần khám đó."]
+              - ["AC-TL.2", "Given quản trị viên, When gọi API timeline, Then bị từ chối."]
+
+          - key: break-glass
+            name: Truy cập khẩn cấp (break-glass)
+            actors: [doctor]
+            trace: [UC-10, AC-10.1, BR-06, BR-07, "API C20"]
+            objective: Cho phép bác sĩ mở hồ sơ bệnh nhân không có quan hệ điều trị trong tình huống cấp cứu, có kiểm soát.
+            trigger: Bác sĩ bấm “Truy cập khẩn cấp” sau khi bị từ chối ở [[UC:view-timeline]].
+            pre: ["Người dùng là Bác sĩ, đã đăng nhập bằng MFA trong 15 phút gần nhất."]
+            post: ["Quyền xem hồ sơ của đúng bệnh nhân đó trong 60 phút; DPO được cảnh báo."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Truy cập khẩn cấp”"}
+              - {n: 2, lane: 1, text: "Hiển thị cảnh báo,\nyêu cầu nhập lý do"}
+              - {n: 3, lane: 0, text: "Nhập lý do, xác nhận"}
+              - {n: 4, lane: 1, kind: decision, text: "Lý do hợp lệ,\nchưa vượt hạn mức?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, text: "Cấp quyền 60 phút, ghi audit,\nphát cảnh báo DPO", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc cảnh báo
+                lines: ["Hiển thị [[MSG:confirm-break-glass]]; [Lý do] bắt buộc."]
+              - step: "(4)"
+                key: break-glass-limit
+                title: Quy tắc lý do và hạn mức
+                lines:
+                  - "[Lý do] tối thiểu 10 ký tự → nếu không [[MSG:reason-min]]."
+                  - "Tối đa 3 lần truy cập khẩn cấp/bác sĩ/ngày; vượt → từ chối và cảnh báo DPO ngay."
+                  - "MFA quá 15 phút → yêu cầu xác thực lại trước khi cấp quyền."
+              - step: "(5)"
+                title: Quy tắc cấp quyền
+                lines:
+                  - "Quyền chỉ áp dụng cho đúng một bệnh nhân, chỉ đọc (ghi chẩn đoán vẫn cần quan hệ điều trị), hết hạn sau 60 phút, không gia hạn tự động."
+                  - "Mọi truy cập trong thời gian này ghi audit với [Mục đích] = “break-glass” và [Lý do]."
+                  - "Kích hoạt [[UC:break-glass-alert]]."
+            acceptance:
+              - ["AC-10.1", "Given bác sĩ dùng truy cập khẩn cấp, Then DPO nhận cảnh báo trong ≤ 5 phút."]
+              - ["AC-BG.1", "Given đã qua 60 phút, When mở lại timeline, Then bị từ chối."]
+              - ["AC-BG.2", "Given lý do 5 ký tự, When xác nhận, Then báo lỗi và không cấp quyền."]

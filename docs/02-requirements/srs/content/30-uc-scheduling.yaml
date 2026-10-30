@@ -1,0 +1,312 @@
+# Chương 3 – Module Lịch hẹn và lịch làm việc (service scheduling).
+use_case_intro: >-
+  Chương này đặc tả yêu cầu chức năng: hệ thống phải làm gì về dữ liệu vào, hành vi và kết quả. Mỗi use case gồm bảng tóm
+  tắt, luồng hoạt động (các bước đánh số), luồng thay thế, quy tắc nghiệp vụ tham chiếu đúng số bước, và tiêu chí nghiệm
+  thu dạng Given/When/Then. Trừ khi ghi khác, mọi use case đều áp dụng [[CBR:authz]], [[CBR:audit]] và [[CBR:no-pii]].
+
+modules:
+  - key: scheduling
+    name: Lịch hẹn và lịch làm việc
+    intro: Đặt, hủy, đổi lịch khám; lịch làm việc và slot của bác sĩ. Dữ liệu thuộc service scheduling (PostgreSQL).
+    sections:
+      - name: Cổng bệnh nhân – Lịch hẹn
+        use_cases:
+          - key: find-slot
+            name: Tìm bác sĩ và khung giờ trống
+            type: Basic
+            actors: [patient, nurse, doctor, admin]
+            trace: [UC-03, BR-04, NFR-P1, "API S8, C9"]
+            objective: Cho phép người dùng tìm khung giờ còn trống theo chuyên khoa, bác sĩ và khoảng ngày.
+            trigger: Người dùng chọn “Đặt lịch khám” trên trang chủ hoặc mở [[SCR:find-doctor]].
+            pre: ["Người dùng đã đăng nhập với một trong các vai trò trên."]
+            post: ["Danh sách khung giờ trống thỏa điều kiện lọc được hiển thị."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Mở màn hình tìm bác sĩ"}
+              - {n: 2, lane: 1, text: "Hiển thị bộ lọc và\ndanh sách chuyên khoa"}
+              - {n: 3, lane: 0, text: "Chọn chuyên khoa / bác sĩ /\nkhoảng ngày, bấm “Tìm”"}
+              - {n: 4, lane: 1, kind: decision, text: "Điều kiện\nhợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, text: "Trả các slot “free”\ntrong cửa sổ 30 ngày", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc hiển thị màn hình
+                lines:
+                  - "Hệ thống tải [[SCR:find-doctor]]; [Từ ngày] mặc định <Hôm nay>, [Đến ngày] mặc định <Hôm nay> + 7 ngày."
+                  - "Danh sách chuyên khoa lấy từ bộ mã chuyên khoa; danh sách bác sĩ lọc theo chuyên khoa đã chọn."
+              - step: "(4)"
+                key: slot-search-validate
+                title: Quy tắc kiểm tra điều kiện
+                lines:
+                  - "Bắt buộc có [Chuyên khoa] hoặc [Bác sĩ]; thiếu thì hiển thị [[MSG:required]] dưới trường [Chuyên khoa]."
+                  - "Khoảng ngày tối đa 31 ngày và không vượt quá <Hôm nay> + 30 ngày (BR-04); vượt thì tự cắt về giới hạn và hiển thị ghi chú."
+              - step: "(5)"
+                title: Quy tắc trả kết quả
+                lines:
+                  - "Chỉ trả slot có [Trạng thái] = “free”, [Bắt đầu] > <Bây giờ>, thuộc lịch làm việc đang hoạt động."
+                  - "Sắp xếp theo [Bắt đầu] tăng dần; phân trang 20 slot/trang theo [[CBR:pagination]]."
+                  - "Bệnh nhân chỉ thấy slot “free”; Điều dưỡng/Quản trị viên/Bác sĩ được lọc thêm “busy”, “busy-unavailable” nhưng không thấy tên bệnh nhân của slot bận trừ khi có quyền xem lịch hẹn đó."
+                  - "Kết quả được cache tối đa 5 giây và làm mới ngay khi có sự kiện đặt/hủy (đảm bảo NFR-P1: p95 ≤ 300 ms ở 500 RPS)."
+            acceptance:
+              - ["AC-FS.1", "Given lịch làm việc có 14 slot trống ngày mai, When bệnh nhân tìm theo chuyên khoa đó, Then thấy đúng 14 slot theo thứ tự giờ."]
+              - ["AC-FS.2", "Given khoảng ngày vượt 30 ngày, When tìm, Then chỉ trả slot đến <Hôm nay> + 30 ngày."]
+              - ["AC-FS.3", "Given bệnh nhân, When lọc trạng thái “busy”, Then yêu cầu bị từ chối hoặc bỏ qua tham số, không lộ lịch hẹn của người khác."]
+
+          - key: book
+            name: Đặt lịch khám
+            actors: [patient, nurse]
+            trace: [UC-03, AC-03.1, AC-03.2, AC-03.3, AC-03.4, AC-03.6, BR-01, BR-03, BR-04, NFR-P2, "API S11"]
+            objective: Cho phép bệnh nhân tự đặt lịch, hoặc điều dưỡng đặt thay bệnh nhân, vào một khung giờ trống.
+            trigger: Người dùng chọn một slot trên [[SCR:find-doctor]] và bấm “Đặt lịch”.
+            pre:
+              - "Người dùng đã đăng nhập; bệnh nhân đã có hồ sơ (đã đăng ký)."
+              - "Slot đang “free”, nằm trong 30 ngày tới."
+            post: ["Lịch hẹn ở trạng thái “booked”; slot chuyển “busy”; sự kiện “đã đặt lịch” được phát (kích hoạt nhắc lịch, dự đoán no-show, audit)."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn slot, bấm “Đặt lịch”"}
+              - {n: 2, lane: 1, text: "Hiển thị màn hình\nxác nhận đặt lịch"}
+              - {n: 3, lane: 0, text: "Nhập lý do khám,\nbấm “Xác nhận”"}
+              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ và\nđủ điều kiện?", branches: [{to: 5, label: Có}, {to: 7, label: Không}]}
+              - {n: 5, lane: 1, text: "Tạo lịch hẹn “booked”,\nslot “busy”, phát sự kiện"}
+              - {n: 6, lane: 1, text: "Hiển thị thông báo\nthành công và mã lịch hẹn", end: true}
+              - {n: 7, lane: 1, text: "Hiển thị lỗi; nếu slot đã\nbị đặt thì gợi ý 3 slot gần nhất", next: 1}
+            alternatives:
+              - "Người dùng bấm “Xác nhận” nhiều lần hoặc mạng chập chờn khiến trình duyệt gửi lại: hệ thống trả đúng lịch hẹn đã tạo ở lần đầu, không tạo lịch trùng ([[BR:book-idempotency]])."
+              - "Hai người cùng đặt một slot: đúng một người thành công, người còn lại nhận [[MSG:slot-unavailable]] kèm 3 slot gợi ý ([[BR:book-concurrency]])."
+            rules:
+              - step: "(2)"
+                title: Quy tắc hiển thị màn hình
+                lines:
+                  - "Hệ thống tải [[SCR:book]] với thông tin slot (bác sĩ, chuyên khoa, ngày giờ) ở chế độ chỉ đọc."
+                  - "Nếu người dùng là Điều dưỡng: hiển thị trường [Bệnh nhân] bắt buộc, tìm theo [[UC:search-patient]]. Nếu là Bệnh nhân: [Bệnh nhân] = <Người dùng hiện tại>, không sửa được."
+                  - "Trình duyệt sinh một [Idempotency-Key] (UUID) khi màn hình mở và giữ nguyên cho mọi lần gửi lại của cùng thao tác."
+              - step: "(4)"
+                key: book-validate
+                title: Quy tắc kiểm tra
+                lines:
+                  - "[Lý do khám] không bắt buộc, tối đa 500 ký tự; vượt thì hiển thị [[MSG:max-length]]."
+                  - "Bệnh nhân chỉ đặt được cho chính mình: [Bệnh nhân] khác <Người dùng hiện tại> → từ chối [[MSG:forbidden]] và ghi audit “deny” (AC-03.6)."
+                  - "Slot phải nằm trong <Hôm nay> + 30 ngày (BR-04), nếu không → [[MSG:outside-window]]."
+                  - "Bệnh nhân không được có quá 3 lịch hẹn tương lai “booked” (BR-03), nếu không → [[MSG:max-future]]. Quy tắc áp dụng cả khi Điều dưỡng đặt thay."
+                  - "Giới hạn 10 yêu cầu đặt lịch/phút/người dùng; vượt → [[MSG:rate-limited]]."
+              - step: "(5)"
+                key: book-concurrency
+                title: Quy tắc tạo lịch hẹn và chống đặt trùng
+                lines:
+                  - "Tạo [Lịch hẹn] với [Trạng thái] = “booked”, [Kênh đặt] = “web” (Bệnh nhân) hoặc “counter” (Điều dưỡng), [Mã lịch hẹn] = “LH-” + yyyyMMdd + “-” + số thứ tự 4 chữ số trong ngày."
+                  - "Cập nhật slot sang “busy” trong cùng giao dịch; ràng buộc duy nhất ở CSDL bảo đảm một slot chỉ có một lịch hẹn hiệu lực (BR-01). Nếu slot đã bị chiếm → [[MSG:slot-unavailable]] kèm tối đa 3 slot trống gần nhất cùng bác sĩ hoặc cùng chuyên khoa."
+                  - "Ghi sự kiện “shp.scheduling.appointment-booked.v1” vào outbox trong cùng giao dịch (không chứa tên, SĐT, lý do khám)."
+                  - "Ghi audit theo [[CBR:audit]]."
+              - step: "(5)"
+                key: book-idempotency
+                title: Quy tắc gửi lại an toàn (idempotency)
+                lines:
+                  - "Thiếu [Idempotency-Key] → từ chối (lỗi kỹ thuật 428, client luôn gửi khóa)."
+                  - "Cùng khóa và cùng nội dung trong 24 giờ → trả lại đúng lịch hẹn đã tạo, không tạo bản ghi mới (AC-03.2)."
+                  - "Cùng khóa nhưng nội dung khác → từ chối, không thay đổi dữ liệu (AC-03.3)."
+              - step: "(6)"
+                title: Quy tắc thông báo kết quả
+                lines:
+                  - "Hiển thị [[MSG:booked]]; chuyển tới [[SCR:my-appointments]] (Bệnh nhân) hoặc [[SCR:queue]] (Điều dưỡng)."
+                  - "Gửi [[ET:booking-confirmation]] theo tùy chọn thông báo của bệnh nhân."
+            acceptance:
+              - ["AC-03.1", "Given 1 slot trống và 50 yêu cầu đặt đồng thời từ 50 bệnh nhân, When xử lý xong, Then đúng 1 yêu cầu thành công và 49 nhận lỗi “slot-unavailable”."]
+              - ["AC-03.2", "Given cùng Idempotency-Key gửi 2 lần với cùng nội dung, Then cả hai nhận cùng một lịch hẹn và chỉ 1 lịch hẹn tồn tại."]
+              - ["AC-03.3", "Given cùng Idempotency-Key nhưng nội dung khác, When gửi, Then bị từ chối và không có thay đổi."]
+              - ["AC-03.4", "Given bệnh nhân đã có 3 lịch hẹn tương lai, When đặt thêm, Then bị từ chối với “max-future-appointments”."]
+              - ["AC-03.6", "Given bệnh nhân A, When đặt lịch cho bệnh nhân B, Then bị từ chối và có bản ghi audit “deny”."]
+              - ["AC-BK.1", "Given đặt lịch thành công, Then sự kiện phát ra không chứa họ tên, SĐT, email hay lý do khám."]
+
+          - key: cancel
+            name: Hủy lịch khám
+            actors: [patient, nurse]
+            trace: [UC-03, AC-03.5, AC-07.1, BR-02, "API S14"]
+            objective: Cho phép bệnh nhân hủy lịch hẹn của mình trước giờ khám ít nhất 2 giờ, hoặc điều dưỡng hủy bất kỳ lúc nào trước khi check-in.
+            trigger: Người dùng bấm “Hủy lịch” trên [[SCR:my-appointments]] hoặc [[SCR:queue]].
+            pre: ["Lịch hẹn đang ở trạng thái “booked”."]
+            post: ["Lịch hẹn “cancelled”; slot trở về “free”; các lần nhắc chưa gửi bị hủy."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Hủy lịch”"}
+              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận\nvà chọn lý do hủy"}
+              - {n: 3, lane: 0, text: "Chọn lý do, bấm “Đồng ý”"}
+              - {n: 4, lane: 1, kind: decision, text: "Được phép hủy?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
+              - {n: 5, lane: 1, text: "Hủy lịch hẹn, giải phóng slot,\nphát sự kiện “đã hủy”", end: true}
+              - {n: 6, lane: 1, text: "Hiển thị lỗi, giữ nguyên\nlịch hẹn", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc xác nhận
+                lines:
+                  - "Hiển thị [[MSG:confirm-cancel]] với danh sách [Lý do hủy] (bộ mã 6 lý do). Bấm “Không” thì đóng hộp thoại, không thay đổi gì."
+              - step: "(4)"
+                key: cancel-window
+                title: Quy tắc thời hạn hủy
+                lines:
+                  - "Bệnh nhân chỉ hủy được lịch hẹn của mình và khi [Bắt đầu] − <Bây giờ> ≥ 2 giờ (BR-02); nếu không → [[MSG:cancel-too-late]]."
+                  - "Điều dưỡng hủy được bất kỳ lịch hẹn “booked” nào. Lịch hẹn không ở “booked” → [[MSG:invalid-state]]."
+              - step: "(5)"
+                title: Quy tắc hủy
+                lines:
+                  - "Cập nhật [Trạng thái] = “cancelled”, lưu [Lý do hủy], người hủy, thời điểm; slot về “free” trong cùng giao dịch."
+                  - "Phát sự kiện “shp.scheduling.appointment-cancelled.v1”; service thông báo hủy mọi lần nhắc “scheduled” ([[UC:cancel-reminders]])."
+                  - "Hiển thị [[MSG:cancelled]]; gửi [[ET:cancellation]]."
+            acceptance:
+              - ["AC-03.5", "Given còn 1 giờ đến giờ khám, When bệnh nhân hủy, Then bị từ chối “cancellation-too-late”; When điều dưỡng hủy, Then thành công."]
+              - ["AC-07.1", "Given lịch hẹn bị hủy trước giờ nhắc, Then không có lần nhắc nào được gửi."]
+              - ["AC-CN.1", "Given hủy thành công, Then slot trở lại “free” và xuất hiện trong kết quả tìm kiếm trong ≤ 5 giây."]
+
+          - key: reschedule
+            name: Đổi lịch khám
+            actors: [patient, nurse]
+            trace: [UC-03, BR-01..04, "API S15"]
+            objective: Cho phép đổi lịch hẹn sang khung giờ khác như một thao tác duy nhất; thất bại thì giữ nguyên lịch cũ.
+            trigger: Người dùng bấm “Đổi lịch” trên [[SCR:my-appointments]] hoặc [[SCR:queue]].
+            pre: ["Lịch hẹn cũ đang “booked”; với bệnh nhân, còn ≥ 2 giờ đến giờ khám cũ."]
+            post: ["Lịch hẹn cũ “cancelled”, lịch hẹn mới “booked” – hoặc không có gì thay đổi."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Đổi lịch”"}
+              - {n: 2, lane: 1, text: "Mở tìm slot, lọc sẵn\ncùng bác sĩ / chuyên khoa"}
+              - {n: 3, lane: 0, text: "Chọn slot mới, xác nhận"}
+              - {n: 4, lane: 1, kind: decision, text: "Đặt slot mới và\nhủy slot cũ được?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
+              - {n: 5, lane: 1, text: "Hoàn tất đổi lịch,\nphát sự kiện “đã đổi lịch”", end: true}
+              - {n: 6, lane: 1, text: "Hủy toàn bộ thay đổi,\ngiữ lịch cũ, báo lỗi", end: true}
+            rules:
+              - step: "(3)"
+                title: Quy tắc xác nhận
+                lines: ["Hiển thị [[MSG:confirm-reschedule]]."]
+              - step: "(4)"
+                title: Quy tắc đổi lịch nguyên tử
+                lines:
+                  - "Áp dụng toàn bộ quy tắc của [[UC:book]] cho slot mới và của [[UC:cancel]] cho lịch cũ, trong một giao dịch duy nhất."
+                  - "Đổi lịch không làm tăng số lịch hẹn tương lai (lịch cũ được trừ khi kiểm tra BR-03)."
+              - step: "(5)"
+                title: Quy tắc kết quả
+                lines:
+                  - "Phát một sự kiện “shp.scheduling.appointment-rescheduled.v1” (không phát riêng đặt và hủy) để service thông báo hủy nhắc cũ, tạo nhắc mới."
+                  - "Hiển thị [[MSG:rescheduled]]."
+            acceptance:
+              - ["AC-RS.1", "Given slot mới vừa bị người khác đặt, When đổi lịch, Then lịch cũ vẫn “booked” và không có lịch hẹn mới."]
+              - ["AC-RS.2", "Given bệnh nhân có 3 lịch hẹn tương lai, When đổi một lịch, Then thành công (không vướng BR-03)."]
+
+          - key: my-appointments
+            name: Xem lịch hẹn của tôi
+            type: Basic
+            actors: [patient]
+            trace: [UC-03, BR-05, "API S13"]
+            objective: Cho phép bệnh nhân xem danh sách và chi tiết lịch hẹn của chính mình.
+            trigger: Bệnh nhân mở [[SCR:my-appointments]].
+            pre: ["Bệnh nhân đã đăng nhập."]
+            post: ["Danh sách lịch hẹn của bệnh nhân được hiển thị."]
+            rules: []
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Mở “Lịch hẹn của tôi”"}
+              - {n: 2, lane: 1, text: "Lấy lịch hẹn của\n<Người dùng hiện tại>", end: true}
+            alternatives: ["Áp dụng [[CMUC:view-list]] và [[CMUC:view-item]]; quy tắc riêng: bộ lọc [Bệnh nhân] luôn bị ép bằng <Người dùng hiện tại> ở phía server, tham số khác bị bỏ qua (BR-05)."]
+            acceptance:
+              - ["AC-MA.1", "Given bệnh nhân A gửi yêu cầu lọc lịch hẹn của bệnh nhân B, Then chỉ nhận lịch hẹn của A."]
+
+      - name: Cổng nội bộ – Lịch làm việc
+        use_cases:
+          - key: schedule-template
+            name: Tạo lịch làm việc và mẫu lịch tuần
+            actors: [nurse, admin]
+            trace: [UC-02, "API S1, S5"]
+            objective: Cho phép tạo lịch làm việc cho một bác sĩ theo chuyên khoa và đặt mẫu lịch tuần.
+            trigger: Người dùng bấm “Tạo lịch” trên [[SCR:schedule]].
+            pre: ["Bác sĩ đã có hồ sơ Practitioner với chuyên khoa tương ứng."]
+            post: ["Lịch làm việc hoạt động và mẫu tuần được lưu; slot chưa được sinh."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Bấm “Tạo lịch”"}
+              - {n: 2, lane: 1, text: "Hiển thị form lịch\nvà mẫu tuần"}
+              - {n: 3, lane: 0, text: "Chọn bác sĩ, chuyên khoa,\nnhập mẫu tuần, bấm “Lưu”"}
+              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
+              - {n: 5, lane: 1, text: "Lưu lịch và mẫu tuần,\nghi audit", end: true}
+            rules:
+              - step: "(4)"
+                key: template-validate
+                title: Quy tắc kiểm tra mẫu tuần
+                lines:
+                  - "Mỗi dòng mẫu gồm [Thứ], [Giờ bắt đầu], [Giờ kết thúc], [Độ dài slot] ∈ {10, 15, 20, 30} phút; bắt buộc đủ."
+                  - "[Giờ bắt đầu] < [Giờ kết thúc], nếu không → [[MSG:time-range]]; khoảng thời gian phải chia hết cho [Độ dài slot] → nếu không [[MSG:slot-length]]."
+                  - "Hai dòng cùng thứ không được chồng giờ."
+                  - "Mỗi bác sĩ chỉ có một lịch hoạt động cho mỗi chuyên khoa; trùng → [[MSG:duplicate-schedule]]."
+              - step: "(5)"
+                title: Quy tắc lưu
+                lines: ["Lưu theo [[CMUC:create-item]]; [Khoảng lập lịch] = <Hôm nay> → <Hôm nay> + 30 ngày. Sửa mẫu không tự xóa slot đã sinh."]
+            acceptance:
+              - ["AC-ST.1", "Given mẫu 08:00–11:30 slot 15 phút, When lưu, Then hợp lệ; Given 08:00–11:20 slot 15 phút, Then báo lỗi chia không hết."]
+
+          - key: generate-slots
+            name: Sinh slot theo mẫu
+            actors: [nurse, admin]
+            trace: [UC-02, AC-02.1, BR-04, "API S7"]
+            objective: Sinh các slot cho một khoảng ngày theo mẫu lịch tuần.
+            trigger: Người dùng bấm “Sinh slot” trên [[SCR:schedule]]; hoặc job hằng ngày tự sinh thêm ngày thứ 30.
+            pre: ["Lịch làm việc đang hoạt động và có mẫu tuần."]
+            post: ["Các slot “free” được tạo; slot đã tồn tại không bị nhân đôi."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn khoảng ngày,\nbấm “Sinh slot”"}
+              - {n: 2, lane: 1, text: "Sinh slot theo mẫu,\nbỏ qua slot đã có"}
+              - {n: 3, lane: 1, text: "Hiển thị số slot\nđã tạo", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc sinh slot
+                lines:
+                  - "Chỉ sinh trong cửa sổ <Hôm nay> → <Hôm nay> + 30 ngày (BR-04); ngày ngoài cửa sổ bị bỏ qua."
+                  - "Thao tác lặp lại an toàn: slot trùng bác sĩ và giờ bắt đầu không được tạo lần hai."
+                  - "Ngày lễ trong danh mục ngày nghỉ của bệnh viện không sinh slot."
+            acceptance:
+              - ["AC-02.1", "Given mẫu 08:00–11:30 slot 15 phút, When sinh slot cho một ngày, Then có đúng 14 slot “free”."]
+              - ["AC-GS.1", "Given đã sinh slot ngày D, When sinh lại ngày D, Then tổng số slot ngày D không đổi."]
+
+          - key: block-slot
+            name: Chặn / mở chặn slot
+            actors: [nurse, admin]
+            trace: [UC-02, AC-02.2, "API S9, S10"]
+            objective: Chặn khung giờ khi bác sĩ nghỉ hoặc bận; mở lại khi cần.
+            trigger: Người dùng chọn slot trên [[SCR:schedule]] và bấm “Chặn” hoặc “Mở chặn”.
+            pre: ["Slot thuộc lịch làm việc đang hoạt động."]
+            post: ["Slot “busy-unavailable” (chặn) hoặc “free” (mở chặn)."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn slot, bấm “Chặn”,\nnhập lý do"}
+              - {n: 2, lane: 1, kind: decision, text: "Slot đang có\nlịch hẹn?", branches: [{to: 3, label: Không}, {to: 4, label: Có}]}
+              - {n: 3, lane: 1, text: "Chuyển “busy-unavailable”,\nlưu lý do", end: true}
+              - {n: 4, lane: 1, text: "Từ chối, yêu cầu hủy / đổi\nlịch hẹn trước", end: true}
+            rules:
+              - step: "(1)"
+                title: Quy tắc xác nhận
+                lines: ["Hiển thị [[MSG:confirm-block]]; [Lý do] bắt buộc, tối đa 200 ký tự, không ghi thông tin bệnh nhân."]
+              - step: "(2)"
+                title: Quy tắc chặn
+                lines:
+                  - "Slot đang “busy” bởi lịch hẹn hiệu lực → [[MSG:slot-has-appointment]] (AC-02.2)."
+                  - "Mở chặn chỉ áp dụng cho slot “busy-unavailable”; slot quá khứ không thay đổi được."
+            acceptance:
+              - ["AC-02.2", "Given slot đã được đặt, When chặn slot, Then trả lỗi “slot-has-appointment”."]
+
+          - key: view-own-schedule
+            name: Bác sĩ xem lịch làm việc và lịch khám của mình
+            type: Basic
+            actors: [doctor]
+            trace: [UC-02, AC-02.3, "API S3, S13"]
+            objective: Cho phép bác sĩ xem lịch làm việc, slot và lịch hẹn của chính mình (không sửa).
+            trigger: Bác sĩ mở [[SCR:schedule]].
+            pre: ["Tài khoản bác sĩ đã liên kết với Practitioner."]
+            post: ["Lịch của bác sĩ được hiển thị ở chế độ chỉ đọc."]
+            lanes: [Bác sĩ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Mở “Lịch làm việc”"}
+              - {n: 2, lane: 1, text: "Lấy lịch của\n<Practitioner hiện tại>", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc phạm vi dữ liệu
+                lines:
+                  - "Bộ lọc [Bác sĩ] luôn bị ép bằng Practitioner của <Người dùng hiện tại>; các nút sửa/chặn/sinh slot bị ẩn và mọi yêu cầu sửa bị từ chối (AC-02.3)."
+                  - "Lịch hẹn hiển thị họ tên bệnh nhân và lý do khám vì đây là bệnh nhân có quan hệ điều trị."
+            acceptance:
+              - ["AC-02.3", "Given bác sĩ A, When xem lịch của bác sĩ B hoặc sửa lịch của mình, Then bị từ chối và ghi audit."]
