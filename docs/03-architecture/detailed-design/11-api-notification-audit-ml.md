@@ -15,6 +15,19 @@ Phần lớn hoạt động là **bất đồng bộ qua event**; API chỉ ph�
 | N5 | `GET /api/v1/notifications/reminders?appointment={id}` | Xem các lần nhắc của một lịch hẹn | N, A |
 | N6 | `GET /api/v1/notifications/dead-letters` | Danh sách nhắc lỗi hẳn | A |
 | N7 | `POST /api/v1/notifications/dead-letters/{id}/retry` | Đưa lại hàng đợi | A |
+| N8 | `POST /internal/v1/otp/send` | Tạo và gửi mã OTP (Zalo trước, SMS sau, hoặc email) | clinical, Keycloak |
+| N9 | `POST /internal/v1/otp/verify` | Kiểm mã OTP | clinical, Keycloak |
+
+### N8/N9 OTP (nội bộ, gọi từ clinical và từ authenticator của Keycloak)
+`N8` nhận `{ purpose: "register"|"claim-record"|"link-relative"|"change-phone", channelHint: "phone"|"email", destination, locale, context }`
+và trả `{ challengeId, channel, expiresAt }`. `N9` nhận `{ challengeId, code }` và trả `{ ok }`.
+- **Kênh:** với số điện thoại, thử **Zalo** (tin xác thực) trước; nếu Zalo báo lỗi, số không dùng Zalo, hoặc chưa có kết quả giao sau 30 giây thì
+  gửi **SMS với cùng mã**. Email dùng kênh email. Mỗi kênh là một adapter sau giao diện `OtpChannel`; có bản giả cho dev và test.
+- **Mã:** 6 chữ số ngẫu nhiên an toàn, chỉ lưu **băm** (HMAC) trong collection `otp_challenges` (TTL 5 phút), dùng một lần; sai 5 lần thì khóa 15 phút
+  (429 `otp-locked`). Mỗi số nhận tối đa 5 mã/giờ, mỗi IP tối đa 20 mã/giờ (429 `otp-rate-limited`).
+- **Nội dung tin:** theo template version hóa; tin ủy quyền (`link-relative`) nêu rõ **ai** (tên đã rút gọn) xin **phạm vi** nào. Không chèn dữ liệu y tế.
+- **Chi phí và theo dõi:** metric số tin theo kênh, tỉ lệ giao thành công, tỉ lệ rơi xuống SMS; cảnh báo khi vượt ngân sách tháng.
+- Chỉ service có role `internal.otp` gọi được; gateway không route `/internal`. Không bao giờ log `destination` hay `code`.
 
 ### N1 `PUT /api/v1/notifications/devices`
 `{ "platform": "ios|android|web", "token": "<FCM/APNs token>" }` → 200 `{ "tokenId" }`. Upsert theo `token`; chủ sở hữu lấy từ

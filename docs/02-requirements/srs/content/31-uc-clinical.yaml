@@ -11,7 +11,7 @@ modules:
           - key: register
             name: Đăng ký tài khoản bệnh nhân
             actors: [patient]
-            trace: [UC-01, AC-01.2, "API C1", NFR-SEC1]
+            trace: [UC-01, AC-01.2, AC-RG.1, AC-RG.2, AC-RG.3, AC-RG.4, "API C1, N8, N9", NFR-SEC1]
             objective: Cho phép người dùng mới tạo tài khoản và hồ sơ bệnh nhân của chính mình.
             trigger: Người dùng bấm “Đăng ký” trên trang đăng nhập.
             pre: ["Người dùng đã tạo tài khoản ở trang đăng ký của nhà cung cấp định danh, bằng số điện thoại (đã xác minh mã OTP) hoặc bằng email (đã xác minh), nhưng chưa có hồ sơ bệnh nhân."]
@@ -26,6 +26,13 @@ modules:
               - {n: 6, lane: 1, text: "Tạo hồ sơ, liên kết\ntài khoản, ghi đồng ý", end: true}
               - {n: 7, lane: 1, text: "Không tạo hồ sơ, yêu cầu\nxác minh tại quầy", end: true}
             rules:
+              - step: "(1)"
+                key: otp-delivery
+                title: Quy tắc gửi và kiểm tra mã OTP
+                lines:
+                  - "Mã OTP gồm 6 chữ số, hết hạn sau 5 phút, dùng một lần. Sai 5 lần thì khóa 15 phút; mỗi số điện thoại nhận tối đa 5 mã mỗi giờ và mỗi địa chỉ IP tối đa 20 mã mỗi giờ ([[MSG:otp-rate]], [[MSG:otp-locked]])."
+                  - "Kênh gửi: ưu tiên Zalo (tin xác thực) khi số điện thoại dùng Zalo; nếu Zalo không gửi được hoặc không có, tự chuyển sang SMS với cùng mã trong tối đa 30 giây. Bệnh nhân cũng có thể chủ động bấm “Gửi bằng SMS” sau 30 giây."
+                  - "Mã gửi qua email (tài khoản email) theo cùng hạn và cùng giới hạn thử. Mã OTP không phải yếu tố xác thực thứ hai của nhân viên: nhân viên dùng TOTP hoặc khóa WebAuthn (NFR-SEC1)."
               - step: "(2)"
                 title: Quy tắc hiển thị
                 lines:
@@ -43,7 +50,7 @@ modules:
                 title: Quy tắc phát hiện trùng hồ sơ
                 lines:
                   - "Nếu đã có hồ sơ “active” cùng [Số điện thoại] (chuẩn hóa) và cùng [Ngày sinh] → không tạo hồ sơ, hiển thị [[MSG:duplicate-patient]] (AC-01.2)."
-                  - "Thông báo không tiết lộ thông tin của hồ sơ đã có (không hiển thị tên, mã bệnh nhân)."
+                  - "Thông báo không tiết lộ thông tin của hồ sơ đã có (không hiển thị tên, mã bệnh nhân), chỉ gợi ý chọn “Tôi đã từng khám tại bệnh viện” ([[UC:claim-record]]) hoặc đến quầy."
               - step: "(6)"
                 title: Quy tắc tạo hồ sơ
                 lines:
@@ -53,6 +60,140 @@ modules:
               - ["AC-01.2", "Given đã có hồ sơ cùng SĐT + ngày sinh, When đăng ký, Then không tạo hồ sơ mới và thông báo cần xác minh, không lộ thông tin hồ sơ cũ."]
               - ["AC-RG.1", "Given không tích ô đồng ý điều khoản, When đăng ký, Then không gửi được."]
               - ["AC-RG.2", "Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ."]
+              - ["AC-RG.3", "Given số điện thoại dùng Zalo nhưng gửi qua Zalo thất bại, When yêu cầu mã, Then mã cùng giá trị được gửi bằng SMS trong tối đa 30 giây."]
+              - ["AC-RG.4", "Given mã OTP đã dùng, đã hết hạn 5 phút hoặc bị nhập sai 5 lần, When nhập mã, Then bị từ chối; Given quá 5 mã trong một giờ cho một số, When yêu cầu thêm, Then bị từ chối."]
+
+          - key: claim-record
+            name: Tự nhận hồ sơ đã có tại bệnh viện
+            actors: [patient]
+            trace: [UC-01, AC-CL.1, AC-CL.2, AC-CL.3, AC-CL.4, "API C27, C28", NFR-SEC1]
+            objective: Cho phép người đã từng khám tại bệnh viện (đã có hồ sơ ở quầy) liên kết tài khoản mới với hồ sơ đó thay vì tạo hồ sơ mới.
+            trigger: Bệnh nhân chọn “Tôi đã từng khám tại bệnh viện” trên [[SCR:claim-record]].
+            pre: ["Người dùng đã đăng nhập, chưa có hồ sơ bệnh nhân gắn với tài khoản."]
+            post: ["Tài khoản được liên kết với hồ sơ đã có (quan hệ “bản thân”); số điện thoại trong hồ sơ nhận thông báo có tài khoản mới được liên kết."]
+            lanes: [Bệnh nhân, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập họ tên, ngày sinh,\nsố điện thoại đã đăng ký\ntại bệnh viện"}
+              - {n: 2, lane: 1, text: "Tìm hồ sơ khớp; nếu đúng một\nhồ sơ thì gửi mã OTP tới số\ntrong hồ sơ"}
+              - {n: 3, lane: 0, text: "Nhập mã OTP nhận được"}
+              - {n: 4, lane: 1, kind: decision, text: "Mã đúng và hồ sơ\nchưa liên kết?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
+              - {n: 5, lane: 1, text: "Liên kết tài khoản, ghi audit,\nbáo tới số trong hồ sơ", end: true}
+              - {n: 6, lane: 1, text: "Từ chối, hướng dẫn đến\nquầy để xác minh", end: true}
+            rules:
+              - step: "(2)"
+                key: claim-match
+                title: Quy tắc tìm và đối chiếu hồ sơ
+                lines:
+                  - "Khớp khi [Họ và tên] (không phân biệt dấu và hoa thường), [Ngày sinh] và [Số điện thoại] (chuẩn hóa) cùng trùng một hồ sơ “active”. Nhiều số điện thoại dùng chung trong một gia đình vẫn phân biệt được nhờ họ tên và ngày sinh."
+                  - "Mã OTP chỉ gửi tới số điện thoại đang lưu trong hồ sơ, không gửi tới số vừa nhập nếu khác. Kênh gửi và quy tắc mã theo [[BR:otp-delivery]]."
+                  - "Phản hồi luôn giống nhau dù có khớp hay không ([[MSG:claim-sent]]); không hiển thị bất kỳ dữ liệu nào của hồ sơ trước khi xác minh OTP thành công, để không dò được ai là bệnh nhân của bệnh viện."
+                  - "Không khớp, nhiều hơn một ứng viên, hoặc hồ sơ không có số điện thoại → không gửi mã; bệnh nhân được hướng dẫn đến quầy để Điều dưỡng liên kết sau khi đối chiếu giấy tờ ([[UC:link-relative]], luồng tại quầy)."
+              - step: "(4)"
+                key: claim-limits
+                title: Quy tắc giới hạn và chống lạm dụng
+                lines:
+                  - "Tối đa 5 lần thử nhận hồ sơ trong 24 giờ cho mỗi tài khoản và 3 lần gửi mã trong 24 giờ cho mỗi số điện thoại trong hồ sơ; vượt → [[MSG:otp-rate]]."
+                  - "Hồ sơ đã liên kết với một tài khoản khác ở quan hệ “bản thân” → không liên kết, hướng dẫn đến quầy; việc này được ghi audit."
+                  - "Khi liên kết thành công, hệ thống gửi thông báo tới số điện thoại trong hồ sơ (“Tài khoản mới đã được liên kết với hồ sơ của bạn”) để chủ hồ sơ phát hiện nếu bị mạo nhận."
+            acceptance:
+              - ["AC-CL.1", "Given thông tin khớp đúng một hồ sơ, When nhập đúng mã OTP gửi tới số trong hồ sơ, Then tài khoản được liên kết với hồ sơ đó và không tạo hồ sơ mới."]
+              - ["AC-CL.2", "Given thông tin không khớp hoặc khớp nhiều hồ sơ, When gửi yêu cầu, Then phản hồi giống hệt trường hợp khớp, không gửi mã và không lộ dữ liệu hồ sơ nào."]
+              - ["AC-CL.3", "Given đã nhập sai mã OTP 5 lần hoặc đã nhận hồ sơ quá 5 lần trong 24 giờ, When thử tiếp, Then bị khóa tạm và có bản ghi audit."]
+              - ["AC-CL.4", "Given hồ sơ đã liên kết với tài khoản khác ở quan hệ “bản thân”, When nhận hồ sơ, Then không liên kết và hướng dẫn đến quầy."]
+
+          - key: add-dependent
+            name: Tạo hồ sơ cho con dưới 16 tuổi
+            actors: [patient]
+            trace: [UC-01, AC-DP.1, AC-DP.2, AC-DP.3, BR-05, "API C22, C23"]
+            objective: Cho phép cha, mẹ hoặc người giám hộ tạo và quản lý hồ sơ bệnh nhân cho người dưới 16 tuổi ngay trong tài khoản của mình.
+            trigger: Người dùng bấm “Thêm con” trên [[SCR:relatives]].
+            pre: ["Người dùng đã đăng nhập và đã có hồ sơ của chính mình."]
+            post: ["Hồ sơ của người dưới 16 tuổi được tạo và liên kết với tài khoản ở quan hệ “người giám hộ” (toàn quyền)."]
+            lanes: [Người giám hộ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập họ tên, ngày sinh, giới tính\ncủa con, tích cam đoan là\nngười giám hộ"}
+              - {n: 2, lane: 1, kind: decision, text: "Dưới 16 tuổi và\nchưa quá 10 hồ sơ?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
+              - {n: 3, lane: 1, text: "Tạo hồ sơ, liên kết “người giám hộ”,\nghi audit và bản ghi cam đoan", end: true}
+              - {n: 4, lane: 1, text: "Từ chối, hiển thị thông báo", end: true}
+            rules:
+              - step: "(2)"
+                key: dependent-rules
+                title: Quy tắc hồ sơ người dưới 16 tuổi
+                lines:
+                  - "Chỉ tạo được khi [Ngày sinh] cho thấy dưới 16 tuổi tính đến <Hôm nay>; từ 16 tuổi trở lên → [[MSG:age-not-dependent]]. Người từ 16 tuổi tự đăng ký hoặc được ủy quyền ([[UC:link-relative]])."
+                  - "Bắt buộc tích “Tôi là cha, mẹ hoặc người giám hộ hợp pháp của người này”; lưu bản ghi cam đoan (người cam đoan, thời điểm)."
+                  - "Hồ sơ không bắt buộc có số điện thoại riêng; thông báo nhắc lịch gửi tới liên hệ của người giám hộ. Hồ sơ vẫn đi qua phát hiện trùng như [[BR:duplicate-check]]."
+                  - "Mỗi tài khoản quản lý tối đa 10 hồ sơ (kể cả của chính mình); vượt → [[MSG:profile-limit]]."
+                  - "Khi người được quản lý đủ 16 tuổi, hệ thống thông báo cho người giám hộ và đề nghị chuyển quyền: quyền giám hộ chỉ còn hiệu lực đến sinh nhật 16 tuổi, sau đó phải theo [[UC:link-relative]]."
+            acceptance:
+              - ["AC-DP.1", "Given người được quản lý từ 16 tuổi trở lên, When tạo hồ sơ như người dưới 16 tuổi, Then bị từ chối."]
+              - ["AC-DP.2", "Given thông tin hợp lệ của người dưới 16 tuổi và đã cam đoan, When tạo, Then hồ sơ được tạo và liên kết người giám hộ."]
+              - ["AC-DP.3", "Given tài khoản đã quản lý 10 hồ sơ, When thêm hồ sơ thứ 11, Then bị từ chối."]
+
+          - key: link-relative
+            name: Liên kết hồ sơ của người thân trưởng thành
+            actors: [patient, nurse]
+            trace: [UC-01, AC-LK.1, AC-LK.2, AC-LK.3, AC-LK.4, AC-PX.1, BR-05, "API C24, C25, C29"]
+            objective: Cho phép một người quản lý lịch hẹn, và nếu được đồng ý thì xem kết quả, của người thân đã trưởng thành (ví dụ cha mẹ lớn tuổi) bằng sự đồng ý rõ ràng của người đó.
+            trigger: Người dùng bấm “Thêm người thân” trên [[SCR:relatives]]; hoặc Điều dưỡng bấm “Ghi ủy quyền” trên hồ sơ bệnh nhân khi người thân đến quầy.
+            pre: ["Người yêu cầu đã đăng nhập; người thân đã có hồ sơ tại bệnh viện, có số điện thoại trong hồ sơ."]
+            post: ["Liên kết “người được ủy quyền” có hiệu lực với phạm vi đã chọn, hết hạn sau 12 tháng; chủ hồ sơ nhận thông báo."]
+            lanes: [Người yêu cầu, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhập họ tên, ngày sinh, SĐT của\nngười thân, chọn phạm vi"}
+              - {n: 2, lane: 1, text: "Nếu khớp một hồ sơ, gửi mã OTP kèm\nnội dung ủy quyền tới số của người thân"}
+              - {n: 3, lane: 0, text: "Người thân đọc mã, người yêu\ncầu nhập mã"}
+              - {n: 4, lane: 1, kind: decision, text: "Mã đúng và\nchưa quá giới hạn?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
+              - {n: 5, lane: 1, text: "Tạo liên kết, ghi audit, báo cho\nchủ hồ sơ", end: true}
+              - {n: 6, lane: 1, text: "Từ chối", end: true}
+            rules:
+              - step: "(1)"
+                key: proxy-scope
+                title: Quy tắc phạm vi ủy quyền
+                lines:
+                  - "Hai phạm vi: “Đặt lịch” (xem, đặt, hủy, đổi lịch hẹn của người thân) là mặc định; “Đặt lịch và xem kết quả” (thêm kết quả khám và tài liệu đã phát hành) chỉ có khi nội dung gửi kèm mã OTP nêu rõ phạm vi này để chủ hồ sơ biết trước khi đọc mã (AC-PX.1)."
+                  - "Người được ủy quyền không bao giờ xem được ghi chú lâm sàng chưa phát hành, không sửa họ tên, ngày sinh, giới tính của người thân, và không bật được xử lý dữ liệu bằng AI thay họ."
+              - step: "(2)"
+                title: Quy tắc xác minh
+                lines:
+                  - "Mã OTP gửi tới số điện thoại trong hồ sơ của người thân, theo [[BR:otp-delivery]]; phản hồi cho người yêu cầu luôn giống nhau dù có khớp hay không ([[MSG:claim-sent]])."
+                  - "Tối đa 5 yêu cầu liên kết trong 24 giờ cho mỗi tài khoản; mỗi tài khoản quản lý tối đa 10 hồ sơ ([[MSG:profile-limit]])."
+              - step: "(5)"
+                key: proxy-lifecycle
+                title: Quy tắc hiệu lực và thông báo
+                lines:
+                  - "Liên kết hết hiệu lực sau 12 tháng; trước 30 ngày hệ thống nhắc người yêu cầu gia hạn bằng một mã OTP mới. Chủ hồ sơ có thể thu hồi bất kỳ lúc nào ([[UC:revoke-link]])."
+                  - "Mỗi truy cập qua ủy quyền được ghi audit kèm tài khoản thực hiện và hồ sơ được truy cập (onBehalfOf)."
+                  - "Tại quầy: người thân (đặc biệt người lớn tuổi không dùng điện thoại thông minh) đưa giấy tờ gốc; Điều dưỡng đối chiếu, nhập tài khoản của người được ủy quyền (SĐT hoặc email), chọn phạm vi và tích “Chủ hồ sơ đã đồng ý ủy quyền”; liên kết có hiệu lực ngay và được ghi audit."
+            acceptance:
+              - ["AC-LK.1", "Given thông tin khớp một hồ sơ trưởng thành, When người yêu cầu nhập đúng mã OTP đã gửi tới số của người thân, Then liên kết có hiệu lực với phạm vi đã chọn."]
+              - ["AC-LK.2", "Given liên kết phạm vi “Đặt lịch”, When người được ủy quyền đặt, hủy, đổi hoặc xem lịch hẹn của người thân, Then thành công và audit ghi tài khoản thực hiện và hồ sơ được truy cập."]
+              - ["AC-LK.3", "Given người thân đến quầy và Điều dưỡng ghi ủy quyền sau khi đối chiếu giấy tờ, When lưu, Then liên kết có hiệu lực và có bản ghi audit."]
+              - ["AC-LK.4", "Given liên kết đã quá 12 tháng, When người được ủy quyền truy cập, Then bị từ chối cho đến khi gia hạn."]
+              - ["AC-PX.1", "Given liên kết phạm vi “Đặt lịch”, When người được ủy quyền xem kết quả khám hoặc tài liệu của người thân, Then bị từ chối và có bản ghi audit “deny”."]
+
+          - key: revoke-link
+            name: Thu hồi liên kết hồ sơ người thân
+            actors: [patient, nurse]
+            trace: [UC-01, AC-RV.1, AC-RV.2, BR-05, "API C26"]
+            objective: Cho phép người quản lý hoặc chủ hồ sơ chấm dứt liên kết; Điều dưỡng chấm dứt thay chủ hồ sơ tại quầy.
+            trigger: Người dùng bấm “Thu hồi” trên [[SCR:relatives]], hoặc chủ hồ sơ có tài khoản riêng bấm “Ngừng chia sẻ”.
+            pre: ["Liên kết đang hiệu lực."]
+            post: ["Liên kết “revoked”; người từng được ủy quyền không còn truy cập; bên còn lại nhận thông báo."]
+            lanes: [Người dùng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chọn liên kết, bấm Thu hồi,\nxác nhận"}
+              - {n: 2, lane: 1, text: "Đánh dấu thu hồi, hủy phiên\nđang mở, ghi audit", end: false}
+              - {n: 3, lane: 1, text: "Gửi thông báo cho bên còn lại", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc thu hồi
+                lines:
+                  - "Chủ hồ sơ (có tài khoản riêng), người quản lý, hoặc Điều dưỡng tại quầy đều thu hồi được. Người giám hộ của người dưới 16 tuổi chỉ chuyển quyền, không tự xóa hồ sơ."
+                  - "Hiệu lực chậm nhất 60 giây (cùng hạn bộ nhớ đệm quyền, xem [[UC:lock-account]]); lịch hẹn đã đặt vẫn giữ nguyên."
+            acceptance:
+              - ["AC-RV.1", "Given liên kết đang hiệu lực, When chủ hồ sơ hoặc người quản lý thu hồi, Then người được ủy quyền không còn truy cập sau tối đa 60 giây và có bản ghi audit."]
+              - ["AC-RV.2", "Given hồ sơ có tài khoản riêng, When có liên kết mới hoặc bị thu hồi, Then chủ hồ sơ nhận thông báo."]
 
           - key: update-profile
             name: Cập nhật thông tin hành chính
