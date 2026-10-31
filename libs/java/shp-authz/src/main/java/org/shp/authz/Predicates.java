@@ -3,6 +3,9 @@ package org.shp.authz;
 /** Tên predicate dùng trong ma trận (khớp khóa {@code predicates} trong matrix.yaml). */
 public final class Predicates {
   public static final String OWN = "own";
+  public static final String LINKED = "linked";
+  public static final String LINKED_RECORDS = "linked-records";
+  public static final String GUARDIAN = "guardian";
   public static final String SELF_PRACTITIONER = "self-practitioner";
   public static final String CARE = "care";
   public static final String BREAK_GLASS = "breakglass";
