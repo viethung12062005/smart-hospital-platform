@@ -205,3 +205,13 @@ testcases:
   level: api
   priority: P0
   spec: Given bác sĩ A, When xem lịch của bác sĩ B hoặc sửa lịch của mình, Then bị từ chối và ghi audit.
+- id: TC-AC-03.7
+  title: 'Đặt lịch khám: AC-03.7'
+  covers:
+  - AC-03.7
+  srs_uc: book
+  srs_ref: UC 2
+  module: scheduling
+  level: api
+  priority: P0
+  spec: "Given hồ sơ người thân đã liên kết, When tài khoản của A đặt lịch cho hồ sơ đó, Then đặt thành công và audit ghi tài khoản thực hiện và hồ sơ được đặt."

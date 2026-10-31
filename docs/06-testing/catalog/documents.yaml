@@ -5,7 +5,7 @@ testcases:
   covers:
   - AC-05.1
   srs_uc: upload-document
-  srs_ref: UC 23
+  srs_ref: UC 28
   module: documents
   level: api
   priority: P0
@@ -15,7 +15,7 @@ testcases:
   covers:
   - AC-UD.1
   srs_uc: upload-document
-  srs_ref: UC 23
+  srs_ref: UC 28
   module: documents
   level: api
   priority: P0
@@ -25,7 +25,7 @@ testcases:
   covers:
   - AC-UD.2
   srs_uc: upload-document
-  srs_ref: UC 23
+  srs_ref: UC 28
   module: documents
   level: integration
   priority: P0
@@ -35,7 +35,7 @@ testcases:
   covers:
   - AC-05.3
   srs_uc: release-document
-  srs_ref: UC 24
+  srs_ref: UC 29
   module: documents
   level: api
   priority: P0
@@ -45,7 +45,7 @@ testcases:
   covers:
   - AC-05.2
   srs_uc: download-document
-  srs_ref: UC 25
+  srs_ref: UC 30
   module: documents
   level: api
   priority: P0
@@ -55,7 +55,7 @@ testcases:
   covers:
   - AC-05.3
   srs_uc: download-document
-  srs_ref: UC 25
+  srs_ref: UC 30
   module: documents
   level: api
   priority: P0
@@ -65,7 +65,7 @@ testcases:
   covers:
   - AC-VD.1
   srs_uc: void-document
-  srs_ref: UC 26
+  srs_ref: UC 31
   module: documents
   level: api
   priority: P0

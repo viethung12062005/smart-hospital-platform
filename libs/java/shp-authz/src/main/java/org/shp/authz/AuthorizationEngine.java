@@ -54,6 +54,9 @@ public final class AuthorizationEngine {
   private boolean holds(String predicate, Principal p, ResourceContext c) {
     return switch (predicate) {
       case Predicates.OWN -> same(c.patientId(), p.fhirUserId());
+      case Predicates.LINKED -> c.linkedProfile();
+      case Predicates.LINKED_RECORDS -> c.linkedRecords();
+      case Predicates.GUARDIAN -> c.guardianLink();
       case Predicates.SELF_PRACTITIONER -> same(c.practitionerId(), p.fhirUserId());
       case Predicates.CARE -> c.hasCareRelationship();
       case Predicates.BREAK_GLASS -> c.hasActiveBreakGlass();

@@ -1,26 +1,26 @@
 # Truy vết yêu cầu ↔ test case
 
-> Sinh tự động bằng `python -I tools/qa/trace.py`. Không sửa tay. Nguồn: `docs/06-testing/catalog/`, SRS v0.95.
+> Sinh tự động bằng `python -I tools/qa/trace.py`. Không sửa tay. Nguồn: `docs/06-testing/catalog/`, SRS v0.96.
 
 ## Tóm tắt
 
 | Chỉ số | Giá trị |
 |---|---|
-| Test case | 180 |
-| Đã tự động hóa hoặc một phần | 38 (21%) |
+| Test case | 202 |
+| Đã tự động hóa hoặc một phần | 38 (18%) |
 | Tự động hóa đầy đủ | 9 |
-| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 105, tự động hóa ít nhất một phần: 25 |
+| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 121, tự động hóa ít nhất một phần: 25 |
 
 ## Theo module và trạng thái
 
 | Module | Tổng | Tự động | Một phần | Chờ viết | Thủ công |
 |---|---|---|---|---|---|
 | ai | 15 | 0 | 0 | 15 | 0 |
-| clinical | 23 | 0 | 0 | 23 | 0 |
+| clinical | 44 | 0 | 0 | 44 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 3 | 12 | 40 | 7 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
-| scheduling | 20 | 0 | 9 | 11 | 0 |
+| scheduling | 21 | 0 | 9 | 12 | 0 |
 | security | 28 | 4 | 6 | 18 | 0 |
 | system | 10 | 1 | 1 | 8 | 0 |
 
@@ -30,10 +30,10 @@
 |---|---|---|---|---|---|
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
-| integration | 27 | 1 | 6 | 20 | 0 |
-| api | 74 | 1 | 11 | 62 | 0 |
+| integration | 29 | 1 | 6 | 22 | 0 |
+| api | 90 | 1 | 11 | 78 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
-| security | 8 | 4 | 0 | 4 | 0 |
+| security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
 | resilience | 10 | 0 | 0 | 10 | 0 |
 | ai-eval | 23 | 0 | 0 | 23 | 0 |
@@ -49,6 +49,7 @@
 | TC-AC-01.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-01.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-03.6 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
+| TC-AC-03.7 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
 | TC-AC-04.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-04.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-05.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
@@ -69,17 +70,32 @@
 | TC-AC-BG.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-BK.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
 | TC-AC-CI.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-CL.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-CL.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-CL.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-CL.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-CP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-CS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-EA.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-FB.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-FS.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
+| TC-AC-ID.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-ID.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-ID.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-IS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-LK.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-LK.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-LK.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-LK.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-LP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-PG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
+| TC-AC-PX.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-RE.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-RG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-RG.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-RG.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-RS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
+| TC-AC-RV.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-SM.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-SM.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-SP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
@@ -141,6 +157,7 @@
 | AC-03.4 | TC-AC-03.4 (api, P0) | partial |
 | AC-03.5 | TC-AC-03.5 (api, P0) | partial |
 | AC-03.6 | TC-AC-03.6 (api, P0) | planned |
+| AC-03.7 | TC-AC-03.7 (api, P0) | planned |
 | AC-04.1 | TC-AC-04.1 (api, P0) | planned |
 | AC-04.2 | TC-AC-04.2 (api, P0) | planned |
 | AC-05.1 | TC-AC-05.1 (api, P0) | planned |
@@ -188,10 +205,17 @@
 | AC-BG.3 | TC-SEC-25 (api, P0) | planned |
 | AC-BK.1 | TC-AC-BK.1 (integration, P0) | planned |
 | AC-CI.1 | TC-AC-CI.1 (api, P0) | planned |
+| AC-CL.1 | TC-AC-CL.1 (api, P0) | planned |
+| AC-CL.2 | TC-AC-CL.2 (security, P0) | planned |
+| AC-CL.3 | TC-AC-CL.3 (security, P0) | planned |
+| AC-CL.4 | TC-AC-CL.4 (api, P0) | planned |
 | AC-CN.1 | TC-AC-CN.1 (api, P1) | partial |
 | AC-CP.1 | TC-AC-CP.1 (e2e, P0) | planned |
 | AC-CS.1 | TC-AC-CS.1 (api, P0) | planned |
 | AC-DL.1 | TC-AC-DL.1 (api, P1) | planned |
+| AC-DP.1 | TC-AC-DP.1 (api, P1) | planned |
+| AC-DP.2 | TC-AC-DP.2 (api, P1) | planned |
+| AC-DP.3 | TC-AC-DP.3 (api, P1) | planned |
 | AC-DR.1 | TC-AC-DR.1 (api, P1) | planned |
 | AC-DX.1 | TC-AC-DX.1 (api, P1) | planned |
 | AC-EA.1 | TC-AC-EA.1 (api, P0) | planned |
@@ -201,18 +225,32 @@
 | AC-FS.2 | TC-AC-FS.2 (api, P1) | planned |
 | AC-FS.3 | TC-AC-FS.3 (api, P0) | planned |
 | AC-GS.1 | TC-AC-GS.1 (api, P1) | planned |
+| AC-ID.1 | TC-AC-ID.1 (api, P0) | planned |
+| AC-ID.2 | TC-AC-ID.2 (api, P0) | planned |
+| AC-ID.3 | TC-AC-ID.3 (api, P1) | planned |
+| AC-ID.4 | TC-AC-ID.4 (security, P0) | planned |
 | AC-IS.1 | TC-AC-IS.1 (api, P0) | planned |
 | AC-KB.1 | TC-AC-KB.1 (ai-eval, P1) | planned |
+| AC-LK.1 | TC-AC-LK.1 (api, P0) | planned |
+| AC-LK.2 | TC-AC-LK.2 (api, P0) | planned |
+| AC-LK.3 | TC-AC-LK.3 (api, P0) | planned |
+| AC-LK.4 | TC-AC-LK.4 (api, P0) | planned |
 | AC-LP.1 | TC-AC-LP.1 (api, P0) | planned |
 | AC-MA.1 | TC-AC-MA.1 (api, P0) | partial |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | planned |
 | AC-NP.1 | TC-AC-NP.1 (api, P1) | planned |
 | AC-NS.1 | TC-AC-NS.1 (integration, P1) | planned |
 | AC-PG.1 | TC-AC-PG.1 (integration, P0) | planned |
+| AC-PX.1 | TC-AC-PX.1 (security, P0) | planned |
 | AC-RE.1 | TC-AC-RE.1 (api, P0) | planned |
 | AC-RG.1 | TC-AC-RG.1 (api, P0) | planned |
+| AC-RG.2 | TC-AC-RG.2 (api, P0) | planned |
+| AC-RG.3 | TC-AC-RG.3 (integration, P1) | planned |
+| AC-RG.4 | TC-AC-RG.4 (integration, P0) | planned |
 | AC-RS.1 | TC-AC-RS.1 (api, P0) | planned |
 | AC-RS.2 | TC-AC-RS.2 (api, P1) | planned |
+| AC-RV.1 | TC-AC-RV.1 (api, P0) | planned |
+| AC-RV.2 | TC-AC-RV.2 (api, P1) | planned |
 | AC-SM.1 | TC-AC-SM.1 (ai-eval, P0) | planned |
 | AC-SM.2 | TC-AC-SM.2 (ai-eval, P0) | planned |
 | AC-SM.2 | TC-SEC-18 (integration, P0) | planned |

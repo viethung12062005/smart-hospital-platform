@@ -4,10 +4,10 @@ actors:
     name: Bệnh nhân
     short: BN
     description: >-
-      Người có tài khoản trên cổng bệnh nhân. Đặt/hủy/đổi lịch khám của chính mình, xem lịch hẹn, xem tài liệu đã được
+      Người có tài khoản trên cổng bệnh nhân. Đặt/hủy/đổi lịch khám của chính mình và của người thân đã được liên kết (con dưới 16 tuổi, người lớn đã ủy quyền), xem lịch hẹn, xem tài liệu đã được
       bác sĩ phát hành, cập nhật thông tin hành chính, xem ai đã truy cập hồ sơ của mình, quản lý đồng ý xử lý dữ liệu
       bằng AI, dùng chatbot đặt lịch. Hệ thống nhận diện “Bệnh nhân” khi token OIDC có vai trò “patient” và [fhirUser] trỏ tới
-      một Patient. Chỉ thấy dữ liệu của chính mình (BR-05).
+      một Patient. Chỉ thấy dữ liệu của chính mình và của hồ sơ đã được liên kết đúng phạm vi (BR-05).
   - key: doctor
     name: Bác sĩ
     short: BS
@@ -46,10 +46,10 @@ actors:
 
 external_systems:
   - key: idp
-    name: Nhà cung cấp định danh (Microsoft Entra ID / Keycloak)
+    name: Nhà cung cấp định danh (Keycloak)
     description: >-
-      Xác thực OIDC, MFA, cấp token có vai trò. Entra ID ở môi trường cloud, Keycloak ở môi trường dev. Hệ thống không lưu
-      mật khẩu người dùng.
+      Xác thực OIDC, MFA, cấp token có vai trò, chạy trong cụm của hệ thống ở mọi môi trường. Đăng ký bệnh nhân bằng số điện
+      thoại (mã OTP) hoặc email (mã xác minh). Chỉ nhà cung cấp định danh lưu mật khẩu (băm chậm có salt); các service nghiệp vụ không bao giờ nhận hay lưu mật khẩu.
   - key: messaging
     name: Nhà cung cấp gửi tin (email, SMS, push)
     description: Gửi nhắc lịch và thông báo. Nội dung không chứa chẩn đoán hay kết quả khám.
@@ -79,8 +79,21 @@ objects:
       - {name: Giới tính, example: Nữ, input: Input in a list, note: "male, female, other, unknown"}
       - {name: Số điện thoại, example: "0912 345 678", input: Free Input, note: Dùng kiểm tra trùng hồ sơ cùng ngày sinh}
       - {name: Email, example: lan.nguyen@example.org, input: Free Input}
+      - {name: Số căn cước công dân, example: "000123456789", input: Free Input, note: "Không bắt buộc; điều dưỡng bổ sung khi bệnh nhân đến khám; lưu mã hóa, hiển thị che"}
       - {name: Địa chỉ, example: "12 Lê Lợi, Huế", input: Free Input}
       - {name: Trạng thái, example: active, input: System generated, note: "active, merged (đã gộp vào hồ sơ khác)"}
+  - key: profile-link
+    name: Liên kết hồ sơ (ProfileLink)
+    actors: [patient, nurse]
+    description: >-
+      Quan hệ giữa một tài khoản đăng nhập và một hồ sơ bệnh nhân: bản thân, người giám hộ của người dưới 16 tuổi, hoặc người
+      được ủy quyền. Có phạm vi, hiệu lực 12 tháng và có thể thu hồi.
+    properties:
+      - {name: Quan hệ, example: Người giám hộ, input: Input in a list, note: "bản thân, người giám hộ, người được ủy quyền"}
+      - {name: Phạm vi, example: Đặt lịch, input: Input in a list, note: "Đặt lịch; Đặt lịch và xem kết quả. Người giám hộ có toàn quyền"}
+      - {name: Trạng thái, example: active, input: System generated, note: "pending, active, revoked, expired"}
+      - {name: Hết hạn, example: 31/10/2027, input: System generated, note: 12 tháng kể từ lúc liên kết, gia hạn bằng OTP}
+      - {name: Cách xác lập, example: Mã OTP của người thân, input: System generated, note: "OTP của người thân, tại quầy có đối chiếu giấy tờ, cam đoan của người giám hộ"}
   - key: practitioner
     name: Bác sĩ (Practitioner / PractitionerRole)
     actors: [admin]

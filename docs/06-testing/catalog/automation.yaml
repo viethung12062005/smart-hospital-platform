@@ -20,7 +20,7 @@ automation:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::wrongAudienceWrongSignatureAndExpiredTokensAre401
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::patientDoesNotNeedMfa
-    gap: "Chưa thử với Keycloak/Entra thật; chưa đo thời hạn token ≤ 15 phút từ IdP."
+    gap: "Chưa thử với Keycloak thật; chưa đo thời hạn token ≤ 15 phút từ IdP."
   TC-SEC-04:
     status: partial
     refs:

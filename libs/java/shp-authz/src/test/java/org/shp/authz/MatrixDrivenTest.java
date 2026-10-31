@@ -31,6 +31,9 @@ class MatrixDrivenTest {
   static final List<String> ALL_PREDICATES =
       List.of(
           Predicates.OWN,
+          Predicates.LINKED,
+          Predicates.LINKED_RECORDS,
+          Predicates.GUARDIAN,
           Predicates.SELF_PRACTITIONER,
           Predicates.CARE,
           Predicates.BREAK_GLASS,
@@ -219,6 +222,37 @@ class MatrixDrivenTest {
   }
 
   @Test
+  void bookingScopeLinkAllowsAppointmentsButNotClinicalRecords() {
+    var p = new Principal("s", Set.of("patient"), "me");
+    var booking =
+        ResourceContext.builder()
+            .patientId("kid")
+            .linkedProfile(true)
+            .encounterFinished(true)
+            .build();
+    assertThat(ENGINE.decide(p, "Appointment", "book", booking).allowed()).isTrue();
+    assertThat(ENGINE.decide(p, "Encounter", "read", booking).allowed()).isFalse();
+    var records =
+        ResourceContext.builder()
+            .patientId("kid")
+            .linkedProfile(true)
+            .linkedRecords(true)
+            .encounterFinished(true)
+            .build();
+    assertThat(ENGINE.decide(p, "Encounter", "read", records).allowed()).isTrue();
+  }
+
+  @Test
+  void onlyGuardianMayUpdateAdministrativeFieldsOfAnotherProfile() {
+    var p = new Principal("s", Set.of("patient"), "me");
+    var proxy = ResourceContext.builder().patientId("adult").linkedProfile(true).build();
+    var guardian =
+        ResourceContext.builder().patientId("kid").linkedProfile(true).guardianLink(true).build();
+    assertThat(ENGINE.decide(p, "Patient", "update", proxy).allowed()).isFalse();
+    assertThat(ENGINE.decide(p, "Patient", "update", guardian).allowed()).isTrue();
+  }
+
+  @Test
   void unlinkedUserIsDeniedOwnAccess() {
     var p = new Principal("s", Set.of("patient"), null);
     assertThat(ENGINE.decide(p, "Patient", "read", ResourceContext.empty()).allowed()).isFalse();
@@ -298,6 +332,9 @@ class MatrixDrivenTest {
   static ResourceContext ctx(Set<String> holding, boolean notCareFails) {
     return ResourceContext.builder()
         .patientId(holding.contains(Predicates.OWN) ? "me" : "someone-else")
+        .linkedProfile(holding.contains(Predicates.LINKED))
+        .linkedRecords(holding.contains(Predicates.LINKED_RECORDS))
+        .guardianLink(holding.contains(Predicates.GUARDIAN))
         .practitionerId(holding.contains(Predicates.SELF_PRACTITIONER) ? "me" : "someone-else")
         .hasCareRelationship(holding.contains(Predicates.CARE) || notCareFails)
         .hasActiveBreakGlass(holding.contains(Predicates.BREAK_GLASS))

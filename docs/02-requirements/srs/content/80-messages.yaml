@@ -15,6 +15,13 @@ messages:
       - {key: max-future, text: "Bạn đã có 3 lịch hẹn sắp tới. Vui lòng hủy bớt trước khi đặt thêm.", when: "422 max-future-appointments (BR-03)"}
       - {key: outside-window, text: "Chỉ đặt được lịch trong vòng 30 ngày tới.", when: "422 outside-booking-window (BR-04)"}
       - {key: cancel-too-late, text: "Đã quá thời hạn hủy (2 giờ trước giờ khám). Vui lòng liên hệ quầy tiếp đón.", when: "422 cancellation-too-late (BR-02)"}
+      - {key: national-id-duplicate, text: "Số căn cước công dân này đã gắn với một hồ sơ khác. Hãy kiểm tra và gộp hồ sơ trùng.", when: "422 duplicate-patient-suspected (theo CCCD)"}
+      - {key: claim-sent, text: "Nếu thông tin khớp với một hồ sơ tại bệnh viện, mã xác minh đã được gửi tới số điện thoại của hồ sơ đó.", when: "200 (giống nhau dù có khớp hay không)"}
+      - {key: otp-invalid, text: "Mã xác minh không đúng hoặc đã hết hạn.", when: "422 otp-invalid"}
+      - {key: otp-locked, text: "Bạn nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.", when: "429 otp-locked"}
+      - {key: otp-rate, text: "Bạn đã yêu cầu mã quá nhiều lần. Vui lòng thử lại sau.", when: "429 otp-rate-limited"}
+      - {key: profile-limit, text: "Mỗi tài khoản quản lý tối đa 10 hồ sơ.", when: "422 profile-limit"}
+      - {key: age-not-dependent, text: "Hồ sơ này không thuộc người dưới 16 tuổi. Người từ 16 tuổi cần tự đăng ký hoặc được ủy quyền.", when: "422 not-a-dependent"}
       - {key: duplicate-patient, text: "Thông tin trùng với một hồ sơ đã có. Vui lòng đến quầy tiếp đón để được xác minh.", when: "422 duplicate-patient-suspected"}
       - {key: duplicate-schedule, text: "Bác sĩ đã có lịch làm việc hoạt động cho chuyên khoa này.", when: "409"}
       - {key: file-too-large, text: "Tệp vượt quá 20 MB.", when: "413 file-too-large"}
@@ -37,6 +44,7 @@ messages:
       - {key: max-length, text: "Vượt quá số ký tự cho phép."}
       - {key: dob-future, text: "Ngày sinh không được ở tương lai."}
       - {key: invalid-phone, text: "Số điện thoại không hợp lệ."}
+      - {key: invalid-national-id, text: "Số căn cước công dân phải gồm đúng 12 chữ số."}
       - {key: time-range, text: "Giờ bắt đầu phải trước giờ kết thúc."}
       - {key: slot-length, text: "Khoảng thời gian phải chia hết cho độ dài khung giờ."}
       - {key: vital-range, text: "Giá trị nằm ngoài khoảng cho phép."}

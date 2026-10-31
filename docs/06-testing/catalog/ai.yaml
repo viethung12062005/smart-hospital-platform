@@ -5,7 +5,7 @@ testcases:
   covers:
   - AC-11.1
   srs_uc: ask-assistant
-  srs_ref: UC 27
+  srs_ref: UC 32
   module: ai
   level: ai-eval
   priority: P1
@@ -16,7 +16,7 @@ testcases:
   covers:
   - AC-11.2
   srs_uc: ask-assistant
-  srs_ref: UC 27
+  srs_ref: UC 32
   module: ai
   level: ai-eval
   priority: P0
@@ -27,7 +27,7 @@ testcases:
   covers:
   - AC-11.3
   srs_uc: ask-assistant
-  srs_ref: UC 27
+  srs_ref: UC 32
   module: ai
   level: ai-eval
   priority: P1
@@ -37,7 +37,7 @@ testcases:
   covers:
   - AC-AS.1
   srs_uc: ask-assistant
-  srs_ref: UC 27
+  srs_ref: UC 32
   module: ai
   level: ai-eval
   priority: P1
@@ -47,7 +47,7 @@ testcases:
   covers:
   - AC-FB.1
   srs_uc: answer-feedback
-  srs_ref: UC 28
+  srs_ref: UC 33
   module: ai
   level: api
   priority: P0
@@ -57,7 +57,7 @@ testcases:
   covers:
   - AC-12.1
   srs_uc: summarize
-  srs_ref: UC 29
+  srs_ref: UC 34
   module: ai
   level: ai-eval
   priority: P0
@@ -67,7 +67,7 @@ testcases:
   covers:
   - AC-12.2
   srs_uc: summarize
-  srs_ref: UC 29
+  srs_ref: UC 34
   module: ai
   level: ai-eval
   priority: P1
@@ -77,7 +77,7 @@ testcases:
   covers:
   - AC-SM.1
   srs_uc: summarize
-  srs_ref: UC 29
+  srs_ref: UC 34
   module: ai
   level: ai-eval
   priority: P0
@@ -87,7 +87,7 @@ testcases:
   covers:
   - AC-SM.2
   srs_uc: summarize
-  srs_ref: UC 29
+  srs_ref: UC 34
   module: ai
   level: ai-eval
   priority: P0
@@ -98,7 +98,7 @@ testcases:
   covers:
   - AC-13.1
   srs_uc: review-extraction
-  srs_ref: UC 30
+  srs_ref: UC 35
   module: ai
   level: api
   priority: P1
@@ -108,7 +108,7 @@ testcases:
   covers:
   - AC-RE.1
   srs_uc: review-extraction
-  srs_ref: UC 30
+  srs_ref: UC 35
   module: ai
   level: api
   priority: P0
@@ -118,7 +118,7 @@ testcases:
   covers:
   - AC-KB.1
   srs_uc: manage-kb
-  srs_ref: UC 31
+  srs_ref: UC 36
   module: ai
   level: ai-eval
   priority: P1
@@ -128,7 +128,7 @@ testcases:
   covers:
   - AC-14.1
   srs_uc: chatbot-booking
-  srs_ref: UC 32
+  srs_ref: UC 37
   module: ai
   level: ai-eval
   priority: P1
@@ -138,7 +138,7 @@ testcases:
   covers:
   - AC-14.2
   srs_uc: chatbot-booking
-  srs_ref: UC 32
+  srs_ref: UC 37
   module: ai
   level: ai-eval
   priority: P0
@@ -148,7 +148,7 @@ testcases:
   covers:
   - AC-14.3
   srs_uc: chatbot-booking
-  srs_ref: UC 32
+  srs_ref: UC 37
   module: ai
   level: ai-eval
   priority: P1

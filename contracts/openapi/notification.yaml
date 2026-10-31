@@ -312,6 +312,92 @@ paths:
         required: true
         schema:
           type: string
+  /internal/v1/otp/send:
+    post:
+      operationId: N8
+      summary: Tạo và gửi mã OTP (Zalo trước, SMS sau, hoặc email)
+      tags:
+      - notification
+      x-permission: clinical, Keycloak
+      x-roles: []
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      x-internal: true
+      security:
+      - workloadIdentity: []
+  /internal/v1/otp/verify:
+    post:
+      operationId: N9
+      summary: Kiểm mã OTP
+      tags:
+      - notification
+      x-permission: clinical, Keycloak
+      x-roles: []
+      x-doc: detailed-design/11-api-notification-audit-ml.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      x-internal: true
+      security:
+      - workloadIdentity: []
 components:
   securitySchemes:
     oidc:

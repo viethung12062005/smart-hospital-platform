@@ -7,13 +7,13 @@ wireframes:
     active: "Thông tin cá nhân"
     blocks:
       - {t: h, text: "Đăng ký tài khoản"}
-      - {t: p, text: "Điền thông tin hành chính để tạo hồ sơ bệnh nhân. Email lấy từ tài khoản đăng nhập."}
+      - {t: p, text: "Điền thông tin hành chính để tạo hồ sơ bệnh nhân. Số điện thoại và email lấy từ tài khoản đã xác minh; tài khoản email thì nhập và xác minh số điện thoại bằng mã OTP."}
       - t: form
         fields:
           - ["Họ và tên *", text, "Nguyễn Thị Lan"]
           - ["Ngày sinh *", text, "12/04/1988"]
           - ["Giới tính *", select, "Nữ"]
-          - ["Số điện thoại *", text, "0900 010 001"]
+          - ["Số điện thoại *", text, "0900 010 001 (đã xác minh OTP)"]
           - ["Email", label, "lan.nguyen@example.org (từ tài khoản, không sửa)"]
       - {t: banner, text: "Điều khoản xử lý dữ liệu cá nhân: mục đích, thời hạn lưu, quyền của bạn. Xem toàn văn trước khi đồng ý."}
       - t: form
@@ -22,6 +22,36 @@ wireframes:
           - ["Bắt buộc", check, "Tôi đã đọc và đồng ý điều khoản xử lý dữ liệu cá nhân"]
           - ["Tùy chọn", check, "Cho phép xử lý dữ liệu sức khỏe của tôi bằng AI (tóm tắt, trích xuất, dự đoán). Mặc định không chọn."]
       - {t: buttons, items: [["Đăng ký", primary], ["Hủy", secondary]]}
+  claim-record:
+    user: "Chưa có hồ sơ"
+    nav: ["#Đăng ký", "Thông tin cá nhân"]
+    active: "Thông tin cá nhân"
+    blocks:
+      - {t: h, text: "Tôi đã từng khám tại bệnh viện"}
+      - {t: p, text: "Nhập đúng thông tin đã đăng ký tại bệnh viện. Mã xác minh chỉ được gửi tới số điện thoại lưu trong hồ sơ."}
+      - t: form
+        fields:
+          - ["Họ và tên *", text, "Nguyễn Thị Lan"]
+          - ["Ngày sinh *", text, "12/04/1988"]
+          - ["Số điện thoại đã đăng ký tại bệnh viện *", text, "0900 010 001"]
+          - ["Mã xác minh *", text, "6 chữ số (gửi qua Zalo, hoặc SMS nếu không có Zalo)"]
+      - {t: banner, text: "Nếu thông tin khớp, mã đã được gửi. Chưa nhận được sau 30 giây? Bấm “Gửi bằng SMS”. Không khớp? Đến quầy tiếp đón để được hỗ trợ."}
+      - {t: buttons, items: [["Gửi yêu cầu", primary], ["Gửi bằng SMS", secondary]]}
+  relatives:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Lịch hẹn của tôi", "Hồ sơ người thân"]
+    active: "Hồ sơ người thân"
+    blocks:
+      - {t: h, text: "Hồ sơ người thân"}
+      - {t: p, text: "Bạn đang quản lý 3 hồ sơ (tối đa 10). Bạn chỉ xem và đặt lịch trong phạm vi đã được đồng ý."}
+      - t: table
+        cols: ["Họ và tên", "Quan hệ", "Phạm vi", "Hết hạn", ""]
+        widths: [260, 180, 260, 200, 120]
+        rows:
+          - ["Nguyễn Thị Lan", "Bản thân", "Toàn bộ", "-", ""]
+          - ["Trần Minh Khôi (8 tuổi)", "Người giám hộ", "Toàn quyền", "đến sinh nhật 16 tuổi", "#Thu hồi"]
+          - ["Nguyễn Văn Hậu", "Người được ủy quyền", "Đặt lịch", "31/10/2027", "#Thu hồi"]
+      - {t: buttons, items: [["Thêm con", primary], ["Thêm người thân", secondary]]}
   chatbot:
     user: "Nguyễn Thị Lan"
     nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Chatbot đặt lịch", "Lịch hẹn của tôi"]

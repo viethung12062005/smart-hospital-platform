@@ -33,7 +33,7 @@ user DB riêng, chỉ có quyền trên database của mình.
 
 | Collection | `search` (trường chuẩn hóa) | Index | Shard key |
 |---|---|---|---|
-| `patients` | `mrn`, `nameTokens[]` (chữ thường, bỏ dấu), `phone` (E.164), `birthDate`, `gender`, `active` | `{search.mrn:1}` **unique** · `{search.phone:1, search.birthDate:1}` (chống trùng AC-01.2) · `{search.nameTokens:1, search.birthDate:1}` | `{_id: "hashed"}` |
+| `patients` | `mrn`, `nameTokens[]` (chữ thường, bỏ dấu), `phone` (E.164), `birthDate`, `gender`, `active`, `nationalIdEnc` (AES-256-GCM, tùy chọn), `nationalIdLast4` | `{search.mrn:1}` **unique** · `{search.phone:1, search.birthDate:1}` (chống trùng AC-01.2) · `{search.nationalIdHash:1}` **unique, partial** (chỉ khi có; HMAC-SHA-256, không lưu số rõ) · `{search.nameTokens:1, search.birthDate:1}` | `{_id: "hashed"}` |
 | `practitioners` | `staffCode`, `nameTokens[]`, `active` | `{search.staffCode:1}` **unique** · `{search.nameTokens:1}` | không (nhỏ) |
 | `practitioner_roles` | `practitionerId`, `specialty`, `code`, `active` | `{search.practitionerId:1}` · `{search.specialty:1, search.code:1, search.active:1}` | không |
 | `encounters` | `status`, `practitionerId`, `appointmentId`, `periodStart`, `periodEnd`, `serviceType` | `{patientId:1, search.periodStart:-1}` · `{search.practitionerId:1, search.periodStart:-1}` · `{search.appointmentId:1}` **unique** (tạo Encounter từ event là idempotent) | `{patientId: "hashed"}` |
@@ -42,6 +42,8 @@ user DB riêng, chỉ có quyền trên database của mình.
 | `allergy_intolerances` | `clinicalStatus`, `criticality` | `{patientId:1}` | `{patientId: "hashed"}` |
 | `resource_history` | — (`_id` = `<type>/<id>/<version>`, kèm `resourceType`, `id`, `versionId`, `operation`, `changedBy`, `changedAt`, `resource`) | `{resourceType:1, id:1, versionId:-1}` | `{patientId: "hashed"}` |
 | `identity_links` | `_id` = OIDC subject; `issuer`, `fhirUser` (`Patient/..` hoặc `Practitioner/..`), `disabled`, `createdAt`, `createdBy` | `{fhirUser:1}` **unique** | không |
+| `profile_links` | `accountSub`, `patientId`, `relationship` (`guardian` · `proxy`), `scope` (`booking` · `records` · `full`), `status` (`pending` · `active` · `revoked` · `expired`), `establishedBy` (`otp` · `counter` · `guardian-declaration`), `consentRef`, `expiresAt`, `createdAt`, `revokedAt` | `{accountSub:1, status:1}` · `{patientId:1, status:1}` · `{accountSub:1, patientId:1}` **unique** | không |
+| `link_attempts` | `accountSub`, `kind` (`claim` · `link`), `phoneHash`, `at` | `{accountSub:1, at:1}` · `{phoneHash:1, at:1}` · TTL 24 giờ trên `at` | không |
 | `care_relationships` | `_id` = `<practitionerId>\|<patientId>`; `practitionerId`, `patientId`, `sources[]` (`{type, id, status, at}`), `validUntil` | `{patientId:1}` · `{practitionerId:1, validUntil:-1}` | không |
 | `break_glass_sessions` | `practitionerId`, `patientId`, `reason`, `startedAt`, `expiresAt` | `{practitionerId:1, patientId:1, expiresAt:-1}` · **TTL** trên `expiresAt` | không |
 | `mrn_counters` | `_id` = năm, `seq` | (theo `_id`) | không |
