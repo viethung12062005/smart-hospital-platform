@@ -5,13 +5,13 @@ document:
   version: "0.9"
   team: Nhóm 12
   date_text: Tháng 11/2026
-  srs_version: "0.95"
+  srs_version: "0.96"
 
 sections:
   - name: Giới thiệu
     paragraphs:
       - >-
-        Tài liệu này mô tả cách nhóm kiểm thử Smart Hospital Platform để chứng minh từng yêu cầu trong SRS v0.95 được đáp ứng:
+        Tài liệu này mô tả cách nhóm kiểm thử Smart Hospital Platform để chứng minh từng yêu cầu trong SRS v0.96 được đáp ứng:
         phạm vi, chiến lược theo rủi ro, các mức và loại kiểm thử, môi trường, công cụ, tiêu chí vào/ra, quy trình xử lý lỗi,
         và cách tích hợp vào CI/CD. Hệ thống xử lý dữ liệu sức khỏe nên bảo mật và quyền riêng tư là rủi ro số một: không phát
         hành khi còn một test bảo mật mức P0 thất bại.

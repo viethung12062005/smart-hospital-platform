@@ -2,7 +2,7 @@
 
 > Sinh tự động bằng `python3 -I tools/plan/build.py` từ `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Không sửa tay. Import vào GitHub Projects bằng [backlog.csv](backlog.csv). Việc theo từng người: [by-person](by-person/).
 
-Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
+Tổng: **322 task**, **1102 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 giờ.
 
 ## Tải còn lại theo người và theo tuần (giờ; task đã xong không tính)
 
@@ -14,13 +14,13 @@ Tổng: **317 task**, **1070 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 | W4 | **52** | 27 | 29 | 29 |
 | W5 | 38 | 30 | 29 | 30 |
 | W6 | 27 | 29 | 27 | 29 |
-| W7 | 42 | 29 | 29 | 30 |
-| W8 | 29 | 30 | 29 | 30 |
+| W7 | **62** | 29 | 29 | 30 |
+| W8 | 41 | 30 | 29 | 30 |
 | W9 | 2 | 24 | 26 | 29 |
 | W10 | 28 | 4 |  | 22 |
 | W11 | 8 |  |  | 3 |
 | W12 | 9 |  |  |  |
-| **Tổng** | **356** | **177** | **215** | **258** |
+| **Tổng** | **388** | **177** | **215** | **258** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -100,7 +100,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | IAC-13 | ENABLER | Module service bus | Namespace tắt local auth; RBAC cho service | SA | 2 | IAC-05 | S3 | ADR-0001 |
 | IAC-14 | ENABLER | Module ai-search | Tắt API key (RBAC only), SKU theo biến môi trường | SA | 2 | IAC-05 | S3 | ADR-0008 |
 | IAC-15 | ENABLER | Module workload identity cho service | Mỗi service một UAMI + federated credential (namespace/serviceaccount) + role tới đúng kho dữ liệu | SA | 4 | IAC-07 | S3 | NFR-SEC4 |
-| IAC-16 | US-008, US-066 | Module identity ứng dụng (Entra ID) | App registration API + SPA, app roles patient/doctor/nurse/admin/dpo, user thử nghiệm giả | SA | 4 | IAC-01 | S3 | UC-08, NFR-SEC1 |
+| IAC-16 | US-008, US-066 | Hạ tầng cho Keycloak (ADR-0017) | PostgreSQL riêng cho IAM, secret trong Key Vault, đường dẫn /idp qua Gateway, NetworkPolicy chỉ cho gateway và admin IP | SA | 4 | IAC-01 | S3 | UC-08, NFR-SEC1, ADR-0017 |
 | IAC-20 | US-070 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack | plan chạy được cho cả 2 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình | SA | 4 | IAC-17, IAC-12, IAC-15 | S3 | NFR-D4 |
 | IAC-18 | US-036 | Module Defender for Storage + Event Grid → queue cho kết quả quét | Blob mới được quét; kết quả vào queue để document service xử lý | SA | 3 | IAC-12 | S4 | 05-storage §2 |
 | IAC-19 | US-055 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values | SA | 4 | IAC-05 | S4 | ADR-0006 |
@@ -223,7 +223,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | SHR-10 | ENABLER | Mongo resource store: create/update với version CAS + history + outbox trong một transaction | Update version cũ khớp 0; transaction rollback toàn phần khi lỗi | D2 | 4 | SHR-03, LOC-08 | P2 | 03 §2.5 |
 | SHR-11 | ENABLER | Mongo search executor: biên dịch tiêu chí search thành truy vấn + dùng index | Kế hoạch truy vấn dùng IXSCAN cho các truy vấn chính | D2 | 3 | SHR-10 | S1 | 03 §2.6 |
 | SHR-12 | US-035 | Idempotency-Key cho MongoDB (document service) | Cùng key → cùng kết quả; khác body 422 | D2 | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
-| SHR-20 | US-008, US-066 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | SA | 3 | LOC-02 | P1 | 07 §2, 15 §1 |
+| SHR-20 | US-008, US-066 | JWT bearer từ Keycloak (OIDC chuẩn): map claim roles, kiểm amr=mfa với nhân viên | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | SA | 3 | LOC-02 | P1 | 07 §2, 15 §1 |
 | SHR-21 | US-007 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | SA | 3 | SHR-20 | P1 | 15 §8, C2 |
 | SHR-22 | ENABLER | Authz: schema + loader + validator cho contracts/authz/matrix.yaml | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | SA | 3 | ARC-19 | P1 | 15 §3 |
 | SHR-23 | ENABLER | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | SA | 4 | SHR-22 | P1 | 15 §2 |
@@ -241,8 +241,8 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| PY-01 | US-066 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | Test token hợp lệ/sai/hết hạn | D3 | 3 | LOC-02 | P1 | 07 §2 |
-| PY-02 | US-053 | Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange) | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | D3 | 3 | PY-01 | P2 | 15 §7 |
+| PY-01 | US-066 | Thư viện Python: xác thực JWT (Keycloak), dependency role cho FastAPI | Test token hợp lệ/sai/hết hạn | D3 | 3 | LOC-02 | P1 | 07 §2 |
+| PY-02 | US-053 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | D3 | 3 | PY-01 | P2 | 15 §7 |
 | PY-05 | ENABLER | Problem Details + danh mục mã lỗi cho FastAPI | Khớp 07 §5; test | D3 | 2 | LOC-04 | P1 | 07 §5 |
 | PY-06 | US-055 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) | Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure | D3 | 4 |  | P1 | NFR-SEC8 |
 | PY-07 | US-055 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | Cùng một interface; mô phỏng timeout/429/5xx | D3 | 4 | LOC-04 | P2 | ADR-0006 |
@@ -452,7 +452,7 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
 | ID | Story | Task | Xong khi | Người | Giờ | Phụ thuộc | Sprint | Truy vết |
 |---|---|---|---|---|---|---|---|---|
-| WEB-01 | US-066 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline | SA | 4 | LOC-02, SHR-20 | P2 | NFR-I2 |
+| WEB-01 | US-066 | Web shell React/Vite: OIDC (Keycloak), router theo vai trò, khung giao diện, i18n vi/en | Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline | SA | 4 | LOC-02, SHR-20 | P2 | NFR-I2 |
 | WEB-02 | US-066 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên | SA | 3 | WEB-01 | S1 | 07 §3, §5 |
 | WEB-10 | US-066 | Pipeline + chart cho web | Container nginx non-root dùng chart chung | SA | 2 | WEB-01 | S3 | ADR-0009 |
 | WEB-30 | US-053, US-056 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | Hiển thị chế độ retrieval-only; trích dẫn mở đúng mục | D3 | 4 | WEB-02, AI-09 | S4 | AI1, AI2 |
