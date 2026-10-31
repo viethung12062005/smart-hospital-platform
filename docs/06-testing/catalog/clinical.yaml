@@ -1,0 +1,235 @@
+# Test case của module 'clinical'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+testcases:
+- id: TC-AC-01.2
+  title: 'Đăng ký tài khoản bệnh nhân: AC-01.2'
+  covers:
+  - AC-01.2
+  srs_uc: register
+  srs_ref: UC 10
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given đã có hồ sơ cùng SĐT + ngày sinh, When đăng ký, Then không tạo hồ sơ mới và thông báo cần xác minh, không lộ
+    thông tin hồ sơ cũ.
+- id: TC-AC-RG.1
+  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.1'
+  covers:
+  - AC-RG.1
+  srs_uc: register
+  srs_ref: UC 10
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given không tích ô đồng ý điều khoản, When đăng ký, Then không gửi được.
+- id: TC-AC-01.1
+  title: 'Cập nhật thông tin hành chính: AC-01.1'
+  covers:
+  - AC-01.1
+  srs_uc: update-profile
+  srs_ref: UC 11
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bệnh nhân đã đăng nhập, When xem hồ sơ, Then chỉ thấy hồ sơ của mình.
+- id: TC-AC-01.3
+  title: 'Cập nhật thông tin hành chính: AC-01.3'
+  covers:
+  - AC-01.3
+  srs_uc: update-profile
+  srs_ref: UC 11
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given hồ sơ được sửa 2 lần, Then xem được 3 phiên bản.
+- id: TC-AC-UP.1
+  title: 'Cập nhật thông tin hành chính: AC-UP.1'
+  covers:
+  - AC-UP.1
+  srs_uc: update-profile
+  srs_ref: UC 11
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bệnh nhân gửi yêu cầu sửa ngày sinh, Then bị từ chối, dữ liệu không đổi.
+- id: TC-AC-CP.1
+  title: 'Tạo và sửa hồ sơ bệnh nhân tại quầy: AC-CP.1'
+  covers:
+  - AC-CP.1
+  srs_uc: create-patient
+  srs_ref: UC 12
+  module: clinical
+  level: e2e
+  priority: P0
+  spec: Given hồ sơ nghi trùng, When điều dưỡng lưu, Then hệ thống hiển thị hồ sơ trùng thay vì tạo mới.
+- id: TC-AC-MG.1
+  title: 'Gộp hồ sơ trùng: AC-MG.1'
+  covers:
+  - AC-MG.1
+  srs_uc: merge-patient
+  srs_ref: UC 13
+  module: clinical
+  level: api
+  priority: P1
+  spec: Given gộp A vào B, Then lịch hẹn và tài liệu của A hiện dưới B, và mở hồ sơ A chuyển hướng tới B.
+- id: TC-AC-CI.1
+  title: 'Check-in bệnh nhân: AC-CI.1'
+  covers:
+  - AC-CI.1
+  srs_uc: check-in
+  srs_ref: UC 14
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given lịch hẹn ngày mai, When check-in hôm nay, Then bị từ chối.
+- id: TC-AC-VT.1
+  title: 'Ghi sinh hiệu: AC-VT.1'
+  covers:
+  - AC-VT.1
+  srs_uc: record-vitals
+  srs_ref: UC 15
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given SpO2 = 120, When lưu, Then báo lỗi tại trường, không lưu.
+- id: TC-AC-VT.2
+  title: 'Ghi sinh hiệu: AC-VT.2'
+  covers:
+  - AC-VT.2
+  srs_uc: record-vitals
+  srs_ref: UC 15
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bác sĩ không có quan hệ điều trị, When ghi sinh hiệu, Then bị từ chối và ghi audit “deny”.
+- id: TC-AC-04.1
+  title: 'Mở lần khám: AC-04.1'
+  covers:
+  - AC-04.1
+  srs_uc: start-encounter
+  srs_ref: UC 16
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bác sĩ không có quan hệ điều trị, When ghi chẩn đoán, Then bị từ chối.
+- id: TC-AC-DX.1
+  title: 'Ghi bệnh sử và chẩn đoán: AC-DX.1'
+  covers:
+  - AC-DX.1
+  srs_uc: record-diagnosis
+  srs_ref: UC 17
+  module: clinical
+  level: api
+  priority: P1
+  spec: Given mã “X99.99” không có trong danh mục, When lưu, Then báo lỗi tại trường.
+- id: TC-AC-04.2
+  title: 'Kết thúc lần khám: AC-04.2'
+  covers:
+  - AC-04.2
+  srs_uc: finish-encounter
+  srs_ref: UC 18
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given lần khám “finished”, When sửa bệnh sử, Then bị từ chối; dữ liệu cũ giữ nguyên.
+- id: TC-AC-AD.1
+  title: 'Bổ sung lần khám đã kết thúc: AC-AD.1'
+  covers:
+  - AC-AD.1
+  srs_uc: addendum
+  srs_ref: UC 19
+  module: clinical
+  level: e2e
+  priority: P1
+  spec: Given lần khám “finished”, When thêm bổ sung, Then bản gốc không đổi và bản bổ sung hiển thị với người viết và thời
+    điểm.
+- id: TC-AC-06.1
+  title: 'Tìm kiếm bệnh nhân: AC-06.1'
+  covers:
+  - AC-06.1
+  srs_uc: search-patient
+  srs_ref: UC 20
+  module: clinical
+  level: api
+  priority: P1
+  spec: Given bệnh nhân “Nguyễn Văn An”, When tìm “nguyen van”, Then có trong kết quả.
+- id: TC-AC-SP.1
+  title: 'Tìm kiếm bệnh nhân: AC-SP.1'
+  covers:
+  - AC-SP.1
+  srs_uc: search-patient
+  srs_ref: UC 20
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given điều kiện “ng” (2 ký tự), When tìm, Then bị từ chối, không trả danh sách.
+- id: TC-AC-06.2
+  title: 'Xem hồ sơ và timeline bệnh nhân: AC-06.2'
+  covers:
+  - AC-06.2
+  srs_uc: view-timeline
+  srs_ref: UC 21
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bác sĩ không có quan hệ điều trị, When mở timeline, Then bị từ chối (trừ break-glass) và có audit “deny”.
+- id: TC-AC-TL.1
+  title: 'Xem hồ sơ và timeline bệnh nhân: AC-TL.1'
+  covers:
+  - AC-TL.1
+  srs_uc: view-timeline
+  srs_ref: UC 21
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bệnh nhân có lần khám “in-progress”, When bệnh nhân xem timeline, Then không thấy lần khám đó.
+- id: TC-AC-TL.2
+  title: 'Xem hồ sơ và timeline bệnh nhân: AC-TL.2'
+  covers:
+  - AC-TL.2
+  srs_uc: view-timeline
+  srs_ref: UC 21
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given quản trị viên, When gọi API timeline, Then bị từ chối.
+- id: TC-AC-10.1
+  title: 'Truy cập khẩn cấp (break-glass): AC-10.1'
+  covers:
+  - AC-10.1
+  srs_uc: break-glass
+  srs_ref: UC 22
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bác sĩ dùng truy cập khẩn cấp, Then DPO nhận cảnh báo trong ≤ 5 phút.
+- id: TC-AC-BG.1
+  title: 'Truy cập khẩn cấp (break-glass): AC-BG.1'
+  covers:
+  - AC-BG.1
+  srs_uc: break-glass
+  srs_ref: UC 22
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given đã qua 60 phút, When mở lại timeline, Then bị từ chối.
+- id: TC-AC-BG.2
+  title: 'Truy cập khẩn cấp (break-glass): AC-BG.2'
+  covers:
+  - AC-BG.2
+  srs_uc: break-glass
+  srs_ref: UC 22
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given lý do 5 ký tự, When xác nhận, Then báo lỗi và không cấp quyền.
+- id: TC-AC-BG.3
+  title: 'Truy cập khẩn cấp (break-glass): AC-BG.3'
+  covers:
+  - AC-BG.3
+  srs_uc: break-glass
+  srs_ref: UC 22
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given bác sĩ đã dùng truy cập khẩn cấp 2 lần trong 24 giờ, When dùng lần thứ 3 với lý do hợp lệ, Then vẫn được cấp
+    quyền, và lần đó được đánh dấu “bất thường”, báo thêm trưởng khoa, DPO phải rà soát trong 24 giờ.

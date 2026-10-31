@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'], // e2e/ là test Playwright, chạy bằng `npm run e2e`
     css: false,
     testTimeout: 30_000,
     coverage: {

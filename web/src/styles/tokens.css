@@ -9,7 +9,7 @@
   --shp-teal-soft: #e6f2ef;
   --shp-mint: #d7e9e1;
   --shp-ink: #263238;
-  --shp-muted: #607d8b;
+  --shp-muted: #4f6672; /* >= 4,5:1 trên nền trắng và nền xám nhạt (WCAG 2.1 AA, NFR-U1) */
   --shp-hair: #e3e8ec;
   --shp-bg: #f5f7f8;
   --shp-card: #ffffff;
@@ -386,4 +386,9 @@ button.shp-kpi:hover {
   font-weight: 600;
   color: var(--shp-ink);
   margin-bottom: 5px;
+}
+
+/* Chữ phụ (dimmed) mặc định của Mantine là #868e96 (3,3:1): thay bằng màu đạt WCAG AA. */
+:root[data-mantine-color-scheme='light'] {
+  --mantine-color-dimmed: #566a75;
 }
