@@ -74,48 +74,56 @@ export function MyAppointmentsPage() {
             {t('appt.past')} ({past.length})
           </Tabs.Tab>
         </Tabs.List>
+        <Tabs.Panel value={tab ?? 'upcoming'}>
+          <Card flush>
+            {appts.isLoading || me.isLoading ? (
+              <Loading />
+            ) : rows.length === 0 ? (
+              <EmptyState title={t('appt.none')} />
+            ) : (
+              <table className="shp-tbl">
+                <thead>
+                  <tr>
+                    <th>{t('appt.when')}</th>
+                    <th>{t('appt.doctor')}</th>
+                    <th>{t('appt.specialty')}</th>
+                    <th>{t('appt.status')}</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((a) => (
+                    <tr key={a.id}>
+                      <td className="strong">{formatDateTime(a.start)}</td>
+                      <td>
+                        {participantName(a, 'Practitioner')}
+                        {a.description && <span className="sub">{a.description}</span>}
+                      </td>
+                      <td>{specialtyName(a.serviceType?.[0]?.coding?.[0]?.code)}</td>
+                      <td>
+                        <StatusChip status={a.status} />
+                      </td>
+                      <td className="tight">
+                        {a.status === 'booked' && tab === 'upcoming' && (
+                          <Button
+                            size="xs"
+                            variant="subtle"
+                            color="red"
+                            style={{ color: '#a61e1e' }}
+                            onClick={() => (cancel.reset(), setCancelling(a))}
+                          >
+                            {t('appt.cancel')}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Card>
+        </Tabs.Panel>
       </Tabs>
-      <Card flush>
-        {appts.isLoading || me.isLoading ? (
-          <Loading />
-        ) : rows.length === 0 ? (
-          <EmptyState title={t('appt.none')} />
-        ) : (
-          <table className="shp-tbl">
-            <thead>
-              <tr>
-                <th>{t('appt.when')}</th>
-                <th>{t('appt.doctor')}</th>
-                <th>{t('appt.specialty')}</th>
-                <th>{t('appt.status')}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((a) => (
-                <tr key={a.id}>
-                  <td className="strong">{formatDateTime(a.start)}</td>
-                  <td>
-                    {participantName(a, 'Practitioner')}
-                    {a.description && <span className="sub">{a.description}</span>}
-                  </td>
-                  <td>{specialtyName(a.serviceType?.[0]?.coding?.[0]?.code)}</td>
-                  <td>
-                    <StatusChip status={a.status} />
-                  </td>
-                  <td className="tight">
-                    {a.status === 'booked' && tab === 'upcoming' && (
-                      <Button size="xs" variant="subtle" color="red" onClick={() => (cancel.reset(), setCancelling(a))}>
-                        {t('appt.cancel')}
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
 
       <Modal opened={!!cancelling} onClose={() => setCancelling(undefined)} title={t('appt.cancelTitle')}>
         {cancelling && (
@@ -139,7 +147,7 @@ export function MyAppointmentsPage() {
               <Button variant="default" onClick={() => setCancelling(undefined)}>
                 {t('common.close')}
               </Button>
-              <Button color="red" loading={cancel.isPending} onClick={() => cancel.mutate()}>
+              <Button color="red.9" loading={cancel.isPending} onClick={() => cancel.mutate()}>
                 {t('appt.cancel')}
               </Button>
             </Group>

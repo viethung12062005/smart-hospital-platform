@@ -43,7 +43,7 @@ export function Header(props: { readonly navbarOpen: boolean; readonly navbarTog
         <span>{t('app.name')}</span>
       </UnstyledButton>
       {mode === 'mock' && (
-        <Badge color="orange" variant="light" size="sm">
+        <Badge color="orange" variant="light" size="sm" styles={{ label: { color: '#8a3300' } }}>
           mock
         </Badge>
       )}

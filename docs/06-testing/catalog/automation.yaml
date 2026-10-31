@@ -1,0 +1,180 @@
+# Trạng thái tự động hóa của từng test case. Khóa = id test case (catalog/*.yaml).
+#   automated: test tự động đã chạy trong CI và phủ đủ test case.
+#   partial:   có test tự động phủ một phần (ghi rõ `gap`); phần còn lại chờ tính năng/môi trường.
+#   planned:   chưa có test tự động; `blocked_by` nói rõ cần gì để viết được, `owner` là người phụ trách viết.
+#   manual:    cố ý kiểm thủ công / rà soát (ghi lý do).
+# `refs`: "đường/dẫn/file::tên" (tên là chuỗi có trong file). Công cụ truy vết kiểm file và tên có thật.
+# Test E2E mang mã TC-... trong tiêu đề nên được tự nhận ra, không cần ghi lại ở đây.
+automation:
+  # ---- Phân quyền, danh tính ----
+  TC-NFR-SEC2:
+    status: partial
+    refs:
+      - libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java::adminAndDpoNeverReachClinicalResources
+      - libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java::defaultDenyForRolesWithoutRuleEvenWhenEveryPredicateHolds
+      - libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java::ruleDeniesWhenAnySinglePredicateFails
+    gap: "Mới ở mức thư viện quyết định và giao diện; chưa có test gọi từng endpoint thật (SCH-/CLN-/DOC-). Owner: D1, D2."
+  TC-NFR-SEC1:
+    status: partial
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::wrongAudienceWrongSignatureAndExpiredTokensAre401
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::patientDoesNotNeedMfa
+    gap: "Chưa thử với Keycloak/Entra thật; chưa đo thời hạn token ≤ 15 phút từ IdP."
+  TC-SEC-04:
+    status: partial
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::wrongAudienceWrongSignatureAndExpiredTokensAre401
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::missingTokenIs401ProblemJson
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::tokenWithoutKnownRoleIs403
+    gap: "Thiếu ca alg=none và sai issuer; thêm vào WebTest."
+  TC-SEC-06:
+    status: automated
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::patientDoesNotNeedMfa
+  TC-AC-08.2:
+    status: automated
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
+  TC-AC-08.1:
+    status: partial
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
+    gap: "Mới kiểm bộ nhớ đệm 60 giây của danh tính; chưa có test khóa tài khoản đầu-cuối ≤ 5 phút."
+  TC-SEC-02:
+    status: partial
+    refs:
+      - libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java::unknownResourceOrActionIsDenied
+    gap: "Cần test sinh từ OpenAPI + ma trận gọi mọi endpoint theo từng vai trò (khi service có endpoint)."
+
+  # ---- Audit, sự kiện, idempotency, hộp thư ----
+  TC-AC-03.2:
+    status: partial
+    refs:
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::firstRequestClaimsAndSameRequestReplaysTheSameResource
+    gap: "Thư viện idempotency đã kiểm; test gọi API $book hai lần cùng khóa chờ endpoint scheduling (SCH-xx). Giao diện: E2E TC-AC-03.2."
+  TC-AC-03.3:
+    status: partial
+    refs:
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::sameKeyWithADifferentBodyOrOperationIs422
+    gap: "Chờ endpoint $book."
+  TC-AC-03.1:
+    status: partial
+    refs:
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::parallelRequestsWithOneKeyProduceExactlyOneNewClaim
+    gap: "Mới kiểm tranh chấp cùng khóa; cần test 50 yêu cầu đồng thời vào một slot với PostgreSQL thật (SCH-xx, Testcontainers)."
+  TC-AC-07.2:
+    status: partial
+    refs:
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
+      - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
+    gap: "Phần chống xử lý trùng đã có; thiếu mô phỏng nhà cung cấp gửi tin lỗi tạm thời (NTF-xx)."
+  TC-AC-SR.1:
+    status: automated
+    refs:
+      - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
+  TC-NFR-SEC5:
+    status: partial
+    refs:
+      - libs/java/shp-events/src/test/java/org/shp/events/audit/AuditTest.java::deniedDecisionIsAuditedWithReasonAndAllowedWithPurpose
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/AuditSinkTest.java::auditSurvivesARolledBackBusinessTransaction
+    gap: "Audit cho phép và từ chối đã kiểm ở thư viện; chưa đối chiếu 100% thao tác của từng service và độ trễ ≤ 1 phút (AUD-xx)."
+  TC-AC-09.2:
+    status: planned
+    blocked_by: "Chưa có kho audit WORM và API tra cứu (AUD-02, AUD-06)."
+    owner: D2
+  TC-SEC-26:
+    status: planned
+    blocked_by: "Cần audit-verify và Blob WORM (AUD-02, AUD-06, IAC-12)."
+    owner: D2
+  TC-SEC-11:
+    status: partial
+    refs:
+      - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/OutboxTest.java::lastErrorNeverContainsThePayload
+      - libs/java/shp-events/src/test/java/org/shp/events/audit/AuditTest.java::longReasonIsRejectedAndLongUserAgentTruncated
+    gap: "Mới kiểm outbox/audit không lộ nội dung; cần quét log, trace, sự kiện của luồng thật (script tools/qa/pii_scan khi có service chạy)."
+  TC-NFR-O4:
+    status: partial
+    refs:
+      - libs/java/shp-service-defaults/src/test/java/org/shp/servicedefaults/ServiceDefaultsTest.java::healthDoesNotLeakDetails
+    gap: "Chưa quét log tìm PII."
+  TC-NFR-O1:
+    status: partial
+    refs:
+      - libs/java/shp-service-defaults/src/test/java/org/shp/servicedefaults/ServiceDefaultsTest.java::otlpExportIsOffUnlessClusterEnablesIt
+    gap: "Chưa kiểm trace xuyên service."
+  TC-NFR-I1:
+    status: partial
+    refs:
+      - "tools/contracts/test_validators.py::def test_"
+    gap: "Contract test OpenAPI/schema sự kiện có; chưa validate tài nguyên FHIR bằng validator FHIR."
+  TC-NFR-SEC9:
+    status: automated
+    refs:
+      - docs/00-synthetic-data.md::dữ liệu giả
+
+  # ---- Chuỗi cung ứng, CI ----
+  TC-NFR-SEC4:
+    status: automated
+    refs:
+      - .github/workflows/pr-checks.yml::pr-checks
+    note: "gitleaks trong pr-checks của repo templates quét mọi PR; push protection bật ở cả 4 repo."
+  TC-SEC-23:
+    status: automated
+    refs:
+      - .github/workflows/pr-checks.yml::pr-checks
+  TC-NFR-SEC6:
+    status: partial
+    refs:
+      - .github/workflows/svc-web.yml::container
+    gap: "Trivy, SBOM, cosign chạy trong container.yml (repo templates); Kyverno chặn image không ký chỉ kiểm khi có cụm (GOP-07)."
+  TC-SEC-24:
+    status: partial
+    refs:
+      - .github/workflows/svc-web.yml::container
+    gap: "Chưa kiểm cụm từ chối image không ký."
+  TC-NFR-D1:
+    status: planned
+    blocked_by: "Cần số liệu pipeline có triển khai thật (Azure)."
+    owner: SA
+  TC-NFR-D2:
+    status: planned
+    blocked_by: "Cần cụm và Argo CD (ENV-01)."
+    owner: SA
+  TC-NFR-D3:
+    status: planned
+    blocked_by: "Cần subscription Azure để chạy env-provision/env-destroy."
+    owner: SA
+
+  # ---- Bảo mật ứng dụng web (workflow qa.yml) ----
+  TC-SEC-09:
+    status: automated
+    refs:
+      - web/nginx-security-headers.conf::Content-Security-Policy
+      - web/e2e/headers.spec.ts::TC-SEC-09
+  TC-SEC-10:
+    status: automated
+    refs:
+      - .github/workflows/qa.yml::dast-web
+  TC-NFR-SEC15:
+    status: automated
+    refs:
+      - .github/workflows/qa.yml::dast-web
+      - web/e2e/headers.spec.ts::TC-SEC-09
+  TC-SEC-27:
+    status: planned
+    blocked_by: "Giao diện chưa có đăng xuất xóa dữ liệu và chặn Back (WEB-xx)."
+    owner: SA
+
+  # ---- Hiệu năng (k6) ----
+  TC-NFR-P1: {status: partial, refs: ["tests/performance/k6/slots-search.js::p(95)<300"], gap: "Script đã có và kiểm cú pháp trong CI; chạy trên UAT cỡ production khi có Azure (PRD-10, PRD-01)."}
+  TC-NFR-P2: {status: partial, refs: ["tests/performance/k6/booking.js::p(95)<800"], gap: "Như trên."}
+  TC-NFR-S2: {status: partial, refs: ["tests/performance/k6/slots-search.js::scenarios"], gap: "Kịch bản 5× nằm trong script; chạy khi có UAT."}
+  TC-NFR-S3: {status: partial, refs: ["tests/performance/k6/slots-search.js::scenarios"], gap: "Kịch bản 10×; chạy khi có UAT."}
+  TC-NFR-S1: {status: planned, blocked_by: "Cần KEDA/HPA trên UAT (PRD-11).", owner: SA}
+
+review_policy: >-
+  Test case có `level: review`, `monitoring` hoặc `manual` được kiểm bằng rà soát tài liệu/dashboard; công cụ truy vết
+  chấp nhận chúng không có test tự động nhưng yêu cầu ghi `owner` trong catalog hoặc automation.yaml.

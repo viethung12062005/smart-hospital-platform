@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@mantine/core": "7.17.8",
@@ -36,8 +37,10 @@
     "react-router-dom": "7.18.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "10.0.1",
     "@medplum/fhirtypes": "5.2.9",
+    "@playwright/test": "1.63.0",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.8",
@@ -67,6 +70,7 @@
     ]
   },
   "overrides": {
-    "tinypool": "2.2.0"
+    "tinypool": "2.2.0",
+    "playwright-core": "1.63.0"
   }
 }

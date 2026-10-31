@@ -1,0 +1,132 @@
+# Kiểm thử tự động theo kế hoạch kiểm thử (docs/06-testing). Mọi job chạy không cần Azure.
+#   trace      truy vết yêu cầu ↔ test case: mọi AC/NFR có test case, tham chiếu test tồn tại, tỉ lệ tự động hóa không giảm
+#   e2e        E2E giao diện web ở chế độ dữ liệu giả (Playwright) + trợ năng WCAG AA (axe) + màn hình điện thoại
+#   dast-web   dựng image web, kiểm tiêu đề bảo mật và quét OWASP ZAP baseline (NFR-SEC15)
+#   k6-check   kiểm cú pháp script hiệu năng; chạy thật trên UAT khi có (workflow_dispatch với BASE_URL)
+# Kết quả được tổng hợp vào pr-gate (workflow_run), nên các job này chặn merge khi đỏ.
+name: qa
+on:
+  pull_request:
+    paths: ["web/**", "docs/02-requirements/**", "docs/06-testing/**", "tools/qa/**", "tools/srs/**", "tests/**", "libs/**", "services/**", ".github/workflows/qa.yml"]
+  push:
+    branches: [main]
+    paths: ["web/**", "docs/02-requirements/**", "docs/06-testing/**", "tools/qa/**", "tools/srs/**", "tests/**", "libs/**", "services/**", ".github/workflows/qa.yml"]
+  schedule:
+    - cron: "0 20 * * *"   # hằng đêm: quét lại ZAP với bản quy tắc mới nhất
+  workflow_dispatch:
+    inputs:
+      perf-base-url: { description: "UAT URL để chạy k6 (để trống: chỉ kiểm cú pháp)", required: false, default: "" }
+      perf-scenario: { description: "smoke | load | x5 | x10", required: false, default: "smoke" }
+permissions:
+  contents: read
+env:
+  ZAP_IMAGE: ghcr.io/zaproxy/zaproxy@sha256:030d3df57735dacbb83464854758e674dd9ad01d79d12a129a8e58b1fd384238
+  K6_IMAGE: grafana/k6@sha256:23f2279054c3e01535455c4d92914a625df12aeb631ea0e3ea7a43f96bcbc843
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.12" }
+      - run: pip install -r tools/contracts/requirements.txt
+      - name: Requirement-to-test traceability
+        run: python -I tools/qa/trace.py --check
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      - name: E2E (desktop + mobile), mock data
+        run: npx playwright test
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: e2e-report
+          path: |
+            web/playwright-report
+            web/test-results
+          retention-days: 14
+
+  dast-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Build the web image (same Dockerfile as svc-web)
+        run: docker build -f web/Dockerfile -t shp-web:qa .
+      - name: Run the container (read-only, non-root, as in the cluster)
+        run: |
+          docker run -d --name web --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges -p 8080:8080 shp-web:qa
+          for i in $(seq 1 30); do curl -fsS http://localhost:8080/healthz >/dev/null && break; sleep 1; done
+          curl -fsS http://localhost:8080/healthz
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Security header tests against the container (TC-SEC-09)
+        working-directory: web
+        env:
+          WEB_BASE_URL: http://localhost:8080
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npx playwright test e2e/headers.spec.ts --project=desktop
+      - name: OWASP ZAP baseline (TC-SEC-10)
+        run: |
+          mkdir -p zap && chmod 777 zap
+          set +e
+          docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
+            zap-baseline.py -t http://localhost:8080 -c zap-rules.conf -r zap-report.html -J zap-report.json -I
+          code=$?
+          echo "zap-baseline exit code: $code"
+          # 0 = pass, 1 = at least one FAIL rule, 2 = warnings only (-I makes that exit 0), 3 = scan error
+          [ "$code" -eq 0 ] || exit "$code"
+        working-directory: web
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: zap-report
+          path: |
+            web/zap
+            web/test-results
+          retention-days: 14
+
+  k6-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Syntax and options check of every k6 script
+        run: |
+          set -euo pipefail
+          for f in tests/performance/k6/*.js; do
+            echo "== $f"
+            docker run --rm -v "$PWD/tests/performance/k6:/scripts:ro" "$K6_IMAGE" inspect "/scripts/$(basename "$f")" >/dev/null
+          done
+      - name: Run against UAT (manual)
+        if: github.event_name == 'workflow_dispatch' && inputs.perf-base-url != ''
+        env:
+          BASE_URL: ${{ inputs.perf-base-url }}
+          SCENARIO: ${{ inputs.perf-scenario }}
+          TOKEN: ${{ secrets.PERF_TEST_TOKEN }}
+        run: |
+          docker run --rm -e BASE_URL -e SCENARIO -e TOKEN -v "$PWD/tests/performance/k6:/scripts:ro" "$K6_IMAGE" run /scripts/slots-search.js

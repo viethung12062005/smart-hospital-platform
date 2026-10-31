@@ -4,3 +4,8 @@ coverage
 *.local
 .env.local
 *.tsbuildinfo
+
+test-results
+playwright-report
+zap
+zap.yaml

@@ -1,0 +1,154 @@
+# Test case của module 'privacy-admin'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+testcases:
+- id: TC-AC-AL.1
+  title: 'Xem ai đã truy cập hồ sơ của tôi: AC-AL.1'
+  covers:
+  - AC-AL.1
+  srs_uc: view-my-access-log
+  srs_ref: UC 33
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given bác sĩ đã mở hồ sơ của bệnh nhân lúc 09:02, Then bệnh nhân thấy dòng truy cập đó trong ≤ 1 phút.
+- id: TC-AC-CS.1
+  title: 'Quản lý đồng ý xử lý dữ liệu: AC-CS.1'
+  covers:
+  - AC-CS.1
+  srs_uc: manage-consent
+  srs_ref: UC 34
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given bệnh nhân rút đồng ý lúc T, When bác sĩ yêu cầu tóm tắt sau T, Then bị từ chối “consent-required”.
+- id: TC-AC-EX.1
+  title: 'Yêu cầu trích xuất dữ liệu cá nhân: AC-EX.1'
+  covers:
+  - AC-EX.1
+  srs_uc: export-my-data
+  srs_ref: UC 35
+  module: privacy-admin
+  level: api
+  priority: P1
+  spec: Given bệnh nhân đã có yêu cầu đang xử lý, When gửi thêm, Then không tạo yêu cầu mới.
+- id: TC-AC-NP.1
+  title: 'Cài đặt nhận thông báo: AC-NP.1'
+  covers:
+  - AC-NP.1
+  srs_uc: notification-preferences
+  srs_ref: UC 36
+  module: privacy-admin
+  level: api
+  priority: P1
+  spec: Given bệnh nhân tắt mọi kênh, When lưu, Then báo lỗi.
+- id: TC-AC-09.1
+  title: 'Tra cứu audit truy cập: AC-09.1'
+  covers:
+  - AC-09.1
+  srs_uc: search-audit
+  srs_ref: UC 37
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given mọi thao tác đọc/ghi dữ liệu bệnh nhân trong UC-01, 04, 05, 06, 10, 11–13, Then mỗi thao tác có một bản ghi
+    audit (ai, khi nào, cái gì, kết quả, từ đâu).
+- id: TC-AC-09.2
+  title: 'Tra cứu audit truy cập: AC-09.2'
+  covers:
+  - AC-09.2
+  srs_uc: search-audit
+  srs_ref: UC 37
+  module: privacy-admin
+  level: e2e
+  priority: P0
+  spec: Given quản trị viên, When cố sửa hoặc xóa bản ghi audit (API, giao diện, kho lưu trữ), Then không thực hiện được.
+- id: TC-AC-EA.1
+  title: 'Xuất báo cáo audit: AC-EA.1'
+  covers:
+  - AC-EA.1
+  srs_uc: export-audit
+  srs_ref: UC 38
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given xuất báo cáo, Then có bản ghi audit “export” với mục đích đã nhập.
+- id: TC-AC-DR.1
+  title: 'Xử lý yêu cầu của chủ thể dữ liệu: AC-DR.1'
+  covers:
+  - AC-DR.1
+  srs_uc: process-data-request
+  srs_ref: UC 39
+  module: privacy-admin
+  level: api
+  priority: P1
+  spec: Given gói dữ liệu đã tạo, Then link chỉ mở được bởi tài khoản của chính bệnh nhân và hết hạn sau 24 giờ.
+- id: TC-AC-08.2
+  title: 'Mời nhân viên và gán vai trò: AC-08.2'
+  covers:
+  - AC-08.2
+  srs_uc: invite-staff
+  srs_ref: UC 40
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given nhân viên chưa đăng ký MFA, When đăng nhập, Then không truy cập được dữ liệu bệnh nhân.
+- id: TC-AC-IS.1
+  title: 'Mời nhân viên và gán vai trò: AC-IS.1'
+  covers:
+  - AC-IS.1
+  srs_uc: invite-staff
+  srs_ref: UC 40
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given quản trị viên tự gán vai trò DPO cho mình, Then bị từ chối.
+- id: TC-AC-08.1
+  title: 'Khóa / mở khóa tài khoản: AC-08.1'
+  covers:
+  - AC-08.1
+  srs_uc: lock-account
+  srs_ref: UC 41
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given tài khoản bị khóa lúc T, When dùng token cũ lúc T + 5 phút, Then bị từ chối.
+- id: TC-AC-LP.1
+  title: 'Liên kết tài khoản bác sĩ với hồ sơ bác sĩ: AC-LP.1'
+  covers:
+  - AC-LP.1
+  srs_uc: link-practitioner
+  srs_ref: UC 42
+  module: privacy-admin
+  level: api
+  priority: P0
+  spec: Given Practitioner đã gắn tài khoản A, When gắn cho tài khoản B, Then bị từ chối.
+- id: TC-AC-DL.1
+  title: 'Xử lý thông báo gửi lỗi: AC-DL.1'
+  covers:
+  - AC-DL.1
+  srs_uc: manage-dead-letters
+  srs_ref: UC 43
+  module: privacy-admin
+  level: api
+  priority: P1
+  spec: Given lịch hẹn đã hủy, When gửi lại mục lỗi, Then không có tin nào được gửi.
+- id: TC-AC-16.1
+  title: 'Sao lưu và khôi phục dữ liệu: AC-16.1'
+  covers:
+  - AC-16.1
+  srs_uc: backup-restore
+  srs_ref: UC 44
+  module: privacy-admin
+  level: resilience
+  priority: P1
+  spec: Given dữ liệu bị xóa nhầm lúc T, When khôi phục về T − 1 phút, Then dữ liệu lịch hẹn và hồ sơ khớp trạng thái tại
+    thời điểm đó.
+- id: TC-AC-16.2
+  title: 'Sao lưu và khôi phục dữ liệu: AC-16.2'
+  covers:
+  - AC-16.2
+  srs_uc: backup-restore
+  srs_ref: UC 44
+  module: privacy-admin
+  level: resilience
+  priority: P1
+  spec: Given diễn tập khôi phục, Then biên bản ghi thời gian thực tế và so với RTO 1 giờ.
