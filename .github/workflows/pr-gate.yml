@@ -8,7 +8,7 @@
 name: pr-gate
 on:
   workflow_run:
-    workflows: [pr-checks, contracts, libs-java, svc-ai, svc-audit, svc-clinical, svc-document, svc-gateway, svc-ml, svc-notification, svc-scheduling, svc-web]
+    workflows: [pr-checks, contracts, qa, libs-java, svc-ai, svc-audit, svc-clinical, svc-document, svc-gateway, svc-ml, svc-notification, svc-scheduling, svc-web]
     types: [completed]
 permissions:
   actions: read

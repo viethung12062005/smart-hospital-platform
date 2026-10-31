@@ -1,0 +1,169 @@
+# Kế hoạch kiểm thử tổng thể (Master Test Plan) của Smart Hospital Platform. Sinh ra docx bằng tools/qa/plan_docx.py.
+document:
+  title: Kế hoạch kiểm thử tổng thể
+  system: Smart Hospital Platform
+  version: "0.9"
+  team: Nhóm 12
+  date_text: Tháng 11/2026
+  srs_version: "0.95"
+
+sections:
+  - name: Giới thiệu
+    paragraphs:
+      - >-
+        Tài liệu này mô tả cách nhóm kiểm thử Smart Hospital Platform để chứng minh từng yêu cầu trong SRS v0.95 được đáp ứng:
+        phạm vi, chiến lược theo rủi ro, các mức và loại kiểm thử, môi trường, công cụ, tiêu chí vào/ra, quy trình xử lý lỗi,
+        và cách tích hợp vào CI/CD. Hệ thống xử lý dữ liệu sức khỏe nên bảo mật và quyền riêng tư là rủi ro số một: không phát
+        hành khi còn một test bảo mật mức P0 thất bại.
+      - >-
+        Nguồn sự thật của kế hoạch là mã: danh mục test case nằm ở docs/06-testing/catalog, công cụ truy vết
+        (tools/qa/trace.py) kiểm trong mỗi PR rằng mọi tiêu chí nghiệm thu và NFR có test case, mọi tham chiếu test tự động
+        tồn tại, và tỉ lệ tự động hóa không giảm. Tài liệu này và các báo cáo truy vết được sinh ra từ đó.
+  - name: Phạm vi kiểm thử
+    table:
+      header: ["Hạng mục", "Trong phạm vi", "Ngoài phạm vi / giới hạn"]
+      widths: [3.6, 6.8, 6.1]
+      rows:
+        - ["Chức năng", "52 use case của SRS (6 module) và 90 tiêu chí nghiệm thu Given/When/Then", "Thanh toán, nội trú, kê đơn (ngoài phạm vi sản phẩm)"]
+        - ["Phi chức năng", "62 NFR: hiệu năng, mở rộng, sẵn sàng, bảo mật và quyền riêng tư, vận hành, triển khai, chi phí, chất lượng AI, tương thích, trợ năng", "Chi phí thực tế chỉ đo khi có Azure"]
+        - ["Bảo mật", "28 test bảo mật bổ sung theo OWASP ASVS mức 2, OWASP API Top 10, OWASP LLM Top 10", "Kiểm thử xâm nhập bởi bên thứ ba: khuyến nghị trước khi dùng dữ liệu thật"]
+        - ["Thành phần", "8 service, gateway, web, thư viện dùng chung, contracts (OpenAPI, sự kiện, phân quyền), hạ tầng dưới dạng code, pipeline", "Dịch vụ do nhà cung cấp quản lý (Azure, Entra ID, LLM) chỉ kiểm tích hợp, không kiểm bên trong"]
+        - ["Dữ liệu", "Chỉ dữ liệu giả sinh theo docs/00-synthetic-data.md", "Dữ liệu bệnh nhân thật không bao giờ dùng để kiểm thử"]
+  - name: Chiến lược kiểm thử
+    paragraphs:
+      - "Chiến lược theo ba nguyên tắc: kiểm thử dựa trên rủi ro, kim tự tháp kiểm thử (nhiều test nhanh ở đáy, ít test chậm ở đỉnh), và dịch chuyển sang trái (phát hiện lỗi càng sớm càng tốt, ngay trong PR)."
+    table:
+      header: ["Ưu tiên", "Tiêu chí", "Ví dụ", "Hậu quả khi lỗi"]
+      widths: [1.8, 5.8, 5.4, 3.5]
+      rows:
+        - ["P0", "Liên quan quyền truy cập, dữ liệu bệnh nhân, định danh, đồng ý, audit, mã độc, an toàn người bệnh, đặt trùng slot", "Bác sĩ không có quan hệ điều trị mở được hồ sơ; log chứa tên bệnh nhân; AI đặt lịch khi chưa xác nhận", "Chặn phát hành; sửa ngay"]
+        - ["P1", "Chức năng Must còn lại và NFR hiệu năng, sẵn sàng", "Đặt, hủy, đổi lịch; nhắc lịch; p95 tìm slot", "Sửa trước khi kết thúc sprint"]
+        - ["P2", "Should/Could, giao diện phụ, trường hợp hiếm", "Chatbot đặt lịch, thông báo kênh dự phòng", "Có thể lùi sang sprint sau"]
+    paragraphs_after:
+      - "Số liệu hiện tại (xem báo cáo truy vết): 180 test case, trong đó 105 test case P0."
+  - name: Các mức và loại kiểm thử
+    table:
+      header: ["Mức", "Mục tiêu", "Công cụ", "Chạy khi nào", "Người viết"]
+      widths: [2.6, 4.8, 3.8, 3.4, 1.9]
+      rows:
+        - ["Unit", "Logic thuần: phân quyền, quy tắc, validator, định dạng", "JUnit 5; pytest; Vitest", "Mỗi PR (java-ci, python-ci, node-ci)", "Dev"]
+        - ["Integration", "Service với CSDL, hàng đợi, kho tệp thật", "Testcontainers (PostgreSQL, MongoDB, RabbitMQ, Azurite)", "Mỗi PR", "Dev"]
+        - ["Contract", "OpenAPI, schema sự kiện, ma trận phân quyền khớp giữa nơi định nghĩa và nơi dùng", "tools/contracts, openapi-spec-validator, jsonschema", "Mỗi PR đổi contracts", "SA, Dev"]
+        - ["API", "Từng endpoint theo SRS: kết quả, mã lỗi, phân quyền, idempotency", "Spring MockMvc/WebTestClient + Testcontainers; test sinh từ ma trận phân quyền và OpenAPI", "Mỗi PR của service", "Dev"]
+        - ["E2E", "Luồng người dùng trên giao diện: đặt lịch, hủy, phân quyền màn hình, trợ năng, điện thoại", "Playwright + axe-core, chạy với dữ liệu giả (MSW) không cần backend", "Mỗi PR đổi web (qa.yml, job e2e)", "SA, Dev"]
+        - ["Bảo mật", "Phân quyền, tiêm mã, tiêu đề, lộ dữ liệu, chuỗi cung ứng, AI", "gitleaks, Trivy, OSV-Scanner, OWASP Dependency-Check, OWASP ZAP baseline, test tự viết", "Mỗi PR (tĩnh) và hằng đêm (động)", "SA"]
+        - ["Hiệu năng", "p95, thông lượng, mở rộng 1×/5×/10×", "k6 (tests/performance/k6)", "Cú pháp: mỗi PR. Chạy thật: trên UAT trước mỗi mốc", "SA"]
+        - ["Phục hồi", "Mất zone, phụ thuộc lỗi, backup/restore, rollback", "Diễn tập thủ công có biên bản; kịch bản tự động dần", "H1 (tuần 10–11) trên UAT", "SA"]
+        - ["Đánh giá AI", "Recall@5, MRR, groundedness, trích dẫn, prompt injection, F1 trích xuất, AUC no-show", "Bộ eval riêng + harness (AI-14..17)", "Mỗi thay đổi prompt/model; hằng tuần", "Dev AI"]
+        - ["Rà soát", "NFR đo bằng rà soát: kiến trúc, chi phí, tài liệu, hồ sơ pháp lý", "Danh sách kiểm tra trong PR", "Trước mỗi gate", "SA"]
+  - name: Môi trường và dữ liệu kiểm thử
+    table:
+      header: ["Môi trường", "Dùng để", "Cách dựng", "Dữ liệu"]
+      widths: [2.6, 5.0, 5.2, 3.7]
+      rows:
+        - ["PR / CI", "Mọi test tự động của PR", "Runner GitHub, Testcontainers, web ở chế độ dữ liệu giả, container web cho quét ZAP", "Dữ liệu giả cố định trong repo; đồng hồ cố định cho E2E"]
+        - ["Máy dev (kind)", "Chạy service thật, thử tích hợp, tái hiện lỗi", "make quickstart (dev/)", "Dữ liệu giả nạp bằng CLI seed"]
+        - ["UAT (Azure)", "Test hiệu năng cỡ production, phục hồi, DAST đầy đủ, nghiệm thu", "env-provision (dựng khi cần, hủy khi xong)", "Dữ liệu giả quy mô năm đầu (50.000 bệnh nhân)"]
+        - ["Prod tạm thời", "Diễn tập demo", "env-provision prod", "Dữ liệu giả demo"]
+    paragraphs_after:
+      - "Quy tắc dữ liệu: không dùng dữ liệu thật ở bất kỳ môi trường nào; dữ liệu giả có tên, SĐT, email dễ nhận diện để test quét log và quét lộ PII tìm được chúng; mỗi test tự dựng và dọn dữ liệu của mình."
+  - name: Tự động hóa trong CI/CD
+    paragraphs:
+      - "Mọi test tự động chạy trong GitHub Actions không cần Azure. Kết quả của mọi workflow được tổng hợp vào trạng thái pr-gate, là kiểm tra bắt buộc để merge vào main."
+    table:
+      header: ["Giai đoạn", "Workflow / job", "Kiểm gì", "Chặn merge"]
+      widths: [3.0, 5.0, 6.5, 2.0]
+      rows:
+        - ["Mọi PR", "pr-checks", "gitleaks, actionlint, Trivy fs, OSV-Scanner, OWASP Dependency-Check", "Có"]
+        - ["Mọi PR", "svc-*, libs-java", "Format, build, test đơn vị và tích hợp, độ phủ, quét image (HIGH/CRITICAL), SBOM, ký", "Có"]
+        - ["PR đổi contracts hoặc yêu cầu", "contracts", "OpenAPI, sự kiện, ma trận phân quyền, nội dung SRS", "Có"]
+        - ["PR đổi web, yêu cầu, test, libs, services", "qa / trace", "Mọi AC/NFR có test case; tham chiếu test tồn tại; tỉ lệ tự động hóa không giảm", "Có"]
+        - ["PR đổi web, yêu cầu, test, libs, services", "qa / e2e", "E2E desktop và điện thoại, axe WCAG 2.1 AA, bảo mật giao diện", "Có"]
+        - ["PR đổi web, yêu cầu, test, libs, services", "qa / dast-web", "Tiêu đề bảo mật của image web; OWASP ZAP baseline (luật FAIL chặn)", "Có"]
+        - ["PR đổi web, yêu cầu, test, libs, services", "qa / k6-check", "Cú pháp và ngưỡng của script hiệu năng", "Có"]
+        - ["Hằng đêm", "qa (schedule), dependency-check-db", "Quét ZAP với bộ luật mới nhất; cập nhật CSDL lỗ hổng NVD", "Báo lỗi"]
+        - ["Trước mỗi mốc, trên UAT", "qa / k6 (chạy tay)", "Load test 1×, 5×, 10×; failure test; backup/restore", "Theo gate"]
+    paragraphs_after:
+      - "Cơ chế ratchet: baseline.json lưu số test case đã tự động hóa; PR làm số này giảm bị chặn. Khi tính năng mới có test, người viết nâng baseline bằng `python -I tools/qa/trace.py --update-baseline` trong cùng PR để mức tự động hóa chỉ tăng."
+  - name: Kiểm thử bảo mật và quyền riêng tư
+    paragraphs:
+      - "Vì là dữ liệu sức khỏe, các kiểm thử sau là bắt buộc, mỗi mục có test case P0 trong catalog:"
+    bullets:
+      - "Phân quyền: test sinh từ contracts/authz/matrix.yaml cho từng ô (vai trò × tài nguyên × hành động × điều kiện); test 'mọi endpoint phải có quy tắc'; IDOR; leo thang đặc quyền; mass assignment (TC-SEC-01..03)."
+      - "Không lộ sự tồn tại: dữ liệu của người khác trả 404, nội dung phản hồi giống hệt ID không tồn tại; mọi từ chối đều được ghi audit."
+      - "Xác thực: token sai chữ ký, alg=none, hết hạn, sai audience; MFA bắt buộc với nhân viên; không lưu token ở localStorage (TC-SEC-04..06, 28)."
+      - "Không lộ PII/PHI: quét log, metric, trace, sự kiện, URL, thông báo lỗi bằng dữ liệu giả dễ nhận diện (TC-SEC-11..12)."
+      - "Tệp upload: đổi đuôi, tệp lai, quá cỡ, tên tệp chứa ../, mẫu EICAR; link tải hết hạn và không dùng lại được (TC-SEC-13..14)."
+      - "Tiêu đề và ứng dụng web: CSP chặt, X-Frame-Options, nosniff, COOP/COEP/CORP, không lộ phiên bản máy chủ; OWASP ZAP baseline với luật FAIL; XSS lưu trữ (TC-SEC-08..10)."
+      - "AI: bộ 50 mẫu prompt injection trong câu hỏi và trong tài liệu; dữ liệu gửi LLM ngoài đã che định danh; AI chỉ có quyền của người gọi; bot không hành động khi chưa xác nhận (TC-SEC-17..19)."
+      - "Truy cập khẩn cấp và audit: phạm vi một bệnh nhân, hết hạn 60 phút, báo DPO, không sửa/xóa audit (TC-SEC-25..26)."
+      - "Chuỗi cung ứng, secret, cô lập mạng, TLS (TC-SEC-21..24)."
+    paragraphs_after:
+      - "Phát hiện thực tế từ lần chạy đầu: quét ZAP chỉ ra connect-src và form-action của CSP quá rộng và thiếu COEP; E2E phát hiện danh sách giờ trống không được làm mới sau khi đặt lịch; axe phát hiện nhiều chữ không đủ độ tương phản WCAG AA. Cả ba đã được sửa cùng với test."
+  - name: Kiểm thử hiệu năng và khả năng chịu lỗi
+    table:
+      header: ["NFR", "Kịch bản", "Ngưỡng đạt", "Điều kiện"]
+      widths: [1.8, 6.0, 4.5, 4.2]
+      rows:
+        - ["NFR-P1", "Tìm slot, 500 RPS, 10 phút (slots-search.js, SCENARIO=load)", "p95 ≤ 300 ms, lỗi < 0,1%", "UAT cỡ production, 50.000 bệnh nhân giả, đã làm nóng"]
+        - ["NFR-P2", "Đặt lịch, 50 RPS, 20% tranh chấp cùng slot (booking.js)", "p95 ≤ 800 ms, 5xx < 0,1%; đúng một người thắng mỗi slot", "Như trên"]
+        - ["NFR-S2, S3", "Tải 5× và 10× (SCENARIO=x5, x10)", "5×: p95 ≤ 2× mục tiêu. 10×: 429 thay vì sập", "Như trên"]
+        - ["NFR-S1", "Tăng tải lúc 07:00 từ mức tối thiểu", "Đủ tải trong ≤ 2 phút không can thiệp", "KEDA cron + HPA"]
+        - ["NFR-A3, A6", "Mất một zone; tắt nhà cung cấp SMS, LLM, ML", "Không mất dữ liệu; phục hồi ≤ 5 phút; luồng khám không hỏng", "UAT"]
+        - ["NFR-A4, A5", "Khôi phục theo thời điểm PostgreSQL, MongoDB, tài liệu", "RPO ≤ 5 phút, RTO ≤ 1 giờ", "Diễn tập có biên bản thời gian"]
+        - ["NFR-A7", "Triển khai canary khi đang tải", "0 request lỗi do triển khai", "Argo Rollouts trên UAT"]
+  - name: Tiêu chí vào và ra
+    table:
+      header: ["Giai đoạn", "Tiêu chí vào", "Tiêu chí ra"]
+      widths: [3.0, 6.5, 7.0]
+      rows:
+        - ["Sprint (merge PR)", "PR có mô tả, test mới hoặc cập nhật cho thay đổi; CI chạy được", "pr-gate xanh; test case của tính năng được cập nhật trạng thái tự động hóa; một người duyệt"]
+        - ["Nghiệm thu tính năng", "Tính năng hoàn thành theo 'Xong khi' của task", "Mọi AC của use case có test tự động hoặc có biên bản kiểm thử thủ công được duyệt; 0 lỗi P0 và P1 mở"]
+        - ["Hardening (H1)", "Hệ thống chạy trên UAT cỡ production", "Đạt NFR-P/S/A theo bảng trên; ZAP 0 FAIL; báo cáo kiểm thử theo từng NFR"]
+        - ["Phát hành demo / bảo vệ", "Báo cáo kiểm thử, danh sách lỗi còn lại và rủi ro chấp nhận được", "Không còn test P0 thất bại; mọi NFR-SEC đạt hoặc có chấp nhận rủi ro bằng văn bản của SA"]
+    paragraphs_after:
+      - "Mục tiêu tự động hóa: 100% test case P0 ở mức unit/integration/API/E2E có test tự động trước H1; tối thiểu 80% tổng test case tự động hóa hoặc có biên bản; độ phủ dòng của thư viện dùng chung ≥ 80%, service ≥ 70%, web ≥ 70%."
+  - name: Quản lý lỗi
+    table:
+      header: ["Mức", "Định nghĩa", "Thời hạn sửa"]
+      widths: [3.0, 9.0, 4.5]
+      rows:
+        - ["Nghiêm trọng (S1)", "Lộ dữ liệu bệnh nhân, vượt quyền, mất dữ liệu, hệ thống ngừng", "Ngay; chặn phát hành"]
+        - ["Cao (S2)", "Sai nghiệp vụ lõi (đặt trùng slot, nhắc sai, sai kết quả AI), vi phạm NFR-SEC", "Trong sprint"]
+        - ["Trung bình (S3)", "Chức năng phụ sai, giao diện khó dùng, NFR hiệu năng lệch dưới 20%", "Sprint sau"]
+        - ["Thấp (S4)", "Lỗi hiển thị, từ ngữ", "Theo khả năng"]
+    paragraphs_after:
+      - "Mọi lỗi là một GitHub issue gắn nhãn mức S1–S4, mã test case thất bại và module. Lỗi sửa xong phải có test hồi quy (hoặc nâng test case hiện có) trong cùng PR. Lỗi bảo mật không đăng công khai: dùng kênh báo lỗi riêng tư của repo."
+  - name: Vai trò và phân công
+    table:
+      header: ["Vai trò", "Trách nhiệm kiểm thử"]
+      widths: [5.0, 11.5]
+      rows:
+        - ["Kiến trúc sư / DevOps (viethung12062005)", "Chiến lược, kế hoạch, công cụ truy vết, pipeline qa, E2E, bảo mật, hiệu năng, phục hồi; duyệt thay đổi test lõi"]
+        - ["Dev đặt lịch và thông báo (qnt124)", "Test đơn vị, tích hợp, API cho scheduling và notification; test case module scheduling và system"]
+        - ["Dev lâm sàng, tài liệu, audit (Her55chers)", "Test đơn vị, tích hợp, API cho clinical, document, audit; test case module clinical, documents, privacy-admin"]
+        - ["Dev AI/ML (24021501-hunglk)", "Test cho ai và ml; bộ eval RAG, prompt injection, trích xuất, no-show"]
+    paragraphs_after:
+      - "Quy tắc: mỗi PR tính năng kèm test; người viết tính năng viết test cho tính năng đó, người khác duyệt test. Test case trong catalog có owner mặc định theo module."
+  - name: Rủi ro của kế hoạch kiểm thử
+    table:
+      header: ["Rủi ro", "Ảnh hưởng", "Giảm thiểu"]
+      widths: [5.8, 5.4, 5.3]
+      rows:
+        - ["Service chưa có endpoint nên chưa viết được test API (hiện 0 endpoint nghiệp vụ)", "Phần lớn test P0 mới ở trạng thái 'chờ viết'", "Test được viết cùng tính năng; báo cáo truy vết liệt kê test P0 còn thiếu theo người; ratchet chống thụt lùi"]
+        - ["Chưa có Azure nên chưa đo được hiệu năng, phục hồi, DAST đầy đủ", "NFR-P, S, A chưa có số đo", "Script k6 và kịch bản đã sẵn sàng; chạy ngay khi dựng UAT; đo thử trên kind"]
+        - ["Dữ liệu giả chưa phản ánh hết tình huống thật", "Bỏ sót lỗi", "Bộ dữ liệu có ca biên (trùng hồ sơ, tên có dấu, ngày giờ sát hạn 2 giờ); bổ sung theo lỗi phát hiện"]
+        - ["Chất lượng AI phụ thuộc nhà cung cấp mô hình thay đổi", "Kết quả eval dao động", "Chạy lại eval khi đổi model; ngưỡng theo NFR-AI; lưu kết quả theo phiên bản model"]
+        - ["Ít người, khối lượng viết test lớn", "Chậm tiến độ", "Ưu tiên P0 trước; tự động hóa sinh test từ ma trận phân quyền và OpenAPI; mỗi PR chỉ phải thêm test cho phần của mình"]
+        - ["Căn cứ pháp lý cần xác minh (thời hạn lưu, hiệu lực nghị định)", "Test chính sách lưu trữ có thể sai", "Phụ lục A của SRS ghi rõ mục cần xác minh; test cấu hình theo từng loại hồ sơ nên đổi số năm không phải sửa mã"]
+  - name: Lịch kiểm thử
+    table:
+      header: ["Tuần", "Trọng tâm kiểm thử"]
+      widths: [3.0, 13.5]
+      rows:
+        - ["6–7", "Chốt SRS v1.0, test case chức năng theo module, khung test API; E2E, ZAP, k6-check trong CI (đã có); viết test API cùng endpoint đầu tiên"]
+        - ["8–9", "Test API và tích hợp cho đặt lịch, hồ sơ, tài liệu; test ma trận phân quyền từng endpoint; eval AI phần 1"]
+        - ["10", "Test E2E trên UAT; ZAP đầy đủ; bộ tấn công prompt injection; eval AI phần 2"]
+        - ["11", "Load test 1×, 5×, 10×; failure test; backup/restore; sửa lỗi"]
+        - ["12", "Rà soát bảo mật; báo cáo kết quả kiểm thử theo từng NFR; báo cáo chi phí"]
+        - ["13", "Diễn tập demo; chốt danh sách lỗi và rủi ro còn lại"]

@@ -1,0 +1,73 @@
+# Test case của module 'documents'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+testcases:
+- id: TC-AC-05.1
+  title: 'Upload tài liệu lâm sàng: AC-05.1'
+  covers:
+  - AC-05.1
+  srs_uc: upload-document
+  srs_ref: UC 23
+  module: documents
+  level: api
+  priority: P0
+  spec: Given tệp .exe đổi tên thành .pdf, When upload, Then bị từ chối sau bước kiểm tra chữ ký nội dung.
+- id: TC-AC-UD.1
+  title: 'Upload tài liệu lâm sàng: AC-UD.1'
+  covers:
+  - AC-UD.1
+  srs_uc: upload-document
+  srs_ref: UC 23
+  module: documents
+  level: api
+  priority: P0
+  spec: Given tệp 21 MB, When xin link upload, Then bị từ chối “file-too-large”.
+- id: TC-AC-UD.2
+  title: 'Upload tài liệu lâm sàng: AC-UD.2'
+  covers:
+  - AC-UD.2
+  srs_uc: upload-document
+  srs_ref: UC 23
+  module: documents
+  level: integration
+  priority: P0
+  spec: Given tệp chứa mẫu EICAR, When upload, Then tài liệu “quarantined” và không phát sự kiện.
+- id: TC-AC-05.3
+  title: 'Phát hành tài liệu cho bệnh nhân: AC-05.3'
+  covers:
+  - AC-05.3
+  srs_uc: release-document
+  srs_ref: UC 24
+  module: documents
+  level: api
+  priority: P0
+  spec: Given tài liệu chưa phát hành, When bệnh nhân tải, Then không thấy tài liệu (404).
+- id: TC-AC-05.2
+  title: 'Tải tài liệu: AC-05.2'
+  covers:
+  - AC-05.2
+  srs_uc: download-document
+  srs_ref: UC 25
+  module: documents
+  level: api
+  priority: P0
+  spec: Given link đã cấp 6 phút trước, When mở, Then bị từ chối (403).
+- id: TC-AC-05.3-download-document
+  title: 'Tải tài liệu: AC-05.3'
+  covers:
+  - AC-05.3
+  srs_uc: download-document
+  srs_ref: UC 25
+  module: documents
+  level: api
+  priority: P0
+  spec: Given bệnh nhân A, When xin link tài liệu của bệnh nhân B, Then nhận 404 và có audit “deny”.
+- id: TC-AC-VD.1
+  title: 'Đánh dấu tài liệu nhập nhầm: AC-VD.1'
+  covers:
+  - AC-VD.1
+  srs_uc: void-document
+  srs_ref: UC 26
+  module: documents
+  level: api
+  priority: P0
+  spec: Given tài liệu bị đánh dấu nhập nhầm, Then không xuất hiện trong danh sách mặc định nhưng vẫn truy vết được trong
+    audit.
