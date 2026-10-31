@@ -46,10 +46,10 @@ actors:
 
 external_systems:
   - key: idp
-    name: Nhà cung cấp định danh (Microsoft Entra ID / Keycloak)
+    name: Nhà cung cấp định danh (Keycloak)
     description: >-
-      Xác thực OIDC, MFA, cấp token có vai trò. Entra ID ở môi trường cloud, Keycloak ở môi trường dev. Hệ thống không lưu
-      mật khẩu người dùng.
+      Xác thực OIDC, MFA, cấp token có vai trò, chạy trong cụm của hệ thống ở mọi môi trường. Đăng ký bệnh nhân bằng số điện
+      thoại có mã OTP. Chỉ nhà cung cấp định danh lưu mật khẩu (băm chậm có salt); các service nghiệp vụ không bao giờ nhận hay lưu mật khẩu.
   - key: messaging
     name: Nhà cung cấp gửi tin (email, SMS, push)
     description: Gửi nhắc lịch và thông báo. Nội dung không chứa chẩn đoán hay kết quả khám.

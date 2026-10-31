@@ -1,22 +1,22 @@
 # Truy vết yêu cầu ↔ test case
 
-> Sinh tự động bằng `python -I tools/qa/trace.py`. Không sửa tay. Nguồn: `docs/06-testing/catalog/`, SRS v0.95.
+> Sinh tự động bằng `python -I tools/qa/trace.py`. Không sửa tay. Nguồn: `docs/06-testing/catalog/`, SRS v0.96.
 
 ## Tóm tắt
 
 | Chỉ số | Giá trị |
 |---|---|
-| Test case | 180 |
-| Đã tự động hóa hoặc một phần | 38 (21%) |
+| Test case | 181 |
+| Đã tự động hóa hoặc một phần | 38 (20%) |
 | Tự động hóa đầy đủ | 9 |
-| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 105, tự động hóa ít nhất một phần: 25 |
+| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 106, tự động hóa ít nhất một phần: 25 |
 
 ## Theo module và trạng thái
 
 | Module | Tổng | Tự động | Một phần | Chờ viết | Thủ công |
 |---|---|---|---|---|---|
 | ai | 15 | 0 | 0 | 15 | 0 |
-| clinical | 23 | 0 | 0 | 23 | 0 |
+| clinical | 24 | 0 | 0 | 24 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 3 | 12 | 40 | 7 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
@@ -31,7 +31,7 @@
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 27 | 1 | 6 | 20 | 0 |
-| api | 74 | 1 | 11 | 62 | 0 |
+| api | 75 | 1 | 11 | 63 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 8 | 4 | 0 | 4 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -79,6 +79,7 @@
 | TC-AC-PG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
 | TC-AC-RE.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-RG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-RG.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-RS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
 | TC-AC-SM.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-SM.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
@@ -211,6 +212,7 @@
 | AC-PG.1 | TC-AC-PG.1 (integration, P0) | planned |
 | AC-RE.1 | TC-AC-RE.1 (api, P0) | planned |
 | AC-RG.1 | TC-AC-RG.1 (api, P0) | planned |
+| AC-RG.2 | TC-AC-RG.2 (api, P0) | planned |
 | AC-RS.1 | TC-AC-RS.1 (api, P0) | planned |
 | AC-RS.2 | TC-AC-RS.2 (api, P1) | planned |
 | AC-SM.1 | TC-AC-SM.1 (ai-eval, P0) | planned |

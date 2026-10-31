@@ -7,13 +7,13 @@ wireframes:
     active: "Thông tin cá nhân"
     blocks:
       - {t: h, text: "Đăng ký tài khoản"}
-      - {t: p, text: "Điền thông tin hành chính để tạo hồ sơ bệnh nhân. Email lấy từ tài khoản đăng nhập."}
+      - {t: p, text: "Điền thông tin hành chính để tạo hồ sơ bệnh nhân. Số điện thoại và email lấy từ tài khoản đã xác minh."}
       - t: form
         fields:
           - ["Họ và tên *", text, "Nguyễn Thị Lan"]
           - ["Ngày sinh *", text, "12/04/1988"]
           - ["Giới tính *", select, "Nữ"]
-          - ["Số điện thoại *", text, "0900 010 001"]
+          - ["Số điện thoại", label, "0900 010 001 (đã xác minh OTP, không sửa)"]
           - ["Email", label, "lan.nguyen@example.org (từ tài khoản, không sửa)"]
       - {t: banner, text: "Điều khoản xử lý dữ liệu cá nhân: mục đích, thời hạn lưu, quyền của bạn. Xem toàn văn trước khi đồng ý."}
       - t: form

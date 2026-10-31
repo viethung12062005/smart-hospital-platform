@@ -372,7 +372,7 @@ STORIES = [
     # ------------------------------------------------------------------ Giao diện web
     ("US-066", "Người dùng đăng nhập và thấy giao diện theo vai trò", "Người dùng", "đăng nhập bằng OIDC và vào đúng màn hình theo vai trò",
      "chỉ thấy chức năng mình được phép", "M", ["UC-08"], ["C2"], [],
-     ["Given đăng nhập Entra ID hoặc Keycloak, When vào ứng dụng, Then menu hiển thị theo role",
+     ["Given đăng nhập bằng Keycloak, When vào ứng dụng, Then menu hiển thị theo role",
       "Given hết phiên, When gọi API, Then tự đăng nhập lại; lỗi 403/404 hiển thị thông điệp theo Accept-Language"]),
 
     # ------------------------------------------------------------------ Vận hành (enabler)

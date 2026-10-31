@@ -43,7 +43,7 @@ Cổng 5173 là cố định vì đó là redirect URI đã khai báo cho client
 ## Cấu hình theo môi trường
 
 `public/config.json` (local) hoặc ConfigMap trên cụm (`shp-gitops/envs/<env>/web/values.yaml`):
-`authority` (issuer OIDC), `clientId`, `scope` (trên Entra phải có scope API, ví dụ `api://shp-api-uat/access_as_user`), `apiBase` (rỗng = cùng origin).
+`authority` (issuer OIDC), `clientId`, `scope` (scope mặc định của realm Keycloak đã gắn audience API), `apiBase` (rỗng = cùng origin).
 
 ## CI/CD
 

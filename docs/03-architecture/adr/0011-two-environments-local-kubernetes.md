@@ -39,5 +39,5 @@ Hệ quả cho thiết kế:
 
 ## Hệ quả
 - Máy dev cần tối thiểu 4 CPU, 16 GB RAM, Docker; có hai profile: `core` (~6 GB, đủ cho phần lớn task) và `full` (thêm OpenSearch, Ollama, ClamAV, MLflow, observability).
-- Mỗi dev chạy local nên các bug phụ thuộc cloud (Entra ID, Azure Blob, AI Search thật, Service Bus) chỉ lộ ra ở UAT: SA lên lịch dựng UAT thường xuyên (đề xuất mỗi thứ Năm).
+- Mỗi dev chạy local nên các bug phụ thuộc cloud (Azure Blob, AI Search thật, Service Bus; đăng nhập đã dùng Keycloak giống local, ADR-0017) chỉ lộ ra ở UAT: SA lên lịch dựng UAT thường xuyên (đề xuất mỗi thứ Năm).
 - Chi phí cloud giảm: chỉ trả tiền theo giờ UAT/prod tồn tại.

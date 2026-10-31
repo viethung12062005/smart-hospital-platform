@@ -14,11 +14,11 @@ modules:
             trace: [UC-01, AC-01.2, "API C1", NFR-SEC1]
             objective: Cho phép người dùng mới tạo tài khoản và hồ sơ bệnh nhân của chính mình.
             trigger: Người dùng bấm “Đăng ký” trên trang đăng nhập.
-            pre: ["Người dùng đã tạo danh tính tại nhà cung cấp định danh (email đã xác minh) nhưng chưa có hồ sơ bệnh nhân."]
+            pre: ["Người dùng đã tạo tài khoản ở trang đăng ký của nhà cung cấp định danh (số điện thoại đã xác minh bằng mã OTP) nhưng chưa có hồ sơ bệnh nhân."]
             post: ["Hồ sơ bệnh nhân “active” được tạo và liên kết với tài khoản; hoặc yêu cầu xác minh tại quầy nếu nghi trùng."]
             lanes: [Người dùng, Hệ thống]
             steps:
-              - {n: 1, lane: 0, text: "Đăng nhập lần đầu qua\nnhà cung cấp định danh"}
+              - {n: 1, lane: 0, text: "Tạo tài khoản bằng SĐT,\nxác minh mã OTP, đăng nhập"}
               - {n: 2, lane: 1, text: "Hiển thị form đăng ký\nvà điều khoản xử lý dữ liệu"}
               - {n: 3, lane: 0, text: "Nhập thông tin, đồng ý\nđiều khoản, bấm “Đăng ký”"}
               - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
@@ -36,7 +36,7 @@ modules:
                 title: Quy tắc kiểm tra
                 lines:
                   - "Bắt buộc: [Họ và tên] (2–100 ký tự), [Ngày sinh] (không ở tương lai → [[MSG:dob-future]]), [Giới tính], [Số điện thoại] (định dạng Việt Nam → [[MSG:invalid-phone]])."
-                  - "[Email] lấy từ nhà cung cấp định danh, không sửa ở đây. Thiếu trường bắt buộc → [[MSG:required]]."
+                  - "[Số điện thoại] lấy từ tài khoản đã xác minh OTP và không sửa ở đây; [Email] (nếu có) cũng lấy từ tài khoản. Thiếu trường bắt buộc → [[MSG:required]]."
                   - "Không thu thập CCCD, số BHYT ở giai đoạn này (tối thiểu hóa dữ liệu)."
               - step: "(5)"
                 key: duplicate-check
@@ -52,6 +52,7 @@ modules:
             acceptance:
               - ["AC-01.2", "Given đã có hồ sơ cùng SĐT + ngày sinh, When đăng ký, Then không tạo hồ sơ mới và thông báo cần xác minh, không lộ thông tin hồ sơ cũ."]
               - ["AC-RG.1", "Given không tích ô đồng ý điều khoản, When đăng ký, Then không gửi được."]
+              - ["AC-RG.2", "Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ."]
 
           - key: update-profile
             name: Cập nhật thông tin hành chính

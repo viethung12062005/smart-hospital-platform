@@ -45,5 +45,5 @@
 | C4 | Notification lưu trạng thái nhắc lịch trong **PostgreSQL** (database `notification`; ML cũng dùng PostgreSQL database `ml`) và lập lịch bằng bảng + worker `SKIP LOCKED` | Hủy nhắc chỉ là cập nhật một dòng; chạy giống nhau trên RabbitMQ và Service Bus | ADR-0008 |
 | C5 | ML tự duy trì thống kê đi khám từ event và **phát `NoShowScored`**; notification nghe event này thay vì gọi API ML | ML lỗi không ảnh hưởng nhắc lịch (AC-15.1), không phụ thuộc đồng bộ | ADR-0007 |
 | C6 | Check-in thuộc scheduling (`Appointment.status = arrived`); clinical nghe event để tự tạo `Encounter` | Một nguồn sự thật cho trạng thái lịch hẹn | 01, 13 |
-| C7 | Liên kết tài khoản ↔ `Patient`/`Practitioner` lưu ở clinical (`identity_links`); service khác tra qua API nội bộ có cache, không dùng custom claim | Entra ID và Keycloak hoạt động giống nhau, không cần cấu hình claim riêng | 15 |
+| C7 | Liên kết tài khoản ↔ `Patient`/`Practitioner` lưu ở clinical (`identity_links`); service khác tra qua API nội bộ có cache, không dùng custom claim | Không cần cấu hình claim riêng trong Keycloak, đổi IdP không đổi code | 15 |
 | C8 | Event dùng định dạng **CloudEvents 1.0** | Chuẩn mở, mang `traceparent` xuyên service | 13 |

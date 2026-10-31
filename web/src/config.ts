@@ -3,7 +3,7 @@
  * Trên cụm, file này do ConfigMap ghi đè; khi dev, mặc định nằm ở public/config.json.
  */
 export interface AppConfig {
-  /** 'oidc' (Keycloak/Entra) hoặc 'mock' (chọn vai trò, không cần backend). */
+  /** 'oidc' (Keycloak) hoặc 'mock' (chọn vai trò, không cần backend). */
   readonly authMode: 'oidc' | 'mock';
   /** Issuer OIDC, ví dụ http://localhost:18080/realms/shp */
   readonly authority: string;

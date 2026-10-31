@@ -71,7 +71,7 @@ SHPAudit_CL | where Outcome == "denied" | summarize n = count() by ActorSubject,
 
 | Storage account | Container | Đường dẫn | Ghi chú |
 |---|---|---|---|
-| `stshpdocs<suffix>` | `documents` | `patients/{patientId}/{documentId}/v{version}/original.{pdf\|jpg\|png}` | Tắt shared key, chỉ Entra ID; private endpoint; versioning + soft delete 14 ngày |
+| `stshpdocs<suffix>` | `documents` | `patients/{patientId}/{documentId}/v{version}/original.{pdf\|jpg\|png}` | Tắt shared key, chỉ danh tính managed identity (Entra); private endpoint; versioning + soft delete 14 ngày |
 | | `quarantine` | như trên | File nhiễm mã độc chuyển sang đây; chỉ admin bảo mật đọc được |
 | | `kb` | `kb/{kbDocumentId}/v{version}/{filename}` | Tài liệu gốc của kho tri thức RAG (ai service) |
 | `stshpaudit<suffix>` | `audit` | xem §1.2 | WORM |
