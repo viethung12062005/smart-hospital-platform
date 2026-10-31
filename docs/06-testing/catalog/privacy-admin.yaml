@@ -5,7 +5,7 @@ testcases:
   covers:
   - AC-AL.1
   srs_uc: view-my-access-log
-  srs_ref: UC 34
+  srs_ref: UC 38
   module: privacy-admin
   level: api
   priority: P0
@@ -15,7 +15,7 @@ testcases:
   covers:
   - AC-CS.1
   srs_uc: manage-consent
-  srs_ref: UC 35
+  srs_ref: UC 39
   module: privacy-admin
   level: api
   priority: P0
@@ -25,7 +25,7 @@ testcases:
   covers:
   - AC-EX.1
   srs_uc: export-my-data
-  srs_ref: UC 36
+  srs_ref: UC 40
   module: privacy-admin
   level: api
   priority: P1
@@ -35,7 +35,7 @@ testcases:
   covers:
   - AC-NP.1
   srs_uc: notification-preferences
-  srs_ref: UC 37
+  srs_ref: UC 41
   module: privacy-admin
   level: api
   priority: P1
@@ -45,7 +45,7 @@ testcases:
   covers:
   - AC-09.1
   srs_uc: search-audit
-  srs_ref: UC 38
+  srs_ref: UC 42
   module: privacy-admin
   level: api
   priority: P0
@@ -56,7 +56,7 @@ testcases:
   covers:
   - AC-09.2
   srs_uc: search-audit
-  srs_ref: UC 38
+  srs_ref: UC 42
   module: privacy-admin
   level: e2e
   priority: P0
@@ -66,7 +66,7 @@ testcases:
   covers:
   - AC-EA.1
   srs_uc: export-audit
-  srs_ref: UC 39
+  srs_ref: UC 43
   module: privacy-admin
   level: api
   priority: P0
@@ -76,7 +76,7 @@ testcases:
   covers:
   - AC-DR.1
   srs_uc: process-data-request
-  srs_ref: UC 40
+  srs_ref: UC 44
   module: privacy-admin
   level: api
   priority: P1
@@ -86,7 +86,7 @@ testcases:
   covers:
   - AC-08.2
   srs_uc: invite-staff
-  srs_ref: UC 41
+  srs_ref: UC 45
   module: privacy-admin
   level: api
   priority: P0
@@ -96,7 +96,7 @@ testcases:
   covers:
   - AC-IS.1
   srs_uc: invite-staff
-  srs_ref: UC 41
+  srs_ref: UC 45
   module: privacy-admin
   level: api
   priority: P0
@@ -106,7 +106,7 @@ testcases:
   covers:
   - AC-08.1
   srs_uc: lock-account
-  srs_ref: UC 42
+  srs_ref: UC 46
   module: privacy-admin
   level: api
   priority: P0
@@ -116,7 +116,7 @@ testcases:
   covers:
   - AC-LP.1
   srs_uc: link-practitioner
-  srs_ref: UC 43
+  srs_ref: UC 47
   module: privacy-admin
   level: api
   priority: P0
@@ -126,7 +126,7 @@ testcases:
   covers:
   - AC-DL.1
   srs_uc: manage-dead-letters
-  srs_ref: UC 44
+  srs_ref: UC 48
   module: privacy-admin
   level: api
   priority: P1
@@ -136,7 +136,7 @@ testcases:
   covers:
   - AC-16.1
   srs_uc: backup-restore
-  srs_ref: UC 45
+  srs_ref: UC 49
   module: privacy-admin
   level: resilience
   priority: P1
@@ -147,7 +147,7 @@ testcases:
   covers:
   - AC-16.2
   srs_uc: backup-restore
-  srs_ref: UC 45
+  srs_ref: UC 49
   module: privacy-admin
   level: resilience
   priority: P1

@@ -30,7 +30,7 @@ Build và test toàn bộ phần Java: `mvn -B verify` (cần JDK 21, Maven 3.9,
 | 0. Quy trình | [docs/00-delivery-process.md](docs/00-delivery-process.md) | — |
 | 1. Business Analysis | [docs/01-business-analysis](docs/01-business-analysis/business-analysis.md) | Approved (G1) |
 | 2. Requirements | [FR](docs/02-requirements/functional-requirements.md) · [NFR](docs/02-requirements/non-functional-requirements.md) · [Phân quyền](docs/02-requirements/access-control-matrix.md) · [Tải](docs/02-requirements/workload-analysis.md) · [Truy vết](docs/02-requirements/traceability.md) | Approved (G2) |
-| 2b. User story | [75 user story](docs/02-requirements/user-stories.md) | Approved (G2) |
+| 2b. User story | [79 user story](docs/02-requirements/user-stories.md) | Approved (G2) |
 | 3. Architecture | [Tổng quan](docs/03-architecture/overview.md) · [ADR](docs/03-architecture/adr/README.md) · [Thiết kế chi tiết](docs/03-architecture/detailed-design/README.md) | Approved (G3) |
 | 4. Platform & DevOps | [Kế hoạch](docs/04-devops/README.md) · [Nhật ký từng bước](docs/04-devops/progress-log.md) · [Chạy local](dev/README.md) | Đang làm: thư viện, khung 8 service, dev kit đã xong |
 | Kế hoạch dự án | [Plan](docs/05-plan/project-plan.md) · [Backlog](docs/05-plan/backlog.md) · [CSV](docs/05-plan/backlog.csv) · việc từng người: [SA](docs/05-plan/by-person/SA.md), [D1](docs/05-plan/by-person/D1.md), [D2](docs/05-plan/by-person/D2.md), [D3](docs/05-plan/by-person/D3.md) | Approved |

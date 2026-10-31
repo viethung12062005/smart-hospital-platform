@@ -42,6 +42,8 @@ user DB riêng, chỉ có quyền trên database của mình.
 | `allergy_intolerances` | `clinicalStatus`, `criticality` | `{patientId:1}` | `{patientId: "hashed"}` |
 | `resource_history` | — (`_id` = `<type>/<id>/<version>`, kèm `resourceType`, `id`, `versionId`, `operation`, `changedBy`, `changedAt`, `resource`) | `{resourceType:1, id:1, versionId:-1}` | `{patientId: "hashed"}` |
 | `identity_links` | `_id` = OIDC subject; `issuer`, `fhirUser` (`Patient/..` hoặc `Practitioner/..`), `disabled`, `createdAt`, `createdBy` | `{fhirUser:1}` **unique** | không |
+| `profile_links` | `accountSub`, `patientId`, `relationship` (`guardian` · `proxy`), `scope` (`booking` · `records` · `full`), `status` (`pending` · `active` · `revoked` · `expired`), `establishedBy` (`otp` · `counter` · `guardian-declaration`), `consentRef`, `expiresAt`, `createdAt`, `revokedAt` | `{accountSub:1, status:1}` · `{patientId:1, status:1}` · `{accountSub:1, patientId:1}` **unique** | không |
+| `link_attempts` | `accountSub`, `kind` (`claim` · `link`), `phoneHash`, `at` | `{accountSub:1, at:1}` · `{phoneHash:1, at:1}` · TTL 24 giờ trên `at` | không |
 | `care_relationships` | `_id` = `<practitionerId>\|<patientId>`; `practitionerId`, `patientId`, `sources[]` (`{type, id, status, at}`), `validUntil` | `{patientId:1}` · `{practitionerId:1, validUntil:-1}` | không |
 | `break_glass_sessions` | `practitionerId`, `patientId`, `reason`, `startedAt`, `expiresAt` | `{practitionerId:1, patientId:1, expiresAt:-1}` · **TTL** trên `expiresAt` | không |
 | `mrn_counters` | `_id` = năm, `seq` | (theo `_id`) | không |

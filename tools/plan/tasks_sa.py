@@ -39,7 +39,7 @@ SA_TASKS = [
     ('IAM-01', 'US-001, US-008, US-066', 'Keycloak trên cụm (ADR-0017)', 'Chart + GitOps app, 2 replica prod, realm shp as code (client shp-web PKCE, audience shp-api, roles), băm Argon2id, chính sách mật khẩu và khóa chống dò, console quản trị không ra Internet, sao lưu DB và thử khôi phục', 'SA', 8, 'IAC-16, GOP-03', 'S4', 'ADR-0017, NFR-SEC1'),
     ('IAM-02', 'US-053, US-066', 'Tài khoản dịch vụ và token exchange', 'Client credentials cho /internal theo từng service, token exchange RFC 8693 cho AI; chốt cách xác thực client (assertion bằng token ServiceAccount hoặc secret xoay 90 ngày); test với Keycloak thật', 'SA', 6, 'IAM-01, SHR-20', 'S4', '15 §7, ADR-0017'),
     ('IAM-03', 'US-001, US-008', 'Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt', 'Theme Keycloak vi/en cùng hệ thiết kế SHP; đăng ký bằng SĐT hoặc email, điều khoản, đạt WCAG AA; không lộ tài khoản đã tồn tại', 'SA', 6, 'IAM-01', 'S4', 'UC-01, ADR-0017'),
-    ('IAM-04', 'US-001', 'Authenticator mã OTP qua SMS (SPI Keycloak)', 'Xác minh sở hữu SĐT lúc đăng ký (và ở bước điền hồ sơ với tài khoản email) và khi đổi SĐT; email xác minh bằng mã gửi qua email; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần', 'SA', 8, 'IAM-01', 'S5', 'AC-RG.2, ADR-0017'),
+    ('IAM-04', 'US-001', 'Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 (Zalo trước, SMS sau)', 'Xác minh sở hữu SĐT lúc đăng ký (và ở bước điền hồ sơ với tài khoản email) và khi đổi SĐT; email xác minh bằng mã gửi qua email; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần', 'SA', 8, 'IAM-01', 'S5', 'AC-RG.2, ADR-0017'),
     ('IAM-05', 'US-008, US-031', 'Sự kiện danh tính về audit', 'Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP', 'SA', 4, 'IAM-01, SHR-09', 'S5', 'NFR-SEC5, ADR-0017'),
     ('IAC-17', 'ENABLER', 'Stack envs/uat, prod (lõi: network, AKS, Key Vault, ACR) + sizing', '2 stack gọi module; tfvars khác nhau về SKU/HA/spot; UAT có sizing=prod để đo hiệu năng; plan chạy được', 'SA', 4, 'IAC-05, IAC-07, IAC-08', 'P4', 'NFR-D4'),
     ('CIT-01', 'US-070', 'Reusable workflow Java CI (Maven)', 'Spotless check, build -Werror, test + JaCoCo ngưỡng coverage, quét dependency lỗ hổng; dùng được từ repo khác', 'SA', 4, 'GOV-01', 'P1', 'ADR-0009'),
@@ -120,6 +120,8 @@ SA_TASKS = [
      "Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test", "SA", 3, "ARC-19", "P1", "15 §3"),
     ("SHR-23", "ENABLER", "Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care",
      "Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập", "SA", 4, "SHR-22", "P1", "15 §2"),
+    ("SHR-30", "US-076, US-077", "Authz: điều kiện linked, linked-records, guardian; onBehalfOf trong audit; sinh test từ ma trận cho hồ sơ liên kết",
+     "Mỗi quy tắc *-LINKED có test Allow và Deny; audit ghi tài khoản thực hiện và hồ sơ được truy cập", "SA", 3, "SHR-24, SHR-21", "P2", "15 §3, ADR-0018"),
     ("SHR-24", "ENABLER", "Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse",
      "Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng", "SA", 3, "SHR-23", "P2", "15 §2"),
     # Chuyển sang SA (2026-10-27): SA làm sẵn lớp lỗi + xác thực + tra danh tính.
@@ -127,7 +129,7 @@ SA_TASKS = [
      "Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace", "SA", 3, "SHR-01", "P1", "07 §5"),
     ("SHR-20", "US-008, US-066", "JWT bearer từ Keycloak (OIDC chuẩn): map claim roles, kiểm amr=mfa với nhân viên",
      "Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường", "SA", 3, "LOC-02", "P1", "07 §2, 15 §1"),
-    ("SHR-21", "US-007", "Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây",
+    ("SHR-21", "US-007", "Identity resolver: sub → fhirUser + roles + disabled + linkedProfiles (hồ sơ, phạm vi), cache 60 giây",
      "Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503", "SA", 3, "SHR-20", "P1", "15 §8, C2"),
     # Chuyển sang SA: envelope event, audit emitter, filter phân quyền gắn endpoint.
     ("SHR-06", "ENABLER", "CloudEvents envelope + validate JSON Schema + helper test hợp đồng",

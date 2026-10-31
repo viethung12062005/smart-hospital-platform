@@ -12,6 +12,9 @@ purposes: [TREAT, ETREAT, HOPERAT, PATRQT]
 
 predicates:
   own: Resource thuộc chính người gọi (patientId == fhirUser)
+  linked: Hồ sơ nằm trong linkedProfiles của người gọi, liên kết active chưa hết hạn, phạm vi booking trở lên
+  linked-records: Như linked, phạm vi records hoặc full (thêm kết quả khám và tài liệu đã phát hành)
+  guardian: Liên kết có relationship=guardian (người giám hộ của người dưới 16 tuổi)
   self-practitioner: practitionerId của resource == fhirUser
   care: Có quan hệ điều trị còn hiệu lực giữa bác sĩ và bệnh nhân
   breakglass: Có phiên break-glass chưa hết hạn cho cặp (bác sĩ, bệnh nhân)
@@ -48,11 +51,13 @@ denyAll:
 rules:
   # Patient
   - { id: PAT-READ-OWN,    resource: Patient, action: read,   role: patient, when: [own], purpose: PATRQT }
+  - { id: PAT-READ-LINKED, resource: Patient, action: read,   role: patient, when: [linked], purpose: PATRQT }
   - { id: PAT-READ-DOC,    resource: Patient, action: read,   role: doctor,  when: [care], purpose: TREAT }
   - { id: PAT-READ-DOC-BG, resource: Patient, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: PAT-READ-NUR,    resource: Patient, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: PAT-CREATE-NUR,  resource: Patient, action: create, role: nurse,   when: [] }
   - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
+  - { id: PAT-UPD-GUARDIAN, resource: Patient, action: update, role: patient, when: [guardian], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
   - { id: PAT-SEARCH-DOC,  resource: Patient, action: search, role: doctor,  when: [] }
   - { id: PAT-SEARCH-NUR,  resource: Patient, action: search, role: nurse,   when: [] }
@@ -69,14 +74,18 @@ rules:
   - { id: SLOT-BLOCK-ADM,  resource: Slot, action: block,  role: admin,   when: [] }
   # Appointment
   - { id: APPT-BOOK-OWN,   resource: Appointment, action: book,   role: patient, when: [own] }
+  - { id: APPT-BOOK-LINKED, resource: Appointment, action: book,   role: patient, when: [linked] }
   - { id: APPT-BOOK-NUR,   resource: Appointment, action: book,   role: nurse,   when: [] }
   - { id: APPT-CANCEL-PAT, resource: Appointment, action: cancel, role: patient, when: [own, before-2h] }
+  - { id: APPT-CANCEL-LINKED, resource: Appointment, action: cancel, role: patient, when: [linked, before-2h] }
   - { id: APPT-CANCEL-NUR, resource: Appointment, action: cancel, role: nurse,   when: [] }
   - { id: APPT-READ-PAT,   resource: Appointment, action: read,   role: patient, when: [own] }
+  - { id: APPT-READ-LINKED, resource: Appointment, action: read,   role: patient, when: [linked] }
   - { id: APPT-READ-DOC,   resource: Appointment, action: read,   role: doctor,  when: [self-practitioner] }
   - { id: APPT-READ-NUR,   resource: Appointment, action: read,   role: nurse,   when: [] }
   # Encounter
   - { id: ENC-READ-PAT,    resource: Encounter, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
+  - { id: ENC-READ-LINKED, resource: Encounter, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
   - { id: ENC-READ-DOC,    resource: Encounter, action: read,   role: doctor,  when: [care], purpose: TREAT }
   - { id: ENC-READ-DOC-BG, resource: Encounter, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: ENC-READ-NUR,    resource: Encounter, action: read,   role: nurse,   when: [], purpose: TREAT }
@@ -86,6 +95,7 @@ rules:
   - { id: ENC-WRITE-NUR,   resource: Encounter, action: update, role: nurse,   when: [unfinished-encounter] }
   # Observation
   - { id: OBS-READ-PAT,    resource: Observation, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
+  - { id: OBS-READ-LINKED, resource: Observation, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
   - { id: OBS-READ-DOC,    resource: Observation, action: read,   role: doctor,  when: [care], purpose: TREAT }
   - { id: OBS-READ-DOC-BG, resource: Observation, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: OBS-READ-NUR,    resource: Observation, action: read,   role: nurse,   when: [], purpose: TREAT }
@@ -97,6 +107,7 @@ rules:
   - { id: DOC-UP-DOC,      resource: Document, action: upload,   role: doctor,  when: [care] }
   - { id: DOC-UP-NUR,      resource: Document, action: upload,   role: nurse,   when: [] }
   - { id: DOC-DL-PAT,      resource: Document, action: download, role: patient, when: [own, released], purpose: PATRQT }
+  - { id: DOC-DL-LINKED, resource: Document, action: download, role: patient, when: [linked-records, released], purpose: PATRQT }
   - { id: DOC-DL-DOC,      resource: Document, action: download, role: doctor,  when: [care], purpose: TREAT }
   - { id: DOC-DL-DOC-BG,   resource: Document, action: download, role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: DOC-DL-NUR,      resource: Document, action: download, role: nurse,   when: [], purpose: TREAT }

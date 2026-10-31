@@ -118,7 +118,7 @@ Header bắt buộc: `Idempotency-Key`. Body là `Parameters`:
   ]
 }
 ```
-- `patient`: Patient role chỉ được đặt cho **chính mình** (so với `fhirUser`), ngược lại 403 (AC-03.6). Nurse đặt cho bất kỳ bệnh nhân (`channel=staff` bị ép).
+- `patient`: Patient role chỉ được đặt cho **chính mình** hoặc cho hồ sơ trong `linkedProfiles` (con, người thân đã ủy quyền, phạm vi từ `booking`), ngược lại 403 (AC-03.6); đặt hộ được audit kèm `onBehalfOf` (AC-03.7). Giới hạn 3 lịch tương lai (BR-03) tính **theo từng hồ sơ**. Nurse đặt cho bất kỳ bệnh nhân (`channel=staff` bị ép).
 - `comment` tùy chọn ≤ 500 ký tự; `channel` ∈ {`web`,`chatbot`,`staff`} (Patient chỉ được `web`/`chatbot`).
 
 Kết quả:
