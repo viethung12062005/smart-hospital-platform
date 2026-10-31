@@ -66,6 +66,7 @@ khi ghi (giảm bề mặt dữ liệu, tối thiểu hóa dữ liệu cá nhân
 | `name` | 1..1 | `use=official`, `family`, `given[]`, `text` (họ tên đầy đủ); độ dài 2–100 |
 | `telecom[phone]` | 1..1 | `system=phone`, E.164 (`+84...`); dùng để nhắc lịch và chống trùng |
 | `telecom[email]` | 0..1 | `system=email` |
+| `identifier[cccd]` | 0..1 | system `urn:shp:cccd`; số căn cước công dân 12 chữ số, **không bắt buộc**, chỉ điều dưỡng ghi khi bệnh nhân đến khám và đồng ý; lưu mã hóa, chỉ trả bản che (4 số cuối) |
 | `gender` | 1..1 | `male` · `female` · `other` · `unknown` |
 | `birthDate` | 1..1 | không ở tương lai, tuổi ≤ 120 |
 | `address` | 0..1 | `text`, `city`, `district` (không lưu số nhà chi tiết) |
@@ -73,7 +74,7 @@ khi ghi (giảm bề mặt dữ liệu, tối thiểu hóa dữ liệu cá nhân
 | `communication.language` | 0..1 | `vi` (mặc định) hoặc `en`; quyết định ngôn ngữ thông báo |
 | `link` | 0..\* | `type=replaced-by` khi gộp hồ sơ trùng (UC-01 luồng phụ) |
 
-Không lưu CCCD/CMND, nghề nghiệp, dân tộc (không cần cho phạm vi; tối thiểu hóa dữ liệu nhạy cảm).
+Không lưu nghề nghiệp, dân tộc, CMND 9 số (không cần cho phạm vi; tối thiểu hóa dữ liệu nhạy cảm). Số CCCD chỉ lưu khi bệnh nhân đồng ý và được bổ sung khi đến khám (SRS UC `supplement-national-id`).
 
 ### 4.2 Practitioner và PractitionerRole (clinical)
 

@@ -6,17 +6,17 @@
 
 | Chỉ số | Giá trị |
 |---|---|
-| Test case | 181 |
+| Test case | 185 |
 | Đã tự động hóa hoặc một phần | 38 (20%) |
 | Tự động hóa đầy đủ | 9 |
-| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 106, tự động hóa ít nhất một phần: 25 |
+| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 109, tự động hóa ít nhất một phần: 25 |
 
 ## Theo module và trạng thái
 
 | Module | Tổng | Tự động | Một phần | Chờ viết | Thủ công |
 |---|---|---|---|---|---|
 | ai | 15 | 0 | 0 | 15 | 0 |
-| clinical | 24 | 0 | 0 | 24 | 0 |
+| clinical | 28 | 0 | 0 | 28 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 3 | 12 | 40 | 7 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
@@ -31,9 +31,9 @@
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 27 | 1 | 6 | 20 | 0 |
-| api | 75 | 1 | 11 | 63 | 0 |
+| api | 78 | 1 | 11 | 66 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
-| security | 8 | 4 | 0 | 4 | 0 |
+| security | 9 | 4 | 0 | 5 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
 | resilience | 10 | 0 | 0 | 10 | 0 |
 | ai-eval | 23 | 0 | 0 | 23 | 0 |
@@ -74,6 +74,9 @@
 | TC-AC-EA.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-FB.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
 | TC-AC-FS.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
+| TC-AC-ID.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-ID.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
+| TC-AC-ID.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-IS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-LP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
 | TC-AC-PG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
@@ -202,6 +205,10 @@
 | AC-FS.2 | TC-AC-FS.2 (api, P1) | planned |
 | AC-FS.3 | TC-AC-FS.3 (api, P0) | planned |
 | AC-GS.1 | TC-AC-GS.1 (api, P1) | planned |
+| AC-ID.1 | TC-AC-ID.1 (api, P0) | planned |
+| AC-ID.2 | TC-AC-ID.2 (api, P0) | planned |
+| AC-ID.3 | TC-AC-ID.3 (api, P1) | planned |
+| AC-ID.4 | TC-AC-ID.4 (security, P0) | planned |
 | AC-IS.1 | TC-AC-IS.1 (api, P0) | planned |
 | AC-KB.1 | TC-AC-KB.1 (ai-eval, P1) | planned |
 | AC-LP.1 | TC-AC-LP.1 (api, P0) | planned |

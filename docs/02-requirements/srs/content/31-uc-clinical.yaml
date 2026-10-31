@@ -14,11 +14,11 @@ modules:
             trace: [UC-01, AC-01.2, "API C1", NFR-SEC1]
             objective: Cho phép người dùng mới tạo tài khoản và hồ sơ bệnh nhân của chính mình.
             trigger: Người dùng bấm “Đăng ký” trên trang đăng nhập.
-            pre: ["Người dùng đã tạo tài khoản ở trang đăng ký của nhà cung cấp định danh (số điện thoại đã xác minh bằng mã OTP) nhưng chưa có hồ sơ bệnh nhân."]
+            pre: ["Người dùng đã tạo tài khoản ở trang đăng ký của nhà cung cấp định danh, bằng số điện thoại (đã xác minh mã OTP) hoặc bằng email (đã xác minh), nhưng chưa có hồ sơ bệnh nhân."]
             post: ["Hồ sơ bệnh nhân “active” được tạo và liên kết với tài khoản; hoặc yêu cầu xác minh tại quầy nếu nghi trùng."]
             lanes: [Người dùng, Hệ thống]
             steps:
-              - {n: 1, lane: 0, text: "Tạo tài khoản bằng SĐT,\nxác minh mã OTP, đăng nhập"}
+              - {n: 1, lane: 0, text: "Tạo tài khoản bằng SĐT hoặc\nemail, xác minh, đăng nhập"}
               - {n: 2, lane: 1, text: "Hiển thị form đăng ký\nvà điều khoản xử lý dữ liệu"}
               - {n: 3, lane: 0, text: "Nhập thông tin, đồng ý\nđiều khoản, bấm “Đăng ký”"}
               - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
@@ -36,8 +36,8 @@ modules:
                 title: Quy tắc kiểm tra
                 lines:
                   - "Bắt buộc: [Họ và tên] (2–100 ký tự), [Ngày sinh] (không ở tương lai → [[MSG:dob-future]]), [Giới tính], [Số điện thoại] (định dạng Việt Nam → [[MSG:invalid-phone]])."
-                  - "[Số điện thoại] lấy từ tài khoản đã xác minh OTP và không sửa ở đây; [Email] (nếu có) cũng lấy từ tài khoản. Thiếu trường bắt buộc → [[MSG:required]]."
-                  - "Không thu thập CCCD, số BHYT ở giai đoạn này (tối thiểu hóa dữ liệu)."
+                  - "[Số điện thoại] bắt buộc (dùng nhắc lịch và chống trùng). Tài khoản tạo bằng SĐT: lấy từ tài khoản, không sửa. Tài khoản tạo bằng email: nhập ở đây và phải xác minh bằng mã OTP trước khi tạo hồ sơ (AC-RG.2). [Email] lấy từ tài khoản nếu có, không sửa ở đây. Thiếu trường bắt buộc → [[MSG:required]]."
+                  - "Không thu thập CCCD khi đăng ký: số CCCD được bổ sung khi bệnh nhân đến khám ([[UC:supplement-national-id]]). Không thu số BHYT ở giai đoạn này (tối thiểu hóa dữ liệu)."
               - step: "(5)"
                 key: duplicate-check
                 title: Quy tắc phát hiện trùng hồ sơ
@@ -164,8 +164,50 @@ modules:
                 lines:
                   - "Chỉ check-in lịch hẹn “booked” có ngày khám = <Hôm nay>; sớm hơn 60 phút so với giờ khám vẫn được phép. Khác → [[MSG:invalid-state]]."
                   - "Phát “shp.scheduling.appointment-checked-in.v1”; clinical tạo lần khám “arrived” gắn với lịch hẹn và bác sĩ; hiển thị [[MSG:checked-in]]."
+                  - "Nếu hồ sơ chưa có số CCCD, giao diện nhắc điều dưỡng bổ sung ([[UC:supplement-national-id]]); không bắt buộc, có thể bỏ qua và vẫn check-in."
             acceptance:
               - ["AC-CI.1", "Given lịch hẹn ngày mai, When check-in hôm nay, Then bị từ chối."]
+
+          - key: supplement-national-id
+            name: Bổ sung số căn cước công dân khi đến khám
+            actors: [nurse]
+            trace: [UC-01, "API C5", NFR-SEC10]
+            objective: Ghi số CCCD của bệnh nhân vào hồ sơ khi bệnh nhân đến khám, sau khi đối chiếu giấy tờ gốc. Không bắt buộc để được khám.
+            trigger: Điều dưỡng bấm “Bổ sung CCCD” trên [[SCR:queue]] hoặc trong lúc check-in ([[UC:check-in]]).
+            pre: ["Bệnh nhân có mặt và đưa giấy tờ gốc; hồ sơ “active” chưa có số CCCD."]
+            post: ["Số CCCD được lưu mã hóa vào hồ sơ; có bản ghi đồng ý và bản ghi audit."]
+            lanes: [Điều dưỡng, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Đối chiếu giấy tờ gốc, nhập số\nCCCD, tích bệnh nhân đồng ý"}
+              - {n: 2, lane: 1, kind: decision, text: "Đúng định dạng\nvà có đồng ý?", branches: [{to: 3, label: Có}, {to: 1, label: Không}]}
+              - {n: 3, lane: 1, kind: decision, text: "Đã thuộc hồ sơ\nkhác?", branches: [{to: 4, label: Không}, {to: 5, label: Có}]}
+              - {n: 4, lane: 1, text: "Lưu mã hóa, ghi đồng ý\nvà audit", end: true}
+              - {n: 5, lane: 1, text: "Không lưu, báo nghi trùng,\ngợi ý gộp hồ sơ", end: true}
+            rules:
+              - step: "(2)"
+                key: national-id-validate
+                title: Quy tắc kiểm tra số CCCD
+                lines:
+                  - "[Số CCCD] gồm đúng 12 chữ số. Không nhận số CMND 9 số cũ ở giai đoạn này. Sai định dạng → [[MSG:invalid-national-id]]."
+                  - "Theo cấu trúc số CCCD, chữ số thứ 4 cho biết giới tính và thế kỷ sinh, chữ số thứ 5 và 6 là hai số cuối của năm sinh. Nếu không khớp [Giới tính] hoặc [Ngày sinh] của hồ sơ, hệ thống cảnh báo và chỉ cho lưu khi điều dưỡng ghi lý do."
+                  - "Bắt buộc tích “Bệnh nhân đồng ý cung cấp số CCCD để xác minh danh tính”. Lưu bản ghi đồng ý (mục đích, thời điểm, người ghi)."
+              - step: "(3)"
+                key: national-id-duplicate
+                title: Quy tắc phát hiện trùng theo CCCD
+                lines:
+                  - "Nếu số CCCD đã gắn với hồ sơ “active” khác → không lưu, hiển thị [[MSG:national-id-duplicate]] và gợi ý gộp hồ sơ ([[UC:merge-patient]]). Việc so khớp dùng giá trị băm, không so số rõ."
+              - step: "(4)"
+                key: national-id-storage
+                title: Quy tắc lưu và hiển thị số CCCD
+                lines:
+                  - "Lưu mã hóa (AES-256-GCM, khóa trong Key Vault) cùng giá trị băm HMAC-SHA-256 có khóa riêng để kiểm trùng mà không lưu số rõ."
+                  - "Mặc định hiển thị che, chỉ 4 số cuối. Điều dưỡng bấm “Hiện số” mới thấy đủ số và mỗi lần đều ghi audit; bệnh nhân xem được số của chính mình; bác sĩ, DPO và quản trị viên chỉ thấy bản che."
+                  - "Số CCCD không xuất hiện trong log, sự kiện, kết quả tìm kiếm, tin nhắn thông báo và văn bản gửi cho AI."
+            acceptance:
+              - ["AC-ID.1", "Given số CCCD hợp lệ và đã tích đồng ý, When lưu, Then số được lưu mã hóa và hiển thị che, chỉ 4 số cuối."]
+              - ["AC-ID.2", "Given số CCCD đã thuộc hồ sơ “active” khác, When lưu, Then không lưu và báo nghi trùng, không tiết lộ thông tin hồ sơ kia cho người không có quyền."]
+              - ["AC-ID.3", "Given sai định dạng hoặc chưa tích đồng ý, When lưu, Then bị từ chối."]
+              - ["AC-ID.4", "Given số CCCD đã lưu, When tìm kiếm, phát sự kiện hoặc ghi log, Then số không xuất hiện ở các nơi đó."]
 
       - name: Cổng nội bộ – Khám bệnh
         use_cases:

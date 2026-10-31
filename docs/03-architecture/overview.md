@@ -98,7 +98,7 @@ flowchart LR
 ```
 
 Ghi chú về sơ đồ:
-- **Giao diện web** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` chỉ phục vụ file tĩnh (SPA). Trình duyệt tải SPA từ `/`, đăng nhập OIDC (PKCE) với Keycloak (cùng giao diện đăng ký bằng số điện thoại ở mọi môi trường),
+- **Giao diện web** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` chỉ phục vụ file tĩnh (SPA). Trình duyệt tải SPA từ `/`, đăng nhập OIDC (PKCE) với Keycloak (cùng giao diện đăng ký bằng số điện thoại hoặc email ở mọi môi trường),
   rồi gọi API cùng origin qua `/fhir`, `/api` → gateway (không cần CORS). Menu theo vai trò chỉ để điều hướng; quyền thật do backend kiểm.
 - **Ranh giới tin cậy.** Mọi request từ ngoài đi qua WAF (cloud), Ingress, rồi gateway.
   - Gateway kiểm token ở biên.

@@ -116,7 +116,7 @@ Bác sĩ có `care` với bệnh nhân khi tồn tại **một nguồn còn hi�
 ## 8. Quản lý danh tính
 
 - Nhân viên: tài khoản do Admin mời qua email trong Keycloak, bắt buộc TOTP hoặc WebAuthn (không dùng SMS làm yếu tố thứ hai); `identity_links` liên kết `sub` ↔ `Practitioner`, kiểm tra khớp `PractitionerRole.code` với role (`doctor`↔`doctor`, `nurse`↔`nurse`).
-- Bệnh nhân: tự đăng ký trên trang Keycloak bằng số điện thoại, xác minh bằng mã OTP SMS (role `patient` mặc định), rồi liên kết `Patient` qua `POST /registration` (C1).
+- Bệnh nhân: tự đăng ký trên trang Keycloak bằng số điện thoại (OTP SMS) hoặc email (role `patient` mặc định), rồi liên kết `Patient` qua `POST /registration` (C1).
 - Khóa: `PUT /admin/users/{sub} {disabled:true}` → ghi `identity_links.disabled`; tối đa 60 giây (hết cache) mọi service từ chối; token còn hạn (≤ 15 phút) vẫn bị từ chối vì lớp 3 kiểm `disabled`.
 - Đổi role: có hiệu lực ở token kế tiếp (≤ 15 phút); khóa thì ngay (60 giây) như trên.
 

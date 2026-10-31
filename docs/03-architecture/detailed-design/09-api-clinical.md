@@ -58,7 +58,7 @@ Nurse tạo cho bệnh nhân chưa có tài khoản. Cùng kiểm tra trùng; Nu
 
 ### C5 `PUT /fhir/Patient/{id}`
 `If-Match` bắt buộc. Patient chỉ được sửa `telecom`, `address`, `contact`, `communication`; sửa `name`, `birthDate`,
-`gender`, `identifier` → 403. Mỗi lần sửa tạo version mới trong `resource_history` (AC-01.3). 412 nếu version cũ.
+`gender`, `identifier` → 403. **Số CCCD** (`identifier[cccd]`) chỉ Nurse đặt được, kèm `extension` đồng ý và (khi lệch giới tính hoặc năm sinh) lý do; 422 `duplicate-patient-suspected` nếu đã thuộc hồ sơ khác (so bằng băm), 400 `validation-failed` nếu không đủ 12 chữ số. Phản hồi chỉ trả bản che; xem đủ số cần `?reveal=national-id` và phát audit mỗi lần. Mỗi lần sửa tạo version mới trong `resource_history` (AC-01.3). 412 nếu version cũ.
 
 ### C6 `POST /fhir/Patient/_search` (form-urlencoded)
 | Tham số | Ghi chú |

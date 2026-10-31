@@ -24,7 +24,7 @@ sections:
       header: ["Hạng mục", "Trong phạm vi", "Ngoài phạm vi / giới hạn"]
       widths: [3.6, 6.8, 6.1]
       rows:
-        - ["Chức năng", "52 use case của SRS (6 module) và 90 tiêu chí nghiệm thu Given/When/Then", "Thanh toán, nội trú, kê đơn (ngoài phạm vi sản phẩm)"]
+        - ["Chức năng", "53 use case của SRS (6 module) và 95 tiêu chí nghiệm thu Given/When/Then", "Thanh toán, nội trú, kê đơn (ngoài phạm vi sản phẩm)"]
         - ["Phi chức năng", "62 NFR: hiệu năng, mở rộng, sẵn sàng, bảo mật và quyền riêng tư, vận hành, triển khai, chi phí, chất lượng AI, tương thích, trợ năng", "Chi phí thực tế chỉ đo khi có Azure"]
         - ["Bảo mật", "28 test bảo mật bổ sung theo OWASP ASVS mức 2, OWASP API Top 10, OWASP LLM Top 10", "Kiểm thử xâm nhập bởi bên thứ ba: khuyến nghị trước khi dùng dữ liệu thật"]
         - ["Thành phần", "8 service, gateway, web, thư viện dùng chung, contracts (OpenAPI, sự kiện, phân quyền), hạ tầng dưới dạng code, pipeline", "Dịch vụ do nhà cung cấp quản lý (Azure, Entra ID, LLM) chỉ kiểm tích hợp, không kiểm bên trong"]

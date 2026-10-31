@@ -10,13 +10,14 @@ screens:
       - key: register
         name: Đăng ký tài khoản
         purpose: Bệnh nhân mới nhập thông tin hành chính và đồng ý điều khoản xử lý dữ liệu.
-        access: "Sau khi tạo tài khoản bằng số điện thoại và xác minh mã OTP, đăng nhập lần đầu khi chưa có hồ sơ."
+        access: "Sau khi tạo tài khoản bằng số điện thoại hoặc email và xác minh, đăng nhập lần đầu khi chưa có hồ sơ."
         uc: [register, manage-consent]
         components:
           - ["Họ và tên", "Textbox", "Có", "Có", "N/A", "2–100 ký tự."]
           - ["Ngày sinh", "Date picker", "Có", "Có", "N/A", "Không ở tương lai."]
           - ["Giới tính", "Dropdown", "Có", "Có", "N/A", "Nam, Nữ, Khác, Không rõ."]
-          - ["Số điện thoại", "Label", "Không", "N/A", "Từ tài khoản đã xác minh OTP", "Không sửa; muốn đổi phải xác minh OTP lại."]
+          - ["Số điện thoại", "Textbox", "Có", "Có", "Từ tài khoản nếu đăng ký bằng SĐT", "Lấy từ tài khoản thì không sửa; nhập mới (tài khoản email) phải xác minh mã OTP."]
+          - ["Mã OTP", "Textbox", "Có*", "Có*", "Trống", "*Chỉ hiện khi số điện thoại cần xác minh; 6 chữ số, hết hạn sau 5 phút."]
           - ["Email", "Label", "Không", "N/A", "Từ tài khoản (nếu có)", "Không sửa."]
           - ["Đồng ý điều khoản xử lý dữ liệu", "Checkbox", "Có", "Có", "Không tích", "Bắt buộc tích mới gửi được; liên kết xem toàn văn điều khoản."]
           - ["Cho phép xử lý dữ liệu bằng AI", "Checkbox", "Có", "Không", "Không tích", "Tùy chọn riêng, có giải thích."]
@@ -106,13 +107,14 @@ screens:
         name: Hàng đợi hôm nay
         purpose: Theo dõi lịch hẹn trong ngày, check-in, hủy/đổi thay bệnh nhân.
         access: "Tiếp đón → “Hàng đợi hôm nay”."
-        uc: [check-in, book, cancel, reschedule]
+        uc: [check-in, supplement-national-id, book, cancel, reschedule]
         data_source: "Lịch hẹn có ngày khám = <Hôm nay> của các bác sĩ thuộc khoa người dùng được phân công."
         sorting: "[Bắt đầu] tăng dần."
         components:
           - ["Giờ, bệnh nhân, bác sĩ, trạng thái", "Grid", "Không", "N/A", "N/A", "Tên bệnh nhân + năm sinh; SĐT che 4 số giữa."]
           - ["Nguy cơ không đến", "Badge", "Không", "N/A", "N/A", "Hiển thị khi nguy cơ ≥ ngưỡng; không hiển thị con số với bệnh nhân."]
           - ["Check-in", "Button", "N/A", "N/A", "N/A", "Bật khi “booked” và ngày khám hôm nay."]
+          - ["Bổ sung CCCD", "Button", "N/A", "N/A", "N/A", "Hiện khi hồ sơ chưa có số CCCD; mở hộp nhập số CCCD và ô đồng ý ([[UC:supplement-national-id]])."]
           - ["Đặt lịch thay", "Button", "N/A", "N/A", "N/A", "Mở [[SCR:find-doctor]] ở chế độ Điều dưỡng."]
       - key: schedule
         name: Lịch làm việc và slot

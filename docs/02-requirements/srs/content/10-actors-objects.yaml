@@ -49,7 +49,7 @@ external_systems:
     name: Nhà cung cấp định danh (Keycloak)
     description: >-
       Xác thực OIDC, MFA, cấp token có vai trò, chạy trong cụm của hệ thống ở mọi môi trường. Đăng ký bệnh nhân bằng số điện
-      thoại có mã OTP. Chỉ nhà cung cấp định danh lưu mật khẩu (băm chậm có salt); các service nghiệp vụ không bao giờ nhận hay lưu mật khẩu.
+      thoại (mã OTP) hoặc email (mã xác minh). Chỉ nhà cung cấp định danh lưu mật khẩu (băm chậm có salt); các service nghiệp vụ không bao giờ nhận hay lưu mật khẩu.
   - key: messaging
     name: Nhà cung cấp gửi tin (email, SMS, push)
     description: Gửi nhắc lịch và thông báo. Nội dung không chứa chẩn đoán hay kết quả khám.
@@ -79,6 +79,7 @@ objects:
       - {name: Giới tính, example: Nữ, input: Input in a list, note: "male, female, other, unknown"}
       - {name: Số điện thoại, example: "0912 345 678", input: Free Input, note: Dùng kiểm tra trùng hồ sơ cùng ngày sinh}
       - {name: Email, example: lan.nguyen@example.org, input: Free Input}
+      - {name: Số căn cước công dân, example: "000123456789", input: Free Input, note: "Không bắt buộc; điều dưỡng bổ sung khi bệnh nhân đến khám; lưu mã hóa, hiển thị che"}
       - {name: Địa chỉ, example: "12 Lê Lợi, Huế", input: Free Input}
       - {name: Trạng thái, example: active, input: System generated, note: "active, merged (đã gộp vào hồ sơ khác)"}
   - key: practitioner

@@ -143,22 +143,23 @@ Tổng: **129 task, 448 giờ**. Đã xong: **19**, làm một phần: **23** (�
 | ☐ | IAC-19 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values | 4 | IAC-05 | US-055 |
 | ☐ | IAM-01 | Keycloak trên cụm (ADR-0017) | Chart + GitOps app, 2 replica prod, realm shp as code (client shp-web PKCE, audience shp-api, roles), băm Argon2id, chính sách mật khẩu và khóa chống dò, console quản trị không ra Internet, sao lưu DB và thử khôi phục | 8 | IAC-16, GOP-03 | US-001, US-008, US-066 |
 | ☐ | IAM-02 | Tài khoản dịch vụ và token exchange | Client credentials cho /internal theo từng service, token exchange RFC 8693 cho AI; chốt cách xác thực client (assertion bằng token ServiceAccount hoặc secret xoay 90 ngày); test với Keycloak thật | 6 | IAM-01, SHR-20 | US-053, US-066 |
-| ☐ | IAM-03 | Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt | Theme Keycloak vi/en cùng hệ thiết kế SHP; đăng ký bằng SĐT, điều khoản, đạt WCAG AA; không lộ tài khoản đã tồn tại | 6 | IAM-01 | US-001, US-008 |
+| ☐ | IAM-03 | Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt | Theme Keycloak vi/en cùng hệ thiết kế SHP; đăng ký bằng SĐT hoặc email, điều khoản, đạt WCAG AA; không lộ tài khoản đã tồn tại | 6 | IAM-01 | US-001, US-008 |
 | ☐ | OBS-01 | Dashboard RED chuẩn cho mọi service | Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLO + cảnh báo burn rate | SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate | 3 | OBS-01 | ENABLER |
 
-## Tuần 8 — 41 giờ
+## Tuần 8 — 46 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ARC-17 | Sprint review + planning S5 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | ENV-03 | Workflow cost-guard | Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy) | 2 | IAC-04 | US-070 |
 | ☐ | ENV-04 | Runbook vòng đời môi trường | Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp | 2 | ENV-01, ENV-02 | US-070 |
-| ☐ | IAM-04 | Authenticator mã OTP qua SMS (SPI Keycloak) | Xác minh sở hữu SĐT lúc đăng ký và khi đổi SĐT; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần | 8 | IAM-01 | US-001 |
+| ☐ | IAM-04 | Authenticator mã OTP qua SMS (SPI Keycloak) | Xác minh sở hữu SĐT lúc đăng ký (và ở bước điền hồ sơ với tài khoản email) và khi đổi SĐT; email xác minh bằng mã gửi qua email; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần | 8 | IAM-01 | US-001 |
 | ☐ | IAM-05 | Sự kiện danh tính về audit | Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP | 4 | IAM-01, SHR-09 | US-008, US-031 |
 | ☐ | MLO-01 | Pipeline huấn luyện ML trong CI + canary deploy model | Chạy khi dữ liệu/code đổi; artifact model; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | Cùng image + dataset hash + seed cho cùng model; image được ký | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback | Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường | 6 | GOP-04, SCF-07, ML-25 | US-073 |
+| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
 | ☐ | MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại | 3 | ML-10, OBS-01 | US-065 |
 | ☐ | OBS-03 | Cảnh báo DLQ và lỗi pipeline | Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded | 2 | OBS-01 | ENABLER |
 | ☐ | PRD-10 | Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x) | Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên UAT (cỡ prod) | 4 | SCH-14 | US-068 |
@@ -170,12 +171,11 @@ Tổng: **129 task, 448 giờ**. Đã xong: **19**, làm một phần: **23** (�
 |---|---|---|---|---|---|---|
 | ☐ | ARC-18 | Sprint review + planning S6 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 
-## Tuần 10 — 28 giờ
+## Tuần 10 — 23 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☐ | ENV-06 | Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ | Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập | 4 | ENV-01, ENV-02, ENV-05 | US-070 |
-| ☐ | MLO-04 | Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit | Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng | 5 | ML-23, GOP-10 | US-074 |
 | ☐ | PRD-01 | Load test 1x/5x/10x + báo cáo | Chạy trên UAT ephemeral (cỡ prod); so với NFR-P/S | 6 | PRD-10, ENV-01 | US-068 |
 | ☐ | PRD-02 | Failure test | Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả | 6 | ENV-01 | US-069 |
 | ☐ | PRD-03 | Diễn tập backup/restore | PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO | 4 | ENV-01 | US-067 |

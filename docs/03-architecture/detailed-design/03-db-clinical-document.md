@@ -33,7 +33,7 @@ user DB riêng, chỉ có quyền trên database của mình.
 
 | Collection | `search` (trường chuẩn hóa) | Index | Shard key |
 |---|---|---|---|
-| `patients` | `mrn`, `nameTokens[]` (chữ thường, bỏ dấu), `phone` (E.164), `birthDate`, `gender`, `active` | `{search.mrn:1}` **unique** · `{search.phone:1, search.birthDate:1}` (chống trùng AC-01.2) · `{search.nameTokens:1, search.birthDate:1}` | `{_id: "hashed"}` |
+| `patients` | `mrn`, `nameTokens[]` (chữ thường, bỏ dấu), `phone` (E.164), `birthDate`, `gender`, `active`, `nationalIdEnc` (AES-256-GCM, tùy chọn), `nationalIdLast4` | `{search.mrn:1}` **unique** · `{search.phone:1, search.birthDate:1}` (chống trùng AC-01.2) · `{search.nationalIdHash:1}` **unique, partial** (chỉ khi có; HMAC-SHA-256, không lưu số rõ) · `{search.nameTokens:1, search.birthDate:1}` | `{_id: "hashed"}` |
 | `practitioners` | `staffCode`, `nameTokens[]`, `active` | `{search.staffCode:1}` **unique** · `{search.nameTokens:1}` | không (nhỏ) |
 | `practitioner_roles` | `practitionerId`, `specialty`, `code`, `active` | `{search.practitionerId:1}` · `{search.specialty:1, search.code:1, search.active:1}` | không |
 | `encounters` | `status`, `practitionerId`, `appointmentId`, `periodStart`, `periodEnd`, `serviceType` | `{patientId:1, search.periodStart:-1}` · `{search.practitionerId:1, search.periodStart:-1}` · `{search.appointmentId:1}` **unique** (tạo Encounter từ event là idempotent) | `{patientId: "hashed"}` |
