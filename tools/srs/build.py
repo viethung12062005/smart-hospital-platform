@@ -24,6 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 SRC = os.path.join(ROOT, "docs", "02-requirements", "srs", "content")
 DIST = os.path.join(ROOT, "docs", "02-requirements", "srs", "dist")
+MOCKUPS = os.path.join(ROOT, "docs", "02-requirements", "srs", "mockups")
 sys.path.insert(0, HERE)
 
 import drawio  # noqa: E402
@@ -163,6 +164,14 @@ class Model:
             for k in row.get("uc", []):
                 if k not in keys:
                     self.errors.append(f"permission row '{row['function']}' refers to unknown use case '{k}'")
+        screen_keys = {sc["key"] for portal in self["screens"] for sc in portal["items"]}
+        wf = self.data.get("wireframes", {})
+        shots = {os.path.splitext(f)[0] for f in os.listdir(MOCKUPS)} if os.path.isdir(MOCKUPS) else set()
+        for k in wf:
+            if k not in screen_keys:
+                self.errors.append(f"wireframe '{k}' is not a screen key")
+        for k in sorted(screen_keys - set(wf) - shots):
+            self.errors.append(f"screen '{k}' has neither a screenshot (srs/mockups/{k}.png) nor a wireframe")
         return sorted(set(self.errors))
 
 
@@ -223,7 +232,17 @@ def build_diagrams(m: Model, png: bool, only: list[str] | None = None) -> dict[s
             families.setdefault("19-activity-common", []).append(
                 (f"act-{c['key']}", f"{m.num[('CMUC', c['key'])]} {c['name']}"[:60], drawio.activity(c["lanes"], c["steps"])))
 
+    import wireframe
+    screen_name = {sc["key"]: sc["name"] for portal in m["screens"] for sc in portal["items"]}
+    for key, spec in m.data.get("wireframes", {}).items():
+        families.setdefault("06-wireframes", []).append(
+            (f"mock-{key}", screen_name[key][:60], wireframe.wireframe(spec["user"], spec["nav"], spec["active"], spec["blocks"])))
+
     pngs = {}
+    if os.path.isdir(MOCKUPS):                     # real screenshots of the running web app (mock data)
+        for f in os.listdir(MOCKUPS):
+            if f.endswith(".png"):
+                pngs[f"mock-{os.path.splitext(f)[0]}"] = os.path.join(MOCKUPS, f)
     for fname, pages in families.items():
         path = os.path.join(out, f"{fname}.drawio")
         drawio.write_file(path, [(name, xml) for _, name, xml in pages])

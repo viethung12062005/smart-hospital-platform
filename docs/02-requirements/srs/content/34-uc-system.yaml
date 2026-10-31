@@ -29,7 +29,7 @@ modules:
                 title: Quy tắc mốc nhắc
                 lines:
                   - "Tạo nhắc T-24h và T-2h; mốc đã qua thì bỏ qua (đặt lịch sát giờ chỉ còn T-2h hoặc không nhắc)."
-                  - "Nguy cơ không đến khám ≥ ngưỡng (mặc định 0,35) thì thêm nhắc T-6h; thiếu điểm nguy cơ (ML lỗi) thì vẫn tạo T-24h, T-2h (AC-15.1)."
+                  - "Nguy cơ không đến khám ≥ ngưỡng thì thêm nhắc T-6h. Ngưỡng mặc định 0,30, cấu hình được, được hiệu chỉnh trên dữ liệu thật sau 4 tuần (mục “Cơ sở đặt ngưỡng”); thiếu điểm nguy cơ (ML lỗi) thì vẫn tạo T-24h, T-2h (AC-15.1)."
                   - "Đổi lịch: hủy các nhắc của lịch cũ, tạo nhắc cho lịch mới."
                   - "Mỗi lần nhắc duy nhất theo (mã lịch hẹn, loại nhắc)."
             acceptance:
@@ -202,7 +202,7 @@ modules:
             name: Xóa dữ liệu hết thời hạn lưu trữ
             type: Other
             actors: [system]
-            trace: [BR-11, NFR-SEC, "Nghị định 13/2023 – lưu trữ có thời hạn"]
+            trace: [BR-11, NFR-SEC, "Luật BVDLCN 91/2025/QH15 – lưu trữ có thời hạn"]
             objective: Xóa tự động dữ liệu tạm có thời hạn lưu ngắn theo chính sách lưu trữ.
             trigger: Job hằng ngày lúc 02:00.
             pre: ["N/A"]
@@ -217,6 +217,6 @@ modules:
                 title: Quy tắc thời hạn lưu trữ
                 lines:
                   - "Hội thoại trợ lý: 30 ngày. Hội thoại chatbot và hành động chờ: 7 ngày. Tệp xuất audit và gói dữ liệu bệnh nhân: 24 giờ. Lần nhắc đã gửi: 90 ngày. Bản ghi chống trùng (inbox, idempotency): 7 ngày."
-                  - "Hồ sơ bệnh án, lần khám, tài liệu lâm sàng: lưu dài hạn theo quy định (giả định 10 năm, BR-11), không bị job này xóa. Audit: 90 ngày tra cứu nhanh + 2 năm lưu trữ; bản gốc WORM theo chính sách khóa."
+                  - "Hồ sơ bệnh án, lần khám, tài liệu lâm sàng: job này không bao giờ xóa. Thời hạn lưu theo từng loại hồ sơ cấu hình được; mặc định tối thiểu 10 năm, loại hồ sơ có thời hạn dài hơn theo pháp luật về lưu trữ (xem mục “Cơ sở đặt ngưỡng”, cần xác minh với văn bản chính thức trước khi dùng dữ liệu thật). Audit: 90 ngày tra cứu nhanh + lưu trữ bất biến tối thiểu 10 năm cùng thời hạn hồ sơ mà nó chứng minh truy cập (thay cho 2 năm của bản v0.9); bản gốc WORM theo chính sách khóa."
             acceptance:
               - ["AC-PG.1", "Given hội thoại tạo 31 ngày trước, When job chạy, Then hội thoại bị xóa; Given lần khám 31 ngày trước, Then không bị xóa."]

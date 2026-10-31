@@ -3,7 +3,7 @@ modules:
   - key: privacy-admin
     name: Quyền riêng tư, audit và quản trị
     intro: >-
-      Quyền của bệnh nhân với dữ liệu của mình (Nghị định 13/2023/NĐ-CP), nhật ký truy cập bất biến, quản lý tài khoản
+      Quyền của bệnh nhân với dữ liệu của mình (Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15), nhật ký truy cập bất biến, quản lý tài khoản
       nhân viên, xử lý thông báo lỗi, sao lưu và khôi phục.
     sections:
       - name: Cổng bệnh nhân – Quyền riêng tư và thông báo
@@ -12,7 +12,7 @@ modules:
             name: Xem ai đã truy cập hồ sơ của tôi
             type: Basic
             actors: [patient]
-            trace: [UC-09, AC-09.1, NFR-SEC5, "Nghị định 13/2023 – quyền được biết"]
+            trace: [UC-09, AC-09.1, NFR-SEC5, "Luật BVDLCN 91/2025/QH15 – quyền được biết"]
             objective: Cho bệnh nhân biết ai (vai trò, khoa), khi nào, với mục đích gì đã truy cập hồ sơ của mình.
             trigger: Bệnh nhân mở [[SCR:my-access-log]].
             pre: ["Bệnh nhân đã đăng nhập."]
@@ -34,7 +34,7 @@ modules:
           - key: manage-consent
             name: Quản lý đồng ý xử lý dữ liệu
             actors: [patient]
-            trace: [NFR-SEC, "Nghị định 13/2023 – đồng ý và rút đồng ý", UC-12, UC-13, UC-15]
+            trace: [NFR-SEC, "Luật BVDLCN 91/2025/QH15 – đồng ý và rút đồng ý", UC-12, UC-13, UC-15]
             objective: Bệnh nhân đồng ý hoặc rút đồng ý cho việc xử lý dữ liệu sức khỏe bằng AI (tóm tắt, trích xuất, dự đoán).
             trigger: Bệnh nhân bật/tắt tùy chọn trên [[SCR:privacy]].
             pre: ["Bệnh nhân đã đăng nhập."]
@@ -62,7 +62,7 @@ modules:
           - key: export-my-data
             name: Yêu cầu trích xuất dữ liệu cá nhân
             actors: [patient]
-            trace: ["Nghị định 13/2023 – quyền truy cập, quyền yêu cầu cung cấp dữ liệu"]
+            trace: ["Luật BVDLCN 91/2025/QH15 – quyền truy cập, quyền yêu cầu cung cấp dữ liệu"]
             objective: Bệnh nhân yêu cầu nhận bản sao dữ liệu cá nhân và dữ liệu sức khỏe của mình.
             trigger: Bệnh nhân bấm “Yêu cầu bản sao dữ liệu” trên [[SCR:privacy]].
             pre: ["Bệnh nhân đã đăng nhập và xác thực lại trong 15 phút gần nhất."]
@@ -158,7 +158,7 @@ modules:
           - key: process-data-request
             name: Xử lý yêu cầu của chủ thể dữ liệu
             actors: [dpo]
-            trace: ["Nghị định 13/2023", UC-17]
+            trace: ["Luật BVDLCN 91/2025/QH15", UC-17]
             objective: DPO xác minh và xử lý yêu cầu cung cấp bản sao dữ liệu của bệnh nhân.
             trigger: DPO mở yêu cầu trên [[SCR:audit]] (tab “Yêu cầu của bệnh nhân”).
             pre: ["Có yêu cầu đang chờ xử lý."]

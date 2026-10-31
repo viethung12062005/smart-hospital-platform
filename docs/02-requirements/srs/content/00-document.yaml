@@ -2,7 +2,7 @@
 document:
   system: Smart Hospital Platform
   subtitle: Nền tảng đặt lịch khám, hồ sơ lâm sàng, tài liệu bệnh nhân và trợ lý AI cho bệnh viện
-  version: "0.9"
+  version: "0.95"
   team: Nhóm 12
   prepared_by: Business Analyst – Nhóm 12
   date_text: Tháng 10/2026
@@ -18,6 +18,7 @@ document:
   history:
     - {date: "26/10/2026", version: "0.5", author: "BA", change: "Tài liệu yêu cầu Pha 2 (functional-requirements.md, non-functional-requirements.md, user-stories.md) – gate G2"}
     - {date: "30/10/2026", version: "0.9", author: "BA", change: "Chuyển toàn bộ yêu cầu sang mẫu SRS: use case chi tiết có activity diagram và quy tắc nghiệp vụ, ma trận phân quyền, site map, danh sách màn hình, NFR có cách đo, danh sách thông điệp và mẫu thông báo. Bản để review nội bộ."}
+    - {date: "31/10/2026", version: "0.95", author: "BA", change: "Thêm Phụ lục A: cơ sở đặt ngưỡng và căn cứ pháp lý (Luật BVDLCN 91/2025/QH15, Luật Khám bệnh chữa bệnh 2023, NIST SP 800-63B-4, nghiên cứu về nhắc lịch và dự đoán no-show). Đổi truy cập khẩn cấp từ chặn cứng sang leo thang; đặt lại ngưỡng no-show 0,30, phiên làm việc, thời hạn lưu audit. Thêm mockup cho 22 màn hình (7 ảnh chụp từ giao diện web, 15 wireframe)."}
     - {date: "", version: "1.0", author: "", change: "Bản chính thức sau review (baseline). Mọi thay đổi sau đó đi qua yêu cầu thay đổi."}
 
 introduction:
@@ -88,4 +89,8 @@ introduction:
     - ["Thiết kế chi tiết", "docs/03-architecture/detailed-design/", "Mô hình dữ liệu, API từng service, danh mục sự kiện, phân quyền chi tiết"]
     - ["Hợp đồng API", "contracts/openapi/*.yaml", "OpenAPI 3 của 7 service"]
     - ["HL7 FHIR R4", "https://hl7.org/fhir/R4/", "Chuẩn tài nguyên Patient, Appointment, Slot, Encounter, Observation, DocumentReference…"]
-    - ["Luật/Nghị định bảo vệ dữ liệu cá nhân", "Nghị định 13/2023/NĐ-CP", "Dữ liệu sức khỏe là dữ liệu cá nhân nhạy cảm – cơ sở cho audit, DPO, che PII"]
+    - ["Luật Bảo vệ dữ liệu cá nhân", "Luật số 91/2025/QH15, hiệu lực 01/01/2026", "Dữ liệu sức khỏe là dữ liệu cá nhân nhạy cảm – cơ sở cho đồng ý, audit, DPO, che PII, thông báo vi phạm 72 giờ (Điều 23), chuyển dữ liệu ra nước ngoài (Điều 20), đánh giá tác động (Điều 21–22), AI và điện toán đám mây (Điều 30), thông tin sức khỏe (Điều 26)"]
+    - ["Nghị định hướng dẫn", "Nghị định 356/2025/NĐ-CP", "Hướng dẫn thi hành Luật 91/2025/QH15"]
+    - ["Luật Khám bệnh, chữa bệnh", "Luật 2023, Điều 69", "Hồ sơ bệnh án giấy hoặc điện tử có giá trị pháp lý như nhau; lưu trữ theo pháp luật về lưu trữ"]
+    - ["NIST SP 800-63B-4", "https://pages.nist.gov/800-63-4/sp800-63b/aal", "Mức bảo đảm xác thực AAL2: thời gian đăng nhập lại và không thao tác"]
+    - ["Cơ sở đặt ngưỡng và căn cứ pháp lý", "Chương 9, mục “Cơ sở đặt ngưỡng và căn cứ pháp lý”", "Giá trị từng ngưỡng, nguồn, mức chắc chắn, câu hỏi mở cần xác minh"]

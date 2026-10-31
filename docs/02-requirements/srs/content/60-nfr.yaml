@@ -4,7 +4,7 @@ nfr:
     Chương này mô tả hệ thống phải hoạt động thế nào về hiệu năng, mở rộng, sẵn sàng, bảo mật, quyền riêng tư, vận hành,
     chi phí và chất lượng AI. Mỗi yêu cầu có chỉ số đo được, điều kiện đo và loại kiểm thử dùng để chứng minh; Kế hoạch
     kiểm thử truy vết từng mã NFR sang test case. Hệ thống xử lý dữ liệu sức khỏe – dữ liệu cá nhân nhạy cảm theo Nghị định
-    13/2023/NĐ-CP – nên nhóm bảo mật và quyền riêng tư có ưu tiên cao nhất: không phát hành nếu một NFR-SEC bất kỳ không đạt.
+    91/2025/QH15 (có hiệu lực từ 01/01/2026) – nên nhóm bảo mật và quyền riêng tư có ưu tiên cao nhất: không phát hành nếu một NFR-SEC bất kỳ không đạt.
   categories:
     - name: Hiệu năng
       intro: Đo trên môi trường UAT cỡ production, dữ liệu giả theo quy mô năm đầu (50.000 bệnh nhân), sau 5 phút làm nóng.
@@ -50,14 +50,14 @@ nfr:
         - {id: NFR-SEC11, title: Đồng ý xử lý dữ liệu, target: "Lưu đồng ý có phiên bản và thời điểm; rút đồng ý có hiệu lực ngay cho mọi xử lý AI", measure: "Test rút đồng ý rồi gọi tóm tắt/trích xuất/dự đoán", test: API}
         - {id: NFR-SEC12, title: Quyền chủ thể dữ liệu, target: "Bệnh nhân xem được lịch sử truy cập hồ sơ và yêu cầu bản sao dữ liệu; DPO xử lý có theo dõi thời hạn", measure: Test luồng end-to-end, test: E2E}
         - {id: NFR-SEC13, title: Không để lộ dữ liệu, target: "Không PII/PHI trong log, metric, trace, sự kiện, URL, thông báo lỗi; lỗi không lộ sự tồn tại hồ sơ (404)", measure: "Test quét log/sự kiện trong test tích hợp tìm mẫu PII; test 404 cho tài nguyên của người khác", test: "Integration, Security"}
-        - {id: NFR-SEC14, title: Phiên làm việc, target: "Nhân viên tự đăng xuất sau 15 phút không thao tác, bệnh nhân 30 phút; token không lưu localStorage", measure: Test E2E giao diện, test: E2E}
+        - {id: NFR-SEC14, title: Phiên làm việc, target: "Nhân viên tự đăng xuất sau 15 phút không thao tác, bệnh nhân 30 phút; đăng nhập lại tối đa sau 12 giờ (nhân viên) / 24 giờ (bệnh nhân); token không lưu localStorage", measure: "Test E2E giao diện. Chặt hơn mức tối đa của NIST SP 800-63B-4 mức AAL2 (không thao tác 1 giờ, tổng 24 giờ) vì máy dùng chung tại phòng khám", test: E2E}
         - {id: NFR-SEC15, title: Bảo vệ ứng dụng web, target: "CSP chặt, HSTS, chống clickjacking, cookie Secure/HttpOnly/SameSite; không có lỗi mức High theo OWASP ZAP baseline", measure: "ZAP baseline trên UAT trong pipeline", test: DAST}
         - {id: NFR-SEC16, title: Chống lạm dụng, target: "Giới hạn tốc độ theo người dùng; khóa tạm sau 5 lần đăng nhập sai; tìm kiếm bệnh nhân không liệt kê toàn bộ", measure: "Test 429; test điều kiện tìm tối thiểu", test: "API, Security"}
         - {id: NFR-SEC17, title: An toàn tệp tải lên, target: "Kiểm tra loại theo nội dung, ≤ 20 MB, quét mã độc trước khi dùng; tệp nhiễm bị cách ly", measure: "Test với EICAR, tệp đổi đuôi, tệp quá cỡ", test: "Integration, Security"}
         - {id: NFR-SEC18, title: Phân tách nhiệm vụ, target: "Quản trị viên/DPO không đọc dữ liệu lâm sàng; gán vai trò đặc quyền và khôi phục dữ liệu cần người thứ hai duyệt", measure: Test phân quyền + rà soát quy trình, test: "API, Review"}
         - {id: NFR-SEC19, title: Lưu trữ và xóa, target: "Thời hạn lưu theo bảng lưu trữ; dữ liệu tạm tự xóa đúng hạn; hồ sơ bệnh án lưu dài hạn", measure: Test job xóa dữ liệu hết hạn, test: Integration}
         - {id: NFR-SEC20, title: Ẩn danh dữ liệu phân tích/huấn luyện, target: "Dữ liệu huấn luyện ML và báo cáo không chứa định danh trực tiếp; chỉ dữ liệu của bệnh nhân còn đồng ý", measure: "Test kiểm tra schema tập huấn luyện", test: "Unit, Review"}
-        - {id: NFR-SEC21, title: Sự cố và chuyển dữ liệu ra nước ngoài, target: "Quy trình phát hiện và thông báo vi phạm dữ liệu trong 72 giờ; hồ sơ đánh giá tác động xử lý dữ liệu và chuyển dữ liệu ra nước ngoài (vùng cloud, nhà cung cấp LLM) trước khi dùng dữ liệu thật", measure: "Runbook sự cố + diễn tập; hồ sơ đánh giá tác động được duyệt", test: Review}
+        - {id: NFR-SEC21, title: Sự cố và chuyển dữ liệu ra nước ngoài, target: "Thông báo vi phạm cho cơ quan chuyên trách chậm nhất 72 giờ kể từ khi phát hiện (Điều 23 khoản 1 Luật 91/2025/QH15); hồ sơ đánh giá tác động xử lý dữ liệu (Điều 21, nộp trong 60 ngày kể từ lần xử lý đầu tiên, cập nhật 6 tháng một lần theo Điều 22) và hồ sơ đánh giá tác động chuyển dữ liệu ra nước ngoài (Điều 20: vùng cloud ngoài Việt Nam, nhà cung cấp LLM nước ngoài) trước khi dùng dữ liệu thật", measure: "Runbook sự cố + diễn tập đo thời gian từ phát hiện đến thông báo; hồ sơ đánh giá tác động được duyệt", test: Review}
     - name: Khả năng quan sát và vận hành
       items:
         - {id: NFR-O1, title: Tracing phân tán, target: "100% request có trace xuyên service", measure: Kiểm tra trace mẫu qua gateway → service → bus, test: Integration}
