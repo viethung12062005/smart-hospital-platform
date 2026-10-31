@@ -14,7 +14,7 @@ Các ADR khác (kiến trúc, dữ liệu, AI, CI/CD, môi trường) **giữ ng
 | Build | `dotnet` | **Maven** multi-module (một reactor: `libs/java/*` + 6 service Java), BOM tập trung ở `pom.xml` gốc; `ai`/`ml`: `pyproject` (không đổi) |
 | FHIR | Firely SDK | **HAPI FHIR structures R4** (`ca.uhn.hapi.fhir`) |
 | Gateway | YARP | **Spring Cloud Gateway** (server WebFlux) |
-| Xác thực | JwtBearer | **Spring Security OAuth2 Resource Server** (Entra ID / Keycloak) |
+| Xác thực | JwtBearer | **Spring Security OAuth2 Resource Server** (Keycloak, ADR-0017) |
 | PostgreSQL (scheduling) | Npgsql + Dapper | **JDBC (`JdbcClient`) + Flyway**, SQL tường minh |
 | MongoDB | MongoDB .NET driver | **Spring Data MongoDB** / driver đồng bộ |
 | Messaging | MassTransit (RabbitMQ / Service Bus) | **Spring Cloud Stream** (binder RabbitMQ local, Azure Service Bus cloud) |

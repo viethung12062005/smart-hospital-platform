@@ -10,14 +10,14 @@ screens:
       - key: register
         name: Đăng ký tài khoản
         purpose: Bệnh nhân mới nhập thông tin hành chính và đồng ý điều khoản xử lý dữ liệu.
-        access: "Đăng nhập lần đầu qua nhà cung cấp định danh khi chưa có hồ sơ."
+        access: "Sau khi tạo tài khoản bằng số điện thoại và xác minh mã OTP, đăng nhập lần đầu khi chưa có hồ sơ."
         uc: [register, manage-consent]
         components:
           - ["Họ và tên", "Textbox", "Có", "Có", "N/A", "2–100 ký tự."]
           - ["Ngày sinh", "Date picker", "Có", "Có", "N/A", "Không ở tương lai."]
           - ["Giới tính", "Dropdown", "Có", "Có", "N/A", "Nam, Nữ, Khác, Không rõ."]
-          - ["Số điện thoại", "Textbox", "Có", "Có", "N/A", "Định dạng Việt Nam."]
-          - ["Email", "Label", "Không", "N/A", "Từ nhà cung cấp định danh", "Không sửa."]
+          - ["Số điện thoại", "Label", "Không", "N/A", "Từ tài khoản đã xác minh OTP", "Không sửa; muốn đổi phải xác minh OTP lại."]
+          - ["Email", "Label", "Không", "N/A", "Từ tài khoản (nếu có)", "Không sửa."]
           - ["Đồng ý điều khoản xử lý dữ liệu", "Checkbox", "Có", "Có", "Không tích", "Bắt buộc tích mới gửi được; liên kết xem toàn văn điều khoản."]
           - ["Cho phép xử lý dữ liệu bằng AI", "Checkbox", "Có", "Không", "Không tích", "Tùy chọn riêng, có giải thích."]
           - ["Đăng ký", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:register]]."]

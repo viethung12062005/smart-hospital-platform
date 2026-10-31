@@ -39,7 +39,7 @@ integration:
     Hệ thống tích hợp các hệ thống bên ngoài sau. Mọi tích hợp dùng kết nối mã hóa, xác thực bằng danh tính được quản lý
     (không lưu mật khẩu trong code), và không gửi dữ liệu nhiều hơn mức cần thiết.
   rows:
-    - ["Nhà cung cấp định danh (Entra ID / Keycloak)", "Vào", "OIDC, Authorization Code + PKCE; token JWT có roles, fhirUser, amr", "Không đăng nhập được: hiển thị thông báo; không có chế độ đăng nhập dự phòng bỏ qua MFA."]
+    - ["Nhà cung cấp định danh (Keycloak)", "Vào", "OIDC, Authorization Code + PKCE; token JWT có roles, fhirUser, amr", "Không đăng nhập được: hiển thị thông báo; không có chế độ đăng nhập dự phòng bỏ qua MFA."]
     - ["Nhà cung cấp gửi tin", "Ra", "API HTTPS gửi email/SMS/push; nội dung theo mẫu thông báo, không có dữ liệu lâm sàng", "Thử lại 5 lần, kênh dự phòng, hàng lỗi + cảnh báo."]
     - ["Nhà cung cấp mô hình ngôn ngữ (DeepSeek, Gemini)", "Ra", "API HTTPS tương thích OpenAI; văn bản đã che định danh", "Chuỗi model dự phòng, mô hình nội bộ (Ollama), cuối cùng trả kết quả không dùng AI."]
     - ["Quét mã độc (Defender for Storage / ClamAV)", "Ra/Vào", "Sự kiện kết quả quét qua hàng đợi", "Chưa có kết quả quét thì tài liệu ở “pending-scan”, không dùng được."]

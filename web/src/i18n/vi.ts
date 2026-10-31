@@ -23,7 +23,7 @@ export const vi = {
     signIn: 'Đăng nhập',
     signOut: 'Đăng xuất',
     signInTitle: 'Đăng nhập hệ thống',
-    signInHint: 'Đăng nhập bằng tài khoản bệnh viện (Keycloak khi chạy local, Entra ID trên cloud).',
+    signInHint: 'Đăng nhập bằng số điện thoại hoặc tài khoản bệnh viện. Bệnh nhân mới: chọn Đăng ký ở trang kế tiếp.',
     mockHint: 'Chế độ dữ liệu giả: chọn một vai trò để vào thử, không cần máy chủ.',
     signingIn: 'Đang đăng nhập…',
     forbidden: 'Bạn không có quyền xem trang này.',

@@ -4,7 +4,7 @@ import { decodeJwtPayload, rolesFromClaims, type Role, type SessionUser } from '
 
 /**
  * Nguồn token duy nhất cho lớp gọi API. Hai chế độ:
- * - oidc: Authorization Code + PKCE với client shp-web (realm Keycloak local / Entra trên cloud);
+ * - oidc: Authorization Code + PKCE với client shp-web (realm Keycloak, giống nhau ở mọi môi trường);
  * - mock: người dùng giả chọn ở màn hình đăng nhập, token giả (MSW không kiểm chữ ký).
  */
 let manager: UserManager | undefined;
