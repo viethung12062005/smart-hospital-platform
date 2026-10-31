@@ -86,7 +86,7 @@ testcases:
   covers:
   - AC-VT.1
   srs_uc: record-vitals
-  srs_ref: UC 15
+  srs_ref: UC 16
   module: clinical
   level: api
   priority: P0
@@ -96,7 +96,7 @@ testcases:
   covers:
   - AC-VT.2
   srs_uc: record-vitals
-  srs_ref: UC 15
+  srs_ref: UC 16
   module: clinical
   level: api
   priority: P0
@@ -106,7 +106,7 @@ testcases:
   covers:
   - AC-04.1
   srs_uc: start-encounter
-  srs_ref: UC 16
+  srs_ref: UC 17
   module: clinical
   level: api
   priority: P0
@@ -116,7 +116,7 @@ testcases:
   covers:
   - AC-DX.1
   srs_uc: record-diagnosis
-  srs_ref: UC 17
+  srs_ref: UC 18
   module: clinical
   level: api
   priority: P1
@@ -126,7 +126,7 @@ testcases:
   covers:
   - AC-04.2
   srs_uc: finish-encounter
-  srs_ref: UC 18
+  srs_ref: UC 19
   module: clinical
   level: api
   priority: P0
@@ -136,7 +136,7 @@ testcases:
   covers:
   - AC-AD.1
   srs_uc: addendum
-  srs_ref: UC 19
+  srs_ref: UC 20
   module: clinical
   level: e2e
   priority: P1
@@ -147,7 +147,7 @@ testcases:
   covers:
   - AC-06.1
   srs_uc: search-patient
-  srs_ref: UC 20
+  srs_ref: UC 21
   module: clinical
   level: api
   priority: P1
@@ -157,7 +157,7 @@ testcases:
   covers:
   - AC-SP.1
   srs_uc: search-patient
-  srs_ref: UC 20
+  srs_ref: UC 21
   module: clinical
   level: api
   priority: P0
@@ -167,7 +167,7 @@ testcases:
   covers:
   - AC-06.2
   srs_uc: view-timeline
-  srs_ref: UC 21
+  srs_ref: UC 22
   module: clinical
   level: api
   priority: P0
@@ -177,7 +177,7 @@ testcases:
   covers:
   - AC-TL.1
   srs_uc: view-timeline
-  srs_ref: UC 21
+  srs_ref: UC 22
   module: clinical
   level: api
   priority: P0
@@ -187,7 +187,7 @@ testcases:
   covers:
   - AC-TL.2
   srs_uc: view-timeline
-  srs_ref: UC 21
+  srs_ref: UC 22
   module: clinical
   level: api
   priority: P0
@@ -197,7 +197,7 @@ testcases:
   covers:
   - AC-10.1
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 23
   module: clinical
   level: api
   priority: P0
@@ -207,7 +207,7 @@ testcases:
   covers:
   - AC-BG.1
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 23
   module: clinical
   level: api
   priority: P0
@@ -217,7 +217,7 @@ testcases:
   covers:
   - AC-BG.2
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 23
   module: clinical
   level: api
   priority: P0
@@ -227,7 +227,7 @@ testcases:
   covers:
   - AC-BG.3
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 23
   module: clinical
   level: api
   priority: P0
@@ -243,3 +243,43 @@ testcases:
   level: api
   priority: P0
   spec: Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ.
+- id: TC-AC-ID.1
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.1'
+  covers:
+  - AC-ID.1
+  srs_uc: supplement-national-id
+  srs_ref: UC 15
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given số CCCD hợp lệ và đã tích đồng ý, When lưu, Then số được lưu mã hóa và hiển thị che, chỉ 4 số cuối.
+- id: TC-AC-ID.2
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.2'
+  covers:
+  - AC-ID.2
+  srs_uc: supplement-national-id
+  srs_ref: UC 15
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given số CCCD đã thuộc hồ sơ “active” khác, When lưu, Then không lưu và báo nghi trùng, không tiết lộ thông tin hồ sơ kia cho người không có quyền.
+- id: TC-AC-ID.3
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.3'
+  covers:
+  - AC-ID.3
+  srs_uc: supplement-national-id
+  srs_ref: UC 15
+  module: clinical
+  level: api
+  priority: P1
+  spec: Given sai định dạng hoặc chưa tích đồng ý, When lưu, Then bị từ chối.
+- id: TC-AC-ID.4
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.4'
+  covers:
+  - AC-ID.4
+  srs_uc: supplement-national-id
+  srs_ref: UC 15
+  module: clinical
+  level: security
+  priority: P0
+  spec: Given số CCCD đã lưu, When tìm kiếm, phát sự kiện hoặc ghi log, Then số không xuất hiện ở các nơi đó.
