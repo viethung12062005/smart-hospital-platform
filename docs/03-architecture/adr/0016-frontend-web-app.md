@@ -16,7 +16,7 @@
 | Kiến trúc | **Một** web app (SPA, PWA) cho cả 5 vai trò, thư mục `web/` trong repo `smart-hospital-platform` | Cùng repo với hợp đồng (`contracts/`) để đổi API và giao diện trong một PR (ADR-0010) |
 | Ngôn ngữ, build | **TypeScript (strict) + Vite + React 18** | Phổ biến, build nhanh; React 18 khớp Mantine 7 và các component tái dùng |
 | UI | **Mantine 7** + hệ thiết kế SHP (`web/src/styles/tokens.css`, `web/src/theme.ts`) | Portal PoC đã dùng Mantine 7 và bộ token (teal, chip, bảng, KPI, stepper): chép có chọn lọc chạy được ngay |
-| Đăng nhập | **OIDC Authorization Code + PKCE** bằng `oidc-client-ts`; client `shp-web` (Keycloak local), app registration SPA (Entra trên cloud) | Không giữ mật khẩu ở trình duyệt; vai trò lấy từ claim `roles` như backend |
+| Đăng nhập | **OIDC Authorization Code + PKCE** bằng `oidc-client-ts`; client `shp-web` của Keycloak ở mọi môi trường (ADR-0017) | Không giữ mật khẩu ở trình duyệt; vai trò lấy từ claim `roles` như backend |
 | Gọi API | Cùng origin (`/fhir`, `/api`) qua gateway; **TanStack Query**; một lớp client gắn token, `Accept-Language`, `Idempotency-Key`, `If-Match` và đọc lỗi OperationOutcome / Problem Details | Không cần CORS; quy ước 07-api-conventions áp dụng một chỗ |
 | Kiểu FHIR | `@medplum/fhirtypes` (chỉ kiểu, không có mã chạy) | Không tự định nghĩa kiểu R4 |
 | Danh mục mã | Đọc thẳng `contracts/terminology/code-systems.yaml` lúc build | Một nguồn duy nhất với backend |
@@ -49,6 +49,6 @@ Chỉ **chép có chọn lọc** vào app mới, không mang theo phụ thuộc 
 ## Hệ quả
 - Thêm một image (`web`) vào pipeline, GitOps và Kyverno (vẫn là image ký từ ACR).
 - Gateway API đổi HTTPRoute từ `/` sang `/fhir`, `/api` (chart thêm `httpRoute.pathPrefixes`).
-- Entra ID cần thêm app registration SPA và scope API (`api://shp-api-<env>/access_as_user`); nếu thiếu scope, access token là của Graph và gateway trả 401 (IAC-16).
+- Keycloak cần client công khai `shp-web` (PKCE) và audience `shp-api` trong realm (IAM-01); cấu hình realm là code nên giống nhau ở mọi môi trường (ADR-0017).
 - CSP của nginx cho phép `connect-src https:` (máy chủ đăng nhập) và `http://localhost:*` (Keycloak local); thu hẹp về đúng issuer khi có tên miền thật.
 - Menu và route theo vai trò chỉ để điều hướng; **mọi quyết định quyền vẫn ở backend** (ma trận `contracts/authz/matrix.yaml`).

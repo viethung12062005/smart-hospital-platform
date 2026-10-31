@@ -206,7 +206,7 @@ modules:
                   - "Gán vai trò Quản trị viên hoặc DPO cần hai người: người thứ hai (Quản trị viên khác) phê duyệt."
               - step: "(3)"
                 title: Quy tắc kích hoạt
-                lines: ["Lời mời hết hạn sau 72 giờ; nhân viên phải đăng ký MFA ở lần đăng nhập đầu tiên, nếu không tài khoản không truy cập được dữ liệu (AC-08.2)."]
+                lines: ["Lời mời hết hạn sau 72 giờ; nhân viên phải đăng ký MFA (ứng dụng xác thực TOTP hoặc khóa WebAuthn, không dùng SMS) ở lần đăng nhập đầu tiên, nếu không tài khoản không truy cập được dữ liệu (AC-08.2)."]
             acceptance:
               - ["AC-08.2", "Given nhân viên chưa đăng ký MFA, When đăng nhập, Then không truy cập được dữ liệu bệnh nhân."]
               - ["AC-IS.1", "Given quản trị viên tự gán vai trò DPO cho mình, Then bị từ chối."]

@@ -107,7 +107,7 @@ D1_TASKS = [
      "Không mất và không gửi trùng; ghi kết quả", "D1", 3, "NTF-12", "S5", "NFR-A6"),
 
     # ---------------- web: shell + đặt lịch + quản lý lịch ----------------
-    ("WEB-01", "US-066", "Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en",
+    ("WEB-01", "US-066", "Web shell React/Vite: OIDC (Keycloak), router theo vai trò, khung giao diện, i18n vi/en",
      "Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline", "SA", 4, "LOC-02, SHR-20", "P2", "NFR-I2"),
     ("WEB-02", "US-066", "Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp",
      "Hiển thị lỗi theo Accept-Language; tự thử lại đăng nhập khi hết phiên", "SA", 3, "WEB-01", "S1", "07 §3, §5"),
@@ -265,9 +265,9 @@ D2_TASKS = [
 
 D3_TASKS = [
     # ---------------- shared Python (ai, ml giữ Python theo ADR-0015) ----------------
-    ("PY-01", "US-066", "Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI",
+    ("PY-01", "US-066", "Thư viện Python: xác thực JWT (Keycloak), dependency role cho FastAPI",
      "Test token hợp lệ/sai/hết hạn", "D3", 3, "LOC-02", "P1", "07 §2"),
-    ("PY-02", "US-053", "Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange)",
+    ("PY-02", "US-053", "Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange)",
      "Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả", "D3", 3, "PY-01", "P2", "15 §7"),
     ("PY-03", "US-059, US-064", "Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ",
      "Event trùng xử lý một lần", "D3", 4, "ARC-07", "P2", "13 §1"),

@@ -233,3 +233,13 @@ testcases:
   priority: P0
   spec: Given bác sĩ đã dùng truy cập khẩn cấp 2 lần trong 24 giờ, When dùng lần thứ 3 với lý do hợp lệ, Then vẫn được cấp
     quyền, và lần đó được đánh dấu “bất thường”, báo thêm trưởng khoa, DPO phải rà soát trong 24 giờ.
+- id: TC-AC-RG.2
+  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.2'
+  covers:
+  - AC-RG.2
+  srs_uc: register
+  srs_ref: UC 10
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ.

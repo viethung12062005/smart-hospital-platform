@@ -9,14 +9,14 @@ Tổng: **74 story** — Must 49, Should 22, Could 3.
 
 | ID | Story | Vai trò | MoSCoW | UC | Task | Giờ |
 |---|---|---|---|---|---|---|
-| [US-001](#us-001) | Bệnh nhân tự đăng ký hồ sơ | Bệnh nhân | Must | UC-01 | 5 | 18 |
+| [US-001](#us-001) | Bệnh nhân tự đăng ký hồ sơ | Bệnh nhân | Must | UC-01 | 8 | 40 |
 | [US-002](#us-002) | Bệnh nhân xem và cập nhật hồ sơ của mình | Bệnh nhân | Must | UC-01 | 4 | 16 |
 | [US-003](#us-003) | Điều dưỡng đăng ký bệnh nhân tại quầy | Điều dưỡng | Must | UC-01 | 3 | 9 |
 | [US-004](#us-004) | Điều dưỡng gộp hồ sơ trùng | Điều dưỡng | Should | UC-01 | 4 | 12 |
 | [US-005](#us-005) | Bệnh nhân chọn kênh và thiết bị nhận thông báo | Bệnh nhân | Should | UC-07 | 3 | 10 |
 | [US-006](#us-006) | Quản trị viên quản lý nhân sự lâm sàng | Quản trị viên | Must | UC-08 | 2 | 8 |
 | [US-007](#us-007) | Quản trị viên liên kết và khóa tài khoản | Quản trị viên | Must | UC-08 | 2 | 7 |
-| [US-008](#us-008) | Nhân viên bắt buộc dùng MFA | Quản trị viên | Must | UC-08 | 3 | 10 |
+| [US-008](#us-008) | Nhân viên bắt buộc dùng MFA | Quản trị viên | Must | UC-08 | 6 | 28 |
 | [US-009](#us-009) | Điều dưỡng tạo lịch làm việc cho bác sĩ | Điều dưỡng | Must | UC-02 | 6 | 20 |
 | [US-010](#us-010) | Điều dưỡng đặt mẫu lịch tuần | Điều dưỡng | Must | UC-02 | 2 | 8 |
 | [US-011](#us-011) | Hệ thống sinh slot từ mẫu tuần | Hệ thống | Must | UC-02 | 5 | 14 |
@@ -39,7 +39,7 @@ Tổng: **74 story** — Must 49, Should 22, Could 3.
 | [US-028](#us-028) | Bác sĩ kết thúc lần khám | Bác sĩ | Must | UC-04 | 2 | 7 |
 | [US-029](#us-029) | Bác sĩ bổ sung ghi chú sau khi kết thúc | Bác sĩ | Must | UC-04 | 3 | 8 |
 | [US-030](#us-030) | Bệnh nhân xem kết quả khám của mình | Bệnh nhân | Should | UC-04, UC-06 | 1 | 3 |
-| [US-031](#us-031) | Tìm bệnh nhân | Bác sĩ | Must | UC-06 | 3 | 12 |
+| [US-031](#us-031) | Tìm bệnh nhân | Bác sĩ | Must | UC-06 | 4 | 16 |
 | [US-032](#us-032) | Bác sĩ xem timeline bệnh nhân | Bác sĩ | Must | UC-06 | 4 | 15 |
 | [US-033](#us-033) | Hệ thống duy trì quan hệ điều trị | Hệ thống | Must | UC-06, UC-10 | 3 | 11 |
 | [US-034](#us-034) | Bác sĩ truy cập khẩn cấp (break-glass) | Bác sĩ | Should | UC-10 | 3 | 10 |
@@ -61,7 +61,7 @@ Tổng: **74 story** — Must 49, Should 22, Could 3.
 | [US-050](#us-050) | DPO xuất báo cáo audit và kiểm tra toàn vẹn | Cán bộ DPO | Should | UC-09 | 3 | 12 |
 | [US-051](#us-051) | DPO xem xét các lần break-glass | Cán bộ DPO | Should | UC-10 | 2 | 8 |
 | [US-052](#us-052) | Quản trị viên quản lý kho tri thức | Quản trị viên | Must | UC-11 | 7 | 26 |
-| [US-053](#us-053) | Bác sĩ/điều dưỡng hỏi trợ lý và nhận câu trả lời có trích dẫn | Bác sĩ | Must | UC-11 | 8 | 30 |
+| [US-053](#us-053) | Bác sĩ/điều dưỡng hỏi trợ lý và nhận câu trả lời có trích dẫn | Bác sĩ | Must | UC-11 | 9 | 36 |
 | [US-054](#us-054) | Trợ lý kháng prompt injection | Bác sĩ | Must | UC-11 | 3 | 10 |
 | [US-055](#us-055) | Trợ lý vẫn hoạt động khi model lỗi | Bác sĩ | Must | UC-11 | 9 | 32 |
 | [US-056](#us-056) | Người dùng đánh giá câu trả lời của trợ lý | Bác sĩ | Could | UC-11 | 2 | 7 |
@@ -78,7 +78,7 @@ Tổng: **74 story** — Must 49, Should 22, Could 3.
 | [US-072](#us-072) | Đánh giá mô hình theo nhóm con và có model card | Nhóm dự án | Should | UC-15 | 2 | 7 |
 | [US-073](#us-073) | Triển khai model mới bằng canary tự động | DevOps | Should | UC-15 | 3 | 12 |
 | [US-074](#us-074) | Huấn luyện lại tự động khi có drift | Hệ thống | Should | UC-15 | 3 | 12 |
-| [US-066](#us-066) | Người dùng đăng nhập và thấy giao diện theo vai trò | Người dùng | Must | UC-08 | 7 | 22 |
+| [US-066](#us-066) | Người dùng đăng nhập và thấy giao diện theo vai trò | Người dùng | Must | UC-08 | 9 | 36 |
 | [US-067](#us-067) | Khôi phục dữ liệu về một thời điểm | Quản trị viên | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | Hệ thống chịu tải mở slot lúc 07:00 | Nhóm dự án | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | Hệ thống chịu lỗi phụ thuộc | Nhóm dự án | Must |  | 2 | 9 |
@@ -154,7 +154,10 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CLN-03 | Patient repository: sinh MRN BN-YYYY-NNNNNN, nameTokens bỏ dấu, chuẩn hóa SĐT E.164 | D2 | 4 | W4 |
 | CLN-04 | Phát hiện trùng hồ sơ theo SĐT + ngày sinh | D2 | 2 | W5 |
 | CLN-05 | API đăng ký bệnh nhân (C1) + tạo identity_links | D2 | 4 | W5 |
+| IAM-01 | Keycloak trên cụm (ADR-0017) | SA | 8 | W7 |
+| IAM-03 | Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt | SA | 6 | W7 |
 | WEB-27 | Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy | D2 | 4 | W7 |
+| IAM-04 | Authenticator mã OTP qua SMS (SPI Keycloak) | SA | 8 | W8 |
 
 ## US-002
 ### Bệnh nhân xem và cập nhật hồ sơ của mình — Must
@@ -298,8 +301,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
-| SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
-| IAC-16 | Module identity ứng dụng (Entra ID) | SA | 4 | W6 |
+| SHR-20 | JWT bearer từ Keycloak (OIDC chuẩn): map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
+| IAC-16 | Hạ tầng cho Keycloak (ADR-0017) | SA | 4 | W6 |
+| IAM-01 | Keycloak trên cụm (ADR-0017) | SA | 8 | W7 |
+| IAM-03 | Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt | SA | 6 | W7 |
+| IAM-05 | Sự kiện danh tính về audit | SA | 4 | W8 |
 
 ## US-009
 ### Điều dưỡng tạo lịch làm việc cho bác sĩ — Must
@@ -790,6 +796,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CLN-08 | API tìm bệnh nhân POST _search (C6): tên không dấu, SĐT, MRN, ngày sinh, rút gọn kết quả | D2 | 4 | W6 |
 | CLN-26 | Chạy bộ test ma trận phân quyền cho mọi endpoint clinical | D2 | 4 | W6 |
 | WEB-20 | Màn hình tìm bệnh nhân (POST _search): tên không dấu, SĐT, MRN | D2 | 4 | W7 |
+| IAM-05 | Sự kiện danh tính về audit | SA | 4 | W8 |
 
 ## US-032
 ### Bác sĩ xem timeline bệnh nhân — Must
@@ -1252,12 +1259,13 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| PY-02 | Client on-behalf-of (Entra OBO, Keycloak RFC 8693 token exchange) | D3 | 3 | W2 |
+| PY-02 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) | D3 | 3 | W2 |
 | AI-06 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | D3 | 4 | W5 |
 | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | D3 | 3 | W5 |
 | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | D3 | 4 | W5 |
 | AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | D3 | 4 | W6 |
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | D3 | 4 | W6 |
+| IAM-02 | Tài khoản dịch vụ và token exchange | SA | 6 | W7 |
 | WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W9 |
 
@@ -1632,7 +1640,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 **Tiêu chí nghiệm thu**
 
-1. Given đăng nhập Entra ID hoặc Keycloak, When vào ứng dụng, Then menu hiển thị theo role
+1. Given đăng nhập bằng Keycloak, When vào ứng dụng, Then menu hiển thị theo role
 2. Given hết phiên, When gọi API, Then tự đăng nhập lại; lỗi 403/404 hiển thị thông điệp theo Accept-Language
 
 **Task**
@@ -1640,12 +1648,14 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
-| PY-01 | Thư viện Python: xác thực JWT (Entra + Keycloak), dependency role cho FastAPI | D3 | 3 | W2 |
-| SHR-20 | JWT bearer cho Entra ID và Keycloak: map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
-| WEB-01 | Web shell React/Vite: OIDC (Entra/Keycloak), router theo vai trò, khung giao diện, i18n vi/en | SA | 4 | W3 |
+| PY-01 | Thư viện Python: xác thực JWT (Keycloak), dependency role cho FastAPI | D3 | 3 | W2 |
+| SHR-20 | JWT bearer từ Keycloak (OIDC chuẩn): map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
+| WEB-01 | Web shell React/Vite: OIDC (Keycloak), router theo vai trò, khung giao diện, i18n vi/en | SA | 4 | W3 |
 | WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | SA | 3 | W4 |
-| IAC-16 | Module identity ứng dụng (Entra ID) | SA | 4 | W6 |
+| IAC-16 | Hạ tầng cho Keycloak (ADR-0017) | SA | 4 | W6 |
 | WEB-10 | Pipeline + chart cho web | SA | 2 | W6 |
+| IAM-01 | Keycloak trên cụm (ADR-0017) | SA | 8 | W7 |
+| IAM-02 | Tài khoản dịch vụ và token exchange | SA | 6 | W7 |
 
 ## US-067
 ### Khôi phục dữ liệu về một thời điểm — Must

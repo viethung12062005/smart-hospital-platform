@@ -37,7 +37,7 @@ nfr:
         Yêu cầu bắt buộc. Kiểm chứng bằng test tự động trong CI (phân quyền, che dữ liệu, kiểm tra đầu vào), quét bảo mật
         tự động (SAST, phụ thuộc, image, cấu hình, DAST) và rà soát thủ công theo OWASP ASVS mức 2 trước khi demo.
       items:
-        - {id: NFR-SEC1, title: Xác thực, target: "OIDC + PKCE; nhân viên bắt buộc MFA; access token ≤ 15 phút; không lưu mật khẩu", measure: "Test tích hợp với IdP; kiểm tra claim MFA", test: "Integration, Security"}
+        - {id: NFR-SEC1, title: Xác thực, target: "OIDC + PKCE; nhân viên bắt buộc MFA (TOTP hoặc WebAuthn, không dùng SMS); access token ≤ 15 phút; service nghiệp vụ không lưu mật khẩu, nhà cung cấp định danh chỉ lưu băm Argon2id", measure: "Test tích hợp với IdP; kiểm tra claim MFA", test: "Integration, Security"}
         - {id: NFR-SEC2, title: Phân quyền, target: "Đúng 100% ma trận phân quyền; mặc định từ chối", measure: "Test sinh từ contracts/authz/matrix.yaml: mỗi ô cho phép và từ chối; test 'mọi endpoint có quy tắc'", test: "Unit, Contract, API"}
         - {id: NFR-SEC3, title: Mã hóa, target: "TLS 1.2+ mọi kết nối kể cả nội bộ cụm; mã hóa at-rest mọi kho dữ liệu và bản sao lưu", measure: "Quét cấu hình TLS; kiểm tra cấu hình Terraform", test: "Security, Config scan"}
         - {id: NFR-SEC4, title: Secret, target: "Không secret trong code/config/image; Key Vault + workload identity; xoay vòng không cần deploy", measure: "gitleaks + push protection; diễn tập xoay khóa", test: Security}
