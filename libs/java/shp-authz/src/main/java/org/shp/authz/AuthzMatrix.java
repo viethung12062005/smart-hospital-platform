@@ -171,6 +171,12 @@ public final class AuthzMatrix {
     if (r.when().contains(Predicates.OWN) && !r.role().equals("patient")) {
       errors.add(id + ": predicate own chỉ dành cho patient");
     }
+    if ((r.when().contains(Predicates.LINKED)
+            || r.when().contains(Predicates.LINKED_RECORDS)
+            || r.when().contains(Predicates.GUARDIAN))
+        && !r.role().equals("patient")) {
+      errors.add(id + ": predicate linked, linked-records, guardian chỉ dành cho patient");
+    }
   }
 
   private static String key(String resource, String action) {
