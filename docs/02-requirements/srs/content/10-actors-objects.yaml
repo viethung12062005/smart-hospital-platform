@@ -219,4 +219,4 @@ requirements:
   - {id: UC-14, title: Chatbot đặt lịch, description: "Bot đề xuất slot, chỉ đặt/hủy khi bệnh nhân xác nhận rõ ràng, lỗi thì chuyển về form.", priority: Could, source: BP-1}
   - {id: UC-15, title: Dự đoán nguy cơ không đến khám, description: "Tính xác suất khi đặt lịch; nguy cơ cao thì thêm lần nhắc; lỗi ML không ảnh hưởng nhắc lịch.", priority: Should, source: BP-2}
   - {id: UC-16, title: Sao lưu và khôi phục, description: "Khôi phục về thời điểm bất kỳ trong 7 ngày; diễn tập có đo thời gian so với RTO.", priority: Must, source: Đề bài}
-  - {id: UC-17, title: Quyền của chủ thể dữ liệu, description: "Bệnh nhân quản lý đồng ý xử lý dữ liệu bằng AI và yêu cầu trích xuất dữ liệu cá nhân của mình (Nghị định 13/2023/NĐ-CP).", priority: Should, source: "NFR-SEC, Nghị định 13/2023"}
+  - {id: UC-17, title: Quyền của chủ thể dữ liệu, description: "Bệnh nhân quản lý đồng ý xử lý dữ liệu bằng AI và yêu cầu trích xuất dữ liệu cá nhân của mình (Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15).", priority: Should, source: "NFR-SEC, Luật BVDLCN 91/2025/QH15"}

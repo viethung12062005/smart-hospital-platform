@@ -44,7 +44,7 @@ common_use_cases:
         key: session-timeout
         title: Quy tắc hết phiên
         lines:
-          - "Nhân viên: tự đăng xuất sau 15 phút không thao tác (máy dùng chung tại phòng khám); bệnh nhân: 30 phút. Cảnh báo trước 1 phút, hết phiên hiển thị [[MSG:session-expired]]."
+          - "Nhân viên: tự đăng xuất sau 15 phút không thao tác (máy dùng chung tại phòng khám) và phải đăng nhập lại sau tối đa 12 giờ; bệnh nhân: 30 phút không thao tác, tối đa 24 giờ. Cảnh báo trước 1 phút, hết phiên hiển thị [[MSG:session-expired]]."
           - "Đăng xuất xóa token và mọi dữ liệu đã cache trong trình duyệt (bộ nhớ, sessionStorage); nút Back không hiển thị lại dữ liệu bệnh nhân."
 
   - key: view-list

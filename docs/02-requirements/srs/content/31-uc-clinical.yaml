@@ -379,7 +379,7 @@ modules:
                 title: Quy tắc lý do và hạn mức
                 lines:
                   - "[Lý do] tối thiểu 10 ký tự → nếu không [[MSG:reason-min]]."
-                  - "Tối đa 3 lần truy cập khẩn cấp/bác sĩ/ngày; vượt → từ chối và cảnh báo DPO ngay."
+                  - "Không chặn cứng theo số lần: trong cấp cứu, từ chối truy cập có thể gây hại cho bệnh nhân (an toàn người bệnh được ưu tiên). Thay vào đó mọi lần đều báo DPO ngay; từ lần thứ 3 của cùng một bác sĩ trong 24 giờ hoặc lần thứ 10 trong 30 ngày, hệ thống đánh dấu “bất thường”, báo thêm trưởng khoa và DPO phải rà soát trong 24 giờ thay vì 72 giờ."
                   - "MFA quá 15 phút → yêu cầu xác thực lại trước khi cấp quyền."
               - step: "(5)"
                 title: Quy tắc cấp quyền
@@ -391,3 +391,4 @@ modules:
               - ["AC-10.1", "Given bác sĩ dùng truy cập khẩn cấp, Then DPO nhận cảnh báo trong ≤ 5 phút."]
               - ["AC-BG.1", "Given đã qua 60 phút, When mở lại timeline, Then bị từ chối."]
               - ["AC-BG.2", "Given lý do 5 ký tự, When xác nhận, Then báo lỗi và không cấp quyền."]
+              - ["AC-BG.3", "Given bác sĩ đã dùng truy cập khẩn cấp 2 lần trong 24 giờ, When dùng lần thứ 3 với lý do hợp lệ, Then vẫn được cấp quyền, và lần đó được đánh dấu “bất thường”, báo thêm trưởng khoa, DPO phải rà soát trong 24 giờ."]
