@@ -74,7 +74,7 @@ jobs:
       - name: Run the container (read-only, non-root, as in the cluster)
         run: |
           docker run -d --name web --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges -p 8080:8080 shp-web:qa
-          for i in $(seq 1 30); do curl -fsS http://localhost:8080/healthz >/dev/null && break; sleep 1; done
+          for _ in $(seq 1 30); do curl -fsS http://localhost:8080/healthz >/dev/null && break; sleep 1; done
           curl -fsS http://localhost:8080/healthz
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -91,7 +91,8 @@ jobs:
           npx playwright test e2e/headers.spec.ts --project=desktop
       - name: OWASP ZAP baseline (TC-SEC-10)
         run: |
-          mkdir -p zap && chmod 777 zap
+          # ZAP chạy bằng user riêng: thư mục làm việc (gồm file luật) phải ghi được
+          mkdir -p zap && cp zap-rules.conf zap/ && chmod 777 zap
           set +e
           docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
             zap-baseline.py -t http://localhost:8080 -c zap-rules.conf -r zap-report.html -J zap-report.json -I
