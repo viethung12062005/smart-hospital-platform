@@ -74,6 +74,8 @@ khi ghi (giảm bề mặt dữ liệu, tối thiểu hóa dữ liệu cá nhân
 | `communication.language` | 0..1 | `vi` (mặc định) hoặc `en`; quyết định ngôn ngữ thông báo |
 | `link` | 0..\* | `type=replaced-by` khi gộp hồ sơ trùng (UC-01 luồng phụ) |
 
+Một tài khoản có một hồ sơ "bản thân" (`identity_links`) và có thể quản lý thêm hồ sơ khác qua `profile_links` (con dưới 16 tuổi, người lớn ủy quyền; ADR-0018). Quan hệ này không phải resource FHIR; khi cần trao đổi có thể ánh xạ sang `RelatedPerson`.
+
 Không lưu nghề nghiệp, dân tộc, CMND 9 số (không cần cho phạm vi; tối thiểu hóa dữ liệu nhạy cảm). Số CCCD chỉ lưu khi bệnh nhân đồng ý và được bổ sung khi đến khám (SRS UC `supplement-national-id`).
 
 ### 4.2 Practitioner và PractitionerRole (clinical)

@@ -36,6 +36,30 @@ STORIES = [
       "Given số CCCD đã thuộc hồ sơ active khác, When lưu, Then không lưu, báo nghi trùng và gợi ý gộp (AC-ID.2)",
       "Given sai định dạng hoặc chưa có đồng ý, When lưu, Then bị từ chối (AC-ID.3)",
       "Given số CCCD đã lưu, When tìm kiếm, phát sự kiện hoặc ghi log, Then số không xuất hiện (AC-ID.4)"]),
+    ("US-076", "Cha mẹ tạo và quản lý hồ sơ cho con dưới 16 tuổi", "Bệnh nhân", "thêm con vào tài khoản của mình và đặt lịch cho con",
+     "không cần mỗi người một tài khoản", "S", ["UC-01"], ["C22", "C23"], [],
+     ["Given người dưới 16 tuổi và đã cam đoan là người giám hộ, When tạo hồ sơ, Then hồ sơ được tạo và liên kết toàn quyền (AC-DP.2)",
+      "Given người từ 16 tuổi trở lên, When tạo như người dưới 16 tuổi, Then bị từ chối (AC-DP.1)",
+      "Given tài khoản đã quản lý 10 hồ sơ, When thêm hồ sơ thứ 11, Then bị từ chối (AC-DP.3)",
+      "Given hồ sơ con đã liên kết, When tài khoản đặt lịch cho con, Then thành công và audit ghi tài khoản thực hiện (AC-03.7)"]),
+    ("US-077", "Người dùng liên kết và thu hồi hồ sơ người thân trưởng thành", "Bệnh nhân", "quản lý lịch hẹn, và nếu được đồng ý thì xem kết quả, của cha mẹ hoặc người thân",
+     "giúp người không dùng được ứng dụng mà vẫn do chính họ đồng ý", "S", ["UC-01"], ["C24", "C25", "C26", "C29"], [],
+     ["Given thông tin khớp một hồ sơ trưởng thành, When nhập đúng mã OTP gửi tới số của người thân, Then liên kết có hiệu lực với phạm vi đã chọn (AC-LK.1)",
+      "Given liên kết phạm vi Đặt lịch, When xem kết quả khám hoặc tài liệu của người thân, Then bị từ chối và có audit deny (AC-PX.1)",
+      "Given người thân đến quầy và Điều dưỡng ghi ủy quyền sau khi đối chiếu giấy tờ, When lưu, Then liên kết có hiệu lực (AC-LK.3)",
+      "Given liên kết quá 12 tháng, When truy cập, Then bị từ chối cho đến khi gia hạn (AC-LK.4)",
+      "Given chủ hồ sơ hoặc người quản lý thu hồi, When thu hồi, Then mất quyền sau tối đa 60 giây và có audit (AC-RV.1)"]),
+    ("US-078", "Bệnh nhân cũ tự nhận hồ sơ đã có tại bệnh viện", "Bệnh nhân", "liên kết tài khoản mới với hồ sơ cũ bằng mã OTP",
+     "không tạo hồ sơ trùng và không phải đến quầy", "M", ["UC-01"], ["C27", "C28"], [],
+     ["Given thông tin khớp đúng một hồ sơ, When nhập đúng mã OTP gửi tới số trong hồ sơ, Then liên kết tài khoản, không tạo hồ sơ mới (AC-CL.1)",
+      "Given không khớp hoặc nhiều ứng viên, When gửi yêu cầu, Then phản hồi giống hệt trường hợp khớp, không gửi mã, không lộ dữ liệu (AC-CL.2)",
+      "Given nhập sai OTP 5 lần hoặc quá 5 lần nhận hồ sơ trong 24 giờ, When thử tiếp, Then bị khóa tạm có audit (AC-CL.3)",
+      "Given hồ sơ đã liên kết tài khoản khác, When nhận hồ sơ, Then không liên kết và hướng dẫn đến quầy (AC-CL.4)"]),
+    ("US-079", "Mã OTP gửi qua Zalo trước, SMS sau", "Bệnh nhân", "nhận mã xác minh nhanh và rẻ qua Zalo, tự chuyển SMS khi không được",
+     "đăng ký, nhận hồ sơ và liên kết người thân dùng chung một cách gửi mã an toàn", "M", ["UC-07"], ["N8", "N9"], [],
+     ["Given số dùng Zalo nhưng Zalo gửi lỗi, When yêu cầu mã, Then cùng mã được gửi bằng SMS trong tối đa 30 giây (AC-RG.3)",
+      "Given mã đã dùng, hết hạn 5 phút hoặc sai 5 lần, When nhập, Then bị từ chối; quá 5 mã mỗi giờ cho một số thì từ chối gửi thêm (AC-RG.4)",
+      "Given mã OTP và số điện thoại, When ghi log hoặc audit, Then không xuất hiện giá trị rõ"]),
     ("US-005", "Bệnh nhân chọn kênh và thiết bị nhận thông báo", "Bệnh nhân", "chọn kênh, ngôn ngữ, giờ yên tĩnh và đăng ký thiết bị",
      "nhận nhắc lịch đúng cách tôi muốn", "S", ["UC-07"], ["N1", "N2", "N3", "N4"], [],
      ["Given thứ tự kênh push, email, sms, When lưu, Then các lần gửi thử theo thứ tự đó",
@@ -415,7 +439,7 @@ ALL_FR_ACS = [
 
 # Every API id defined in detailed-design/08..12 (coverage check: must appear in some story).
 ALL_API_IDS = (
-    [f"S{i}" for i in range(1, 19)] + [f"C{i}" for i in range(1, 22)] + [f"D{i}" for i in range(1, 10)]
-    + [f"N{i}" for i in range(1, 8)] + [f"A{i}" for i in range(1, 6)] + [f"M{i}" for i in range(1, 4)]
+    [f"S{i}" for i in range(1, 19)] + [f"C{i}" for i in range(1, 30)] + [f"D{i}" for i in range(1, 10)]
+    + [f"N{i}" for i in range(1, 10)] + [f"A{i}" for i in range(1, 6)] + [f"M{i}" for i in range(1, 4)]
     + [f"AI{i}" for i in range(1, 11)]
 )

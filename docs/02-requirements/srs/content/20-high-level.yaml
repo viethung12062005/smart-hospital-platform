@@ -273,7 +273,7 @@ uc_diagrams:
     name: Use case cổng bệnh nhân
     actors_left: [Bệnh nhân]
     actors_right: [Điều dưỡng]
-    cases: [register, update-profile, find-slot, book, cancel, reschedule, my-appointments, download-document, chatbot-booking, notification-preferences, manage-consent, view-my-access-log, export-my-data]
+    cases: [register, claim-record, add-dependent, link-relative, revoke-link, update-profile, find-slot, book, cancel, reschedule, my-appointments, download-document, chatbot-booking, notification-preferences, manage-consent, view-my-access-log, export-my-data]
   - key: schedule-reception
     name: Use case lịch làm việc và tiếp đón
     actors_left: [Điều dưỡng, Quản trị viên]
@@ -306,12 +306,14 @@ permissions:
     được của ma trận (contracts/authz/matrix.yaml) là nguồn duy nhất cho code và test tự động – mỗi ô có ít nhất một test.
   legend:
     - "“O”: có quyền. Chi tiết hành vi xem use case tương ứng."
-    - "“O*”: chỉ trên dữ liệu của chính mình (bệnh nhân: hồ sơ, lịch hẹn, tài liệu của mình; bác sĩ: lịch của mình)."
+    - "“O*”: chỉ trên dữ liệu của chính mình và hồ sơ đã liên kết đúng phạm vi (bệnh nhân: hồ sơ, lịch hẹn, tài liệu của mình hoặc của người thân đã liên kết; bác sĩ: lịch của mình)."
     - "“Care”: chỉ với bệnh nhân có quan hệ điều trị (lịch hẹn/lần khám trong 12 tháng hoặc lịch hẹn tương lai)."
     - "“Care/BG”: như Care, hoặc qua truy cập khẩn cấp đang hiệu lực."
     - "“X”: không có quyền. Yêu cầu bị từ chối và được ghi audit."
   rows:
     - {function: Đăng ký tài khoản bệnh nhân, uc: [register], grant: {patient: O}}
+    - {function: Tự nhận hồ sơ đã có, uc: [claim-record], grant: {patient: O}}
+    - {function: Tạo hồ sơ con, liên kết và thu hồi hồ sơ người thân, uc: [add-dependent, link-relative, revoke-link], grant: {patient: "O*", nurse: O}}
     - {function: Xem / sửa thông tin hành chính, uc: [update-profile, create-patient], grant: {patient: "O*", nurse: O}}
     - {function: Gộp hồ sơ trùng, uc: [merge-patient], grant: {nurse: O}}
     - {function: Tìm bác sĩ và slot trống, uc: [find-slot], grant: {patient: O, doctor: O, nurse: O, admin: O}}

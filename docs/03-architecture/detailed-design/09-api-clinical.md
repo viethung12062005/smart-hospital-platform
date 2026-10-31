@@ -9,7 +9,7 @@ Ký hiệu: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin, **DPO**. **Ca
 | # | Method + đường dẫn | Mục đích | Quyền | UC |
 |---|---|---|---|---|
 | C1 | `POST /api/v1/registration` | Bệnh nhân tự đăng ký | tài khoản mới (token OIDC chưa có `fhirUser`) | UC-01 |
-| C2 | `GET /api/v1/me` | Tôi là ai (role, `fhirUser`) | mọi người dùng | UC-08 |
+| C2 | `GET /api/v1/me` | Tôi là ai (role, `fhirUser`, danh sách hồ sơ đã liên kết) | mọi người dùng | UC-08 |
 | C3 | `POST /fhir/Patient` | Nurse tạo hồ sơ tại quầy | N | UC-01 |
 | C4 | `GET /fhir/Patient/{id}` | Đọc hồ sơ | P (own), D (Care/BG), N | UC-01 |
 | C5 | `PUT /fhir/Patient/{id}` | Sửa hồ sơ | P (own, trường hành chính), N | UC-01 |
@@ -29,6 +29,14 @@ Ký hiệu: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin, **DPO**. **Ca
 | C19 | `GET /api/v1/clinical/patients/{id}/timeline` | Timeline bệnh nhân | D (Care/BG), N | UC-06 |
 | C20 | `POST /api/v1/clinical/break-glass` | Truy cập khẩn cấp | D | UC-10 |
 | C21 | `GET/POST /api/v1/admin/users`, `PUT /api/v1/admin/users/{subject}` | Liên kết/khóa tài khoản | A | UC-08 |
+| C22 | `GET /api/v1/me/profiles` | Hồ sơ tài khoản đang quản lý (bản thân, con, người thân) | P | UC-01 |
+| C23 | `POST /api/v1/me/profiles/dependents` | Tạo hồ sơ cho người dưới 16 tuổi | P | UC-01 |
+| C24 | `POST /api/v1/me/profile-links` | Yêu cầu liên kết hồ sơ người thân trưởng thành (gửi OTP tới người thân) | P | UC-01 |
+| C25 | `POST /api/v1/me/profile-links/{id}/confirm` | Xác nhận liên kết bằng mã OTP | P | UC-01 |
+| C26 | `DELETE /api/v1/me/profile-links/{id}` | Thu hồi liên kết | P, N | UC-01 |
+| C27 | `POST /api/v1/me/claim-record` | Tự nhận hồ sơ đã có: tìm hồ sơ khớp và gửi OTP | P | UC-01 |
+| C28 | `POST /api/v1/me/claim-record/verify` | Nhập OTP để liên kết hồ sơ đã có | P | UC-01 |
+| C29 | `POST /api/v1/clinical/patients/{id}/profile-links` | Điều dưỡng ghi ủy quyền của người thân tại quầy | N | UC-01 |
 
 ## 2. Bệnh nhân
 
@@ -50,7 +58,7 @@ Người dùng đã tạo tài khoản OIDC (role `patient`) nhưng chưa có h�
 | 201 | Tạo `Patient`, sinh MRN, tạo `identity_links` cho `sub`; body `{ "patientId", "mrn" }` | |
 | 400 | `phone` không phải số VN hợp lệ; `birthDate` ở tương lai hoặc tuổi > 120 | `validation-failed` |
 | 409 | Token này đã có hồ sơ | `already-registered` |
-| **422** | Đã có hồ sơ **cùng SĐT + ngày sinh** (AC-01.2): **không tạo mới**, trả `{ "code": "duplicate-patient-suspected" }` kèm hướng dẫn đến quầy để điều dưỡng xác minh; không lộ dữ liệu của hồ sơ trùng | `duplicate-patient-suspected` |
+| **422** | Đã có hồ sơ **cùng SĐT + ngày sinh** (AC-01.2): **không tạo mới**, trả `{ "code": "duplicate-patient-suspected" }` kèm gợi ý "Tôi đã từng khám tại bệnh viện" (C27) hoặc hướng dẫn đến quầy để điều dưỡng xác minh; không lộ dữ liệu của hồ sơ trùng | `duplicate-patient-suspected` |
 
 ### C3 `POST /fhir/Patient`
 Nurse tạo cho bệnh nhân chưa có tài khoản. Cùng kiểm tra trùng; Nurse có thể gửi `?forceCreate=true` + header
@@ -149,3 +157,25 @@ Chỉ D **không** có Care. Tạo phiên 60 phút (`break_glass_sessions`); 201
 `POST /api/v1/admin/users` `{ "subject": "<OIDC sub>", "fhirUser": "Practitioner/0192...", "roles": ["doctor"] }` liên kết
 tài khoản nhân viên với `Practitioner` (phải khớp `PractitionerRole.code`); `PUT .../{subject}` `{ "disabled": true }` khóa
 tài khoản. Cả hai ghi audit; khóa có hiệu lực ≤ 60 giây do cache identity (AC-08.1). Admin **không** đọc được dữ liệu lâm sàng.
+
+
+## 9. Liên kết hồ sơ: người thân và tự nhận hồ sơ (C22 đến C29)
+
+Một tài khoản có **một hồ sơ "bản thân"** (`identity_links`, như trước) và có thể quản lý thêm hồ sơ khác qua `profile_links`
+([ADR-0018](../adr/0018-profile-links-and-claim.md)). Mọi API trong mục này chạy trong clinical; việc **gửi và kiểm mã OTP** do
+notification đảm nhận (N8, N9). Phản hồi **không bao giờ** cho biết một hồ sơ có tồn tại hay không trước khi OTP đúng.
+
+| API | Việc làm | Mã trả về chính |
+|---|---|---|
+| C22 | Trả `[{ profileId, patientId, displayName, relationship, scope, expiresAt }]`; tên người thân chỉ rút gọn nếu liên kết chưa active | 200 |
+| C23 | Body `{ name, birthDate, gender, declaration: true }`. Kiểm dưới 16 tuổi, tối đa 10 hồ sơ/tài khoản, chống trùng; tạo `Patient` + `profile_links` (`relationship=guardian`, `scope=full`) | 201; 422 `not-a-dependent`, 422 `profile-limit`, 422 `duplicate-patient-suspected` |
+| C24 | Body `{ name, birthDate, phone, scope: "booking"\|"records" }`. Nếu **đúng một** hồ sơ trưởng thành khớp: tạo liên kết `pending`, gọi N8 gửi OTP tới số **trong hồ sơ** kèm nội dung nêu rõ phạm vi. Luôn trả 200 `{ "requestId" }` | 200; 429 `otp-rate-limited` (5 yêu cầu/24 giờ/tài khoản) |
+| C25 | Body `{ otp }`. Gọi N9; đúng thì `status=active`, `expiresAt=+12 tháng`, thông báo cho chủ hồ sơ (nếu có tài khoản riêng) | 200; 422 `otp-invalid`; 429 `otp-locked` |
+| C26 | Đặt `status=revoked`, xóa cache quyền (hiệu lực ≤ 60 giây), thông báo bên còn lại. Người gọi là người quản lý, chủ hồ sơ (có tài khoản) hoặc Nurse | 204; 404 nếu không thuộc quyền |
+| C27 | Body `{ name, birthDate, phone }`. Tìm hồ sơ `active` khớp (họ tên đã bỏ dấu + ngày sinh + băm số điện thoại). Đúng **một** ứng viên có số điện thoại thì gọi N8 tới số trong hồ sơ. Luôn trả 200 `claim-sent` | 200; 429 `otp-rate-limited` (5 lần/24 giờ/tài khoản, 3 mã/24 giờ/số) |
+| C28 | Body `{ otp }`. Gọi N9; đúng và hồ sơ chưa có `identity_links` "bản thân" thì tạo liên kết, gửi thông báo "tài khoản mới đã liên kết" tới số trong hồ sơ, ghi audit | 200; 409 `record-already-linked` (hướng dẫn đến quầy); 422 `otp-invalid`; 429 `otp-locked` |
+| C29 | Nurse nhập tài khoản được ủy quyền (SĐT hoặc email), `scope`, `consentDeclaration: true` sau khi đối chiếu giấy tờ; hiệu lực ngay, ghi audit | 201; 404; 422 `profile-limit` |
+
+Cùng một người khớp ở nhiều số điện thoại dùng chung (gia đình) được phân biệt bằng họ tên và ngày sinh; nếu vẫn còn **nhiều hơn một**
+ứng viên thì không gửi mã và hướng dẫn đến quầy. Số điện thoại, ngày sinh nhập vào **không bao giờ** xuất hiện trong log hay audit
+(chỉ ghi băm có khóa).

@@ -5,7 +5,7 @@
 > Sinh tự động từ `tools/plan/stories.py` và `tools/plan/tasks_*.py` bằng `python3 -I tools/plan/build.py`. Không sửa tay file này: sửa nguồn rồi chạy lại.
 > Mỗi story truy về use case ([FR](functional-requirements.md)), API ([thiết kế chi tiết](../03-architecture/detailed-design/README.md)) và các task cụ thể của từng người ([backlog](../05-plan/backlog.md)).
 
-Tổng: **75 story** — Must 49, Should 23, Could 3.
+Tổng: **79 story** — Must 51, Should 25, Could 3.
 
 | ID | Story | Vai trò | MoSCoW | UC | Task | Giờ |
 |---|---|---|---|---|---|---|
@@ -14,6 +14,10 @@ Tổng: **75 story** — Must 49, Should 23, Could 3.
 | [US-003](#us-003) | Điều dưỡng đăng ký bệnh nhân tại quầy | Điều dưỡng | Must | UC-01 | 3 | 9 |
 | [US-004](#us-004) | Điều dưỡng gộp hồ sơ trùng | Điều dưỡng | Should | UC-01 | 4 | 12 |
 | [US-075](#us-075) | Điều dưỡng bổ sung số căn cước công dân khi bệnh nhân đến khám | Điều dưỡng | Should | UC-01 | 4 | 14 |
+| [US-076](#us-076) | Cha mẹ tạo và quản lý hồ sơ cho con dưới 16 tuổi | Bệnh nhân | Should | UC-01 | 5 | 18 |
+| [US-077](#us-077) | Người dùng liên kết và thu hồi hồ sơ người thân trưởng thành | Bệnh nhân | Should | UC-01 | 6 | 21 |
+| [US-078](#us-078) | Bệnh nhân cũ tự nhận hồ sơ đã có tại bệnh viện | Bệnh nhân | Must | UC-01 | 4 | 14 |
+| [US-079](#us-079) | Mã OTP gửi qua Zalo trước, SMS sau | Bệnh nhân | Must | UC-07 | 3 | 11 |
 | [US-005](#us-005) | Bệnh nhân chọn kênh và thiết bị nhận thông báo | Bệnh nhân | Should | UC-07 | 3 | 10 |
 | [US-006](#us-006) | Quản trị viên quản lý nhân sự lâm sàng | Quản trị viên | Must | UC-08 | 2 | 8 |
 | [US-007](#us-007) | Quản trị viên liên kết và khóa tài khoản | Quản trị viên | Must | UC-08 | 2 | 7 |
@@ -153,12 +157,12 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | CLN-02 | Validator profile cho Patient, Practitioner, PractitionerRole (cardinality, value set) | D2 | 4 | W3 |
-| CLN-03 | Patient repository: sinh MRN BN-YYYY-NNNNNN, nameTokens bỏ dấu, chuẩn hóa SĐT E.164 | D2 | 4 | W4 |
+| CLN-03 | Patient repository: sinh MRN BN-YYYY-NNNNNN, nameTokens bỏ dấu, chuẩn hóa SĐT E.164 | D2 | 4 | W5 |
 | CLN-04 | Phát hiện trùng hồ sơ theo SĐT + ngày sinh | D2 | 2 | W5 |
 | CLN-05 | API đăng ký bệnh nhân (C1) + tạo identity_links | D2 | 4 | W6 |
 | IAM-01 | Keycloak trên cụm (ADR-0017) | SA | 8 | W7 |
 | IAM-03 | Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt | SA | 6 | W7 |
-| IAM-04 | Authenticator mã OTP qua SMS (SPI Keycloak) | SA | 8 | W8 |
+| IAM-04 | Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 (Zalo trước, SMS sau) | SA | 8 | W8 |
 | WEB-27 | Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy | D2 | 4 | W8 |
 
 ## US-002
@@ -223,8 +227,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | NTF-11 | Consumer document-released, no-show-scored, patient-merged | D1 | 3 | W5 |
 | CLN-09 | API gộp hồ sơ (C8) + phát patient-merged | D2 | 4 | W8 |
-| DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W9 |
-| SCH-26 | Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent) | D1 | 2 | W9 |
+| SCH-26 | Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent) | D1 | 2 | W8 |
+| DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W10 |
 
 ## US-075
 ### Điều dưỡng bổ sung số căn cước công dân khi bệnh nhân đến khám — Should
@@ -244,10 +248,104 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| CLN-30 | Trường CCCD qua C5 (chỉ Nurse): 12 số, khớp giới tính và năm sinh, bản ghi đồng ý, trả bản che, ?reveal có audit | D2 | 4 | W5 |
-| CLN-31 | Mã hóa AES-256-GCM (khóa Key Vault) + băm HMAC-SHA-256, chỉ mục unique partial, gợi ý gộp khi trùng | D2 | 4 | W6 |
-| CLN-32 | Test không rò CCCD: log, sự kiện, tìm kiếm, tin nhắn, văn bản gửi AI | D2 | 3 | W7 |
+| CLN-30 | Trường CCCD qua C5 (chỉ Nurse): 12 số, khớp giới tính và năm sinh, bản ghi đồng ý, trả bản che, ?reveal có audit | D2 | 4 | W7 |
+| CLN-31 | Mã hóa AES-256-GCM (khóa Key Vault) + băm HMAC-SHA-256, chỉ mục unique partial, gợi ý gộp khi trùng | D2 | 4 | W8 |
+| CLN-32 | Test không rò CCCD: log, sự kiện, tìm kiếm, tin nhắn, văn bản gửi AI | D2 | 3 | W9 |
 | WEB-28 | Hộp Bổ sung CCCD ở hàng đợi và check-in: ô nhập, ô đồng ý, hiện số có xác nhận | D2 | 3 | W9 |
+
+## US-076
+### Cha mẹ tạo và quản lý hồ sơ cho con dưới 16 tuổi — Should
+
+**Là** Bệnh nhân, **tôi muốn** thêm con vào tài khoản của mình và đặt lịch cho con, **để** không cần mỗi người một tài khoản.
+
+- Use case: UC-01 · API: C22, C23 · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given người dưới 16 tuổi và đã cam đoan là người giám hộ, When tạo hồ sơ, Then hồ sơ được tạo và liên kết toàn quyền (AC-DP.2)
+2. Given người từ 16 tuổi trở lên, When tạo như người dưới 16 tuổi, Then bị từ chối (AC-DP.1)
+3. Given tài khoản đã quản lý 10 hồ sơ, When thêm hồ sơ thứ 11, Then bị từ chối (AC-DP.3)
+4. Given hồ sơ con đã liên kết, When tài khoản đặt lịch cho con, Then thành công và audit ghi tài khoản thực hiện (AC-03.7)
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| SHR-30 | Authz: điều kiện linked, linked-records, guardian; onBehalfOf trong audit; sinh test từ ma trận cho hồ sơ liên kết | SA | 3 | W3 |
+| CLN-33 | profile_links: mô hình liên kết (guardian, proxy, phạm vi, hết hạn), linkedProfiles trong resolver nội bộ và /me | D2 | 4 | W4 |
+| CLN-34 | API C22, C23: danh sách hồ sơ và tạo hồ sơ dưới 16 tuổi (tối đa 10, chống trùng, cam đoan) | D2 | 4 | W7 |
+| CLN-37 | Test phân quyền và chống dò hồ sơ liên kết: linked, guardian, phạm vi, hết hạn, thu hồi ≤ 60 giây | D2 | 3 | W9 |
+| WEB-35 | Màn hình Hồ sơ người thân: danh sách, thêm con, thêm người thân, thu hồi; chọn người đi khám khi đặt lịch | D2 | 4 | W9 |
+
+## US-077
+### Người dùng liên kết và thu hồi hồ sơ người thân trưởng thành — Should
+
+**Là** Bệnh nhân, **tôi muốn** quản lý lịch hẹn, và nếu được đồng ý thì xem kết quả, của cha mẹ hoặc người thân, **để** giúp người không dùng được ứng dụng mà vẫn do chính họ đồng ý.
+
+- Use case: UC-01 · API: C24, C25, C26, C29 · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given thông tin khớp một hồ sơ trưởng thành, When nhập đúng mã OTP gửi tới số của người thân, Then liên kết có hiệu lực với phạm vi đã chọn (AC-LK.1)
+2. Given liên kết phạm vi Đặt lịch, When xem kết quả khám hoặc tài liệu của người thân, Then bị từ chối và có audit deny (AC-PX.1)
+3. Given người thân đến quầy và Điều dưỡng ghi ủy quyền sau khi đối chiếu giấy tờ, When lưu, Then liên kết có hiệu lực (AC-LK.3)
+4. Given liên kết quá 12 tháng, When truy cập, Then bị từ chối cho đến khi gia hạn (AC-LK.4)
+5. Given chủ hồ sơ hoặc người quản lý thu hồi, When thu hồi, Then mất quyền sau tối đa 60 giây và có audit (AC-RV.1)
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| SHR-30 | Authz: điều kiện linked, linked-records, guardian; onBehalfOf trong audit; sinh test từ ma trận cho hồ sơ liên kết | SA | 3 | W3 |
+| CLN-33 | profile_links: mô hình liên kết (guardian, proxy, phạm vi, hết hạn), linkedProfiles trong resolver nội bộ và /me | D2 | 4 | W4 |
+| CLN-35 | API C24, C25: liên kết người thân trưởng thành bằng OTP, phạm vi, hết hạn 12 tháng và nhắc gia hạn | D2 | 4 | W7 |
+| CLN-38 | API C26, C29: thu hồi liên kết (hiệu lực ≤ 60 giây, thông báo) và ghi ủy quyền tại quầy | D2 | 3 | W7 |
+| CLN-37 | Test phân quyền và chống dò hồ sơ liên kết: linked, guardian, phạm vi, hết hạn, thu hồi ≤ 60 giây | D2 | 3 | W9 |
+| WEB-35 | Màn hình Hồ sơ người thân: danh sách, thêm con, thêm người thân, thu hồi; chọn người đi khám khi đặt lịch | D2 | 4 | W9 |
+
+## US-078
+### Bệnh nhân cũ tự nhận hồ sơ đã có tại bệnh viện — Must
+
+**Là** Bệnh nhân, **tôi muốn** liên kết tài khoản mới với hồ sơ cũ bằng mã OTP, **để** không tạo hồ sơ trùng và không phải đến quầy.
+
+- Use case: UC-01 · API: C27, C28 · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given thông tin khớp đúng một hồ sơ, When nhập đúng mã OTP gửi tới số trong hồ sơ, Then liên kết tài khoản, không tạo hồ sơ mới (AC-CL.1)
+2. Given không khớp hoặc nhiều ứng viên, When gửi yêu cầu, Then phản hồi giống hệt trường hợp khớp, không gửi mã, không lộ dữ liệu (AC-CL.2)
+3. Given nhập sai OTP 5 lần hoặc quá 5 lần nhận hồ sơ trong 24 giờ, When thử tiếp, Then bị khóa tạm có audit (AC-CL.3)
+4. Given hồ sơ đã liên kết tài khoản khác, When nhận hồ sơ, Then không liên kết và hướng dẫn đến quầy (AC-CL.4)
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| CLN-33 | profile_links: mô hình liên kết (guardian, proxy, phạm vi, hết hạn), linkedProfiles trong resolver nội bộ và /me | D2 | 4 | W4 |
+| CLN-36 | API C27, C28: tự nhận hồ sơ (khớp tên, ngày sinh, băm SĐT), phản hồi trung lập, giới hạn, báo tới số trong hồ sơ | D2 | 4 | W6 |
+| CLN-37 | Test phân quyền và chống dò hồ sơ liên kết: linked, guardian, phạm vi, hết hạn, thu hồi ≤ 60 giây | D2 | 3 | W9 |
+| WEB-36 | Màn hình Nhận hồ sơ đã có: form, nhập OTP, Gửi bằng SMS sau 30 giây, thông điệp trung lập | D2 | 3 | W9 |
+
+## US-079
+### Mã OTP gửi qua Zalo trước, SMS sau — Must
+
+**Là** Bệnh nhân, **tôi muốn** nhận mã xác minh nhanh và rẻ qua Zalo, tự chuyển SMS khi không được, **để** đăng ký, nhận hồ sơ và liên kết người thân dùng chung một cách gửi mã an toàn.
+
+- Use case: UC-07 · API: N8, N9 · AC của FR: —
+
+**Tiêu chí nghiệm thu**
+
+1. Given số dùng Zalo nhưng Zalo gửi lỗi, When yêu cầu mã, Then cùng mã được gửi bằng SMS trong tối đa 30 giây (AC-RG.3)
+2. Given mã đã dùng, hết hạn 5 phút hoặc sai 5 lần, When nhập, Then bị từ chối; quá 5 mã mỗi giờ cho một số thì từ chối gửi thêm (AC-RG.4)
+3. Given mã OTP và số điện thoại, When ghi log hoặc audit, Then không xuất hiện giá trị rõ
+
+**Task**
+
+| Task | Việc | Người | Giờ | Tuần |
+|---|---|---|---|---|
+| NTF-16 | Dịch vụ OTP (N8, N9): otp_challenges (băm, TTL 5 phút), dùng một lần, giới hạn theo số và IP, khóa 15 phút | D1 | 4 | W5 |
+| NTF-17 | Adapter Zalo (tin xác thực) và tự chuyển SMS cùng mã khi lỗi hoặc quá 30 giây; metric tỉ lệ rơi xuống SMS và ngân sách | D1 | 4 | W5 |
+| NTF-18 | Test OTP: hết hạn, dùng lại, sai 5 lần, giới hạn theo số, rơi xuống SMS, không log mã | D1 | 3 | W5 |
 
 ## US-005
 ### Bệnh nhân chọn kênh và thiết bị nhận thông báo — Should
@@ -306,7 +404,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây | SA | 3 | W2 |
+| SHR-21 | Identity resolver: sub → fhirUser + roles + disabled + linkedProfiles (hồ sơ, phạm vi), cache 60 giây | SA | 3 | W2 |
 | CLN-11 | API /me (C2), quản lý liên kết/khóa tài khoản (C21), API nội bộ identity | D2 | 4 | W3 |
 
 ## US-008
@@ -350,11 +448,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | SCH-01 | Migration V001: schedule, schedule_template, slot (+ extension, exclusion constraint) | D1 | 2 | W5 |
-| SCH-03 | Schedule repository: tạo/đọc/tìm/sửa với version CAS và history | D1 | 4 | W5 |
-| SCH-04 | API Schedule (S1-S4) + kiểm tra Practitioner/chuyên khoa qua interface (bản giả) + quy tắc authz | D1 | 4 | W5 |
-| SCH-33 | Nối client thật tới clinical (roles của Practitioner) thay cho bản giả trong SCH-04 | D1 | 2 | W6 |
+| SCH-03 | Schedule repository: tạo/đọc/tìm/sửa với version CAS và history | D1 | 4 | W6 |
+| SCH-04 | API Schedule (S1-S4) + kiểm tra Practitioner/chuyên khoa qua interface (bản giả) + quy tắc authz | D1 | 4 | W6 |
+| SCH-33 | Nối client thật tới clinical (roles của Practitioner) thay cho bản giả trong SCH-04 | D1 | 2 | W7 |
 | WEB-06 | Màn hình quản lý lịch bác sĩ: Schedule và mẫu tuần | D1 | 4 | W7 |
-| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
+| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W9 |
 
 ## US-010
 ### Điều dưỡng đặt mẫu lịch tuần — Must
@@ -416,8 +514,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-11 | API block/unblock slot (S9, S10) | D1 | 3 | W5 |
-| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
+| SCH-11 | API block/unblock slot (S9, S10) | D1 | 3 | W7 |
+| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W9 |
 | WEB-07 | Lịch slot dạng tuần: sinh slot, chặn/bỏ chặn; bác sĩ xem lịch của mình | D1 | 4 | W9 |
 
 ## US-013
@@ -437,8 +535,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-04 | API Schedule (S1-S4) + kiểm tra Practitioner/chuyên khoa qua interface (bản giả) + quy tắc authz | D1 | 4 | W5 |
-| SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W6 |
+| SCH-04 | API Schedule (S1-S4) + kiểm tra Practitioner/chuyên khoa qua interface (bản giả) + quy tắc authz | D1 | 4 | W6 |
+| SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W7 |
 | WEB-07 | Lịch slot dạng tuần: sinh slot, chặn/bỏ chặn; bác sĩ xem lịch của mình | D1 | 4 | W9 |
 
 ## US-014
@@ -461,8 +559,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | SCH-09 | Repository tìm slot với keyset pagination (specialty, practitioner, schedule, khoảng ngày) | D1 | 4 | W6 |
 | SCH-10 | API tìm slot (S8): ép status/start cho bệnh nhân, 400 khi thiếu bộ lọc hoặc > 31 ngày | D1 | 3 | W7 |
 | SCH-27 | Cache Redis cho tìm slot (TTL 5 giây) + invalidate theo event; Redis lỗi → đọc thẳng DB | D1 | 4 | W8 |
-| WEB-03 | Màn hình tìm slot trống: bộ lọc chuyên khoa/bác sĩ/ngày, danh sách phân trang | D1 | 4 | W8 |
 | SCH-31 | EXPLAIN ANALYZE 4 truy vấn nóng trên dữ liệu cỡ năm 1 + chỉnh index nếu cần | D1 | 3 | W9 |
+| WEB-03 | Màn hình tìm slot trống: bộ lọc chuyên khoa/bác sĩ/ngày, danh sách phân trang | D1 | 4 | W9 |
 
 ## US-015
 ### Bệnh nhân đặt lịch khám — Must
@@ -491,8 +589,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | SCH-12 | $book bước 1: claim Idempotency-Key, advisory lock theo bệnh nhân, kiểm BR-03 | D1 | 4 | W6 |
 | SCH-13 | $book bước 2: compare-and-set slot, BR-04, tạo appointment, history, outbox appointment-booked | D1 | 4 | W7 |
 | SCH-14 | API $book (S11): parse Parameters, kiểm patient=own, gợi ý 3 slot khi 409 | D1 | 4 | W7 |
-| SCH-15 | Test idempotency end-to-end: cùng key+body, cùng key khác body | D1 | 3 | W7 |
-| SCH-16 | Test đồng thời: 50 yêu cầu đặt một slot (Testcontainers) | D1 | 3 | W7 |
+| SCH-15 | Test idempotency end-to-end: cùng key+body, cùng key khác body | D1 | 3 | W8 |
+| SCH-16 | Test đồng thời: 50 yêu cầu đặt một slot (Testcontainers) | D1 | 3 | W8 |
 | SCH-23 | Relay outbox: bổ sung ageBand từ clinical (cache 24 giờ, lỗi → unknown) | D1 | 3 | W8 |
 | SCH-28 | Job dọn dẹp: outbox đã phát >7 ngày, idempotency >24h, slot free quá khứ >90 ngày | D1 | 2 | W8 |
 | SCH-30 | Test hợp đồng cho event E1-E5 (producer sinh đúng schema) | D1 | 3 | W9 |
@@ -516,8 +614,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W7 |
-| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
+| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W8 |
+| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W9 |
 | WEB-05 | Màn hình lịch hẹn của tôi: xem, hủy (cảnh báo <2h), đổi lịch | D1 | 4 | W9 |
 
 ## US-017
@@ -537,8 +635,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W8 |
-| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W8 |
+| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W9 |
+| SCH-29 | Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling | D1 | 4 | W9 |
 | WEB-05 | Màn hình lịch hẹn của tôi: xem, hủy (cảnh báo <2h), đổi lịch | D1 | 4 | W9 |
 
 ## US-018
@@ -557,7 +655,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W6 |
+| SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W7 |
 | WEB-05 | Màn hình lịch hẹn của tôi: xem, hủy (cảnh báo <2h), đổi lịch | D1 | 4 | W9 |
 
 ## US-019
@@ -578,11 +676,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W6 |
-| SCH-21 | API _history cho Appointment (S17) | D1 | 2 | W6 |
-| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W7 |
-| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W8 |
-| WEB-08 | Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in | D1 | 4 | W9 |
+| SCH-17 | Đọc/tìm lịch hẹn (S12, S13): ép bộ lọc theo vai trò, tối đa 92 ngày | D1 | 4 | W7 |
+| SCH-21 | API _history cho Appointment (S17) | D1 | 2 | W7 |
+| SCH-18 | API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled | D1 | 4 | W8 |
+| SCH-19 | API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction | D1 | 4 | W9 |
+| WEB-08 | Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in | D1 | 4 | W10 |
 
 ## US-020
 ### Hệ thống đánh dấu bệnh nhân không đến — Must
@@ -620,7 +718,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | SCH-20 | API $check-in (S16): cửa sổ -60/+30 phút, chỉ Nurse, outbox appointment-checked-in | D1 | 3 | W8 |
-| WEB-08 | Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in | D1 | 4 | W9 |
+| WEB-08 | Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in | D1 | 4 | W10 |
 
 ## US-022
 ### Lịch hẹn chuyển sang hoàn thành khi khám xong — Must
@@ -679,7 +777,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | CLN-15 | API Encounter: $start, đọc, tìm, sửa ghi chú (C11-C13), chặn sửa khi finished | D2 | 4 | W4 |
 | CLN-26 | Chạy bộ test ma trận phân quyền cho mọi endpoint clinical | D2 | 4 | W6 |
-| WEB-22 | Form lần khám: bắt đầu, lý do, bệnh sử, sinh hiệu (Nurse) | D2 | 4 | W9 |
+| WEB-22 | Form lần khám: bắt đầu, lý do, bệnh sử, sinh hiệu (Nurse) | D2 | 4 | W10 |
 
 ## US-025
 ### Điều dưỡng ghi sinh hiệu — Must
@@ -700,7 +798,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | CLN-16 | Validator Observation: LOINC, đơn vị UCUM, khoảng hợp lý, tính interpretation | D2 | 4 | W3 |
 | CLN-17 | API Observation (C16): ghi/đọc/tìm, ràng buộc Encounter và quyền | D2 | 3 | W4 |
-| WEB-22 | Form lần khám: bắt đầu, lý do, bệnh sử, sinh hiệu (Nurse) | D2 | 4 | W9 |
+| WEB-22 | Form lần khám: bắt đầu, lý do, bệnh sử, sinh hiệu (Nurse) | D2 | 4 | W10 |
 
 ## US-026
 ### Bác sĩ ghi chẩn đoán — Must
@@ -722,7 +820,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | CLN-18 | API Condition (C17) + bảng ICD-10 + quy tắc recorder phải có Care | D2 | 4 | W4 |
 | CLN-26 | Chạy bộ test ma trận phân quyền cho mọi endpoint clinical | D2 | 4 | W6 |
-| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W10 |
+| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W11 |
 
 ## US-027
 ### Bác sĩ ghi dị ứng và bệnh nền — Should
@@ -741,7 +839,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | CLN-19 | API AllergyIntolerance (C18) | D2 | 2 | W5 |
-| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W10 |
+| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W11 |
 
 ## US-028
 ### Bác sĩ kết thúc lần khám — Must
@@ -760,7 +858,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | CLN-20 | API $finish (C14) + phát encounter-finished | D2 | 3 | W4 |
-| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W10 |
+| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W11 |
 
 ## US-029
 ### Bác sĩ bổ sung ghi chú sau khi kết thúc — Must
@@ -780,7 +878,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | CLN-21 | API $addendum (C15) | D2 | 2 | W4 |
 | CLN-25 | Dựng dữ liệu ICD-10 và LOINC vào bảng tra cứu khi khởi động | D2 | 2 | W4 |
-| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W10 |
+| WEB-23 | Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum | D2 | 4 | W11 |
 
 ## US-030
 ### Bệnh nhân xem kết quả khám của mình — Should
@@ -840,10 +938,10 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| CLN-23 | API timeline (C19): 4 truy vấn song song + document client có timeout 300 ms, partial | D2 | 4 | W9 |
-| CLN-28 | Tối ưu timeline: đo p95, index, projection để đạt ≤ 500 ms | D2 | 4 | W9 |
-| DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W9 |
-| WEB-21 | Màn hình timeline bệnh nhân: lọc loại/khoảng, phân trang, hiển thị partial | D2 | 4 | W9 |
+| CLN-23 | API timeline (C19): 4 truy vấn song song + document client có timeout 300 ms, partial | D2 | 4 | W10 |
+| CLN-28 | Tối ưu timeline: đo p95, index, projection để đạt ≤ 500 ms | D2 | 4 | W10 |
+| DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W10 |
+| WEB-21 | Màn hình timeline bệnh nhân: lọc loại/khoảng, phân trang, hiển thị partial | D2 | 4 | W10 |
 
 ## US-033
 ### Hệ thống duy trì quan hệ điều trị — Must
@@ -911,8 +1009,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | DOC-03 | API xin upload (D1): kiểm loại, kích thước, Care, Idempotency-Key | D2 | 4 | W7 |
 | DOC-04 | API complete (D2): kiểm tồn tại, size, SHA-256, magic bytes | D2 | 4 | W8 |
 | DOC-11 | Job dọn blob mồ côi và pending-upload > 24 giờ | D2 | 2 | W8 |
-| DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W9 |
-| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W10 |
+| DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W10 |
+| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W11 |
 
 ## US-036
 ### Hệ thống quét mã độc tài liệu — Must
@@ -932,7 +1030,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | IAC-18 | Module Defender for Storage + Event Grid → queue cho kết quả quét | SA | 3 | W7 |
-| DOC-05 | Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine | D2 | 4 | W8 |
+| DOC-05 | Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine | D2 | 4 | W9 |
 
 ## US-037
 ### Người có quyền tải tài liệu bằng link ngắn hạn — Must
@@ -953,10 +1051,10 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | DOC-02 | IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút | D2 | 4 | W6 |
-| DOC-06 | API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành) | D2 | 3 | W8 |
-| DOC-07 | API cấp link tải 5 phút (D5) + audit mỗi lần | D2 | 3 | W8 |
-| DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W9 |
-| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W10 |
+| DOC-06 | API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành) | D2 | 3 | W9 |
+| DOC-07 | API cấp link tải 5 phút (D5) + audit mỗi lần | D2 | 3 | W10 |
+| DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W10 |
+| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W11 |
 
 ## US-038
 ### Bác sĩ phát hành tài liệu cho bệnh nhân — Must
@@ -974,9 +1072,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| DOC-08 | API phát hành (D6) + phát document-released | D2 | 2 | W8 |
-| DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W9 |
-| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W10 |
+| DOC-08 | API phát hành (D6) + phát document-released | D2 | 2 | W9 |
+| DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D2 | 4 | W10 |
+| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W11 |
 
 ## US-039
 ### Bệnh nhân xem tài liệu đã phát hành — Must
@@ -994,8 +1092,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| DOC-06 | API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành) | D2 | 3 | W8 |
-| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W10 |
+| DOC-06 | API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành) | D2 | 3 | W9 |
+| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W11 |
 
 ## US-040
 ### Bác sĩ đánh dấu tài liệu nhập nhầm — Could
@@ -1012,8 +1110,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| DOC-09 | API entered-in-error (D7) | D2 | 2 | W9 |
-| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W10 |
+| DOC-09 | API entered-in-error (D7) | D2 | 2 | W10 |
+| WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W11 |
 
 ## US-041
 ### Bệnh nhân nhận xác nhận và nhắc lịch — Must
@@ -1179,7 +1277,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | IAC-12 | Module storage | SA | 4 | W5 |
 | AUD-02 | Ghi append blob NDJSON vào container WORM kèm chuỗi hash (prevHash, batchHash) | D2 | 4 | W6 |
-| AUD-08 | Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện | D2 | 3 | W7 |
+| AUD-08 | Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện | D2 | 3 | W9 |
 
 ## US-049
 ### DPO tra cứu ai đã xem hồ sơ — Must
@@ -1200,7 +1298,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | AUD-03 | Đẩy sang Log Analytics (Logs Ingestion) / Loki local | D2 | 4 | W5 |
 | AUD-04 | API tra cứu audit (A1): bộ lọc, khoảng ≤ 90 ngày, ẩn reason với Admin, audit việc tra cứu | D2 | 4 | W5 |
-| WEB-26 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | D2 | 4 | W7 |
+| WEB-26 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | D2 | 4 | W8 |
 
 ## US-050
 ### DPO xuất báo cáo audit và kiểm tra toàn vẹn — Should
@@ -1219,8 +1317,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | AUD-05 | API export audit (A2, A3): job nền xuất CSV, link SAS 5 phút | D2 | 4 | W6 |
-| AUD-06 | Công cụ + API kiểm tra toàn vẹn chuỗi hash (A4) | D2 | 4 | W7 |
-| WEB-26 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | D2 | 4 | W7 |
+| AUD-06 | Công cụ + API kiểm tra toàn vẹn chuỗi hash (A4) | D2 | 4 | W8 |
+| WEB-26 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | D2 | 4 | W8 |
 
 ## US-051
 ### DPO xem xét các lần break-glass — Should
@@ -1239,7 +1337,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | AUD-07 | Break-glass review (A5) + phát cảnh báo DPO ≤ 5 phút qua notification | D2 | 4 | W6 |
-| WEB-26 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | D2 | 4 | W7 |
+| WEB-26 | Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass | D2 | 4 | W8 |
 
 ## US-052
 ### Quản trị viên quản lý kho tri thức — Must
@@ -1264,7 +1362,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-04 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống | D3 | 4 | W5 |
 | AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | D3 | 4 | W5 |
 | WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
-| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
+| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W11 |
 
 ## US-053
 ### Bác sĩ/điều dưỡng hỏi trợ lý và nhận câu trả lời có trích dẫn — Must
@@ -1292,7 +1390,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | D3 | 4 | W6 |
 | IAM-02 | Tài khoản dịch vụ và token exchange | SA | 6 | W7 |
 | WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | D3 | 4 | W7 |
-| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
+| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W11 |
 
 ## US-054
 ### Trợ lý kháng prompt injection — Must
@@ -1401,11 +1499,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-19 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | D3 | 4 | W9 |
-| AI-20 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | D3 | 4 | W9 |
-| AI-21 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline | D3 | 4 | W9 |
-| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
+| AI-19 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | D3 | 4 | W10 |
+| AI-20 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | D3 | 4 | W10 |
+| AI-21 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline | D3 | 4 | W10 |
 | WEB-32 | Panel tóm tắt hồ sơ: nhãn AI, nguồn bấm được sang bản ghi | D3 | 3 | W10 |
+| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W11 |
 
 ## US-059
 ### Hệ thống trích xuất dữ liệu từ tài liệu tải lên — Should
@@ -1425,12 +1523,12 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
 | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | D3 | 4 | W4 |
-| AI-22 | Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ | D3 | 4 | W8 |
-| AI-23 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | D3 | 4 | W9 |
-| AI-24 | Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy | D3 | 4 | W9 |
-| AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | D3 | 3 | W9 |
-| DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W9 |
-| WEB-33 | Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối | D3 | 4 | W10 |
+| AI-22 | Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ | D3 | 4 | W9 |
+| AI-23 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | D3 | 4 | W10 |
+| AI-24 | Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy | D3 | 4 | W10 |
+| AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | D3 | 3 | W10 |
+| DOC-10 | API nội bộ (D8, D9) + consumer patient-merged | D2 | 3 | W10 |
+| WEB-33 | Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối | D3 | 4 | W11 |
 
 ## US-060
 ### Nhân viên duyệt kết quả trích xuất — Should
@@ -1449,10 +1547,10 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | D3 | 3 | W9 |
-| AI-26 | API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields | D3 | 4 | W9 |
-| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
-| WEB-33 | Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối | D3 | 4 | W10 |
+| AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | D3 | 3 | W10 |
+| AI-26 | API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields | D3 | 4 | W10 |
+| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W11 |
+| WEB-33 | Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối | D3 | 4 | W11 |
 
 ## US-061
 ### Bộ đánh giá trích xuất tài liệu — Should
@@ -1469,8 +1567,8 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| AI-27 | Bộ tài liệu giả có nhãn cho trích xuất (xét nghiệm, đơn thuốc, chuyển viện) | D3 | 4 | W10 |
-| AI-28 | Eval F1 mức trường và phân loại + báo cáo | D3 | 3 | W10 |
+| AI-27 | Bộ tài liệu giả có nhãn cho trích xuất (xét nghiệm, đơn thuốc, chuyển viện) | D3 | 4 | W11 |
+| AI-28 | Eval F1 mức trường và phân loại + báo cáo | D3 | 3 | W11 |
 
 ## US-062
 ### Bệnh nhân đặt lịch qua chatbot — Could
@@ -1493,9 +1591,9 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 |---|---|---|---|---|
 | AI-29 | Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây | D3 | 4 | W3 |
 | AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút | D3 | 4 | W8 |
-| AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | D3 | 3 | W9 |
-| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W10 |
-| WEB-34 | Widget chatbot đặt lịch có bước xác nhận (Could) | D3 | 4 | W10 |
+| AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | D3 | 3 | W8 |
+| WEB-34 | Widget chatbot đặt lịch có bước xác nhận (Could) | D3 | 4 | W9 |
+| AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | D3 | 4 | W11 |
 
 ## US-063
 ### Huấn luyện và đăng ký mô hình dự đoán no-show — Should

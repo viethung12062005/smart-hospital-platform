@@ -22,6 +22,30 @@ screens:
           - ["Đồng ý điều khoản xử lý dữ liệu", "Checkbox", "Có", "Có", "Không tích", "Bắt buộc tích mới gửi được; liên kết xem toàn văn điều khoản."]
           - ["Cho phép xử lý dữ liệu bằng AI", "Checkbox", "Có", "Không", "Không tích", "Tùy chọn riêng, có giải thích."]
           - ["Đăng ký", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:register]]."]
+      - key: claim-record
+        name: Nhận hồ sơ đã có
+        purpose: Người từng khám tại bệnh viện liên kết tài khoản với hồ sơ cũ bằng mã OTP.
+        access: "Sau khi đăng nhập lần đầu → “Tôi đã từng khám tại bệnh viện”; hoặc từ gợi ý khi đăng ký bị trùng hồ sơ."
+        uc: [claim-record]
+        components:
+          - ["Họ và tên", "Textbox", "Có", "Có", "Trống", "Như trên hồ sơ tại bệnh viện."]
+          - ["Ngày sinh", "Date picker", "Có", "Có", "Trống", "Không ở tương lai."]
+          - ["Số điện thoại đã đăng ký tại bệnh viện", "Textbox", "Có", "Có", "Trống", "Định dạng Việt Nam; mã OTP chỉ gửi tới số lưu trong hồ sơ."]
+          - ["Mã OTP", "Textbox", "Có*", "Có*", "Trống", "*Hiện sau khi gửi yêu cầu; 6 chữ số, hết hạn sau 5 phút."]
+          - ["Gửi bằng SMS", "Link", "Có*", "N/A", "N/A", "*Hiện sau 30 giây nếu chưa nhận được mã qua Zalo."]
+          - ["Gửi yêu cầu", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:claim-record]]."]
+      - key: relatives
+        name: Hồ sơ người thân
+        purpose: Xem, thêm và thu hồi các hồ sơ mà tài khoản đang quản lý (con, người thân).
+        access: "Trang chủ → “Hồ sơ người thân”."
+        uc: [add-dependent, link-relative, revoke-link]
+        data_source: "Liên kết đang “active” hoặc “pending” của tài khoản hiện tại."
+        sorting: "Bản thân trước, sau đó theo họ tên."
+        components:
+          - ["Danh sách hồ sơ", "Grid", "Không", "N/A", "N/A", "Họ tên, quan hệ, phạm vi, ngày hết hạn; hồ sơ sắp hết hạn có nhãn nhắc gia hạn."]
+          - ["Thêm con", "Button", "N/A", "N/A", "N/A", "Mở form hồ sơ người dưới 16 tuổi ([[UC:add-dependent]])."]
+          - ["Thêm người thân", "Button", "N/A", "N/A", "N/A", "Mở form liên kết người lớn: họ tên, ngày sinh, SĐT, phạm vi ([[UC:link-relative]])."]
+          - ["Thu hồi", "Button", "N/A", "N/A", "N/A", "Có xác nhận; kích hoạt [[UC:revoke-link]]."]
       - key: find-doctor
         name: Tìm bác sĩ và khung giờ
         purpose: Tìm khung giờ trống theo chuyên khoa, bác sĩ, ngày.
@@ -42,7 +66,7 @@ screens:
         uc: [book, reschedule]
         components:
           - ["Bác sĩ, chuyên khoa, ngày giờ", "Label", "Không", "N/A", "Theo slot", "Chỉ đọc."]
-          - ["Bệnh nhân", "Label / Search", "Chỉ Điều dưỡng", "Có", "<Người dùng hiện tại>", "Bệnh nhân không đổi được; Điều dưỡng tìm bệnh nhân."]
+          - ["Người đi khám", "Dropdown / Search", "Có", "Có", "Bản thân", "Bệnh nhân chọn trong các hồ sơ đã liên kết (bản thân, con, người thân); Điều dưỡng tìm bệnh nhân."]
           - ["Lý do khám", "Textarea", "Có", "Không", "Trống", "Tối đa 500 ký tự."]
           - ["Xác nhận", "Button", "N/A", "N/A", "N/A", "Gửi kèm Idempotency-Key; vô hiệu trong lúc chờ phản hồi."]
       - key: chatbot
