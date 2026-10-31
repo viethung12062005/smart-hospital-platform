@@ -9,7 +9,7 @@ Kết hợp **RBAC** (role trong token) và **ABAC** (quan hệ giữa người 
 |---|---|---|
 | 1. Xác thực | Kiểm chữ ký, `iss`, `aud`, `exp`; nhân viên phải có `amr` chứa `mfa` (NFR-SEC1) | Gateway **và** từng service |
 | 2. Role | `roles` ∈ {`patient`,`doctor`,`nurse`,`admin`,`dpo`} từ claim; thiếu → 403 | Service (thư viện chung) |
-| 3. Danh tính FHIR | `sub` → `identity_links` → `fhirUser` (cache 60 giây); chưa liên kết hoặc `disabled` → 403 `forbidden` | Service, gọi clinical |
+| 3. Danh tính FHIR | `sub` → `identity_links` → `fhirUser` (cache 60 giây) và `profile_links` đang hiệu lực → `linkedProfiles[]` (hồ sơ, phạm vi); chưa liên kết hoặc `disabled` → 403 `forbidden` | Service, gọi clinical |
 | 4. Chính sách theo tài nguyên | Hàm quyết định theo (role, hành động, loại resource, quan hệ) — mục 3 | Service sở hữu dữ liệu |
 | 5. Lọc dữ liệu | Bộ lọc ép vào truy vấn (ví dụ `patient = mình`) để không bao giờ đọc dữ liệu ngoài phạm vi | Tầng truy vấn |
 | 6. Audit | Mỗi quyết định (cả cho phép và từ chối) phát `audit-recorded` | Thư viện chung |
@@ -31,6 +31,9 @@ Decision        = Allow(purpose) | Deny(code)       purpose ∈ TREAT | ETREAT |
 | Predicate | Định nghĩa |
 |---|---|
 | `own` | `resourceContext.patientId == principal.fhirUser` (Patient) |
+| `linked` | `resourceContext.patientId` thuộc `linkedProfiles` của người gọi với liên kết `active` chưa hết hạn, phạm vi từ `booking` trở lên (đặt, hủy, đổi, xem lịch hẹn và hồ sơ hành chính) |
+| `linked-records` | như `linked`, phạm vi `records` hoặc `full` (thêm kết quả khám và tài liệu đã phát hành) |
+| `guardian` | liên kết có `relationship=guardian` (cha, mẹ, người giám hộ của người dưới 16 tuổi) |
 | `self-practitioner` | `resourceContext.practitionerId == principal.fhirUser` |
 | `care` | Có quan hệ điều trị (mục 4) giữa `principal.fhirUser` (Practitioner) và `resourceContext.patientId` |
 | `breakglass` | Có phiên break-glass chưa hết hạn cho cặp (practitioner, patient) |
@@ -117,6 +120,8 @@ Bác sĩ có `care` với bệnh nhân khi tồn tại **một nguồn còn hi�
 
 - Nhân viên: tài khoản do Admin mời qua email trong Keycloak, bắt buộc TOTP hoặc WebAuthn (không dùng SMS làm yếu tố thứ hai); `identity_links` liên kết `sub` ↔ `Practitioner`, kiểm tra khớp `PractitionerRole.code` với role (`doctor`↔`doctor`, `nurse`↔`nurse`).
 - Bệnh nhân: tự đăng ký trên trang Keycloak bằng số điện thoại (OTP SMS) hoặc email (role `patient` mặc định), rồi liên kết `Patient` qua `POST /registration` (C1).
+- Hồ sơ người thân: `profile_links` (ADR-0018). Con dưới 16 tuổi: người giám hộ cam đoan, toàn quyền đến sinh nhật 16 tuổi. Người lớn: chỉ khi **chính họ đồng ý** (đọc mã OTP gửi tới số của họ, hoặc tại quầy có giấy tờ), phạm vi `booking` hoặc `records`, hết hạn 12 tháng, thu hồi ≤ 60 giây. Người được ủy quyền không xem được ghi chú chưa phát hành, không sửa họ tên, ngày sinh, giới tính, không đổi đồng ý AI. Audit mọi truy cập qua liên kết kèm `onBehalfOf`.
+- Tự nhận hồ sơ đã có (C27, C28): chỉ liên kết "bản thân" khi OTP đúng gửi tới số **lưu trong hồ sơ**, hồ sơ chưa gắn tài khoản nào, và gửi thông báo cho số đó.
 - Khóa: `PUT /admin/users/{sub} {disabled:true}` → ghi `identity_links.disabled`; tối đa 60 giây (hết cache) mọi service từ chối; token còn hạn (≤ 15 phút) vẫn bị từ chối vì lớp 3 kiểm `disabled`.
 - Đổi role: có hiệu lực ở token kế tiếp (≤ 15 phút); khóa thì ngay (60 giây) như trên.
 

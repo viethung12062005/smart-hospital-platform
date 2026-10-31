@@ -5,7 +5,7 @@ testcases:
   covers:
   - AC-SR.1
   srs_uc: schedule-reminders
-  srs_ref: UC 46
+  srs_ref: UC 50
   module: system
   level: integration
   priority: P1
@@ -15,7 +15,7 @@ testcases:
   covers:
   - AC-07.2
   srs_uc: send-reminder
-  srs_ref: UC 47
+  srs_ref: UC 51
   module: system
   level: integration
   priority: P1
@@ -25,7 +25,7 @@ testcases:
   covers:
   - AC-SN.1
   srs_uc: send-reminder
-  srs_ref: UC 47
+  srs_ref: UC 51
   module: system
   level: integration
   priority: P1
@@ -35,7 +35,7 @@ testcases:
   covers:
   - AC-07.1
   srs_uc: cancel-reminders
-  srs_ref: UC 48
+  srs_ref: UC 52
   module: system
   level: integration
   priority: P1
@@ -45,7 +45,7 @@ testcases:
   covers:
   - AC-15.1
   srs_uc: predict-noshow
-  srs_ref: UC 49
+  srs_ref: UC 53
   module: system
   level: integration
   priority: P1
@@ -55,7 +55,7 @@ testcases:
   covers:
   - AC-15.2
   srs_uc: predict-noshow
-  srs_ref: UC 49
+  srs_ref: UC 53
   module: system
   level: integration
   priority: P1
@@ -65,7 +65,7 @@ testcases:
   covers:
   - AC-NS.1
   srs_uc: mark-noshow
-  srs_ref: UC 50
+  srs_ref: UC 54
   module: system
   level: integration
   priority: P1
@@ -75,7 +75,7 @@ testcases:
   covers:
   - AC-13.2
   srs_uc: extract-document
-  srs_ref: UC 51
+  srs_ref: UC 55
   module: system
   level: integration
   priority: P1
@@ -85,7 +85,7 @@ testcases:
   covers:
   - AC-10.1
   srs_uc: break-glass-alert
-  srs_ref: UC 52
+  srs_ref: UC 56
   module: system
   level: integration
   priority: P0
@@ -95,7 +95,7 @@ testcases:
   covers:
   - AC-PG.1
   srs_uc: purge-expired
-  srs_ref: UC 53
+  srs_ref: UC 57
   module: system
   level: integration
   priority: P0

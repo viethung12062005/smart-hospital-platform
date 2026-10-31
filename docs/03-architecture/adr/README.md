@@ -21,3 +21,4 @@ Mỗi ADR theo format: Bối cảnh → Quyết định → Phương án đã c�
 | [0015](0015-java-for-all-services.md) | Java 21 + Spring Boot 4.1 cho 6 service nghiệp vụ; ai và ml giữ Python (thay 0002, 0012) | Accepted |
 | [0016](0016-frontend-web-app.md) | Một web app PWA (React + TypeScript + Vite + Mantine 7) trong repo ứng dụng; tái dùng có chọn lọc portal PoC | Proposed |
 | [0017](0017-keycloak-identity-everywhere.md) | Keycloak là nhà cung cấp danh tính duy nhất cho người dùng ứng dụng ở mọi môi trường (thay Entra ID ở cloud) | Accepted |
+| [0018](0018-profile-links-and-claim.md) | Một tài khoản quản lý nhiều hồ sơ (con dưới 16 tuổi, người lớn ủy quyền), tự nhận hồ sơ đã có bằng OTP, dịch vụ OTP dùng chung (Zalo trước, SMS sau) | Accepted |

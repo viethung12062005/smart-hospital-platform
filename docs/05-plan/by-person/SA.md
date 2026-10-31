@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **129 task, 448 giờ**. Đã xong: **19**, làm một phần: **23** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **130 task, 451 giờ**. Đã xong: **19**, làm một phần: **23** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -41,11 +41,11 @@ Tổng: **129 task, 448 giờ**. Đã xong: **19**, làm một phần: **23** (�
 | ◐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm **[làm một phần, commit e8e2fe2: chart shp-local-full (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel) + make up PROFILE=full + pull-models; đã helm lint/template; CHƯA chạy trên kind thật]** | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
 | ☑ | SHR-02 | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi **[xong, commit 5e423ab: libs/java/shp-web/errors: ErrorCatalog (27 mã, test đối chiếu 07 §5), ShpException, ErrorWriter, ShpExceptionHandler]** | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | 3 | SHR-01 | ENABLER |
 | ◐ | SHR-20 | JWT bearer từ Keycloak (OIDC chuẩn): map claim roles, kiểm amr=mfa với nhân viên **[làm một phần, commit 5e423ab: shp-web ShpJwt + SecurityFilterChain (issuer, audience, hạn, MFA nhân viên); test bằng token HMAC cục bộ; CHƯA thử với Keycloak thật]** | Test token hợp lệ/sai chữ ký/hết hạn/sai aud/nhân viên thiếu MFA; cấu hình qua biến môi trường | 3 | LOC-02 | US-008, US-066 |
-| ☑ | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled, cache 60 giây **[xong, commit 5e423ab: shp-web IdentityResolver (cache 60s/5s) + HttpIdentityLinkClient + IdentityInterceptor; endpoint nội bộ phía clinical là task dev]** | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | 3 | SHR-20 | US-007 |
+| ☑ | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled + linkedProfiles (hồ sơ, phạm vi), cache 60 giây **[xong, commit 5e423ab: shp-web IdentityResolver (cache 60s/5s) + HttpIdentityLinkClient + IdentityInterceptor; endpoint nội bộ phía clinical là task dev]** | Tài khoản bị khóa bị từ chối ≤ 60 giây; cache hết hạn đúng; clinical lỗi thì dùng cache, không có cache thì 503 | 3 | SHR-20 | US-007 |
 | ☑ | SHR-22 | Authz: schema + loader + validator cho contracts/authz/matrix.yaml **[xong, commit 95d2f74: libs/java/shp-authz: AuthzMatrix (Java)]** | Matrix sai schema (thiếu role, predicate lạ) làm build thất bại; unit test | 3 | ARC-19 | ENABLER |
 | ☑ | SHR-23 | Authz: các predicate own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[xong, commit 95d2f74: Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)]** | Mỗi predicate có test đúng/sai; predicate care/breakglass gọi qua interface có thể giả lập | 4 | SHR-22 | ENABLER |
 
-## Tuần 3 — 73 giờ
+## Tuần 3 — 76 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -65,6 +65,7 @@ Tổng: **129 task, 448 giờ**. Đã xong: **19**, làm một phần: **23** (�
 | ☑ | SHR-24 | Authz: decision engine default-deny, ràng buộc trường (fields), purposeOfUse **[xong, commit 95d2f74: AuthorizationEngine.decide (Java): default-deny, fields, purpose, 238 test]** | Không có quy tắc khớp → Deny; nhiều quy tắc khớp lấy Allow đầu tiên có điều kiện thỏa; test bảng | 3 | SHR-23 | ENABLER |
 | ☑ | SHR-25 | Authz: filter endpoint Spring + test 'mọi endpoint phải có quy tắc' **[xong, commit 5e423ab: shp-web @RequireShpAuthz + AuthzInterceptor + UnprotectedEndpoints.find (test chặn quên phân quyền)]** | Thêm endpoint không có quy tắc làm test CI thất bại; 403/404 đúng quy ước | 4 | SHR-24 | ENABLER |
 | ☑ | SHR-28 | Idempotency-Key middleware cho PostgreSQL (claim, request hash, replay) **[xong, commit 3764d57: shp-data-postgres PostgresIdempotency + shp-web IdempotencyKeys; 28 test với PostgreSQL thật]** | Cùng key+body → trả kết quả cũ; khác body → 422; thiếu key → 428; test song song | 4 | SHR-05 | US-015 |
+| ☐ | SHR-30 | Authz: điều kiện linked, linked-records, guardian; onBehalfOf trong audit; sinh test từ ma trận cho hồ sơ liên kết | Mỗi quy tắc *-LINKED có test Allow và Deny; audit ghi tài khoản thực hiện và hồ sơ được truy cập | 3 | SHR-24, SHR-21 | US-076, US-077 |
 | ◐ | WEB-01 | Web shell React/Vite: OIDC (Keycloak), router theo vai trò, khung giao diện, i18n vi/en **[làm một phần, commit nhánh WEB-01-frontend-base: web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), route/menu theo vai trò, i18n vi/en, ErrorBoundary, hệ thiết kế + AppShell chuyển từ portal PoC (Apache-2.0); 6 màn hình mẫu chạy với MSW; CHƯA thử đăng nhập Keycloak thật trên trình duyệt]** | Đăng nhập, menu theo role, ErrorBoundary; build qua pipeline | 4 | LOC-02, SHR-20 | US-066 |
 
 ## Tuần 4 — 57 giờ
@@ -154,7 +155,7 @@ Tổng: **129 task, 448 giờ**. Đã xong: **19**, làm một phần: **23** (�
 | ☐ | ARC-17 | Sprint review + planning S5 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | ENV-03 | Workflow cost-guard | Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy) | 2 | IAC-04 | US-070 |
 | ☐ | ENV-04 | Runbook vòng đời môi trường | Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp | 2 | ENV-01, ENV-02 | US-070 |
-| ☐ | IAM-04 | Authenticator mã OTP qua SMS (SPI Keycloak) | Xác minh sở hữu SĐT lúc đăng ký (và ở bước điền hồ sơ với tài khoản email) và khi đổi SĐT; email xác minh bằng mã gửi qua email; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần | 8 | IAM-01 | US-001 |
+| ☐ | IAM-04 | Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 (Zalo trước, SMS sau) | Xác minh sở hữu SĐT lúc đăng ký (và ở bước điền hồ sơ với tài khoản email) và khi đổi SĐT; email xác minh bằng mã gửi qua email; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần | 8 | IAM-01 | US-001 |
 | ☐ | IAM-05 | Sự kiện danh tính về audit | Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP | 4 | IAM-01, SHR-09 | US-008, US-031 |
 | ☐ | MLO-01 | Pipeline huấn luyện ML trong CI + canary deploy model | Chạy khi dữ liệu/code đổi; artifact model; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | Cùng image + dataset hash + seed cho cùng model; image được ký | 3 | MLO-01 | US-071 |
