@@ -24,7 +24,7 @@ export const en: Messages = {
     signIn: 'Sign in',
     signOut: 'Sign out',
     signInTitle: 'Sign in',
-    signInHint: 'Sign in with your phone number or hospital account. New patient? Choose Register on the next page.',
+    signInHint: 'Sign in with your phone number, email or hospital account. New patient? Choose Register on the next page.',
     mockHint: 'Mock data mode: pick a role to try the app, no server needed.',
     signingIn: 'Signing in…',
     forbidden: 'You do not have access to this page.',
