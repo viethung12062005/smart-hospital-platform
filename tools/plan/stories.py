@@ -8,12 +8,13 @@ criteria: story-level Given/When/Then lines (refine the FR acceptance criteria t
 
 STORIES = [
     # ------------------------------------------------------------------ Hồ sơ bệnh nhân
-    ("US-001", "Bệnh nhân tự đăng ký hồ sơ", "Bệnh nhân", "đăng ký thông tin cá nhân sau khi tạo tài khoản",
+    ("US-001", "Bệnh nhân tự đăng ký hồ sơ", "Bệnh nhân", "đăng ký hồ sơ sau khi tạo tài khoản bằng số điện thoại hoặc email",
      "có hồ sơ để đặt lịch khám", "M", ["UC-01"], ["C1"], ["AC-01.2"],
      ["Given tài khoản mới chưa liên kết hồ sơ, When gửi thông tin hợp lệ, Then tạo Patient với mã BN-YYYY-NNNNNN và liên kết tài khoản",
       "Given đã có hồ sơ cùng SĐT + ngày sinh, When đăng ký, Then 422 duplicate-patient-suspected và KHÔNG tạo hồ sơ, không lộ dữ liệu hồ sơ trùng",
       "Given SĐT sai định dạng hoặc ngày sinh ở tương lai, When đăng ký, Then 400 validation-failed",
-      "Given tài khoản đã có hồ sơ, When đăng ký lại, Then 409 already-registered"]),
+      "Given tài khoản đã có hồ sơ, When đăng ký lại, Then 409 already-registered",
+      "Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ (AC-RG.2)"]),
     ("US-002", "Bệnh nhân xem và cập nhật hồ sơ của mình", "Bệnh nhân", "xem và sửa thông tin liên hệ",
      "thông tin luôn đúng và nhận được thông báo", "M", ["UC-01"], ["C2", "C4", "C5", "C7"], ["AC-01.1", "AC-01.3"],
      ["Given đã đăng nhập, When đọc hồ sơ, Then chỉ thấy hồ sơ của mình; đọc hồ sơ người khác trả 404",
@@ -29,6 +30,12 @@ STORIES = [
      ["Given hai hồ sơ active, When $merge, Then hồ sơ nguồn active=false và link replaced-by tới hồ sơ đích, phát patient-merged",
       "Given một hồ sơ đã bị gộp, When gộp lại, Then 409",
       "Given patient-merged, When scheduling/notification/ml/document nhận, Then cập nhật patientId (idempotent)"]),
+    ("US-075", "Điều dưỡng bổ sung số căn cước công dân khi bệnh nhân đến khám", "Điều dưỡng",
+     "ghi số CCCD của bệnh nhân vào hồ sơ sau khi đối chiếu giấy tờ gốc", "xác minh danh tính và phát hiện hồ sơ trùng", "S", ["UC-01"], ["C5"], [],
+     ["Given số CCCD hợp lệ và bệnh nhân đồng ý, When lưu, Then số được lưu mã hóa và hiển thị che, chỉ 4 số cuối (AC-ID.1)",
+      "Given số CCCD đã thuộc hồ sơ active khác, When lưu, Then không lưu, báo nghi trùng và gợi ý gộp (AC-ID.2)",
+      "Given sai định dạng hoặc chưa có đồng ý, When lưu, Then bị từ chối (AC-ID.3)",
+      "Given số CCCD đã lưu, When tìm kiếm, phát sự kiện hoặc ghi log, Then số không xuất hiện (AC-ID.4)"]),
     ("US-005", "Bệnh nhân chọn kênh và thiết bị nhận thông báo", "Bệnh nhân", "chọn kênh, ngôn ngữ, giờ yên tĩnh và đăng ký thiết bị",
      "nhận nhắc lịch đúng cách tôi muốn", "S", ["UC-07"], ["N1", "N2", "N3", "N4"], [],
      ["Given thứ tự kênh push, email, sms, When lưu, Then các lần gửi thử theo thứ tự đó",

@@ -278,7 +278,7 @@ uc_diagrams:
     name: Use case lịch làm việc và tiếp đón
     actors_left: [Điều dưỡng, Quản trị viên]
     actors_right: [Bác sĩ]
-    cases: [schedule-template, generate-slots, block-slot, view-own-schedule, create-patient, merge-patient, check-in]
+    cases: [schedule-template, generate-slots, block-slot, view-own-schedule, create-patient, merge-patient, supplement-national-id, check-in]
   - key: clinical
     name: Use case khám bệnh và hồ sơ
     actors_left: [Bác sĩ]
@@ -319,6 +319,7 @@ permissions:
     - {function: Hủy / đổi lịch khám, uc: [cancel, reschedule], grant: {patient: "O* (≥ 2h)", nurse: O}}
     - {function: Xem lịch hẹn, uc: [my-appointments, view-own-schedule], grant: {patient: "O*", doctor: "O*", nurse: O}}
     - {function: "Tạo lịch, mẫu tuần, sinh / chặn slot", uc: [schedule-template, generate-slots, block-slot], grant: {nurse: O, admin: O}}
+    - {function: Bổ sung số CCCD khi đến khám, uc: [supplement-national-id], grant: {nurse: O}}
     - {function: Check-in, uc: [check-in], grant: {nurse: O}}
     - {function: Ghi sinh hiệu, uc: [record-vitals], grant: {doctor: Care, nurse: O}}
     - {function: "Mở lần khám, ghi bệnh sử và chẩn đoán, kết thúc, bổ sung", uc: [start-encounter, record-diagnosis, finish-encounter, addendum], grant: {doctor: Care}}

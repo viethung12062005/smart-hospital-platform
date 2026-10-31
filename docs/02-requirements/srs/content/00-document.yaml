@@ -16,7 +16,7 @@ document:
     - ["Người review", "Đại diện nhóm phát triển"]
     - ["Người phê duyệt", "Giảng viên hướng dẫn"]
   history:
-    - {date: "31/10/2026", version: "0.96", author: "BA", change: "Đổi nhà cung cấp định danh: Keycloak cho mọi môi trường (ADR-0017); đăng ký bệnh nhân bằng số điện thoại và mã OTP (UC-01, AC-RG.2); MFA nhân viên không dùng SMS (NFR-SEC1, UC-08)"}
+    - {date: "31/10/2026", version: "0.96", author: "BA", change: "Đổi nhà cung cấp định danh: Keycloak cho mọi môi trường (ADR-0017); đăng ký bệnh nhân bằng số điện thoại (mã OTP) hoặc email (UC-01, AC-RG.2); bổ sung số CCCD khi đến khám, có đồng ý, lưu mã hóa, hiển thị che (UC mới supplement-national-id, AC-ID.1 đến AC-ID.4); MFA nhân viên không dùng SMS (NFR-SEC1, UC-08)"}
     - {date: "26/10/2026", version: "0.5", author: "BA", change: "Tài liệu yêu cầu Pha 2 (functional-requirements.md, non-functional-requirements.md, user-stories.md) – gate G2"}
     - {date: "30/10/2026", version: "0.9", author: "BA", change: "Chuyển toàn bộ yêu cầu sang mẫu SRS: use case chi tiết có activity diagram và quy tắc nghiệp vụ, ma trận phân quyền, site map, danh sách màn hình, NFR có cách đo, danh sách thông điệp và mẫu thông báo. Bản để review nội bộ."}
     - {date: "31/10/2026", version: "0.95", author: "BA", change: "Thêm Phụ lục A: cơ sở đặt ngưỡng và căn cứ pháp lý (Luật BVDLCN 91/2025/QH15, Luật Khám bệnh chữa bệnh 2023, NIST SP 800-63B-4, nghiên cứu về nhắc lịch và dự đoán no-show). Đổi truy cập khẩn cấp từ chặn cứng sang leo thang; đặt lại ngưỡng no-show 0,30, phiên làm việc, thời hạn lưu audit. Thêm mockup cho 22 màn hình (7 ảnh chụp từ giao diện web, 15 wireframe)."}

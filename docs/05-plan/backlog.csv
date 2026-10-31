@@ -137,10 +137,10 @@ AUD-01,AUD,US-047,"Consumer audit.recorded: validate schema, inbox theo eventId,
 AUD-03,AUD,US-049,Đẩy sang Log Analytics (Logs Ingestion) / Loki local,Xuất hiện trong ≤ 1 phút; không mất khi sink lỗi (retry),D2,4,AUD-01,S3,5,"05 §1.3, NFR-SEC5"
 AUD-04,AUD,US-049,"API tra cứu audit (A1): bộ lọc, khoảng ≤ 90 ngày, ẩn reason với Admin, audit việc tra cứu",Thiếu from/to → 400; DPO thấy đủ trường,D2,4,"AUD-03, SHR-25",S4,5,A1
 CLN-04,CLN,"US-001, US-003",Phát hiện trùng hồ sơ theo SĐT + ngày sinh,"Trùng → duplicate-patient-suspected, không lộ dữ liệu",D2,2,CLN-03,S1,5,AC-01.2
-CLN-05,CLN,US-001,API đăng ký bệnh nhân (C1) + tạo identity_links,201/400/409/422 đúng; MRN trả về; có audit,D2,4,"CLN-04, SHR-25, SHR-21",S1,5,C1
 CLN-19,CLN,US-027,API AllergyIntolerance (C18),Bác sĩ Care và Nurse ghi; bệnh nhân đọc của mình,D2,2,CLN-15,S3,5,C18
 CLN-22,CLN,US-030,Quy tắc bệnh nhân đọc dữ liệu lâm sàng của mình (chỉ Encounter finished),Encounter chưa finished 404; dữ liệu người khác 404,D2,3,"CLN-17, CLN-18",S4,5,15 §6
 CLN-24,CLN,US-034,"API break-glass (C20): phiên 60 phút TTL, lý do 20-500 ký tự, audit ETREAT, chỉ đọc",Ghi chẩn đoán trong phiên 403; phiên hết hạn tự mất,D2,4,"CLN-13, SHR-09",S4,5,"C20, AC-10.1"
+CLN-30,CLN,US-075,"Trường CCCD qua C5 (chỉ Nurse): 12 số, khớp giới tính và năm sinh, bản ghi đồng ý, trả bản che, ?reveal có audit","AC-ID.1, AC-ID.3: lưu hợp lệ che 4 số cuối; sai định dạng hoặc thiếu đồng ý bị từ chối",D2,4,CLN-03,S4,5,"C5, AC-ID.1, AC-ID.3"
 DOC-01,DOC,US-035,"Bootstrap MongoDB document: collections, validator, index, TTL upload_sessions",Script idempotent,D2,2,"SCF-04, SHR-10",S3,5,03 §3
 ENV-01,ENV,US-070,Workflow env-provision,plan -> approval infra-<env> -> apply -> cài Argo CD + bootstrap -> chờ healthy -> seed dữ liệu giả -> smoke test,SA,6,"IAC-17, GOP-03",P4,5,ADR-0009
 ENV-02,ENV,US-070,Workflow env-destroy,"Gõ đúng tên môi trường + approval infra-<env>-destroy; destroy sạch, kiểm tra không còn resource",SA,2,IAC-17,P4,5,ADR-0009
@@ -175,10 +175,10 @@ AI-17,AI,US-054,Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và
 ARC-15,ARC,ENABLER,Sprint review + planning S3,"Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn",SA,2,,S3,6,PM
 AUD-02,AUD,US-048,"Ghi append blob NDJSON vào container WORM kèm chuỗi hash (prevHash, batchHash)",Batch sau chứa hash batch trước; metadata batchHash đúng,D2,4,"AUD-01, IAC-12",S3,6,05 §1.2
 AUD-05,AUD,US-050,"API export audit (A2, A3): job nền xuất CSV, link SAS 5 phút",Khoảng ≤ 366 ngày; tối đa 3 export đồng thời,D2,4,AUD-04,S4,6,"A2, A3"
-CLN-06,CLN,US-002,"API đọc/sửa/lịch sử Patient (C4, C5, C7) với quy tắc trường cho bệnh nhân",Patient sửa name → 403; mỗi sửa có version; hồ sơ người khác 404,D2,4,CLN-05,S2,6,"C4, C5, C7, AC-01.1, AC-01.3"
-CLN-07,CLN,US-003,API Nurse tạo hồ sơ (C3) + forceCreate có lý do và audit,Không forceCreate khi nghi trùng → 422,D2,3,CLN-05,S2,6,C3
-CLN-08,CLN,US-031,"API tìm bệnh nhân POST _search (C6): tên không dấu, SĐT, MRN, ngày sinh, rút gọn kết quả",'nguyen va' ra đúng người; bác sĩ không Care chỉ thấy năm sinh; không tham số → 400,D2,4,"CLN-05, SHR-11",S2,6,"C6, AC-06.1, AC-06.2"
+AUD-07,AUD,US-051,Break-glass review (A5) + phát cảnh báo DPO ≤ 5 phút qua notification,Trạng thái new → acknowledged; cảnh báo gửi email + push,D2,4,"AUD-03, CLN-24",S4,6,"A5, AC-10.1"
+CLN-05,CLN,US-001,API đăng ký bệnh nhân (C1) + tạo identity_links,201/400/409/422 đúng; MRN trả về; có audit,D2,4,"CLN-04, SHR-25, SHR-21",S1,6,C1
 CLN-26,CLN,"US-002, US-024, US-026, US-031, US-034",Chạy bộ test ma trận phân quyền cho mọi endpoint clinical,Mọi ô clinical xanh; Admin 403 mọi dữ liệu lâm sàng,D2,4,"CLN-24, SHR-26",S5,6,NFR-SEC2
+CLN-31,CLN,US-075,"Mã hóa AES-256-GCM (khóa Key Vault) + băm HMAC-SHA-256, chỉ mục unique partial, gợi ý gộp khi trùng",AC-ID.2: trùng thì không lưu; DB không chứa số rõ,D2,4,CLN-30,S4,6,"AC-ID.2, 03 §2"
 DOC-02,DOC,"US-035, US-037","IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút","Test với Azurite (Testcontainers); SAS đúng quyền, đúng blob, đúng thời hạn",D2,4,DOC-01,S3,6,05 §2
 ENV-05,ENV,US-070,Diễn tập G4,Service mẫu đi local -> uat -> prod (dựng tạm) chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng,SA,4,"ENV-01, LOC-03, LOC-04, GOP-07",S3,6,Gate G4
 GOP-10,GOP,US-063,Chart MLflow (tracking + registry) cho môi trường cluster,"MLflow chạy với backend lưu trữ bền, truy cập qua Workload Identity",SA,3,GOP-03,S3,6,ADR-0007
@@ -205,11 +205,13 @@ ARC-08,ARC,ENABLER,Threat model STRIDE,"Bảng mối đe dọa theo luồng dữ
 ARC-12,ARC,ENABLER,Kế hoạch kiểm thử (test strategy),"Mức test, ngưỡng coverage, kịch bản load/failure test map với NFR",SA,4,ARC-02,S4,7,P4
 ARC-16,ARC,ENABLER,Sprint review + planning S4,"Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn",SA,2,,S4,7,PM
 AUD-06,AUD,US-050,Công cụ + API kiểm tra toàn vẹn chuỗi hash (A4),Phát hiện batch bị thay đổi/thiếu và báo vị trí,D2,4,AUD-02,S4,7,A4
-AUD-07,AUD,US-051,Break-glass review (A5) + phát cảnh báo DPO ≤ 5 phút qua notification,Trạng thái new → acknowledged; cảnh báo gửi email + push,D2,4,"AUD-03, CLN-24",S4,7,"A5, AC-10.1"
 AUD-08,AUD,US-048,"Test bất biến: sửa/xóa blob audit bị từ chối, chuỗi hash đứt bị phát hiện",Chuỗi hash đứt bị phát hiện: xanh trong CI (Azurite); sửa/xóa blob bị từ chối (WORM): smoke test trên UAT,D2,3,AUD-06,S5,7,AC-09.2
 CIT-09,CIT,US-070,Phát hành templates có version,Tag vX.Y.Z trên shp-platform-templates; chart push OCI lên ACR; CHANGELOG,SA,2,"CIT-01, GOP-01",S4,7,ADR-0010
 CIT-10,CIT,US-070,Đóng gói Maven nội bộ cho thư viện dùng chung,Thư viện phát hành lên GitHub Packages (Maven) có version; service tham chiếu theo version,SA,3,SHR-01,S4,7,ADR-0010
-CLN-09,CLN,US-004,API gộp hồ sơ (C8) + phát patient-merged,"Hồ sơ nguồn active=false, link replaced-by; gộp lại 409",D2,4,CLN-06,S2,7,"C8, E7(pub)"
+CLN-06,CLN,US-002,"API đọc/sửa/lịch sử Patient (C4, C5, C7) với quy tắc trường cho bệnh nhân",Patient sửa name → 403; mỗi sửa có version; hồ sơ người khác 404,D2,4,CLN-05,S2,7,"C4, C5, C7, AC-01.1, AC-01.3"
+CLN-07,CLN,US-003,API Nurse tạo hồ sơ (C3) + forceCreate có lý do và audit,Không forceCreate khi nghi trùng → 422,D2,3,CLN-05,S2,7,C3
+CLN-08,CLN,US-031,"API tìm bệnh nhân POST _search (C6): tên không dấu, SĐT, MRN, ngày sinh, rút gọn kết quả",'nguyen va' ra đúng người; bác sĩ không Care chỉ thấy năm sinh; không tham số → 400,D2,4,"CLN-05, SHR-11",S2,7,"C6, AC-06.1, AC-06.2"
+CLN-32,CLN,US-075,"Test không rò CCCD: log, sự kiện, tìm kiếm, tin nhắn, văn bản gửi AI",AC-ID.4: quét đầu ra bằng số CCCD giả (tiền tố 000) không thấy,D2,3,CLN-31,S5,7,"AC-ID.4, NFR-SEC10"
 DAT-03,DAT,ENABLER,CLI seed gọi API công khai: local và môi trường cloud,Một lệnh nạp xong dữ liệu mẫu; chạy lại không trùng,D3,3,"DAT-02, SCH-14, CLN-05",S3,7,NFR-SEC9
 DOC-03,DOC,US-035,"API xin upload (D1): kiểm loại, kích thước, Care, Idempotency-Key",415/413/403/400 đúng; cùng key cùng documentId,D2,4,"DOC-02, SHR-12, SHR-25",S3,7,"D1, AC-05.1"
 GOP-02,GOP,US-070,Unit test cho chart,helm-unittest cho các tổ hợp values chính; chạy trong CI,SA,3,GOP-01,S4,7,ADR-0009
@@ -220,7 +222,7 @@ IAC-18,IAC,US-036,Module Defender for Storage + Event Grid → queue cho kết q
 IAC-19,IAC,US-055,"Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault","Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values",SA,4,IAC-05,S4,7,ADR-0006
 IAM-01,IAM,"US-001, US-008, US-066",Keycloak trên cụm (ADR-0017),"Chart + GitOps app, 2 replica prod, realm shp as code (client shp-web PKCE, audience shp-api, roles), băm Argon2id, chính sách mật khẩu và khóa chống dò, console quản trị không ra Internet, sao lưu DB và thử khôi phục",SA,8,"IAC-16, GOP-03",S4,7,"ADR-0017, NFR-SEC1"
 IAM-02,IAM,"US-053, US-066",Tài khoản dịch vụ và token exchange,"Client credentials cho /internal theo từng service, token exchange RFC 8693 cho AI; chốt cách xác thực client (assertion bằng token ServiceAccount hoặc secret xoay 90 ngày); test với Keycloak thật",SA,6,"IAM-01, SHR-20",S4,7,"15 §7, ADR-0017"
-IAM-03,IAM,"US-001, US-008","Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt","Theme Keycloak vi/en cùng hệ thiết kế SHP; đăng ký bằng SĐT, điều khoản, đạt WCAG AA; không lộ tài khoản đã tồn tại",SA,6,IAM-01,S4,7,"UC-01, ADR-0017"
+IAM-03,IAM,"US-001, US-008","Giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt","Theme Keycloak vi/en cùng hệ thiết kế SHP; đăng ký bằng SĐT hoặc email, điều khoản, đạt WCAG AA; không lộ tài khoản đã tồn tại",SA,6,IAM-01,S4,7,"UC-01, ADR-0017"
 ML-07,ML,"US-064, US-046","Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox",AC-15.2 lưu model version và đặc trưng; cùng transaction,D3,4,"ML-06, ML-05",S2,7,"E10(pub), AC-15.2"
 ML-08,ML,"US-063, US-064","API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ)",p95 ≤ 100 ms cho M3; quyền đúng,D3,3,ML-07,S2,7,"M1, M2, M3"
 ML-09,ML,US-063,Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy,Test đổi alias,D3,2,ML-08,S3,7,ADR-0007
@@ -238,34 +240,32 @@ SCH-16,SCH,US-015,Test đồng thời: 50 yêu cầu đặt một slot (Testcont
 SCH-18,SCH,"US-016, US-019","API $cancel (S14): BR-02, trả slot về free, outbox appointment-cancelled","<2h Patient 422, Nurse được; không còn booked → 409; slot trả đúng",D1,4,SCH-13,S4,7,"S14, E2(pub), AC-03.5"
 SCH-22,SCH,US-022,API nội bộ đọc lịch hẹn (S18) với service token,Chỉ clinical/ml gọi được; role khác 403; audit actor=system,D1,2,SCH-17,S4,7,S18
 WEB-06,WEB,"US-009, US-010",Màn hình quản lý lịch bác sĩ: Schedule và mẫu tuần,Nurse/Admin tạo/sửa; lỗi validate hiển thị theo trường,D1,4,"WEB-02, SCH-05",S4,7,"S1, S5"
-WEB-20,WEB,US-031,"Màn hình tìm bệnh nhân (POST _search): tên không dấu, SĐT, MRN",Kết quả rút gọn; Doctor không Care thấy gợi ý break-glass,D2,4,"WEB-02, CLN-08",S5,7,C6
-WEB-24,WEB,US-034,"Luồng break-glass: hộp thoại lý do, banner đếm ngược 60 phút",Banner hiển thị suốt phiên,D2,2,"WEB-20, CLN-24",S6,7,C20
-WEB-27,WEB,"US-001, US-002, US-003","Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy",Xử lý 422 trùng hồ sơ; field khóa với bệnh nhân,D2,4,"WEB-02, CLN-06",S2,7,"C1, C4, C5"
+WEB-26,WEB,"US-049, US-050, US-051","Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass",Chỉ DPO/Admin; Admin không thấy reason,D2,4,"WEB-02, AUD-07",S6,7,"A1, A2, A5"
 WEB-31,WEB,"US-053, US-052",Giao diện quản lý kho tri thức và xem chi phí AI (Admin),"Tải lên, duyệt, gỡ; bảng usage",D3,4,"WEB-30, AI-13",S5,7,"AI9, AI10"
-AI-19,AI,US-058,"Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn",Không có quyền → 403 trước khi dữ liệu vào prompt,D3,4,"PY-02, CLN-23",S4,8,AC-12.1
-AI-20,AI,US-058,Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ),Mọi ý có sources trỏ bản ghi thật,D3,4,"AI-19, PY-08",S4,8,AC-12.2
-AI-21,AI,US-058,"API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline",Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3),D3,4,AI-20,S5,8,"AI4, AC-12.3"
+AI-22,AI,US-059,Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ,"unique (documentId, version); retry 1/5/15 phút → failed",D3,4,"PY-03, DOC-05",S5,8,"E8(sub), AC-13.2"
 AI-30,AI,US-062,"pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút",Chưa xác nhận không có lịch hẹn (AC-14.1); 409 → đề xuất lại,D3,4,"AI-29, SCH-14",S6,8,"AI8, AC-14.1"
 ARC-17,ARC,ENABLER,Sprint review + planning S5,"Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn",SA,2,,S5,8,PM
-CLN-23,CLN,US-032,"API timeline (C19): 4 truy vấn song song + document client có timeout 300 ms, partial",Document lỗi vẫn trả phần còn lại với partial; keyset,D2,4,"CLN-17, CLN-18, DOC-10",S4,8,C19
+CLN-09,CLN,US-004,API gộp hồ sơ (C8) + phát patient-merged,"Hồ sơ nguồn active=false, link replaced-by; gộp lại 409",D2,4,CLN-06,S2,8,"C8, E7(pub)"
 DOC-04,DOC,US-035,"API complete (D2): kiểm tồn tại, size, SHA-256, magic bytes",Không khớp → 422 upload-incomplete; 202 scanning,D2,4,DOC-03,S4,8,D2
 DOC-05,DOC,US-036,Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine,File nhiễm không phát event; quét lỗi retry 3 lần,D2,4,"DOC-04, IAC-18",S4,8,E8(pub)
 DOC-06,DOC,"US-037, US-039","API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành)",Patient chưa phát hành → 404; không trả URL,D2,3,"DOC-04, SHR-25",S4,8,"D3, D4, AC-05.3"
 DOC-07,DOC,US-037,API cấp link tải 5 phút (D5) + audit mỗi lần,Sau 5 phút Blob 403; chưa available 409; Deny cũng audit,D2,3,"DOC-06, SHR-09",S4,8,"D5, AC-05.2"
 DOC-08,DOC,US-038,API phát hành (D6) + phát document-released,Phát hành lại 409; chỉ bác sĩ Care,D2,2,DOC-06,S4,8,"D6, E9(pub)"
-DOC-10,DOC,"US-032, US-059, US-004","API nội bộ (D8, D9) + consumer patient-merged",D9 SAS đọc 60 giây chỉ cho service ai; merge idempotent,D2,3,"DOC-06, SHR-08",S4,8,"D8, D9, E7(sub)"
 DOC-11,DOC,US-035,Job dọn blob mồ côi và pending-upload > 24 giờ,Không xóa file đã available,D2,2,DOC-04,S5,8,10 §5
 ENV-03,ENV,US-070,Workflow cost-guard,Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy),SA,2,IAC-04,S5,8,NFR-C1
 ENV-04,ENV,US-070,Runbook vòng đời môi trường,"Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp",SA,2,"ENV-01, ENV-02",S5,8,NFR-D3
-IAM-04,IAM,US-001,Authenticator mã OTP qua SMS (SPI Keycloak),"Xác minh sở hữu SĐT lúc đăng ký và khi đổi SĐT; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần",SA,8,IAM-01,S5,8,"AC-RG.2, ADR-0017"
+IAM-04,IAM,US-001,Authenticator mã OTP qua SMS (SPI Keycloak),"Xác minh sở hữu SĐT lúc đăng ký (và ở bước điền hồ sơ với tài khoản email) và khi đổi SĐT; email xác minh bằng mã gửi qua email; giới hạn số lần gửi theo SĐT và IP; giao diện nhà cung cấp SMS có bản giả cho dev; mã hết hạn 5 phút, dùng một lần",SA,8,IAM-01,S5,8,"AC-RG.2, ADR-0017"
 IAM-05,IAM,"US-008, US-031",Sự kiện danh tính về audit,"Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP",SA,4,"IAM-01, SHR-09",S5,8,"NFR-SEC5, ADR-0017"
 ML-10,ML,US-065,"Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo",Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng,D3,3,"ML-19, ML-20",S6,8,NFR-AI6
 ML-19,ML,US-065,Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện,"Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển",D3,4,"ML-07, ML-21",S2,8,16-mlops §4
 ML-20,ML,US-065,"Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày","Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn",D3,4,"ML-06, ML-07",S2,8,16-mlops §4
+ML-22,ML,US-074,"Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng","Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu",D3,3,"ML-19, ML-20",S3,8,16-mlops §5
+ML-23,ML,US-074,"Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production",Không đạt cổng thì dừng và giữ nguyên production; mọi run có liên kết và audit,D3,4,"ML-22, ML-05, ML-14, ML-17",S3,8,16-mlops §5
 ML-25,ML,US-073,"Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản",Prometheus có đủ metric theo model_version để AnalysisTemplate dùng,D3,3,ML-08,S3,8,16-mlops §6
 MLO-01,MLO,US-063,Pipeline huấn luyện ML trong CI + canary deploy model,Chạy khi dữ liệu/code đổi; artifact model; canary deploy,SA,4,ML-05,S5,8,ADR-0007
 MLO-02,MLO,US-071,"Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng",Cùng image + dataset hash + seed cho cùng model; image được ký,SA,3,MLO-01,S5,8,16-mlops §2
 MLO-03,MLO,US-073,"Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback","Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường",SA,6,"GOP-04, SCF-07, ML-25",S5,8,16-mlops §6
+MLO-04,MLO,US-074,"Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit",Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng,SA,5,"ML-23, GOP-10",S5,8,16-mlops §5
 MLO-05,MLO,US-065,Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps,"Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại",SA,3,"ML-10, OBS-01",S5,8,NFR-O3
 OBS-03,OBS,ENABLER,Cảnh báo DLQ và lỗi pipeline,"Cảnh báo khi dead-letter có message, cert sắp hết hạn, Argo CD app degraded",SA,2,OBS-01,S5,8,NFR-O3
 PRD-10,PRD,US-068,Script k6: tìm slot + đặt lịch (kịch bản 1x/5x/10x),Kịch bản 1x/5x/10x theo workload-analysis; chạy được trên UAT (cỡ prod),SA,4,SCH-14,S5,8,"NFR-P1, P2"
@@ -279,19 +279,22 @@ SCH-27,SCH,US-014,Cache Redis cho tìm slot (TTL 5 giây) + invalidate theo even
 SCH-28,SCH,US-015,"Job dọn dẹp: outbox đã phát >7 ngày, idempotency >24h, slot free quá khứ >90 ngày",Không xóa dữ liệu còn cần; test,D1,2,SCH-13,S5,8,02 §3.3
 SCH-29,SCH,"US-009, US-012, US-016, US-017",Chạy bộ test ma trận phân quyền cho mọi endpoint scheduling,Mọi ô liên quan scheduling xanh; mọi Deny có audit,D1,4,"SCH-22, SHR-26",S5,8,NFR-SEC2
 WEB-03,WEB,US-014,"Màn hình tìm slot trống: bộ lọc chuyên khoa/bác sĩ/ngày, danh sách phân trang",Chỉ gọi API S8; hiển thị theo múi giờ VN,D1,4,"WEB-02, SCH-10",S3,8,S8
-WEB-26,WEB,"US-049, US-050, US-051","Màn hình DPO: tra cứu audit, xuất CSV, xem xét break-glass",Chỉ DPO/Admin; Admin không thấy reason,D2,4,"WEB-02, AUD-07",S6,8,"A1, A2, A5"
-AI-22,AI,US-059,Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ,"unique (documentId, version); retry 1/5/15 phút → failed",D3,4,"PY-03, DOC-05",S5,9,"E8(sub), AC-13.2"
+WEB-20,WEB,US-031,"Màn hình tìm bệnh nhân (POST _search): tên không dấu, SĐT, MRN",Kết quả rút gọn; Doctor không Care thấy gợi ý break-glass,D2,4,"WEB-02, CLN-08",S5,8,C6
+WEB-27,WEB,"US-001, US-002, US-003","Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy",Xử lý 422 trùng hồ sơ; field khóa với bệnh nhân,D2,4,"WEB-02, CLN-06",S2,8,"C1, C4, C5"
+AI-19,AI,US-058,"Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn",Không có quyền → 403 trước khi dữ liệu vào prompt,D3,4,"PY-02, CLN-23",S4,9,AC-12.1
+AI-20,AI,US-058,Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ),Mọi ý có sources trỏ bản ghi thật,D3,4,"AI-19, PY-08",S4,9,AC-12.2
+AI-21,AI,US-058,"API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline",Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3),D3,4,AI-20,S5,9,"AI4, AC-12.3"
 AI-23,AI,US-059,Bước OCR bằng Tesseract (local); văn bản lưu Blob,Fallback khi dịch vụ lỗi; test với tài liệu mẫu,D3,4,"AI-22, DOC-10",S5,9,D9
 AI-24,AI,US-059,Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy,"overallConfidence = min các trường bắt buộc; ngưỡng 0,85",D3,4,"AI-23, PY-08",S5,9,06 §3
 AI-25,AI,"US-059, US-060",API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu,Lọc theo status/patient; quyền Care/Nurse,D3,3,AI-24,S6,9,AI5
 AI-26,AI,US-060,API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields,Chưa xác nhận không có dữ liệu vào hồ sơ; lỗi clinical trả nguyên văn,D3,4,"AI-25, PY-02, CLN-17",S6,9,"AI6, AC-13.1"
 AI-31,AI,US-062,API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi,503 ai-unavailable kèm fallback (AC-14.3),D3,3,AI-30,S6,9,"AI7, AC-14.3"
-AI-32,AI,"US-052, US-053, US-058, US-060, US-062",Test ma trận phân quyền và hợp đồng event cho ai-service,Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI,D3,4,"AI-31, AI-26",S6,9,NFR-SEC2
 ARC-18,ARC,ENABLER,Sprint review + planning S6,"Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn",SA,2,,S6,9,PM
+CLN-23,CLN,US-032,"API timeline (C19): 4 truy vấn song song + document client có timeout 300 ms, partial",Document lỗi vẫn trả phần còn lại với partial; keyset,D2,4,"CLN-17, CLN-18, DOC-10",S4,9,C19
 CLN-28,CLN,US-032,"Tối ưu timeline: đo p95, index, projection để đạt ≤ 500 ms",Báo cáo p95 trên dữ liệu cỡ năm 1 (NFR-P3),D2,4,"CLN-23, DAT-03",S5,9,NFR-P3
 DOC-09,DOC,US-040,API entered-in-error (D7),"Ẩn khỏi timeline/bệnh nhân, giữ bản ghi",D2,2,DOC-06,S5,9,D7
+DOC-10,DOC,"US-032, US-059, US-004","API nội bộ (D8, D9) + consumer patient-merged",D9 SAS đọc 60 giây chỉ cho service ai; merge idempotent,D2,3,"DOC-06, SHR-08",S4,9,"D8, D9, E7(sub)"
 DOC-12,DOC,"US-035, US-037, US-038",Test ma trận phân quyền và hợp đồng event cho document,Xanh trong CI,D2,4,"DOC-09, SHR-26",S5,9,NFR-SEC2
-ML-22,ML,US-074,"Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng","Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu",D3,3,"ML-19, ML-20",S3,9,16-mlops §5
 SCH-26,SCH,US-004,Consumer patient-merged: thay patientId trong dữ liệu scheduling (idempotent),Chạy lại không đổi kết quả; test,D1,2,"SCH-13, SHR-08",S5,9,E7(sub)
 SCH-30,SCH,US-015,Test hợp đồng cho event E1-E5 (producer sinh đúng schema),Schema JSON validate trong CI,D1,3,"SCH-25, SHR-06",S5,9,"E1(pub), E2(pub), E3(pub), E4(pub), E5(pub)"
 SCH-31,SCH,US-014,EXPLAIN ANALYZE 4 truy vấn nóng trên dữ liệu cỡ năm 1 + chỉnh index nếu cần,Kết quả ghi vào docs; truy vấn tìm slot dùng index,D1,3,"SCH-27, DAT-03",S5,9,"02 §4, NFR-P1"
@@ -301,18 +304,19 @@ WEB-07,WEB,"US-011, US-012, US-013","Lịch slot dạng tuần: sinh slot, chặ
 WEB-08,WEB,"US-019, US-021","Màn hình quầy: đặt hộ, hủy/đổi hộ, check-in",Chỉ Nurse; check-in ngoài cửa sổ hiển thị lỗi rõ,D1,4,"WEB-05, SCH-20",S5,9,S16
 WEB-21,WEB,US-032,"Màn hình timeline bệnh nhân: lọc loại/khoảng, phân trang, hiển thị partial",Hiển thị cảnh báo khi thiếu phần tài liệu,D2,4,"WEB-20, CLN-23",S5,9,C19
 WEB-22,WEB,"US-024, US-025","Form lần khám: bắt đầu, lý do, bệnh sử, sinh hiệu (Nurse)",Báo lỗi theo trường (value-out-of-range),D2,4,"WEB-21, CLN-17",S6,9,"C11, C13, C16"
-WEB-23,WEB,"US-026, US-027, US-028, US-029","Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum",Chặn kết thúc khi thiếu chẩn đoán,D2,4,"WEB-22, CLN-21",S6,9,"C14, C15, C17, C18"
-WEB-25,WEB,"US-035, US-037, US-038, US-039, US-040","Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành","Tiến độ upload, trạng thái scanning, xử lý hết hạn link",D2,4,"WEB-21, DOC-07",S6,9,"D1, D2, D5, D6"
+WEB-24,WEB,US-034,"Luồng break-glass: hộp thoại lý do, banner đếm ngược 60 phút",Banner hiển thị suốt phiên,D2,2,"WEB-20, CLN-24",S6,9,C20
+WEB-28,WEB,US-075,"Hộp Bổ sung CCCD ở hàng đợi và check-in: ô nhập, ô đồng ý, hiện số có xác nhận",Bỏ qua được; hiển thị che; cảnh báo lệch giới tính hoặc năm sinh,D2,3,"WEB-27, CLN-30",S5,9,C5
 AI-27,AI,US-061,"Bộ tài liệu giả có nhãn cho trích xuất (xét nghiệm, đơn thuốc, chuyển viện)",≥ 60 tài liệu có nhãn trường,D3,4,AI-24,S6,10,NFR-AI4
 AI-28,AI,US-061,Eval F1 mức trường và phân loại + báo cáo,"F1 ≥ 0,85 hoặc giải thích",D3,3,AI-27,H1,10,NFR-AI4
+AI-32,AI,"US-052, US-053, US-058, US-060, US-062",Test ma trận phân quyền và hợp đồng event cho ai-service,Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI,D3,4,"AI-31, AI-26",S6,10,NFR-SEC2
 ENV-06,ENV,US-070,"Diễn tập dựng prod ephemeral lần 1: đo thời gian dựng/hủy, seed dữ liệu, kịch bản dự phòng nếu dựng trễ",Có số đo thời gian thực tế; có bản dự phòng (video/ảnh chụp/UAT); prod được hủy sạch sau diễn tập,SA,4,"ENV-01, ENV-02, ENV-05",H1,10,ADR-0011
-ML-23,ML,US-074,"Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production",Không đạt cổng thì dừng và giữ nguyên production; mọi run có liên kết và audit,D3,4,"ML-22, ML-05, ML-14, ML-17",S3,10,16-mlops §5
-MLO-04,MLO,US-074,"Điều phối huấn luyện lại trên cluster: CronJob/KEDA nhận yêu cầu từ ML-22, chạy ML-23, theo dõi và audit",Cảnh báo drift giả lập khởi động đúng một lần huấn luyện lại; không chạy chồng,SA,5,"ML-23, GOP-10",S5,10,16-mlops §5
 PRD-01,PRD,US-068,Load test 1x/5x/10x + báo cáo,Chạy trên UAT ephemeral (cỡ prod); so với NFR-P/S,SA,6,"PRD-10, ENV-01",H1,10,"NFR-P1, P2, S2, S3"
 PRD-02,PRD,US-069,Failure test,"Kill pod, DB failover, provider SMS lỗi, LLM lỗi, consumer crash; ghi kết quả",SA,6,ENV-01,H1,10,"NFR-A3, A6"
 PRD-03,PRD,US-067,Diễn tập backup/restore,PITR Postgres + restore Mongo; ghi thời gian thực tế so với RTO,SA,4,ENV-01,H1,10,"UC-16, NFR-A4"
 PRD-04,PRD,ENABLER,Dashboard SLO cuối cùng,Error budget theo NFR-A1,SA,3,OBS-02,H1,10,NFR-O2
 SCH-32,SCH,US-068,"Tinh chỉnh hiệu năng theo kết quả load test (pool, index, truy vấn)","Đạt NFR-P1, P2 hoặc có giải thích",D1,4,PRD-01,H1,10,"NFR-P1, P2"
+WEB-23,WEB,"US-026, US-027, US-028, US-029","Form chẩn đoán/dị ứng, kết thúc lần khám, bổ sung addendum",Chặn kết thúc khi thiếu chẩn đoán,D2,4,"WEB-22, CLN-21",S6,10,"C14, C15, C17, C18"
+WEB-25,WEB,"US-035, US-037, US-038, US-039, US-040","Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành","Tiến độ upload, trạng thái scanning, xử lý hết hạn link",D2,4,"WEB-21, DOC-07",S6,10,"D1, D2, D5, D6"
 WEB-32,WEB,US-058,"Panel tóm tắt hồ sơ: nhãn AI, nguồn bấm được sang bản ghi",Hiển thị mode structured-timeline khi LLM lỗi,D3,3,"WEB-21, AI-21",S5,10,AI4
 WEB-33,WEB,"US-059, US-060","Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối",Trường độ tin cậy thấp được đánh dấu,D3,4,"WEB-25, AI-26",S6,10,"AI5, AI6"
 WEB-34,WEB,US-062,Widget chatbot đặt lịch có bước xác nhận (Could),Hiển thị fallback form khi 503,D3,4,"WEB-04, AI-31",S6,10,"AI7, AI8"
