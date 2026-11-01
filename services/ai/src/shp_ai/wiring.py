@@ -5,6 +5,8 @@ import logging
 import threading
 from typing import Any
 
+from shp_ai import usage
+from shp_ai.assistant import conversations
 from shp_ai.blobstore import AzureBlobStore, BlobStore, MemoryBlobStore
 from shp_ai.deps import Deps
 from shp_ai.directory import ClinicalDirectory, Directory, StaticDirectory
@@ -13,9 +15,9 @@ from shp_ai.kb.index import AzureSearchIndex, MemoryIndex, OpenSearchIndex, Sear
 from shp_ai.kb.service import ensure_indexes
 from shp_ai.llm_config import build_router, load_config, providers_from
 from shp_ai.settings import Settings
+from shp_ai.usage import MongoTokenBudget
 from shp_platform import mongo
 from shp_platform.bus import Bus, RabbitBus, ServiceBus
-from shp_platform.llm.router import TokenBudget
 from shp_platform.service_token import ServiceTokenProvider, StaticToken
 
 LOG = logging.getLogger("shp.ai.wiring")
@@ -48,17 +50,9 @@ def from_settings(s: Settings) -> Deps:  # pragma: no cover - hạ tầng thật
     directory: Directory = ClinicalDirectory(s.clinical_url, tokens) if s.token_endpoint else StaticDirectory()
     config = load_config(s.llm_config_path)
     client: MongoClient[dict[str, Any]] = MongoClient(s.mongodb_uri, tz_aware=True)
-    deps = Deps(
-        s,
-        client,
-        blobs,
-        index,
-        embedder,
-        directory,
-        build_router(config, providers_from(s), TokenBudget(s.daily_token_limit)),
-        {"llm_config": config, "service_tokens": tokens},
-    )
-    return deps
+    budget = MongoTokenBudget(client[s.mongodb_db], s.daily_token_limit)  # chung cho mọi replica
+    router = build_router(config, providers_from(s), budget, usage.on_call)
+    return Deps(s, client, blobs, index, embedder, directory, router, {"llm_config": config, "service_tokens": tokens})
 
 
 def offline_deps(s: Settings) -> Deps:
@@ -86,6 +80,8 @@ def make_bus(s: Settings) -> Bus | None:  # pragma: no cover
 
 def start_background(deps: Deps, stop: threading.Event) -> None:  # pragma: no cover - hạ tầng thật
     ensure_indexes(deps.db)
+    conversations.ensure_indexes(deps.db)
+    usage.ensure_indexes(deps.db)
     mongo.ensure_messaging_indexes(deps.db)
     try:
         deps.index.ensure()
