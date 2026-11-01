@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **55**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **63**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -116,7 +116,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **55**, làm một phần: **26** (�
 | ☑ | ML-18 | Sinh model card tự động khi đăng ký model **[xong, commit 34b171e: card.md sinh khi đăng ký, có cảnh báo dữ liệu giả]** | Model card lưu cùng artifact trong MLflow; có đủ mục theo 16-mlops §3 | 3 | ML-17, ML-05 | US-072 |
 | ☐ | OBS-04 | Thư viện observability chuẩn (OTel, log có trace-id, che PII) | OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII | 4 | LOC-03 | ENABLER |
 | ☑ | PY-04 | Audit emitter Python (E11) cho AI/ML **[xong, commit 932b0e4: audit.build: che IP, chặn giá trị tìm kiếm trong resource, khớp lược đồ E11]** | Không ghi nội dung câu hỏi hay PII; test | 2 | PY-03 | US-047 |
-| ◐ | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model **[làm một phần, commit 932b0e4: Circuit breaker 5 lỗi/60s, hạn mức token/ngày, hook metric; CHƯA có bộ đếm chung nhiều replica (Redis) và exporter Prometheus]** | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | 3 | PY-08 | US-055 |
+| ☑ | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model **[xong, commit cf3ed23: Circuit breaker, hạn mức token/ngày dùng chung (MongoDB), metric theo model]** | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | 3 | PY-08 | US-055 |
 | ◐ | SCF-01 | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) **[làm một phần, commit c909d5b: scheduling: khung Spring Boot + Flyway + outbox/inbox/idempotency PostgreSQL, Dockerfile, svc-scheduling.yml, values-local; CHƯA nối bus (Spring Cloud Stream), values uat/prod ở repo GitOps]** | Service từ template; svc-scheduling.yml; values local/uat/prod | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-02 | Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus) **[làm một phần, commit c909d5b: notification: khung + Mongo outbox/inbox, collection do make up tạo; CHƯA nối bus, values uat/prod]** | Service từ template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-03 | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) **[làm một phần, commit c909d5b: clinical: khung + Mongo + MongoIdentityLinkClient; CHƯA nối bus, values uat/prod]** | Service từ template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
@@ -135,9 +135,9 @@ Tổng: **215 task, 727 giờ**. Đã xong: **55**, làm một phần: **26** (�
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ☑ | AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa **[xong, commit 2b6a50c: AI9: tải lên, duyệt theo khoa, thay file, gỡ; retry index 3 lần; audit]** | draft → approved → indexed → retired; lỗi index retry 3 lần | 4 | AI-04, PY-01 | US-052 |
-| ☐ | AI-06 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | Người không được phép không bao giờ thấy chunk; test lọc | 4 | AI-04 | US-053 |
-| ☐ | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | ID phiên bản prompt ghi vào message | 3 | AI-06 | US-053 |
-| ☐ | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | Không có nguồn → không gọi LLM sinh nội dung | 4 | AI-07, PY-08 | US-053 |
+| ☑ | AI-06 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi **[xong, commit cf3ed23: Hybrid BM25 + vector + RRF, trimming trong truy vấn; reranker chưa bật (chờ eval AI-16)]** | Người không được phép không bao giờ thấy chunk; test lọc | 4 | AI-04 | US-053 |
+| ☑ | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token **[xong, commit cf3ed23: prompts/<task>/v<N>.md, ID ghi vào messages; ngữ cảnh ≤ 3.500 token]** | ID phiên bản prompt ghi vào message | 3 | AI-06 | US-053 |
+| ☑ | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false **[xong, commit cf3ed23: Kiểm quote khớp chunk, thử lại model kế một lần, không có nguồn thì không gọi LLM]** | Không có nguồn → không gọi LLM sinh nội dung | 4 | AI-07, PY-08 | US-053 |
 | ☐ | ARC-14 | Sprint review + planning S2 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | ENV-01 | Workflow env-provision | plan -> approval infra-<env> -> apply -> cài Argo CD + bootstrap -> chờ healthy -> seed dữ liệu giả -> smoke test | 6 | IAC-17, GOP-03 | US-070 |
 | ☐ | ENV-02 | Workflow env-destroy | Gõ đúng tên môi trường + approval infra-<env>-destroy; destroy sạch, kiểm tra không còn resource | 2 | IAC-17 | US-070 |
@@ -161,11 +161,11 @@ Tổng: **215 task, 727 giờ**. Đã xong: **55**, làm một phần: **26** (�
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | Mode retrieval-only khi mọi model lỗi; p95 token đầu ≤ 3s | 4 | AI-08, PY-09 | US-053, US-055 |
-| ☐ | AI-10 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit | Mẫu tấn công bị chặn; không chặn nhầm câu hỏi y khoa thường | 3 | AI-09 | US-054 |
-| ☐ | AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk | Vi phạm → thử model kế rồi answered=false | 3 | AI-09 | US-054 |
-| ☐ | AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) | Chỉ chủ hội thoại; đánh giá lặp 409 | 3 | AI-09 | US-056 |
-| ☐ | AI-13 | Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách | Báo cáo theo tác vụ/model/ngày | 3 | PY-09 | US-055 |
+| ◐ | AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model **[làm một phần, commit cf3ed23: AI1 JSON và SSE; SSE phát sau khi câu trả lời đã kiểm xong (chưa stream token thật từ provider nên chưa đo được p95 token đầu ≤ 3 giây)]** | Mode retrieval-only khi mọi model lỗi; p95 token đầu ≤ 3s | 4 | AI-08, PY-09 | US-053, US-055 |
+| ☑ | AI-10 | Guardrail đầu vào: độ dài, mẫu prompt injection, chặn có audit **[xong, commit cf3ed23: Guardrail đầu vào: độ dài, mẫu injection vi/en; chặn có audit denied]** | Mẫu tấn công bị chặn; không chặn nhầm câu hỏi y khoa thường | 3 | AI-09 | US-054 |
+| ☑ | AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk **[xong, commit cf3ed23: Guardrail đầu ra: schema, trích dẫn, không chỉ định trực tiếp, liều phải có trong nguồn; chống thoát khối dữ liệu]** | Vi phạm → thử model kế rồi answered=false | 3 | AI-09 | US-054 |
+| ☑ | AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) **[xong, commit cf3ed23: conversations/messages TTL 30 ngày, feedback (409, PUT), AI3 chỉ chủ hội thoại]** | Chỉ chủ hội thoại; đánh giá lặp 409 | 3 | AI-09 | US-056 |
+| ☑ | AI-13 | Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách **[xong, commit cf3ed23: usage theo lời gọi, chi phí, AI10 theo task/model/day, cảnh báo 80% ngân sách]** | Báo cáo theo tác vụ/model/ngày | 3 | PY-09 | US-055 |
 | ☐ | AI-14 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | File JSON có kiểm tra schema | 3 | AI-05 | US-057 |
 | ☐ | ARC-15 | Sprint review + planning S3 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | DAT-03 | CLI seed gọi API công khai: local và môi trường cloud | Một lệnh nạp xong dữ liệu mẫu; chạy lại không trùng | 3 | DAT-02, SCH-14, CLN-05 | ENABLER |
