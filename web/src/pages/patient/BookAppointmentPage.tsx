@@ -64,6 +64,8 @@ export function BookAppointmentPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['appointments'] });
       void queryClient.invalidateQueries({ queryKey: ['home-appointments'] });
+      // Slot vừa đặt phải biến khỏi danh sách giờ trống ngay, không chờ hết hạn bộ nhớ đệm.
+      void queryClient.invalidateQueries({ queryKey: ['slots'] });
       setStep(3);
     },
     onError: (e) => {

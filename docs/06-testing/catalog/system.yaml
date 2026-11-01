@@ -1,0 +1,103 @@
+# Test case của module 'system'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+testcases:
+- id: TC-AC-SR.1
+  title: 'Lên lịch nhắc khi lịch hẹn được tạo: AC-SR.1'
+  covers:
+  - AC-SR.1
+  srs_uc: schedule-reminders
+  srs_ref: UC 45
+  module: system
+  level: integration
+  priority: P1
+  spec: Given cùng sự kiện “đã đặt lịch” được giao 2 lần, Then chỉ có một bộ lần nhắc.
+- id: TC-AC-07.2
+  title: 'Gửi nhắc lịch: AC-07.2'
+  covers:
+  - AC-07.2
+  srs_uc: send-reminder
+  srs_ref: UC 46
+  module: system
+  level: integration
+  priority: P1
+  spec: Given nhà cung cấp lỗi tạm thời 2 lần rồi thành công, Then bệnh nhân nhận đúng 1 tin.
+- id: TC-AC-SN.1
+  title: 'Gửi nhắc lịch: AC-SN.1'
+  covers:
+  - AC-SN.1
+  srs_uc: send-reminder
+  srs_ref: UC 46
+  module: system
+  level: integration
+  priority: P1
+  spec: Given tin nhắc gửi đi, Then không chứa lý do khám hay chẩn đoán.
+- id: TC-AC-07.1-cancel-reminders
+  title: 'Hủy nhắc khi lịch hẹn bị hủy: AC-07.1'
+  covers:
+  - AC-07.1
+  srs_uc: cancel-reminders
+  srs_ref: UC 47
+  module: system
+  level: integration
+  priority: P1
+  spec: Given lịch hẹn bị hủy trước giờ nhắc, Then không gửi nhắc.
+- id: TC-AC-15.1
+  title: 'Dự đoán nguy cơ không đến khám: AC-15.1'
+  covers:
+  - AC-15.1
+  srs_uc: predict-noshow
+  srs_ref: UC 48
+  module: system
+  level: integration
+  priority: P1
+  spec: Given service ML lỗi, Then lịch nhắc T-24h và T-2h vẫn được tạo.
+- id: TC-AC-15.2
+  title: 'Dự đoán nguy cơ không đến khám: AC-15.2'
+  covers:
+  - AC-15.2
+  srs_uc: predict-noshow
+  srs_ref: UC 48
+  module: system
+  level: integration
+  priority: P1
+  spec: Given một dự đoán, Then có phiên bản mô hình đi kèm.
+- id: TC-AC-NS.1
+  title: 'Đánh dấu không đến khám: AC-NS.1'
+  covers:
+  - AC-NS.1
+  srs_uc: mark-noshow
+  srs_ref: UC 49
+  module: system
+  level: integration
+  priority: P1
+  spec: Given lịch hẹn 08:00 chưa check-in, When job chạy lúc 08:40, Then lịch hẹn “noshow”.
+- id: TC-AC-13.2
+  title: 'Trích xuất dữ liệu từ tài liệu: AC-13.2'
+  covers:
+  - AC-13.2
+  srs_uc: extract-document
+  srs_ref: UC 50
+  module: system
+  level: integration
+  priority: P1
+  spec: Given OCR lỗi liên tục, Then tài liệu vẫn “available” và tải được; mục trích xuất “failed”.
+- id: TC-AC-10.1-break-glass-alert
+  title: 'Cảnh báo truy cập khẩn cấp cho DPO: AC-10.1'
+  covers:
+  - AC-10.1
+  srs_uc: break-glass-alert
+  srs_ref: UC 51
+  module: system
+  level: integration
+  priority: P0
+  spec: Given truy cập khẩn cấp lúc T, Then DPO nhận cảnh báo trước T + 5 phút.
+- id: TC-AC-PG.1
+  title: 'Xóa dữ liệu hết thời hạn lưu trữ: AC-PG.1'
+  covers:
+  - AC-PG.1
+  srs_uc: purge-expired
+  srs_ref: UC 52
+  module: system
+  level: integration
+  priority: P0
+  spec: Given hội thoại tạo 31 ngày trước, When job chạy, Then hội thoại bị xóa; Given lần khám 31 ngày trước, Then không
+    bị xóa.

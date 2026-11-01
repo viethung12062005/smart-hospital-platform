@@ -54,7 +54,7 @@ export function PatientSummary(props: {
           : props.allergies.map((a) => (
               <Group key={a.id} justify="space-between" mb={6}>
                 <Text size="sm">{conceptText(a.code)}</Text>
-                <Badge color={a.criticality === 'high' ? 'red' : 'gray'} variant="light" size="sm">
+                <Badge color={a.criticality === 'high' ? 'red.9' : 'dark'} variant="light" size="sm">
                   {a.criticality}
                 </Badge>
               </Group>
