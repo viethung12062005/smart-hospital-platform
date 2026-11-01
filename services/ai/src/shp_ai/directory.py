@@ -1,0 +1,105 @@
+"""Tra khoa (chuyên khoa) và quan hệ điều trị của người gọi qua API nội bộ của clinical (09 §4), cache 5 phút.
+
+sub → /internal/v1/identity/{sub} → Practitioner/<id> → /internal/v1/practitioners/{id}/roles → chuyên khoa.
+Gọi bằng token dịch vụ của ai (client credentials). Lỗi clinical → 503, không đoán quyền.
+"""
+
+import time
+from collections.abc import Callable
+from typing import Any, Protocol
+
+import httpx
+
+from shp_platform.errors import ShpError
+from shp_platform.security import Principal
+
+CACHE_SECONDS = 300
+
+
+class TokenSource(Protocol):
+    def token(self) -> str: ...
+
+
+class Directory(Protocol):
+    def departments(self, principal: Principal) -> tuple[str, ...]: ...
+
+    def fhir_user(self, principal: Principal) -> str | None: ...
+
+    def has_care(self, principal: Principal, patient_id: str) -> bool: ...
+
+
+class ClinicalDirectory:
+    def __init__(
+        self,
+        base_url: str,
+        tokens: TokenSource,
+        http: httpx.Client | None = None,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        self._base = base_url.rstrip("/")
+        self._tokens = tokens
+        self._http = http or httpx.Client(timeout=5.0)
+        self._clock = clock
+        self._cache: dict[str, tuple[float, Any]] = {}
+
+    def _get(self, path: str, cache: bool = True) -> Any:
+        now = self._clock()
+        hit = self._cache.get(path)
+        if cache and hit and hit[0] > now:
+            return hit[1]
+        try:
+            res = self._http.get(self._base + path, headers={"Authorization": f"Bearer {self._tokens.token()}"})
+        except httpx.HTTPError as exc:
+            raise ShpError("dependency-unavailable") from exc
+        if res.status_code == 404:
+            value = None
+        elif res.status_code == 200:
+            value = res.json()
+        else:
+            raise ShpError("dependency-unavailable")
+        if cache:
+            self._cache[path] = (now + CACHE_SECONDS, value)
+        return value
+
+    def fhir_user(self, principal: Principal) -> str | None:
+        ident = self._get(f"/internal/v1/identity/{principal.subject}")
+        return ident.get("fhirUser") if ident and not ident.get("disabled") else None
+
+    def departments(self, principal: Principal) -> tuple[str, ...]:
+        claimed = principal.claims.get("shp_departments")
+        if isinstance(claimed, list) and all(isinstance(d, str) for d in claimed):
+            return tuple(claimed)  # mapper Keycloak có thể gắn sẵn; không có thì tra clinical
+        fu = self.fhir_user(principal)
+        if not fu or not fu.startswith("Practitioner/"):
+            return ()
+        roles = self._get(f"/internal/v1/practitioners/{fu.split('/', 1)[1]}/roles") or []
+        return tuple(sorted({r["specialty"] for r in roles if r.get("active", True) and r.get("specialty")}))
+
+    def has_care(self, principal: Principal, patient_id: str) -> bool:
+        fu = self.fhir_user(principal)
+        if not fu or not fu.startswith("Practitioner/"):
+            return False
+        res = self._get(
+            f"/internal/v1/care-relationships/check?practitioner={fu.split('/', 1)[1]}&patient={patient_id}",
+            cache=False,
+        )
+        return bool(res and res.get("care"))
+
+
+class StaticDirectory:
+    """Bản giả cho test/dev: khoa theo subject, quan hệ điều trị theo (subject, patient)."""
+
+    def __init__(
+        self, departments: dict[str, tuple[str, ...]] | None = None, care: set[tuple[str, str]] | None = None
+    ) -> None:
+        self._deps = departments or {}
+        self._care = care or set()
+
+    def departments(self, principal: Principal) -> tuple[str, ...]:
+        return self._deps.get(principal.subject, ())
+
+    def fhir_user(self, principal: Principal) -> str | None:
+        return f"Practitioner/{principal.subject}"
+
+    def has_care(self, principal: Principal, patient_id: str) -> bool:
+        return (principal.subject, patient_id) in self._care
