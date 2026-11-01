@@ -63,5 +63,8 @@ STATUS = {
     "ML-14": ("done", "e391985", "checks.check (pandas, không dùng pandera): schema, khoảng, thiếu < 2%, rò rỉ thời gian, tỉ lệ nhãn"),
     "ML-15": ("done", "e391985", "features.features_for dùng chung cho train và serve"),
     "ML-16": ("done", "e391985", "test_training_features_equal_serving_features: phát lại sự kiện khớp training_frame"),
-    "ML-21": ("done", "e391985", "synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot; có test"),
+    "ML-21": ("done", "e391985", "synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot, nhiều ca sáng sớm; detector báo drift trên bộ này"),
+    "ML-19": ("done", "490481e", "drift.feature_drift: PSI đặc trưng chính và điểm dự đoán, ngưỡng 0,2 ở ≥ 2 đặc trưng; test bộ thường không báo, bộ dịch chuyển có báo"),
+    "ML-20": ("partial", "490481e", "drift.live_performance: AUC thực tế, cần ≥ 500 nhãn, cảnh báo khi giảm > 0,05; CHƯA ghép prediction với outcome từ Mongo (cần ML-06, ML-07)"),
+    "ML-22": ("done", "490481e", "drift.decide_retrain: drift hoặc AUC giảm, cooldown 7 ngày, ≥ 500 nhãn mới, chống chạy chồng, tối đa 2 lần/14 ngày rồi chờ người xử lý; cửa sổ trượt 24 tháng"),
 }
