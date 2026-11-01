@@ -8,7 +8,7 @@ Definition of Done for every task: unit tests green, lint clean, no secrets, PR 
 D1_TASKS = [
     # ---------------- shared: authentication / authorization / idempotency ----------------
     ("SHR-26", "ENABLER", "Authz: bộ sinh test từ matrix.yaml (role × điều kiện)",
-     "Từ matrix sinh test Allow/Deny cho mọi ô; dùng được trong test của từng service", "D1", 4, "SHR-24", "P2", "15 §3, NFR-SEC2"),
+     "Từ matrix sinh test Allow/Deny cho mọi ô; dùng được trong test của từng service", "SA", 4, "SHR-24", "P2", "15 §3, NFR-SEC2"),
     ("SCH-02", "US-015", "Migration V002: appointment, resource_history, outbox, idempotency_key, inbox",
      "Chạy sạch; index unique một lịch hiệu lực mỗi slot tồn tại", "D1", 2, "SCH-01", "S1", "02 §2"),
     ("SCH-03", "US-009", "Schedule repository: tạo/đọc/tìm/sửa với version CAS và history",
@@ -134,19 +134,19 @@ D1_TASKS = [
 D2_TASKS = [
     # ---------------- shared: FHIR core, Mongo, events, audit emitter ----------------
     ("SHR-01", "ENABLER", "FHIR R4 JSON serialize/parse (HAPI FHIR) + test vòng khứ hồi cho resource trong phạm vi",
-     "Parse sai trả 400 validation-failed; test từng resource type", "D2", 3, "LOC-03", "P1", "ADR-0003"),
+     "Parse sai trả 400 validation-failed; test từng resource type", "SA", 3, "LOC-03", "P1", "ADR-0003"),
     ("SHR-03", "ENABLER", "Search parameter registry + parser (token, reference, date theo độ chính xác, _count)",
-     "ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400", "D2", 4, "SHR-01", "P1", "ADR-0003, 07 §4"),
+     "ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400", "SA", 4, "SHR-01", "P1", "ADR-0003, 07 §4"),
     ("SHR-04", "ENABLER", "Keyset page token (mờ, ký) + dựng Bundle searchset",
-     "Token bị sửa → 400; link next/self đúng", "D2", 3, "SHR-03", "P2", "07 §4"),
+     "Token bị sửa → 400; link next/self đúng", "SA", 3, "SHR-03", "P2", "07 §4"),
     ("SHR-05", "ENABLER", "Filter ETag/If-Match (412/428) và Idempotency-Key bắt buộc (428)",
-     "Thiếu header → 428; ETag W/\"version\" trên mọi response", "D2", 2, "SHR-02", "P2", "07 §3"),
+     "Thiếu header → 428; ETag W/\"version\" trên mọi response", "SA", 2, "SHR-02", "P2", "07 §3"),
     ("SHR-10", "ENABLER", "Mongo resource store: create/update với version CAS + history + outbox trong một transaction",
-     "Update version cũ khớp 0; transaction rollback toàn phần khi lỗi", "D2", 4, "SHR-03, LOC-08", "P2", "03 §2.5"),
+     "Update version cũ khớp 0; transaction rollback toàn phần khi lỗi", "SA", 4, "SHR-03, LOC-08", "P2", "03 §2.5"),
     ("SHR-11", "ENABLER", "Mongo search executor: biên dịch tiêu chí search thành truy vấn + dùng index",
-     "Kế hoạch truy vấn dùng IXSCAN cho các truy vấn chính", "D2", 3, "SHR-10", "S1", "03 §2.6"),
+     "Kế hoạch truy vấn dùng IXSCAN cho các truy vấn chính", "SA", 3, "SHR-10", "S1", "03 §2.6"),
     ("SHR-12", "US-035", "Idempotency-Key cho MongoDB (document service)",
-     "Cùng key → cùng kết quả; khác body 422", "D2", 2, "SHR-05, SHR-10", "S1", "07 §3"),
+     "Cùng key → cùng kết quả; khác body 422", "SA", 2, "SHR-05, SHR-10", "S1", "07 §3"),
 
     # ---------------- clinical service ----------------
     ("CLN-01", "US-002", "Bootstrap MongoDB clinical: collections, $jsonSchema validator, mọi index theo thiết kế",
