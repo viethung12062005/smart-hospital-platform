@@ -5,7 +5,7 @@ import logging
 import threading
 from typing import Any
 
-from shp_ai import api_summary, usage
+from shp_ai import api_booking, api_summary, usage
 from shp_ai.assistant import conversations
 from shp_ai.blobstore import AzureBlobStore, BlobStore, MemoryBlobStore
 from shp_ai.deps import Deps
@@ -87,6 +87,7 @@ def start_background(deps: Deps, stop: threading.Event) -> None:  # pragma: no c
     usage.ensure_indexes(deps.db)
     idempotency.ensure_indexes(deps.db)
     api_summary.ensure_indexes(deps.db)
+    api_booking.ensure_indexes(deps.db)
     mongo.ensure_messaging_indexes(deps.db)
     try:
         deps.index.ensure()

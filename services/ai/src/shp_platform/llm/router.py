@@ -13,9 +13,10 @@ from collections import defaultdict, deque
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import Any
 
 from shp_platform.llm.provider import ChatMessage, Completion, LlmError, Provider
-from shp_platform.pii import redact
+from shp_platform.pii import Redaction, redact
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ class RouterResult:
     latency_ms: int = 0
     final_fallback: str = ""
     budget_exceeded: bool = False
+    tool_calls: tuple[Any, ...] = ()  # ToolCall; rỗng trừ khi task gọi complete(..., tools=...)
     errors: list[str] = field(default_factory=list)  # "deepseek:timeout"; không chứa nội dung
 
 
@@ -132,8 +134,11 @@ class Router:
         messages: Sequence[ChatMessage],
         known_pii: Mapping[str, Iterable[str]] | None = None,
         start_level: int = 0,
+        tools: Sequence[dict[str, object]] | None = None,
     ) -> RouterResult:
-        """`start_level`: bỏ qua các bước đầu (ví dụ thử lại với model kế khi đầu ra không đạt kiểm tra)."""
+        """`start_level`: bỏ qua các bước đầu (ví dụ thử lại với model kế khi đầu ra không đạt kiểm tra).
+        `tools`: định nghĩa tool kiểu OpenAI function-calling (booking-agent, PY-07); model có thể trả `tool_calls`
+        thay vì `text` — người gọi tự thực thi tool và gọi lại với kết quả nối vào `messages` (role="tool")."""
         cfg = self._tasks[task]
         result = RouterResult(answered=False, final_fallback=cfg.final_fallback)
         if self._budget is not None and self._budget.exhausted():
@@ -149,14 +154,25 @@ class Router:
                 result.errors.append(f"{step.provider}:circuit-open")
                 continue
             must_redact = step.redact_pii or provider.external
-            redactions = [redact(m.content, known) for m in messages] if must_redact else []
+            # role="tool": JSON kết quả tool do backend tạo (id slot/lịch hẹn...), không phải văn bản tự nhiên của
+            # người dùng; che PII ở đây sẽ hỏng id mà model cần đọc lại nguyên vẹn ở lượt sau (booking-agent).
+            redactions = (
+                [redact(m.content, known) if m.role != "tool" else Redaction(m.content, {}) for m in messages]
+                if must_redact
+                else []
+            )
             sent = (
-                [ChatMessage(m.role, r.text) for m, r in zip(messages, redactions, strict=True)]
+                [
+                    ChatMessage(m.role, r.text, tool_call_id=m.tool_call_id, tool_calls=m.tool_calls)
+                    for m, r in zip(messages, redactions, strict=True)
+                ]
                 if must_redact
                 else list(messages)
             )
             try:
-                c: Completion = provider.complete(step.model, sent, cfg.max_output_tokens, cfg.timeout_seconds)
+                c: Completion = provider.complete(
+                    step.model, sent, cfg.max_output_tokens, cfg.timeout_seconds, tools=tools
+                )
             except LlmError as exc:
                 self._breaker.failure(key)
                 result.errors.append(f"{step.provider}:{exc.kind}")
@@ -175,6 +191,7 @@ class Router:
             result.model = c.model
             result.fallback_level = level
             result.tokens_in, result.tokens_out, result.latency_ms = c.tokens_in, c.tokens_out, c.latency_ms
+            result.tool_calls = c.tool_calls
             return result
         return result
 
