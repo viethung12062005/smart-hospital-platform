@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **206 task, 695 giờ**. Đã xong: **32**, làm một phần: **27** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **206 task, 695 giờ**. Đã xong: **34**, làm một phần: **28** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -74,7 +74,7 @@ Tổng: **206 task, 695 giờ**. Đã xong: **32**, làm một phần: **27** (�
 | ☑ | ML-14 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera **[xong, commit e391985: checks.check (pandas, không dùng pandera): schema, khoảng, thiếu < 2%, rò rỉ thời gian, tỉ lệ nhãn]** | Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng | 3 | ML-13 | US-071 |
 | ☑ | ML-15 | Package đặc trưng dùng chung cho huấn luyện và phục vụ **[xong, commit e391985: features.features_for dùng chung cho train và serve]** | Một nguồn duy nhất cho mọi đặc trưng; có unit test | 3 | ML-02 | US-071 |
 | ☐ | ML-17 | Đánh giá theo nhóm con (chuyên khoa, nhóm tuổi, kênh) + calibration + độ trễ dự đoán | Cổng chặn nếu nhóm thấp hơn AUC tổng > 0,07 hoặc p95 > 100 ms | 4 | ML-04 | US-072 |
-| ☑ | ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) **[xong, commit e391985: synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot; có test]** | Có tài liệu mô tả mức dịch chuyển; dùng cho test detector và demo | 3 | ML-01 | US-065 |
+| ☑ | ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) **[xong, commit e391985: synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot, nhiều ca sáng sớm; detector báo drift trên bộ này]** | Có tài liệu mô tả mức dịch chuyển; dùng cho test detector và demo | 3 | ML-01 | US-065 |
 | ◐ | PY-02 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) **[làm một phần, commit 932b0e4: token_exchange RFC 8693 có cache, test với IdP giả; CHƯA thử với Keycloak thật (cần IAM-07)]** | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | 3 | PY-01 | US-053 |
 | ◐ | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ **[làm một phần, commit 932b0e4: events: tạo/kiểm lược đồ, inbox, retry → DLQ sau 5 lần; CHƯA nối broker (RabbitMQ/Service Bus) và inbox Mongo]** | Event trùng xử lý một lần | 4 | ARC-07 | US-059, US-064 |
 | ☑ | PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test **[xong, commit 932b0e4: Provider + adapter OpenAI-compatible (DeepSeek/Gemini/Ollama) + FakeProvider; timeout/429/5xx]** | Cùng một interface; mô phỏng timeout/429/5xx | 4 | LOC-04 | US-055 |
@@ -154,8 +154,8 @@ Tổng: **206 task, 695 giờ**. Đã xong: **32**, làm một phần: **27** (�
 | ☐ | ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | p95 ≤ 100 ms cho M3; quyền đúng | 3 | ML-07 | US-063, US-064 |
 | ◐ | ML-11 | Khởi tạo MongoDB ml (ADR-0014): patient_stats, appointment_facts, predictions (time-series nếu vCore hỗ trợ), inbox, outbox **[làm một phần, commit 3b7390f: contracts/db/mongo-notification-ml.js: collection ml, predictions time-series + index (modelVersion, predictedAt), validator ageBand/outcome; CHƯA ràng buộc score (time-series không nhận validator — kiểm ở code)]** | Script idempotent; validator ràng buộc ageBand, score; index (modelVersion, predictedAt) | 2 | SCF-07 | US-064 |
 | ☑ | ML-16 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường **[xong, commit e391985: test_training_features_equal_serving_features: phát lại sự kiện khớp training_frame]** | Test xanh trong CI; lệch thì thất bại | 3 | ML-15, ML-07 | US-071 |
-| ☐ | ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện | Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển | 4 | ML-07, ML-21 | US-065 |
-| ☐ | ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày | Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn | 4 | ML-06, ML-07 | US-065 |
+| ☑ | ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện **[xong, commit 490481e: drift.feature_drift: PSI đặc trưng chính và điểm dự đoán, ngưỡng 0,2 ở ≥ 2 đặc trưng; test bộ thường không báo, bộ dịch chuyển có báo]** | Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển | 4 | ML-07, ML-21 | US-065 |
+| ◐ | ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày **[làm một phần, commit 490481e: drift.live_performance: AUC thực tế, cần ≥ 500 nhãn, cảnh báo khi giảm > 0,05; CHƯA ghép prediction với outcome từ Mongo (cần ML-06, ML-07)]** | Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn | 4 | ML-06, ML-07 | US-065 |
 
 ## Tuần 6 — 66 giờ
 
@@ -178,7 +178,7 @@ Tổng: **206 task, 695 giờ**. Đã xong: **32**, làm một phần: **27** (�
 | ☐ | IAC-20 | Gắn các module dữ liệu và identity (IAC-09..IAC-16) vào 2 stack | plan chạy được cho cả 2 môi trường; mỗi service chỉ có quyền đúng kho dữ liệu của mình | 4 | IAC-17, IAC-12, IAC-15 | US-070 |
 | ☐ | ML-09 | Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy | Test đổi alias | 2 | ML-08 | US-063 |
 | ☐ | ML-12 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch | Xanh trong CI; AC-15.1 có test ở notification | 2 | ML-08, SHR-06 | US-064, US-046 |
-| ☐ | ML-22 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng | Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu | 3 | ML-19, ML-20 | US-074 |
+| ☑ | ML-22 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng **[xong, commit 490481e: drift.decide_retrain: drift hoặc AUC giảm, cooldown 7 ngày, ≥ 500 nhãn mới, chống chạy chồng, tối đa 2 lần/14 ngày rồi chờ người xử lý; cửa sổ trượt 24 tháng]** | Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu | 3 | ML-19, ML-20 | US-074 |
 | ☐ | ML-23 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production | Không đạt cổng thì dừng và giữ nguyên production; mọi run có liên kết và audit | 4 | ML-22, ML-05, ML-14, ML-17 | US-074 |
 | ☐ | ML-24 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả | Không tăng độ trễ phía người dùng; có metric đồng thuận với bản đang chạy | 3 | ML-09 | US-073 |
 | ☐ | ML-25 | Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản | Prometheus có đủ metric theo model_version để AnalysisTemplate dùng | 3 | ML-08 | US-073 |
