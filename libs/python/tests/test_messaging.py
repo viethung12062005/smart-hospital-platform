@@ -12,8 +12,7 @@ from pymongo.client_session import ClientSession
 from shp_platform import events, mongo
 from shp_platform.bus import RabbitBus
 from shp_platform.events import Outcome
-
-from .conftest import fresh_db
+from shp_platform.testing import fresh_db
 
 ROOT = Path(__file__).resolve().parents[3]
 
