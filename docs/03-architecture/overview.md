@@ -252,7 +252,7 @@ Ghi chú:
 | `shp-web` | Bắt lỗi → Problem Details; `@RequireShpAuthz` (test đỏ nếu endpoint quên); phân giải danh tính `sub → Patient/…`; `IdempotencyKeys` | SA |
 | `shp-data-postgres` | Outbox + relay (`SKIP LOCKED`), inbox, Idempotency-Key, sink audit — bảng do Flyway tạo | SA |
 | `shp-data-mongo` | Như trên cho MongoDB (`findAndModify` + `lockedUntil`), `MongoMessaging.inTransaction` | SA |
-| `services/*` (trừ gateway) | Controller, nghiệp vụ, truy cập dữ liệu, consumer của service | D1 (scheduling) · D2 (clinical) · D3 (notification, document, audit, gateway, Keycloak) · SA (ai, ml) |
+| `services/*` (trừ gateway) | Controller, nghiệp vụ, truy cập dữ liệu, consumer của service | D1 (scheduling) · D2 (clinical) · D3 (notification, document, audit, gateway) · SA (ai, ml, Keycloak) |
 
 ## 4. Bên trong một service Java
 

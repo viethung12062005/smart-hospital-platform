@@ -60,16 +60,15 @@ Hướng dẫn đầy đủ và cách xử lý sự cố: [dev/README.md](../dev
   - `MongoOutbox`, `MongoInbox`, `MongoIdempotency`, `MongoMessaging.inTransaction`;
   - `MongoIdentityLinkClient` (clinical đọc liên kết danh tính từ DB của chính mình).
 
-### D3: gateway, Keycloak, notification, document, audit (Java)
+### D3: gateway, notification, document, audit (Java)
 Từ 2026-11-01 SA nhận toàn bộ AI/ML (`services/ai`, `services/ml`, dữ liệu giả) và mọi thư viện dùng chung (`libs/java`, `libs/python`); D3 chuyển sang các service Java dưới đây. Dev chỉ viết logic nghiệp vụ; cần sửa thư viện dùng chung thì mở issue cho SA.
-- **Service:** [`services/gateway`](../services/gateway), [`services/notification`](../services/notification), [`services/document`](../services/document), [`services/audit`](../services/audit); Keycloak (task IAM-*).
+- **Service:** [`services/gateway`](../services/gateway), [`services/notification`](../services/notification), [`services/document`](../services/document), [`services/audit`](../services/audit); Keycloak do SA làm (IAM-*).
 - **Thiết kế cần đọc:**
   - [ADR-0017](03-architecture/adr/0017-keycloak-identity-everywhere.md), [ADR-0018](03-architecture/adr/0018-profile-links-and-claim.md), [07-api-conventions](03-architecture/detailed-design/07-api-conventions.md), [15-authorization](03-architecture/detailed-design/15-authorization.md)
   - [11-api-notification-audit-ml](03-architecture/detailed-design/11-api-notification-audit-ml.md), [10-api-document](03-architecture/detailed-design/10-api-document.md), [05-storage-audit-blob](03-architecture/detailed-design/05-storage-audit-blob.md)
 - **Việc đầu tiên:**
   - GW-01, GW-02: làm lại xác thực ở gateway (JWT, MFA nhân viên, rate limit theo người dùng) dùng thư viện `shp-security` của SA.
-  - IAM-01, IAM-06: Keycloak trên cụm; sau đó IAM-02, IAM-07 (token dịch vụ, token exchange cho ai).
-  - AUD-* (dùng audit emitter SHR-09 của SA); NTF-16 (dịch vụ OTP) trước IAM-04.
+  - AUD-* (dùng audit emitter SHR-09 của SA); NTF-16 (dịch vụ OTP; SA dùng trong IAM-04).
 - **Lưu ý:**
   - Không log mật khẩu, mã OTP, số điện thoại hay token; audit không chứa nội dung lâm sàng.
   - Audit là WORM: không có API sửa hoặc xóa.

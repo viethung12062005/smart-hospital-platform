@@ -14,13 +14,13 @@ Tổng: **342 task**, **1159 giờ** · dev: mỗi task ≤ 4 giờ, SA: ≤ 8 g
 | W4 | **78** | 30 | 29 | 27 |
 | W5 | **67** | 30 | 30 | 29 |
 | W6 | **63** | 30 | 30 | 30 |
-| W7 | **61** | 30 | 30 | 30 |
-| W8 | **57** | 4 | 25 | 30 |
-| W9 | 42 |  |  | 10 |
+| W7 | **81** | 30 | 30 | 30 |
+| W8 | **69** | 4 | 25 | 8 |
+| W9 | 42 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 11 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Tổng** | **587** | **128** | **171** | **163** |
+| **Tổng** | **619** | **128** | **171** | **131** |
 
 In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 
@@ -374,10 +374,10 @@ In đậm = vượt ngưỡng cảnh báo (dev > 30h/tuần, SA > 45h/tuần).
 | DOC-06 | US-037, US-039 | API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành) | Patient chưa phát hành → 404; không trả URL | D3 | 3 | DOC-04, SHR-25 | S4 | D3, D4, AC-05.3 |
 | DOC-07 | US-037 | API cấp link tải 5 phút (D5) + audit mỗi lần | Sau 5 phút Blob 403; chưa available 409; Deny cũng audit | D3 | 3 | DOC-06, SHR-09 | S4 | D5, AC-05.2 |
 | DOC-08 | US-038 | API phát hành (D6) + phát document-released | Phát hành lại 409; chỉ bác sĩ Care | D3 | 2 | DOC-06 | S4 | D6, E9(pub) |
-| DOC-10 | US-032, US-059, US-004 | API nội bộ (D8, D9) + consumer patient-merged | D9 SAS đọc 60 giây chỉ cho service ai; merge idempotent | D3 | 3 | DOC-06, SHR-08 | S4 | D8, D9, E7(sub) |
-| DOC-05 | US-036 | Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine | File nhiễm không phát event; quét lỗi retry 3 lần | D3 | 4 | DOC-04, IAC-18 | S4 | E8(pub) |
 | DOC-09 | US-040 | API entered-in-error (D7) | Ẩn khỏi timeline/bệnh nhân, giữ bản ghi | D3 | 2 | DOC-06 | S5 | D7 |
+| DOC-10 | US-032, US-059, US-004 | API nội bộ (D8, D9) + consumer patient-merged | D9 SAS đọc 60 giây chỉ cho service ai; merge idempotent | D3 | 3 | DOC-06, SHR-08 | S4 | D8, D9, E7(sub) |
 | DOC-11 | US-035 | Job dọn blob mồ côi và pending-upload > 24 giờ | Không xóa file đã available | D3 | 2 | DOC-04 | S5 | 10 §5 |
+| DOC-05 | US-036 | Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine | File nhiễm không phát event; quét lỗi retry 3 lần | D3 | 4 | DOC-04, IAC-18 | S4 | E8(pub) |
 | DOC-12 | US-035, US-037, US-038 | Test ma trận phân quyền và hợp đồng event cho document | Xanh trong CI | D3 | 4 | DOC-09, SHR-26 | S5 | NFR-SEC2 |
 
 ## AUD — Audit service

@@ -161,12 +161,12 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CLN-04 | Phát hiện trùng hồ sơ theo SĐT + ngày sinh | D2 | 2 | W5 |
 | CLN-05 | API đăng ký bệnh nhân (C1) + tạo identity_links | D2 | 4 | W5 |
 | WEB-27 | Màn hình hồ sơ: đăng ký, xem/sửa hồ sơ của tôi, đăng ký tại quầy | D2 | 4 | W6 |
-| IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | D3 | 4 | W7 |
-| IAM-03 | Theme Keycloak vi/en: đăng nhập, quên mật khẩu | D3 | 3 | W8 |
-| IAM-04 | Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 lúc đăng ký | D3 | 4 | W8 |
-| IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | D3 | 4 | W8 |
-| IAM-08 | Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng | D3 | 3 | W9 |
-| IAM-09 | OTP khi đổi SĐT/email, giới hạn theo SĐT và IP, bản giả nhà cung cấp cho dev, test | D3 | 4 | W9 |
+| IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | SA | 4 | W7 |
+| IAM-03 | Theme Keycloak vi/en: đăng nhập, quên mật khẩu | SA | 3 | W7 |
+| IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | SA | 4 | W7 |
+| IAM-08 | Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng | SA | 3 | W7 |
+| IAM-04 | Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 lúc đăng ký | SA | 4 | W8 |
+| IAM-09 | OTP khi đổi SĐT/email, giới hạn theo SĐT và IP, bản giả nhà cung cấp cho dev, test | SA | 4 | W8 |
 
 ## US-002
 ### Bệnh nhân xem và cập nhật hồ sơ của mình — Must
@@ -429,11 +429,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | LOC-02 | Keycloak realm local | SA | 3 | W2 |
 | SHR-20 | JWT bearer từ Keycloak (OIDC chuẩn): map claim roles, kiểm amr=mfa với nhân viên | SA | 3 | W2 |
 | IAC-16 | Hạ tầng cho Keycloak (ADR-0017) | SA | 4 | W6 |
-| IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | D3 | 4 | W7 |
-| IAM-03 | Theme Keycloak vi/en: đăng nhập, quên mật khẩu | D3 | 3 | W8 |
-| IAM-05 | Sự kiện danh tính về audit | D3 | 4 | W8 |
-| IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | D3 | 4 | W8 |
-| IAM-08 | Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng | D3 | 3 | W9 |
+| IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | SA | 4 | W7 |
+| IAM-03 | Theme Keycloak vi/en: đăng nhập, quên mật khẩu | SA | 3 | W7 |
+| IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | SA | 4 | W7 |
+| IAM-08 | Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng | SA | 3 | W7 |
+| IAM-05 | Sự kiện danh tính về audit | SA | 4 | W8 |
 
 ## US-009
 ### Điều dưỡng tạo lịch làm việc cho bác sĩ — Must
@@ -924,7 +924,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | CLN-08 | API tìm bệnh nhân POST _search (C6): tên không dấu, SĐT, MRN, ngày sinh, rút gọn kết quả | D2 | 4 | W5 |
 | CLN-26 | Chạy bộ test ma trận phân quyền cho mọi endpoint clinical | D2 | 4 | W6 |
 | WEB-20 | Màn hình tìm bệnh nhân (POST _search): tên không dấu, SĐT, MRN | D2 | 4 | W6 |
-| IAM-05 | Sự kiện danh tính về audit | D3 | 4 | W8 |
+| IAM-05 | Sự kiện danh tính về audit | SA | 4 | W8 |
 
 ## US-032
 ### Bác sĩ xem timeline bệnh nhân — Must
@@ -1013,7 +1013,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | DOC-02 | IBlobStore trên Azure Blob SDK (một code cho local Azurite và cloud); chọn cách ký SAS qua cấu hình (user delegation trên cloud, account key trên Azurite); SAS ghi 10 phút/đọc 5 phút | D3 | 4 | W6 |
 | DOC-03 | API xin upload (D1): kiểm loại, kích thước, Care, Idempotency-Key | D3 | 4 | W6 |
 | DOC-04 | API complete (D2): kiểm tồn tại, size, SHA-256, magic bytes | D3 | 4 | W7 |
-| DOC-11 | Job dọn blob mồ côi và pending-upload > 24 giờ | D3 | 2 | W8 |
+| DOC-11 | Job dọn blob mồ côi và pending-upload > 24 giờ | D3 | 2 | W7 |
 | DOC-12 | Test ma trận phân quyền và hợp đồng event cho document | D3 | 4 | W8 |
 | WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W8 |
 
@@ -1115,7 +1115,7 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 
 | Task | Việc | Người | Giờ | Tuần |
 |---|---|---|---|---|
-| DOC-09 | API entered-in-error (D7) | D3 | 2 | W8 |
+| DOC-09 | API entered-in-error (D7) | D3 | 2 | W7 |
 | WEB-25 | Màn hình tài liệu: upload trực tiếp bằng SAS, xem bằng link 5 phút, phát hành | D2 | 4 | W8 |
 
 ## US-041
@@ -1392,11 +1392,11 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | SA | 3 | W5 |
 | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | SA | 4 | W5 |
 | AI-09 | API hỏi trợ lý (AI1) + SSE stream, event reset khi chuyển model | SA | 4 | W6 |
+| IAM-02 | Tài khoản dịch vụ: client credentials cho /internal theo từng service | SA | 3 | W7 |
+| IAM-07 | Token exchange RFC 8693 cho ai (thay mặt người dùng) | SA | 3 | W7 |
 | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | SA | 4 | W7 |
-| IAM-02 | Tài khoản dịch vụ: client credentials cho /internal theo từng service | D3 | 3 | W8 |
 | WEB-31 | Giao diện quản lý kho tri thức và xem chi phí AI (Admin) | SA | 4 | W8 |
 | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | SA | 4 | W9 |
-| IAM-07 | Token exchange RFC 8693 cho ai (thay mặt người dùng) | D3 | 3 | W9 |
 
 ## US-054
 ### Trợ lý kháng prompt injection — Must
@@ -1783,10 +1783,10 @@ Mỗi AC trong [functional-requirements.md](functional-requirements.md) phải t
 | WEB-02 | Client API: gắn token, Idempotency-Key, If-Match/ETag, ánh xạ OperationOutcome/Problem Details sang thông điệp | SA | 3 | W4 |
 | IAC-16 | Hạ tầng cho Keycloak (ADR-0017) | SA | 4 | W6 |
 | WEB-10 | Pipeline + chart cho web | SA | 2 | W6 |
-| IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | D3 | 4 | W7 |
-| IAM-02 | Tài khoản dịch vụ: client credentials cho /internal theo từng service | D3 | 3 | W8 |
-| IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | D3 | 4 | W8 |
-| IAM-07 | Token exchange RFC 8693 cho ai (thay mặt người dùng) | D3 | 3 | W9 |
+| IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | SA | 4 | W7 |
+| IAM-02 | Tài khoản dịch vụ: client credentials cho /internal theo từng service | SA | 3 | W7 |
+| IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | SA | 4 | W7 |
+| IAM-07 | Token exchange RFC 8693 cho ai (thay mặt người dùng) | SA | 3 | W7 |
 
 ## US-067
 ### Khôi phục dữ liệu về một thời điểm — Must
