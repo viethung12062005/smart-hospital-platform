@@ -32,6 +32,26 @@ _INJECTION = [
 ]
 _INJECTION_RE = [re.compile(p, re.IGNORECASE) for p in _INJECTION]
 
+# Câu nói với AI/model (chỉ dẫn cài trong tài liệu): không bao giờ là nội dung phác đồ hợp lệ
+_ADDRESSING_AI = [
+    r"\b(trợ lý|AI|model|mô hình|assistant|chatbot)\b[^.\n]{0,40}\b(phải|hãy|cần|must|should|shall)\b",
+    r"\b(nếu bạn là|if you are)\s+(một\s+)?(AI|model|trợ lý|assistant)\b",
+    r"\b(instruction|note|ghi chú)\s+(to|for|cho)\s+(the\s+)?(AI|model|assistant|trợ lý)\b",
+    r"(mọi|tất cả)\s+câu trả lời\s+(phải|cần)",
+    r"\b(output|print|respond with|reply|say)\b\s+\S",
+    r"\boverride\b|\bact\s+as\b|forget\s+the\s+(documents?|rules|instructions)",
+    r"\banswered\s*[=:]\s*true\b|\"answered\"\s*:",
+    r"\[(SYSTEM|INST)\]|ghi chú ẩn|developer note",
+]
+_ADDRESSING_RE = [re.compile(p, re.IGNORECASE) for p in _ADDRESSING_AI]
+
+
+def looks_like_instruction(text: str) -> bool:
+    """Văn bản có dạng chỉ dẫn gửi AI (prompt injection), dùng cho câu hỏi, đoạn tài liệu và câu trả lời."""
+    norm = unicodedata.normalize("NFC", text)
+    return any(r.search(norm) for r in _INJECTION_RE) or any(r.search(norm) for r in _ADDRESSING_RE)
+
+
 _DIRECT_CLINICAL = [
     r"\b(bạn|anh|chị|ông|bà|bệnh nhân này)\s+(bị|mắc|đã mắc)\s+",  # không có "em": "trẻ em bị" là câu tài liệu
     r"\b(tôi|ai)\s+chẩn đoán\b",
@@ -55,7 +75,7 @@ def check_input(question: str) -> InputCheck:
     if len(q) < MIN_LEN or len(q) > MAX_LEN:
         return InputCheck(False, "length")
     norm = unicodedata.normalize("NFC", q)
-    if any(r.search(norm) for r in _INJECTION_RE):
+    if looks_like_instruction(norm):
         return InputCheck(False, "prompt-injection")
     return InputCheck(True)
 
@@ -122,6 +142,8 @@ def check_output(ans: Answer, chunks: list[str]) -> Answer:
     refs = {int(m) for m in _REF.findall(ans.answer)}
     if not refs or not refs <= set(cited):
         raise OutputRejectedError("missing-citation")
+    if looks_like_instruction(ans.answer) or any(looks_like_instruction(c["quote"]) for c in ans.citations):
+        raise OutputRejectedError("injected-content")
     if any(r.search(ans.answer) for r in _DIRECT_RE):
         raise OutputRejectedError("clinical-directive")
     source = _norm(" ".join(cited.values()))
