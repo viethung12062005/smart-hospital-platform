@@ -1,0 +1,114 @@
+# Phụ lục – Danh sách thông điệp và mẫu thông báo. Mã API tương ứng ghi trong cột “Khi nào”.
+messages:
+  - name: Thông điệp lỗi
+    prefix: EMSG
+    intro: "Hiển thị trong hộp thông báo:"
+    format: ["Tiêu đề: “Không thực hiện được”.", "Nội dung: <Thông điệp> và mã tham chiếu.", "Nút: “Đóng”."]
+    items:
+      - {key: forbidden, text: "Bạn không có quyền thực hiện thao tác này.", when: "403 forbidden"}
+      - {key: not-found, text: "Không tìm thấy dữ liệu hoặc bạn không có quyền xem.", when: "404 not-found – dùng cả khi không có quyền với dữ liệu của người khác"}
+      - {key: no-care, text: "Bạn chưa có quan hệ điều trị với bệnh nhân này. Trường hợp cấp cứu, hãy dùng truy cập khẩn cấp.", when: "403 no-care-relationship"}
+      - {key: slot-unavailable, text: "Khung giờ này vừa có người đặt. Vui lòng chọn một khung giờ gợi ý bên dưới.", when: "409 slot-unavailable"}
+      - {key: slot-has-appointment, text: "Khung giờ đã có lịch hẹn. Hãy hủy hoặc đổi lịch hẹn trước khi chặn.", when: "409 slot-has-appointment"}
+      - {key: invalid-state, text: "Thao tác không hợp lệ với trạng thái hiện tại.", when: "409 invalid-state-transition"}
+      - {key: version-conflict, text: "Dữ liệu vừa được người khác cập nhật. Vui lòng tải lại và thực hiện lại.", when: "412 version-conflict"}
+      - {key: max-future, text: "Bạn đã có 3 lịch hẹn sắp tới. Vui lòng hủy bớt trước khi đặt thêm.", when: "422 max-future-appointments (BR-03)"}
+      - {key: outside-window, text: "Chỉ đặt được lịch trong vòng 30 ngày tới.", when: "422 outside-booking-window (BR-04)"}
+      - {key: cancel-too-late, text: "Đã quá thời hạn hủy (2 giờ trước giờ khám). Vui lòng liên hệ quầy tiếp đón.", when: "422 cancellation-too-late (BR-02)"}
+      - {key: duplicate-patient, text: "Thông tin trùng với một hồ sơ đã có. Vui lòng đến quầy tiếp đón để được xác minh.", when: "422 duplicate-patient-suspected"}
+      - {key: duplicate-schedule, text: "Bác sĩ đã có lịch làm việc hoạt động cho chuyên khoa này.", when: "409"}
+      - {key: file-too-large, text: "Tệp vượt quá 20 MB.", when: "413 file-too-large"}
+      - {key: invalid-file-type, text: "Chỉ chấp nhận tệp PDF, JPEG hoặc PNG.", when: "415 invalid-file-type"}
+      - {key: file-infected, text: "Tệp không an toàn và đã bị cách ly. Vui lòng kiểm tra lại tệp gốc.", when: "Kết quả quét mã độc"}
+      - {key: link-expired, text: "Liên kết đã hết hạn. Vui lòng mở lại tài liệu.", when: "403 từ kho lưu trữ"}
+      - {key: consent-required, text: "Bệnh nhân chưa đồng ý cho xử lý dữ liệu bằng AI.", when: "403 consent-required"}
+      - {key: confirmation-expired, text: "Yêu cầu xác nhận đã hết hạn. Vui lòng thực hiện lại.", when: "422 confirmation-expired"}
+      - {key: rate-limited, text: "Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.", when: "429 rate-limited"}
+      - {key: ai-unavailable, text: "Trợ lý AI tạm thời không khả dụng. Dưới đây là các tài liệu liên quan.", when: "503 ai-unavailable"}
+      - {key: ai-budget, text: "Đã hết hạn mức sử dụng AI hôm nay. Dưới đây là các tài liệu liên quan.", when: "503 ai-budget-exceeded"}
+      - {key: account-locked, text: "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.", when: "401/403 tài khoản disabled"}
+      - {key: mfa-required, text: "Tài khoản nhân viên bắt buộc xác thực nhiều yếu tố. Vui lòng đăng nhập lại.", when: "403 thiếu MFA"}
+      - {key: session-expired, text: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.", when: "Hết phiên / 401"}
+  - name: Lỗi tại trường
+    prefix: IEM
+    intro: "Hiển thị màu đỏ ngay dưới trường không hợp lệ."
+    items:
+      - {key: required, text: "Vui lòng nhập trường này."}
+      - {key: max-length, text: "Vượt quá số ký tự cho phép."}
+      - {key: dob-future, text: "Ngày sinh không được ở tương lai."}
+      - {key: invalid-phone, text: "Số điện thoại không hợp lệ."}
+      - {key: time-range, text: "Giờ bắt đầu phải trước giờ kết thúc."}
+      - {key: slot-length, text: "Khoảng thời gian phải chia hết cho độ dài khung giờ."}
+      - {key: vital-range, text: "Giá trị nằm ngoài khoảng cho phép."}
+      - {key: icd-invalid, text: "Mã chẩn đoán không có trong danh mục ICD-10."}
+      - {key: reason-min, text: "Lý do phải có ít nhất 10 ký tự."}
+  - name: Hộp thoại xác nhận
+    prefix: CFD
+    intro: "Tiêu đề “Xác nhận”; nút chính thực hiện hành động, nút “Hủy” đóng hộp thoại và không thay đổi gì."
+    items:
+      - {key: confirm-cancel, text: "Bạn có chắc muốn hủy lịch hẹn <<Mã lịch hẹn>> lúc <<Giờ>> ngày <<Ngày>>?"}
+      - {key: confirm-reschedule, text: "Đổi lịch hẹn sang <<Giờ mới>> ngày <<Ngày mới>>? Lịch cũ sẽ được hủy khi đổi thành công."}
+      - {key: confirm-block, text: "Chặn <<Số>> khung giờ đã chọn?"}
+      - {key: confirm-merge, text: "Gộp hồ sơ <<Mã nguồn>> vào <<Mã đích>>? Thao tác không hoàn tác được."}
+      - {key: confirm-finish, text: "Kết thúc lần khám? Sau khi kết thúc chỉ có thể thêm bản ghi bổ sung."}
+      - {key: confirm-break-glass, text: "Bạn đang truy cập khẩn cấp hồ sơ không thuộc quan hệ điều trị. Mọi thao tác được ghi lại và báo cho Cán bộ bảo vệ dữ liệu. Nhập lý do để tiếp tục."}
+      - {key: confirm-release, text: "Phát hành tài liệu cho bệnh nhân? Bệnh nhân sẽ xem được tài liệu này."}
+      - {key: confirm-void, text: "Đánh dấu tài liệu nhập nhầm? Tài liệu bị ẩn nhưng không bị xóa."}
+      - {key: confirm-bot-action, text: "Trợ lý đề xuất: <<Hành động>>. Bạn xác nhận?"}
+      - {key: confirm-withdraw-consent, text: "Rút đồng ý? Các tính năng AI sẽ không xử lý dữ liệu của bạn nữa."}
+      - {key: confirm-lock, text: "Khóa tài khoản <<Tên>>? Người dùng sẽ bị đăng xuất trong tối đa 5 phút."}
+  - name: Thông báo thành công
+    prefix: SMSG
+    intro: "Hiển thị góc màn hình, tự đóng sau 5 giây."
+    items:
+      - {key: booked, text: "Đặt lịch thành công. Mã lịch hẹn: <<Mã lịch hẹn>>."}
+      - {key: cancelled, text: "Đã hủy lịch hẹn."}
+      - {key: rescheduled, text: "Đã đổi lịch hẹn."}
+      - {key: saved, text: "Đã lưu thay đổi."}
+      - {key: checked-in, text: "Đã check-in."}
+      - {key: uploaded, text: "Đã tải lên. Tài liệu sẽ dùng được sau khi kiểm tra an toàn."}
+      - {key: request-received, text: "Đã ghi nhận yêu cầu. Cán bộ bảo vệ dữ liệu sẽ xử lý và thông báo cho bạn."}
+
+email_intro: >-
+  Mẫu thông báo viết ở thì quá khứ, lịch sự, ngắn gọn. Quy tắc bảo mật chung: thông báo gửi qua email/SMS/push không chứa
+  chẩn đoán, lý do khám, kết quả hay loại tài liệu; chỉ chứa thông tin hành chính tối thiểu và đường dẫn yêu cầu đăng nhập.
+email_templates:
+  - key: booking-confirmation
+    name: Xác nhận đặt lịch
+    channel: "Email / push (theo tùy chọn)"
+    to: "Bệnh nhân của lịch hẹn"
+    trigger: "[[UC:book]] thành công"
+    subject: "[Bệnh viện] Xác nhận lịch khám <<Mã lịch hẹn>>"
+    body: "Kính gửi <<Tên gọi>>, lịch khám của bạn đã được đặt lúc <<Giờ>> ngày <<Ngày>> với <<Bác sĩ>> – <<Chuyên khoa>>, tại <<Phòng khám>>. Quản lý lịch hẹn: <<Liên kết>>."
+    notes: ["<<Tên gọi>> là tên gọi ngắn (ví dụ “chị Lan”), không phải họ tên đầy đủ.", "Liên kết yêu cầu đăng nhập, không chứa mã lịch hẹn trong URL."]
+  - key: reminder
+    name: Nhắc lịch khám
+    channel: "Push / email / SMS"
+    to: "Bệnh nhân của lịch hẹn"
+    trigger: "[[UC:send-reminder]] (T-24h, T-6h, T-2h)"
+    subject: "[Bệnh viện] Nhắc lịch khám ngày <<Ngày>>"
+    body: "Bạn có lịch khám lúc <<Giờ>> ngày <<Ngày>> với <<Bác sĩ>>. Vui lòng đến trước 15 phút. Hủy hoặc đổi lịch trước 2 giờ tại <<Liên kết>>."
+    notes: ["SMS tối đa 160 ký tự, không dấu nếu nhà mạng yêu cầu."]
+  - key: cancellation
+    name: Xác nhận hủy lịch
+    channel: "Email / push"
+    to: "Bệnh nhân của lịch hẹn"
+    trigger: "[[UC:cancel]] thành công"
+    subject: "[Bệnh viện] Lịch khám <<Mã lịch hẹn>> đã được hủy"
+    body: "Lịch khám lúc <<Giờ>> ngày <<Ngày>> đã được hủy. Nếu bạn không thực hiện thao tác này, vui lòng liên hệ bệnh viện."
+  - key: document-released
+    name: Có tài liệu mới
+    channel: "Push / email"
+    to: "Bệnh nhân sở hữu tài liệu"
+    trigger: "[[UC:release-document]]"
+    subject: "[Bệnh viện] Bạn có tài liệu mới"
+    body: "Bệnh viện vừa gửi tới bạn một tài liệu mới. Đăng nhập để xem: <<Liên kết>>."
+    notes: ["Không nêu loại tài liệu hay nội dung kết quả."]
+  - key: break-glass-alert
+    name: Cảnh báo truy cập khẩn cấp
+    channel: "Email + thông báo trong hệ thống"
+    to: "Cán bộ bảo vệ dữ liệu"
+    trigger: "[[UC:break-glass-alert]]"
+    subject: "[SHP] Truy cập khẩn cấp cần rà soát"
+    body: "<<Bác sĩ>> (<<Khoa>>) đã truy cập khẩn cấp hồ sơ <<Mã bệnh nhân>> lúc <<Thời điểm>>. Lý do: <<Lý do>>. Rà soát tại: <<Liên kết>>."
+    notes: ["Không có họ tên bệnh nhân trong email."]
