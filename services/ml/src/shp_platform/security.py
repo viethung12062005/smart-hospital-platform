@@ -134,3 +134,17 @@ class Authenticator:
             return principal
 
         return dependency
+
+    def require_service(self, service: str, *callers: str) -> Callable[..., Principal]:
+        """Endpoint `/internal/*` (15 §7): token dịch vụ (client credentials) có role `internal.<service>` và `azp`
+        nằm trong danh sách service được gọi. Gateway luôn chặn `/internal/**` từ bên ngoài."""
+        allowed = frozenset(callers)
+
+        def dependency(principal: Annotated[Principal, Depends(self.principal)]) -> Principal:
+            raw = principal.claims.get("roles")
+            roles = raw if isinstance(raw, list) else []
+            if principal.claims.get("azp") not in allowed or f"internal.{service}" not in roles:
+                raise ShpError("forbidden")
+            return principal
+
+        return dependency
