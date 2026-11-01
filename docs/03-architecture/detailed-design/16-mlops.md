@@ -15,7 +15,7 @@ Không dùng dataset no-show công khai vì chúng bắt nguồn từ dữ liệ
 | Quy luật | `logit(p) = β0 + β1·lead_time + β2·prior_noshow_rate + β3·is_first_visit + β4·early_morning + β5·channel + β6·specialty + ε`; hệ số do SA chọn và ghi vào tài liệu, **ε đủ lớn để AUC đạt được khoảng 0,78–0,82** (nếu không, cổng AUC ≥ 0,75 vô nghĩa) |
 | Cấu trúc thời gian | Có xu hướng theo mùa và mùa bệnh; chia train/validation **theo thời gian** (18 tháng đầu / 6 tháng cuối), không xáo trộn |
 | Tái lập | Seed cố định; sinh ra Parquet + file mô tả (schema, tỉ lệ nhãn, hash) |
-| Bộ dữ liệu dịch chuyển (`ML-21`) | Cùng schema; lead time trung bình +40%, tỉ lệ vắng +6 điểm, đổi tỉ trọng kênh đặt. Dùng để test detector drift và demo cảnh báo |
+| Bộ dữ liệu dịch chuyển (`ML-21`) | Cùng schema; lead time trung bình +40%, tỉ lệ vắng +6 điểm, đổi tỉ trọng kênh đặt, lịch sáng sớm (07:00–07:45) từ 10% lên 35% (để ≥ 2 đặc trưng chính vượt PSI 0,2; riêng lead time +40% chỉ cho PSI ≈ 0,08). Dùng để test detector drift và demo cảnh báo |
 | Giới hạn phải ghi trong báo cáo | Mô hình chỉ học lại quy luật do nhóm tự viết; kết quả chứng minh quy trình MLOps, **không** chứng minh khả năng dự đoán thực tế |
 
 ## 2. Huấn luyện có kiểm soát và tái lập

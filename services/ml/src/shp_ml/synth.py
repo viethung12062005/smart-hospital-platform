@@ -54,14 +54,15 @@ class Coef:
 
 @dataclass(frozen=True)
 class Shift:
-    """Bộ dữ liệu dịch chuyển (ML-21): lead time +40%, tỉ lệ vắng +6 điểm, nhiều chatbot hơn."""
+    """Bộ dữ liệu dịch chuyển (ML-21): lead time +40%, tỉ lệ vắng +6 điểm, nhiều chatbot, nhiều ca sáng sớm."""
 
     lead_factor: float = 1.0
     extra_rate_points: float = 0.0
     channel_weights: tuple[float, float, float] = (0.55, 0.35, 0.10)
+    early_share: float = 0.1  # tỉ lệ lịch 07:00-07:45 (4 trong 40 khung)
 
 
-SHIFTED = Shift(lead_factor=1.4, extra_rate_points=0.06, channel_weights=(0.4, 0.25, 0.35))
+SHIFTED = Shift(lead_factor=1.4, extra_rate_points=0.06, channel_weights=(0.4, 0.25, 0.35), early_share=0.35)
 COEF = Coef()
 TARGET_RATE = 0.18
 CANCEL_RATE = 0.08
@@ -91,7 +92,9 @@ def generate(
 
     span_days = int(months * 30.4)
     day = rng.integers(0, span_days, rows)
-    slot = rng.integers(0, 40, rows)  # 07:00 → 16:45 giờ VN, mỗi 15 phút
+    # 07:00 → 16:45 giờ VN, mỗi 15 phút; `early_share` lịch rơi vào 4 khung đầu (07:00-07:45)
+    early_pick = rng.random(rows) < shift.early_share
+    slot = np.where(early_pick, rng.integers(0, 4, rows), rng.integers(4, 40, rows))
     local_start = [
         (
             start.astimezone(VN).replace(hour=7, minute=0, second=0, microsecond=0)
