@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **63**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **68**, làm một phần: **27** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -166,7 +166,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **63**, làm một phần: **26** (�
 | ☑ | AI-11 | Guardrail đầu ra: schema, không có chẩn đoán/chỉ định tự đưa ra, quote khớp chunk **[xong, commit cf3ed23: Guardrail đầu ra: schema, trích dẫn, không chỉ định trực tiếp, liều phải có trong nguồn; chống thoát khối dữ liệu]** | Vi phạm → thử model kế rồi answered=false | 3 | AI-09 | US-054 |
 | ☑ | AI-12 | Lưu hội thoại/tin nhắn (TTL 30 ngày) + API feedback và lịch sử (AI2, AI3) **[xong, commit cf3ed23: conversations/messages TTL 30 ngày, feedback (409, PUT), AI3 chỉ chủ hội thoại]** | Chỉ chủ hội thoại; đánh giá lặp 409 | 3 | AI-09 | US-056 |
 | ☑ | AI-13 | Theo dõi token/chi phí/fallback + API usage (AI10) + cảnh báo 80% ngân sách **[xong, commit cf3ed23: usage theo lời gọi, chi phí, AI10 theo task/model/day, cảnh báo 80% ngân sách]** | Báo cáo theo tác vụ/model/ngày | 3 | PY-09 | US-055 |
-| ☐ | AI-14 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu | File JSON có kiểm tra schema | 3 | AI-05 | US-057 |
+| ☑ | AI-14 | Bộ eval RAG phần 1: 50 câu hỏi + đoạn đáp án chuẩn từ kho tri thức mẫu **[xong, commit 0235093: 50 câu phần 1 từ kho tri thức giả, kiểm schema]** | File JSON có kiểm tra schema | 3 | AI-05 | US-057 |
 | ☐ | ARC-15 | Sprint review + planning S3 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | DAT-03 | CLI seed gọi API công khai: local và môi trường cloud | Một lệnh nạp xong dữ liệu mẫu; chạy lại không trùng | 3 | DAT-02, SCH-14, CLN-05 | ENABLER |
 | ☐ | ENV-05 | Diễn tập G4 | Service mẫu đi local -> uat -> prod (dựng tạm) chỉ qua pipeline; rollback bằng GitOps revert < 5 phút; image chưa ký bị chặn; destroy; có bằng chứng | 4 | ENV-01, LOC-03, LOC-04, GOP-07 | US-070 |
@@ -188,9 +188,9 @@ Tổng: **215 task, 727 giờ**. Đã xong: **63**, làm một phần: **26** (�
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | AI-15 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) | Tổng ≥ 100 câu, ≥ 15 câu không có đáp án | 3 | AI-14 | US-057 |
-| ☐ | AI-16 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng | Chạy một lệnh, xuất báo cáo Markdown + JSON | 4 | AI-15 | US-057 |
-| ☐ | AI-17 | Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner | 0 lần vượt rào là điều kiện qua CI | 4 | AI-11 | US-054 |
+| ☑ | AI-15 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) **[xong, commit 0235093: Tổng 100 câu, 18 câu không có đáp án]** | Tổng ≥ 100 câu, ≥ 15 câu không có đáp án | 3 | AI-14 | US-057 |
+| ☑ | AI-16 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng **[xong, commit 0235093: Harness Recall@5, MRR, groundedness, trích dẫn, từ chối; cổng CI; đã dùng để chỉnh ngưỡng liên quan]** | Chạy một lệnh, xuất báo cáo Markdown + JSON | 4 | AI-15 | US-057 |
+| ☑ | AI-17 | Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner **[xong, commit 0235093: 50 mẫu tấn công (câu hỏi + cài trong tài liệu), 0 vượt rào là điều kiện CI]** | 0 lần vượt rào là điều kiện qua CI | 4 | AI-11 | US-054 |
 | ☐ | AI-19 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | Không có quyền → 403 trước khi dữ liệu vào prompt | 4 | PY-02, CLN-23 | US-058 |
 | ☐ | AI-20 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | Mọi ý có sources trỏ bản ghi thật | 4 | AI-19, PY-08 | US-058 |
 | ☐ | ARC-08 | Threat model STRIDE | Bảng mối đe dọa theo luồng dữ liệu, biện pháp giảm thiểu truy về NFR-SEC | 6 | ARC-04 | ENABLER |
@@ -217,7 +217,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **63**, làm một phần: **26** (�
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh | Báo cáo theo model (NFR-AI7) | 3 | AI-16, IAC-19 | US-057, US-055 |
+| ◐ | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh **[làm một phần, commit 0235093: --live chạy từng model trong chuỗi và báo cáo theo model; CHƯA chạy vì cần API key DeepSeek/Gemini (IAC-19)]** | Báo cáo theo model (NFR-AI7) | 3 | AI-16, IAC-19 | US-057, US-055 |
 | ☐ | AI-21 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline | Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3) | 4 | AI-20 | US-058 |
 | ☐ | AI-22 | Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ | unique (documentId, version); retry 1/5/15 phút → failed | 4 | PY-03, DOC-05 | US-059 |
 | ☐ | AI-23 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | Fallback khi dịch vụ lỗi; test với tài liệu mẫu | 4 | AI-22, DOC-10 | US-059 |
@@ -270,7 +270,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **63**, làm một phần: **26** (�
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | AI-33 | Báo cáo token và chi phí theo tác vụ/model | Số liệu từ AI10; so với NFR-C2 | 3 | AI-13, PRD-01 | US-055 |
+| ☑ | AI-33 | Báo cáo token và chi phí theo tác vụ/model **[xong, commit 0235093: python -m shp_ai.report_usage: theo tác vụ/model/ngày, ngày chạm 80%]** | Số liệu từ AI10; so với NFR-C2 | 3 | AI-13, PRD-01 | US-055 |
 | ☐ | PRD-05 | Báo cáo FinOps | Chi phí theo giờ-môi trường, dự phóng tháng, khuyến nghị | 4 | ENV-03 | ENABLER |
 | ☐ | PRD-06 | Rà soát bảo mật | Checklist theo threat model; kết quả quét; ma trận phân quyền xanh | 4 | ARC-08 | ENABLER |
 
