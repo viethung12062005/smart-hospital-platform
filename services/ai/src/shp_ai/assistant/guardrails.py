@@ -151,3 +151,8 @@ def check_output(ans: Answer, chunks: list[str]) -> Answer:
         if _norm(dose).replace(" ", "") not in source.replace(" ", ""):
             raise OutputRejectedError("unsupported-dose")
     return ans
+
+
+def is_clinical_directive(text: str) -> bool:
+    """Câu chẩn đoán hoặc chỉ định điều trị trực tiếp cho người bệnh (AI không được tự đưa ra)."""
+    return any(r.search(text) for r in _DIRECT_RE)
