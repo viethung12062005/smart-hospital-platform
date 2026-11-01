@@ -17,6 +17,7 @@ RUN apk upgrade --no-cache \
  && apk del --no-cache curl \
  && rm -rf /docker-entrypoint.d /docker-entrypoint.sh /etc/nginx/conf.d
 COPY web/nginx.conf /etc/nginx/nginx.conf
+COPY web/nginx-security-headers.conf /etc/nginx/shp-security-headers.conf
 COPY --from=build /src/web/dist /usr/share/nginx/html
 USER 101
 EXPOSE 8080
