@@ -19,6 +19,7 @@ from pymongo import DESCENDING, MongoClient
 
 from shp_ml.consumer import TYPES, NoShowConsumer, iso
 from shp_ml.features import FEATURES
+from shp_ml.monitor import start_daily
 from shp_ml.registry import FileRegistry, MlflowRegistry, Registry
 from shp_ml.serving import ModelHolder, start_poller
 from shp_ml.settings import Settings
@@ -92,6 +93,7 @@ def build_app(
             ensure_schema(st.db)
             st.holder.refresh()
             start_poller(st.holder, st.settings.model_poll_seconds, stop)
+            start_daily(st.db, st.holder, stop)  # ML-10: 02:00 giờ VN
             bus = make_bus(st.settings)
             if bus is not None:
                 consumer = NoShowConsumer(st.client, st.db, st.holder, st.settings.consumer_name)
