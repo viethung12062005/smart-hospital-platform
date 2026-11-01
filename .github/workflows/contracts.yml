@@ -1,11 +1,12 @@
-# Validate the contracts (authorization, events, OpenAPI, terminology) whenever contracts or design docs change.
+# Validate the contracts (authorization, events, OpenAPI, terminology) and the SRS content (ids, cross references,
+# traceability) whenever contracts, requirements or design docs change.
 name: contracts
 on:
   pull_request:
-    paths: ["contracts/**", "tools/contracts/**", "docs/03-architecture/detailed-design/**", ".github/workflows/contracts.yml"]
+    paths: ["contracts/**", "tools/contracts/**", "docs/03-architecture/detailed-design/**", "docs/02-requirements/srs/content/**", "tools/srs/**", ".github/workflows/contracts.yml"]
   push:
     branches: [main]
-    paths: ["contracts/**", "tools/contracts/**", "docs/03-architecture/detailed-design/**"]
+    paths: ["contracts/**", "tools/contracts/**", "docs/03-architecture/detailed-design/**", "docs/02-requirements/srs/content/**", "tools/srs/**"]
 permissions:
   contents: read
 jobs:
@@ -22,3 +23,5 @@ jobs:
           cache-dependency-path: tools/contracts/requirements.txt
       - run: pip install -r tools/contracts/requirements.txt
       - run: tools/contracts/check_all.sh
+      - name: Check SRS content (ids, cross references, traceability)
+        run: python tools/srs/build.py --check
