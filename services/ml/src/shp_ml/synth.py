@@ -1,7 +1,8 @@
 """Bộ sinh dữ liệu lịch hẹn giả có quy luật no-show (ML-01, ML-21, 16-mlops §1). Không có dữ liệu thật.
 
 Quy luật (hệ số ghi ở COEF, mô tả trong services/ml/README.md):
-  logit(p) = β0 + β1·lead_time/7 + β2·logit_rate(prior) + β3·is_first_visit + β4·early_morning + β5·channel
+  logit(p) = β0 + f(lead_time) + β2·logit_rate(prior) + β3·is_first_visit + g(giờ khám, tuổi) + β5·channel
+             + h(kênh, tuổi)
              + β6·specialty + mùa(tháng) + u_bệnh_nhân
 u_bệnh_nhân là thiên hướng ẩn (không có trong đặc trưng) để AUC dừng ở khoảng 0,78-0,82.
 β0 được hiệu chỉnh để tỉ lệ no-show ≈ 18%.
@@ -41,10 +42,14 @@ AGE_WEIGHTS = [0.1, 0.08, 0.15, 0.17, 0.15, 0.13, 0.11, 0.07, 0.04]
 
 @dataclass(frozen=True)
 class Coef:
-    lead_per_week: float = 0.45
+    lead_short: float = -1.3  # đặt trong vòng 1 ngày: ít vắng
+    lead_long: float = 1.4  # đặt trước > 14 ngày: dễ quên (ngưỡng, không tuyến tính)
+    lead_per_week: float = 0.1
     prior_rate: float = 1.1  # nhân với logit của tỉ lệ vắng làm mượt
     first_visit: float = 0.35
-    early_morning: float = 0.4  # khám trước 8 giờ
+    early_morning: float = 0.15  # khám trước 8 giờ, mọi tuổi
+    early_morning_elderly: float = 1.6  # cộng thêm với người từ 60 tuổi (tương tác)
+    chatbot_young: float = 1.4  # kênh chatbot với người 10-29 tuổi (tương tác)
     channel: tuple[float, float, float] = (0.0, -0.45, 0.3)  # web, staff, chatbot
     specialty_dermatology: float = 0.35
     specialty_pediatrics: float = -0.25
@@ -114,8 +119,12 @@ def generate(
     base = np.zeros(rows)
     early = np.array([t.hour < 8 for t in local_start])
     month = np.array([t.month for t in local_start])
+    elderly = np.isin(age_band, ["60-69", "70-79", "80-120"])
+    young = np.isin(age_band, ["10-19", "20-29"])
     base += COEF.lead_per_week * lead_days / 7
-    base += COEF.early_morning * early
+    base += COEF.lead_short * (lead_days < 1) + COEF.lead_long * (lead_days > 14)
+    base += COEF.early_morning * early + COEF.early_morning_elderly * (early & elderly)
+    base += COEF.chatbot_young * ((channel == "chatbot") & young)
     base += np.select([channel == c for c in CHANNELS], COEF.channel)
     base += COEF.specialty_dermatology * (specialty == "dermatology")
     base += COEF.specialty_pediatrics * (specialty == "pediatrics")
