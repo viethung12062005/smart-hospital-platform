@@ -36,6 +36,7 @@ Không ai ghi thẳng vào `main` (ruleset `protect-main` ở cả 4 repo):
 - Không secret, không PII trong code/log/test; chỉ dữ liệu giả.
 - Quét image/dependency không có High/Critical đã có bản vá.
 - Chạy thử trên cụm local (`make -C dev deploy SVC=<svc>`) nếu đổi hành vi runtime.
+- Kiểm thử theo yêu cầu: mỗi tiêu chí nghiệm thu (AC) của tính năng có test case trong `docs/06-testing/catalog` và test tự động tương ứng; cập nhật `catalog/automation.yaml` và chạy `python -I tools/qa/trace.py --update-baseline` để mức tự động hóa chỉ tăng. Test case thuộc dữ liệu bệnh nhân, phân quyền, audit hoặc AI (P0) bắt buộc có test tự động trước khi merge. Sửa lỗi thì kèm test hồi quy.
 - Tài liệu liên quan cập nhật; PR được review và squash merge qua pipeline.
 
 ## 5. Ai sửa gì

@@ -1,0 +1,527 @@
+# Test case của module 'nfr'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+testcases:
+- id: TC-NFR-P1
+  title: NFR-P1 Tìm slot trống
+  covers:
+  - NFR-P1
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: p95 ≤ 300 ms tại 500 RPS. Cách đo: k6, 10 phút, tại gateway; tỉ lệ lỗi < 0,1%'
+- id: TC-NFR-P2
+  title: NFR-P2 Đặt lịch
+  covers:
+  - NFR-P2
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: p95 ≤ 800 ms tại 50 RPS; lỗi 5xx < 0,1%. Cách đo: k6, 10 phút, kèm 20% yêu cầu tranh chấp cùng slot'
+- id: TC-NFR-P3
+  title: NFR-P3 Mở hồ sơ / timeline
+  covers:
+  - NFR-P3
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: p95 ≤ 500 ms. Cách đo: k6 + trace, bệnh nhân có 50 lần khám'
+- id: TC-NFR-P4
+  title: NFR-P4 Cấp link upload/tải
+  covers:
+  - NFR-P4
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: p95 ≤ 300 ms. Cách đo: k6'
+- id: TC-NFR-P5
+  title: NFR-P5 Trợ lý RAG
+  covers:
+  - NFR-P5
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: Token đầu ≤ 3 s; trả lời đủ ≤ 10 s (p95). Cách đo: Eval harness + trace, 100 câu hỏi'
+- id: TC-NFR-P6
+  title: NFR-P6 Tóm tắt hồ sơ
+  covers:
+  - NFR-P6
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: ≤ 15 s (p95). Cách đo: Eval harness'
+- id: TC-NFR-P7
+  title: NFR-P7 Trích xuất tài liệu
+  covers:
+  - NFR-P7
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: ≤ 2 phút từ lúc upload (p95). Cách đo: Metric độ trễ hàng đợi'
+- id: TC-NFR-P8
+  title: NFR-P8 Gửi nhắc lịch
+  covers:
+  - NFR-P8
+  module: nfr
+  level: integration
+  priority: P1
+  spec: 'Chỉ số: ≥ 99% gửi trong 5 phút sau giờ hẹn gửi. Cách đo: Metric notification trên 1.000 lần nhắc'
+- id: TC-NFR-S1
+  title: NFR-S1 Đợt tăng tải 07:00
+  covers:
+  - NFR-S1
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: Tự scale đủ tải trong ≤ 2 phút, không can thiệp tay. Cách đo: k6 ramp 0 → 500 RPS trong 1 phút; KEDA cron
+    + HPA'
+- id: TC-NFR-S2
+  title: NFR-S2 Tải 5×
+  covers:
+  - NFR-S2
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: p95 không vượt 2× mục tiêu P1/P2. Cách đo: k6'
+- id: TC-NFR-S3
+  title: NFR-S3 Tải 10×
+  covers:
+  - NFR-S3
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: Xuống cấp có kiểm soát (429, hàng chờ) thay vì sập. Cách đo: k6; không có pod restart do OOM'
+- id: TC-NFR-S4
+  title: NFR-S4 Scale độc lập
+  covers:
+  - NFR-S4
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: Tải AI/tài liệu không làm P1/P2 vượt mục tiêu. Cách đo: k6 chạy song song tải AI và đặt lịch'
+- id: TC-NFR-A1
+  title: NFR-A1 SLO API đặt lịch và hồ sơ
+  covers:
+  - NFR-A1
+  module: nfr
+  level: monitoring
+  priority: P1
+  spec: 'Chỉ số: 99,9%/tháng (≤ 43 phút). Cách đo: SLI từ gateway; dashboard error budget'
+- id: TC-NFR-A2
+  title: NFR-A2 SLO tính năng AI
+  covers:
+  - NFR-A2
+  module: nfr
+  level: resilience
+  priority: P1
+  spec: 'Chỉ số: 99,0%/tháng; AI lỗi không làm hỏng luồng khám. Cách đo: SLI + failure test tắt model'
+- id: TC-NFR-A3
+  title: NFR-A3 Mất một zone
+  covers:
+  - NFR-A3
+  module: nfr
+  level: resilience
+  priority: P1
+  spec: 'Chỉ số: Không mất dữ liệu đã commit; phục hồi ≤ 5 phút. Cách đo: Cordon toàn bộ node một zone'
+- id: TC-NFR-A4
+  title: NFR-A4 RPO/RTO lâm sàng và lịch hẹn
+  covers:
+  - NFR-A4
+  module: nfr
+  level: resilience
+  priority: P0
+  spec: 'Chỉ số: RPO ≤ 5 phút; RTO ≤ 1 giờ. Cách đo: Diễn tập khôi phục có biên bản'
+- id: TC-NFR-A5
+  title: NFR-A5 RPO tài liệu và audit
+  covers:
+  - NFR-A5
+  module: nfr
+  level: resilience
+  priority: P0
+  spec: 'Chỉ số: RPO = 0 cho dữ liệu đã xác nhận ghi. Cách đo: Lưu trữ dư thừa theo zone; kiểm tra sau failover'
+- id: TC-NFR-A6
+  title: NFR-A6 Phụ thuộc bên ngoài lỗi
+  covers:
+  - NFR-A6
+  module: nfr
+  level: resilience
+  priority: P1
+  spec: 'Chỉ số: Không mất dữ liệu; retry + dead-letter; có fallback. Cách đo: Giả lập SMS/LLM/ML lỗi'
+- id: TC-NFR-A7
+  title: NFR-A7 Deploy không gián đoạn
+  covers:
+  - NFR-A7
+  module: nfr
+  level: performance
+  priority: P1
+  spec: 'Chỉ số: 0 request lỗi do deploy. Cách đo: k6 chạy trong lúc rolling/canary'
+- id: TC-NFR-SEC1
+  title: NFR-SEC1 Xác thực
+  covers:
+  - NFR-SEC1
+  module: nfr
+  level: integration
+  priority: P0
+  spec: 'Chỉ số: OIDC + PKCE; nhân viên bắt buộc MFA; access token ≤ 15 phút; không lưu mật khẩu. Cách đo: Test tích hợp với
+    IdP; kiểm tra claim MFA'
+- id: TC-NFR-SEC2
+  title: NFR-SEC2 Phân quyền
+  covers:
+  - NFR-SEC2
+  module: nfr
+  level: unit
+  priority: P0
+  spec: 'Chỉ số: Đúng 100% ma trận phân quyền; mặc định từ chối. Cách đo: Test sinh từ contracts/authz/matrix.yaml: mỗi ô
+    cho phép và từ chối; test ''mọi endpoint có quy tắc'''
+- id: TC-NFR-SEC3
+  title: NFR-SEC3 Mã hóa
+  covers:
+  - NFR-SEC3
+  module: nfr
+  level: security
+  priority: P0
+  spec: 'Chỉ số: TLS 1.2+ mọi kết nối kể cả nội bộ cụm; mã hóa at-rest mọi kho dữ liệu và bản sao lưu. Cách đo: Quét cấu hình
+    TLS; kiểm tra cấu hình Terraform'
+- id: TC-NFR-SEC4
+  title: NFR-SEC4 Secret
+  covers:
+  - NFR-SEC4
+  module: nfr
+  level: security
+  priority: P0
+  spec: 'Chỉ số: Không secret trong code/config/image; Key Vault + workload identity; xoay vòng không cần deploy. Cách đo:
+    gitleaks + push protection; diễn tập xoay khóa'
+- id: TC-NFR-SEC5
+  title: NFR-SEC5 Audit
+  covers:
+  - NFR-SEC5
+  module: nfr
+  level: integration
+  priority: P0
+  spec: 'Chỉ số: 100% truy cập dữ liệu bệnh nhân được audit (cả từ chối); tra cứu được ≤ 1 phút; bất biến. Cách đo: Test đối
+    chiếu thao tác ↔ bản ghi audit; thử sửa/xóa kho WORM'
+- id: TC-NFR-SEC6
+  title: NFR-SEC6 Chuỗi cung ứng
+  covers:
+  - NFR-SEC6
+  module: nfr
+  level: ci
+  priority: P0
+  spec: 'Chỉ số: Image quét lỗ hổng (chặn High/Critical có bản vá), ký, có SBOM; cụm chỉ chạy image đã ký. Cách đo: Pipeline
+    CI; Kyverno từ chối image không ký'
+- id: TC-NFR-SEC7
+  title: NFR-SEC7 Cô lập mạng
+  covers:
+  - NFR-SEC7
+  module: nfr
+  level: security
+  priority: P0
+  spec: 'Chỉ số: Mặc định chặn traffic giữa pod; CSDL không có endpoint public. Cách đo: Kiểm tra NetworkPolicy; thử kết nối
+    trái phép'
+- id: TC-NFR-SEC8
+  title: NFR-SEC8 An toàn AI
+  covers:
+  - NFR-SEC8
+  module: nfr
+  level: ai-eval
+  priority: P0
+  spec: 'Chỉ số: Che PII trước khi gửi model bên ngoài; 0 lần vượt rào prompt injection; AI chỉ dùng quyền người gọi. Cách
+    đo: Test chặn yêu cầu chứa PII; bộ 50 mẫu tấn công (NFR-AI3)'
+- id: TC-NFR-SEC9
+  title: NFR-SEC9 Dữ liệu giả
+  covers:
+  - NFR-SEC9
+  module: nfr
+  level: review
+  priority: P0
+  spec: 'Chỉ số: Chỉ dữ liệu giả ở mọi môi trường. Cách đo: Công cụ sinh dữ liệu giả; rà soát'
+- id: TC-NFR-SEC10
+  title: NFR-SEC10 Tối thiểu hóa dữ liệu
+  covers:
+  - NFR-SEC10
+  module: nfr
+  level: api
+  priority: P0
+  spec: 'Chỉ số: Chỉ thu thập trường cần cho mục đích đã nêu; kết quả tìm kiếm và danh sách che SĐT, không có chẩn đoán. Cách
+    đo: Rà soát schema API; test kết quả tìm kiếm'
+- id: TC-NFR-SEC11
+  title: NFR-SEC11 Đồng ý xử lý dữ liệu
+  covers:
+  - NFR-SEC11
+  module: nfr
+  level: api
+  priority: P0
+  spec: 'Chỉ số: Lưu đồng ý có phiên bản và thời điểm; rút đồng ý có hiệu lực ngay cho mọi xử lý AI. Cách đo: Test rút đồng
+    ý rồi gọi tóm tắt/trích xuất/dự đoán'
+- id: TC-NFR-SEC12
+  title: NFR-SEC12 Quyền chủ thể dữ liệu
+  covers:
+  - NFR-SEC12
+  module: nfr
+  level: e2e
+  priority: P0
+  spec: 'Chỉ số: Bệnh nhân xem được lịch sử truy cập hồ sơ và yêu cầu bản sao dữ liệu; DPO xử lý có theo dõi thời hạn. Cách
+    đo: Test luồng end-to-end'
+- id: TC-NFR-SEC13
+  title: NFR-SEC13 Không để lộ dữ liệu
+  covers:
+  - NFR-SEC13
+  module: nfr
+  level: integration
+  priority: P0
+  spec: 'Chỉ số: Không PII/PHI trong log, metric, trace, sự kiện, URL, thông báo lỗi; lỗi không lộ sự tồn tại hồ sơ (404).
+    Cách đo: Test quét log/sự kiện trong test tích hợp tìm mẫu PII; test 404 cho tài nguyên của người khác'
+- id: TC-NFR-SEC14
+  title: NFR-SEC14 Phiên làm việc
+  covers:
+  - NFR-SEC14
+  module: nfr
+  level: e2e
+  priority: P0
+  spec: 'Chỉ số: Nhân viên tự đăng xuất sau 15 phút không thao tác, bệnh nhân 30 phút; đăng nhập lại tối đa sau 12 giờ (nhân
+    viên) / 24 giờ (bệnh nhân); token không lưu localStorage. Cách đo: Test E2E giao diện. Chặt hơn mức tối đa của NIST SP
+    800-63B-4 mức AAL2 (không thao tác 1 giờ, tổng 24 giờ) vì máy dùng chung tại phòng khám'
+- id: TC-NFR-SEC15
+  title: NFR-SEC15 Bảo vệ ứng dụng web
+  covers:
+  - NFR-SEC15
+  module: nfr
+  level: security
+  priority: P0
+  spec: 'Chỉ số: CSP chặt, HSTS, chống clickjacking, cookie Secure/HttpOnly/SameSite; không có lỗi mức High theo OWASP ZAP
+    baseline. Cách đo: ZAP baseline trên UAT trong pipeline'
+- id: TC-NFR-SEC16
+  title: NFR-SEC16 Chống lạm dụng
+  covers:
+  - NFR-SEC16
+  module: nfr
+  level: api
+  priority: P0
+  spec: 'Chỉ số: Giới hạn tốc độ theo người dùng; khóa tạm sau 5 lần đăng nhập sai; tìm kiếm bệnh nhân không liệt kê toàn
+    bộ. Cách đo: Test 429; test điều kiện tìm tối thiểu'
+- id: TC-NFR-SEC17
+  title: NFR-SEC17 An toàn tệp tải lên
+  covers:
+  - NFR-SEC17
+  module: nfr
+  level: integration
+  priority: P0
+  spec: 'Chỉ số: Kiểm tra loại theo nội dung, ≤ 20 MB, quét mã độc trước khi dùng; tệp nhiễm bị cách ly. Cách đo: Test với
+    EICAR, tệp đổi đuôi, tệp quá cỡ'
+- id: TC-NFR-SEC18
+  title: NFR-SEC18 Phân tách nhiệm vụ
+  covers:
+  - NFR-SEC18
+  module: nfr
+  level: api
+  priority: P0
+  spec: 'Chỉ số: Quản trị viên/DPO không đọc dữ liệu lâm sàng; gán vai trò đặc quyền và khôi phục dữ liệu cần người thứ hai
+    duyệt. Cách đo: Test phân quyền + rà soát quy trình'
+- id: TC-NFR-SEC19
+  title: NFR-SEC19 Lưu trữ và xóa
+  covers:
+  - NFR-SEC19
+  module: nfr
+  level: integration
+  priority: P0
+  spec: 'Chỉ số: Thời hạn lưu theo bảng lưu trữ; dữ liệu tạm tự xóa đúng hạn; hồ sơ bệnh án lưu dài hạn. Cách đo: Test job
+    xóa dữ liệu hết hạn'
+- id: TC-NFR-SEC20
+  title: NFR-SEC20 Ẩn danh dữ liệu phân tích/huấn luyện
+  covers:
+  - NFR-SEC20
+  module: nfr
+  level: unit
+  priority: P0
+  spec: 'Chỉ số: Dữ liệu huấn luyện ML và báo cáo không chứa định danh trực tiếp; chỉ dữ liệu của bệnh nhân còn đồng ý. Cách
+    đo: Test kiểm tra schema tập huấn luyện'
+- id: TC-NFR-SEC21
+  title: NFR-SEC21 Sự cố và chuyển dữ liệu ra nước ngoài
+  covers:
+  - NFR-SEC21
+  module: nfr
+  level: review
+  priority: P0
+  spec: 'Chỉ số: Thông báo vi phạm cho cơ quan chuyên trách chậm nhất 72 giờ kể từ khi phát hiện (Điều 23 khoản 1 Luật 91/2025/QH15);
+    hồ sơ đánh giá tác động xử lý dữ liệu (Điều 21, nộp trong 60 ngày kể từ lần xử lý đầu tiên, cập nhật 6 tháng một lần theo
+    Điều 22) và hồ sơ đánh giá tác động chuyển dữ liệu ra nước ngoài (Điều 20: vùng cloud ngoài Việt Nam, nhà cung cấp LLM
+    nước ngoài) trước khi dùng dữ liệu thật. Cách đo: Runbook sự cố + diễn tập đo thời gian từ phát hiện đến thông báo; hồ
+    sơ đánh giá tác động được duyệt'
+- id: TC-NFR-O1
+  title: NFR-O1 Tracing phân tán
+  covers:
+  - NFR-O1
+  module: nfr
+  level: integration
+  priority: P1
+  spec: 'Chỉ số: 100% request có trace xuyên service. Cách đo: Kiểm tra trace mẫu qua gateway → service → bus'
+- id: TC-NFR-O2
+  title: NFR-O2 Dashboard SLO
+  covers:
+  - NFR-O2
+  module: nfr
+  level: review
+  priority: P1
+  spec: 'Chỉ số: Dashboard SLI/SLO + error budget cho A1, P1, P2. Cách đo: Rà soát dashboard'
+- id: TC-NFR-O3
+  title: NFR-O3 Cảnh báo
+  covers:
+  - NFR-O3
+  module: nfr
+  level: resilience
+  priority: P1
+  spec: 'Chỉ số: Cảnh báo burn rate, hàng lỗi có tin, chứng chỉ sắp hết hạn, truy cập khẩn cấp. Cách đo: Kích hoạt từng điều
+    kiện cảnh báo'
+- id: TC-NFR-O4
+  title: NFR-O4 Log
+  covers:
+  - NFR-O4
+  module: nfr
+  level: integration
+  priority: P1
+  spec: 'Chỉ số: Log có cấu trúc, có trace-id, không chứa PII. Cách đo: Test quét log (NFR-SEC13)'
+- id: TC-NFR-D1
+  title: NFR-D1 Lead time
+  covers:
+  - NFR-D1
+  module: nfr
+  level: ci
+  priority: P1
+  spec: 'Chỉ số: Commit → image đã ký ≤ 15 phút; → UAT ≤ 30 phút. Cách đo: Thống kê pipeline'
+- id: TC-NFR-D2
+  title: NFR-D2 Rollback
+  covers:
+  - NFR-D2
+  module: nfr
+  level: resilience
+  priority: P1
+  spec: 'Chỉ số: ≤ 5 phút bằng một thao tác (GitOps revert). Cách đo: Diễn tập rollback'
+- id: TC-NFR-D3
+  title: NFR-D3 Hạ tầng dưới dạng code
+  covers:
+  - NFR-D3
+  module: nfr
+  level: resilience
+  priority: P1
+  spec: 'Chỉ số: 100% hạ tầng tạo bằng IaC; dựng lại được từ đầu. Cách đo: Dựng/hủy môi trường bằng workflow'
+- id: TC-NFR-D4
+  title: NFR-D4 Cách ly môi trường
+  covers:
+  - NFR-D4
+  module: nfr
+  level: review
+  priority: P1
+  spec: 'Chỉ số: prod tách cụm và resource group với uat; dev chạy local. Cách đo: Rà soát cấu hình'
+- id: TC-NFR-C1
+  title: NFR-C1 Ngân sách hạ tầng
+  covers:
+  - NFR-C1
+  module: nfr
+  level: review
+  priority: P1
+  spec: 'Chỉ số: Không có cụm thường trực; tài nguyên thường trực ≤ 10 USD/tháng; môi trường dựng khi cần. Cách đo: Báo cáo
+    chi phí Azure theo tag'
+- id: TC-NFR-C2
+  title: NFR-C2 Chi phí AI
+  covers:
+  - NFR-C2
+  module: nfr
+  level: monitoring
+  priority: P1
+  spec: 'Chỉ số: ≤ 0,005 USD/request RAG; hạn mức token theo ngày và cảnh báo. Cách đo: Metric token/chi phí'
+- id: TC-NFR-C3
+  title: NFR-C3 Minh bạch chi phí
+  covers:
+  - NFR-C3
+  module: nfr
+  level: review
+  priority: P1
+  spec: 'Chỉ số: Tag chi phí theo môi trường/service; báo cáo hằng tuần. Cách đo: Rà soát'
+- id: TC-NFR-AI1
+  title: NFR-AI1 Truy xuất RAG
+  covers:
+  - NFR-AI1
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: Recall@5 ≥ 0,8; MRR ≥ 0,6. Cách đo: Bộ eval ≥ 100 câu hỏi'
+- id: TC-NFR-AI2
+  title: NFR-AI2 Câu trả lời RAG
+  covers:
+  - NFR-AI2
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: Groundedness ≥ 0,9; độ đúng trích dẫn ≥ 0,9; từ chối đúng khi không có nguồn ≥ 0,9. Cách đo: Eval harness'
+- id: TC-NFR-AI3
+  title: NFR-AI3 Prompt injection
+  covers:
+  - NFR-AI3
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: 0 lần vượt rào trên ≥ 50 mẫu. Cách đo: Bộ tấn công tự động'
+- id: TC-NFR-AI4
+  title: NFR-AI4 Trích xuất
+  covers:
+  - NFR-AI4
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: F1 mức trường ≥ 0,85. Cách đo: Bộ tài liệu giả có nhãn'
+- id: TC-NFR-AI5
+  title: NFR-AI5 Chatbot đặt lịch
+  covers:
+  - NFR-AI5
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: Hoàn thành ≥ 85%; 0 hành động không được xác nhận. Cách đo: Kịch bản hội thoại tự động'
+- id: TC-NFR-AI6
+  title: NFR-AI6 Mô hình no-show
+  covers:
+  - NFR-AI6
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: AUC ≥ 0,75 và hơn baseline; theo dõi drift hằng tuần. Cách đo: Đánh giá offline + giám sát'
+- id: TC-NFR-AI7
+  title: NFR-AI7 Fallback
+  covers:
+  - NFR-AI7
+  module: nfr
+  level: ai-eval
+  priority: P1
+  spec: 'Chỉ số: Mỗi model trong chuỗi đều được eval. Cách đo: Báo cáo theo model'
+- id: TC-NFR-I1
+  title: NFR-I1 Chuẩn dữ liệu
+  covers:
+  - NFR-I1
+  module: nfr
+  level: contract
+  priority: P1
+  spec: 'Chỉ số: API theo FHIR R4 cho các resource trong phạm vi. Cách đo: Validator FHIR trong test hợp đồng'
+- id: TC-NFR-I2
+  title: NFR-I2 Client
+  covers:
+  - NFR-I2
+  module: nfr
+  level: e2e
+  priority: P1
+  spec: 'Chỉ số: Web dùng được trên desktop và mobile (Chrome, Edge, Safari – 2 phiên bản gần nhất), màn hình ≥ 360 px. Cách
+    đo: Test E2E đa trình duyệt'
+- id: TC-NFR-I3
+  title: NFR-I3 Hạ tầng
+  covers:
+  - NFR-I3
+  module: nfr
+  level: ci
+  priority: P1
+  spec: 'Chỉ số: Chạy trên Kubernetes bất kỳ (AKS là đích) và local. Cách đo: Chạy cùng chart trên kind và AKS'
+- id: TC-NFR-U1
+  title: NFR-U1 Ngôn ngữ và trợ năng
+  covers:
+  - NFR-U1
+  module: nfr
+  level: e2e
+  priority: P1
+  spec: 'Chỉ số: Giao diện tiếng Việt và tiếng Anh; đạt WCAG 2.1 mức AA ở các màn hình bệnh nhân. Cách đo: axe-core trong
+    test E2E'
