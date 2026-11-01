@@ -1,10 +1,10 @@
-# Việc của SA — Solution Architect / PM / DevOps; AI, ML, dữ liệu giả
+# Việc của SA — Solution Architect / PM / DevOps; Keycloak, thư viện dùng chung, AI, ML, dữ liệu giả
 
 > Sinh tự động bằng `python3 -I tools/plan/build.py`. Mỗi task là một PR (tên nhánh `<ID>-mo-ta-ngan`). Làm đúng thứ tự tuần; task có phụ thuộc chưa xong thì không bắt đầu.
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **206 task, 695 giờ**. Đã xong: **34**, làm một phần: **28** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **34**, làm một phần: **28** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -184,7 +184,7 @@ Tổng: **206 task, 695 giờ**. Đã xong: **34**, làm một phần: **28** (�
 | ☐ | ML-25 | Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản | Prometheus có đủ metric theo model_version để AnalysisTemplate dùng | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart cho web **[làm một phần, commit nhánh WEB-01-frontend-base; shp-gitops nhánh WEB-10-web-app; templates v0.1.5: Dockerfile nginx non-root (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, values uat/prod; CHƯA chạy pipeline thật và chưa deploy lên cụm]** | Container nginx non-root dùng chart chung | 2 | WEB-01 | US-066 |
 
-## Tuần 7 — 61 giờ
+## Tuần 7 — 81 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -203,11 +203,17 @@ Tổng: **206 task, 695 giờ**. Đã xong: **34**, làm một phần: **28** (�
 | ☐ | GOV-06 | Dependabot cho actions, maven, pip, docker, terraform | dependabot.yml ở mỗi repo; action được ghim theo commit SHA | 2 | GOV-01 | US-070 |
 | ☐ | IAC-18 | Module Defender for Storage + Event Grid → queue cho kết quả quét | Blob mới được quét; kết quả vào queue để document service xử lý | 3 | IAC-12 | US-036 |
 | ☐ | IAC-19 | Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault | Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values | 4 | IAC-05 | US-055 |
+| ☐ | IAM-01 | Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code | Chart + GitOps app, 2 replica prod; realm có client shp-web PKCE, audience shp-api, roles; dựng lại từ code | 4 | IAC-16, GOP-03 | US-001, US-008, US-066 |
+| ☐ | IAM-02 | Tài khoản dịch vụ: client credentials cho /internal theo từng service | Chốt cách xác thực client (assertion bằng token ServiceAccount hoặc secret xoay 90 ngày); test với Keycloak thật | 3 | IAM-01, SHR-20 | US-053, US-066 |
+| ☐ | IAM-03 | Theme Keycloak vi/en: đăng nhập, quên mật khẩu | Cùng hệ thiết kế SHP; đạt WCAG AA; không lộ tài khoản đã tồn tại | 3 | IAM-01 | US-001, US-008 |
+| ☐ | IAM-06 | Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu | Console quản trị không ra Internet; thử khôi phục DB từ bản sao lưu thành công | 4 | IAM-01 | US-001, US-008, US-066 |
+| ☐ | IAM-07 | Token exchange RFC 8693 cho ai (thay mặt người dùng) | Token trao đổi giữ sub người dùng, aud đúng service đích; client khác không đổi được | 3 | IAM-02 | US-053, US-066 |
+| ☐ | IAM-08 | Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng | Đăng ký không lộ tài khoản đã tồn tại; tiếng Việt mặc định | 3 | IAM-03 | US-001, US-008 |
 | ☐ | OBS-01 | Dashboard RED chuẩn cho mọi service | Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLO + cảnh báo burn rate | SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate | 3 | OBS-01 | ENABLER |
 | ☐ | WEB-30 | Giao diện trợ lý: hỏi, stream, hiển thị trích dẫn bấm được, chấm điểm | Hiển thị chế độ retrieval-only; trích dẫn mở đúng mục | 4 | WEB-02, AI-09 | US-053, US-056 |
 
-## Tuần 8 — 57 giờ
+## Tuần 8 — 69 giờ
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
@@ -219,6 +225,9 @@ Tổng: **206 task, 695 giờ**. Đã xong: **34**, làm một phần: **28** (�
 | ☐ | ARC-17 | Sprint review + planning S5 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | ENV-03 | Workflow cost-guard | Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy) | 2 | IAC-04 | US-070 |
 | ☐ | ENV-04 | Runbook vòng đời môi trường | Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp | 2 | ENV-01, ENV-02 | US-070 |
+| ☐ | IAM-04 | Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 lúc đăng ký | Xác minh sở hữu SĐT (Zalo trước, SMS sau) hoặc email bằng mã; mã hết hạn 5 phút, dùng một lần | 4 | IAM-01 | US-001 |
+| ☐ | IAM-05 | Sự kiện danh tính về audit | Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP | 4 | IAM-01, SHR-09 | US-008, US-031 |
+| ☐ | IAM-09 | OTP khi đổi SĐT/email, giới hạn theo SĐT và IP, bản giả nhà cung cấp cho dev, test | Quá giới hạn thì từ chối; không log mã hay SĐT; test với notification giả | 4 | IAM-04, NTF-16 | US-001 |
 | ☐ | MLO-01 | Pipeline huấn luyện ML trong CI + canary deploy model | Chạy khi dữ liệu/code đổi; artifact model; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng | Cùng image + dataset hash + seed cho cùng model; image được ký | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback | Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường | 6 | GOP-04, SCF-07, ML-25 | US-073 |

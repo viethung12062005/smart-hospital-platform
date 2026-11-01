@@ -258,13 +258,20 @@ DOC-04,DOC,US-035,"API complete (D2): kiểm tồn tại, size, SHA-256, magic b
 DOC-06,DOC,"US-037, US-039","API đọc/tìm metadata (D3, D4) với quy tắc bệnh nhân (đã phát hành)",Patient chưa phát hành → 404; không trả URL,D3,3,"DOC-04, SHR-25",S4,7,"D3, D4, AC-05.3"
 DOC-07,DOC,US-037,API cấp link tải 5 phút (D5) + audit mỗi lần,Sau 5 phút Blob 403; chưa available 409; Deny cũng audit,D3,3,"DOC-06, SHR-09",S4,7,"D5, AC-05.2"
 DOC-08,DOC,US-038,API phát hành (D6) + phát document-released,Phát hành lại 409; chỉ bác sĩ Care,D3,2,DOC-06,S4,7,"D6, E9(pub)"
+DOC-09,DOC,US-040,API entered-in-error (D7),"Ẩn khỏi timeline/bệnh nhân, giữ bản ghi",D3,2,DOC-06,S5,7,D7
 DOC-10,DOC,"US-032, US-059, US-004","API nội bộ (D8, D9) + consumer patient-merged",D9 SAS đọc 60 giây chỉ cho service ai; merge idempotent,D3,3,"DOC-06, SHR-08",S4,7,"D8, D9, E7(sub)"
+DOC-11,DOC,US-035,Job dọn blob mồ côi và pending-upload > 24 giờ,Không xóa file đã available,D3,2,DOC-04,S5,7,10 §5
 GOP-02,GOP,US-070,Unit test cho chart,helm-unittest cho các tổ hợp values chính; chạy trong CI,SA,3,GOP-01,S4,7,ADR-0009
 GOP-09,GOP,US-070,Canary prod với Argo Rollouts,"Bước 10%-50%-100%, dừng chờ promote thủ công, rollback tự động khi lỗi",SA,3,GOP-04,S4,7,"NFR-A7, D2"
 GOV-06,GOV,US-070,"Dependabot cho actions, maven, pip, docker, terraform",dependabot.yml ở mỗi repo; action được ghim theo commit SHA,SA,2,GOV-01,S4,7,NFR-SEC6
 IAC-18,IAC,US-036,Module Defender for Storage + Event Grid → queue cho kết quả quét,Blob mới được quét; kết quả vào queue để document service xử lý,SA,3,IAC-12,S4,7,05-storage §2
 IAC-19,IAC,US-055,"Node pool ai chạy Ollama (bge-m3, qwen2.5) + secret API key DeepSeek/Gemini trong Key Vault","Ollama có PVC cache model; key chỉ trong Key Vault, nạp bằng CSI, không trong repo/values",SA,4,IAC-05,S4,7,ADR-0006
-IAM-01,IAM,"US-001, US-008, US-066","Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code","Chart + GitOps app, 2 replica prod; realm có client shp-web PKCE, audience shp-api, roles; dựng lại từ code",D3,4,"IAC-16, GOP-03",S4,7,"ADR-0017, NFR-SEC1"
+IAM-01,IAM,"US-001, US-008, US-066","Keycloak trên cụm (ADR-0017): chart, GitOps app, realm shp as code","Chart + GitOps app, 2 replica prod; realm có client shp-web PKCE, audience shp-api, roles; dựng lại từ code",SA,4,"IAC-16, GOP-03",S4,7,"ADR-0017, NFR-SEC1"
+IAM-02,IAM,"US-053, US-066",Tài khoản dịch vụ: client credentials cho /internal theo từng service,Chốt cách xác thực client (assertion bằng token ServiceAccount hoặc secret xoay 90 ngày); test với Keycloak thật,SA,3,"IAM-01, SHR-20",S4,7,"15 §7, ADR-0017"
+IAM-03,IAM,"US-001, US-008","Theme Keycloak vi/en: đăng nhập, quên mật khẩu",Cùng hệ thiết kế SHP; đạt WCAG AA; không lộ tài khoản đã tồn tại,SA,3,IAM-01,S4,7,"UC-01, ADR-0017"
+IAM-06,IAM,"US-001, US-008, US-066","Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu",Console quản trị không ra Internet; thử khôi phục DB từ bản sao lưu thành công,SA,4,IAM-01,S4,7,"ADR-0017, NFR-SEC1"
+IAM-07,IAM,"US-053, US-066",Token exchange RFC 8693 cho ai (thay mặt người dùng),"Token trao đổi giữ sub người dùng, aud đúng service đích; client khác không đổi được",SA,3,IAM-02,S4,7,"15 §7, ADR-0017"
+IAM-08,IAM,"US-001, US-008","Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng",Đăng ký không lộ tài khoản đã tồn tại; tiếng Việt mặc định,SA,3,IAM-03,S4,7,"UC-01, ADR-0017"
 OBS-01,OBS,ENABLER,Dashboard RED chuẩn cho mọi service,"Grafana dashboard theo nhãn service: rate, errors, duration p50/p95/p99",SA,3,GOP-06,S4,7,NFR-O2
 OBS-02,OBS,ENABLER,SLO + cảnh báo burn rate,"SLO cho NFR-A1, P1, P2; cảnh báo multi-window burn rate",SA,3,OBS-01,S4,7,"NFR-O2, O3"
 SCH-19,SCH,"US-017, US-019",API $reschedule (S15) nguyên tử: đặt mới + hủy cũ trong một transaction,Lỗi giữa chừng giữ nguyên lịch cũ; phát appointment-rescheduled,D1,4,SCH-18,S4,7,"S15, E3(pub)"
@@ -290,16 +297,12 @@ CLN-32,CLN,US-075,"Test không rò CCCD: log, sự kiện, tìm kiếm, tin nh�
 CLN-37,CLN,"US-076, US-077, US-078","Test phân quyền và chống dò hồ sơ liên kết: linked, guardian, phạm vi, hết hạn, thu hồi ≤ 60 giây","AC-PX.1, AC-LK.2; sinh test Allow/Deny từ ma trận; thử 100 lần dò không phân biệt được khớp hay không",D2,3,"CLN-35, CLN-36, CLN-38, SHR-26",S6,8,"AC-PX.1, AC-CL.2"
 CLN-38,CLN,US-077,"API C26, C29: thu hồi liên kết (hiệu lực ≤ 60 giây, thông báo) và ghi ủy quyền tại quầy","AC-LK.3, AC-RV.1, AC-RV.2",D2,3,CLN-35,S5,8,"C26, C29"
 DOC-05,DOC,US-036,Xử lý kết quả quét: sạch → available + phát document-uploaded; nhiễm → quarantine,File nhiễm không phát event; quét lỗi retry 3 lần,D3,4,"DOC-04, IAC-18",S4,8,E8(pub)
-DOC-09,DOC,US-040,API entered-in-error (D7),"Ẩn khỏi timeline/bệnh nhân, giữ bản ghi",D3,2,DOC-06,S5,8,D7
-DOC-11,DOC,US-035,Job dọn blob mồ côi và pending-upload > 24 giờ,Không xóa file đã available,D3,2,DOC-04,S5,8,10 §5
 DOC-12,DOC,"US-035, US-037, US-038",Test ma trận phân quyền và hợp đồng event cho document,Xanh trong CI,D3,4,"DOC-09, SHR-26",S5,8,NFR-SEC2
 ENV-03,ENV,US-070,Workflow cost-guard,Chạy theo lịch; liệt kê môi trường sống quá TTL; mở/cập nhật issue cảnh báo (không tự hủy),SA,2,IAC-04,S5,8,NFR-C1
 ENV-04,ENV,US-070,Runbook vòng đời môi trường,"Hướng dẫn dựng/kiểm thử/hủy, thời gian dự kiến, xử lý sự cố thường gặp",SA,2,"ENV-01, ENV-02",S5,8,NFR-D3
-IAM-02,IAM,"US-053, US-066",Tài khoản dịch vụ: client credentials cho /internal theo từng service,Chốt cách xác thực client (assertion bằng token ServiceAccount hoặc secret xoay 90 ngày); test với Keycloak thật,D3,3,"IAM-01, SHR-20",S4,8,"15 §7, ADR-0017"
-IAM-03,IAM,"US-001, US-008","Theme Keycloak vi/en: đăng nhập, quên mật khẩu",Cùng hệ thiết kế SHP; đạt WCAG AA; không lộ tài khoản đã tồn tại,D3,3,IAM-01,S4,8,"UC-01, ADR-0017"
-IAM-04,IAM,US-001,"Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 lúc đăng ký","Xác minh sở hữu SĐT (Zalo trước, SMS sau) hoặc email bằng mã; mã hết hạn 5 phút, dùng một lần",D3,4,IAM-01,S5,8,"AC-RG.2, ADR-0017"
-IAM-05,IAM,"US-008, US-031",Sự kiện danh tính về audit,"Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP",D3,4,"IAM-01, SHR-09",S5,8,"NFR-SEC5, ADR-0017"
-IAM-06,IAM,"US-001, US-008, US-066","Keycloak an toàn: Argon2id, chính sách mật khẩu, khóa chống dò, console quản trị nội bộ, sao lưu",Console quản trị không ra Internet; thử khôi phục DB từ bản sao lưu thành công,D3,4,IAM-01,S4,8,"ADR-0017, NFR-SEC1"
+IAM-04,IAM,US-001,"Authenticator mã OTP (SPI Keycloak) gọi notification N8, N9 lúc đăng ký","Xác minh sở hữu SĐT (Zalo trước, SMS sau) hoặc email bằng mã; mã hết hạn 5 phút, dùng một lần",SA,4,IAM-01,S5,8,"AC-RG.2, ADR-0017"
+IAM-05,IAM,"US-008, US-031",Sự kiện danh tính về audit,"Đăng nhập thành công/thất bại, đăng ký, khóa tài khoản, đổi mật khẩu/SĐT phát audit.recorded; không ghi mật khẩu hay mã OTP",SA,4,"IAM-01, SHR-09",S5,8,"NFR-SEC5, ADR-0017"
+IAM-09,IAM,US-001,"OTP khi đổi SĐT/email, giới hạn theo SĐT và IP, bản giả nhà cung cấp cho dev, test",Quá giới hạn thì từ chối; không log mã hay SĐT; test với notification giả,SA,4,"IAM-04, NTF-16",S5,8,"AC-RG.2, ADR-0017"
 MLO-01,MLO,US-063,Pipeline huấn luyện ML trong CI + canary deploy model,Chạy khi dữ liệu/code đổi; artifact model; canary deploy,SA,4,ML-05,S5,8,ADR-0007
 MLO-02,MLO,US-071,"Image huấn luyện tái lập được: pin phiên bản thư viện, seed, image cố định, quét lỗ hổng",Cùng image + dataset hash + seed cho cùng model; image được ký,SA,3,MLO-01,S5,8,16-mlops §2
 MLO-03,MLO,US-073,"Argo Rollouts canary cho ml-service + AnalysisTemplate (Prometheus), tự tăng tỉ lệ hoặc rollback","Bước 10%, 50%, 100% có phân tích; model xấu tự rollback; autoPromote cấu hình theo môi trường",SA,6,"GOP-04, SCF-07, ML-25",S5,8,16-mlops §6
@@ -322,9 +325,6 @@ AI-30,AI,US-062,"pending_action + API xác nhận (AI8): gọi $book/$cancel b�
 AI-31,AI,US-062,API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi,503 ai-unavailable kèm fallback (AC-14.3),SA,3,AI-30,S6,9,"AI7, AC-14.3"
 AI-32,AI,"US-052, US-053, US-058, US-060, US-062",Test ma trận phân quyền và hợp đồng event cho ai-service,Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI,SA,4,"AI-31, AI-26",S6,9,NFR-SEC2
 ARC-18,ARC,ENABLER,Sprint review + planning S6,"Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn",SA,2,,S6,9,PM
-IAM-07,IAM,"US-053, US-066",Token exchange RFC 8693 cho ai (thay mặt người dùng),"Token trao đổi giữ sub người dùng, aud đúng service đích; client khác không đổi được",D3,3,IAM-02,S4,9,"15 §7, ADR-0017"
-IAM-08,IAM,"US-001, US-008","Trang đăng ký bằng SĐT hoặc email, điều khoản sử dụng",Đăng ký không lộ tài khoản đã tồn tại; tiếng Việt mặc định,D3,3,IAM-03,S4,9,"UC-01, ADR-0017"
-IAM-09,IAM,US-001,"OTP khi đổi SĐT/email, giới hạn theo SĐT và IP, bản giả nhà cung cấp cho dev, test",Quá giới hạn thì từ chối; không log mã hay SĐT; test với notification giả,D3,4,"IAM-04, NTF-16",S5,9,"AC-RG.2, ADR-0017"
 ML-10,ML,US-065,"Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo",Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng,SA,3,"ML-19, ML-20",S6,9,NFR-AI6
 MLO-05,MLO,US-065,Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps,"Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại",SA,3,"ML-10, OBS-01",S5,9,NFR-O3
 WEB-33,WEB,"US-059, US-060","Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối",Trường độ tin cậy thấp được đánh dấu,SA,4,"WEB-25, AI-26",S6,9,"AI5, AI6"

@@ -45,8 +45,8 @@ EPICS = {
     "SCH": "Scheduling service", "NTF": "Notification service", "CLN": "Clinical service", "DOC": "Document service",
     "AUD": "Audit service", "AI": "AI service", "ML": "ML no-show", "WEB": "Web app (PWA)",
 }
-PERSON = {"SA": "SA — Solution Architect / PM / DevOps; AI, ML, dữ liệu giả", "D1": "D1 — Dev Java (scheduling, phân quyền, UI đặt lịch)",
-          "D2": "D2 — Dev Java (clinical, lõi FHIR, UI lâm sàng)", "D3": "D3 — Dev Java (gateway, Keycloak, notification, document, audit)"}
+PERSON = {"SA": "SA — Solution Architect / PM / DevOps; Keycloak, thư viện dùng chung, AI, ML, dữ liệu giả", "D1": "D1 — Dev Java (scheduling, phân quyền, UI đặt lịch)",
+          "D2": "D2 — Dev Java (clinical, lõi FHIR, UI lâm sàng)", "D3": "D3 — Dev Java (gateway, notification, document, audit)"}
 EVENTS = [f"E{i}" for i in range(1, 12)]
 HOURS_CAP = {"SA": 8, "D1": 4, "D2": 4, "D3": 4}
 LOAD_WARN = {"SA": 45, "D1": 30, "D2": 30, "D3": 30}
