@@ -14,6 +14,7 @@ dependencies = [
   # đặc trưng và dự đoán (ML-15, ML-07)
   "numpy>=2.1,<3",
   "pandas>=2.2,<4",
+  "lightgbm>=4.5,<5",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +22,10 @@ dependencies = [
 train = [
   "pyarrow>=18,<25",
   "scikit-learn>=1.6,<2",
+]
+# MLflow tracking + registry (cụm, LOC-08); không cần cho test
+mlflow = [
+  "mlflow-skinny>=2.17,<4",
 ]
 dev = [
   "shp-ml[train]",
@@ -57,7 +62,7 @@ packages = ["shp_ml"]
 mypy_path = "src"
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "pyarrow.*"]
+module = ["sklearn.*", "pyarrow.*", "lightgbm.*", "mlflow.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
