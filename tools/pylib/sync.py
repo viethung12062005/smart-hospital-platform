@@ -28,8 +28,7 @@ def build(dest: Path) -> None:
         out = dest / "schemas" / src.relative_to(SCHEMAS)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(src.read_bytes())
-    (dest / "COPIED_FROM_LIBS.txt").write_text(HEADER, encoding="utf-8", newline="
-")
+    (dest / "COPIED_FROM_LIBS.txt").write_bytes(HEADER.encode("utf-8"))  # LF trên mọi hệ điều hành
 
 
 def same(a: Path, b: Path) -> bool:
