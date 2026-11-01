@@ -16,7 +16,10 @@ và sơ đồ được **sinh ra** từ YAML, không sửa tay.
 | `content/70-other.yaml`, `80-messages.yaml` | Chương 6–9: quy ước chung, tích hợp, chuyển đổi dữ liệu, thông điệp, mẫu thông báo |
 | `dist/SHP_System_Requirement_Specification_v*.docx` | Tài liệu SRS (sinh ra) |
 | `dist/SHP_System_Analysis_Result_v*.xlsx` | Danh sách yêu cầu, actor, đối tượng dữ liệu, chức năng, màn hình (sinh ra) |
-| `dist/diagrams/*.drawio`, `dist/diagrams/png/` | Sơ đồ mở/sửa được bằng draw.io và ảnh đã xuất (sinh ra) |
+| `content/55-wireframes.yaml` | Wireframe 15 màn hình chưa có trong web |
+| `content/90-rationale.yaml` | Phụ lục A: cơ sở đặt ngưỡng, căn cứ pháp lý, nguồn, việc cần xác minh |
+| `mockups/*.png` | Ảnh chụp 7 màn hình thật của web (chế độ dữ liệu giả, đồng hồ cố định 29/10/2026 08:45) |
+| `dist/diagrams/*.drawio`, `dist/diagrams/png/` | Sơ đồ và wireframe mở/sửa được bằng draw.io, ảnh đã xuất (sinh ra) |
 
 ## Sửa và sinh lại
 
@@ -39,3 +42,9 @@ hoặc biến môi trường `DRAWIO_CLI`. Sau khi mở file Word, chọn *Updat
 - Dữ liệu sức khỏe là dữ liệu cá nhân nhạy cảm: use case nào đọc/ghi dữ liệu bệnh nhân phải nêu rõ phạm vi quyền,
   hành vi khi bị từ chối và yêu cầu audit (xem `CBR authz`, `CBR audit`, `CBR no-pii`, `CBR ai-safety`).
 - Tiêu chí nghiệm thu viết Given/When/Then; mã `AC-…` là khóa để Kế hoạch kiểm thử truy vết test case.
+
+## Mockup
+
+Mỗi màn hình ở `50-screens.yaml` phải có ảnh chụp `mockups/<khóa>.png` hoặc wireframe cùng khóa ở `55-wireframes.yaml`; `--check` báo lỗi nếu thiếu.
+Chụp ảnh: chạy `npm run dev:mock` trong `web/`, đăng nhập vai trò tương ứng rồi chụp bằng trình duyệt (cửa sổ 1360×820, tỉ lệ 1,5).
+Khi một wireframe được hiện thực trong web, chụp ảnh thật, đặt vào `mockups/` và xóa wireframe tương ứng.
