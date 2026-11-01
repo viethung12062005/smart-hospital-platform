@@ -81,4 +81,9 @@ STATUS = {
     "ML-25": ("partial", "d5d63c1", "Metric theo model_version: độ trễ, lỗi, phân phối điểm, highRisk, đồng thuận; AnalysisTemplate (MLO-03) chưa có"),
     "ML-10": ("done", "3a39c95", "monitor.run_daily: PSI 7 ngày, AUC 14 ngày, metric Prometheus, tạo yêu cầu huấn luyện lại; thread 02:00 VN hoặc CronJob"),
     "ML-23": ("done", "3a39c95", "retrain.run_pending: khóa, snapshot Parquet có hash, pipeline có cổng, chỉ đặt candidate, audit; test đầu-cuối với dữ liệu dịch chuyển"),
+    "AI-01": ("done", "2b6a50c", "Index kb-chunks-v1 (Azure AI Search, OpenSearch local) tạo idempotent; Mongo ai có index"),
+    "AI-02": ("done", "2b6a50c", "Parser PDF/DOCX/Markdown giữ mục và trang"),
+    "AI-03": ("done", "2b6a50c", "Chunker 600/80 không cắt giữa mục"),
+    "AI-04": ("done", "2b6a50c", "Embedding bge-m3 (Ollama) + upsert/xóa; chunk cũ xóa sau khi chunk mới vào index"),
+    "AI-05": ("done", "2b6a50c", "AI9: tải lên, duyệt theo khoa, thay file, gỡ; retry index 3 lần; audit"),
 }
