@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **206 task, 695 giờ**. Đã xong: **20**, làm một phần: **23** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **206 task, 695 giờ**. Đã xong: **32**, làm một phần: **27** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -40,10 +40,10 @@ Tổng: **206 task, 695 giờ**. Đã xong: **20**, làm một phần: **23** (�
 | ◐ | LOC-03 | Walking skeleton Java (Spring Boot) **[làm một phần, commit c909d5b: 6 service Java: health/info/prometheus, OTel, Dockerfile distroless non-root (đã build + chạy thử gateway, scheduling); CHƯA chạy qua pipeline GitHub Actions thật]** | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
 | ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
 | ◐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm **[làm một phần, commit e8e2fe2: chart shp-local-full (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel) + make up PROFILE=full + pull-models; đã helm lint/template; CHƯA chạy trên kind thật]** | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
-| ☐ | ML-01 | Sinh dữ liệu lịch hẹn có quy luật no-show (lead time, lịch sử vắng, giờ khám, kênh) | Tài liệu mô tả quy luật; tỉ lệ no-show ~18% tổng | 4 | ARC-11 | US-063 |
-| ☐ | PY-01 | Thư viện Python: xác thực JWT (Keycloak), dependency role cho FastAPI | Test token hợp lệ/sai/hết hạn | 3 | LOC-02 | US-066 |
-| ☐ | PY-05 | Problem Details + danh mục mã lỗi cho FastAPI | Khớp 07 §5; test | 2 | LOC-04 | ENABLER |
-| ☐ | PY-06 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) | Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure | 4 |  | US-055 |
+| ☑ | ML-01 | Sinh dữ liệu lịch hẹn có quy luật no-show (lead time, lịch sử vắng, giờ khám, kênh) **[xong, commit e391985: shp_ml.synth: 80k lịch hẹn, 17,99% no-show, quy luật ghi ở README]** | Tài liệu mô tả quy luật; tỉ lệ no-show ~18% tổng | 4 | ARC-11 | US-063 |
+| ☑ | PY-01 | Thư viện Python: xác thực JWT (Keycloak), dependency role cho FastAPI **[xong, commit 932b0e4: libs/python shp_platform.security: JWKS, iss/aud/hạn, roles, MFA nhân viên, dependency FastAPI; test token hợp lệ/sai/hết hạn]** | Test token hợp lệ/sai/hết hạn | 3 | LOC-02 | US-066 |
+| ☑ | PY-05 | Problem Details + danh mục mã lỗi cho FastAPI **[xong, commit 932b0e4: errors: danh mục mã khớp ErrorCatalog Java, Problem Details, không lộ input/exception]** | Khớp 07 §5; test | 2 | LOC-04 | ENABLER |
+| ☑ | PY-06 | Bộ che PII (tên, SĐT, email, địa chỉ, mã định danh → token giả có bản đồ ngược) **[xong, commit 932b0e4: pii.redact: email, SĐT, CCCD/CMND, BHYT, id, ngày, tên/địa chỉ đã biết; bản đồ ngược; test]** | Bộ test dữ liệu giả: không còn PII trong prompt gửi ra ngoài Azure | 4 |  | US-055 |
 | ☐ | SHR-01 | FHIR R4 JSON serialize/parse (HAPI FHIR) + test vòng khứ hồi cho resource trong phạm vi | Parse sai trả 400 validation-failed; test từng resource type | 3 | LOC-03 | ENABLER |
 | ☑ | SHR-02 | Mô hình lỗi: exception → OperationOutcome / Problem Details + danh mục mã lỗi **[xong, commit 5e423ab: libs/java/shp-web/errors: ErrorCatalog (27 mã, test đối chiếu 07 §5), ShpException, ErrorWriter, ShpExceptionHandler]** | Mọi mã ở 07 §5 có test; thông điệp vi/en, không lộ PII/stack trace | 3 | SHR-01 | ENABLER |
 | ☐ | SHR-03 | Search parameter registry + parser (token, reference, date theo độ chính xác, _count) | ge/gt/le/lt/eq, '2026-11' = cả tháng; tham số lạ → 400 | 4 | SHR-01 | ENABLER |
@@ -67,18 +67,18 @@ Tổng: **206 task, 695 giờ**. Đã xong: **20**, làm một phần: **23** (�
 | ☐ | IAC-05 | Module network | VNet, subnet AKS/private endpoint/Postgres (delegated), private DNS zones; validate + tflint sạch | 5 | IAC-01 | ENABLER |
 | ☐ | IAC-06 | Module monitoring | Log Analytics, Azure Monitor workspace (Prometheus), Managed Grafana, App Insights | 4 | IAC-05 | ENABLER |
 | ☐ | IAC-07 | Module aks | Azure CNI overlay + Cilium, Workload Identity, KV CSI, Azure RBAC, tắt local account, 3 node pool, 3 zone | 8 | IAC-05, IAC-06 | ENABLER |
-| ☐ | ML-02 | Feature engineering + chia train/validation theo thời gian | Không rò rỉ tương lai; test đặc trưng | 4 | ML-01 | US-063 |
-| ☐ | ML-03 | Baseline Logistic Regression + metric (AUC, precision/recall tại ngưỡng) | Ghi vào MLflow | 3 | ML-02 | US-063 |
+| ☑ | ML-02 | Feature engineering + chia train/validation theo thời gian **[xong, commit e391985: features.training_frame chỉ dùng thông tin trước bookedAt + time_split; test rò rỉ]** | Không rò rỉ tương lai; test đặc trưng | 4 | ML-01 | US-063 |
+| ◐ | ML-03 | Baseline Logistic Regression + metric (AUC, precision/recall tại ngưỡng) **[làm một phần, commit e391985: Baseline LR AUC 0,774 (validation 6 tháng cuối), ghi metrics.json; CHƯA ghi MLflow]** | Ghi vào MLflow | 3 | ML-02 | US-063 |
 | ☐ | ML-04 | LightGBM + tìm tham số + MLflow tracking | So sánh với baseline; lưu artifact | 4 | ML-03 | US-063 |
 | ☐ | ML-13 | Dataset Parquet có phiên bản: ghi hash dataset vào run MLflow, dựng lại model từ hash | Cùng hash + seed → cùng model (kiểm bằng test) | 3 | ML-01 | US-071 |
-| ☐ | ML-14 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera | Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng | 3 | ML-13 | US-071 |
-| ☐ | ML-15 | Package đặc trưng dùng chung cho huấn luyện và phục vụ | Một nguồn duy nhất cho mọi đặc trưng; có unit test | 3 | ML-02 | US-071 |
+| ☑ | ML-14 | Kiểm tra dữ liệu trước khi train (schema, khoảng, tỉ lệ thiếu, rò rỉ thời gian) bằng pandera **[xong, commit e391985: checks.check (pandas, không dùng pandera): schema, khoảng, thiếu < 2%, rò rỉ thời gian, tỉ lệ nhãn]** | Dữ liệu hỏng làm pipeline dừng với lý do rõ; test các ca hỏng | 3 | ML-13 | US-071 |
+| ☑ | ML-15 | Package đặc trưng dùng chung cho huấn luyện và phục vụ **[xong, commit e391985: features.features_for dùng chung cho train và serve]** | Một nguồn duy nhất cho mọi đặc trưng; có unit test | 3 | ML-02 | US-071 |
 | ☐ | ML-17 | Đánh giá theo nhóm con (chuyên khoa, nhóm tuổi, kênh) + calibration + độ trễ dự đoán | Cổng chặn nếu nhóm thấp hơn AUC tổng > 0,07 hoặc p95 > 100 ms | 4 | ML-04 | US-072 |
-| ☐ | ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) | Có tài liệu mô tả mức dịch chuyển; dùng cho test detector và demo | 3 | ML-01 | US-065 |
-| ☐ | PY-02 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | 3 | PY-01 | US-053 |
-| ☐ | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ | Event trùng xử lý một lần | 4 | ARC-07 | US-059, US-064 |
-| ☐ | PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test | Cùng một interface; mô phỏng timeout/429/5xx | 4 | LOC-04 | US-055 |
-| ☐ | PY-08 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi | Ghi fallbackLevel; test mọi nhánh lỗi | 4 | PY-07 | US-055 |
+| ☑ | ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) **[xong, commit e391985: synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot; có test]** | Có tài liệu mô tả mức dịch chuyển; dùng cho test detector và demo | 3 | ML-01 | US-065 |
+| ◐ | PY-02 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) **[làm một phần, commit 932b0e4: token_exchange RFC 8693 có cache, test với IdP giả; CHƯA thử với Keycloak thật (cần IAM-07)]** | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | 3 | PY-01 | US-053 |
+| ◐ | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ **[làm một phần, commit 932b0e4: events: tạo/kiểm lược đồ, inbox, retry → DLQ sau 5 lần; CHƯA nối broker (RabbitMQ/Service Bus) và inbox Mongo]** | Event trùng xử lý một lần | 4 | ARC-07 | US-059, US-064 |
+| ☑ | PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test **[xong, commit 932b0e4: Provider + adapter OpenAI-compatible (DeepSeek/Gemini/Ollama) + FakeProvider; timeout/429/5xx]** | Cùng một interface; mô phỏng timeout/429/5xx | 4 | LOC-04 | US-055 |
+| ☑ | PY-08 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi **[xong, commit 932b0e4: Router: chuỗi theo tác vụ, fallbackLevel, final fallback; provider ngoài Azure luôn nhận văn bản đã che]** | Ghi fallbackLevel; test mọi nhánh lỗi | 4 | PY-07 | US-055 |
 | ☐ | SHR-04 | Keyset page token (mờ, ký) + dựng Bundle searchset | Token bị sửa → 400; link next/self đúng | 3 | SHR-03 | ENABLER |
 | ☐ | SHR-05 | Filter ETag/If-Match (412/428) và Idempotency-Key bắt buộc (428) | Thiếu header → 428; ETag W/"version" trên mọi response | 2 | SHR-02 | ENABLER |
 | ☑ | SHR-06 | CloudEvents envelope + validate JSON Schema + helper test hợp đồng **[xong, commit 5e423ab: libs/java/shp-events: CloudEvent + CloudEvents.create (UUIDv7, traceparent, ≤64KB) + EventSchemas.validate (schema nhúng)]** | Event sai schema bị từ chối; helper dùng cho mọi service | 3 | ARC-07 | ENABLER |
@@ -115,8 +115,8 @@ Tổng: **206 task, 695 giờ**. Đã xong: **20**, làm một phần: **23** (�
 | ☐ | ML-05 | Cổng chất lượng và model registry: AUC ≥ 0,75 và hơn baseline mới được đăng ký alias production | Model kém bị chặn; có test cho cổng | 3 | ML-04, LOC-08 | US-063 |
 | ☐ | ML-18 | Sinh model card tự động khi đăng ký model | Model card lưu cùng artifact trong MLflow; có đủ mục theo 16-mlops §3 | 3 | ML-17, ML-05 | US-072 |
 | ☐ | OBS-04 | Thư viện observability chuẩn (OTel, log có trace-id, che PII) | OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII | 4 | LOC-03 | ENABLER |
-| ☐ | PY-04 | Audit emitter Python (E11) cho AI/ML | Không ghi nội dung câu hỏi hay PII; test | 2 | PY-03 | US-047 |
-| ☐ | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | 3 | PY-08 | US-055 |
+| ☑ | PY-04 | Audit emitter Python (E11) cho AI/ML **[xong, commit 932b0e4: audit.build: che IP, chặn giá trị tìm kiếm trong resource, khớp lược đồ E11]** | Không ghi nội dung câu hỏi hay PII; test | 2 | PY-03 | US-047 |
+| ◐ | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model **[làm một phần, commit 932b0e4: Circuit breaker 5 lỗi/60s, hạn mức token/ngày, hook metric; CHƯA có bộ đếm chung nhiều replica (Redis) và exporter Prometheus]** | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | 3 | PY-08 | US-055 |
 | ◐ | SCF-01 | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) **[làm một phần, commit c909d5b: scheduling: khung Spring Boot + Flyway + outbox/inbox/idempotency PostgreSQL, Dockerfile, svc-scheduling.yml, values-local; CHƯA nối bus (Spring Cloud Stream), values uat/prod ở repo GitOps]** | Service từ template; svc-scheduling.yml; values local/uat/prod | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-02 | Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus) **[làm một phần, commit c909d5b: notification: khung + Mongo outbox/inbox, collection do make up tạo; CHƯA nối bus, values uat/prod]** | Service từ template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-03 | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) **[làm một phần, commit c909d5b: clinical: khung + Mongo + MongoIdentityLinkClient; CHƯA nối bus, values uat/prod]** | Service từ template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
@@ -153,7 +153,7 @@ Tổng: **206 task, 695 giờ**. Đã xong: **20**, làm một phần: **23** (�
 | ☐ | ML-07 | Chấm điểm khi nhận E1: dựng đặc trưng, dự đoán, lưu prediction, phát no-show-scored qua outbox | AC-15.2 lưu model version và đặc trưng; cùng transaction | 4 | ML-06, ML-05 | US-064, US-046 |
 | ☐ | ML-08 | API M1 (xem dự đoán), M2 (model hiện hành), M3 (predict nội bộ) | p95 ≤ 100 ms cho M3; quyền đúng | 3 | ML-07 | US-063, US-064 |
 | ◐ | ML-11 | Khởi tạo MongoDB ml (ADR-0014): patient_stats, appointment_facts, predictions (time-series nếu vCore hỗ trợ), inbox, outbox **[làm một phần, commit 3b7390f: contracts/db/mongo-notification-ml.js: collection ml, predictions time-series + index (modelVersion, predictedAt), validator ageBand/outcome; CHƯA ràng buộc score (time-series không nhận validator — kiểm ở code)]** | Script idempotent; validator ràng buộc ageBand, score; index (modelVersion, predictedAt) | 2 | SCF-07 | US-064 |
-| ☐ | ML-16 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường | Test xanh trong CI; lệch thì thất bại | 3 | ML-15, ML-07 | US-071 |
+| ☑ | ML-16 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường **[xong, commit e391985: test_training_features_equal_serving_features: phát lại sự kiện khớp training_frame]** | Test xanh trong CI; lệch thì thất bại | 3 | ML-15, ML-07 | US-071 |
 | ☐ | ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện | Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển | 4 | ML-07, ML-21 | US-065 |
 | ☐ | ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày | Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn | 4 | ML-06, ML-07 | US-065 |
 
