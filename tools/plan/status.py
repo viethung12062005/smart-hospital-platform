@@ -94,4 +94,10 @@ STATUS = {
     "AI-11": ("done", "cf3ed23", "Guardrail đầu ra: schema, trích dẫn, không chỉ định trực tiếp, liều phải có trong nguồn; chống thoát khối dữ liệu"),
     "AI-12": ("done", "cf3ed23", "conversations/messages TTL 30 ngày, feedback (409, PUT), AI3 chỉ chủ hội thoại"),
     "AI-13": ("done", "cf3ed23", "usage theo lời gọi, chi phí, AI10 theo task/model/day, cảnh báo 80% ngân sách"),
+    "AI-14": ("done", "0235093", "50 câu phần 1 từ kho tri thức giả, kiểm schema"),
+    "AI-15": ("done", "0235093", "Tổng 100 câu, 18 câu không có đáp án"),
+    "AI-16": ("done", "0235093", "Harness Recall@5, MRR, groundedness, trích dẫn, từ chối; cổng CI; đã dùng để chỉnh ngưỡng liên quan"),
+    "AI-17": ("done", "0235093", "50 mẫu tấn công (câu hỏi + cài trong tài liệu), 0 vượt rào là điều kiện CI"),
+    "AI-18": ("partial", "0235093", "--live chạy từng model trong chuỗi và báo cáo theo model; CHƯA chạy vì cần API key DeepSeek/Gemini (IAC-19)"),
+    "AI-33": ("done", "0235093", "python -m shp_ai.report_usage: theo tác vụ/model/ngày, ngày chạm 80%"),
 }
