@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/scheduling/appointment-checked-in/v1.json",
+  "title": "shp.scheduling.appointment-checked-in.v1",
+  "description": "E4: check-in. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "appointmentId",
+    "version",
+    "patientId",
+    "practitionerId",
+    "specialty",
+    "checkedInAt"
+  ],
+  "properties": {
+    "appointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "practitionerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "specialty": {
+      "type": "string",
+      "minLength": 1
+    },
+    "checkedInAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

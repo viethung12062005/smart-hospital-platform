@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/scheduling/appointment-cancelled/v1.json",
+  "title": "shp.scheduling.appointment-cancelled.v1",
+  "description": "E2: hủy lịch. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "appointmentId",
+    "version",
+    "patientId",
+    "practitionerId",
+    "start",
+    "cancelReason",
+    "cancelledBy",
+    "cancelledAt",
+    "hoursBeforeStart"
+  ],
+  "properties": {
+    "appointmentId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "patientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "practitionerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cancelReason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cancelledBy": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "staff"
+      ]
+    },
+    "cancelledAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hoursBeforeStart": {
+      "type": "number"
+    }
+  }
+}
