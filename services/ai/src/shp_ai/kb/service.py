@@ -18,6 +18,7 @@ from prometheus_client import Counter
 from pymongo import ASCENDING, ReturnDocument
 from pymongo.database import Database
 
+from shp_ai.assistant.guardrails import looks_like_instruction
 from shp_ai.blobstore import BlobStore
 from shp_ai.kb import parsers
 from shp_ai.kb.chunker import chunk
@@ -27,6 +28,7 @@ from shp_platform.errors import ShpError
 
 INDEX_ATTEMPTS = 3
 ROLES = frozenset({"doctor", "nurse"})
+KB_SUSPICIOUS = Counter("shp_ai_kb_suspicious_chunks_total", "Đoạn tài liệu bị loại vì giống chỉ dẫn gửi AI")
 KB_INDEXED = Counter("shp_ai_kb_index_total", "Kết quả index tài liệu tri thức", ["outcome"])
 Doc = dict[str, Any]
 
@@ -221,6 +223,12 @@ class KnowledgeBase:
         if hashlib.sha256(data).hexdigest() != doc["sha256"]:
             raise parsers.ParseError("tệp trong kho không khớp hash")
         pieces = chunk(parsers.parse(data, doc["contentType"]))
+        # đoạn có chỉ dẫn gửi AI không bao giờ vào index (prompt injection qua tài liệu, AI-17)
+        flagged = [p for p in pieces if looks_like_instruction(p.text)]
+        if flagged:
+            KB_SUSPICIOUS.inc(len(flagged))
+            self.db.kb_documents.update_one({"_id": doc["_id"]}, {"$set": {"suspiciousChunks": len(flagged)}})
+            pieces = [p for p in pieces if p not in flagged]
         vectors = self.embedder.embed([f"{doc['title']}\n{p.section}\n{p.text}" for p in pieces])
         now = self.clock().isoformat()
         return [
