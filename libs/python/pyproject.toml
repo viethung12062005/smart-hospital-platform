@@ -1,0 +1,50 @@
+[project]
+name = "shp-platform"
+version = "0.1.0"
+description = "Thư viện dùng chung cho service Python (ai, ml): xác thực, lỗi, CloudEvents, audit, che PII, LLM router"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "pyjwt[crypto]>=2.10,<3",
+  "httpx>=0.28,<1",
+  "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<10",
+  "pytest-cov>=6,<8",
+  "ruff>=0.8,<1",
+  "mypy>=1.13,<3",
+  "types-jsonschema>=4.23,<5",
+  "pip-audit>=2.7,<3",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["shp_platform*"]
+
+[tool.setuptools.package-data]
+shp_platform = ["schemas/**/*.json"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "N", "ASYNC"]
+ignore = ["S101"]
+
+[tool.mypy]
+strict = true
+packages = ["shp_platform"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.coverage.run]
+source = ["shp_platform"]

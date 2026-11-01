@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shp.example.org/schemas/clinical/patient-merged/v1.json",
+  "title": "shp.clinical.patient-merged.v1",
+  "description": "E7: gộp hồ sơ bệnh nhân. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "type": "object",
+  "required": [
+    "sourcePatientId",
+    "targetPatientId",
+    "mergedAt"
+  ],
+  "properties": {
+    "sourcePatientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "targetPatientId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "mergedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
