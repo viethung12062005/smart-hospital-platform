@@ -49,7 +49,7 @@ STATUS = {
     "WEB-02": ("done", "nhánh WEB-01-frontend-base", "web/src/api/client.ts: token, Accept-Language, Idempotency-Key, If-Match/ETag, OperationOutcome/Problem Details + slot gợi ý 409; test"),
     "WEB-10": ("partial", "nhánh WEB-01-frontend-base; shp-gitops nhánh WEB-10-web-app; templates v0.1.5", "Dockerfile nginx non-root (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, values uat/prod; CHƯA chạy pipeline thật và chưa deploy lên cụm"),
     "PY-01": ("done", "932b0e4", "libs/python shp_platform.security: JWKS, iss/aud/hạn, roles, MFA nhân viên, dependency FastAPI; test token hợp lệ/sai/hết hạn"),
-    "PY-02": ("partial", "932b0e4", "token_exchange RFC 8693 có cache, test với IdP giả; CHƯA thử với Keycloak thật (cần IAM-07)"),
+    "PY-02": ("done", "67662f2", "Token exchange dùng thật trong AI4 (test với IdP giả); thử Keycloak thật ở IAM-07"),
     "PY-03": ("done", "968e3b6", "Inbox/outbox/relay MongoDB (transaction, lease), RabbitMQ (quorum queue, 5 lần rồi DLQ) có test tích hợp thật; adapter Service Bus chưa thử với Azure"),
     "PY-04": ("done", "932b0e4", "audit.build: che IP, chặn giá trị tìm kiếm trong resource, khớp lược đồ E11"),
     "PY-05": ("done", "932b0e4", "errors: danh mục mã khớp ErrorCatalog Java, Problem Details, không lộ input/exception"),
@@ -100,4 +100,7 @@ STATUS = {
     "AI-17": ("done", "0235093", "50 mẫu tấn công (câu hỏi + cài trong tài liệu), 0 vượt rào là điều kiện CI"),
     "AI-18": ("partial", "0235093", "--live chạy từng model trong chuỗi và báo cáo theo model; CHƯA chạy vì cần API key DeepSeek/Gemini (IAC-19)"),
     "AI-33": ("done", "0235093", "python -m shp_ai.report_usage: theo tác vụ/model/ngày, ngày chạm 80%"),
+    "AI-19": ("done", "67662f2", "Thu thập bằng OBO token (timeline, Condition, Allergy, Observation bất thường); clinical thật chưa có, test bằng HTTP giả theo hợp đồng 09"),
+    "AI-20": ("done", "67662f2", "Prompt + schema + kiểm nguồn, số liệu phải có trong nguồn"),
+    "AI-21": ("done", "67662f2", "AI4: Idempotency-Key, cache 10 phút, fallback structured-timeline, audit TREAT/ETREAT"),
 }
