@@ -1,0 +1,54 @@
+# Phụ lục A – Cơ sở đặt ngưỡng và căn cứ pháp lý. Tra cứu ngày 31/10/2026.
+rationale:
+  intro: >-
+    Phụ lục này trình bày giá trị của các ngưỡng quan trọng trong SRS, vì sao chọn giá trị đó, nguồn đã tham khảo và mức
+    chắc chắn. Nguyên tắc: bằng chứng khoa học hoặc pháp lý rõ ràng thì ghi “Có căn cứ”; chỉ có hướng dẫn thực hành của nhà
+    cung cấp hoặc suy luận của nhóm thì ghi “Quyết định thiết kế” hoặc “Cần xác minh”. Các ngưỡng đều cấu hình được và được
+    xem xét lại khi có dữ liệu vận hành.
+  confidence_legend:
+    - "Có căn cứ: có văn bản pháp luật hoặc nghiên cứu được đối chiếu trực tiếp."
+    - "Căn cứ một phần: có nguồn tham khảo nhưng chưa kiểm tra bản gốc, hoặc nguồn thứ cấp."
+    - "Quyết định thiết kế: nhóm tự đặt dựa trên rủi ro; không có chuẩn ngành thống nhất."
+    - "Cần xác minh: phụ thuộc văn bản chính thức hoặc dữ liệu thực tế trước khi dùng dữ liệu thật."
+  thresholds:
+    - ["Thông báo vi phạm dữ liệu", "Chậm nhất 72 giờ kể từ khi phát hiện", "Điều 23 khoản 1 Luật BVDLCN 91/2025/QH15 (văn bản chính thức): vi phạm có thể gây hại tới an ninh, trật tự, tính mạng, sức khỏe, danh dự, tài sản phải báo cơ quan chuyên trách trong 72 giờ.", "Có căn cứ"]
+    - ["Đánh giá tác động xử lý dữ liệu", "Nộp trong 60 ngày kể từ lần xử lý đầu tiên; cập nhật 6 tháng một lần hoặc ngay khi có thay đổi", "Điều 21 và 22 Luật 91/2025/QH15.", "Có căn cứ"]
+    - ["Chuyển dữ liệu ra nước ngoài", "Phải có hồ sơ đánh giá tác động chuyển dữ liệu trước khi dùng dữ liệu thật", "Điều 20 khoản 2 Luật 91/2025/QH15: gồm lưu dữ liệu ở máy chủ ngoài Việt Nam và dùng nền tảng nước ngoài để xử lý dữ liệu thu thập tại Việt Nam. Áp dụng cho vùng Azure Southeast Asia và các nhà cung cấp LLM nước ngoài.", "Có căn cứ"]
+    - ["Đồng ý xử lý dữ liệu sức khỏe", "Bắt buộc có đồng ý; rút đồng ý có hiệu lực ngay", "Điều 9, 10 và 26 Luật 91/2025/QH15 (thông tin sức khỏe), Điều 30 (AI, điện toán đám mây).", "Có căn cứ"]
+    - ["Thời hạn lưu hồ sơ bệnh án", "Không tự xóa; mặc định tối thiểu 10 năm; một số loại hồ sơ 15–20 năm; cấu hình theo từng loại", "Điều 69 Luật Khám bệnh, chữa bệnh 2023 (đã đối chiếu): hồ sơ giấy hoặc điện tử có giá trị như nhau, lưu trữ theo pháp luật về lưu trữ. Con số 10/15/20 năm theo loại hồ sơ đến từ các bài tổng hợp pháp lý, các bài này không thống nhất về loại hồ sơ nào được 20 năm.", "Cần xác minh"]
+    - ["Thời hạn lưu audit", "90 ngày tra cứu nhanh + lưu bất biến cùng thời hạn hồ sơ bệnh án", "Quyết định thiết kế: audit chứng minh ai đã truy cập hồ sơ nên không nên ngắn hơn hồ sơ đó. Bản v0.9 đặt 2 năm; nâng lên để nhất quán.", "Quyết định thiết kế"]
+    - ["Phiên làm việc, nhân viên", "15 phút không thao tác; đăng nhập lại sau 12 giờ", "NIST SP 800-63B-4 (đã đối chiếu): mức AAL2 yêu cầu đăng nhập lại tối đa 24 giờ và không thao tác tối đa 1 giờ. Nhóm chọn chặt hơn vì máy dùng chung tại phòng khám. Hạn 12 giờ và 15 phút không thao tác của mức AAL3 chỉ có ở nguồn thứ cấp.", "Có căn cứ (mức tối đa); giá trị chặt hơn là quyết định thiết kế"]
+    - ["Phiên làm việc, bệnh nhân", "30 phút không thao tác; tối đa 24 giờ", "Trong giới hạn AAL2 của NIST; cân bằng giữa an toàn và sự thuận tiện của người dùng cá nhân.", "Quyết định thiết kế"]
+    - ["Thời hiệu quyền khẩn cấp (break-glass)", "60 phút, một bệnh nhân, chỉ đọc, không gia hạn tự động", "Hướng dẫn thực hành (không phải nghiên cứu): quyền khẩn cấp đo bằng phút, không bằng ngày, hết hạn tự động, gia hạn cần xác nhận lại. Chưa tìm thấy chuẩn ngành cho con số cụ thể.", "Căn cứ một phần"]
+    - ["Rà soát truy cập khẩn cấp", "DPO rà soát trong 72 giờ; trong 24 giờ nếu bị đánh dấu bất thường", "Hướng dẫn thực hành y tế: rà soát mỗi sự kiện trong 24–72 giờ để xác nhận cần thiết về lâm sàng và nguyên tắc tối thiểu cần thiết.", "Căn cứ một phần"]
+    - ["Giới hạn số lần truy cập khẩn cấp", "Không chặn cứng. Từ lần thứ 3 trong 24 giờ hoặc lần thứ 10 trong 30 ngày của một bác sĩ: đánh dấu bất thường, báo trưởng khoa, rà soát 24 giờ", "Quyết định thiết kế. Các hướng dẫn khuyến nghị theo dõi tần suất như tín hiệu bất thường và cảnh báo khi một người dùng lặp lại nhiều lần; không có ngưỡng chuẩn. Bản v0.9 từng chặn cứng 3 lần/ngày: bỏ vì trong cấp cứu việc từ chối truy cập có thể làm hại bệnh nhân. Con số 3 và 10 chỉ là điểm khởi đầu, cần chỉnh theo dữ liệu thật.", "Quyết định thiết kế"]
+    - ["Mốc nhắc lịch", "T-24h và T-2h cho mọi lịch hẹn", "Phân tích gộp 2012 các thử nghiệm ngẫu nhiên về nhắc lịch qua tin nhắn: không có khác biệt có ý nghĩa giữa nhắc 24 giờ, 48 giờ hay từ 72 giờ trước. Tổng quan 2016 (21 thử nghiệm): nhắc bằng tin nhắn giảm 25% khả năng không đến khám (nguy cơ tương đối 0,75; 15% so với 21%). Vì vậy mốc chính xác ít quan trọng hơn việc có nhắc; T-2h giữ để người bệnh còn thời gian hủy đúng hạn 2 giờ.", "Có căn cứ (hiệu quả của việc nhắc); mốc cụ thể là quyết định thiết kế"]
+    - ["Nội dung tin nhắc", "Ngắn, nêu rõ giờ, bác sĩ, cách hủy; sẽ thử nghiệm nhiều cách diễn đạt", "Một thử nghiệm A/B lớn cho thấy cách diễn đạt làm tỉ lệ không đến khám giảm từ 21,1% xuống 14,2%, hơn cả việc đổi thời điểm gửi.", "Căn cứ một phần"]
+    - ["Ngưỡng nguy cơ không đến khám để thêm nhắc T-6h", "0,30 (cấu hình được; hiệu chỉnh sau 4 tuần có dữ liệu thật)", "Các nghiên cứu dùng ngưỡng khác nhau tùy chi phí can thiệp: thử nghiệm ngẫu nhiên gọi điện dùng >15%; một nghiên cứu ở hệ thống y tế cộng đồng dùng 15% với độ nhạy 0,76, độ đặc hiệu 0,55, giá trị dự báo dương 0,30; một đề cương thử nghiệm khác dùng 0,50. Can thiệp ở đây chỉ là thêm một tin nhắn, rất rẻ và không gây hại, nên ngưỡng thấp là chấp nhận được. Nhóm chọn 0,30 để thêm nhắc cho khoảng một phần tư lịch hẹn (tỉ lệ không đến giả định 18%). Chưa dùng ngưỡng này để xếp chồng lịch (overbooking) vì chi phí sai cao hơn.", "Quyết định thiết kế"]
+    - ["Chất lượng mô hình no-show", "AUC ≥ 0,75 và hơn baseline", "Yêu cầu đã có từ NFR-AI6; chưa tìm thấy chuẩn ngành thống nhất. Báo cáo hiệu chỉnh (calibration) bắt buộc để ngưỡng 0,30 có ý nghĩa xác suất.", "Quyết định thiết kế"]
+    - ["Khóa tạm khi đăng nhập sai", "5 lần sai, khóa 15 phút", "Thực hành phổ biến, được thực hiện tại nhà cung cấp định danh; chưa đối chiếu nguồn cụ thể.", "Quyết định thiết kế"]
+    - ["Link tải tài liệu / link upload", "5 phút / 10 phút", "BR-08 của dự án (quy tắc nghiệp vụ đã được duyệt); là biện pháp giảm thời gian lộ link.", "Quyết định thiết kế"]
+  legal:
+    - ["Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15", "Có hiệu lực từ 01/01/2026. Quy định đồng ý, rút đồng ý, thông tin sức khỏe, chuyển dữ liệu xuyên biên giới, đánh giá tác động, thông báo vi phạm, AI và điện toán đám mây.", "Điều 9, 10, 20, 21, 22, 23, 26, 30, 39"]
+    - ["Nghị định 356/2025/NĐ-CP", "Hướng dẫn thi hành Luật 91/2025/QH15 (ban hành 31/12/2025).", "Chưa đọc toàn văn; cần đọc để biết danh mục dữ liệu nhạy cảm và mẫu hồ sơ đánh giá tác động"]
+    - ["Nghị định 13/2023/NĐ-CP", "Nghị định bảo vệ dữ liệu cá nhân trước đây. Điều 39 Luật 91/2025/QH15 cho phép tiếp tục các xử lý đã có đồng ý theo nghị định này mà không cần xin lại. Chưa xác minh được liệu nghị định này còn hiệu lực hay đã bị thay thế.", "Cần xác minh"]
+    - ["Luật Khám bệnh, chữa bệnh 2023", "Điều 69: hồ sơ bệnh án giấy hoặc điện tử giá trị như nhau; lưu trữ theo pháp luật về lưu trữ. Không quy định số năm lưu.", "Điều 69"]
+    - ["Luật Lưu trữ số 33/2024/QH15 và thông tư của Bộ Y tế", "Nguồn của thời hạn lưu cụ thể. Một dự thảo thông tư của Bộ Y tế về thời hạn bảo quản hồ sơ ngành y tế viện dẫn luật này.", "Cần đọc văn bản chính thức"]
+    - ["Thông tư 32/2023/TT-BYT", "Hướng dẫn mẫu hồ sơ bệnh án.", "Cần đối chiếu mẫu hồ sơ"]
+  open_items:
+    - "Xác minh thời hạn lưu hồ sơ bệnh án theo từng loại (10, 15 hay 20 năm) bằng văn bản chính thức của Bộ Y tế và Luật Lưu trữ trước khi cấu hình chính sách lưu."
+    - "Xác minh tình trạng hiệu lực của Nghị định 13/2023/NĐ-CP sau khi Luật 91/2025/QH15 có hiệu lực, và đọc Nghị định 356/2025/NĐ-CP."
+    - "Hiệu chỉnh ngưỡng nguy cơ không đến khám 0,30 và hai ngưỡng truy cập khẩn cấp (3 lần/24 giờ, 10 lần/30 ngày) sau 4 tuần có dữ liệu vận hành."
+    - "Hỏi ý kiến cán bộ bảo vệ dữ liệu / bộ phận pháp chế về việc dùng nhà cung cấp LLM nước ngoài và vùng Azure ngoài Việt Nam cho dữ liệu thật."
+    - "Đối chiếu bản gốc các nghiên cứu về nhắc lịch và ngưỡng no-show được trích dẫn từ kết quả tìm kiếm trước khi dùng con số trong báo cáo khoa học."
+  sources:
+    - ["Luật Bảo vệ dữ liệu cá nhân 91/2025/QH15 (toàn văn)", "https://hethongphapluat.com/luat-bao-ve-du-lieu-ca-nhan-2025"]
+    - ["Luật Khám bệnh, chữa bệnh 2023, Điều 69", "https://hethongphapluat.com/luat-kham-benh-chua-benh-2023/dieu-69"]
+    - ["NIST SP 800-63B-4, mức bảo đảm xác thực", "https://pages.nist.gov/800-63-4/sp800-63b/aal"]
+    - ["Tổng quan và phân tích gộp: nhắc lịch bằng thông báo số (BMJ Open 2016)", "https://pubmed.ncbi.nlm.nih.gov/27798006/"]
+    - ["Phân tích gộp 2012: thời điểm nhắc bằng tin nhắn", "https://pmc.ncbi.nlm.nih.gov/articles/PMC3419880/"]
+    - ["Thử nghiệm A/B về cách diễn đạt tin nhắc", "https://pmc.ncbi.nlm.nih.gov/articles/PMC7310733"]
+    - ["Thử nghiệm ngẫu nhiên gọi nhắc theo nguy cơ không đến khám (J Gen Intern Med 2016)", "https://link.springer.com/content/pdf/10.1007/s11606-016-3813-0.pdf"]
+    - ["Đề cương thử nghiệm dùng ngưỡng nguy cơ 0,50 (ISRCTN)", "https://www.isrctn.com/pdf/28960722"]
+    - ["Hướng dẫn thực hành về truy cập khẩn cấp (không phải nghiên cứu)", "https://nhimg.org/faq/what-should-teams-get-right-about-break-glass-access-for-patient-data/"]
+    - ["Tổng hợp pháp lý về lưu trữ hồ sơ bệnh án (nguồn thứ cấp)", "https://thuvienphapluat.vn/hoi-dap-phap-luat/thoi-gian-luu-tru-ho-so-benh-an-tai-benh-vien-la-bao-lau-225860.html"]

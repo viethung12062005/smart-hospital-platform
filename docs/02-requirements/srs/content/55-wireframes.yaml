@@ -1,0 +1,249 @@
+# Wireframe cho các màn hình chưa có trong giao diện web (khóa = khóa màn hình trong 50-screens.yaml).
+# Dữ liệu minh họa là dữ liệu giả. Màn hình đã có trong web dùng ảnh chụp thật ở docs/02-requirements/srs/mockups/.
+wireframes:
+  register:
+    user: "Chưa có hồ sơ"
+    nav: ["#Đăng ký", "Thông tin cá nhân"]
+    active: "Thông tin cá nhân"
+    blocks:
+      - {t: h, text: "Đăng ký tài khoản"}
+      - {t: p, text: "Điền thông tin hành chính để tạo hồ sơ bệnh nhân. Email lấy từ tài khoản đăng nhập."}
+      - t: form
+        fields:
+          - ["Họ và tên *", text, "Nguyễn Thị Lan"]
+          - ["Ngày sinh *", text, "12/04/1988"]
+          - ["Giới tính *", select, "Nữ"]
+          - ["Số điện thoại *", text, "0900 010 001"]
+          - ["Email", label, "lan.nguyen@example.org (từ tài khoản, không sửa)"]
+      - {t: banner, text: "Điều khoản xử lý dữ liệu cá nhân: mục đích, thời hạn lưu, quyền của bạn. Xem toàn văn trước khi đồng ý."}
+      - t: form
+        cols: 1
+        fields:
+          - ["Bắt buộc", check, "Tôi đã đọc và đồng ý điều khoản xử lý dữ liệu cá nhân"]
+          - ["Tùy chọn", check, "Cho phép xử lý dữ liệu sức khỏe của tôi bằng AI (tóm tắt, trích xuất, dự đoán). Mặc định không chọn."]
+      - {t: buttons, items: [["Đăng ký", primary], ["Hủy", secondary]]}
+  chatbot:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Chatbot đặt lịch", "Lịch hẹn của tôi"]
+    active: "Chatbot đặt lịch"
+    blocks:
+      - {t: h, text: "Chatbot đặt lịch"}
+      - {t: banner, text: "Trợ lý AI chỉ giúp tìm và đề xuất lịch. Mọi lịch hẹn chỉ được đặt hoặc hủy sau khi bạn bấm “Xác nhận”."}
+      - t: chat
+        msgs:
+          - [bot, "Xin chào, bạn muốn đặt lịch khám chuyên khoa nào?"]
+          - [me, "Tôi muốn khám tim mạch sáng thứ Năm"]
+          - [bot, "Có 3 khung giờ trống sáng thứ Năm 05/11 với BS. Lê Minh Quân: 08:00, 08:30, 09:30."]
+          - [me, "Đặt giúp tôi 08:30"]
+      - {t: card, title: "Chờ xác nhận (hết hạn sau 04:32)", lines: ["Đặt lịch khám Tim mạch, BS. Lê Minh Quân, 08:30 ngày 05/11/2026"]}
+      - {t: buttons, items: [["Xác nhận", primary], ["Hủy đề xuất", secondary]]}
+      - {t: form, cols: 1, fields: [["Nhập tin nhắn (tối đa 500 ký tự)", text, "Nhập yêu cầu của bạn…"]]}
+  my-documents:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Lịch hẹn của tôi", "Tài liệu của tôi"]
+    active: "Tài liệu của tôi"
+    blocks:
+      - {t: h, text: "Tài liệu của tôi"}
+      - {t: p, text: "Chỉ hiển thị tài liệu bác sĩ đã phát hành cho bạn. Liên kết xem có hiệu lực 5 phút."}
+      - t: table
+        cols: ["Loại tài liệu", "Ngày phát hành", "Bác sĩ phát hành", ""]
+        widths: [300, 220, 300, 200]
+        rows:
+          - ["Kết quả xét nghiệm", "29/10/2026", "BS. Lê Minh Quân", "#Xem"]
+          - ["Giấy chuyển viện", "09/10/2026", "BS. Đỗ Văn Hải", "#Xem"]
+          - ["Đơn thuốc", "02/09/2026", "BS. Lê Minh Quân", "#Xem"]
+  my-profile:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
+    active: "Thông tin cá nhân"
+    blocks:
+      - {t: h, text: "Thông tin cá nhân"}
+      - {t: banner, text: "Họ tên, ngày sinh, giới tính chỉ thay đổi được tại quầy tiếp đón (có đối chiếu giấy tờ)."}
+      - t: form
+        fields:
+          - ["Mã bệnh nhân", label, "BN-2026-000001"]
+          - ["Họ và tên", label, "Nguyễn Thị Lan"]
+          - ["Ngày sinh", label, "12/04/1988"]
+          - ["Giới tính", label, "Nữ"]
+          - ["Số điện thoại", text, "0900 010 001"]
+          - ["Người liên hệ khẩn cấp", text, "Nguyễn Văn An – 0900 010 002"]
+          - ["Địa chỉ", text, "12 Lê Lợi, TP. Huế"]
+          - ["Ngôn ngữ ưu tiên", select, "Tiếng Việt"]
+      - {t: buttons, items: [["Lưu", primary], ["Hủy", secondary]]}
+  notification-preferences:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
+    active: "Thông báo"
+    blocks:
+      - {t: h, text: "Cài đặt thông báo"}
+      - {t: p, text: "Chọn cách nhận nhắc lịch khám. Nội dung tin chỉ gồm giờ khám, bác sĩ và cách hủy, không có thông tin bệnh."}
+      - {t: toggle, label: "Thông báo đẩy (push)", on: true}
+      - {t: toggle, label: "Email", on: true}
+      - {t: toggle, label: "Tin nhắn SMS", on: false}
+      - t: form
+        fields:
+          - ["Ngôn ngữ", select, "Tiếng Việt"]
+          - ["Khung giờ yên tĩnh", select, "22:00 – 06:30 (không áp dụng cho nhắc T-2h)"]
+      - {t: buttons, items: [["Lưu", primary]]}
+  privacy:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
+    active: "Quyền riêng tư"
+    blocks:
+      - {t: h, text: "Quyền riêng tư"}
+      - {t: card, title: "Xử lý dữ liệu sức khỏe bằng AI", lines: ["Tóm tắt hồ sơ cho bác sĩ, trích xuất dữ liệu từ tài liệu, dự đoán nguy cơ không đến khám.", "Dữ liệu gửi tới nhà cung cấp mô hình bên ngoài đã được che họ tên, SĐT, email, địa chỉ.", "Bạn có thể rút đồng ý bất kỳ lúc nào; có hiệu lực ngay."]}
+      - {t: toggle, label: "Cho phép xử lý dữ liệu của tôi bằng AI", on: true}
+      - {t: h, text: "Lịch sử đồng ý"}
+      - t: table
+        cols: ["Thời điểm", "Phiên bản điều khoản", "Hành động"]
+        widths: [340, 340, 340]
+        rows:
+          - ["30/10/2026 09:12", "v1", "Đồng ý xử lý bằng AI"]
+          - ["30/10/2026 09:12", "v1", "Đồng ý điều khoản"]
+      - {t: card, title: "Bản sao dữ liệu cá nhân", lines: ["Yêu cầu nhận bản sao hồ sơ của bạn. Cần xác thực lại. Cán bộ bảo vệ dữ liệu xử lý và gửi liên kết tải (hiệu lực 24 giờ)."]}
+      - {t: buttons, items: [["Yêu cầu bản sao dữ liệu", secondary]]}
+  my-access-log:
+    user: "Nguyễn Thị Lan"
+    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
+    active: "Lịch sử truy cập hồ sơ"
+    blocks:
+      - {t: h, text: "Ai đã truy cập hồ sơ của tôi"}
+      - {t: p, text: "12 tháng gần nhất. Không hiển thị nội dung đã xem."}
+      - t: table
+        cols: ["Thời điểm", "Người truy cập", "Vai trò / khoa", "Hành động", "Mục đích"]
+        widths: [190, 210, 210, 210, 200]
+        rows:
+          - ["29/10/2026 09:02", "BS. Lê Minh Quân", "Bác sĩ · Tim mạch", "Xem hồ sơ", "Điều trị"]
+          - ["29/10/2026 08:41", "ĐD. Trần Thu Hà", "Điều dưỡng · Tiếp đón", "Check-in", "Điều trị"]
+          - ["11/10/2026 14:20", "BS. Phạm Văn Long", "Bác sĩ · Cấp cứu", "Xem hồ sơ", "#Truy cập khẩn cấp"]
+          - ["09/10/2026 10:50", "BS. Đỗ Văn Hải", "Bác sĩ · Nội tổng quát", "Tải tài liệu", "Điều trị"]
+  patient-form:
+    user: "ĐD. Trần Thu Hà"
+    nav: ["#Tổng quan", "Trang chủ", "#Tiếp đón", "Hàng đợi hôm nay", "Hồ sơ bệnh nhân", "#Phòng khám", "Lịch bác sĩ"]
+    active: "Hồ sơ bệnh nhân"
+    blocks:
+      - {t: h, text: "Tạo hồ sơ bệnh nhân"}
+      - {t: banner, kind: warn, text: "Nghi trùng: đã có hồ sơ cùng SĐT và ngày sinh – Trần Văn B., sinh 1990, SĐT 0900 ** *** 12. Kiểm tra giấy tờ trước khi tạo mới hoặc gộp."}
+      - t: form
+        fields:
+          - ["Họ và tên *", text, "Trần Văn Bình"]
+          - ["Ngày sinh *", text, "05/03/1990"]
+          - ["Giới tính *", select, "Nam"]
+          - ["Số điện thoại *", text, "0900 010 012"]
+          - ["Địa chỉ", text, "45 Trần Phú, Đà Nẵng"]
+          - ["Người liên hệ khẩn cấp", text, ""]
+      - {t: buttons, items: [["Lưu hồ sơ", primary], ["Gộp vào hồ sơ có sẵn", secondary], ["Hủy", secondary]]}
+  encounter:
+    user: "BS. Lê Minh Quân"
+    nav: ["#Tổng quan", "Trang chủ", "#Phòng khám", "Hàng đợi hôm nay", "Lịch bác sĩ", "#Lâm sàng", "Bệnh nhân", "Lần khám"]
+    active: "Lần khám"
+    blocks:
+      - {t: h, text: "Lần khám – Phạm Quang Dũng (BN-2026-000004)"}
+      - {t: tabs, items: ["Sinh hiệu", "Bệnh sử và khám", "Chẩn đoán", "Bổ sung"], active: 1}
+      - t: form
+        fields:
+          - ["Huyết áp (mmHg)", text, "135 / 85"]
+          - ["Mạch (lần/phút)", text, "88"]
+          - ["Nhiệt độ (°C)", text, "36,8"]
+          - ["SpO2 (%)", text, "97"]
+      - t: form
+        cols: 1
+        fields:
+          - ["Lý do khám / bệnh sử", area, "Hồi hộp, khó thở khi gắng sức 2 tuần, tăng khi leo cầu thang…"]
+          - ["Chẩn đoán chính (ICD-10) *", select, "I20.9  Cơn đau thắt ngực, không đặc hiệu"]
+      - {t: buttons, items: [["Lưu", primary], ["Kết thúc khám", primary], ["Tóm tắt hồ sơ (AI)", secondary]]}
+  assistant:
+    user: "BS. Lê Minh Quân"
+    nav: ["#Tổng quan", "Trang chủ", "#Lâm sàng", "Bệnh nhân", "Lần khám", "#Trợ lý AI", "Hỏi trợ lý", "Duyệt trích xuất"]
+    active: "Hỏi trợ lý"
+    blocks:
+      - {t: h, text: "Hỏi trợ lý tri thức y tế"}
+      - {t: banner, text: "Trả lời dựa trên phác đồ nội bộ đã duyệt, kèm trích dẫn. Không nhập thông tin định danh bệnh nhân. Do AI tạo, cần kiểm tra."}
+      - t: chat
+        msgs:
+          - [me, "Ngưỡng xử trí tăng huyết áp độ 2 ở người lớn theo phác đồ khoa?"]
+          - [bot, "Theo phác đồ, tăng huyết áp độ 2 là huyết áp ≥ 160/100 mmHg; cần phối hợp thuốc và tái khám sau 1 tuần [1][2]."]
+      - {t: card, title: "Nguồn trích dẫn", lines: ["[1] Phác đồ điều trị tăng huyết áp – mục 3.2, trang 7", "[2] Quy trình tái khám bệnh mạn tính – mục 2.1"]}
+      - {t: buttons, items: [["Hữu ích", secondary], ["Không hữu ích", secondary]]}
+      - {t: form, cols: 1, fields: [["Câu hỏi (3–2.000 ký tự)", text, "Nhập câu hỏi…"]]}
+  extraction-review:
+    user: "ĐD. Trần Thu Hà"
+    nav: ["#Lâm sàng", "Bệnh nhân", "#Trợ lý AI", "Hỏi trợ lý", "Duyệt trích xuất"]
+    active: "Duyệt trích xuất"
+    blocks:
+      - {t: h, text: "Duyệt trích xuất: Kết quả xét nghiệm máu"}
+      - {t: banner, kind: warn, text: "Mọi trường mặc định “chưa xác nhận”. Chỉ trường bạn xác nhận mới được ghi vào hồ sơ. Không có nút “chấp nhận tất cả”."}
+      - t: table
+        cols: ["Trường", "Giá trị trích xuất", "Đơn vị", "Độ tin cậy", "Quyết định"]
+        widths: [260, 220, 130, 150, 260]
+        rows:
+          - ["Hemoglobin", "13,2", "g/dL", "0,97", "#Xác nhận  Sửa  Bỏ"]
+          - ["Glucose lúc đói", "6,9", "mmol/L", "0,91", "#Xác nhận  Sửa  Bỏ"]
+          - ["Creatinine", "1,8", "mg/dL", "0,72 (thấp)", "Xác nhận  #Sửa  Bỏ"]
+      - {t: buttons, items: [["Lưu kết quả", primary], ["Từ chối tất cả", danger]]}
+  kb:
+    user: "Phạm Quang Huy"
+    nav: ["#Trợ lý AI", "Kho tri thức", "#Quản trị", "Người dùng", "Audit truy cập", "Thông báo lỗi"]
+    active: "Kho tri thức"
+    blocks:
+      - {t: h, text: "Kho tri thức"}
+      - {t: buttons, items: [["Thêm tài liệu", primary]]}
+      - t: table
+        cols: ["Tài liệu", "Phiên bản", "Phạm vi xem", "Trạng thái", ""]
+        widths: [330, 120, 250, 150, 170]
+        rows:
+          - ["Phác đồ điều trị tăng huyết áp", "v3", "Bác sĩ khoa Tim mạch", "#approved", "Thay phiên bản"]
+          - ["Quy trình tái khám bệnh mạn tính", "v2", "Bác sĩ, Điều dưỡng", "#approved", "Thay phiên bản"]
+          - ["Hướng dẫn dùng kháng sinh", "v1", "Bác sĩ", "draft", "Duyệt"]
+      - {t: banner, text: "Tài liệu kho tri thức không được chứa dữ liệu bệnh nhân. Hệ thống quét mẫu thông tin định danh khi tải lên."}
+  users:
+    user: "Phạm Quang Huy"
+    nav: ["#Trợ lý AI", "Kho tri thức", "#Quản trị", "Người dùng", "Audit truy cập", "Thông báo lỗi"]
+    active: "Người dùng"
+    blocks:
+      - {t: h, text: "Người dùng"}
+      - {t: buttons, items: [["Mời nhân viên", primary]]}
+      - t: table
+        cols: ["Họ tên", "Vai trò", "Bác sĩ liên kết", "MFA", "Trạng thái", ""]
+        widths: [250, 150, 220, 100, 140, 160]
+        rows:
+          - ["BS. Lê Minh Quân", "Bác sĩ", "Practitioner pr-001", "Đã bật", "#Hoạt động", "Khóa"]
+          - ["ĐD. Trần Thu Hà", "Điều dưỡng", "", "Đã bật", "#Hoạt động", "Khóa"]
+          - ["Vũ Hải Yến", "DPO", "", "Đã bật", "#Hoạt động", "Khóa"]
+          - ["BS. Phạm Văn Long", "Bác sĩ", "Practitioner pr-004", "Chưa đăng ký", "Chờ kích hoạt", "Gửi lại lời mời"]
+      - {t: banner, text: "Gán vai trò Quản trị viên hoặc DPO cần một quản trị viên khác phê duyệt. Khóa tài khoản có hiệu lực trong tối đa 5 phút."}
+  audit:
+    user: "Vũ Hải Yến"
+    nav: ["#Bảo vệ dữ liệu", "Audit truy cập", "Yêu cầu của bệnh nhân"]
+    active: "Audit truy cập"
+    blocks:
+      - {t: h, text: "Audit truy cập"}
+      - {t: tabs, items: ["Tra cứu", "Cần rà soát (2)", "Yêu cầu của bệnh nhân (1)"], active: 1}
+      - t: form
+        cols: 4
+        fields:
+          - ["Mã bệnh nhân", text, ""]
+          - ["Người truy cập", text, ""]
+          - ["Mục đích", select, "Truy cập khẩn cấp"]
+          - ["Khoảng thời gian (tối đa 92 ngày)", text, "24 giờ gần nhất"]
+      - t: table
+        cols: ["Thời điểm", "Bác sĩ / khoa", "Mã bệnh nhân", "Lý do", "Cờ", ""]
+        widths: [170, 200, 150, 280, 110, 110]
+        rows:
+          - ["29/10 14:20", "BS. Phạm Văn Long / Cấp cứu", "BN-2026-000007", "Ngừng tuần hoàn, chưa có hồ sơ", "#Bất thường", "Đã rà soát"]
+          - ["29/10 09:45", "BS. Đỗ Văn Hải / Nội", "BN-2026-000012", "Bệnh nhân chuyển từ khoa khác khi cấp cứu", "", "Đã rà soát"]
+      - {t: buttons, items: [["Xuất CSV (nhập mục đích)", secondary]]}
+  dead-letters:
+    user: "Phạm Quang Huy"
+    nav: ["#Quản trị", "Người dùng", "Audit truy cập", "Thông báo lỗi"]
+    active: "Thông báo lỗi"
+    blocks:
+      - {t: h, text: "Thông báo gửi lỗi"}
+      - {t: p, text: "Chỉ hiển thị mã lịch hẹn, kênh và lỗi; không có nội dung tin, SĐT hay email."}
+      - t: table
+        cols: ["Mã lịch hẹn", "Loại nhắc", "Kênh", "Lỗi", "Số lần thử", ""]
+        widths: [200, 140, 120, 300, 110, 150]
+        rows:
+          - ["LH-20261103-0042", "T-24h", "SMS", "Nhà cung cấp từ chối: số không khả dụng", "5", "#Gửi lại"]
+          - ["LH-20261103-0057", "T-2h", "Email", "Hết thời gian chờ nhà cung cấp", "5", "#Gửi lại"]
+      - {t: banner, text: "Không gửi lại nếu lịch hẹn đã hủy hoặc đã qua giờ khám."}
