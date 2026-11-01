@@ -21,6 +21,15 @@ def docker_available() -> bool:
         return False
 
 
+def _require_running(c: Any) -> None:
+    """Container đã thoát thì báo lỗi kèm log của nó (thay vì lỗi exec khó hiểu)."""
+    w = c.get_wrapped_container()
+    w.reload()
+    if w.status != "running":
+        logs = w.logs(tail=40).decode(errors="replace")
+        raise RuntimeError(f"container {w.image.tags} dừng ({w.status}):\n{logs}")
+
+
 def _skip(reason: str) -> None:
     import pytest
 
@@ -39,12 +48,13 @@ def mongo_replica_set() -> Iterator[str]:
 
     c = (
         DockerContainer("mirror.gcr.io/library/mongo:8.0")
-        .with_command("--replSet rs0 --bind_ip_all")
+        .with_command(["mongod", "--replSet", "rs0", "--bind_ip_all"])
         .with_exposed_ports(27017)
     )
     c.start()
     try:
         for _ in range(60):
+            _require_running(c)
             code, _out = c.exec(["mongosh", "--quiet", "--eval", "try{rs.status().ok}catch(e){rs.initiate().ok}"])
             if code == 0:
                 break
