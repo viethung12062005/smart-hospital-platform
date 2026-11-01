@@ -1,6 +1,6 @@
 # ml
 
-Mô hình no-show: phục vụ dự đoán, drift, huấn luyện lại tự động. Chủ sở hữu: **D3**.
+Mô hình no-show: phục vụ dự đoán, drift, huấn luyện lại tự động. Chủ sở hữu: **SA** (từ 2026-11-01).
 
 | Lệnh | Việc |
 |---|---|

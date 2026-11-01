@@ -7,8 +7,8 @@ Mục tiêu: trong **dưới 1 giờ**, bạn clone repo, chạy được hệ t
 |---|---|
 | Docker (Desktop hoặc Engine), RAM cho Docker ≥ 6 GB; Windows dùng **WSL2** ([hướng dẫn cài từng bước](onboarding-windows.md)) | mọi người |
 | `git`, `make`, `curl`, `openssl` | mọi người |
-| **JDK 21** (Temurin) + **Maven 3.9**; IDE: IntelliJ IDEA hoặc VS Code (Extension Pack for Java) | D1, D2 |
-| **Python 3.12** | D3 |
+| **JDK 21** (Temurin) + **Maven 3.9**; IDE: IntelliJ IDEA hoặc VS Code (Extension Pack for Java) | D1, D2, D3 |
+| **Python 3.12** | SA (ai, ml) |
 | **Node.js 22** (cho màn hình web, task WEB-*) | D1, D2, D3 |
 
 Không cần cài kind, kubectl hay helm: `make -C dev tools` tự tải đúng phiên bản. Trên Ubuntu/WSL2, `bash dev/scripts/setup-ubuntu.sh` cài đủ JDK, Maven, Python, Node.js.
@@ -60,25 +60,23 @@ Hướng dẫn đầy đủ và cách xử lý sự cố: [dev/README.md](../dev
   - `MongoOutbox`, `MongoInbox`, `MongoIdempotency`, `MongoMessaging.inTransaction`;
   - `MongoIdentityLinkClient` (clinical đọc liên kết danh tính từ DB của chính mình).
 
-### D3 — ai, ml, dữ liệu giả (Python)
-- **Service:** [`services/ai`](../services/ai), [`services/ml`](../services/ml) (FastAPI); README từng service có lệnh cài và chạy.
+### D3: gateway, Keycloak, notification, document, audit (Java)
+Từ 2026-11-01 SA nhận toàn bộ AI/ML (`services/ai`, `services/ml`, dữ liệu giả); D3 chuyển sang các service Java dưới đây.
+- **Service:** [`services/gateway`](../services/gateway), [`services/notification`](../services/notification), [`services/document`](../services/document), [`services/audit`](../services/audit); Keycloak (task IAM-*).
 - **Thiết kế cần đọc:**
-  - [06-data-ai](03-architecture/detailed-design/06-data-ai.md), [12-api-ai](03-architecture/detailed-design/12-api-ai.md), [16-mlops](03-architecture/detailed-design/16-mlops.md)
-  - [04-db-notification-ml](03-architecture/detailed-design/04-db-notification-ml.md) §2
-  - [ADR-0013](03-architecture/adr/0013-llm-deepseek-gemini-local-embedding.md) (DeepSeek → Gemini → Ollama, embedding bge-m3)
-  - [ADR-0007](03-architecture/adr/0007-no-show-ml-mlops.md)
+  - [ADR-0017](03-architecture/adr/0017-keycloak-identity-everywhere.md), [ADR-0018](03-architecture/adr/0018-profile-links-and-claim.md), [07-api-conventions](03-architecture/detailed-design/07-api-conventions.md), [15-authorization](03-architecture/detailed-design/15-authorization.md)
+  - [11-api-notification-audit-ml](03-architecture/detailed-design/11-api-notification-audit-ml.md), [10-api-document](03-architecture/detailed-design/10-api-document.md), [05-storage-audit-blob](03-architecture/detailed-design/05-storage-audit-blob.md)
 - **Việc đầu tiên:**
-  - DAT-01, DAT-02: bộ sinh dữ liệu giả tiếng Việt. Đây là nền cho test của cả nhóm.
-  - PY-01, PY-02, PY-05: thư viện Python cho xác thực và lỗi.
-  - PY-06 → PY-08: che PII, rồi LLM provider và router.
+  - SHR-20 (JWT từ Keycloak, thử với Keycloak thật), GW-01, GW-02: làm lại xác thực ở gateway (JWT, MFA nhân viên, rate limit theo người dùng).
+  - IAM-01, IAM-06: Keycloak trên cụm; sau đó IAM-02, IAM-07 (token dịch vụ, token exchange cho ai).
+  - SHR-09 (audit emitter) rồi AUD-*; NTF-16 (dịch vụ OTP) trước IAM-04.
 - **Lưu ý:**
-  - Key DeepSeek/Gemini **không bao giờ** nằm trong repo; ở local đặt bằng biến môi trường trên máy.
-  - Mọi văn bản gửi ra LLM bên ngoài phải qua bộ che PII.
-  - Collection MongoDB của `ml` đã được `make -C dev up` tạo sẵn.
+  - Không log mật khẩu, mã OTP, số điện thoại hay token; audit không chứa nội dung lâm sàng.
+  - Audit là WORM: không có API sửa hoặc xóa.
 
 ### Màn hình web (cả D1, D2, D3)
 Mỗi người làm màn hình cho phần backend của mình: D1 đặt lịch và lịch bác sĩ (WEB-03..08), D2 bệnh nhân, lần khám, tài liệu, DPO (WEB-20..27),
-D3 giao diện AI (WEB-30..34). Khung đã có sẵn: đăng nhập, menu theo vai trò, client API, hệ thiết kế, 6 màn hình mẫu.
+D3 màn hình thông báo, tài liệu, audit theo task WEB của mình; SA làm giao diện AI (WEB-30..34). Khung đã có sẵn: đăng nhập, menu theo vai trò, client API, hệ thiết kế, 6 màn hình mẫu.
 - **Đọc:** [web/README.md](../web/README.md) (cách chạy, cấu trúc, 8 quy tắc), [ADR-0016](03-architecture/adr/0016-frontend-web-app.md).
 - **Chạy nhanh không cần backend:** `cd web && npm ci && npm run dev:mock`, mở http://localhost:5173 và chọn vai trò.
 - **Bắt đầu từ màn hình mẫu gần nhất:** đặt lịch (`pages/patient/BookAppointmentPage.tsx`), hàng đợi (`pages/staff/QueuePage.tsx`),

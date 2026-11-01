@@ -1,6 +1,6 @@
 # ai
 
-Trợ lý RAG, tóm tắt hồ sơ, trích xuất tài liệu, chatbot đặt lịch; LLM router có fallback. Chủ sở hữu: **D3**.
+Trợ lý RAG, tóm tắt hồ sơ, trích xuất tài liệu, chatbot đặt lịch; LLM router có fallback. Chủ sở hữu: **SA** (từ 2026-11-01).
 
 | Lệnh | Việc |
 |---|---|

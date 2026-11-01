@@ -1,7 +1,7 @@
 # gateway
 
 Cổng vào duy nhất (Spring Cloud Gateway, WebFlux): định tuyến tới 7 service, xác thực JWT (OIDC), chặn `/internal/**`.
-Chủ sở hữu: **SA**. Dev thường **không cần sửa** service này; thêm route mới thì báo SA.
+Chủ sở hữu: **D3** (làm lại xác thực ở gateway, từ 2026-11-01). Thêm route mới thì báo D3.
 
 | Lệnh (chạy ở gốc repo) | Việc |
 |---|---|
