@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
 
 KEY_FEATURES = ["lead_time_days", "prior_noshow", "start_hour", "channel"]
 PSI_ALERT = 0.2
@@ -67,6 +66,14 @@ def feature_drift(
     return DriftReport(values, score, drifted, alert)
 
 
+def rank_auc(labels: np.ndarray, scores: np.ndarray) -> float:
+    """AUC theo Mann-Whitney (xử lý điểm bằng nhau bằng rank trung bình); không cần scikit-learn trong image phục vụ."""
+    ranks = pd.Series(scores).rank(method="average").to_numpy()
+    pos = labels == 1
+    n_pos, n_neg = int(pos.sum()), int((~pos).sum())
+    return float((ranks[pos].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg))
+
+
 @dataclass
 class PerformanceReport:
     auc: float | None
@@ -79,7 +86,7 @@ def live_performance(labels: pd.Series, scores: pd.Series, registered_auc: float
     n = int(labels.notna().sum())
     if n < MIN_LABELED or labels.nunique() < 2:
         return PerformanceReport(None, n, False)
-    auc = float(roc_auc_score(labels, scores))
+    auc = rank_auc(labels.to_numpy(dtype=int), scores.to_numpy(dtype=float))
     return PerformanceReport(round(auc, 4), n, registered_auc - auc > AUC_DROP_ALERT)
 
 
