@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **72**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **75**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -245,9 +245,9 @@ Tổng: **215 task, 727 giờ**. Đã xong: **72**, làm một phần: **26** (�
 | ☐ | AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | Lọc theo status/patient; quyền Care/Nurse | 3 | AI-24 | US-059, US-060 |
 | ☐ | AI-26 | API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields | Chưa xác nhận không có dữ liệu vào hồ sơ; lỗi clinical trả nguyên văn | 4 | AI-25, PY-02, CLN-17 | US-060 |
 | ☐ | AI-27 | Bộ tài liệu giả có nhãn cho trích xuất (xét nghiệm, đơn thuốc, chuyển viện) | ≥ 60 tài liệu có nhãn trường | 4 | AI-24 | US-061 |
-| ☐ | AI-29 | Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây | Tool lạ bị từ chối; tham số sai bị chặn | 4 | PY-08, PY-02 | US-062 |
-| ☐ | AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút | Chưa xác nhận không có lịch hẹn (AC-14.1); 409 → đề xuất lại | 4 | AI-29, SCH-14 | US-062 |
-| ☐ | AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | 503 ai-unavailable kèm fallback (AC-14.3) | 3 | AI-30 | US-062 |
+| ☑ | AI-29 | Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây **[xong, commit 4b3dbcd: 4 tool, schema kiểm tham số, vòng lặp tối đa 6 lượt/10 giây]** | Tool lạ bị từ chối; tham số sai bị chặn | 4 | PY-08, PY-02 | US-062 |
+| ☑ | AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút **[xong, commit 4b3dbcd: pending_actions TTL 5 phút; AI8 confirm gọi $book/$cancel bằng token bệnh nhân, 409 gợi ý lại]** | Chưa xác nhận không có lịch hẹn (AC-14.1); 409 → đề xuất lại | 4 | AI-29, SCH-14 | US-062 |
+| ☑ | AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi **[xong, commit 4b3dbcd: AI7 JSON; mọi model lỗi trả 503 ai-unavailable kèm fallback booking-form]** | 503 ai-unavailable kèm fallback (AC-14.3) | 3 | AI-30 | US-062 |
 | ☐ | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI | 4 | AI-31, AI-26 | US-052, US-053, US-058, US-060, US-062 |
 | ☐ | ARC-18 | Sprint review + planning S6 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☑ | ML-10 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo **[xong, commit 3a39c95: monitor.run_daily: PSI 7 ngày, AUC 14 ngày, metric Prometheus, tạo yêu cầu huấn luyện lại; thread 02:00 VN hoặc CronJob]** | Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng | 3 | ML-19, ML-20 | US-065 |
