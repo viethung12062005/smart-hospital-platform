@@ -491,6 +491,22 @@ class Writer:
                 self.para("Ghi chú:", bold=True)
                 self.bullets(et["notes"])
 
+    def rationale(self):
+        r = self.m["rationale"]
+        self.heading("Cơ sở đặt ngưỡng và căn cứ pháp lý", 2)
+        self.para(r["intro"])
+        self.para("Mức chắc chắn:", bold=True)
+        self.bullets(r["confidence_legend"])
+        self.heading("Các ngưỡng và giá trị", 3)
+        self.table(["Tham số", "Giá trị đã chọn", "Căn cứ và lý do", "Mức chắc chắn"], r["thresholds"],
+                   widths=(3.0, 3.6, 7.4, 2.5), font=8.5)
+        self.heading("Văn bản pháp luật liên quan", 3)
+        self.table(["Văn bản", "Nội dung liên quan", "Điều khoản / trạng thái"], r["legal"], widths=(4.2, 8.0, 4.3), font=9)
+        self.heading("Việc còn phải xác minh", 3)
+        self.bullets(r["open_items"])
+        self.heading("Nguồn tham khảo (tra cứu 31/10/2026)", 3)
+        self.table(["Nguồn", "Liên kết"], r["sources"], widths=(7.0, 9.5), font=8.5)
+
     def build(self, path):
         self.header_footer()
         self.front()
@@ -503,6 +519,7 @@ class Writer:
         self.integration()
         self.migration()
         self.appendices()
+        self.rationale()
         self.doc.core_properties.title = f"{self.m['document']['system']} - Đặc tả yêu cầu phần mềm"
         self.doc.core_properties.author = self.m["document"]["team"]
         self.doc.save(path)
