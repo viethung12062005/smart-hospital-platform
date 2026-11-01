@@ -65,7 +65,7 @@ STATUS = {
     "ML-16": ("done", "e391985", "test_training_features_equal_serving_features: phát lại sự kiện khớp training_frame"),
     "ML-21": ("done", "e391985", "synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot, nhiều ca sáng sớm; detector báo drift trên bộ này"),
     "ML-19": ("done", "490481e", "drift.feature_drift: PSI đặc trưng chính và điểm dự đoán, ngưỡng 0,2 ở ≥ 2 đặc trưng; test bộ thường không báo, bộ dịch chuyển có báo"),
-    "ML-20": ("partial", "490481e", "drift.live_performance: AUC thực tế, cần ≥ 500 nhãn, cảnh báo khi giảm > 0,05; CHƯA ghép prediction với outcome từ Mongo (cần ML-06, ML-07)"),
+    "ML-20": ("done", "3a39c95", "Ghép predictions production với kết quả thật 14 ngày, cần ≥ 500 nhãn"),
     "ML-22": ("done", "490481e", "drift.decide_retrain: drift hoặc AUC giảm, cooldown 7 ngày, ≥ 500 nhãn mới, chống chạy chồng, tối đa 2 lần/14 ngày rồi chờ người xử lý; cửa sổ trượt 24 tháng"),
     "ML-04": ("done", "34b171e", "LightGBM tìm tham số trên 3 tháng cuối của train, AUC 0,784 > LR 0,769"),
     "ML-05": ("partial", "34b171e", "Cổng đủ điều kiện §3, FileRegistry có alias và test; adapter MLflow viết xong, CHƯA thử với MLflow server (LOC-08)"),
@@ -79,4 +79,6 @@ STATUS = {
     "ML-12": ("done", "d5d63c1", "Test: E10 khớp lược đồ, không có model thì không phát E10 và không lỗi"),
     "ML-24": ("done", "d5d63c1", "Shadow: candidate chấm song song, lưu prediction shadow, metric đồng thuận; E10 luôn từ production"),
     "ML-25": ("partial", "d5d63c1", "Metric theo model_version: độ trễ, lỗi, phân phối điểm, highRisk, đồng thuận; AnalysisTemplate (MLO-03) chưa có"),
+    "ML-10": ("done", "3a39c95", "monitor.run_daily: PSI 7 ngày, AUC 14 ngày, metric Prometheus, tạo yêu cầu huấn luyện lại; thread 02:00 VN hoặc CronJob"),
+    "ML-23": ("done", "3a39c95", "retrain.run_pending: khóa, snapshot Parquet có hash, pipeline có cổng, chỉ đặt candidate, audit; test đầu-cuối với dữ liệu dịch chuyển"),
 }
