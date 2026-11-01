@@ -1,0 +1,200 @@
+# Chương 4 – Màn hình. components: [Thành phần, Loại, Sửa được, Bắt buộc, Mặc định, Mô tả]
+screens_intro: >-
+  Chương này mô tả các màn hình và thuộc tính của chúng, gắn với use case ở Chương 3 và site map ở Chương 2. Ảnh mockup
+  lấy từ giao diện web đang phát triển (chế độ dữ liệu giả) hoặc bản phác thảo; màu sắc và phông chữ theo hệ thiết kế
+  của giao diện web. Mọi màn hình hiển thị dữ liệu bệnh nhân tuân theo [[CBR:no-pii]] và [[CMUC:session]].
+
+screens:
+  - portal: Cổng bệnh nhân
+    items:
+      - key: register
+        name: Đăng ký tài khoản
+        purpose: Bệnh nhân mới nhập thông tin hành chính và đồng ý điều khoản xử lý dữ liệu.
+        access: "Đăng nhập lần đầu qua nhà cung cấp định danh khi chưa có hồ sơ."
+        uc: [register, manage-consent]
+        components:
+          - ["Họ và tên", "Textbox", "Có", "Có", "N/A", "2–100 ký tự."]
+          - ["Ngày sinh", "Date picker", "Có", "Có", "N/A", "Không ở tương lai."]
+          - ["Giới tính", "Dropdown", "Có", "Có", "N/A", "Nam, Nữ, Khác, Không rõ."]
+          - ["Số điện thoại", "Textbox", "Có", "Có", "N/A", "Định dạng Việt Nam."]
+          - ["Email", "Label", "Không", "N/A", "Từ nhà cung cấp định danh", "Không sửa."]
+          - ["Đồng ý điều khoản xử lý dữ liệu", "Checkbox", "Có", "Có", "Không tích", "Bắt buộc tích mới gửi được; liên kết xem toàn văn điều khoản."]
+          - ["Cho phép xử lý dữ liệu bằng AI", "Checkbox", "Có", "Không", "Không tích", "Tùy chọn riêng, có giải thích."]
+          - ["Đăng ký", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:register]]."]
+      - key: find-doctor
+        name: Tìm bác sĩ và khung giờ
+        purpose: Tìm khung giờ trống theo chuyên khoa, bác sĩ, ngày.
+        access: "Trang chủ → “Đặt lịch khám”."
+        uc: [find-slot, book]
+        data_source: "Slot “free” của lịch làm việc đang hoạt động, [Bắt đầu] trong khoảng ngày đã chọn và ≤ <Hôm nay> + 30 ngày."
+        sorting: "Theo bác sĩ, rồi [Bắt đầu] tăng dần."
+        components:
+          - ["Chuyên khoa", "Dropdown", "Có", "Có*", "Trống", "*Bắt buộc nếu không chọn bác sĩ."]
+          - ["Bác sĩ", "Searchable dropdown", "Có", "Không", "Tất cả", "Lọc theo chuyên khoa."]
+          - ["Từ ngày / Đến ngày", "Date picker", "Có", "Có", "Hôm nay / +7 ngày", "Tối đa 31 ngày, không quá 30 ngày tới."]
+          - ["Danh sách khung giờ", "Grid", "Không", "N/A", "N/A", "Nhóm theo bác sĩ và ngày; mỗi ô là một giờ bắt đầu."]
+          - ["Đặt lịch", "Button", "N/A", "N/A", "N/A", "Mở [[SCR:book]] với slot đã chọn."]
+      - key: book
+        name: Xác nhận đặt lịch
+        purpose: Xác nhận slot và lý do khám.
+        access: "Chọn một khung giờ trên [[SCR:find-doctor]]."
+        uc: [book, reschedule]
+        components:
+          - ["Bác sĩ, chuyên khoa, ngày giờ", "Label", "Không", "N/A", "Theo slot", "Chỉ đọc."]
+          - ["Bệnh nhân", "Label / Search", "Chỉ Điều dưỡng", "Có", "<Người dùng hiện tại>", "Bệnh nhân không đổi được; Điều dưỡng tìm bệnh nhân."]
+          - ["Lý do khám", "Textarea", "Có", "Không", "Trống", "Tối đa 500 ký tự."]
+          - ["Xác nhận", "Button", "N/A", "N/A", "N/A", "Gửi kèm Idempotency-Key; vô hiệu trong lúc chờ phản hồi."]
+      - key: chatbot
+        name: Chatbot đặt lịch
+        purpose: Đặt/hủy lịch bằng hội thoại có xác nhận.
+        access: "Trang chủ → “Đặt lịch khám” → “Trò chuyện để đặt lịch”."
+        uc: [chatbot-booking]
+        components:
+          - ["Khung hội thoại", "Chat", "Không", "N/A", "Lời chào", "Tin của bot có nhãn AI."]
+          - ["Thẻ hành động chờ xác nhận", "Card", "Không", "N/A", "N/A", "Nút “Xác nhận” / “Hủy” do giao diện vẽ; đếm ngược 5 phút."]
+          - ["Ô nhập", "Textbox", "Có", "N/A", "Trống", "Tối đa 500 ký tự."]
+      - key: my-appointments
+        name: Lịch hẹn của tôi
+        purpose: Xem, hủy, đổi lịch hẹn của chính mình.
+        access: "Trang chủ → “Lịch hẹn của tôi”."
+        uc: [my-appointments, cancel, reschedule]
+        data_source: "Lịch hẹn có [Bệnh nhân] = <Người dùng hiện tại>; tab “Sắp tới” (booked) và “Đã qua”."
+        sorting: "Sắp tới: [Bắt đầu] tăng dần; Đã qua: giảm dần."
+        components:
+          - ["Mã lịch hẹn, giờ, bác sĩ, chuyên khoa, trạng thái", "Grid", "Không", "N/A", "N/A", "Trạng thái hiển thị bằng nhãn màu."]
+          - ["Hủy lịch", "Button", "N/A", "N/A", "N/A", "Chỉ bật khi “booked” và còn ≥ 2 giờ; kích hoạt [[UC:cancel]]."]
+          - ["Đổi lịch", "Button", "N/A", "N/A", "N/A", "Điều kiện như Hủy lịch; kích hoạt [[UC:reschedule]]."]
+      - key: my-documents
+        name: Tài liệu của tôi
+        purpose: Xem tài liệu đã được bác sĩ phát hành.
+        access: "Trang chủ → “Tài liệu của tôi”."
+        uc: [download-document]
+        data_source: "Tài liệu của <Người dùng hiện tại>, “available”, đã phát hành."
+        sorting: "Ngày phát hành giảm dần."
+        components:
+          - ["Loại, ngày, bác sĩ phát hành", "Grid", "Không", "N/A", "N/A", ""]
+          - ["Xem", "Button", "N/A", "N/A", "N/A", "Xin link 5 phút rồi mở tệp."]
+      - key: my-profile
+        name: Thông tin cá nhân
+        purpose: Xem và sửa thông tin hành chính được phép.
+        access: "Tài khoản → “Thông tin cá nhân”."
+        uc: [update-profile]
+      - key: notification-preferences
+        name: Cài đặt thông báo
+        purpose: Chọn kênh, ngôn ngữ, khung giờ yên tĩnh.
+        access: "Tài khoản → “Thông báo”."
+        uc: [notification-preferences]
+      - key: privacy
+        name: Quyền riêng tư
+        purpose: Quản lý đồng ý xử lý dữ liệu bằng AI; yêu cầu bản sao dữ liệu cá nhân.
+        access: "Tài khoản → “Quyền riêng tư”."
+        uc: [manage-consent, export-my-data]
+        components:
+          - ["Cho phép xử lý dữ liệu bằng AI", "Toggle", "Có", "N/A", "Theo lựa chọn khi đăng ký", "Kèm giải thích phạm vi; tắt cần xác nhận."]
+          - ["Lịch sử đồng ý", "Grid", "Không", "N/A", "N/A", "Thời điểm, phiên bản điều khoản, hành động."]
+          - ["Yêu cầu bản sao dữ liệu", "Button", "N/A", "N/A", "N/A", "Yêu cầu xác thực lại; kích hoạt [[UC:export-my-data]]."]
+      - key: my-access-log
+        name: Lịch sử truy cập hồ sơ
+        purpose: Xem ai đã truy cập hồ sơ của mình.
+        access: "Tài khoản → “Lịch sử truy cập hồ sơ”."
+        uc: [view-my-access-log]
+        data_source: "Bản ghi audit có [Bệnh nhân] = <Người dùng hiện tại>, 12 tháng gần nhất."
+        sorting: "Thời điểm giảm dần."
+  - portal: Cổng nội bộ
+    items:
+      - key: queue
+        name: Hàng đợi hôm nay
+        purpose: Theo dõi lịch hẹn trong ngày, check-in, hủy/đổi thay bệnh nhân.
+        access: "Tiếp đón → “Hàng đợi hôm nay”."
+        uc: [check-in, book, cancel, reschedule]
+        data_source: "Lịch hẹn có ngày khám = <Hôm nay> của các bác sĩ thuộc khoa người dùng được phân công."
+        sorting: "[Bắt đầu] tăng dần."
+        components:
+          - ["Giờ, bệnh nhân, bác sĩ, trạng thái", "Grid", "Không", "N/A", "N/A", "Tên bệnh nhân + năm sinh; SĐT che 4 số giữa."]
+          - ["Nguy cơ không đến", "Badge", "Không", "N/A", "N/A", "Hiển thị khi nguy cơ ≥ ngưỡng; không hiển thị con số với bệnh nhân."]
+          - ["Check-in", "Button", "N/A", "N/A", "N/A", "Bật khi “booked” và ngày khám hôm nay."]
+          - ["Đặt lịch thay", "Button", "N/A", "N/A", "N/A", "Mở [[SCR:find-doctor]] ở chế độ Điều dưỡng."]
+      - key: schedule
+        name: Lịch làm việc và slot
+        purpose: Tạo lịch, mẫu tuần, sinh và chặn slot; bác sĩ xem lịch của mình.
+        access: "Lịch làm việc."
+        uc: [schedule-template, generate-slots, block-slot, view-own-schedule]
+      - key: patient-form
+        name: Hồ sơ bệnh nhân (tiếp đón)
+        purpose: Tạo, sửa, gộp hồ sơ bệnh nhân tại quầy.
+        access: "Tiếp đón → “Hồ sơ bệnh nhân”."
+        uc: [create-patient, merge-patient]
+      - key: patient-search
+        name: Tìm kiếm bệnh nhân
+        purpose: Tìm bệnh nhân và mở timeline theo quyền.
+        access: "Bệnh nhân → “Tìm kiếm”."
+        uc: [search-patient, view-timeline]
+        components:
+          - ["Từ khóa", "Textbox", "Có", "Có", "Trống", "Tên (≥ 3 ký tự, không dấu), SĐT, mã bệnh nhân."]
+          - ["Năm sinh", "Number", "Có", "Không", "Trống", "Thu hẹp kết quả."]
+          - ["Kết quả", "Grid", "Không", "N/A", "N/A", "Tối đa 50 dòng: họ tên, năm sinh, giới, mã, SĐT che."]
+      - key: timeline
+        name: Timeline bệnh nhân
+        purpose: Lịch sử khám, sinh hiệu, chẩn đoán, dị ứng, tài liệu.
+        access: "Chọn bệnh nhân trên [[SCR:patient-search]]."
+        uc: [view-timeline, break-glass, summarize, upload-document, download-document, release-document, void-document]
+        components:
+          - ["Thẻ bệnh nhân", "Panel", "Không", "N/A", "N/A", "Họ tên, tuổi, giới, dị ứng, bệnh nền."]
+          - ["Biểu ngữ truy cập khẩn cấp", "Banner", "Không", "N/A", "Ẩn", "Hiện khi dùng quyền khẩn cấp, kèm giờ hết hạn."]
+          - ["Dòng thời gian", "Timeline", "Không", "N/A", "12 tháng", "Lọc theo loại, thời gian; giá trị bất thường tô nổi."]
+          - ["Tóm tắt AI", "Button + Panel", "N/A", "N/A", "N/A", "Chỉ Bác sĩ; nhãn “Do AI tạo, cần kiểm tra”."]
+          - ["Tải lên tài liệu", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:upload-document]]."]
+      - key: encounter
+        name: Lần khám
+        purpose: Ghi sinh hiệu, bệnh sử, chẩn đoán; kết thúc và bổ sung lần khám.
+        access: "Danh sách khám hôm nay → “Bắt đầu khám”."
+        uc: [record-vitals, start-encounter, record-diagnosis, finish-encounter, addendum]
+        components:
+          - ["Sinh hiệu", "Number group", "Có", "Không", "Trống", "Đơn vị cố định; kiểm khoảng hợp lý."]
+          - ["Bệnh sử / khám", "Rich textarea", "Khi “in-progress”", "Không", "Trống", "Tối đa 10.000 ký tự."]
+          - ["Chẩn đoán ICD-10", "Searchable list", "Khi “in-progress”", "Có (≥ 1 chính)", "Trống", "Tìm theo mã hoặc tên."]
+          - ["Kết thúc khám", "Button", "N/A", "N/A", "N/A", "Có hộp thoại xác nhận."]
+          - ["Thêm bổ sung", "Button", "N/A", "N/A", "N/A", "Chỉ khi “finished”."]
+      - key: assistant
+        name: Hỏi trợ lý tri thức
+        purpose: Hỏi đáp có trích dẫn từ tài liệu nội bộ đã duyệt.
+        access: "Trợ lý AI → “Hỏi trợ lý”."
+        uc: [ask-assistant, answer-feedback]
+        components:
+          - ["Ô câu hỏi", "Textarea", "Có", "Có", "Trống", "3–2.000 ký tự; cảnh báo không nhập thông tin định danh bệnh nhân."]
+          - ["Câu trả lời", "Stream text", "Không", "N/A", "N/A", "Có số trích dẫn [1], [2] mở được đoạn nguồn; nhãn AI."]
+          - ["Hữu ích / Không hữu ích", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:answer-feedback]]."]
+      - key: extraction-review
+        name: Duyệt trích xuất tài liệu
+        purpose: Hàng chờ và màn hình duyệt từng trường trích xuất.
+        access: "Trợ lý AI → “Duyệt trích xuất”."
+        uc: [review-extraction]
+        components:
+          - ["Ảnh tài liệu", "Viewer", "Không", "N/A", "N/A", "Tô vùng của trường đang chọn."]
+          - ["Danh sách trường", "Editable grid", "Có", "N/A", "Chưa xác nhận", "Giá trị, đơn vị, độ tin cậy; trạng thái Xác nhận/Sửa/Bỏ từng dòng."]
+          - ["Lưu kết quả / Từ chối tất cả", "Button", "N/A", "N/A", "N/A", "Không có “Chấp nhận tất cả”."]
+      - key: kb
+        name: Kho tri thức
+        purpose: Quản lý tài liệu nguồn của trợ lý.
+        access: "Trợ lý AI → “Kho tri thức”."
+        uc: [manage-kb]
+      - key: users
+        name: Người dùng
+        purpose: Mời nhân viên, gán vai trò, khóa/mở khóa, liên kết bác sĩ.
+        access: "Quản trị → “Người dùng”."
+        uc: [invite-staff, lock-account, link-practitioner]
+      - key: audit
+        name: Audit truy cập
+        purpose: Tra cứu, xuất báo cáo audit; rà soát truy cập khẩn cấp; xử lý yêu cầu của bệnh nhân.
+        access: "Quản trị → “Audit”."
+        uc: [search-audit, export-audit, process-data-request, break-glass-alert]
+        components:
+          - ["Bộ lọc", "Form", "Có", "Có (khoảng thời gian)", "24 giờ gần nhất", "Bệnh nhân, người truy cập, hành động, kết quả, mục đích; tối đa 92 ngày."]
+          - ["Kết quả", "Grid", "Không", "N/A", "N/A", "Không có cột nội dung lâm sàng; IP che octet cuối."]
+          - ["Xuất CSV", "Button", "N/A", "N/A", "N/A", "Yêu cầu nhập mục đích."]
+          - ["Tab “Cần rà soát”", "Tab", "N/A", "N/A", "N/A", "Truy cập khẩn cấp chưa rà soát; nút “Đánh dấu đã rà soát”."]
+      - key: dead-letters
+        name: Thông báo gửi lỗi
+        purpose: Xem và gửi lại các lần nhắc lỗi hẳn.
+        access: "Quản trị → “Thông báo lỗi”."
+        uc: [manage-dead-letters]

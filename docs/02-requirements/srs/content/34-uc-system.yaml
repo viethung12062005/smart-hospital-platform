@@ -1,0 +1,222 @@
+# Chương 3 – Module Tác vụ tự động (worker xử lý sự kiện và job định kỳ).
+modules:
+  - key: system
+    name: Tác vụ tự động của hệ thống
+    intro: >-
+      Các use case do hệ thống tự kích hoạt bởi sự kiện hoặc lịch. Sự kiện được giao ít nhất một lần nên mọi xử lý đều
+      phải chạy lại an toàn (idempotent) – xem [[CBR:event-processing]].
+    sections:
+      - name: Nhắc lịch
+        use_cases:
+          - key: schedule-reminders
+            name: Lên lịch nhắc khi lịch hẹn được tạo
+            type: Other
+            actors: [system]
+            trace: [UC-07, NFR-P8, "Sự kiện E1, E3, E10"]
+            objective: Tạo các lần nhắc T-24h, T-2h (và T-6h nếu nguy cơ không đến khám cao) cho mỗi lịch hẹn.
+            trigger: Sự kiện “đã đặt lịch”, “đã đổi lịch” hoặc “đã chấm điểm nguy cơ”.
+            pre: ["Lịch hẹn “booked”."]
+            post: ["Các lần nhắc “scheduled” tồn tại, không trùng."]
+            lanes: [Hàng đợi sự kiện, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhận sự kiện"}
+              - {n: 2, lane: 1, kind: decision, text: "Đã xử lý\nsự kiện này?", branches: [{to: 3, label: Chưa}, {to: 5, label: Rồi}]}
+              - {n: 3, lane: 1, text: "Tạo lần nhắc theo\nmốc thời gian còn lại"}
+              - {n: 4, lane: 1, text: "Lưu, đánh dấu đã xử lý", end: true}
+              - {n: 5, lane: 1, text: "Bỏ qua", end: true}
+            rules:
+              - step: "(3)"
+                title: Quy tắc mốc nhắc
+                lines:
+                  - "Tạo nhắc T-24h và T-2h; mốc đã qua thì bỏ qua (đặt lịch sát giờ chỉ còn T-2h hoặc không nhắc)."
+                  - "Nguy cơ không đến khám ≥ ngưỡng (mặc định 0,35) thì thêm nhắc T-6h; thiếu điểm nguy cơ (ML lỗi) thì vẫn tạo T-24h, T-2h (AC-15.1)."
+                  - "Đổi lịch: hủy các nhắc của lịch cũ, tạo nhắc cho lịch mới."
+                  - "Mỗi lần nhắc duy nhất theo (mã lịch hẹn, loại nhắc)."
+            acceptance:
+              - ["AC-SR.1", "Given cùng sự kiện “đã đặt lịch” được giao 2 lần, Then chỉ có một bộ lần nhắc."]
+
+          - key: send-reminder
+            name: Gửi nhắc lịch
+            type: Other
+            actors: [system]
+            trace: [UC-07, AC-07.2, NFR-P8, NFR-A6]
+            objective: Gửi lần nhắc đến hạn qua kênh ưu tiên, có thử lại và kênh dự phòng.
+            trigger: Job mỗi phút lấy các lần nhắc đến hạn.
+            pre: ["Lần nhắc “scheduled”, đến giờ gửi."]
+            post: ["Lần nhắc “sent” hoặc “failed” (vào hàng lỗi và cảnh báo vận hành)."]
+            lanes: [Hệ thống, Nhà cung cấp gửi tin]
+            steps:
+              - {n: 1, lane: 0, text: "Lấy lần nhắc đến hạn\n(khóa nguyên tử)"}
+              - {n: 2, lane: 0, kind: decision, text: "Lịch hẹn còn\n“booked”?", branches: [{to: 3, label: Có}, {to: 7, label: Không}]}
+              - {n: 3, lane: 1, text: "Gửi qua kênh ưu tiên"}
+              - {n: 4, lane: 0, kind: decision, text: "Thành công?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
+              - {n: 5, lane: 0, text: "Đánh dấu “sent”", end: true}
+              - {n: 6, lane: 0, text: "Thử lại / chuyển kênh dự phòng;\nhết lượt thì “failed”", end: true}
+              - {n: 7, lane: 0, text: "Hủy lần nhắc", end: true}
+            rules:
+              - step: "(1)"
+                title: Quy tắc nhận việc
+                lines: ["Nhiều bản sao worker chạy song song; mỗi lần nhắc chỉ được một worker nhận (khóa có thời hạn) để không gửi trùng."]
+              - step: "(3)"
+                key: reminder-content
+                title: Quy tắc nội dung tin
+                lines:
+                  - "Dùng [[ET:reminder]]; nội dung chỉ gồm giờ khám, tên bác sĩ, chuyên khoa, địa điểm, link quản lý lịch hẹn – không có chẩn đoán, lý do khám hay kết quả."
+                  - "Tôn trọng khung giờ yên tĩnh (trừ nhắc T-2h); ngôn ngữ theo tùy chọn của bệnh nhân."
+              - step: "(6)"
+                title: Quy tắc thử lại
+                lines:
+                  - "Tối đa 5 lần với backoff 10 giây, 1, 5, 15 phút; lỗi vĩnh viễn (số không hợp lệ) không thử lại."
+                  - "Kênh chính lỗi hẳn thì chuyển kênh dự phòng (push → email → SMS); hết kênh → “failed”, vào hàng lỗi, cảnh báo vận hành ([[UC:manage-dead-letters]])."
+                  - "≥ 99% lần nhắc được gửi trong 5 phút sau giờ hẹn gửi (NFR-P8)."
+            acceptance:
+              - ["AC-07.2", "Given nhà cung cấp lỗi tạm thời 2 lần rồi thành công, Then bệnh nhân nhận đúng 1 tin."]
+              - ["AC-SN.1", "Given tin nhắc gửi đi, Then không chứa lý do khám hay chẩn đoán."]
+
+          - key: cancel-reminders
+            name: Hủy nhắc khi lịch hẹn bị hủy
+            type: Other
+            actors: [system]
+            trace: [UC-07, AC-07.1, "Sự kiện E2"]
+            objective: Bảo đảm không gửi nhắc cho lịch hẹn đã hủy.
+            trigger: Sự kiện “đã hủy lịch hẹn”.
+            pre: ["N/A"]
+            post: ["Mọi lần nhắc “scheduled” của lịch hẹn chuyển “cancelled”."]
+            lanes: [Hàng đợi sự kiện, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhận sự kiện “đã hủy”"}
+              - {n: 2, lane: 1, text: "Hủy các lần nhắc\n“scheduled”", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc hủy
+                lines: ["Chạy lại an toàn; nếu sự kiện hủy đến trước sự kiện đặt (sai thứ tự), lịch hẹn được đánh dấu đã hủy để bước lên lịch nhắc bỏ qua."]
+            acceptance:
+              - ["AC-07.1", "Given lịch hẹn bị hủy trước giờ nhắc, Then không gửi nhắc."]
+
+      - name: Dự đoán và đánh dấu không đến khám
+        use_cases:
+          - key: predict-noshow
+            name: Dự đoán nguy cơ không đến khám
+            type: Other
+            actors: [system]
+            trace: [UC-15, AC-15.1, AC-15.2, "Sự kiện E1, E10"]
+            objective: Tính xác suất không đến khám cho mỗi lịch hẹn mới.
+            trigger: Sự kiện “đã đặt lịch”.
+            pre: ["Bệnh nhân đã đồng ý xử lý dữ liệu bằng AI."]
+            post: ["Dự đoán được lưu kèm phiên bản mô hình; sự kiện “đã chấm điểm” được phát."]
+            lanes: [Hàng đợi sự kiện, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Nhận sự kiện “đã đặt lịch”"}
+              - {n: 2, lane: 1, kind: decision, text: "Bệnh nhân\nđồng ý AI?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
+              - {n: 3, lane: 1, text: "Tính đặc trưng, chạy mô hình,\nlưu kết quả + phiên bản"}
+              - {n: 4, lane: 1, text: "Phát sự kiện “đã chấm điểm”", end: true}
+              - {n: 5, lane: 1, text: "Bỏ qua, không lưu dự đoán", end: true}
+            rules:
+              - step: "(3)"
+                title: Quy tắc dự đoán
+                lines:
+                  - "Đặc trưng chỉ gồm dữ liệu không định danh: nhóm tuổi, chuyên khoa, khoảng cách ngày đặt–ngày khám, giờ khám, số lần không đến/đặt trước đó; không dùng họ tên, địa chỉ, chẩn đoán."
+                  - "Lưu [Phiên bản mô hình] với mỗi dự đoán để truy vết (AC-15.2); lỗi hoặc quá 2 giây thì bỏ qua, không chặn nhắc lịch (AC-15.1)."
+                  - "Tập huấn luyện dùng dữ liệu đã ẩn danh và chỉ của bệnh nhân còn đồng ý."
+            acceptance:
+              - ["AC-15.1", "Given service ML lỗi, Then lịch nhắc T-24h và T-2h vẫn được tạo."]
+              - ["AC-15.2", "Given một dự đoán, Then có phiên bản mô hình đi kèm."]
+
+          - key: mark-noshow
+            name: Đánh dấu không đến khám
+            type: Other
+            actors: [system]
+            trace: [UC-15, BP-2, "Sự kiện E5"]
+            objective: Chuyển lịch hẹn quá giờ chưa check-in sang “noshow”.
+            trigger: Job chạy mỗi 10 phút.
+            pre: ["Lịch hẹn “booked”, quá giờ khám 30 phút."]
+            post: ["Lịch hẹn “noshow”; sự kiện đổi trạng thái được phát (dùng cho ML và báo cáo)."]
+            lanes: [Job định kỳ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chạy theo lịch"}
+              - {n: 2, lane: 1, text: "Chuyển lịch hẹn quá hạn\nsang “noshow”, phát sự kiện", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc đánh dấu
+                lines: ["Chỉ lịch hẹn “booked” có [Bắt đầu] + 30 phút < <Bây giờ>; chạy lại an toàn; Điều dưỡng sửa được thành “arrived” trong ngày nếu bệnh nhân đến muộn (có audit)."]
+            acceptance:
+              - ["AC-NS.1", "Given lịch hẹn 08:00 chưa check-in, When job chạy lúc 08:40, Then lịch hẹn “noshow”."]
+
+      - name: Xử lý tài liệu, cảnh báo và lưu trữ
+        use_cases:
+          - key: extract-document
+            name: Trích xuất dữ liệu từ tài liệu
+            type: Other
+            actors: [system]
+            trace: [UC-13, AC-13.1, AC-13.2, BR-10, NFR-P7, "Sự kiện E8"]
+            objective: OCR, phân loại tài liệu và trích trường để người dùng duyệt.
+            trigger: Sự kiện “đã upload tài liệu”.
+            pre: ["Tài liệu “available”; bệnh nhân đã đồng ý xử lý dữ liệu bằng AI."]
+            post: ["Kết quả trích xuất “needs-review”, hoặc “failed” sau 5 lần thử (không ảnh hưởng tài liệu)."]
+            lanes: [Hàng đợi sự kiện, Hệ thống, Mô hình ngôn ngữ]
+            steps:
+              - {n: 1, lane: 0, text: "Nhận sự kiện"}
+              - {n: 2, lane: 1, text: "Lấy link đọc 60 giây,\nOCR trong cụm"}
+              - {n: 3, lane: 1, text: "Che định danh trong\nvăn bản OCR"}
+              - {n: 4, lane: 2, text: "Phân loại, trích trường\ntheo schema"}
+              - {n: 5, lane: 1, text: "Kiểm tra giá trị/đơn vị,\ngắn độ tin cậy, “needs-review”", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc truy cập tệp
+                lines: ["Service AI xin link đọc 60 giây qua endpoint nội bộ, bằng danh tính workload; OCR chạy trong cụm, văn bản OCR lưu vào kho nội bộ."]
+              - step: "(3)"
+                title: Quy tắc che định danh
+                lines: ["Áp dụng [[CBR:ai-safety]] trước khi gửi văn bản ra mô hình bên ngoài."]
+              - step: "(5)"
+                title: Quy tắc kết quả
+                lines:
+                  - "Không ghi gì vào hồ sơ; chỉ tạo mục chờ duyệt cho [[UC:review-extraction]] (AC-13.1). Hoàn tất ≤ 2 phút sau upload (p95) (NFR-P7)."
+                  - "Lỗi: thử lại 5 lần; hết lượt → “failed”, vào hàng lỗi, không chặn upload hay xem tài liệu (AC-13.2)."
+            acceptance:
+              - ["AC-13.2", "Given OCR lỗi liên tục, Then tài liệu vẫn “available” và tải được; mục trích xuất “failed”."]
+
+          - key: break-glass-alert
+            name: Cảnh báo truy cập khẩn cấp cho DPO
+            type: Other
+            actors: [system]
+            trace: [UC-10, AC-10.1, BR-07]
+            objective: Báo DPO mỗi lần có truy cập khẩn cấp để rà soát.
+            trigger: Bản ghi audit có [Mục đích] = “break-glass”.
+            pre: ["N/A"]
+            post: ["DPO nhận cảnh báo ≤ 5 phút; mục cần rà soát xuất hiện trên [[SCR:audit]]."]
+            lanes: [Hệ thống, Cán bộ bảo vệ dữ liệu]
+            steps:
+              - {n: 1, lane: 0, text: "Phát hiện bản ghi\n“break-glass”"}
+              - {n: 2, lane: 0, text: "Tạo mục rà soát,\ngửi cảnh báo"}
+              - {n: 3, lane: 1, text: "Nhận cảnh báo", end: true}
+            rules:
+              - step: "(2)"
+                title: Quy tắc cảnh báo
+                lines:
+                  - "Dùng [[ET:break-glass-alert]]: tên bác sĩ, khoa, thời điểm, mã bệnh nhân (không tên bệnh nhân), lý do; ≤ 5 phút (AC-10.1)."
+                  - "Mục rà soát chưa xử lý sau 72 giờ được nhắc lại cho DPO."
+            acceptance:
+              - ["AC-10.1", "Given truy cập khẩn cấp lúc T, Then DPO nhận cảnh báo trước T + 5 phút."]
+
+          - key: purge-expired
+            name: Xóa dữ liệu hết thời hạn lưu trữ
+            type: Other
+            actors: [system]
+            trace: [BR-11, NFR-SEC, "Nghị định 13/2023 – lưu trữ có thời hạn"]
+            objective: Xóa tự động dữ liệu tạm có thời hạn lưu ngắn theo chính sách lưu trữ.
+            trigger: Job hằng ngày lúc 02:00.
+            pre: ["N/A"]
+            post: ["Dữ liệu quá hạn bị xóa; số lượng xóa được ghi nhật ký vận hành."]
+            lanes: [Job định kỳ, Hệ thống]
+            steps:
+              - {n: 1, lane: 0, text: "Chạy theo lịch"}
+              - {n: 2, lane: 1, text: "Xóa dữ liệu quá hạn theo\nbảng lưu trữ, ghi số lượng", end: true}
+            rules:
+              - step: "(2)"
+                key: retention
+                title: Quy tắc thời hạn lưu trữ
+                lines:
+                  - "Hội thoại trợ lý: 30 ngày. Hội thoại chatbot và hành động chờ: 7 ngày. Tệp xuất audit và gói dữ liệu bệnh nhân: 24 giờ. Lần nhắc đã gửi: 90 ngày. Bản ghi chống trùng (inbox, idempotency): 7 ngày."
+                  - "Hồ sơ bệnh án, lần khám, tài liệu lâm sàng: lưu dài hạn theo quy định (giả định 10 năm, BR-11), không bị job này xóa. Audit: 90 ngày tra cứu nhanh + 2 năm lưu trữ; bản gốc WORM theo chính sách khóa."
+            acceptance:
+              - ["AC-PG.1", "Given hội thoại tạo 31 ngày trước, When job chạy, Then hội thoại bị xóa; Given lần khám 31 ngày trước, Then không bị xóa."]
