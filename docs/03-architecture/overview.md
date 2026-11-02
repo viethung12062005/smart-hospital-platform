@@ -4,6 +4,9 @@
 >
 > Project 5 — Cloud Application Development. Một hệ thống microservice gọn, FHIR-native, chạy trên Azure nhưng không khóa chặt vào Azure.
 > Chỉ dùng **dữ liệu bệnh nhân giả (synthetic)**.
+>
+> Sơ đồ chi tiết theo từng góc nhìn (C4, triển khai Azure, vùng tin cậy mạng, danh tính, bảo vệ dữ liệu, CI/CD, môi trường, quan sát, AI/ML):
+> [architecture-diagrams.md](architecture-diagrams.md).
 
 Mục lục: [1. Sơ đồ tổng thể](#1-sơ-đồ-kiến-trúc-tổng-thể) · [2. Giao tiếp giữa các module](#2-giao-tiếp-giữa-các-module) ·
 [3. Module mã nguồn](#3-module-mã-nguồn) · [4. Bên trong một service Java](#4-bên-trong-một-service-java) · [5. Luồng nghiệp vụ](#5-luồng-nghiệp-vụ-end-to-end-vertical-slice-chính) ·
