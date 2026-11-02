@@ -106,3 +106,10 @@ def build(
     if client:
         record["client"] = client
     return record
+
+
+def to_event(record: dict[str, Any], traceparent: str | None = None) -> dict[str, Any]:
+    """Đóng gói thành CloudEvent E11 (subject = Audit/<eventId>, giống AuditRecord.toEvent bên Java)."""
+    from shp_platform import events
+
+    return events.create(record["service"], EVENT_TYPE, f"Audit/{record['eventId']}", record, traceparent)
