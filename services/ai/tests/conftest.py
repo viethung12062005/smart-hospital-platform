@@ -8,7 +8,7 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
-from shp_ai import api_summary, usage
+from shp_ai import api_booking, api_summary, usage
 from shp_ai.assistant import conversations
 from shp_ai.blobstore import MemoryBlobStore
 from shp_ai.deps import Deps
@@ -69,6 +69,7 @@ def make_deps(mongo_uri: str) -> Callable[..., Deps]:
         usage.ensure_indexes(db)
         idempotency.ensure_indexes(db)
         api_summary.ensure_indexes(db)
+        api_booking.ensure_indexes(db)
         settings = Settings(mongodb_db=name)
         deps = Deps(
             settings,

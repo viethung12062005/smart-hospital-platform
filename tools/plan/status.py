@@ -103,4 +103,7 @@ STATUS = {
     "AI-19": ("done", "67662f2", "Thu thập bằng OBO token (timeline, Condition, Allergy, Observation bất thường); clinical thật chưa có, test bằng HTTP giả theo hợp đồng 09"),
     "AI-20": ("done", "67662f2", "Prompt + schema + kiểm nguồn, số liệu phải có trong nguồn"),
     "AI-21": ("done", "67662f2", "AI4: Idempotency-Key, cache 10 phút, fallback structured-timeline, audit TREAT/ETREAT"),
+    "AI-29": ("done", "4b3dbcd", "4 tool, schema kiểm tham số, vòng lặp tối đa 6 lượt/10 giây"),
+    "AI-30": ("done", "4b3dbcd", "pending_actions TTL 5 phút; AI8 confirm gọi $book/$cancel bằng token bệnh nhân, 409 gợi ý lại"),
+    "AI-31": ("done", "4b3dbcd", "AI7 JSON; mọi model lỗi trả 503 ai-unavailable kèm fallback booking-form"),
 }
