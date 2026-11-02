@@ -31,3 +31,9 @@ TestResults/
 
 # Build Java (Maven)
 target/
+
+# File khóa/tạm của Office và trình soạn thảo (không bao giờ commit)
+~$*
+.~lock.*
+*.swp
+.DS_Store
