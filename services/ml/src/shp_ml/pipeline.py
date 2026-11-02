@@ -22,6 +22,7 @@ import pandas as pd
 
 from shp_ml.card import model_card
 from shp_ml.checks import check
+from shp_ml.drift import KEY_FEATURES
 from shp_ml.evaluate import (
     GateResult,
     auc,
@@ -31,7 +32,7 @@ from shp_ml.evaluate import (
     quality_gate,
     subgroup_auc,
 )
-from shp_ml.features import FEATURES, time_split, training_frame
+from shp_ml.features import CATEGORICAL, FEATURES, time_split, training_frame
 from shp_ml.model import NoShowModel
 from shp_ml.registry import Registry
 from shp_ml.train import baseline_pipeline
@@ -43,6 +44,7 @@ PARAM_GRID: list[dict[str, Any]] = [
 ]
 MAX_ROUNDS = 1500
 TUNING_MONTHS = 3
+REFERENCE_ROWS = 2000
 
 
 def dataset_hash(path: Path) -> str:
@@ -160,7 +162,13 @@ def train_candidate(
     if not gate.passed:
         return TrainingResult(gate, metrics, None, run_id)
 
+    ref = valid.sample(n=min(REFERENCE_ROWS, len(valid)), random_state=seed)
+    reference = {
+        "features": {f: [str(v) if f in CATEGORICAL else float(v) for v in ref[f]] for f in KEY_FEATURES},
+        "scores": [round(float(v), 6) for v in candidate.predict_frame(ref)],
+    }
     meta = {
+        "reference": reference,  # mẫu phân phối lúc đăng ký cho detector drift (ML-19), không có PII
         "threshold": threshold,
         "datasetSha256": dataset_sha256,
         "seed": seed,
