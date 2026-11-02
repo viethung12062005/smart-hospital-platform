@@ -89,6 +89,36 @@ mọi thay đổi sau đó trên `main` ở cùng file đều thành conflict (c
 | Draft | Mở dạng Draft nếu chưa xong; chuyển Ready khi đủ Definition of Done |
 | Review | 1 review của Code Owner; resolve hết thread; commit mới làm mất approval cũ |
 
+### 4.1 Phong cách viết PR
+
+**Kích thước.** Nhắm ≤ 400 dòng thay đổi (không tính file sinh tự động, lockfile, ảnh). Lớn hơn thì tách theo lát dọc (API → logic → UI)
+hoặc tách phần chuẩn bị (refactor, migration) thành PR riêng đi trước. Refactor không trộn với thay đổi hành vi.
+
+**Mô tả** viết theo đúng các mục của [template](../.github/pull_request_template.md), không tự đặt mục khác:
+
+| Mục | Viết gì | Không viết |
+|---|---|---|
+| Task | ID task, story, mục tài liệu thiết kế đã theo (đường dẫn + §) | |
+| Thay đổi | 2–5 gạch đầu dòng: **vì sao** cần, làm gì ở mức hành vi, điểm reviewer cần soi kỹ | Liệt kê lại từng file (diff đã có) |
+| Ảnh hưởng hợp đồng | Đánh dấu có/không đổi `contracts/`; có đổi thì nêu API/event/matrix nào | |
+| Bảo mật và dữ liệu | Có chạm dữ liệu bệnh nhân, phân quyền, audit, PII, secret, egress không; nếu có thì kiểm soát gì đã thêm | Bỏ trống: ghi rõ "Không ảnh hưởng" kèm lý do |
+| Kiểm tra | Lệnh đã chạy và kết quả thật (số test pass, có Docker hay không); việc **chưa** kiểm được và vì sao | "Đã test" chung chung |
+| Việc theo sau | Việc cố ý để PR khác, kèm task/issue | |
+
+Quy tắc chung:
+- Tiếng Việt cho mô tả; tên kỹ thuật, lệnh, đường dẫn giữ nguyên trong `code`. Câu ngắn, gạch đầu dòng, không văn hoa.
+- Viết như cho người chưa theo dõi cuộc trao đổi: không viết tắt nội bộ, không "như đã nói".
+- Thay đổi giao diện: kèm ảnh chụp hoặc GIF trước/sau (desktop và mobile).
+- Ghi trung thực: test nào bị bỏ qua, phần nào chỉ kiểm trên CI, rủi ro còn lại.
+- Không chèn dòng ghi công của công cụ (`Generated with ...`).
+- Mở PR **sau khi tự review diff** trên GitHub: xóa debug, code chết, thay đổi lạc đề, file không liên quan.
+
+**Review.**
+- Reviewer gắn mức cho từng góp ý: `blocking:` (phải sửa trước merge), `suggestion:` (nên sửa, tác giả quyết), `nit:` (chi tiết nhỏ), `question:` (hỏi để hiểu).
+- Góp ý về code, không về người; kèm lý do hoặc tài liệu tham chiếu.
+- Tác giả trả lời **mọi** thread: sửa thì ghi commit đã sửa; không sửa thì nêu lý do. Người mở thread là người resolve.
+- Tác giả không tự resolve góp ý `blocking:`; muốn bỏ qua thì thống nhất với reviewer và ghi lại trong thread.
+
 ## 5. Cập nhật nhánh theo `main`
 
 | Tình huống | Cách làm |
