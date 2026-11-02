@@ -244,7 +244,7 @@ Ghi chú:
   Gateway là WebFlux nên chỉ dùng `shp-security` + `shp-service-defaults`, không kéo Spring MVC.
 - Schema event và ma trận phân quyền được **nhúng vào jar lúc build**, nên service luôn chạy đúng bản đã review.
 - Mọi service hiện thực đúng `contracts/openapi`; `contracts/db/*.js` khởi tạo collection cho notification/ml.
-- `ai`, `ml` đọc cùng schema/matrix qua thư viện Python (PY-01..05, D3).
+- `ai`, `ml` đọc cùng schema/matrix qua thư viện Python (PY-01..05, SA).
 
 | Module | Vai trò | Ai sửa |
 |---|---|---|
@@ -255,7 +255,7 @@ Ghi chú:
 | `shp-web` | Bắt lỗi → Problem Details; `@RequireShpAuthz` (test đỏ nếu endpoint quên); phân giải danh tính `sub → Patient/…`; `IdempotencyKeys` | SA |
 | `shp-data-postgres` | Outbox + relay (`SKIP LOCKED`), inbox, Idempotency-Key, sink audit — bảng do Flyway tạo | SA |
 | `shp-data-mongo` | Như trên cho MongoDB (`findAndModify` + `lockedUntil`), `MongoMessaging.inTransaction` | SA |
-| `services/*` (trừ gateway) | Controller, nghiệp vụ, truy cập dữ liệu, consumer của service | D1 (scheduling, notification) · D2 (clinical, document, audit) · D3 (ai, ml) |
+| `services/*` (trừ gateway) | Controller, nghiệp vụ, truy cập dữ liệu, consumer của service | D1 (scheduling) · D2 (clinical) · D3 (notification, document, audit, gateway) · SA (ai, ml, Keycloak) |
 
 ## 4. Bên trong một service Java
 
@@ -324,8 +324,8 @@ Mọi lần đọc/ghi dữ liệu nhạy cảm ──► audit-service (append-
 | `document-service` | Java | DocumentReference + file trên Blob | REST + event `document-uploaded`, `document-released` | D2 |
 | `notification-service` | Java worker | Nhắc lịch (`reminder`), lần gửi, tùy chọn nhận tin | Consume event, retry + DLQ | D1 |
 | `audit-service` | Java worker | AuditEvent (append-only) | Consume event | D2 |
-| `ai-service` | Python (FastAPI) | Kho tri thức RAG (AI Search) | REST; gọi các service khác bằng token của người dùng | D3 |
-| `ml-service` | Python (LightGBM, MLflow) | Đặc trưng, dự đoán, model registry (MLflow) | Consume event, phát `no-show-scored` | D3 |
+| `ai-service` | Python (FastAPI) | Kho tri thức RAG (AI Search) | REST; gọi các service khác bằng token của người dùng | SA |
+| `ml-service` | Python (LightGBM, MLflow) | Đặc trưng, dự đoán, model registry (MLflow) | Consume event, phát `no-show-scored` | SA |
 
 Nguyên tắc: **mỗi service sở hữu kho dữ liệu riêng, chọn theo đặc tính tải**
 (xem [ADR-0008](adr/0008-polyglot-persistence.md)); không join chéo service, chỉ tham chiếu

@@ -1,6 +1,6 @@
 # Đặc tả dữ liệu giả (synthetic) tiếng Việt (ARC-11)
 
-Mục đích: mọi người (test, demo, load test) dùng cùng một cách sinh dữ liệu, nhìn giống thật nhưng **không bao giờ là dữ liệu thật**. Bộ sinh do D3 làm (DAT-01, DAT-02); tài liệu này là đặc tả đầu vào.
+Mục đích: mọi người (test, demo, load test) dùng cùng một cách sinh dữ liệu, nhìn giống thật nhưng **không bao giờ là dữ liệu thật**. Bộ sinh do SA làm (DAT-01, DAT-02); tài liệu này là đặc tả đầu vào.
 
 ## 1. Nguyên tắc
 1. Tất cả dữ liệu đều giả. Không lấy mẫu, che hay "xáo trộn" dữ liệu người thật.
@@ -45,11 +45,11 @@ Chuyên khoa, lý do hủy, loại tài liệu, LOINC, ICD-10 lấy từ `contra
 - Load test 1x/5x/10x: nhân tốc độ đặt lịch theo `docs/02-requirements/workload-analysis.md`.
 
 ## 6. Cách dùng
-- Local: `make -C dev seed-users` tạo người dùng đăng nhập (patient/doctor/nurse/admin/dpo); dữ liệu nghiệp vụ nạp bằng bộ sinh của D3 với `--scale small --seed 42`.
+- Local: `make -C dev seed-users` tạo người dùng đăng nhập (patient/doctor/nurse/admin/dpo); dữ liệu nghiệp vụ nạp bằng bộ sinh của SA với `--scale small --seed 42`.
 - Test: dùng seed cố định trong test để kết quả ổn định; không commit tệp dữ liệu lớn, chỉ commit seed + tham số.
 - CI/UAT: `scale` chọn theo môi trường (bảng mục 2); seed ghi vào log job để tái lập.
 
-## 7. Kiểm tra tự động (D3 thêm vào test của bộ sinh)
+## 7. Kiểm tra tự động (SA thêm vào test của bộ sinh)
 - Không giá trị nào khớp mẫu số điện thoại/CCCD thật (chỉ dải giả).
 - Toàn vẹn tham chiếu 100%; cùng seed cho cùng hash đầu ra.
 - Không có tên miền email khác `.test`/`example.*`.

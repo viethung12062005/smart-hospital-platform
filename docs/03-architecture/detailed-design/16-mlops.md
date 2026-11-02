@@ -1,21 +1,21 @@
 # 16 — MLOps cho mô hình dự đoán no-show
 
 Mô hình, đặc trưng và bảng dữ liệu: [04](04-db-notification-ml.md) §2. Quyết định gốc: [ADR-0007](../adr/0007-no-show-ml-mlops.md).
-Story: US-063..065, US-071..074 · Task: `ML-*` (D3), `MLO-*` (SA).
+Story: US-063..065, US-071..074 · Task: `ML-*`, `MLO-*` (SA).
 
 ## 1. Dữ liệu huấn luyện (toàn bộ là dữ liệu giả)
 
-Không dùng dataset no-show công khai vì chúng bắt nguồn từ dữ liệu bệnh nhân thật. D3 viết bộ sinh dữ liệu theo đặc tả sau (`ML-01`, `ML-21`).
+Không dùng dataset no-show công khai vì chúng bắt nguồn từ dữ liệu bệnh nhân thật. SA viết bộ sinh dữ liệu theo đặc tả sau (`ML-01`, `ML-21`).
 
 | Hạng mục | Giá trị |
 |---|---|
 | Quy mô | ~80.000 lịch hẹn, 24 tháng, ~50.000 bệnh nhân giả (ID ngẫu nhiên, không liên quan người thật) |
 | Nhãn | `noshow` (1) / `fulfilled` (0); lịch hẹn `cancelled` loại khỏi tập huấn luyện |
 | Tỉ lệ dương | ~18% tổng, biến thiên theo tháng (±3 điểm phần trăm) |
-| Quy luật | `logit(p) = β0 + β1·lead_time + β2·prior_noshow_rate + β3·is_first_visit + β4·early_morning + β5·channel + β6·specialty + ε`; hệ số do D3 chọn và ghi vào tài liệu, **ε đủ lớn để AUC đạt được khoảng 0,78–0,82** (nếu không, cổng AUC ≥ 0,75 vô nghĩa) |
+| Quy luật | `logit(p) = β0 + β1·lead_time + β2·prior_noshow_rate + β3·is_first_visit + β4·early_morning + β5·channel + β6·specialty + ε`; hệ số do SA chọn và ghi vào tài liệu, **ε đủ lớn để AUC đạt được khoảng 0,78–0,82** (nếu không, cổng AUC ≥ 0,75 vô nghĩa); thêm hiệu ứng có ngưỡng (lead time < 1 ngày, > 14 ngày) và tương tác (sáng sớm × từ 60 tuổi, chatbot × 10–29 tuổi) để mô hình phi tuyến có thể hơn baseline tuyến tính (hệ số: services/ml/README.md) |
 | Cấu trúc thời gian | Có xu hướng theo mùa và mùa bệnh; chia train/validation **theo thời gian** (18 tháng đầu / 6 tháng cuối), không xáo trộn |
 | Tái lập | Seed cố định; sinh ra Parquet + file mô tả (schema, tỉ lệ nhãn, hash) |
-| Bộ dữ liệu dịch chuyển (`ML-21`) | Cùng schema; lead time trung bình +40%, tỉ lệ vắng +6 điểm, đổi tỉ trọng kênh đặt. Dùng để test detector drift và demo cảnh báo |
+| Bộ dữ liệu dịch chuyển (`ML-21`) | Cùng schema; lead time trung bình +40%, tỉ lệ vắng +6 điểm, đổi tỉ trọng kênh đặt, lịch sáng sớm (07:00–07:45) từ 10% lên 35% (để ≥ 2 đặc trưng chính vượt PSI 0,2; riêng lead time +40% chỉ cho PSI ≈ 0,08). Dùng để test detector drift và demo cảnh báo |
 | Giới hạn phải ghi trong báo cáo | Mô hình chỉ học lại quy luật do nhóm tự viết; kết quả chứng minh quy trình MLOps, **không** chứng minh khả năng dự đoán thực tế |
 
 ## 2. Huấn luyện có kiểm soát và tái lập

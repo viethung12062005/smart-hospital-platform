@@ -106,7 +106,7 @@ Chỉ bật khi task cần: `make -C dev up PROFILE=full` (cụm đã tạo bằ
 | Grafana + Loki | http://localhost:13000 (user `admin`, mật khẩu `GRAFANA_ADMIN_PASSWORD` trong `connection.env`) | Loki `http://loki.shp-deps:3100` | xem log |
 | OTel Collector | — | `http://otel-collector.shp-deps:4318` (OTLP/HTTP) | service gửi trace/metric/log; log vào Loki, trace/metric chỉ in ra log collector |
 
-Biến cho service chạy ngoài cụm nằm trong `dev/.local/connection.env` (khối "Profile full"). Dữ liệu giả cho cụm do `make seed-users` và phần seed của từng service tạo (D3 sinh dữ liệu giả theo ARC-11).
+Biến cho service chạy ngoài cụm nằm trong `dev/.local/connection.env` (khối "Profile full"). Dữ liệu giả cho cụm do `make seed-users` và phần seed của từng service tạo (SA sinh dữ liệu giả theo ARC-11).
 
 ## Chưa có (backlog)
 - **LOC-02** — realm hoàn chỉnh (MFA cho nhân viên, claim bổ sung).

@@ -1,0 +1,1 @@
+BẢN CHÉP: sửa ở libs/python/shp_platform rồi chạy python tools/pylib/sync.py

@@ -6,12 +6,12 @@
 *                           @viethung12062005
 
 # /services/scheduling/     @D1 @viethung12062005
-# /services/notification/   @D1 @viethung12062005
+# /services/notification/   @D3 @viethung12062005
 # /services/clinical/       @D2 @viethung12062005
-# /services/document/       @D2 @viethung12062005
-# /services/audit/          @D2 @viethung12062005
-# /services/ai/             @D3 @viethung12062005
-# /services/ml/             @D3 @viethung12062005
+# /services/document/       @D3 @viethung12062005
+# /services/audit/          @D3 @viethung12062005
+/services/ai/               @viethung12062005
+/services/ml/               @viethung12062005
 # /web/src/pages/           @D1 @D2 @D3 @viethung12062005
 
 # Luôn cần SA, kể cả khi đã mở các dòng trên
