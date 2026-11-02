@@ -4,6 +4,7 @@
 ## Task
 - ID: <!-- vd. NTF-02 (một PR = một task; tên nhánh `<ID>-mo-ta-ngan`, tách từ main) -->
 - Story: <!-- vd. US-041, hoặc ENABLER -->
+- Issue: Closes #<!-- issue của task -->, Part of #<!-- issue của US hoặc nhóm việc nền -->
 - Tài liệu thiết kế đã theo: <!-- vd. detailed-design/04-db-notification-ml.md §1.3 -->
 
 ## Thay đổi
