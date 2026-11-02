@@ -39,14 +39,14 @@ SPRINT_LABEL = {
 EPICS = {
     "ARC": "Kiến trúc & quản trị dự án", "GOV": "Repo, quy trình & GitHub governance", "IAC": "Hạ tầng Azure bằng Terraform",
     "CIT": "CI templates (GitHub Actions)", "GOP": "Helm & GitOps (Argo CD)", "ENV": "Vòng đời môi trường ephemeral",
-    "OBS": "Observability nền", "LOC": "Môi trường local & walking skeleton", "SCF": "Scaffold service (SA)", "GW": "API Gateway (SA)",
+    "OBS": "Observability nền", "LOC": "Môi trường local & walking skeleton", "SCF": "Scaffold service (SA)", "GW": "API Gateway",
     "MLO": "MLOps pipeline (SA)", "PRD": "Production engineering & bảo vệ",
-    "SHR": "Thư viện dùng chung (Java)", "PY": "Thư viện dùng chung (Python, cho ai/ml)", "DAT": "Dữ liệu giả",
+    "SHR": "Thư viện dùng chung (Java)", "PY": "Thư viện dùng chung (Python, cho ai/ml, SA)", "DAT": "Dữ liệu giả",
     "SCH": "Scheduling service", "NTF": "Notification service", "CLN": "Clinical service", "DOC": "Document service",
     "AUD": "Audit service", "AI": "AI service", "ML": "ML no-show", "WEB": "Web app (PWA)",
 }
-PERSON = {"SA": "SA — Solution Architect / PM / DevOps", "D1": "D1 — Dev Java (scheduling, notification, phân quyền, UI đặt lịch)",
-          "D2": "D2 — Dev Java (clinical, document, audit, lõi FHIR, UI lâm sàng)", "D3": "D3 — Dev Python/AI (AI, ML, dữ liệu giả, UI AI)"}
+PERSON = {"SA": "SA — Solution Architect / PM / DevOps; Keycloak, thư viện dùng chung, AI, ML, dữ liệu giả", "D1": "D1 — Dev Java (scheduling, phân quyền, UI đặt lịch)",
+          "D2": "D2 — Dev Java (clinical, lõi FHIR, UI lâm sàng)", "D3": "D3 — Dev Java (gateway, notification, document, audit)"}
 EVENTS = [f"E{i}" for i in range(1, 12)]
 HOURS_CAP = {"SA": 8, "D1": 4, "D2": 4, "D3": 4}
 LOAD_WARN = {"SA": 45, "D1": 30, "D2": 30, "D3": 30}
@@ -155,10 +155,10 @@ def validate(tasks: list[Task]) -> list[str]:
     for s in STORIES:
         if s[0] not in covered_stories:
             errs.append(f"story {s[0]} has no task")
-    dev_refs = set().union(*(tokens(t[8]) for t in tasks if t[4] != "SA"))
+    dev_refs = set().union(*(tokens(t[8]) for t in tasks))  # SA làm AI/ML từ 2026-11-01
     for a in ALL_API_IDS:
         if a not in dev_refs:
-            errs.append(f"API {a} is not implemented by any developer task")
+            errs.append(f"API {a} is not implemented by any task")
     all_refs = set().union(*(tokens(t[8]) for t in tasks))
     for e in EVENTS:
         for role in ("pub", "sub"):
