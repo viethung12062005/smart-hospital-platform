@@ -68,6 +68,20 @@ _CATALOG: dict[str, ErrorInfo] = {
             "The current state does not allow this.",
         ),
         ErrorInfo(
+            "slot-unavailable",
+            409,
+            "conflict",
+            "Khung giờ này vừa có người đặt. Vui lòng chọn khung giờ khác.",
+            "This slot has just been taken.",
+        ),
+        ErrorInfo(
+            "slot-has-appointment",
+            409,
+            "conflict",
+            "Khung giờ đã có lịch hẹn.",
+            "The slot already has an appointment.",
+        ),
+        ErrorInfo(
             "version-conflict",
             412,
             "conflict",

@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **68**, làm một phần: **27** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **75**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -75,7 +75,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **68**, làm một phần: **27** (�
 | ☑ | ML-15 | Package đặc trưng dùng chung cho huấn luyện và phục vụ **[xong, commit e391985: features.features_for dùng chung cho train và serve]** | Một nguồn duy nhất cho mọi đặc trưng; có unit test | 3 | ML-02 | US-071 |
 | ☑ | ML-17 | Đánh giá theo nhóm con (chuyên khoa, nhóm tuổi, kênh) + calibration + độ trễ dự đoán **[xong, commit 34b171e: AUC nhóm con, ECE, p95 độ trễ trong cổng]** | Cổng chặn nếu nhóm thấp hơn AUC tổng > 0,07 hoặc p95 > 100 ms | 4 | ML-04 | US-072 |
 | ☑ | ML-21 | Bộ dữ liệu giả thứ hai có phân phối dịch chuyển (lead time dài hơn, tỉ lệ vắng tăng) **[xong, commit e391985: synth --shifted: lead time +40%, vắng +6 điểm, nhiều chatbot, nhiều ca sáng sớm; detector báo drift trên bộ này]** | Có tài liệu mô tả mức dịch chuyển; dùng cho test detector và demo | 3 | ML-01 | US-065 |
-| ◐ | PY-02 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) **[làm một phần, commit 932b0e4: token_exchange RFC 8693 có cache, test với IdP giả; CHƯA thử với Keycloak thật (cần IAM-07)]** | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | 3 | PY-01 | US-053 |
+| ☑ | PY-02 | Client đổi token thay mặt người dùng (Keycloak, RFC 8693 token exchange) **[xong, commit 67662f2: Token exchange dùng thật trong AI4 (test với IdP giả); thử Keycloak thật ở IAM-07]** | Token trao đổi mang danh tính người dùng, aud đúng; test với IdP giả | 3 | PY-01 | US-053 |
 | ☑ | PY-03 | Consumer CloudEvents Python: validate schema, inbox (Mongo/Postgres), retry/DLQ **[xong, commit 968e3b6: Inbox/outbox/relay MongoDB (transaction, lease), RabbitMQ (quorum queue, 5 lần rồi DLQ) có test tích hợp thật; adapter Service Bus chưa thử với Azure]** | Event trùng xử lý một lần | 4 | ARC-07 | US-059, US-064 |
 | ☑ | PY-07 | Giao diện LLM provider + adapter DeepSeek, Gemini, Ollama (OpenAI-compatible) + redact PII bắt buộc + provider giả cho test **[xong, commit 932b0e4: Provider + adapter OpenAI-compatible (DeepSeek/Gemini/Ollama) + FakeProvider; timeout/429/5xx]** | Cùng một interface; mô phỏng timeout/429/5xx | 4 | LOC-04 | US-055 |
 | ☑ | PY-08 | Router: chuỗi model theo tác vụ, timeout, chuyển model kế, kết quả cuối cùng khi hết chuỗi **[xong, commit 932b0e4: Router: chuỗi theo tác vụ, fallbackLevel, final fallback; provider ngoài Azure luôn nhận văn bản đã che]** | Ghi fallbackLevel; test mọi nhánh lỗi | 4 | PY-07 | US-055 |
@@ -191,8 +191,8 @@ Tổng: **215 task, 727 giờ**. Đã xong: **68**, làm một phần: **27** (�
 | ☑ | AI-15 | Bộ eval RAG phần 2: thêm 50 câu (có câu không có đáp án trong tài liệu) **[xong, commit 0235093: Tổng 100 câu, 18 câu không có đáp án]** | Tổng ≥ 100 câu, ≥ 15 câu không có đáp án | 3 | AI-14 | US-057 |
 | ☑ | AI-16 | Harness eval: Recall@5, MRR, groundedness, độ đúng trích dẫn, tỉ lệ từ chối đúng **[xong, commit 0235093: Harness Recall@5, MRR, groundedness, trích dẫn, từ chối; cổng CI; đã dùng để chỉnh ngưỡng liên quan]** | Chạy một lệnh, xuất báo cáo Markdown + JSON | 4 | AI-15 | US-057 |
 | ☑ | AI-17 | Bộ tấn công prompt injection 50 mẫu (trong câu hỏi và trong tài liệu) + runner **[xong, commit 0235093: 50 mẫu tấn công (câu hỏi + cài trong tài liệu), 0 vượt rào là điều kiện CI]** | 0 lần vượt rào là điều kiện qua CI | 4 | AI-11 | US-054 |
-| ☐ | AI-19 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn | Không có quyền → 403 trước khi dữ liệu vào prompt | 4 | PY-02, CLN-23 | US-058 |
-| ☐ | AI-20 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) | Mọi ý có sources trỏ bản ghi thật | 4 | AI-19, PY-08 | US-058 |
+| ☑ | AI-19 | Thu thập dữ liệu cho tóm tắt bằng OBO: timeline, bệnh nền, dị ứng, kết quả bất thường; đánh số nguồn **[xong, commit 67662f2: Thu thập bằng OBO token (timeline, Condition, Allergy, Observation bất thường); clinical thật chưa có, test bằng HTTP giả theo hợp đồng 09]** | Không có quyền → 403 trước khi dữ liệu vào prompt | 4 | PY-02, CLN-23 | US-058 |
+| ☑ | AI-20 | Prompt + schema đầu ra + bộ kiểm tra nguồn (loại ý không có nguồn hợp lệ) **[xong, commit 67662f2: Prompt + schema + kiểm nguồn, số liệu phải có trong nguồn]** | Mọi ý có sources trỏ bản ghi thật | 4 | AI-19, PY-08 | US-058 |
 | ☐ | ARC-08 | Threat model STRIDE | Bảng mối đe dọa theo luồng dữ liệu, biện pháp giảm thiểu truy về NFR-SEC | 6 | ARC-04 | ENABLER |
 | ☐ | ARC-12 | Kế hoạch kiểm thử (test strategy) | Mức test, ngưỡng coverage, kịch bản load/failure test map với NFR | 4 | ARC-02 | ENABLER |
 | ☐ | ARC-16 | Sprint review + planning S4 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
@@ -218,7 +218,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **68**, làm một phần: **27** (�
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
 | ◐ | AI-18 | Chạy eval cho từng model trong chuỗi fallback và lập báo cáo so sánh **[làm một phần, commit 0235093: --live chạy từng model trong chuỗi và báo cáo theo model; CHƯA chạy vì cần API key DeepSeek/Gemini (IAC-19)]** | Báo cáo theo model (NFR-AI7) | 3 | AI-16, IAC-19 | US-057, US-055 |
-| ☐ | AI-21 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline | Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3) | 4 | AI-20 | US-058 |
+| ☑ | AI-21 | API tóm tắt (AI4): Idempotency-Key, cache 10 phút, nhãn AI, fallback structured-timeline **[xong, commit 67662f2: AI4: Idempotency-Key, cache 10 phút, fallback structured-timeline, audit TREAT/ETREAT]** | Mọi model lỗi vẫn trả timeline; có nhãn 'Do AI tạo' (AC-12.3) | 4 | AI-20 | US-058 |
 | ☐ | AI-22 | Mô hình job trích xuất + consumer document-uploaded + state machine + retry/DLQ | unique (documentId, version); retry 1/5/15 phút → failed | 4 | PY-03, DOC-05 | US-059 |
 | ☐ | AI-23 | Bước OCR bằng Tesseract (local); văn bản lưu Blob | Fallback khi dịch vụ lỗi; test với tài liệu mẫu | 4 | AI-22, DOC-10 | US-059 |
 | ☐ | AI-24 | Phân loại + trích trường bằng LLM theo schema + validator giá trị/đơn vị + độ tin cậy | overallConfidence = min các trường bắt buộc; ngưỡng 0,85 | 4 | AI-23, PY-08 | US-059 |
@@ -245,9 +245,9 @@ Tổng: **215 task, 727 giờ**. Đã xong: **68**, làm một phần: **27** (�
 | ☐ | AI-25 | API danh sách và chi tiết trích xuất (AI5) kèm vị trí trường để tô trên tài liệu | Lọc theo status/patient; quyền Care/Nurse | 3 | AI-24 | US-059, US-060 |
 | ☐ | AI-26 | API duyệt (AI6): tạo Observation bằng OBO sau khi người xác nhận; ghi editedFields | Chưa xác nhận không có dữ liệu vào hồ sơ; lỗi clinical trả nguyên văn | 4 | AI-25, PY-02, CLN-17 | US-060 |
 | ☐ | AI-27 | Bộ tài liệu giả có nhãn cho trích xuất (xét nghiệm, đơn thuốc, chuyển viện) | ≥ 60 tài liệu có nhãn trường | 4 | AI-24 | US-061 |
-| ☐ | AI-29 | Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây | Tool lạ bị từ chối; tham số sai bị chặn | 4 | PY-08, PY-02 | US-062 |
-| ☐ | AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút | Chưa xác nhận không có lịch hẹn (AC-14.1); 409 → đề xuất lại | 4 | AI-29, SCH-14 | US-062 |
-| ☐ | AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | 503 ai-unavailable kèm fallback (AC-14.3) | 3 | AI-30 | US-062 |
+| ☑ | AI-29 | Bot đặt lịch: 4 tool, schema tham số, giới hạn 6 vòng và timeout 10 giây **[xong, commit 4b3dbcd: 4 tool, schema kiểm tham số, vòng lặp tối đa 6 lượt/10 giây]** | Tool lạ bị từ chối; tham số sai bị chặn | 4 | PY-08, PY-02 | US-062 |
+| ☑ | AI-30 | pending_action + API xác nhận (AI8): gọi $book/$cancel bằng token bệnh nhân, hết hạn 5 phút **[xong, commit 4b3dbcd: pending_actions TTL 5 phút; AI8 confirm gọi $book/$cancel bằng token bệnh nhân, 409 gợi ý lại]** | Chưa xác nhận không có lịch hẹn (AC-14.1); 409 → đề xuất lại | 4 | AI-29, SCH-14 | US-062 |
+| ☑ | AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi **[xong, commit 4b3dbcd: AI7 JSON; mọi model lỗi trả 503 ai-unavailable kèm fallback booking-form]** | 503 ai-unavailable kèm fallback (AC-14.3) | 3 | AI-30 | US-062 |
 | ☐ | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI | 4 | AI-31, AI-26 | US-052, US-053, US-058, US-060, US-062 |
 | ☐ | ARC-18 | Sprint review + planning S6 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☑ | ML-10 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo **[xong, commit 3a39c95: monitor.run_daily: PSI 7 ngày, AUC 14 ngày, metric Prometheus, tạo yêu cầu huấn luyện lại; thread 02:00 VN hoặc CronJob]** | Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng | 3 | ML-19, ML-20 | US-065 |

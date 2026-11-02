@@ -27,6 +27,8 @@ class Directory(Protocol):
 
     def has_care(self, principal: Principal, patient_id: str) -> bool: ...
 
+    def care_via(self, principal: Principal, patient_id: str) -> str | None: ...
+
 
 class ClinicalDirectory:
     def __init__(
@@ -85,15 +87,30 @@ class ClinicalDirectory:
         )
         return bool(res and res.get("care"))
 
+    def care_via(self, principal: Principal, patient_id: str) -> str | None:
+        """appointment | encounter | break-glass, hoặc None nếu không có quan hệ điều trị."""
+        fu = self.fhir_user(principal)
+        if not fu or not fu.startswith("Practitioner/"):
+            return None
+        res = self._get(
+            f"/internal/v1/care-relationships/check?practitioner={fu.split('/', 1)[1]}&patient={patient_id}",
+            cache=False,
+        )
+        return str(res.get("via") or "appointment") if res and res.get("care") else None
+
 
 class StaticDirectory:
     """Bản giả cho test/dev: khoa theo subject, quan hệ điều trị theo (subject, patient)."""
 
     def __init__(
-        self, departments: dict[str, tuple[str, ...]] | None = None, care: set[tuple[str, str]] | None = None
+        self,
+        departments: dict[str, tuple[str, ...]] | None = None,
+        care: set[tuple[str, str]] | None = None,
+        break_glass: set[tuple[str, str]] | None = None,
     ) -> None:
         self._deps = departments or {}
         self._care = care or set()
+        self._bg = break_glass or set()
 
     def departments(self, principal: Principal) -> tuple[str, ...]:
         return self._deps.get(principal.subject, ())
@@ -103,3 +120,8 @@ class StaticDirectory:
 
     def has_care(self, principal: Principal, patient_id: str) -> bool:
         return (principal.subject, patient_id) in self._care
+
+    def care_via(self, principal: Principal, patient_id: str) -> str | None:
+        if (principal.subject, patient_id) in self._bg:
+            return "break-glass"
+        return "appointment" if (principal.subject, patient_id) in self._care else None
