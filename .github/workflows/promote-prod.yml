@@ -46,7 +46,7 @@ jobs:
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
   promote:
     needs: uat-digest
-    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.5
+    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.6
     with:
       service: ${{ inputs.service }}
       environment: prod

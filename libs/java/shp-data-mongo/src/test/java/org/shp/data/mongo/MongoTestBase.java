@@ -17,12 +17,18 @@ import org.testcontainers.utility.DockerImageName;
 /**
  * MongoDB 8 replica set thật (Testcontainers) — cần cho transaction. Đổi image bằng
  * SHP_TEST_MONGO_IMAGE.
+ *
+ * <p>GLIBC_TUNABLES: một số kernel Linux 6.19–7.0.13 có lỗi tcmalloc vi phạm ABI rseq khiến mongod
+ * tự chặn khởi động (MongoDB SERVER-121912, không có bản vá — closed "Gone away"); một số runner CI
+ * dùng kernel này. `glibc.pthread.rseq=1` là cách né được cộng đồng xác nhận hoạt động
+ * (https://github.com/kiwiproject/kiwi/issues/1480). Bỏ khi runner có kernel >= 7.0.14.
  */
 abstract class MongoTestBase {
   static final MongoDBContainer MONGO =
       new MongoDBContainer(
               DockerImageName.parse(System.getenv().getOrDefault("SHP_TEST_MONGO_IMAGE", "mongo:8"))
                   .asCompatibleSubstituteFor("mongo"))
+          .withEnv("GLIBC_TUNABLES", "glibc.pthread.rseq=1")
           .withReplicaSet(); // Testcontainers 2.x không tự bật replica set (transaction cần replica
   // set)
   static final MongoTemplate DB;

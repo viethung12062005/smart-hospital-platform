@@ -10,6 +10,6 @@ permissions:
   contents: read
 jobs:
   build-db:
-    uses: viethung12062005/shp-platform-templates/.github/workflows/dependency-check-db.yml@v0.1.5
+    uses: viethung12062005/shp-platform-templates/.github/workflows/dependency-check-db.yml@v0.1.6
     secrets:
       NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
