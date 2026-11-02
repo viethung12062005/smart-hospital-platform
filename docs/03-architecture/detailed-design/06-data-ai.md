@@ -121,3 +121,42 @@ Tên model là giá trị cấu hình, chốt khi dựng môi trường theo dan
 mọi model trong chuỗi đều phải chạy qua bộ eval (NFR-AI7) trước khi đưa vào chuỗi.
 
 Prompt template được version hóa trong repo (`prompts/<task>/v<N>.md`), ID phiên bản prompt được ghi vào `messages` để truy vết.
+
+## 5. Messaging và idempotency
+
+Database `ai` có thêm ba collection nền tảng. `outbox`, `inbox` cùng định nghĩa với [03](03-db-clinical-document.md) §2.7;
+`idempotency_keys` dùng **biến thể có trạng thái** (§5.1) vì thao tác của ai gọi service khác.
+
+| Collection | Dùng cho | Ghi chú |
+|---|---|---|
+| `outbox` | Phát E11 `audit.recorded` cho `ai-query`, `ai-summary` ([05](05-storage-audit-blob.md) §1.1) | Ghi cùng transaction với `messages` / `extraction_jobs`; relay giống Java (`shp_platform.mongo`). Lần đọc hồ sơ thay mặt người dùng do clinical tự audit |
+| `inbox` | Nhận E8 `document-uploaded` (consumer `ai`) | `insert inbox` + tạo `extraction_jobs` trong **một transaction**: event lặp thì bỏ qua cả event. Index unique `{documentId, documentVersion}` của `extraction_jobs` là lớp chặn thứ hai |
+| `idempotency_keys` | AI4 tóm tắt hồ sơ, AI6 duyệt trích xuất, AI8 xác nhận hành động chatbot ([12](12-api-ai.md)) | Request lặp trả lại đúng phản hồi cũ: AI6 không tạo `Observation` hai lần, AI8 không đặt hai lịch |
+
+### 5.1 `idempotency_keys` của ai
+
+Khác Java (giành khóa trong cùng transaction với dữ liệu, [03](03-db-clinical-document.md) §2.7): AI4, AI6, AI8 gọi clinical/scheduling/LLM qua mạng,
+không gói được vào một transaction MongoDB. Vì vậy khóa có trạng thái và lưu lại phản hồi.
+
+| Trường | Ý nghĩa |
+|---|---|
+| `_id` | `SHA-256(<subject>\|<scope>\|<key>)`; `scope` = tên thao tác (`summary`, `extraction-review`, `booking-confirm`) |
+| `hash` | SHA-256 của body (JSON sắp khóa) — không lưu body |
+| `state` | `processing` → `done` |
+| `response` | `{status, body}` của lần xử lý đầu (chỉ có khi `done`) |
+| `createdAt` | **TTL** 24 giờ |
+
+| Tình huống | Kết quả |
+|---|---|
+| Key mới | Ghi `processing`, xử lý; xong → `done` + lưu phản hồi; lỗi → **xóa bản ghi** để người dùng thử lại cùng key |
+| Cùng key, cùng body, `done` | Trả lại phản hồi đã lưu |
+| Cùng key, cùng body, đang `processing` | **409** `invalid-state-transition` |
+| Cùng key, khác body | **422** `idempotency-key-reused` |
+
+Bảo mật (dữ liệu sức khỏe):
+- `response` của AI4 là bản tóm tắt hồ sơ (PHI). Collection được bảo vệ như `messages`: chỉ user DB của ai đọc/ghi, mã hóa at-rest, TTL 24 giờ, **không ghi log** nội dung.
+- **Kiểm quyền trước khi trả bản replay**: xác thực token, tài khoản chưa bị khóa, và quan hệ điều trị (Care) còn hiệu lực — y như request mới. Người bị thu hồi quyền trong 24 giờ không được lấy lại bản đã lưu.
+- AI8 gọi `$book`/`$cancel` kèm `Idempotency-Key` (bắt buộc ở scheduling), nên scheduling chặn trùng thêm một lớp.
+
+Hiện trạng code: `shp_platform/idempotency.py` có trên nhánh `AI-US062-booking-chatbot` (chưa merge) và đúng ngữ nghĩa trên, nhưng tên collection là `idempotency`.
+Cần đổi thành `idempotency_keys` trước khi merge.

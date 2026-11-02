@@ -36,7 +36,7 @@ Hai kiểu API:
 
 | Header | Hướng | Quy tắc |
 |---|---|---|
-| `Idempotency-Key` | request | **Bắt buộc** với `$book`, `$cancel`, `$reschedule`, xác nhận hành động chatbot, tạo upload session. 8–128 ký tự (khuyên dùng UUID). Lưu 24 giờ theo (người gọi, key). Gửi lại cùng key và cùng body → trả lại kết quả cũ; cùng key khác body → 422 `idempotency-key-reused` |
+| `Idempotency-Key` | request | **Bắt buộc** với `$book`, `$cancel`, `$reschedule`, tạo upload session (D1), tóm tắt hồ sơ (AI4), duyệt trích xuất (AI6), xác nhận hành động chatbot (AI8). 8–128 ký tự (khuyên dùng UUID). Lưu 24 giờ theo (người gọi, key). Gửi lại cùng key và cùng body → trả lại kết quả cũ; cùng key khác body → 422 `idempotency-key-reused` |
 | `If-Match` | request | **Bắt buộc** với mọi `PUT` và thao tác đổi trạng thái (`$cancel`, `$reschedule`, `$check-in`, `$finish`): `W/"<versionId>"`. Thiếu → 428 `precondition-required`; sai version → 412 `version-conflict` |
 | `ETag` | response | `W/"<versionId>"` trên mọi response trả một resource |
 | `Location` | response | trên 201: `/fhir/<Type>/<id>/_history/<version>` |
