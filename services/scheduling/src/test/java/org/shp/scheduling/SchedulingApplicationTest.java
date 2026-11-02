@@ -57,6 +57,15 @@ class SchedulingApplicationTest {
   }
 
   @Test
+  void azurePasswordlessPluginIsPackaged() throws Exception {
+    // uat/prod đăng nhập PostgreSQL bằng plugin này (02-db-scheduling §5); thiếu thì không có DB
+    assertThat(
+            Class.forName(
+                "com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"))
+        .isNotNull();
+  }
+
+  @Test
   void apiRequiresAToken() throws Exception {
     var r = get("/api/v1/anything");
     assertThat(r.statusCode()).isEqualTo(401);
