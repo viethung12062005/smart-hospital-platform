@@ -55,4 +55,4 @@ Service Python (`ai`, `ml`): `src/<pkg>/{api,domain,store,events}`, test ở `te
 
 ## 8. Phong cách code
 - Java: Spotless (`mvn spotless:apply`), `-Werror`, không dùng `@SuppressWarnings` nếu chưa có lý do ghi chú. Python: `ruff` + `mypy` strict.
-- Commit nhỏ, thông điệp thì hiện tại: `Create reminders on appointment-booked`.
+- Commit nhỏ; tiêu đề `<story> (<task>): <mô tả>` theo [00-git-github.md](00-git-github.md), ví dụ `US-041 (NTF-02): create reminders on appointment-booked`.

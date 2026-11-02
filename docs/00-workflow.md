@@ -17,9 +17,9 @@ Không ai ghi thẳng vào `main` (ruleset `protect-main` ở cả 4 repo):
 
 ## 2. Vòng đời một task
 1. Lấy task trong `docs/05-plan/by-person/<bạn>.md`, đủ **Definition of Ready** (mục 3).
-2. `git switch main && git pull`, rồi `git switch -c <ID>-mo-ta-ngan` (ví dụ `NTF-02-consumer-booked`). Một PR cho một task.
+2. `git fetch origin && git switch -c <ID>-mo-ta-ngan origin/main` (ví dụ `NTF-02-consumer-booked`). Một PR cho một task; luôn tách từ `main`, không tách từ nhánh task khác.
 3. Code + test, chạy kiểm tra giống CI ([CONTRIBUTING](../CONTRIBUTING.md)).
-4. `git push -u origin HEAD`, mở PR theo template, ghi `Closes #<issue>`.
+4. `git push -u origin HEAD`, mở PR theo template, tiêu đề `<story> (<task>): <mô tả>`, ghi `Closes #<issue>`. Chi tiết nhánh, commit, PR, merge: [00-git-github.md](00-git-github.md).
 5. Chờ CI xanh và 1 review; sửa theo góp ý bằng commit mới (không force-push sau khi đã có review).
 6. SA hoặc reviewer **squash merge**; nhánh tự xóa. Cập nhật trạng thái task ở board.
 
