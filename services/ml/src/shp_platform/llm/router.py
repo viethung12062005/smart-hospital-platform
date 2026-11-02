@@ -127,8 +127,13 @@ class Router:
                     raise ValueError(f"tác vụ {name}: provider chưa khai báo {step.provider}")
 
     def complete(
-        self, task: str, messages: Sequence[ChatMessage], known_pii: Mapping[str, Iterable[str]] | None = None
+        self,
+        task: str,
+        messages: Sequence[ChatMessage],
+        known_pii: Mapping[str, Iterable[str]] | None = None,
+        start_level: int = 0,
     ) -> RouterResult:
+        """`start_level`: bỏ qua các bước đầu (ví dụ thử lại với model kế khi đầu ra không đạt kiểm tra)."""
         cfg = self._tasks[task]
         result = RouterResult(answered=False, final_fallback=cfg.final_fallback)
         if self._budget is not None and self._budget.exhausted():
@@ -136,6 +141,8 @@ class Router:
             return result
         known = {k: list(v) for k, v in (known_pii or {}).items()}
         for level, step in enumerate(cfg.chain):
+            if level < start_level:
+                continue
             key = f"{step.provider}/{step.model}"
             provider = self._providers[step.provider]
             if not self._breaker.allow(key):
@@ -174,3 +181,6 @@ class Router:
     def _emit(self, step: ChainStep, outcome: str, tin: int, tout: int) -> None:
         if self._on_call is not None:
             self._on_call(step.provider, step.model, outcome, tin, tout)
+
+    def chain_length(self, task: str) -> int:
+        return len(self._tasks[task].chain)

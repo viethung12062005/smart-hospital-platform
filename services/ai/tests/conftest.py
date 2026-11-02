@@ -8,6 +8,8 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 
+from shp_ai import usage
+from shp_ai.assistant import conversations
 from shp_ai.blobstore import MemoryBlobStore
 from shp_ai.deps import Deps
 from shp_ai.directory import StaticDirectory
@@ -62,6 +64,8 @@ def make_deps(mongo_uri: str) -> Callable[..., Deps]:
         name = f"ai_{uuid.uuid4().hex[:8]}"
         client, db = fresh_db(mongo_uri, name)
         ensure_indexes(db)
+        conversations.ensure_indexes(db)
+        usage.ensure_indexes(db)
         settings = Settings(mongodb_db=name)
         deps = Deps(
             settings,
