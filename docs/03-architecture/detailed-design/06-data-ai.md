@@ -125,15 +125,15 @@ Prompt template được version hóa trong repo (`prompts/<task>/v<N>.md`), ID 
 ## 5. Messaging và idempotency
 
 Database `ai` có thêm ba collection nền tảng. `outbox`, `inbox` cùng định nghĩa với [03](03-db-clinical-document.md) §2.7;
-`idempotency_keys` dùng **biến thể có trạng thái** (§5.1) vì thao tác của ai gọi service khác.
+`idempotency` (tên khác `idempotency_keys` của Java vì schema khác) là **biến thể có trạng thái** (§5.1), vì thao tác của ai gọi service khác.
 
 | Collection | Dùng cho | Ghi chú |
 |---|---|---|
 | `outbox` | Phát E11 `audit.recorded` cho `ai-query`, `ai-summary` ([05](05-storage-audit-blob.md) §1.1) | Ghi cùng transaction với `messages` / `extraction_jobs`; relay giống Java (`shp_platform.mongo`). Lần đọc hồ sơ thay mặt người dùng do clinical tự audit |
 | `inbox` | Nhận E8 `document-uploaded` (consumer `ai`) | `insert inbox` + tạo `extraction_jobs` trong **một transaction**: event lặp thì bỏ qua cả event. Index unique `{documentId, documentVersion}` của `extraction_jobs` là lớp chặn thứ hai |
-| `idempotency_keys` | AI4 tóm tắt hồ sơ, AI6 duyệt trích xuất, AI8 xác nhận hành động chatbot ([12](12-api-ai.md)) | Request lặp trả lại đúng phản hồi cũ: AI6 không tạo `Observation` hai lần, AI8 không đặt hai lịch |
+| `idempotency` | AI4 tóm tắt hồ sơ, AI6 duyệt trích xuất, AI8 xác nhận hành động chatbot ([12](12-api-ai.md)) | Request lặp trả lại đúng phản hồi cũ: AI6 không tạo `Observation` hai lần, AI8 không đặt hai lịch |
 
-### 5.1 `idempotency_keys` của ai
+### 5.1 `idempotency` của ai
 
 Khác Java (giành khóa trong cùng transaction với dữ liệu, [03](03-db-clinical-document.md) §2.7): AI4, AI6, AI8 gọi clinical/scheduling/LLM qua mạng,
 không gói được vào một transaction MongoDB. Vì vậy khóa có trạng thái và lưu lại phản hồi.
@@ -158,5 +158,5 @@ Bảo mật (dữ liệu sức khỏe):
 - **Kiểm quyền trước khi trả bản replay**: xác thực token, tài khoản chưa bị khóa, và quan hệ điều trị (Care) còn hiệu lực — y như request mới. Người bị thu hồi quyền trong 24 giờ không được lấy lại bản đã lưu.
 - AI8 gọi `$book`/`$cancel` kèm `Idempotency-Key` (bắt buộc ở scheduling), nên scheduling chặn trùng thêm một lớp.
 
-Hiện trạng code: `shp_platform/idempotency.py` có trên nhánh `AI-US062-booking-chatbot` (chưa merge) và đúng ngữ nghĩa trên, nhưng tên collection là `idempotency`.
-Cần đổi thành `idempotency_keys` trước khi merge.
+Hiện thực: `libs/python/shp_platform/idempotency.py` (`COLLECTION = "idempotency"`, index TTL 24 giờ tạo bởi `ensure_indexes`), dùng ở `api_summary.py` (AI4) và `api_booking.py` (AI8).
+Thư viện Python chưa có bản stateless giống `MongoIdempotency` của Java; service Python nào cần thì dùng bản có trạng thái này.
