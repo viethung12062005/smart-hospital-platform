@@ -113,7 +113,7 @@ Bản PostgreSQL tương đương (bảng `outbox`, `inbox`, `idempotency_key`) 
 |---|---|---|---|
 | `outbox` | `_id` = event id (UUIDv7); `eventType` (`^shp\.[a-z]+\.[a-z-]+\.v[0-9]+$`), `subject`, `payload` (CloudEvent đầy đủ), `occurredAt`, `publishedAt` (`null` khi chưa phát), `attempts` | `ix_outbox_unpublished`: `{occurredAt:1}` partial `publishedAt: null` | Java `shp-data-mongo` · Python `shp_platform.mongo` |
 | `inbox` | `_id` = `<consumer>\|<messageId>`, `processedAt` | `ttl_inbox_14d`: **TTL** 14 ngày trên `processedAt` | Java `shp-data-mongo` · Python `shp_platform.mongo` |
-| `idempotency_keys` | `_id` = `<subject>\|<key>` (`subject` = OIDC `sub` của người gọi, `key` = header `Idempotency-Key`, 8–128 ký tự); `operation` (tên thao tác, vd. `create-upload-session`); `requestHash` (SHA-256 của body, kiểu Binary); `resourceId` (UUIDv7 của tài nguyên được tạo); `createdAt` | `ttl_idempotency_24h`: **TTL** 24 giờ trên `createdAt` | Java `MongoIdempotency` (SHR-12) · Python: chưa có |
+| `idempotency_keys` | `_id` = `<subject>\|<key>` (`subject` = OIDC `sub` của người gọi, `key` = header `Idempotency-Key`, 8–128 ký tự); `operation` (tên thao tác, vd. `create-upload-session`); `requestHash` (SHA-256 của body, kiểu Binary); `resourceId` (UUIDv7 của tài nguyên được tạo); `createdAt` | `ttl_idempotency_24h`: **TTL** 24 giờ trên `createdAt` | Java `MongoIdempotency` (SHR-12). Python dùng collection `idempotency` khác schema, xem [06](06-data-ai.md) §5.1 |
 
 Quy tắc `idempotency_keys` (cùng ngữ nghĩa với PostgreSQL và [07](07-api-conventions.md)):
 - Ghi bản ghi **trong cùng transaction** với thay đổi dữ liệu; request song song cùng key gây xung đột, lần thử lại thấy bản ghi đã commit.
@@ -131,7 +131,7 @@ Database nào có collection nào (chỉ tạo collection mà database thật s�
 | notification | ✓ | ✓ | — | Phát E11; nhận E1–E3, E7, E9, E10 |
 | audit | ✓ | ✓ | — | Nhận E11; phát E11 khi export audit ([11](11-api-notification-audit-ml.md)) |
 | ml | ✓ | ✓ | — | Phát E10; nhận E1–E3, E5, E7 |
-| ai | ✓ | ✓ | ✓ | Phát E11; nhận E8; AI4, AI6, AI8 bắt buộc key ([06](06-data-ai.md) §5) |
+| ai | ✓ | ✓ | ✓ (`idempotency`, biến thể có trạng thái) | Phát E11; nhận E8; AI4, AI6, AI8 bắt buộc key ([06](06-data-ai.md) §5.1) |
 
 Mọi service còn phát E11 `audit.recorded` qua `outbox` của chính mình ([13](13-events.md)).
 
