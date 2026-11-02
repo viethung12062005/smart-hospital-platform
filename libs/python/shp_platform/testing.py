@@ -2,6 +2,11 @@
 
 Có biến SHP_TEST_MONGO_URI / SHP_TEST_RABBITMQ_URL thì dùng luôn (ví dụ cụm local `make -C dev up`);
 không có Docker thì test bị bỏ qua (pytest.skip), không đỏ.
+
+SHP_TEST_MONGO_IMAGE ghi đè image MongoDB dùng cho container test (mặc định tag nổi `:8`, giống
+quy ước bên Java — xem libs/java/shp-data-mongo/.../MongoTestBase.java); dùng khi image mặc định
+không tương thích với kernel máy chạy CI (ví dụ SERVER-121912: mongo:8.0 cố định lỗi trên kernel
+Linux ≥ 6.19, tag nổi `:8` đã có bản vá).
 """
 
 import os
@@ -46,8 +51,9 @@ def mongo_replica_set() -> Iterator[str]:
     from pymongo import MongoClient
     from testcontainers.core.container import DockerContainer
 
+    mongo_image = os.environ.get("SHP_TEST_MONGO_IMAGE", "mirror.gcr.io/library/mongo:8")
     c = (
-        DockerContainer("mirror.gcr.io/library/mongo:8.0")
+        DockerContainer(mongo_image)
         .with_command(["mongod", "--replSet", "rs0", "--bind_ip_all"])
         .with_exposed_ports(27017)
     )
