@@ -272,7 +272,7 @@ Windows: chạy công cụ trong `tools/` có thể ghi file với CRLF; trướ
 | Nguồn | Định dạng giữ nguyên | Ghi chú |
 |---|---|---|
 | Dependabot | `Bump <gói> from <a> to <b> in <thư mục>`, `Update <gói> requirement from <a> to <b> in <thư mục>` | Không sửa tiêu đề; vẫn qua review và CI |
-| Workflow `gitops-promote`, `promote-prod`, `bump-consumers` | Định dạng cố định trong workflow | Đổi định dạng thì sửa workflow ở `shp-platform-templates` |
+| Workflow `gitops-promote` (`promote(<env>): <service> -> <digest> ...`), `promote-prod`, `bump-consumers` (`Bump platform templates pin to vX.Y.Z`) | Định dạng cố định trong workflow | PR do bot mở được check tiêu đề miễn (xác định theo tác giả PR `...[bot]`, không theo chữ đầu tiêu đề). Đổi định dạng thì sửa workflow ở `shp-platform-templates` |
 | Nút *Revert* của GitHub | `Revert "<tiêu đề cũ>"` | Sửa lại tiêu đề theo §2.5 trước khi merge |
 
 ## 15. Kiểm tra tự động
@@ -285,6 +285,7 @@ Biểu thức kiểm tiêu đề commit/PR (dùng cho check trong CI):
 
 | Đã có | Chưa có (việc theo sau) |
 |---|---|
-| Ruleset `protect-main`, `protect-tags`; `pr-gate`; `gitleaks`; CODEOWNERS | Check tiêu đề PR theo biểu thức trên (`pr-checks` ở `shp-platform-templates`) |
-| `.gitattributes` ép LF | Mẫu `~$*`, `.~lock.*` trong `.gitignore`; gỡ file khóa Office đang nằm trên `main` |
-| Template PR | Template issue; label `hotfix`, `security`, `blocked` |
+| Ruleset `protect-main`, `protect-tags`; `pr-gate`; `gitleaks`; CODEOWNERS | Bắt buộc check tiêu đề PR ở `shp-platform-templates`, `shp-infra`, `shp-gitops` (đã chạy nhưng chưa nằm trong status check bắt buộc của ruleset) |
+| Check tiêu đề PR `pr-title` (workflow tái sử dụng ở `shp-platform-templates`, chạy lại khi sửa tiêu đề); ở repo ứng dụng nằm trong `pr-gate` nên là check bắt buộc | Kiểm tiêu đề từng commit trong nhánh (hiện chỉ kiểm tiêu đề PR, tức commit squash trên `main`) |
+| `.gitattributes` ép LF; `.gitignore` chặn `~$*`, `.~lock.*`, `*.swp`, `.DS_Store` | Cảnh báo file > 5 MB |
+| Template PR và template issue (`task`, `bug`); label `hotfix`, `security`, `blocked` ở cả 4 repo | |
