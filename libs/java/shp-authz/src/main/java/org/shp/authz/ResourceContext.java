@@ -9,6 +9,10 @@ import java.time.Instant;
  *
  * @param encounterFinished true = encounter đã finished, false = chưa, null = không liên quan/không
  *     biết
+ * @param linkedProfile hồ sơ nằm trong linkedProfiles của người gọi (liên kết active, phạm vi từ
+ *     booking); ADR-0018
+ * @param linkedRecords như linkedProfile nhưng phạm vi records hoặc full (kết quả khám, tài liệu)
+ * @param guardianLink liên kết có quan hệ người giám hộ
  */
 public record ResourceContext(
     String patientId,
@@ -17,7 +21,10 @@ public record ResourceContext(
     boolean hasActiveBreakGlass,
     Boolean releasedToPatient,
     Boolean encounterFinished,
-    Instant appointmentStart) {
+    Instant appointmentStart,
+    boolean linkedProfile,
+    boolean linkedRecords,
+    boolean guardianLink) {
 
   public static ResourceContext empty() {
     return builder().build();
@@ -36,6 +43,9 @@ public record ResourceContext(
     private Boolean releasedToPatient;
     private Boolean encounterFinished;
     private Instant appointmentStart;
+    private boolean linkedProfile;
+    private boolean linkedRecords;
+    private boolean guardianLink;
 
     private Builder() {}
 
@@ -74,6 +84,21 @@ public record ResourceContext(
       return this;
     }
 
+    public Builder linkedProfile(boolean v) {
+      linkedProfile = v;
+      return this;
+    }
+
+    public Builder linkedRecords(boolean v) {
+      linkedRecords = v;
+      return this;
+    }
+
+    public Builder guardianLink(boolean v) {
+      guardianLink = v;
+      return this;
+    }
+
     public ResourceContext build() {
       return new ResourceContext(
           patientId,
@@ -82,7 +107,10 @@ public record ResourceContext(
           hasActiveBreakGlass,
           releasedToPatient,
           encounterFinished,
-          appointmentStart);
+          appointmentStart,
+          linkedProfile,
+          linkedRecords,
+          guardianLink);
     }
   }
 }

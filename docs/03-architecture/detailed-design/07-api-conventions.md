@@ -25,9 +25,9 @@ Hai kiểu API:
 
 ## 2. Xác thực
 
-- `Authorization: Bearer <access token>` OIDC (Entra ID trên cloud, Keycloak local). Token sống ≤ 15 phút.
+- `Authorization: Bearer <access token>` OIDC của Keycloak (mọi môi trường, ADR-0017). Token sống ≤ 15 phút.
 - Gateway kiểm chữ ký, `iss`, `aud`, `exp`; **service kiểm lại** (phòng thủ nhiều lớp, không tin header từ gateway).
-- Role lấy từ claim `roles` (Entra app roles / Keycloak client roles): `patient`, `doctor`, `nurse`, `admin`, `dpo`.
+- Role lấy từ claim `roles` (Keycloak client roles): `patient`, `doctor`, `nurse`, `admin`, `dpo`.
 - `fhirUser` (ví dụ `Patient/0192...`) **không** nằm trong token; service tra theo `sub` qua clinical
   (`/internal/v1/identity/{subject}`), cache 60 giây. Tài khoản bị khóa bị từ chối trong ≤ 60 giây (AC-08.1). Chi tiết ở
   [15-authorization.md](15-authorization.md).
@@ -118,7 +118,7 @@ Lúc mở slot (07:00) khi tải vượt ngưỡng, gateway bật **waiting room
   tài liệu API.
 - Xác thực bằng token của **workload identity** (client credentials, `aud` = app ID service đích) với app role
   `internal.<tên>`; không dùng token người dùng.
-- Khi AI cần đọc dữ liệu bệnh nhân **thay mặt người dùng**, AI dùng **on-behalf-of** (Entra) / token exchange RFC 8693
+- Khi AI cần đọc dữ liệu bệnh nhân **thay mặt người dùng**, AI dùng token exchange RFC 8693
   (Keycloak) để gọi API công khai, nên mọi kiểm tra quyền của người dùng vẫn áp dụng.
 
 ## 9. Health và metric

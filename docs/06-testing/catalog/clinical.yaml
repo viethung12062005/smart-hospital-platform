@@ -26,7 +26,7 @@ testcases:
   covers:
   - AC-01.1
   srs_uc: update-profile
-  srs_ref: UC 11
+  srs_ref: UC 15
   module: clinical
   level: api
   priority: P0
@@ -36,7 +36,7 @@ testcases:
   covers:
   - AC-01.3
   srs_uc: update-profile
-  srs_ref: UC 11
+  srs_ref: UC 15
   module: clinical
   level: api
   priority: P0
@@ -46,7 +46,7 @@ testcases:
   covers:
   - AC-UP.1
   srs_uc: update-profile
-  srs_ref: UC 11
+  srs_ref: UC 15
   module: clinical
   level: api
   priority: P0
@@ -56,7 +56,7 @@ testcases:
   covers:
   - AC-CP.1
   srs_uc: create-patient
-  srs_ref: UC 12
+  srs_ref: UC 16
   module: clinical
   level: e2e
   priority: P0
@@ -66,7 +66,7 @@ testcases:
   covers:
   - AC-MG.1
   srs_uc: merge-patient
-  srs_ref: UC 13
+  srs_ref: UC 17
   module: clinical
   level: api
   priority: P1
@@ -76,7 +76,7 @@ testcases:
   covers:
   - AC-CI.1
   srs_uc: check-in
-  srs_ref: UC 14
+  srs_ref: UC 18
   module: clinical
   level: api
   priority: P0
@@ -86,7 +86,7 @@ testcases:
   covers:
   - AC-VT.1
   srs_uc: record-vitals
-  srs_ref: UC 15
+  srs_ref: UC 20
   module: clinical
   level: api
   priority: P0
@@ -96,7 +96,7 @@ testcases:
   covers:
   - AC-VT.2
   srs_uc: record-vitals
-  srs_ref: UC 15
+  srs_ref: UC 20
   module: clinical
   level: api
   priority: P0
@@ -106,7 +106,7 @@ testcases:
   covers:
   - AC-04.1
   srs_uc: start-encounter
-  srs_ref: UC 16
+  srs_ref: UC 21
   module: clinical
   level: api
   priority: P0
@@ -116,7 +116,7 @@ testcases:
   covers:
   - AC-DX.1
   srs_uc: record-diagnosis
-  srs_ref: UC 17
+  srs_ref: UC 22
   module: clinical
   level: api
   priority: P1
@@ -126,7 +126,7 @@ testcases:
   covers:
   - AC-04.2
   srs_uc: finish-encounter
-  srs_ref: UC 18
+  srs_ref: UC 23
   module: clinical
   level: api
   priority: P0
@@ -136,7 +136,7 @@ testcases:
   covers:
   - AC-AD.1
   srs_uc: addendum
-  srs_ref: UC 19
+  srs_ref: UC 24
   module: clinical
   level: e2e
   priority: P1
@@ -147,7 +147,7 @@ testcases:
   covers:
   - AC-06.1
   srs_uc: search-patient
-  srs_ref: UC 20
+  srs_ref: UC 25
   module: clinical
   level: api
   priority: P1
@@ -157,7 +157,7 @@ testcases:
   covers:
   - AC-SP.1
   srs_uc: search-patient
-  srs_ref: UC 20
+  srs_ref: UC 25
   module: clinical
   level: api
   priority: P0
@@ -167,7 +167,7 @@ testcases:
   covers:
   - AC-06.2
   srs_uc: view-timeline
-  srs_ref: UC 21
+  srs_ref: UC 26
   module: clinical
   level: api
   priority: P0
@@ -177,7 +177,7 @@ testcases:
   covers:
   - AC-TL.1
   srs_uc: view-timeline
-  srs_ref: UC 21
+  srs_ref: UC 26
   module: clinical
   level: api
   priority: P0
@@ -187,7 +187,7 @@ testcases:
   covers:
   - AC-TL.2
   srs_uc: view-timeline
-  srs_ref: UC 21
+  srs_ref: UC 26
   module: clinical
   level: api
   priority: P0
@@ -197,7 +197,7 @@ testcases:
   covers:
   - AC-10.1
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 27
   module: clinical
   level: api
   priority: P0
@@ -207,7 +207,7 @@ testcases:
   covers:
   - AC-BG.1
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 27
   module: clinical
   level: api
   priority: P0
@@ -217,7 +217,7 @@ testcases:
   covers:
   - AC-BG.2
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 27
   module: clinical
   level: api
   priority: P0
@@ -227,9 +227,219 @@ testcases:
   covers:
   - AC-BG.3
   srs_uc: break-glass
-  srs_ref: UC 22
+  srs_ref: UC 27
   module: clinical
   level: api
   priority: P0
   spec: Given bác sĩ đã dùng truy cập khẩn cấp 2 lần trong 24 giờ, When dùng lần thứ 3 với lý do hợp lệ, Then vẫn được cấp
     quyền, và lần đó được đánh dấu “bất thường”, báo thêm trưởng khoa, DPO phải rà soát trong 24 giờ.
+- id: TC-AC-RG.2
+  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.2'
+  covers:
+  - AC-RG.2
+  srs_uc: register
+  srs_ref: UC 10
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ.
+- id: TC-AC-ID.1
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.1'
+  covers:
+  - AC-ID.1
+  srs_uc: supplement-national-id
+  srs_ref: UC 19
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given số CCCD hợp lệ và đã tích đồng ý, When lưu, Then số được lưu mã hóa và hiển thị che, chỉ 4 số cuối.
+- id: TC-AC-ID.2
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.2'
+  covers:
+  - AC-ID.2
+  srs_uc: supplement-national-id
+  srs_ref: UC 19
+  module: clinical
+  level: api
+  priority: P0
+  spec: Given số CCCD đã thuộc hồ sơ “active” khác, When lưu, Then không lưu và báo nghi trùng, không tiết lộ thông tin hồ sơ kia cho người không có quyền.
+- id: TC-AC-ID.3
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.3'
+  covers:
+  - AC-ID.3
+  srs_uc: supplement-national-id
+  srs_ref: UC 19
+  module: clinical
+  level: api
+  priority: P1
+  spec: Given sai định dạng hoặc chưa tích đồng ý, When lưu, Then bị từ chối.
+- id: TC-AC-ID.4
+  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.4'
+  covers:
+  - AC-ID.4
+  srs_uc: supplement-national-id
+  srs_ref: UC 19
+  module: clinical
+  level: security
+  priority: P0
+  spec: Given số CCCD đã lưu, When tìm kiếm, phát sự kiện hoặc ghi log, Then số không xuất hiện ở các nơi đó.
+- id: TC-AC-RG.3
+  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.3'
+  covers:
+  - AC-RG.3
+  srs_uc: register
+  srs_ref: UC 10
+  module: clinical
+  level: integration
+  priority: P1
+  spec: "Given số điện thoại dùng Zalo nhưng gửi qua Zalo thất bại, When yêu cầu mã, Then mã cùng giá trị được gửi bằng SMS trong tối đa 30 giây."
+- id: TC-AC-RG.4
+  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.4'
+  covers:
+  - AC-RG.4
+  srs_uc: register
+  srs_ref: UC 10
+  module: clinical
+  level: integration
+  priority: P0
+  spec: "Given mã OTP đã dùng, đã hết hạn 5 phút hoặc bị nhập sai 5 lần, When nhập mã, Then bị từ chối; Given quá 5 mã trong một giờ cho một số, When yêu cầu thêm, Then bị từ chối."
+- id: TC-AC-CL.1
+  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.1'
+  covers:
+  - AC-CL.1
+  srs_uc: claim-record
+  srs_ref: UC 11
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given thông tin khớp đúng một hồ sơ, When nhập đúng mã OTP gửi tới số trong hồ sơ, Then tài khoản được liên kết với hồ sơ đó và không tạo hồ sơ mới."
+- id: TC-AC-CL.2
+  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.2'
+  covers:
+  - AC-CL.2
+  srs_uc: claim-record
+  srs_ref: UC 11
+  module: clinical
+  level: security
+  priority: P0
+  spec: "Given thông tin không khớp hoặc khớp nhiều hồ sơ, When gửi yêu cầu, Then phản hồi giống hệt trường hợp khớp, không gửi mã và không lộ dữ liệu hồ sơ nào."
+- id: TC-AC-CL.3
+  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.3'
+  covers:
+  - AC-CL.3
+  srs_uc: claim-record
+  srs_ref: UC 11
+  module: clinical
+  level: security
+  priority: P0
+  spec: "Given đã nhập sai mã OTP 5 lần hoặc đã nhận hồ sơ quá 5 lần trong 24 giờ, When thử tiếp, Then bị khóa tạm và có bản ghi audit."
+- id: TC-AC-CL.4
+  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.4'
+  covers:
+  - AC-CL.4
+  srs_uc: claim-record
+  srs_ref: UC 11
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given hồ sơ đã liên kết với tài khoản khác ở quan hệ “bản thân”, When nhận hồ sơ, Then không liên kết và hướng dẫn đến quầy."
+- id: TC-AC-DP.1
+  title: 'Tạo hồ sơ cho con dưới 16 tuổi: AC-DP.1'
+  covers:
+  - AC-DP.1
+  srs_uc: add-dependent
+  srs_ref: UC 12
+  module: clinical
+  level: api
+  priority: P1
+  spec: "Given người được quản lý từ 16 tuổi trở lên, When tạo hồ sơ như người dưới 16 tuổi, Then bị từ chối."
+- id: TC-AC-DP.2
+  title: 'Tạo hồ sơ cho con dưới 16 tuổi: AC-DP.2'
+  covers:
+  - AC-DP.2
+  srs_uc: add-dependent
+  srs_ref: UC 12
+  module: clinical
+  level: api
+  priority: P1
+  spec: "Given thông tin hợp lệ của người dưới 16 tuổi và đã cam đoan, When tạo, Then hồ sơ được tạo và liên kết người giám hộ."
+- id: TC-AC-DP.3
+  title: 'Tạo hồ sơ cho con dưới 16 tuổi: AC-DP.3'
+  covers:
+  - AC-DP.3
+  srs_uc: add-dependent
+  srs_ref: UC 12
+  module: clinical
+  level: api
+  priority: P1
+  spec: "Given tài khoản đã quản lý 10 hồ sơ, When thêm hồ sơ thứ 11, Then bị từ chối."
+- id: TC-AC-LK.1
+  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.1'
+  covers:
+  - AC-LK.1
+  srs_uc: link-relative
+  srs_ref: UC 13
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given thông tin khớp một hồ sơ trưởng thành, When người yêu cầu nhập đúng mã OTP đã gửi tới số của người thân, Then liên kết có hiệu lực với phạm vi đã chọn."
+- id: TC-AC-LK.2
+  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.2'
+  covers:
+  - AC-LK.2
+  srs_uc: link-relative
+  srs_ref: UC 13
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given liên kết phạm vi “Đặt lịch”, When người được ủy quyền đặt, hủy, đổi hoặc xem lịch hẹn của người thân, Then thành công và audit ghi tài khoản thực hiện và hồ sơ được truy cập."
+- id: TC-AC-LK.3
+  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.3'
+  covers:
+  - AC-LK.3
+  srs_uc: link-relative
+  srs_ref: UC 13
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given người thân đến quầy và Điều dưỡng ghi ủy quyền sau khi đối chiếu giấy tờ, When lưu, Then liên kết có hiệu lực và có bản ghi audit."
+- id: TC-AC-LK.4
+  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.4'
+  covers:
+  - AC-LK.4
+  srs_uc: link-relative
+  srs_ref: UC 13
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given liên kết đã quá 12 tháng, When người được ủy quyền truy cập, Then bị từ chối cho đến khi gia hạn."
+- id: TC-AC-PX.1
+  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-PX.1'
+  covers:
+  - AC-PX.1
+  srs_uc: link-relative
+  srs_ref: UC 13
+  module: clinical
+  level: security
+  priority: P0
+  spec: "Given liên kết phạm vi “Đặt lịch”, When người được ủy quyền xem kết quả khám hoặc tài liệu của người thân, Then bị từ chối và có bản ghi audit “deny”."
+- id: TC-AC-RV.1
+  title: 'Thu hồi liên kết hồ sơ người thân: AC-RV.1'
+  covers:
+  - AC-RV.1
+  srs_uc: revoke-link
+  srs_ref: UC 14
+  module: clinical
+  level: api
+  priority: P0
+  spec: "Given liên kết đang hiệu lực, When chủ hồ sơ hoặc người quản lý thu hồi, Then người được ủy quyền không còn truy cập sau tối đa 60 giây và có bản ghi audit."
+- id: TC-AC-RV.2
+  title: 'Thu hồi liên kết hồ sơ người thân: AC-RV.2'
+  covers:
+  - AC-RV.2
+  srs_uc: revoke-link
+  srs_ref: UC 14
+  module: clinical
+  level: api
+  priority: P1
+  spec: "Given hồ sơ có tài khoản riêng, When có liên kết mới hoặc bị thu hồi, Then chủ hồ sơ nhận thông báo."

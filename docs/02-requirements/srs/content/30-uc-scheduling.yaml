@@ -54,7 +54,7 @@ modules:
           - key: book
             name: Đặt lịch khám
             actors: [patient, nurse]
-            trace: [UC-03, AC-03.1, AC-03.2, AC-03.3, AC-03.4, AC-03.6, BR-01, BR-03, BR-04, NFR-P2, "API S11"]
+            trace: [UC-03, AC-03.1, AC-03.2, AC-03.3, AC-03.4, AC-03.6, AC-03.7, BR-01, BR-03, BR-04, NFR-P2, "API S11"]
             objective: Cho phép bệnh nhân tự đặt lịch, hoặc điều dưỡng đặt thay bệnh nhân, vào một khung giờ trống.
             trigger: Người dùng chọn một slot trên [[SCR:find-doctor]] và bấm “Đặt lịch”.
             pre:
@@ -85,7 +85,7 @@ modules:
                 title: Quy tắc kiểm tra
                 lines:
                   - "[Lý do khám] không bắt buộc, tối đa 500 ký tự; vượt thì hiển thị [[MSG:max-length]]."
-                  - "Bệnh nhân chỉ đặt được cho chính mình: [Bệnh nhân] khác <Người dùng hiện tại> → từ chối [[MSG:forbidden]] và ghi audit “deny” (AC-03.6)."
+                  - "Bệnh nhân chỉ đặt được cho chính mình hoặc cho hồ sơ đã liên kết với tài khoản (con dưới 16 tuổi, người thân đã ủy quyền, [[UC:link-relative]]); [Bệnh nhân] khác → từ chối [[MSG:forbidden]] và ghi audit “deny” (AC-03.6). Đặt hộ được ghi audit kèm tài khoản thực hiện (AC-03.7)."
                   - "Slot phải nằm trong <Hôm nay> + 30 ngày (BR-04), nếu không → [[MSG:outside-window]]."
                   - "Bệnh nhân không được có quá 3 lịch hẹn tương lai “booked” (BR-03), nếu không → [[MSG:max-future]]. Quy tắc áp dụng cả khi Điều dưỡng đặt thay."
                   - "Giới hạn 10 yêu cầu đặt lịch/phút/người dùng; vượt → [[MSG:rate-limited]]."
@@ -114,7 +114,8 @@ modules:
               - ["AC-03.2", "Given cùng Idempotency-Key gửi 2 lần với cùng nội dung, Then cả hai nhận cùng một lịch hẹn và chỉ 1 lịch hẹn tồn tại."]
               - ["AC-03.3", "Given cùng Idempotency-Key nhưng nội dung khác, When gửi, Then bị từ chối và không có thay đổi."]
               - ["AC-03.4", "Given bệnh nhân đã có 3 lịch hẹn tương lai, When đặt thêm, Then bị từ chối với “max-future-appointments”."]
-              - ["AC-03.6", "Given bệnh nhân A, When đặt lịch cho bệnh nhân B, Then bị từ chối và có bản ghi audit “deny”."]
+              - ["AC-03.6", "Given bệnh nhân A, When đặt lịch cho hồ sơ chưa liên kết với tài khoản của A, Then bị từ chối và có bản ghi audit “deny”."]
+              - ["AC-03.7", "Given hồ sơ người thân đã liên kết, When tài khoản của A đặt lịch cho hồ sơ đó, Then đặt thành công và audit ghi tài khoản thực hiện và hồ sơ được đặt."]
               - ["AC-BK.1", "Given đặt lịch thành công, Then sự kiện phát ra không chứa họ tên, SĐT, email hay lý do khám."]
 
           - key: cancel

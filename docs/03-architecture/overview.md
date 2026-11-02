@@ -30,7 +30,7 @@ flowchart LR
     ADM["Admin · DPO"]
   end
 
-  IDP["Danh tính OIDC<br/>Keycloak (local) · Entra ID (cloud)"]
+  IDP["Danh tính OIDC<br/>Keycloak (mọi môi trường)"]
 
   subgraph EDGE["Rìa"]
     direction TB
@@ -98,7 +98,7 @@ flowchart LR
 ```
 
 Ghi chú về sơ đồ:
-- **Giao diện web** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` chỉ phục vụ file tĩnh (SPA). Trình duyệt tải SPA từ `/`, đăng nhập OIDC (PKCE) với Keycloak/Entra,
+- **Giao diện web** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` chỉ phục vụ file tĩnh (SPA). Trình duyệt tải SPA từ `/`, đăng nhập OIDC (PKCE) với Keycloak (cùng giao diện đăng ký bằng số điện thoại hoặc email ở mọi môi trường),
   rồi gọi API cùng origin qua `/fhir`, `/api` → gateway (không cần CORS). Menu theo vai trò chỉ để điều hướng; quyền thật do backend kiểm.
 - **Ranh giới tin cậy.** Mọi request từ ngoài đi qua WAF (cloud), Ingress, rồi gateway.
   - Gateway kiểm token ở biên.
@@ -357,7 +357,8 @@ provider lỗi. Xem [ADR-0001](adr/0001-microservice-boundaries.md).
 | Message bus | Azure Service Bus | RabbitMQ | Spring Cloud Stream (Java) · client AMQP (Python) |
 | Object storage | Azure Blob Storage | Azurite (giả lập Azure Blob, cùng SDK) — ADR-0012 | Azure Storage SDK (`BlobStore`) |
 | Cache | Azure Cache for Redis | Redis | Spring Data Redis |
-| Identity | Microsoft Entra ID (OIDC) | Keycloak (OIDC) | JWT Bearer chuẩn OIDC |
+| Identity (người dùng ứng dụng) | Keycloak (OIDC), ADR-0017 | Keycloak (OIDC) | JWT Bearer chuẩn OIDC |
+| Identity (quản trị Azure, workload) | Microsoft Entra ID, managed identity | không dùng | Azure SDK `DefaultAzureCredential` |
 | Secret | Key Vault (CSI) + Workload Identity | env / K8s Secret | biến môi trường → Spring `Environment` |
 | Observability | Azure Monitor / App Insights | Grafana + Tempo + Prometheus | OpenTelemetry (OTLP) |
 | LLM | DeepSeek API → Gemini free tier → Ollama trong cụm (embedding bge-m3) — ADR-0013 | Ollama | router của `ai` |
