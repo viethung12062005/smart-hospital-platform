@@ -8,7 +8,7 @@
 name: pr-gate
 on:
   workflow_run:
-    workflows: [pr-checks, contracts, qa, libs-java, libs-python, svc-ai, svc-audit, svc-clinical, svc-document, svc-gateway, svc-ml, svc-notification, svc-scheduling, svc-web]
+    workflows: [pr-checks, pr-title, contracts, qa, libs-java, libs-python, svc-ai, svc-audit, svc-clinical, svc-document, svc-gateway, svc-ml, svc-notification, svc-scheduling, svc-web]
     types: [completed]
 permissions:
   actions: read
@@ -30,8 +30,9 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          runs=$(gh api --paginate "repos/$REPO/actions/runs?head_sha=$SHA&event=pull_request&per_page=100" \
-            --jq '.workflow_runs[] | select(.name != "pr-gate") | "\(.name)\t\(.status)\t\(.conclusion // "")"')
+          # Only the latest run of each workflow counts: editing the PR title starts a new pr-title run on the same commit.
+          runs=$(gh api "repos/$REPO/actions/runs?head_sha=$SHA&event=pull_request&per_page=100" \
+            --jq '[.workflow_runs[] | select(.name != "pr-gate")] | group_by(.name) | map(sort_by(.created_at) | last) | .[] | "\(.name)\t\(.status)\t\(.conclusion // "")"')
           echo "$runs"
           running=$(awk -F'\t' '$2 != "completed" {print $1}' <<<"$runs" | sort -u | paste -sd, -)
           failed=$(awk -F'\t' '$2 == "completed" && $3 ~ /^(failure|cancelled|timed_out|action_required|startup_failure)$/ {print $1}' <<<"$runs" | sort -u | paste -sd, -)
