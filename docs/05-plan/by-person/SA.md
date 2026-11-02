@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **50**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **55**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -96,10 +96,10 @@ Tổng: **215 task, 727 giờ**. Đã xong: **50**, làm một phần: **26** (�
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | AI-01 | Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local) | Script idempotent; cùng schema cho hai backend | 3 | SCF-06, LOC-08 | US-052 |
-| ☐ | AI-02 | Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang) | Giữ tiêu đề mục và số trang; test với tài liệu mẫu | 3 | AI-01 | US-052 |
-| ☐ | AI-03 | Chunker: 600 token, overlap 80, tách theo tiêu đề mục | Chunk không cắt giữa mục; test độ dài | 4 | AI-02 | US-052 |
-| ☐ | AI-04 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống | Chunk mới index xong mới xóa chunk cũ; test | 4 | AI-03, PY-07 | US-052 |
+| ☑ | AI-01 | Bootstrap MongoDB ai + script tạo index AI Search kb-chunks-v1 (và OpenSearch local) **[xong, commit 2b6a50c: Index kb-chunks-v1 (Azure AI Search, OpenSearch local) tạo idempotent; Mongo ai có index]** | Script idempotent; cùng schema cho hai backend | 3 | SCF-06, LOC-08 | US-052 |
+| ☑ | AI-02 | Parser tài liệu: PDF, DOCX, Markdown → văn bản có cấu trúc (mục, trang) **[xong, commit 2b6a50c: Parser PDF/DOCX/Markdown giữ mục và trang]** | Giữ tiêu đề mục và số trang; test với tài liệu mẫu | 3 | AI-01 | US-052 |
+| ☑ | AI-03 | Chunker: 600 token, overlap 80, tách theo tiêu đề mục **[xong, commit 2b6a50c: Chunker 600/80 không cắt giữa mục]** | Chunk không cắt giữa mục; test độ dài | 4 | AI-02 | US-052 |
+| ☑ | AI-04 | Embedding bge-m3 local (Ollama, 1024 chiều) + upsert/xóa index; thay version không có khoảng trống **[xong, commit 2b6a50c: Embedding bge-m3 (Ollama) + upsert/xóa; chunk cũ xóa sau khi chunk mới vào index]** | Chunk mới index xong mới xóa chunk cũ; test | 4 | AI-03, PY-07 | US-052 |
 | ☐ | ARC-13 | Sprint review + planning S1 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
 | ☐ | CIT-02 | Reusable workflow Python CI | ruff lint+format, mypy, pytest + coverage, pip-audit | 3 | GOV-01 | US-070 |
 | ☐ | CIT-04 | Reusable workflow Helm validate | helm lint, render từng môi trường, kubeconform strict, Trivy config | 3 | GOP-01 | US-070 |
@@ -134,7 +134,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **50**, làm một phần: **26** (�
 
 | ✓ | ID | Việc | Xong khi | Giờ | Phụ thuộc | Story |
 |---|---|---|---|---|---|---|
-| ☐ | AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa | draft → approved → indexed → retired; lỗi index retry 3 lần | 4 | AI-04, PY-01 | US-052 |
+| ☑ | AI-05 | API kho tri thức (AI9): tải lên, duyệt, thay file, gỡ; quyền Admin/Doctor khoa **[xong, commit 2b6a50c: AI9: tải lên, duyệt theo khoa, thay file, gỡ; retry index 3 lần; audit]** | draft → approved → indexed → retired; lỗi index retry 3 lần | 4 | AI-04, PY-01 | US-052 |
 | ☐ | AI-06 | Truy xuất hybrid (RRF, rerank cross-encoder tùy chọn theo eval) + security trimming theo role/khoa; xuống cấp khi embedding/reranker lỗi | Người không được phép không bao giờ thấy chunk; test lọc | 4 | AI-04 | US-053 |
 | ☐ | AI-07 | Prompt template có version + lắp ngữ cảnh trong giới hạn token | ID phiên bản prompt ghi vào message | 3 | AI-06 | US-053 |
 | ☐ | AI-08 | Sinh câu trả lời + kiểm tra trích dẫn khớp chunk + quy tắc answered=false | Không có nguồn → không gọi LLM sinh nội dung | 4 | AI-07, PY-08 | US-053 |
