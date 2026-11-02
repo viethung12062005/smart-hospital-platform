@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **47**, làm một phần: **27** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **50**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -155,7 +155,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **47**, làm một phần: **27** (�
 | ☑ | ML-11 | Khởi tạo MongoDB ml (ADR-0014): patient_stats, appointment_facts, predictions (time-series nếu vCore hỗ trợ), inbox, outbox **[xong, commit d5d63c1: store.ensure_schema idempotent: validator, index, TTL, unique; tôn trọng time-series do script hạ tầng tạo]** | Script idempotent; validator ràng buộc ageBand, score; index (modelVersion, predictedAt) | 2 | SCF-07 | US-064 |
 | ☑ | ML-16 | Test chống lệch train/serve: cùng mẫu cho đầu ra khớp giữa hai đường **[xong, commit e391985: test_training_features_equal_serving_features: phát lại sự kiện khớp training_frame]** | Test xanh trong CI; lệch thì thất bại | 3 | ML-15, ML-07 | US-071 |
 | ☑ | ML-19 | Detector drift: PSI từng đặc trưng và điểm dự đoán so với dữ liệu huấn luyện **[xong, commit 490481e: drift.feature_drift: PSI đặc trưng chính và điểm dự đoán, ngưỡng 0,2 ở ≥ 2 đặc trưng; test bộ thường không báo, bộ dịch chuyển có báo]** | Ngưỡng PSI > 0,2 ở ≥ 2 đặc trưng chính; test với bộ dữ liệu dịch chuyển | 4 | ML-07, ML-21 | US-065 |
-| ◐ | ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày **[làm một phần, commit 490481e: drift.live_performance: AUC thực tế, cần ≥ 500 nhãn, cảnh báo khi giảm > 0,05; CHƯA ghép prediction với outcome từ Mongo (cần ML-06, ML-07)]** | Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn | 4 | ML-06, ML-07 | US-065 |
+| ☑ | ML-20 | Giám sát hiệu năng thực tế: ghép dự đoán với kết quả thật, AUC cuộn 14 ngày **[xong, commit 3a39c95: Ghép predictions production với kết quả thật 14 ngày, cần ≥ 500 nhãn]** | Cảnh báo khi AUC giảm > 0,05 và có ≥ 500 mẫu nhãn | 4 | ML-06, ML-07 | US-065 |
 
 ## Tuần 6 — 66 giờ
 
@@ -179,7 +179,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **47**, làm một phần: **27** (�
 | ☑ | ML-09 | Nạp lại model khi đổi alias production trong ≤ 60 giây không cần deploy **[xong, commit d5d63c1: ModelHolder poll alias 30 giây, thay model nguyên tử; registry lỗi giữ model cũ]** | Test đổi alias | 2 | ML-08 | US-063 |
 | ☑ | ML-12 | Test hợp đồng: consume E1/E5 và phát E10; ML lỗi không ảnh hưởng nhắc lịch **[xong, commit d5d63c1: Test: E10 khớp lược đồ, không có model thì không phát E10 và không lỗi]** | Xanh trong CI; AC-15.1 có test ở notification | 2 | ML-08, SHR-06 | US-064, US-046 |
 | ☑ | ML-22 | Logic kích hoạt huấn luyện lại: điều kiện, cooldown 7 ngày, ≥ 500 mẫu nhãn mới, chống chạy chồng **[xong, commit 490481e: drift.decide_retrain: drift hoặc AUC giảm, cooldown 7 ngày, ≥ 500 nhãn mới, chống chạy chồng, tối đa 2 lần/14 ngày rồi chờ người xử lý; cửa sổ trượt 24 tháng]** | Test các ca: drift, AUC giảm, trong cooldown, thiếu mẫu | 3 | ML-19, ML-20 | US-074 |
-| ☐ | ML-23 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production | Không đạt cổng thì dừng và giữ nguyên production; mọi run có liên kết và audit | 4 | ML-22, ML-05, ML-14, ML-17 | US-074 |
+| ☑ | ML-23 | Job huấn luyện lại: train → kiểm tra dữ liệu → cổng chất lượng → đăng ký alias candidate, không bao giờ tự đổi production **[xong, commit 3a39c95: retrain.run_pending: khóa, snapshot Parquet có hash, pipeline có cổng, chỉ đặt candidate, audit; test đầu-cuối với dữ liệu dịch chuyển]** | Không đạt cổng thì dừng và giữ nguyên production; mọi run có liên kết và audit | 4 | ML-22, ML-05, ML-14, ML-17 | US-074 |
 | ☑ | ML-24 | Chế độ shadow trong serving: model candidate chấm điểm song song, chỉ ghi nhận, không dùng kết quả **[xong, commit d5d63c1: Shadow: candidate chấm song song, lưu prediction shadow, metric đồng thuận; E10 luôn từ production]** | Không tăng độ trễ phía người dùng; có metric đồng thuận với bản đang chạy | 3 | ML-09 | US-073 |
 | ◐ | ML-25 | Xuất metric cho phân tích canary: tỉ lệ lỗi, p95, phân phối điểm, đồng thuận, gắn nhãn phiên bản **[làm một phần, commit d5d63c1: Metric theo model_version: độ trễ, lỗi, phân phối điểm, highRisk, đồng thuận; AnalysisTemplate (MLO-03) chưa có]** | Prometheus có đủ metric theo model_version để AnalysisTemplate dùng | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart cho web **[làm một phần, commit nhánh WEB-01-frontend-base; shp-gitops nhánh WEB-10-web-app; templates v0.1.5: Dockerfile nginx non-root (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, values uat/prod; CHƯA chạy pipeline thật và chưa deploy lên cụm]** | Container nginx non-root dùng chart chung | 2 | WEB-01 | US-066 |
@@ -250,7 +250,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **47**, làm một phần: **27** (�
 | ☐ | AI-31 | API chat đặt lịch (AI7) + fallback sang form khi mọi model lỗi | 503 ai-unavailable kèm fallback (AC-14.3) | 3 | AI-30 | US-062 |
 | ☐ | AI-32 | Test ma trận phân quyền và hợp đồng event cho ai-service | Xanh trong CI; bác sĩ không Care không lấy được dữ liệu qua AI | 4 | AI-31, AI-26 | US-052, US-053, US-058, US-060, US-062 |
 | ☐ | ARC-18 | Sprint review + planning S6 | Demo, cập nhật trạng thái backlog, rủi ro; biên bản ngắn | 2 |  | ENABLER |
-| ☐ | ML-10 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo | Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng | 3 | ML-19, ML-20 | US-065 |
+| ☑ | ML-10 | Job drift hằng ngày chạy detector (ML-19, ML-20), xuất metric và cảnh báo **[xong, commit 3a39c95: monitor.run_daily: PSI 7 ngày, AUC 14 ngày, metric Prometheus, tạo yêu cầu huấn luyện lại; thread 02:00 VN hoặc CronJob]** | Metric PSI/AUC thực tế có trong Prometheus; cảnh báo khi vượt ngưỡng | 3 | ML-19, ML-20 | US-065 |
 | ☐ | MLO-05 | Cảnh báo drift và AUC thực tế (Alertmanager) + panel dashboard MLOps | Cảnh báo tới đúng kênh; dashboard có PSI, AUC thực tế, phiên bản model, lịch sử huấn luyện lại | 3 | ML-10, OBS-01 | US-065 |
 | ☐ | WEB-33 | Màn hình duyệt trích xuất: tô trường trên tài liệu gốc, sửa, chấp nhận/từ chối | Trường độ tin cậy thấp được đánh dấu | 4 | WEB-25, AI-26 | US-059, US-060 |
 | ☐ | WEB-34 | Widget chatbot đặt lịch có bước xác nhận (Could) | Hiển thị fallback form khi 503 | 4 | WEB-04, AI-31 | US-062 |

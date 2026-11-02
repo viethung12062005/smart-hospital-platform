@@ -44,3 +44,21 @@ Model lưu dạng văn bản LightGBM (không pickle) kèm sha256, kiểm lại 
 **Giới hạn:** mô hình chỉ học lại quy luật nhóm tự viết; con số chứng minh quy trình MLOps, không chứng minh khả năng dự đoán thực tế.
 
 `shp_platform` trong `src/` là bản chép của `libs/python`: không sửa ở đây, sửa ở nguồn rồi chạy `python tools/pylib/sync.py`.
+
+## Phục vụ, giám sát và huấn luyện lại (US-064, US-065, US-073, US-074)
+
+```
+scheduling ─E1/E2/E3/E5, clinical E7─► consumer (inbox, 1 transaction) ─► appointment_facts, patient_stats
+                                          └─► chấm điểm production (+ shadow candidate) ─► predictions + outbox E10
+02:00 VN  monitor: PSI 7 ngày (đặc trưng từ predictions) + AUC thực tế 14 ngày ─► metric ─► retrain_requests
+Job       retrain: khóa ─► snapshot Parquet 24 tháng (hash) ─► pipeline + cổng ─► alias candidate (không bao giờ production)
+```
+
+| Lệnh | Việc |
+|---|---|
+| `uvicorn shp_ml.main:app --port 8090` (cần `MONGODB_URI`, `RABBITMQ_URL`, `REGISTRY_DIR` hoặc `MLFLOW_TRACKING_URI`) | service: consumer, relay outbox, nạp model, giám sát hằng ngày, `/metrics` |
+| `python -m shp_ml.monitor` | chạy giám sát một lần (CronJob) |
+| `python -m shp_ml.retrain --datasets /data/datasets` | xử lý yêu cầu huấn luyện lại (Kubernetes Job, image huấn luyện) |
+
+Test tích hợp dùng MongoDB replica set và RabbitMQ thật qua testcontainers (cần Docker); có `SHP_TEST_MONGO_URI`
+thì dùng luôn cụm local. Không có Docker thì các test đó được bỏ qua.
