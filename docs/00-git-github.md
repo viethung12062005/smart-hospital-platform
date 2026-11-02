@@ -15,7 +15,9 @@ Mục lục: [1. Định danh](#1-định-danh-story-và-task) · [2. Commit](#2
 
 ## 1. Định danh: story và task
 
-Mọi thay đổi gắn với một task trong [backlog](05-plan/backlog.csv). Cột `Stories` của task cho biết phần "story":
+Mọi thay đổi gắn với một task trong [backlog](05-plan/backlog.csv) (hoặc trong bảng kế hoạch chung của dự án với các task chưa vào backlog,
+như `REQ-*`, `TST-*`; các task này không có story nên dùng `ENABLER`). **Không** dùng lại ID của task khác cho việc không liên quan
+(ví dụ `ARC-17` là "Sprint review S5", không phải Keycloak). Cột `Stories` của task cho biết phần "story":
 
 | Cột `Stories` của task | Phần story | Ví dụ task |
 |---|---|---|
@@ -38,7 +40,8 @@ Việc chưa có task (sửa CI, đổi cấu hình, dọn dẹp...) thì **thê
 | `<story>` | `US-xxx`; nhiều story cách nhau `, `; dải liên tiếp `US-053..US-056`. Không có story thì `ENABLER` | `US-064` · `US-053..US-056` · `ENABLER` |
 | `<task>` | ID trong backlog, chữ hoa; nhiều task cách nhau `, `; dải `AI-06..AI-13`. Không dùng ký tự đại diện (`IAM-*`) | `(ML-06, ML-07)` |
 | `<mô tả>` | Tiếng Anh, thì hiện tại, mệnh lệnh, bắt đầu bằng động từ chữ thường (`add`, `fix`, `remove`, `document`...), không chấm cuối | `add no-show scoring consumer` |
-| Độ dài | Cả tiêu đề ≤ 100 ký tự; chi tiết đưa vào thân | |
+| Độ dài | Cả tiêu đề ≤ 100 ký tự (không tính hậu tố `(#N)` do GitHub thêm); chi tiết đưa vào thân | |
+| Quá dài | Một PR chạm quá nhiều story/task không vừa 100 ký tự là dấu hiệu PR quá lớn: ưu tiên tách PR. Nếu buộc phải giữ, tiêu đề ghi story/task **chính**, phần còn lại ghi đủ ở thân bằng hai dòng `Stories: ...` và `Tasks: ...` | `US-066 (WEB-01): add tests for baseline scaffold pages` + thân `Stories: US-011..US-014, US-024, US-025, US-031, US-066` |
 
 Đúng:
 ```
