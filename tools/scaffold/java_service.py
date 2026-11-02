@@ -304,6 +304,9 @@ def test_java(name: str, db: str) -> str:
       new MongoDBContainer(
               DockerImageName.parse(System.getenv().getOrDefault("SHP_TEST_MONGO_IMAGE", "mongo:8"))
                   .asCompatibleSubstituteFor("mongo"))
+          .withEnv(
+              "GLIBC_TUNABLES",
+              "glibc.pthread.rseq=1") // kernel 6.19-7.0.13: SERVER-121912, xem MongoTestBase
           .withReplicaSet();"""
         imp = "import org.testcontainers.mongodb.MongoDBContainer;"
     return f"""package org.shp.{name};
