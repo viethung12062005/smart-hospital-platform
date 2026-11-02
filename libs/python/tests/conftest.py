@@ -12,3 +12,22 @@ for _src in (ROOT / "contracts" / "events").rglob("*.json"):
         _out = _dest / _src.relative_to(ROOT / "contracts" / "events")
         _out.parent.mkdir(parents=True, exist_ok=True)
         _out.write_bytes(_src.read_bytes())
+
+
+from collections.abc import Iterator  # noqa: E402
+
+import pytest  # noqa: E402
+
+from shp_platform.testing import mongo_replica_set, rabbitmq  # noqa: E402
+
+
+@pytest.fixture(scope="session")
+def mongo_uri() -> Iterator[str]:
+    with mongo_replica_set() as uri:
+        yield uri
+
+
+@pytest.fixture(scope="session")
+def rabbit_url() -> Iterator[str]:
+    with rabbitmq() as url:
+        yield url

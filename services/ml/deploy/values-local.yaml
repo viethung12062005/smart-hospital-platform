@@ -5,3 +5,10 @@ image:
 replicaCount: 1
 env:
   OTEL_SERVICE_NAME: ml
+  # MONGODB_URI, RABBITMQ_URL: chart local truyền từ secret shp-local-conn (dev/chart/app-values-local.yaml)
+  MONGODB_DB: ml
+  CONSUMER_NAME: ml
+  MODEL_POLL_SECONDS: "30"
+  SHADOW_ENABLED: "true"
+  # Registry: profile full có MLflow (LOC-08) → MLFLOW_TRACKING_URI; không có thì service chạy, chỉ không chấm điểm
+  # MLFLOW_TRACKING_URI: http://mlflow.shp-deps:5000

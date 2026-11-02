@@ -15,6 +15,12 @@ dependencies = [
   "numpy>=2.1,<3",
   "pandas>=2.2,<4",
   "lightgbm>=4.5,<5",
+  "prometheus-client>=0.21,<1",
+  # bus và MongoDB (shp_platform.mongo, shp_platform.bus)
+  "pymongo>=4.10,<5",
+  "pika>=1.3,<2",
+  "azure-servicebus>=7.13,<8",
+  "azure-identity>=1.19,<2",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +36,7 @@ mlflow = [
 dev = [
   "shp-ml[train]",
   "pandas-stubs>=2.2,<4",
+  "testcontainers>=4.9,<5",
   "pytest>=8.3,<10",
   "pytest-cov>=6,<8",
   "types-jsonschema>=4.23,<5",
@@ -62,7 +69,7 @@ packages = ["shp_ml"]
 mypy_path = "src"
 
 [[tool.mypy.overrides]]
-module = ["sklearn.*", "pyarrow.*", "lightgbm.*", "mlflow.*"]
+module = ["sklearn.*", "pyarrow.*", "lightgbm.*", "mlflow.*", "pika.*", "testcontainers.*", "docker.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
