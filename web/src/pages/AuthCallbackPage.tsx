@@ -6,7 +6,7 @@ import { useAuth } from '@/auth/useAuth';
 import { completeSignIn } from '@/auth/session';
 import { Loading } from '@/components/ui';
 
-/** Nhận mã ủy quyền từ Keycloak/Entra (redirect URI /auth/callback), đổi lấy token rồi quay về trang cũ. */
+/** Nhận mã ủy quyền từ Keycloak (redirect URI /auth/callback), đổi lấy token rồi quay về trang cũ. */
 export function AuthCallbackPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();

@@ -55,7 +55,7 @@ paths:
   /api/v1/me:
     get:
       operationId: C2
-      summary: Tôi là ai (role, `fhirUser`)
+      summary: Tôi là ai (role, `fhirUser`, danh sách hồ sơ đã liên kết)
       tags:
       - clinical
       x-permission: mọi người dùng
@@ -1109,6 +1109,353 @@ paths:
             application/problem+json: {}
       parameters:
       - name: subject
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/me/profiles:
+    get:
+      operationId: C22
+      summary: Hồ sơ tài khoản đang quản lý (bản thân, con, người thân)
+      tags:
+      - clinical
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/me/profiles/dependents:
+    post:
+      operationId: C23
+      summary: Tạo hồ sơ cho người dưới 16 tuổi
+      tags:
+      - clinical
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/me/profile-links:
+    post:
+      operationId: C24
+      summary: Yêu cầu liên kết hồ sơ người thân trưởng thành (gửi OTP tới người thân)
+      tags:
+      - clinical
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/me/profile-links/{id}/confirm:
+    post:
+      operationId: C25
+      summary: Xác nhận liên kết bằng mã OTP
+      tags:
+      - clinical
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/me/profile-links/{id}:
+    delete:
+      operationId: C26
+      summary: Thu hồi liên kết
+      tags:
+      - clinical
+      x-permission: P, N
+      x-roles:
+      - patient
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/v1/me/claim-record:
+    post:
+      operationId: C27
+      summary: 'Tự nhận hồ sơ đã có: tìm hồ sơ khớp và gửi OTP'
+      tags:
+      - clinical
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/me/claim-record/verify:
+    post:
+      operationId: C28
+      summary: Nhập OTP để liên kết hồ sơ đã có
+      tags:
+      - clinical
+      x-permission: P
+      x-roles:
+      - patient
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+  /api/v1/clinical/patients/{id}/profile-links:
+    post:
+      operationId: C29
+      summary: Điều dưỡng ghi ủy quyền của người thân tại quầy
+      tags:
+      - clinical
+      x-permission: N
+      x-roles:
+      - nurse
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Thành công
+        '400':
+          description: Yêu cầu sai
+          content:
+            application/problem+json: {}
+        '401':
+          description: Chưa xác thực
+          content:
+            application/problem+json: {}
+        '403':
+          description: Không đủ quyền (có ghi audit)
+          content:
+            application/problem+json: {}
+        '404':
+          description: Không tìm thấy
+          content:
+            application/problem+json: {}
+        '409':
+          description: Xung đột (version/idempotency)
+          content:
+            application/problem+json: {}
+        '422':
+          description: Dữ liệu không hợp lệ
+          content:
+            application/problem+json: {}
+        '429':
+          description: Quá giới hạn tốc độ
+          content:
+            application/problem+json: {}
+      parameters:
+      - name: id
         in: path
         required: true
         schema:

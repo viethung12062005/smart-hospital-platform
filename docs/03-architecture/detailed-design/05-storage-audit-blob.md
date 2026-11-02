@@ -17,6 +17,7 @@ link tài liệu, mỗi truy vấn AI trên dữ liệu bệnh nhân và **mỗi
 | `actor.subject` | string | OIDC subject |
 | `actor.role` | enum | `patient` · `doctor` · `nurse` · `admin` · `dpo` · `system` |
 | `actor.fhirUser` | string | `Practitioner/0192...` |
+| `onBehalfOf` | string \| null | `Patient/0192...` của người được quản lý khi một tài khoản hành động qua `profile_links` (kèm `relationship`); null nếu không ủy quyền |
 | `patientId` | uuid \| null | bệnh nhân bị truy cập (null nếu không liên quan bệnh nhân) |
 | `resource` | string | `Encounter/0192...` hoặc `Patient?name=...` (với search chỉ ghi tên tham số, **không ghi giá trị**) |
 | `purposeOfUse` | enum | `TREAT` (điều trị) · `ETREAT` (khẩn cấp, break-glass) · `HOPERAT` (vận hành) · `PATRQT` (bệnh nhân tự xem) |
@@ -71,7 +72,7 @@ SHPAudit_CL | where Outcome == "denied" | summarize n = count() by ActorSubject,
 
 | Storage account | Container | Đường dẫn | Ghi chú |
 |---|---|---|---|
-| `stshpdocs<suffix>` | `documents` | `patients/{patientId}/{documentId}/v{version}/original.{pdf\|jpg\|png}` | Tắt shared key, chỉ Entra ID; private endpoint; versioning + soft delete 14 ngày |
+| `stshpdocs<suffix>` | `documents` | `patients/{patientId}/{documentId}/v{version}/original.{pdf\|jpg\|png}` | Tắt shared key, chỉ danh tính managed identity (Entra); private endpoint; versioning + soft delete 14 ngày |
 | | `quarantine` | như trên | File nhiễm mã độc chuyển sang đây; chỉ admin bảo mật đọc được |
 | | `kb` | `kb/{kbDocumentId}/v{version}/{filename}` | Tài liệu gốc của kho tri thức RAG (ai service) |
 | `stshpaudit<suffix>` | `audit` | xem §1.2 | WORM |

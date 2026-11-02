@@ -10,17 +10,42 @@ screens:
       - key: register
         name: Đăng ký tài khoản
         purpose: Bệnh nhân mới nhập thông tin hành chính và đồng ý điều khoản xử lý dữ liệu.
-        access: "Đăng nhập lần đầu qua nhà cung cấp định danh khi chưa có hồ sơ."
+        access: "Sau khi tạo tài khoản bằng số điện thoại hoặc email và xác minh, đăng nhập lần đầu khi chưa có hồ sơ."
         uc: [register, manage-consent]
         components:
           - ["Họ và tên", "Textbox", "Có", "Có", "N/A", "2–100 ký tự."]
           - ["Ngày sinh", "Date picker", "Có", "Có", "N/A", "Không ở tương lai."]
           - ["Giới tính", "Dropdown", "Có", "Có", "N/A", "Nam, Nữ, Khác, Không rõ."]
-          - ["Số điện thoại", "Textbox", "Có", "Có", "N/A", "Định dạng Việt Nam."]
-          - ["Email", "Label", "Không", "N/A", "Từ nhà cung cấp định danh", "Không sửa."]
+          - ["Số điện thoại", "Textbox", "Có", "Có", "Từ tài khoản nếu đăng ký bằng SĐT", "Lấy từ tài khoản thì không sửa; nhập mới (tài khoản email) phải xác minh mã OTP."]
+          - ["Mã OTP", "Textbox", "Có*", "Có*", "Trống", "*Chỉ hiện khi số điện thoại cần xác minh; 6 chữ số, hết hạn sau 5 phút."]
+          - ["Email", "Label", "Không", "N/A", "Từ tài khoản (nếu có)", "Không sửa."]
           - ["Đồng ý điều khoản xử lý dữ liệu", "Checkbox", "Có", "Có", "Không tích", "Bắt buộc tích mới gửi được; liên kết xem toàn văn điều khoản."]
           - ["Cho phép xử lý dữ liệu bằng AI", "Checkbox", "Có", "Không", "Không tích", "Tùy chọn riêng, có giải thích."]
           - ["Đăng ký", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:register]]."]
+      - key: claim-record
+        name: Nhận hồ sơ đã có
+        purpose: Người từng khám tại bệnh viện liên kết tài khoản với hồ sơ cũ bằng mã OTP.
+        access: "Sau khi đăng nhập lần đầu → “Tôi đã từng khám tại bệnh viện”; hoặc từ gợi ý khi đăng ký bị trùng hồ sơ."
+        uc: [claim-record]
+        components:
+          - ["Họ và tên", "Textbox", "Có", "Có", "Trống", "Như trên hồ sơ tại bệnh viện."]
+          - ["Ngày sinh", "Date picker", "Có", "Có", "Trống", "Không ở tương lai."]
+          - ["Số điện thoại đã đăng ký tại bệnh viện", "Textbox", "Có", "Có", "Trống", "Định dạng Việt Nam; mã OTP chỉ gửi tới số lưu trong hồ sơ."]
+          - ["Mã OTP", "Textbox", "Có*", "Có*", "Trống", "*Hiện sau khi gửi yêu cầu; 6 chữ số, hết hạn sau 5 phút."]
+          - ["Gửi bằng SMS", "Link", "Có*", "N/A", "N/A", "*Hiện sau 30 giây nếu chưa nhận được mã qua Zalo."]
+          - ["Gửi yêu cầu", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:claim-record]]."]
+      - key: relatives
+        name: Hồ sơ người thân
+        purpose: Xem, thêm và thu hồi các hồ sơ mà tài khoản đang quản lý (con, người thân).
+        access: "Trang chủ → “Hồ sơ người thân”."
+        uc: [add-dependent, link-relative, revoke-link]
+        data_source: "Liên kết đang “active” hoặc “pending” của tài khoản hiện tại."
+        sorting: "Bản thân trước, sau đó theo họ tên."
+        components:
+          - ["Danh sách hồ sơ", "Grid", "Không", "N/A", "N/A", "Họ tên, quan hệ, phạm vi, ngày hết hạn; hồ sơ sắp hết hạn có nhãn nhắc gia hạn."]
+          - ["Thêm con", "Button", "N/A", "N/A", "N/A", "Mở form hồ sơ người dưới 16 tuổi ([[UC:add-dependent]])."]
+          - ["Thêm người thân", "Button", "N/A", "N/A", "N/A", "Mở form liên kết người lớn: họ tên, ngày sinh, SĐT, phạm vi ([[UC:link-relative]])."]
+          - ["Thu hồi", "Button", "N/A", "N/A", "N/A", "Có xác nhận; kích hoạt [[UC:revoke-link]]."]
       - key: find-doctor
         name: Tìm bác sĩ và khung giờ
         purpose: Tìm khung giờ trống theo chuyên khoa, bác sĩ, ngày.
@@ -41,7 +66,7 @@ screens:
         uc: [book, reschedule]
         components:
           - ["Bác sĩ, chuyên khoa, ngày giờ", "Label", "Không", "N/A", "Theo slot", "Chỉ đọc."]
-          - ["Bệnh nhân", "Label / Search", "Chỉ Điều dưỡng", "Có", "<Người dùng hiện tại>", "Bệnh nhân không đổi được; Điều dưỡng tìm bệnh nhân."]
+          - ["Người đi khám", "Dropdown / Search", "Có", "Có", "Bản thân", "Bệnh nhân chọn trong các hồ sơ đã liên kết (bản thân, con, người thân); Điều dưỡng tìm bệnh nhân."]
           - ["Lý do khám", "Textarea", "Có", "Không", "Trống", "Tối đa 500 ký tự."]
           - ["Xác nhận", "Button", "N/A", "N/A", "N/A", "Gửi kèm Idempotency-Key; vô hiệu trong lúc chờ phản hồi."]
       - key: chatbot
@@ -106,13 +131,14 @@ screens:
         name: Hàng đợi hôm nay
         purpose: Theo dõi lịch hẹn trong ngày, check-in, hủy/đổi thay bệnh nhân.
         access: "Tiếp đón → “Hàng đợi hôm nay”."
-        uc: [check-in, book, cancel, reschedule]
+        uc: [check-in, supplement-national-id, book, cancel, reschedule]
         data_source: "Lịch hẹn có ngày khám = <Hôm nay> của các bác sĩ thuộc khoa người dùng được phân công."
         sorting: "[Bắt đầu] tăng dần."
         components:
           - ["Giờ, bệnh nhân, bác sĩ, trạng thái", "Grid", "Không", "N/A", "N/A", "Tên bệnh nhân + năm sinh; SĐT che 4 số giữa."]
           - ["Nguy cơ không đến", "Badge", "Không", "N/A", "N/A", "Hiển thị khi nguy cơ ≥ ngưỡng; không hiển thị con số với bệnh nhân."]
           - ["Check-in", "Button", "N/A", "N/A", "N/A", "Bật khi “booked” và ngày khám hôm nay."]
+          - ["Bổ sung CCCD", "Button", "N/A", "N/A", "N/A", "Hiện khi hồ sơ chưa có số CCCD; mở hộp nhập số CCCD và ô đồng ý ([[UC:supplement-national-id]])."]
           - ["Đặt lịch thay", "Button", "N/A", "N/A", "N/A", "Mở [[SCR:find-doctor]] ở chế độ Điều dưỡng."]
       - key: schedule
         name: Lịch làm việc và slot
