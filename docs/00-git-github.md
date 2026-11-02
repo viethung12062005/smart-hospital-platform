@@ -3,7 +3,7 @@
 Áp dụng cho cả 4 repo: `smart-hospital-platform`, `shp-platform-templates`, `shp-infra`, `shp-gitops`, cho mọi người và mọi công cụ
 (kể cả trợ lý AI) tạo commit hay PR. Quy trình task, Definition of Ready/Done: [00-workflow.md](00-workflow.md). Chuẩn code: [00-conventions.md](00-conventions.md).
 
-Tóm tắt: **mỗi task một nhánh tách từ `main` → commit nhỏ đúng định dạng → một PR theo template → review → squash merge.**
+Tóm tắt: **mỗi US một issue cha, mỗi task một sub-issue → mỗi task một nhánh tách từ `main` → commit nhỏ đúng định dạng → một PR theo template → review → squash merge.**
 
 Mục lục: [1. Định danh](#1-định-danh-story-và-task) · [2. Commit](#2-commit) · [3. Nhánh](#3-nhánh) · [4. Pull request](#4-pull-request) ·
 [5. Review](#5-review) · [6. Cập nhật nhánh và conflict](#6-cập-nhật-nhánh-và-conflict) · [7. Merge và sau merge](#7-merge-và-sau-merge) ·
@@ -138,7 +138,7 @@ và mọi thay đổi sau đó trên `main` ở cùng file đều thành conflic
 | Draft | Mở dạng **Draft** khi chưa đủ Definition of Done; chuyển *Ready for review* khi đủ |
 | Người gán | Assignee là tác giả; Reviewer theo CODEOWNERS (GitHub tự gán) |
 | Label | Ít nhất một label loại: `enhancement`, `bug`, `documentation`, `dependencies`, `hotfix` (xem §12) |
-| Liên kết | `Closes #<issue>` nếu có issue; PR liên quan ở repo khác: link đầy đủ (§8) |
+| Liên kết | `Closes #<issue task>` và `Part of #<issue US>` ([00-workflow §2](00-workflow.md#2-theo-dõi-việc-theo-user-story)); PR liên quan ở repo khác: link đầy đủ (§8) |
 
 ### 4.2 Kích thước
 
@@ -209,7 +209,7 @@ Luôn dùng `--force-with-lease`, không dùng `--force`. Trước lệnh có th
 - Trước khi bấm: kiểm tiêu đề squash đúng §2.1 (sửa được trong hộp thoại) và rút gọn thân commit còn phần "vì sao".
 - Cấu hình repo đề xuất (SA bật ở Settings → General → Pull Requests): *Default commit message* cho squash = **Pull request title and description**.
   Hiện đang là *Pull request title and commit details*: PR một commit lấy tiêu đề commit, thân gộp mọi commit — nguồn gốc của tiêu đề lệch trên `main`.
-- Sau merge: nhánh tự xóa; tác giả cập nhật trạng thái task (`tools/plan/status.py` hoặc board); PR thay đổi workflow/template thì phát hành tag (§9).
+- Sau merge: nhánh tự xóa, issue task tự đóng nhờ `Closes #`; tác giả cập nhật trạng thái task ở bảng kế hoạch; PR thay đổi workflow/template thì phát hành tag (§9).
 
 ## 8. Thay đổi nhiều repo
 
@@ -250,9 +250,14 @@ Luôn dùng `--force-with-lease`, không dùng `--force`. Trước lệnh có th
 | `dependencies` | Nâng thư viện (Dependabot tự gắn) |
 | `hotfix` | Sửa gấp theo [00-workflow §6](00-workflow.md#6-hotfix) |
 | `security` | Thay đổi/sự cố liên quan bảo mật, dữ liệu sức khỏe |
-| `blocked` | Đang chờ việc khác; ghi chờ gì trong mô tả |
+| `blocked` | Đang chờ việc ngoài backlog; ghi chờ gì trong mô tả. Chờ task khác thì dùng quan hệ *Blocked by* |
+| `user-story` | Issue cha của một US |
+| `enabler` | Issue cha của một nhóm việc nền (không có US) |
+| `task` | Issue của một task, là sub-issue của US hoặc nhóm việc nền |
+| `priority:must`, `priority:should`, `priority:could` | Mức MoSCoW của US |
 
-Issue: tiêu đề nêu vấn đề (không theo định dạng commit), mô tả gồm hiện trạng, mong đợi, cách tái hiện (lỗi) hoặc tiêu chí xong (việc), task/story liên quan.
+Issue US và task theo cấu trúc ở [00-workflow §2.2](00-workflow.md#22-cấu-trúc-issue): tiêu đề `US-015: <tên story>` hoặc
+`SCH-12: <tên task>` (không theo định dạng commit). Issue lỗi: tiêu đề nêu vấn đề, mô tả gồm hiện trạng, mong đợi, cách tái hiện và task/story liên quan.
 
 ## 13. Cấu hình Git trên máy
 
