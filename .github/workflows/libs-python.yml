@@ -21,6 +21,6 @@ jobs:
       - name: Service copies match libs/python and contracts/events
         run: python -I tools/pylib/sync.py --check
   ci:
-    uses: viethung12062005/shp-platform-templates/.github/workflows/python-ci.yml@v0.1.5
+    uses: viethung12062005/shp-platform-templates/.github/workflows/python-ci.yml@v0.1.6
     with:
       working-directory: libs/python

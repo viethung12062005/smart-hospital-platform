@@ -93,15 +93,20 @@ def test_relay_publishes_in_order_and_stops_on_bus_error(mongo_uri: str) -> None
             mongo.add_to_outbox(db, s, e)
 
         mongo.in_transaction(client, add)
+    # Thứ tự chỉ được bảo đảm theo subject (13-events §1); 3 event khác subject tạo trong cùng 1 ms có thể có
+    # thứ tự UUIDv7 bất kỳ, nên lấy thứ tự mong đợi theo đúng khóa sắp của relay (occurredAt, _id).
+    order = [d["_id"] for d in db.outbox.find({}, {"_id": 1}).sort([("occurredAt", 1), ("_id", 1)])]
+    assert sorted(order) == sorted(e["id"] for e in evts)
     flaky = FakePublisher(fail_on=1)
     with pytest.raises(mongo.OutboxPublishError) as err:
         mongo.relay_once(db, flaky)
     assert err.value.sent == 1
-    failed = db.outbox.find_one({"_id": evts[1]["id"]})
+    assert [e["id"] for e in flaky.sent] == [order[0]]
+    failed = db.outbox.find_one({"_id": order[1]})
     assert failed["attempts"] == 1 and "lockedBy" not in failed and failed["publishedAt"] is None
     ok = FakePublisher()
     assert mongo.relay_once(db, ok) == 2
-    assert [e["id"] for e in ok.sent] == [evts[1]["id"], evts[2]["id"]]
+    assert [e["id"] for e in ok.sent] == [order[1], order[2]]
     assert mongo.relay_once(db, ok) == 0
 
 

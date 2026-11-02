@@ -104,13 +104,45 @@ profile FHIR chi tiết (cardinality, value set) nằm ở tầng ứng dụng; 
 | Chống trùng khi đăng ký | `find({search.phone, search.birthDate, search.active: true})` | `{search.phone, search.birthDate}` |
 | Danh sách bệnh nhân hôm nay của bác sĩ | `encounters.find({search.practitionerId, search.periodStart: {$gte: today}})` | `{search.practitionerId, search.periodStart}` |
 
+### 2.7 Collection nền tảng: `outbox`, `inbox`, `idempotency_keys`
+
+Định nghĩa chung cho **mọi** database MongoDB (clinical, document, notification, audit, ml, ai). Các tài liệu 04, 05, 06 tham chiếu mục này.
+Bản PostgreSQL tương đương (bảng `outbox`, `inbox`, `idempotency_key`) ở [02](02-db-scheduling.md).
+
+| Collection | Trường | Index / TTL | Thư viện |
+|---|---|---|---|
+| `outbox` | `_id` = event id (UUIDv7); `eventType` (`^shp\.[a-z]+\.[a-z-]+\.v[0-9]+$`), `subject`, `payload` (CloudEvent đầy đủ), `occurredAt`, `publishedAt` (`null` khi chưa phát), `attempts` | `ix_outbox_unpublished`: `{occurredAt:1}` partial `publishedAt: null` | Java `shp-data-mongo` · Python `shp_platform.mongo` |
+| `inbox` | `_id` = `<consumer>\|<messageId>`, `processedAt` | `ttl_inbox_14d`: **TTL** 14 ngày trên `processedAt` | Java `shp-data-mongo` · Python `shp_platform.mongo` |
+| `idempotency_keys` | `_id` = `<subject>\|<key>` (`subject` = OIDC `sub` của người gọi, `key` = header `Idempotency-Key`, 8–128 ký tự); `operation` (tên thao tác, vd. `create-upload-session`); `requestHash` (SHA-256 của body, kiểu Binary); `resourceId` (UUIDv7 của tài nguyên được tạo); `createdAt` | `ttl_idempotency_24h`: **TTL** 24 giờ trên `createdAt` | Java `MongoIdempotency` (SHR-12) · Python: chưa có |
+
+Quy tắc `idempotency_keys` (cùng ngữ nghĩa với PostgreSQL và [07](07-api-conventions.md)):
+- Ghi bản ghi **trong cùng transaction** với thay đổi dữ liệu; request song song cùng key gây xung đột, lần thử lại thấy bản ghi đã commit.
+- Cùng key + cùng `operation` + cùng `requestHash` trong 24 giờ → trả lại đúng tài nguyên cũ (`resourceId`), không tạo mới.
+- Cùng key nhưng khác body hoặc khác thao tác → **422** `idempotency-key-reused`.
+- Khóa gồm `subject`, nên key của người này không bao giờ trả về tài nguyên của người khác. Không lưu body, chỉ lưu hash (không chứa PII).
+
+Database nào có collection nào (chỉ tạo collection mà database thật sự dùng):
+
+| Database | `outbox` | `inbox` | `idempotency_keys` | Lý do |
+|---|---|---|---|---|
+| scheduling (PostgreSQL) | ✓ | ✓ | ✓ (`idempotency_key`) | Phát E1–E5; nhận E6, E7; `$book`, `$cancel`, `$reschedule` bắt buộc key |
+| clinical | ✓ | ✓ | — | Phát E6, E7; nhận E1–E5; không có API bắt buộc key |
+| document | ✓ | ✓ | ✓ | Phát E8, E9; nhận E7; D1 tạo upload session bắt buộc key |
+| notification | ✓ | ✓ | — | Phát E11; nhận E1–E3, E7, E9, E10 |
+| audit | ✓ | ✓ | — | Nhận E11; phát E11 khi export audit ([11](11-api-notification-audit-ml.md)) |
+| ml | ✓ | ✓ | — | Phát E10; nhận E1–E3, E5, E7 |
+| ai | ✓ | ✓ | ✓ | Phát E11; nhận E8; AI4, AI6, AI8 bắt buộc key ([06](06-data-ai.md) §5) |
+
+Mọi service còn phát E11 `audit.recorded` qua `outbox` của chính mình ([13](13-events.md)).
+
 ## 3. Database `document`
 
 | Collection | Trường | Index |
 |---|---|---|
 | `document_references` | `_id`, `versionId`, `lastUpdated`, `patientId`, `resource` (FHIR DocumentReference), `processing.state` (`pending-upload` · `scanning` · `available` · `quarantined`), `processing.scanResult`, `processing.scannedAt`, `blob` (`container`, `path`, `contentType`, `size`, `sha256`), `releasedToPatient` (bool), `search` (`encounterId`, `type`, `date`, `authorId`) | `{patientId:1, search.date:-1}` · `{search.encounterId:1}` · `{processing.state:1, lastUpdated:1}` |
 | `upload_sessions` | `_id` (upload id), `documentId`, `patientId`, `createdBy`, `blobPath`, `maxSize`, `allowedTypes[]`, `state` (`open` · `completed` · `expired`), `expiresAt` | **TTL** trên `expiresAt` (15 phút) |
-| `resource_history`, `outbox`, `inbox` | như database `clinical` | như trên |
+| `resource_history` | như database `clinical` | như trên |
+| `outbox`, `inbox`, `idempotency_keys` | như §2.7 | như §2.7 |
 
 Shard key `document_references`: `{patientId: "hashed"}`.
 
