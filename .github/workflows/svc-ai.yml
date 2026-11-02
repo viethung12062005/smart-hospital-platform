@@ -10,12 +10,12 @@ permissions:
   contents: read
 jobs:
   ci:
-    uses: viethung12062005/shp-platform-templates/.github/workflows/python-ci.yml@v0.1.5
+    uses: viethung12062005/shp-platform-templates/.github/workflows/python-ci.yml@v0.1.6
     with:
       working-directory: services/ai
   container:
     needs: ci
-    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@v0.1.5
+    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@v0.1.6
     permissions:
       contents: read
       id-token: write
@@ -30,7 +30,7 @@ jobs:
   promote-uat:
     if: github.ref == 'refs/heads/main' && needs.container.outputs.digest != ''
     needs: container
-    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.5
+    uses: viethung12062005/shp-platform-templates/.github/workflows/gitops-promote.yml@v0.1.6
     with:
       service: ai
       environment: uat

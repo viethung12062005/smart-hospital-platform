@@ -24,7 +24,7 @@ Quy ước chung (giống [03](03-db-clinical-document.md)): `_id` là UUIDv7 d�
 | `preferences` | `_id` = patientId; `channels` (mảng có thứ tự ⊂ `push`,`sms`,`email`, ≥ 1); `locale` `vi`\|`en`; `quietStart`, `quietEnd` (chuỗi `HH:mm`, tùy chọn); `updatedAt` | `_id` |
 | `device_tokens` | `_id`; `ownerRef` (`Patient/{id}`\|`Practitioner/{id}`); `platform` `ios`\|`android`\|`web`; `token`; `createdAt`, `lastSeenAt` | unique `{token:1}`; `{ownerRef:1}` |
 | `reminders` | xem dưới | xem dưới |
-| `inbox`, `outbox` | như [03](03-db-clinical-document.md) §2 | như 03 |
+| `inbox`, `outbox` | như [03](03-db-clinical-document.md) §2.7 (không có `idempotency_keys`: không có API bắt buộc key) | như 03 §2.7 |
 
 `reminders`:
 ```json
@@ -81,7 +81,7 @@ Validator (`$jsonSchema`) bắt buộc `subjectRef`, `patientId`, `kind` ∈ dan
 | `patient_stats` | `_id` = patientId; `bookedTotal`, `fulfilledTotal`, `noshowTotal`, `lateCancelTotal`; `lastNoshowAt`, `lastVisitAt`, `updatedAt` | cập nhật nguyên tử bằng `$inc`/`$max` với `upsert` — không cần khóa |
 | `appointment_facts` | `_id` = appointmentId; `patientId`, `practitionerId`, `specialty`, `channel`, `ageBand` (`^\d{1,3}-\d{1,3}$` hoặc `unknown`), `bookedAt`, `startAt`, `outcome` (`pending`\|`fulfilled`\|`noshow`\|`cancelled`), `outcomeAt` | `{startAt:1}`; `{patientId:1, startAt:-1}`; validator `ageBand`, `outcome` |
 | `predictions` | `appointmentId`, `modelName`, `modelVersion`, `score` 0..1, `threshold` 0..1, `highRisk`, `features` (đặc trưng đã dùng — truy vết AC-15.2), `predictedAt`, `latencyMs` | **time-series collection** (`timeField: predictedAt`, `metaField: modelVersion`, `granularity: minutes`) nếu Cosmos DB vCore hỗ trợ; nếu không: collection thường + `{modelVersion:1, predictedAt:1}` + unique `{appointmentId:1}`. TTL 400 ngày |
-| `inbox`, `outbox` | như 03 §2 | |
+| `inbox`, `outbox` | như [03](03-db-clinical-document.md) §2.7 (không có `idempotency_keys`) | như 03 §2.7 |
 
 Xuất snapshot huấn luyện: job `ml-export` đọc `appointment_facts` có `outcome ≠ pending` (+ đặc trưng tái tạo từ `patient_stats` **tại thời điểm
 đặt lịch**, lưu sẵn trong `predictions.features` để không rò rỉ tương lai) → ghi `datasets/no-show/<yyyy-MM-dd>/<sha256>.parquet` bằng DuckDB `COPY ... TO ... (FORMAT parquet)`.

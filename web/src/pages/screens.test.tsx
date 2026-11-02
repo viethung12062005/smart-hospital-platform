@@ -90,3 +90,125 @@ describe('phân quyền giao diện', () => {
     expect(await screen.findByText('Tăng huyết áp vô căn')).toBeInTheDocument();
   });
 });
+
+// WEB-01 (US-066): màn hình đăng nhập/trang chủ/callback — 3 trang nền tảng khi chạy ở chế độ mock.
+describe('đăng nhập (chế độ mock)', () => {
+  it('hiển thị đủ 5 vai trò giả và đăng nhập chuyển sang trang chủ', async () => {
+    const user = userEvent.setup();
+    renderApp('/login', 'patient');
+
+    expect(screen.getByText('Bệnh nhân')).toBeInTheDocument();
+    expect(screen.getByText('Bác sĩ')).toBeInTheDocument();
+    expect(screen.getByText('Điều dưỡng')).toBeInTheDocument();
+    expect(screen.getByText('Quản trị')).toBeInTheDocument();
+    expect(screen.getByText('DPO')).toBeInTheDocument();
+
+    await user.click(screen.getByText('BS. Lê Minh Quân'));
+
+    expect(await screen.findByText('Xin chào, BS. Lê Minh Quân')).toBeInTheDocument();
+  });
+});
+
+describe('trang chủ', () => {
+  it('bệnh nhân thấy KPI lịch hẹn sắp tới và lối tắt', async () => {
+    renderApp('/', 'patient');
+
+    expect(await screen.findByText('Xin chào, Nguyễn Thị Lan')).toBeInTheDocument();
+    expect(screen.getAllByText('Lịch hẹn sắp tới').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Tìm bác sĩ' }).length).toBeGreaterThan(0);
+  });
+
+  it('điều dưỡng thấy KPI lịch hẹn hôm nay theo trạng thái', async () => {
+    renderApp('/', 'nurse');
+
+    await screen.findByText('Đang chờ khám');
+    expect(screen.getAllByText('Lịch hẹn hôm nay').length).toBeGreaterThan(0);
+  });
+});
+
+describe('callback đăng nhập', () => {
+  it('callback không có phiên đăng nhập hợp lệ: báo lỗi và cho đăng nhập lại', async () => {
+    renderApp('/auth/callback', 'patient');
+
+    expect(await screen.findByText('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
+  });
+});
+
+// WEB-07 (US-011, US-012, US-013): lịch bác sĩ theo tuần.
+describe('lịch bác sĩ', () => {
+  it('bác sĩ xem lịch của chính mình, không có bộ chọn bác sĩ', async () => {
+    renderApp('/schedule', 'doctor');
+
+    expect(await screen.findByText('Trống', { selector: 'span' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Bác sĩ')).not.toBeInTheDocument();
+  });
+
+  it('điều dưỡng chọn bác sĩ và chuyển sang tuần sau', async () => {
+    const user = userEvent.setup();
+    renderApp('/schedule', 'nurse');
+
+    expect((await screen.findAllByLabelText('Bác sĩ')).length).toBeGreaterThan(0);
+    const before = screen.getByRole('heading', { level: 3 }).textContent;
+    await user.click(screen.getByRole('button', { name: 'Tuần sau' }));
+
+    await waitFor(() => expect(screen.getByRole('heading', { level: 3 }).textContent).not.toBe(before));
+  });
+});
+
+// WEB-20 (US-031): tìm bệnh nhân.
+describe('tìm bệnh nhân', () => {
+  it('chưa nhập từ khóa: gợi ý nhập từ khóa, chưa gọi API tìm kiếm', async () => {
+    renderApp('/patients', 'nurse');
+    expect(await screen.findByText('Nhập từ khóa để tìm bệnh nhân.')).toBeInTheDocument();
+  });
+
+  it('tìm theo tên ra đúng bệnh nhân', async () => {
+    const user = userEvent.setup();
+    renderApp('/patients', 'nurse');
+
+    await user.type(await screen.findByLabelText('Tìm kiếm'), 'Lan');
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+
+    const row = (await screen.findByText('Nguyễn Thị Lan')).closest('tr')!;
+    expect(within(row as HTMLElement).getByText('BN-2026-000001')).toBeInTheDocument();
+  });
+});
+
+// WEB-22 (US-024, US-025): danh sách lần khám.
+describe('danh sách lần khám', () => {
+  it('hiển thị lần khám gần nhất, lọc theo trạng thái', async () => {
+    const user = userEvent.setup();
+    renderApp('/encounters', 'doctor');
+
+    expect(await screen.findByText('Tăng huyết áp tái khám')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Hoàn tất' }));
+
+    await waitFor(() => expect(screen.getAllByText('Hoàn tất').length).toBeGreaterThan(0));
+    expect(screen.queryByText('Hồi hộp, khó thở')).not.toBeInTheDocument(); // đang khám, bị lọc bỏ
+  });
+});
+
+// WEB-03/WEB-06 phạm vi tìm bác sĩ (US-014 giai đoạn chọn bác sĩ trước khi xem slot).
+describe('tìm bác sĩ', () => {
+  it('mặc định hiện bác sĩ tim mạch, lọc theo tên và có nút đặt lịch cho bệnh nhân', async () => {
+    const user = userEvent.setup();
+    renderApp('/doctors?specialty=cardiology', 'patient');
+
+    expect(await screen.findByText('BS. Lê Minh Quân')).toBeInTheDocument();
+    expect(screen.getByText('BS. Phạm Thu Trang')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Đặt lịch' }).length).toBeGreaterThan(0);
+
+    await user.type(screen.getByPlaceholderText('Tên bác sĩ'), 'Quân');
+
+    await waitFor(() => expect(screen.queryByText('BS. Phạm Thu Trang')).not.toBeInTheDocument());
+    expect(screen.getByText('BS. Lê Minh Quân')).toBeInTheDocument();
+  });
+
+  it('điều dưỡng không thấy nút đặt lịch', async () => {
+    renderApp('/doctors?specialty=cardiology', 'nurse');
+    expect(await screen.findByText('BS. Lê Minh Quân')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Đặt lịch' })).not.toBeInTheDocument();
+  });
+});
