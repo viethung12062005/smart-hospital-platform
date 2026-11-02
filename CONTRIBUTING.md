@@ -23,7 +23,8 @@
 5. Chạy kiểm tra giống CI trước khi push (mục dưới).
 6. Mở PR theo template, ghi `Closes #<số issue>`. CI phải xanh, cần ít nhất 1 review (CODEOWNERS). Merge kiểu **squash**.
 
-Commit message ngắn, ở thì hiện tại, nói việc làm. Ví dụ: `Create reminders on appointment-booked`.
+Tiêu đề commit và PR theo [docs/00-git-github.md](docs/00-git-github.md): `<story> (<task>): <mô tả>`,
+ví dụ `US-041 (NTF-02): create reminders on appointment-booked` hoặc `ENABLER (ARC-04): add architecture diagrams`.
 
 ## Kiểm tra trước khi push
 | Phần | Lệnh (chạy ở gốc repo) |

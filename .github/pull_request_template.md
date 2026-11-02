@@ -1,5 +1,8 @@
+<!-- Tiêu đề PR = commit trên main khi squash: `<story> (<task>): <mô tả>`, vd. `US-041 (NTF-02): create reminders on appointment-booked`
+     hoặc `ENABLER (ARC-04): add architecture diagrams`. Base luôn là main. Xem docs/00-git-github.md -->
+
 ## Task
-- ID: <!-- vd. NTF-02 (một PR = một task; tên nhánh `<ID>-mo-ta-ngan`) -->
+- ID: <!-- vd. NTF-02 (một PR = một task; tên nhánh `<ID>-mo-ta-ngan`, tách từ main) -->
 - Story: <!-- vd. US-041 -->
 - Tài liệu thiết kế đã theo: <!-- vd. detailed-design/04-db-notification-ml.md §1.3 -->
 
