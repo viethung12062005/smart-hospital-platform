@@ -268,7 +268,7 @@ Windows: chạy công cụ trong `tools/` có thể ghi file với CRLF; trướ
 
 | Nguồn | Định dạng giữ nguyên | Ghi chú |
 |---|---|---|
-| Dependabot | `Bump <gói> from <a> to <b> in <thư mục>` | Không sửa tiêu đề; vẫn qua review và CI |
+| Dependabot | `Bump <gói> from <a> to <b> in <thư mục>`, `Update <gói> requirement from <a> to <b> in <thư mục>` | Không sửa tiêu đề; vẫn qua review và CI |
 | Workflow `gitops-promote`, `promote-prod`, `bump-consumers` | Định dạng cố định trong workflow | Đổi định dạng thì sửa workflow ở `shp-platform-templates` |
 | Nút *Revert* của GitHub | `Revert "<tiêu đề cũ>"` | Sửa lại tiêu đề theo §2.5 trước khi merge |
 
