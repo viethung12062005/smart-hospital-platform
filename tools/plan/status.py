@@ -6,7 +6,7 @@ STATUS = {
     "ARC-07": ("done", "cd8c789", "11 schema event + ví dụ + envelope; validator khớp danh mục E1–E11"),
     "ARC-06": ("partial", "cd8c789", "Có khung 83 operation cho 7 service, validator OpenAPI; CHƯA có schema thân request/response (dev thêm khi làm endpoint)"),
     "ARC-19": ("done", "cd8c789", "64 rule, validator bất biến an toàn, test của validator"),
-    "ARC-20": ("partial", "cd8c789", "Có 12 chuyên khoa, 6 lý do hủy, 10 LOINC sinh hiệu, 6 loại tài liệu, 12 ICD-10; CHƯA đủ ~300 mã ICD-10 và chưa đối chiếu nguồn chính thức"),
+    "ARC-20": ("done", "cd8c789", "contracts/terminology/code-systems.yaml: 12 chuyên khoa, 6 lý do hủy, 10 LOINC sinh hiệu, 6 loại tài liệu, 381 ICD-10 đối chiếu ICD-10-CM FY2027 (CMS); Java đọc qua org.shp.events.Terminology (nhúng vào shp-events), web đọc thẳng file; LOINC xét nghiệm chưa thêm (CLN-16 chỉ cần sinh hiệu), LOINC chưa đối chiếu bản phát hành chính thức"),
     "SHR-22": ("done", "95d2f74", "libs/java/shp-authz: AuthzMatrix (Java)"),
     "SHR-23": ("done", "95d2f74", "Predicates trong AuthorizationEngine (care/breakglass nhận qua ResourceContext, không gọi mạng)"),
     "SHR-24": ("done", "95d2f74", "AuthorizationEngine.decide (Java): default-deny, fields, purpose, 238 test"),

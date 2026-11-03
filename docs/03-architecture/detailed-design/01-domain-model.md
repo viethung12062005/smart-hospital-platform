@@ -52,6 +52,15 @@ bằng việc chỉ tạo tham chiếu từ ID nhận qua event hoặc API đã 
 | Loại tài liệu (LOINC) | `11502-2` kết quả xét nghiệm · `18748-4` kết quả chẩn đoán hình ảnh · `57833-6` đơn thuốc · `57133-1` giấy chuyển viện · `34133-9` tóm tắt đợt điều trị · `51851-4` giấy tờ hành chính |
 | Chẩn đoán | ICD-10 (`http://hl7.org/fhir/sid/icd-10`) |
 
+Nguồn và cách dùng:
+- **Một nguồn duy nhất:** `contracts/terminology/code-systems.yaml`. Web đọc thẳng file này (`web/src/api/terminology.ts`); service Java dùng
+  `org.shp.events.Terminology` (file được nhúng vào jar `shp-events` lúc build, giống schema event); `tools/contracts/validate_terminology.py` kiểm trong CI.
+- **Chẩn đoán (`icd10-subset`):** tập con ~380 mã thường gặp ở phòng khám ngoại trú, trải đủ 12 chuyên khoa. Mỗi mã đã đối chiếu với file chính thức
+  **ICD-10-CM FY2027 của CMS** (`icd10cm_order_2027.txt`, phạm vi công cộng) và nhãn lấy nguyên văn mô tả dài trong file đó (tiếng Anh). Chỉ giữ mã có
+  cùng nghĩa ở ICD-10 của WHO (mã 3 ký tự và mã 4 ký tự dạng `X00.0`); mã chỉ có ở một bên (vd. `E14`, `I64`) không đưa vào. Mã ngoài danh mục bị từ chối khi ghi (mã lỗi theo API tương ứng, 07 §5).
+- **Quyền riêng tư:** danh mục chỉ là mã chuẩn công khai, không chứa dữ liệu bệnh nhân; mã chẩn đoán của bệnh nhân là dữ liệu sức khỏe, chỉ lưu trong
+  `Condition` của clinical và **không** đưa vào event, log hay URL.
+
 ## 4. Profile từng resource
 
 Ký hiệu: **1..1** bắt buộc · **0..1** tùy chọn · **0..\*** nhiều. Trường không liệt kê thì **không dùng** và bị từ chối

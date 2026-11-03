@@ -17,6 +17,11 @@
       <artifactId>shp-authz</artifactId>
     </dependency>
     <dependency>
+      <!-- Đọc contracts/terminology/code-systems.yaml (Terminology); phiên bản do Spring Boot quản lý -->
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
+    <dependency>
       <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
@@ -47,6 +52,12 @@
         <targetPath>shp/events</targetPath>
         <includes><include>**/*.json</include></includes>
         <excludes><exclude>**/*.example.json</exclude></excludes>
+      </resource>
+      <!-- Nhúng danh mục mã (Terminology): service và web dùng cùng một file contracts/terminology/code-systems.yaml -->
+      <resource>
+        <directory>${project.basedir}/../../../contracts/terminology</directory>
+        <targetPath>shp/terminology</targetPath>
+        <includes><include>code-systems.yaml</include></includes>
       </resource>
     </resources>
   </build>
