@@ -26,6 +26,7 @@
     <module>libs/java/shp-web</module>
     <module>libs/java/shp-data-postgres</module>
     <module>libs/java/shp-data-mongo</module>
+    <module>libs/java/shp-messaging</module>
     <module>services/gateway</module>
     <module>services/scheduling</module>
     <module>services/notification</module>
@@ -41,6 +42,10 @@
     <hapi-fhir.version>8.12.1</hapi-fhir.version>
     <json-schema-validator.version>3.0.8</json-schema-validator.version>
     <cloudevents.version>5.1.0</cloudevents.version>
+    <!-- Messaging (13-events §1.1), tra trên Maven Central ngày 2026-11-03: cùng Spring Cloud với gateway (chạy được với Boot 4.1);
+         Spring Cloud Azure 7.4.0 phát hành 07/2026 -->
+    <spring-cloud.version>2025.1.4</spring-cloud.version>
+    <spring-cloud-azure.version>7.4.0</spring-cloud-azure.version>
     <archunit.version>1.5.1</archunit.version>
     <spotless.version>3.10.4</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
@@ -111,6 +116,25 @@
         <groupId>com.tngtech.archunit</groupId>
         <artifactId>archunit-junit5</artifactId>
         <version>${archunit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.shp</groupId>
+        <artifactId>shp-messaging</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>${spring-cloud.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.azure.spring</groupId>
+        <artifactId>spring-cloud-azure-dependencies</artifactId>
+        <version>${spring-cloud-azure.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -35,6 +35,10 @@ def pom(name: str, desc: str, db: str) -> str:
       <artifactId>shp-data-postgres</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.shp</groupId>
+      <artifactId>shp-messaging</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-flyway</artifactId>
     </dependency>
@@ -47,6 +51,10 @@ def pom(name: str, desc: str, db: str) -> str:
         data = """    <dependency>
       <groupId>org.shp</groupId>
       <artifactId>shp-data-mongo</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.shp</groupId>
+      <artifactId>shp-messaging</artifactId>
     </dependency>"""
         tc = "testcontainers-mongodb"
     return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -125,7 +133,8 @@ def platform_config(name: str, db: str) -> str:
 """
     )
     if db == "postgres":
-        data_imports = """import org.shp.data.postgres.PostgresIdempotency;
+        data_imports = """import org.shp.data.postgres.OutboxRelay;
+import org.shp.data.postgres.PostgresIdempotency;
 import org.shp.data.postgres.PostgresInbox;
 import org.shp.data.postgres.PostgresOutbox;
 import org.shp.data.postgres.PostgresOutboxAuditSink;
@@ -134,6 +143,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
         data_beans = """  @Bean
   PostgresOutbox outbox(JdbcClient jdbc) {
     return new PostgresOutbox(jdbc);
+  }
+
+  /** Phát outbox lên bus mỗi giây, nhiều replica không trùng (13-events §1, §1.1). */
+  @Bean
+  OutboxRelay outboxRelay(
+      JdbcClient jdbc, TransactionTemplate tx, EventPublisher publisher, Clock clock) {
+    return new OutboxRelay(jdbc, tx, publisher, clock, 100, Duration.ofSeconds(1));
   }
 
   @Bean
@@ -157,6 +173,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.shp.data.mongo.MongoInbox;
 import org.shp.data.mongo.MongoMessaging;
 import org.shp.data.mongo.MongoOutbox;
+import org.shp.data.mongo.MongoOutboxRelay;
 import org.shp.data.mongo.MongoOutboxAuditSink;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
@@ -172,6 +189,12 @@ import org.springframework.data.mongodb.core.MongoTemplate;
   @Bean
   MongoOutbox outbox(MongoTemplate mongo) {
     return new MongoOutbox(mongo);
+  }
+
+  /** Phát outbox lên bus mỗi giây, nhiều replica không trùng (13-events §1, §1.1). */
+  @Bean
+  MongoOutboxRelay outboxRelay(MongoTemplate mongo, EventPublisher publisher, Clock clock) {
+    return new MongoOutboxRelay(mongo, publisher, clock, 100, Duration.ofSeconds(1));
   }
 
   @Bean
@@ -210,7 +233,9 @@ import org.springframework.web.client.RestClient;
     lines = f"""package {pkg}.config;
 
 import java.time.Clock;
-{data_imports}import org.shp.events.audit.AuditSink;
+import java.time.Duration;
+{data_imports}import org.shp.events.EventPublisher;
+import org.shp.events.audit.AuditSink;
 import org.shp.web.auth.IdentityLinkClient;
 {extra_imports}import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
