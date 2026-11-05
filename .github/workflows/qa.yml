@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
           cache: npm
@@ -54,7 +54,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: E2E (desktop + mobile), mock data
         run: npx playwright test
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: e2e-report
@@ -76,7 +76,7 @@ jobs:
           docker run -d --name web --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges -p 8080:8080 shp-web:qa
           for _ in $(seq 1 30); do curl -fsS http://localhost:8080/healthz >/dev/null && break; sleep 1; done
           curl -fsS http://localhost:8080/healthz
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
           cache: npm
@@ -101,7 +101,7 @@ jobs:
           # 0 = pass, 1 = at least one FAIL rule, 2 = warnings only (-I makes that exit 0), 3 = scan error
           [ "$code" -eq 0 ] || exit "$code"
         working-directory: web
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: zap-report
