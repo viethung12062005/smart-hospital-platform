@@ -1,11 +1,14 @@
 package org.shp.audit.config;
 
 import java.time.Clock;
+import java.time.Duration;
 import org.shp.data.mongo.MongoIdempotency;
 import org.shp.data.mongo.MongoInbox;
 import org.shp.data.mongo.MongoMessaging;
 import org.shp.data.mongo.MongoOutbox;
 import org.shp.data.mongo.MongoOutboxAuditSink;
+import org.shp.data.mongo.MongoOutboxRelay;
+import org.shp.events.EventPublisher;
 import org.shp.events.audit.AuditSink;
 import org.shp.web.auth.HttpIdentityLinkClient;
 import org.shp.web.auth.IdentityLinkClient;
@@ -43,6 +46,12 @@ class PlatformConfig {
   @Bean
   MongoOutbox outbox(MongoTemplate mongo) {
     return new MongoOutbox(mongo);
+  }
+
+  /** Phát outbox lên bus mỗi giây, nhiều replica không trùng (13-events §1, §1.1). */
+  @Bean
+  MongoOutboxRelay outboxRelay(MongoTemplate mongo, EventPublisher publisher, Clock clock) {
+    return new MongoOutboxRelay(mongo, publisher, clock, 100, Duration.ofSeconds(1));
   }
 
   @Bean

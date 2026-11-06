@@ -216,6 +216,7 @@ flowchart TB
     WEB["shp-web<br/>lỗi chuẩn (Problem/OperationOutcome)<br/>@RequireShpAuthz · danh tính · SecurityFilterChain"]
     SEC["shp-security<br/>JWT: issuer · audience · MFA nhân viên"]
     EV["shp-events<br/>CloudEvents · kiểm schema · bản ghi audit"]
+    MSG["shp-messaging<br/>Spring Cloud Stream: phát · nhận idempotent · DLQ<br/>RabbitMQ (local) · Service Bus (cloud)"]
     AZ["shp-authz<br/>ma trận + engine phân quyền"]
     SD["shp-service-defaults<br/>health · info · OTel · virtual threads"]
   end
@@ -229,6 +230,8 @@ flowchart TB
 
   SCH --> DP
   NTF & CLI & DOC & AUD --> DM
+  SCH & NTF & CLI & DOC & AUD --> MSG
+  MSG --> EV & SD
   DP & DM --> WEB
   DP & DM --> EV
   GW --> SEC & SD
@@ -240,7 +243,7 @@ flowchart TB
 ```
 
 Ghi chú:
-- Service chỉ khai báo trực tiếp `shp-data-*`, phần còn lại (`shp-web`, `shp-events`, …) đi kèm theo.
+- Service chỉ khai báo trực tiếp `shp-data-*` và `shp-messaging`, phần còn lại (`shp-web`, `shp-events`, …) đi kèm theo.
   Gateway là WebFlux nên chỉ dùng `shp-security` + `shp-service-defaults`, không kéo Spring MVC.
 - Schema event và ma trận phân quyền được **nhúng vào jar lúc build**, nên service luôn chạy đúng bản đã review.
 - Mọi service hiện thực đúng `contracts/openapi`; `contracts/db/*.js` khởi tạo collection cho notification/ml.
@@ -255,6 +258,7 @@ Ghi chú:
 | `shp-web` | Bắt lỗi → Problem Details; `@RequireShpAuthz` (test đỏ nếu endpoint quên); phân giải danh tính `sub → Patient/…`; `IdempotencyKeys` | SA |
 | `shp-data-postgres` | Outbox + relay (`SKIP LOCKED`), inbox, Idempotency-Key, sink audit — bảng do Flyway tạo | SA |
 | `shp-data-mongo` | Như trên cho MongoDB (`findAndModify` + `lockedUntil`), `MongoMessaging.inTransaction` | SA |
+| `shp-messaging` | `StreamEventPublisher` (relay outbox phát qua Spring Cloud Stream), `EventConsumers.idempotent` (kiểm schema + inbox), mặc định binder, retry và DLQ ([13-events §1.1](detailed-design/13-events.md#11-cài-đặt-thư-viện-libsjavashp-messaging)) | SA |
 | `services/*` (trừ gateway) | Controller, nghiệp vụ, truy cập dữ liệu, consumer của service | D1 (scheduling) · D2 (clinical) · D3 (notification, document, audit, gateway) · SA (ai, ml, Keycloak) |
 
 ## 4. Bên trong một service Java
