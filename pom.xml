@@ -44,12 +44,19 @@
     <archunit.version>1.5.1</archunit.version>
     <spotless.version>3.10.4</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
+    <!-- Tra trên Maven Central ngày 2026-11-03 (bản 06/10): plugin JDBC lấy token Entra cho PostgreSQL trên Azure (02-db-scheduling §5) -->
+    <azure-identity-extensions.version>1.2.10</azure-identity-extensions.version>
     <!-- Ngưỡng line coverage tối thiểu cho mỗi module có code (CI chặn nếu thấp hơn) -->
     <shp.coverage.minimum>0.70</shp.coverage.minimum>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.azure</groupId>
+        <artifactId>azure-identity-extensions</artifactId>
+        <version>${azure-identity-extensions.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-service-defaults</artifactId>

@@ -4,7 +4,7 @@
 
 **Definition of Done mọi task:** test đơn vị xanh, lint sạch, không secret, PR được review và merge qua pipeline.
 
-Tổng: **215 task, 727 giờ**. Đã xong: **75**, làm một phần: **26** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
+Tổng: **215 task, 727 giờ**. Đã xong: **77**, làm một phần: **24** (☑ xong, ◐ một phần, ☐ chưa; ghi trong `tools/plan/status.py`).
 
 ## Tuần 1 — 42 giờ
 
@@ -37,7 +37,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **75**, làm một phần: **26** (�
 | ☐ | IAC-02 | Bootstrap: Azure Container Registry | ACR tắt admin user; retention policy; output login server | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-03 | Bootstrap: identity OIDC cho GitHub | Identity plan (read), apply-<env>, acr-push; federated credential theo repo + environment; RBAC tối thiểu | 4 | IAC-01 | ENABLER |
 | ☐ | LOC-02 | Keycloak realm local | Realm export với role patient/doctor/nurse/admin/dpo, claim fhir_user, user giả | 3 | LOC-01 | US-008, US-066 |
-| ◐ | LOC-03 | Walking skeleton Java (Spring Boot) **[làm một phần, commit c909d5b: 6 service Java: health/info/prometheus, OTel, Dockerfile distroless non-root (đã build + chạy thử gateway, scheduling); CHƯA chạy qua pipeline GitHub Actions thật]** | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
+| ☑ | LOC-03 | Walking skeleton Java (Spring Boot) **[xong, commit c909d5b: 6 service Java: health/info/prometheus, OTel, Dockerfile distroless non-root; chạy qua pipeline template thật trên main (vd. svc-scheduling run 41487094998: verify, build + quét image); đẩy image lên ACR chờ IAC-02]** | Service mẫu: actuator health, info, OTel, Dockerfile distroless non-root; chạy qua pipeline template | 4 | ARC-09 | ENABLER |
 | ☐ | LOC-04 | Walking skeleton Python | FastAPI: health, info, OTel, Dockerfile non-root; chạy qua pipeline template | 3 | ARC-09 | ENABLER |
 | ◐ | LOC-08 | Profile full cho dev local: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed dữ liệu giả vào cụm **[làm một phần, commit e8e2fe2: chart shp-local-full (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel) + make up PROFILE=full + pull-models; đã helm lint/template; CHƯA chạy trên kind thật]** | `make up PROFILE=full` dựng đủ hạ tầng cho mọi service; healthcheck; tài liệu tài nguyên cần thiết | 3 | LOC-01 | ENABLER |
 | ☑ | ML-01 | Sinh dữ liệu lịch hẹn có quy luật no-show (lead time, lịch sử vắng, giờ khám, kênh) **[xong, commit f108284: synth: 80k lịch hẹn, 18% no-show, có hiệu ứng ngưỡng và tương tác]** | Tài liệu mô tả quy luật; tỉ lệ no-show ~18% tổng | 4 | ARC-11 | US-063 |
@@ -117,7 +117,7 @@ Tổng: **215 task, 727 giờ**. Đã xong: **75**, làm một phần: **26** (�
 | ☐ | OBS-04 | Thư viện observability chuẩn (OTel, log có trace-id, che PII) | OTel traces/metrics/logs, log có trace-id, enricher che PII; test log không chứa PII | 4 | LOC-03 | ENABLER |
 | ☑ | PY-04 | Audit emitter Python (E11) cho AI/ML **[xong, commit 932b0e4: audit.build: che IP, chặn giá trị tìm kiếm trong resource, khớp lược đồ E11]** | Không ghi nội dung câu hỏi hay PII; test | 2 | PY-03 | US-047 |
 | ☑ | PY-09 | Circuit breaker + hạn mức token/ngày + metric theo model **[xong, commit cf3ed23: Circuit breaker, hạn mức token/ngày dùng chung (MongoDB), metric theo model]** | Mạch mở sau 5 lỗi/60s; vượt ngân sách → ai-budget-exceeded | 3 | PY-08 | US-055 |
-| ◐ | SCF-01 | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) **[làm một phần, commit c909d5b: scheduling: khung Spring Boot + Flyway + outbox/inbox/idempotency PostgreSQL, Dockerfile, svc-scheduling.yml, values-local; CHƯA nối bus (Spring Cloud Stream), values uat/prod ở repo GitOps]** | Service từ template; svc-scheduling.yml; values local/uat/prod | 2 | LOC-03, CIT-08 | ENABLER |
+| ☑ | SCF-01 | Scaffold scheduling service (khung code, Dockerfile, pipeline svc-scheduling, Helm values, kết nối DB/bus/OTel) **[xong, commit c909d5b: scheduling: khung Spring Boot + Flyway + outbox/inbox/idempotency PostgreSQL, Dockerfile, svc-scheduling.yml, values local/uat/prod; uat/prod đăng nhập PostgreSQL bằng Workload Identity (azure-identity-extensions, shp-gitops + shp-infra SCF-01); nối bus làm ở SHR-08]** | Service từ template; svc-scheduling.yml; values local/uat/prod | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-02 | Scaffold notification worker (khung code, pipeline, values, kết nối DB/bus) **[làm một phần, commit c909d5b: notification: khung + Mongo outbox/inbox, collection do make up tạo; CHƯA nối bus, values uat/prod]** | Service từ template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-03 | Scaffold clinical service (khung code, pipeline, values, kết nối MongoDB/bus) **[làm một phần, commit c909d5b: clinical: khung + Mongo + MongoIdentityLinkClient; CHƯA nối bus, values uat/prod]** | Service từ template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ◐ | SCF-04 | Scaffold document service (khung code, pipeline, values, Blob/MongoDB) **[làm một phần, commit c909d5b: document: khung + Mongo; CHƯA Blob client, nối bus, values uat/prod]** | Service từ template; svc-document.yml | 2 | LOC-03, CIT-08 | ENABLER |

@@ -208,8 +208,9 @@ lưu vào tài liệu hiệu năng.
 | Kích thước năm 1 | slot ~1,2 triệu dòng (~1,2 GB), appointment ~330k (~0,5 GB), history ~1 GB |
 | Partition | Chưa cần ở quy mô này; xem xét partition `slot`/`appointment` theo tháng khi > 50 triệu dòng |
 | Backup | PITR 7 ngày (Flexible Server); prod bật geo-redundant backup |
-| Role DB | `scheduling_app` (managed identity của service): `SELECT/INSERT/UPDATE` mọi bảng, `DELETE` chỉ trên `outbox`, `idempotency_key`, `inbox`, `slot` (job dọn dẹp); không có quyền DDL. `scheduling_migrator`: chạy migration (Kubernetes Job trước khi deploy, sync wave của Argo CD) |
-| Migration | File SQL đánh số (`V001__init.sql`, ...), chạy bằng DbUp; chỉ thay đổi tương thích ngược (expand → migrate → contract) để deploy không downtime |
+| Role DB | Principal Entra của managed identity `id-<prefix>-scheduling` (tạo bằng `pgaadauth_create_principal` sau khi apply, runbook ở `shp-infra/modules/postgres/README.md`). Hiện tại principal này sở hữu schema trong database `scheduling` vì Flyway chạy trong service (xem dòng Migration). Mục tiêu: tách `scheduling_migrator` (chỉ Job migration có DDL) và để service chỉ còn `SELECT/INSERT/UPDATE`, `DELETE` trên `outbox`, `idempotency_key`, `inbox`, `slot` |
+| Migration | Flyway (`db/migration`, `V1__...sql`) chạy khi service khởi động, có khóa nên nhiều replica không chạy trùng; chỉ thay đổi tương thích ngược (expand → migrate → contract) để deploy không downtime |
+| Kết nối | Local: user/mật khẩu từ `dev/.local`. Azure: **không mật khẩu** (server tắt password auth). JDBC dùng plugin `com.azure:azure-identity-extensions` (`authenticationPluginClassName=com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin`), lấy token Entra bằng Workload Identity của ServiceAccount `scheduling`; `sslmode=require`; username là tên managed identity. Giá trị điền ở `shp-gitops/envs/<env>/scheduling/values.yaml` từ output Terraform |
 
 ## 6. Kiểm chứng thiết kế (đã chạy)
 
