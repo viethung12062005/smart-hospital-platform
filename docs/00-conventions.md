@@ -42,6 +42,11 @@ Service Python (`ai`, `ml`): `src/<pkg>/{api,domain,store,events}`, test ở `te
 - Hợp đồng đi trước code: sửa `contracts/openapi` và `contracts/events` trong cùng PR, `tools/contracts/check_all.sh` phải xanh.
 - Endpoint mới phải có `@RequireShpAuthz` và dòng tương ứng trong `contracts/authz/matrix.yaml`; thiếu thì test `UnprotectedEndpoints` làm CI đỏ.
 - Ghi dữ liệu thay đổi trạng thái: nhận `Idempotency-Key` (PostgreSQL: `PostgresIdempotency`; MongoDB: `MongoIdempotency`).
+- Header bắt buộc ([07 §3](03-architecture/detailed-design/07-api-conventions.md#3-header)) do `shp-web` kiểm trước phân quyền:
+  - Endpoint cần `Idempotency-Key` gắn `@RequireIdempotencyKey` (thiếu → 428); lấy key bằng `PreconditionInterceptor.idempotencyKey(req)`.
+  - Mọi `PUT` và endpoint gắn `@RequireIfMatch` bắt buộc `If-Match: W/"<versionId>"` (thiếu → 428). So với version hiện tại bằng
+    `PreconditionInterceptor.checkVersion(req, version)` (lệch → 412); store vẫn ghi có điều kiện theo version.
+  - `ETag: W/"<versionId>"` tự đặt khi body có `meta.versionId` (FHIR) hoặc là `Versioned` (DTO).
 
 ## 6. Dữ liệu và sự kiện
 - Mỗi service chỉ ghi vào kho dữ liệu của mình ([ADR-0014](03-architecture/adr/0014-database-per-service-review.md)). Muốn dữ liệu service khác: gọi API hoặc nghe event.

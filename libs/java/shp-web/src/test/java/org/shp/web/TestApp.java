@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.spec.SecretKeySpec;
 import org.shp.authz.ResourceContext;
+import org.shp.events.CloudEvents;
 import org.shp.events.audit.InMemoryAuditSink;
 import org.shp.security.ShpAuthProperties;
 import org.shp.security.ShpJwt;
@@ -30,6 +31,10 @@ import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.authz.ResourceContextResolver;
 import org.shp.web.authz.ShpPublicEndpoint;
 import org.shp.web.errors.ShpException;
+import org.shp.web.precondition.PreconditionInterceptor;
+import org.shp.web.precondition.RequireIdempotencyKey;
+import org.shp.web.precondition.RequireIfMatch;
+import org.shp.web.precondition.Versioned;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -37,7 +42,10 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
 
 /** Ứng dụng thử: dùng đúng auto-config của shp-web; IdP được thay bằng khóa ký HMAC cục bộ. */
 @SpringBootApplication
@@ -212,6 +220,48 @@ public class TestApp {
     @GetMapping("/api/v1/unprotected")
     String unprotected() {
       return "ok";
+    }
+
+    // ---------- header bắt buộc + ETag (resource giả có version hiện tại là 3) ----------
+    @PutMapping("/fhir/Patient/{id}")
+    @ShpPublicEndpoint
+    Map<String, Object> updatePatient(@PathVariable String id, HttpServletRequest req) {
+      PreconditionInterceptor.checkVersion(req, 3);
+      return Map.of("resourceType", "Patient", "id", id, "meta", Map.of("versionId", "4"));
+    }
+
+    @PostMapping("/fhir/Appointment/{id}/$cancel")
+    @RequireShpAuthz(resource = "Appointment", action = "cancel")
+    @RequireIdempotencyKey
+    @RequireIfMatch
+    Map<String, Object> cancel(@PathVariable String id, HttpServletRequest req) {
+      PreconditionInterceptor.checkVersion(req, 3);
+      return Map.of(
+          "resourceType",
+          "Appointment",
+          "id",
+          id,
+          "meta",
+          Map.of("versionId", 4),
+          "idempotencyKey",
+          PreconditionInterceptor.idempotencyKey(req));
+    }
+
+    record Upload(String id, long version) implements Versioned {}
+
+    @GetMapping("/api/v1/uploads/{id}")
+    @ShpPublicEndpoint
+    Upload upload(@PathVariable String id) {
+      return new Upload(id, 7);
+    }
+
+    @GetMapping("/fhir/Observation/{id}")
+    @ShpPublicEndpoint
+    JsonNode observation(@PathVariable String id) {
+      return CloudEvents.JSON.readTree(
+          "{\"resourceType\":\"Observation\",\"id\":\""
+              + id
+              + "\",\"meta\":{\"versionId\":\"2\"}}");
     }
   }
 }
