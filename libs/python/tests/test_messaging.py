@@ -78,6 +78,37 @@ def test_handle_once_is_atomic_and_idempotent(mongo_uri: str) -> None:
     assert db.inbox.count_documents({"_id": f"ml|{other['id']}"}) == 0
 
 
+def test_ensure_messaging_indexes_reuses_contract_indexes(mongo_uri: str) -> None:
+    """quickstart chạy contracts/db/mongo-notification-ml.js trước service: cùng tên + khóa nên không xung đột."""
+    client, db = fresh_db(mongo_uri, "t_indexes")
+    db.inbox.create_index([("processedAt", 1)], name="ttl_inbox_14d", expireAfterSeconds=14 * 24 * 3600)
+    db.outbox.create_index(
+        [("occurredAt", 1)], name="ix_outbox_unpublished", partialFilterExpression={"publishedAt": None}
+    )
+
+    mongo.ensure_messaging_indexes(db)
+    mongo.ensure_messaging_indexes(db)  # chạy lại vẫn idempotent
+
+    assert {i["name"] for i in db.inbox.list_indexes()} == {"_id_", "ttl_inbox_14d"}
+    assert {i["name"] for i in db.outbox.list_indexes()} == {"_id_", "ix_outbox_unpublished"}
+
+
+def test_ensure_messaging_indexes_keeps_indexes_created_before_naming(mongo_uri: str) -> None:
+    """DB dev cũ (vd. `ai`, script khởi tạo không đụng tới) đã có index pymongo tự đặt tên."""
+    client, db = fresh_db(mongo_uri, "t_legacy_indexes")
+    db.inbox.create_index([("processedAt", 1)], expireAfterSeconds=14 * 24 * 3600)
+    db.outbox.create_index([("publishedAt", 1), ("occurredAt", 1), ("_id", 1)])
+
+    mongo.ensure_messaging_indexes(db)
+    mongo.ensure_messaging_indexes(db)
+
+    inbox = {i["name"]: i for i in db.inbox.list_indexes()}
+    assert set(inbox) == {"_id_", "processedAt_1"}  # không tạo thêm index trùng khóa
+    assert inbox["processedAt_1"]["expireAfterSeconds"] == 14 * 24 * 3600
+    # outbox cũ có khóa khác → thêm index chuẩn, không xung đột
+    assert "ix_outbox_unpublished" in {i["name"] for i in db.outbox.list_indexes()}
+
+
 def test_outbox_requires_transaction(mongo_uri: str) -> None:
     client, db = fresh_db(mongo_uri, "t_outbox_tx")
     with client.start_session() as s, pytest.raises(RuntimeError):

@@ -15,6 +15,7 @@ from typing import Any, Protocol
 
 from pymongo import ASCENDING, MongoClient, ReturnDocument
 from pymongo.client_session import ClientSession
+from pymongo.collection import Collection
 from pymongo.database import Database
 from pymongo.errors import DuplicateKeyError
 
@@ -34,10 +35,28 @@ def now() -> datetime:
     return datetime.now(UTC)
 
 
+def _ensure_index(collection: Collection[Doc], keys: list[tuple[str, int]], name: str, **options: Any) -> None:
+    """Tạo index dưới tên cố định, kể cả khi cùng khóa đã tồn tại dưới tên khác.
+
+    MongoDB báo lỗi 85 `IndexOptionsConflict` khi cùng một khóa index đã có dưới tên khác, mà cùng khóa này do ba
+    nơi khai báo: `MongoMessaging` (Java), `contracts/db/mongo-notification-ml.js` (quickstart chạy trước service) và
+    ở đây. DB dev cũ còn index do pymongo tự đặt tên (`processedAt_1`) từ bản trước khi đặt tên — gặp cả hai chiều
+    đều phải khởi động được, nên tôn trọng index sẵn có khi khóa và tùy chọn trùng khớp.
+    """
+    for existing, info in collection.index_information().items():
+        if list(info["key"]) == keys and existing != name and all(info.get(k) == v for k, v in options.items()):
+            return
+    collection.create_index(keys, name=name, **options)
+
+
 def ensure_messaging_indexes(db: Database[Doc]) -> None:
-    """Idempotent: TTL inbox 14 ngày, outbox chờ phát theo thứ tự."""
-    db[INBOX].create_index([("processedAt", ASCENDING)], expireAfterSeconds=int(INBOX_TTL.total_seconds()))
-    db[OUTBOX].create_index([("publishedAt", ASCENDING), ("occurredAt", ASCENDING), ("_id", ASCENDING)])
+    """Idempotent: TTL inbox 14 ngày, outbox chờ phát theo thứ tự (tên/khóa trùng Java và contracts/db)."""
+    _ensure_index(
+        db[INBOX], [("processedAt", ASCENDING)], "ttl_inbox_14d", expireAfterSeconds=int(INBOX_TTL.total_seconds())
+    )
+    _ensure_index(
+        db[OUTBOX], [("occurredAt", ASCENDING)], "ix_outbox_unpublished", partialFilterExpression={"publishedAt": None}
+    )
 
 
 def in_transaction[T](client: MongoClient[Doc], fn: Callable[[ClientSession], T]) -> T:
