@@ -14,6 +14,8 @@ import org.shp.web.authz.AuthzInterceptor;
 import org.shp.web.errors.ErrorCatalog;
 import org.shp.web.errors.ErrorWriter;
 import org.shp.web.errors.ShpExceptionHandler;
+import org.shp.web.precondition.ETagAdvice;
+import org.shp.web.precondition.PreconditionInterceptor;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -33,12 +35,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Cấu hình web dùng chung cho mọi service Spring MVC: xác thực JWT, tra danh tính, phân quyền theo
- * ma trận, audit, lỗi chuẩn. Service chỉ cần cung cấp bean {@link IdentityLinkClient} và {@link
- * AuditSink}.
+ * ma trận, audit, lỗi chuẩn, header bắt buộc (If-Match, Idempotency-Key) và ETag. Service chỉ cần
+ * cung cấp bean {@link IdentityLinkClient} và {@link AuditSink}.
  */
 @AutoConfiguration
 @EnableConfigurationProperties(ShpAuthProperties.class)
-@Import(ShpExceptionHandler.class)
+@Import({ShpExceptionHandler.class, ETagAdvice.class})
 public class ShpWebAutoConfiguration {
 
   @Bean
@@ -127,10 +129,11 @@ public class ShpWebAutoConfiguration {
       @Override
       public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new IdentityInterceptor(resolver)).order(0);
+        registry.addInterceptor(new PreconditionInterceptor()).order(1);
         registry
             .addInterceptor(
                 new AuthzInterceptor(engine, sink.getObject(), clock, info.name(), beans))
-            .order(1);
+            .order(2);
       }
     };
   }
