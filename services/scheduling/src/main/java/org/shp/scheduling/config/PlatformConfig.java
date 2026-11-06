@@ -1,10 +1,13 @@
 package org.shp.scheduling.config;
 
 import java.time.Clock;
+import java.time.Duration;
+import org.shp.data.postgres.OutboxRelay;
 import org.shp.data.postgres.PostgresIdempotency;
 import org.shp.data.postgres.PostgresInbox;
 import org.shp.data.postgres.PostgresOutbox;
 import org.shp.data.postgres.PostgresOutboxAuditSink;
+import org.shp.events.EventPublisher;
 import org.shp.events.audit.AuditSink;
 import org.shp.web.auth.HttpIdentityLinkClient;
 import org.shp.web.auth.IdentityLinkClient;
@@ -33,6 +36,13 @@ class PlatformConfig {
   @Bean
   PostgresOutbox outbox(JdbcClient jdbc) {
     return new PostgresOutbox(jdbc);
+  }
+
+  /** Phát outbox lên bus mỗi giây, nhiều replica không trùng (13-events §1, §1.1). */
+  @Bean
+  OutboxRelay outboxRelay(
+      JdbcClient jdbc, TransactionTemplate tx, EventPublisher publisher, Clock clock) {
+    return new OutboxRelay(jdbc, tx, publisher, clock, 100, Duration.ofSeconds(1));
   }
 
   @Bean

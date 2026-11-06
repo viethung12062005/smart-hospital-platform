@@ -15,6 +15,17 @@
 | Trace | CloudEvents extension `traceparent` mang trace context xuyên bus |
 | Giới hạn | ≤ 64 KB/event |
 
+### 1.1 Cài đặt (thư viện `libs/java/shp-messaging`)
+
+| Chủ đề | Cài đặt |
+|---|---|
+| Phát | `StreamEventPublisher` (cài đặt `EventPublisher`) gửi qua `StreamBridge` tới binding `shp-events-out-0` (destination `shp-events`); thân là CloudEvent JSON đầy đủ (structured) nhưng khai báo content-type `application/json`, vì với `application/cloudevents+json` Spring Cloud Function tự tách envelope ra header. Relay outbox của service gọi publisher này |
+| Header khi phát | `type` = CloudEvents `type` (Service Bus: application property dùng trong SQL filter `type IN (...)`; RabbitMQ: routing key); Service Bus: `MessageId` = CloudEvents `id` (topic bật duplicate detection 10 phút), `SessionId` = `subject` |
+| Binder | Cả hai binder có sẵn trong thư viện, chọn bằng `SHP_MESSAGING_BINDER`: `rabbit` (mặc định, local) hoặc `servicebus` (uat/prod, đăng nhập bằng Workload Identity, không connection string) |
+| Nhận | Service khai báo bean `Consumer<Message<byte[]>>` dựng bằng `EventConsumers.idempotent(consumer, types, inbox, handler)`: parse + kiểm schema, bỏ qua `type` không đăng ký, xử lý trong `inbox.handleOnce` (trùng → bỏ qua). Binding `<tên>-in-0`, destination `shp-events`, `group` = tên service (RabbitMQ: queue `shp-events.<service>`; Service Bus: subscription cùng tên, `session-enabled`) |
+| Retry/DLQ | Handler ném exception → không ack. Service Bus: không retry trong tiến trình, broker giao lại tới `max_delivery_count = 5` rồi dead-letter. RabbitMQ: 5 lần thử trong tiến trình (backoff 1 → 10 giây, local không cần chờ 15 phút) rồi chuyển vào `shp-events.<service>.dlq` |
+| Event sai schema | Coi như lỗi vĩnh viễn: ném `PoisonEventException`, vào DLQ sau 5 lần như trên; log chỉ có `id`, `type`, tên trường lỗi (không log `data`) |
+
 ### Envelope mẫu
 ```json
 {
