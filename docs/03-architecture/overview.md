@@ -295,7 +295,7 @@ Quy tắc:
   - Unit test cho `domain/` và `app/`.
   - Test tích hợp (Testcontainers, DB thật) cho `infra/`, API và consumer.
   - Coverage dòng ≥ 70% mỗi module (CI chặn).
-- Service Python (`ai`, `ml`) chia module con trong `src/shp_ai`, `src/shp_ml` theo cùng cách: `api/` (FastAPI router), `app/`, `domain/`, `infra/`, `messaging/`.
+- Service Python (`ai`, `ml`) chia module con trong `src/shp_ai`, `src/shp_ml` theo tính năng (vd. `assistant/`, `kb/`, `summary/`); quy tắc giống Java: router chỉ làm HTTP, transaction và outbox ở lớp use case, test tích hợp dùng Testcontainers ([00-conventions §1](../00-conventions.md#1-cấu-trúc-thư-mục)).
 
 ## 5. Luồng nghiệp vụ end-to-end (vertical slice chính)
 

@@ -1,6 +1,6 @@
 # Đóng góp code
 
-Áp dụng cho mọi người trong nhóm (SA, D1, D2, D3). Bắt đầu từ [docs/onboarding.md](docs/onboarding.md) nếu bạn mới vào.
+Áp dụng cho mọi người trong nhóm. Bắt đầu từ [docs/onboarding.md](docs/onboarding.md) nếu bạn mới vào.
 
 ## Nguyên tắc không thương lượng
 1. **Chỉ dữ liệu giả (synthetic).** Không bao giờ đưa dữ liệu bệnh nhân thật vào repo, test, log hay ảnh chụp màn hình.
@@ -15,8 +15,8 @@
    - Cần đổi những phần đó thì mở issue cho SA.
 
 ## Quy trình một task
-1. Lấy task trong `docs/05-plan/by-person/<bạn>.md`. Làm theo thứ tự tuần; task có phụ thuộc chưa xong thì chưa bắt đầu.
-   Mỗi task có issue `[ID] ...` trên GitHub (nếu chưa có thì tạo).
+1. Lấy task là issue gán cho bạn (milestone tuần này; tiêu đề `<ID>: ...`, sub-issue của issue User Story). Làm theo thứ tự tuần;
+   task còn *Blocked by* chưa đóng thì chưa bắt đầu. Cách theo dõi việc: [docs/00-workflow.md §2](docs/00-workflow.md#2-theo-dõi-việc-theo-user-story).
 2. Tạo nhánh từ `main`: `git switch -c <ID>-mo-ta-ngan`, ví dụ `NTF-02-consumer-booked`. **Một PR cho một task.**
 3. Đọc phần thiết kế ghi ở cột "Tài liệu" của task (`docs/03-architecture/detailed-design/`).
 4. Viết code kèm test.
