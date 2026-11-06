@@ -11,14 +11,20 @@ services/<svc>/
   deploy/values-local.yaml         # dev được thêm biến môi trường không nhạy cảm
   src/main/java/org/shp/<svc>/
     api/            # controller, DTO, mapper; chỉ nhận/trả hợp đồng trong contracts/openapi
-    domain/         # logic nghiệp vụ thuần, không phụ thuộc framework nếu có thể
-    store/          # repository (PostgreSQL/MongoDB), outbox/inbox
-    events/         # publisher + consumer (envelope CloudEvents, schema trong contracts/events)
-    config/         # PlatformConfig (SA quản lý)
+    app/            # use case @Transactional: nơi duy nhất mở transaction, ghi dữ liệu + outbox.add(...)
+    domain/         # model + quy tắc nghiệp vụ thuần, không import Spring/JDBC/Mongo
+    infra/          # repository (JdbcClient/MongoTemplate), client REST nội bộ, Blob
+    messaging/      # consumer event, luôn bọc inbox.handleOnce(...)
+    config/         # PlatformConfig (SA quản lý, sinh bởi tools/scaffold/java_service.py)
   src/main/resources/db/migration/ # Flyway (chỉ service dùng PostgreSQL)
   src/test/java/...                # cùng package với code; test tích hợp dùng Testcontainers
 ```
-Service Python (`ai`, `ml`): `src/<pkg>/{api,domain,store,events}`, test ở `tests/`.
+Bố cục này do `tools/scaffold/java_service.py` sinh và giống mọi service Java ([overview §4](03-architecture/overview.md#4-bên-trong-một-service-java)).
+Outbox, inbox và idempotency đã có sẵn trong `config/PlatformConfig` (thư viện `shp-data-*`); service không tự viết lại.
+
+Service Python (`ai`, `ml`): gói `src/shp_ai`, `src/shp_ml` chia theo tính năng (vd. `assistant/`, `kb/`, `summary/`, `booking/`, `eval/` ở ai;
+`train.py`, `serving.py`, `drift.py`, `consumer.py` ở ml); router FastAPI ở `api_*.py` hoặc `main.py`; `src/shp_platform/` là bản chép của `libs/python`
+(sửa ở `libs/python` rồi chạy `tools/pylib/sync.py`); test ở `tests/`.
 
 ## 2. Lỗi
 - Ném `ShpException` với mã trong `ErrorCatalog` (27 mã, khớp [07 §5](03-architecture/detailed-design/07-api-conventions.md)). **Không tự bịa mã mới**: mở issue cho SA.
