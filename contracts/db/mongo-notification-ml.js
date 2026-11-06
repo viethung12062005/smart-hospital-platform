@@ -62,7 +62,8 @@ if (!ml.getCollectionNames().includes("predictions")) {
     print("ml.predictions: time-series collection");
   } catch (e) {
     ml.createCollection("predictions");
-    ml.predictions.createIndex({ predictedAt: 1 }, { expireAfterSeconds: 400 * 24 * 3600 });
+    // Tên phải trùng shp_ml/store.py (ensure_schema) — MongoDB báo lỗi 85 khi cùng khóa đã có dưới tên khác.
+    ml.predictions.createIndex({ predictedAt: 1 }, { name: "ttl_predictedAt", expireAfterSeconds: 400 * 24 * 3600 });
     print("ml.predictions: collection thường (" + e.codeName + ")");
   }
 }
