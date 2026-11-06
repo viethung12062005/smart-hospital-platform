@@ -101,6 +101,24 @@ class PreconditionTest {
     }
   }
 
+  @Test
+  void multipleIfMatchLinesAreRejectedEvenIfTheFirstOneMatches() throws Exception {
+    // RFC 9110 cho phép lặp header; chỉ đọc dòng đầu thì "W/\"2\"" phía sau bị bỏ qua và request
+    // ghi
+    // đè lên bản mới hơn vẫn qua
+    var r =
+        send(
+            "PUT",
+            "/fhir/Patient/p1",
+            WebTest.patient(),
+            "If-Match",
+            "W/\"3\"",
+            "If-Match",
+            "W/\"2\"");
+    assertThat(r.statusCode()).isEqualTo(412);
+    assertThat(code(r)).isEqualTo("version-conflict");
+  }
+
   // ---------- Idempotency-Key + If-Match trên thao tác đổi trạng thái ----------
   @Test
   void stateChangeWithoutIdempotencyKeyIs428() throws Exception {

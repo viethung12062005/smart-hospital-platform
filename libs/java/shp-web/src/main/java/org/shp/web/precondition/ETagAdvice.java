@@ -42,23 +42,27 @@ public class ETagAdvice implements ResponseBodyAdvice<Object> {
 
   static Long versionOf(Object body) {
     if (body instanceof Versioned v) {
-      return v.version();
+      // Bỏ ETag nếu version không đọc lại được bằng If-Match (âm hoặc quá dài).
+      return ETags.tryParseVersion(v.version());
     }
-    if (body instanceof Map<?, ?> m && m.get("meta") instanceof Map<?, ?> meta) {
-      return parse(meta.get("versionId"));
+    if (body instanceof Map<?, ?> m) {
+      return versionFromMeta(m.get("meta"));
     }
     if (body instanceof JsonNode n) {
-      JsonNode v = n.path("meta").path("versionId");
-      return v.isNumber() || v.isString() ? parse(v.asString()) : null;
+      return versionFromMeta(n.path("meta"));
     }
     return null;
   }
 
-  private static Long parse(Object versionId) {
-    String s =
-        versionId instanceof Number || versionId instanceof String
-            ? versionId.toString().strip()
-            : "";
-    return s.matches("\\d{1,18}") ? Long.valueOf(s) : null;
+  /** {@code meta} có thể là Map (dựng tay) hoặc JsonNode (đọc từ Jackson); phải nhận cả hai. */
+  private static Long versionFromMeta(Object meta) {
+    if (meta instanceof Map<?, ?> m) {
+      return ETags.tryParseVersion(m.get("versionId"));
+    }
+    if (meta instanceof JsonNode n) {
+      JsonNode v = n.path("versionId");
+      return v.isNumber() || v.isString() ? ETags.tryParseVersion(v.asString()) : null;
+    }
+    return null;
   }
 }

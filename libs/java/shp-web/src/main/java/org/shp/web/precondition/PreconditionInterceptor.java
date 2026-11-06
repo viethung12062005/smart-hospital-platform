@@ -2,6 +2,7 @@ package org.shp.web.precondition;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import org.shp.web.errors.ShpException;
 import org.shp.web.idempotency.IdempotencyKeys;
 import org.springframework.http.HttpHeaders;
@@ -27,7 +28,14 @@ public final class PreconditionInterceptor implements HandlerInterceptor {
       req.setAttribute(ATTR_KEY, IdempotencyKeys.require(req.getHeader(IdempotencyKeys.HEADER)));
     }
     if (HttpMethod.PUT.matches(req.getMethod()) || hm.hasMethodAnnotation(RequireIfMatch.class)) {
-      req.setAttribute(ATTR_VERSION, ETags.parseIfMatch(req.getHeader(HttpHeaders.IF_MATCH)));
+      // Nhiều dòng If-Match tương đương danh sách phân cách phẩy → cũng là 412, không lặng lẽ lấy
+      // dòng đầu (getHeader chỉ trả giá trị đầu, làm sai lệch ngữ nghĩa "khớp một trong các bản").
+      var values = Collections.list(req.getHeaders(HttpHeaders.IF_MATCH));
+      if (values.size() > 1) {
+        throw new ShpException("version-conflict");
+      }
+      req.setAttribute(
+          ATTR_VERSION, ETags.parseIfMatch(values.isEmpty() ? null : values.getFirst()));
     }
     return true;
   }
