@@ -125,10 +125,45 @@ class FhirJsonTest {
         "{\"resourceType\":\"Patient\",\"birthDate\":\"12/04/1985\"}",
         "{\"resourceType\":\"Patient\",\"gender\":\"nam\"}",
         "{\"resourceType\":\"Patient\",\"active\":\"yes\"}",
-        "{\"resourceType\":\"Observation\",\"status\":\"final\"}"
+        "{\"resourceType\":\"Observation\",\"status\":\"final\"}",
+        // khóa trùng: HAPI lấy giá trị sau, bộ đọc khác có thể lấy giá trị trước
+        "{\"resourceType\":\"Patient\",\"active\":true,\"active\":false}",
+        "{\"resourceType\":\"Patient\",\"active\":null}",
+        "{\"resourceType\":\"Patient\",\"name\":[{\"family\":null}]}",
+        // id sai kiểu FHIR id: ký tự cấm, quá 64 ký tự, không phải chuỗi; cả resource lồng
+        "{\"resourceType\":\"Patient\",\"id\":\"a b/../c\"}",
+        "{\"resourceType\":\"Patient\",\"id\":\"%s\"}",
+        "{\"resourceType\":\"Patient\",\"id\":42}",
+        "{\"resourceType\":\"Patient\",\"contained\":[{\"resourceType\":\"Practitioner\",\"id\":\"../x\"}]}"
       })
   void invalidPatientIsValidationFailed(String json) {
-    assertValidationFailed(() -> FhirJson.parse(json, Patient.class));
+    String body = json == null ? null : json.replace("%s", "x".repeat(65));
+    assertValidationFailed(() -> FhirJson.parse(body, Patient.class));
+  }
+
+  @Test
+  void validIdsAndNullsInsideArraysAreAccepted() {
+    // 64 ký tự, có '-' và '.'; null trong mảng hợp lệ khi căn hàng với _given (extension)
+    String id = "a-b.c" + "x".repeat(59);
+    Patient p =
+        FhirJson.parse(
+            "{\"resourceType\":\"Patient\",\"id\":\""
+                + id
+                + "\",\"name\":[{\"given\":[\"An\",null],\"_given\":[null,{\"extension\":"
+                + "[{\"url\":\"https://shp.example.org/x\",\"valueString\":\"y\"}]}]}],"
+                + "\"contained\":[{\"resourceType\":\"Practitioner\",\"id\":\"p1\"}]}",
+            Patient.class);
+    assertThat(p.getIdElement().getIdPart()).isEqualTo(id);
+  }
+
+  @Test
+  void versionedReferencesSurviveSerialization() {
+    // HAPI mặc định cắt "_history/2" khi ghi ra; 07 §3 và Location dùng tham chiếu có version
+    String json =
+        "{\"resourceType\":\"Observation\",\"status\":\"final\",\"code\":{\"text\":\"x\"},"
+            + "\"derivedFrom\":[{\"reference\":\"DocumentReference/abc/_history/2\"}]}";
+    assertThat(FhirJson.serialize(FhirJson.parse(json, Observation.class)))
+        .contains("\"DocumentReference/abc/_history/2\"");
   }
 
   @ParameterizedTest
