@@ -33,6 +33,7 @@ tools/synthetic/
 └── generators/
     ├── __init__.py
     ├── ids.py
+    ├── names.py
     ├── patients.py
     └── practitioners.py
 
@@ -47,6 +48,7 @@ Chức năng các thành phần:
 |---|---|
 | `generate.py` | Giao diện dòng lệnh, điều phối sinh dữ liệu và tạo manifest |
 | `generators/ids.py` | Sinh UUIDv7 có tính tái lập |
+| `generators/names.py` | Họ, tên đệm, tên tiếng Việt theo giới; slug cho email |
 | `generators/patients.py` | Sinh dữ liệu Patient |
 | `generators/practitioners.py` | Sinh Practitioner và PractitionerRole |
 | `tests/synthetic/test_generators.py` | Kiểm thử các generator |
@@ -148,58 +150,35 @@ Manifest lưu lại:
 
 ## 8. Kiểm thử
 
-Sử dụng thư viện `unittest` có sẵn trong Python.
-
-Chạy toàn bộ test DAT-01:
+Test chạy bằng `pytest` (hoặc `unittest`), tự động trong CI ở job `synthetic` của workflow `qa` (ruff, mypy strict, test):
 
 ```bash
-python3 -m unittest discover \
-    -s tests/synthetic \
-    -p "test_*.py" \
-    -v
+pip install -r tools/contracts/requirements.txt ruff mypy pytest types-PyYAML
+ruff check tools/synthetic tests/synthetic && ruff format --check tools/synthetic tests/synthetic
+mypy --strict --explicit-package-bases tools/synthetic tests/synthetic
+python -m pytest -q tests/synthetic
 ```
 
-Các nhóm kiểm thử:
+Các nhóm kiểm thử (theo `docs/00-synthetic-data.md` §7):
 
 | Nhóm | Nội dung |
 |---|---|
-| UUIDv7 | Kiểm tra phiên bản UUID và tính tái lập |
-| Patient | Kiểm tra số lượng, ID, email, số điện thoại |
-| Practitioner | Kiểm tra số lượng và tính duy nhất của ID |
-| PractitionerRole | Kiểm tra mã vai trò và tham chiếu Practitioner |
-| Reproducibility | Kiểm tra cùng seed và khác seed |
+| UUIDv7 | Phiên bản UUID, tái lập, khác seed thì khác |
+| Patient | Số lượng; ID/MRN/email/SĐT duy nhất; SĐT chỉ trong dải giả; email `.test`; tên theo giới; tỉ lệ giới 49/51; phân bố tuổi 18/35/29/18; ngày sinh hợp lệ; dấu hiệu giả `(test)`, `(giả)` |
+| Dải số điện thoại | Đủ 500.000 số không trùng cho `large`; 100.000 số đầu thuộc dải gốc `09000xxxxx` |
+| Practitioner / Role | ID không trùng với nhau và với Patient; tham chiếu tồn tại; chuyên khoa và vai trò lấy từ `contracts/terminology`; tên theo giới |
+| Tái lập | Cùng seed + scale cho cùng file đầu ra từng byte |
 
-### 8.1. Kết quả kiểm thử hiện tại
+## 9. Quy ước đã chốt
 
-| Hạng mục | Kết quả |
+| Nội dung | Quy ước |
 |---|---|
-| Automated tests | 18/18 PASS |
-| Small generation | PASS |
-| Medium generation | PASS |
-| Large generation | PASS |
-| JSON validation | PASS trên Small |
-| Gender distribution | Đã kiểm tra trên Medium |
-| Age distribution | Đã kiểm tra trên Medium |
-| ID uniqueness | Đã kiểm tra trên Medium |
-| Referential integrity | Đã kiểm tra trên Medium |
-| Reproducibility | Đã xác nhận trên Small và Medium |
-
-Lưu ý: Large đã được xác nhận sinh thành công và có số lượng đúng theo manifest. Chưa thực hiện đầy đủ các kiểm tra chất lượng trên toàn bộ 500.000 Patient.
-
-## 9. Các điểm cần thống nhất với ARC-11
-
-Một số quy ước trong implementation cần được xác nhận với người phụ trách đặc tả trước khi chốt:
-
-| Nội dung | Implementation hiện tại | Điểm cần xác nhận |
-|---|---|---|
-| Patient email | `<slug>-<sequence>@example.test` | ARC-11 mô tả `<slug>@example.test` |
-| Practitioner email | Slug kèm mã nhân viên | Cần xác nhận định dạng |
-| Doctor/nurse ratio | 2:1 | Chưa có tỷ lệ chính thức trong ARC-11 |
-| PractitionerRole coding system | `urn:shp:practitioner-role` | Cần xác nhận URI chính thức |
-| UUIDv7 | UUIDv7 xác định từ seed | Cần thống nhất cách thể hiện dấu hiệu nhận diện dữ liệu giả |
-| Phone | Dải giả `09000xxxxx`, chuyển sang E.164 | Dải số có giới hạn 100.000 giá trị, có thể lặp ở Large |
-
-Không tự ý thay đổi các quy ước này nếu chưa có thống nhất từ nhóm.
+| Họ tên | Tên đệm và tên chọn theo giới (`names.py`); tỉ lệ giới 49/51 |
+| Số điện thoại | `+84900` + 6 chữ số theo thứ tự bệnh nhân, không trùng. `small`/`medium` nằm trong dải `09000xxxxx` của ARC-11; `large` mở rộng sang `0900xxxxxx` (đã ghi vào `docs/00-synthetic-data.md` §3) |
+| Patient email | `<slug>-<số thứ tự>@example.test` (thêm số thứ tự để không trùng) |
+| Practitioner email | `<slug>-nv<mã nhân viên>@example.test` |
+| Tỉ lệ bác sĩ/điều dưỡng | 2:1 |
+| Mã vai trò | CodeSystem `practitioner-role` (`https://shp.example.org/fhir/CodeSystem/practitioner-role`) trong `contracts/terminology`, khớp 01-domain-model §3 |
 
 ## 10. Lưu ý khi sử dụng
 

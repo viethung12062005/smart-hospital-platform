@@ -25,7 +25,7 @@ Chuyên khoa, lý do hủy, loại tài liệu, LOINC, ICD-10 lấy từ `contra
 |---|---|---|
 | Họ tên | Họ phổ biến (Nguyễn, Trần, Lê, Phạm, Hoàng, Vũ, Đặng, Bùi...) + tên đệm + tên theo giới; có dấu tiếng Việt đầy đủ (NFC) | Thêm hậu tố `(test)` ở `Patient.name.text` khi `scale` = `small` |
 | Giới, ngày sinh | Giới theo tỉ lệ 49/51; tuổi theo phân bố mục 5; ngày sinh hợp lệ | — |
-| Số điện thoại | Dạng `0xxxxxxxxx` thuộc dải **không cấp phát** `09000xxxxx` | Dải dành riêng cho test |
+| Số điện thoại | Dạng `0xxxxxxxxx` thuộc dải **không cấp phát** `09000xxxxx` (100 000 số, đủ cho `small`/`medium`); `large` (500 000 bệnh nhân) mở rộng sang `0900xxxxxx`, 100 000 số đầu trùng dải gốc. Mỗi bệnh nhân một số, không trùng (số dùng để chống trùng hồ sơ, 01 §4.1) | Dải dành riêng cho test |
 | Email | `<slug>@example.test` | Tên miền `.test` (RFC 2606) |
 | CCCD/CMND | 12 số bắt đầu `000`; không hợp lệ theo mã tỉnh thật | Tiền tố `000` |
 | Mã BHYT | `TEST` + 11 số | Tiền tố `TEST` |

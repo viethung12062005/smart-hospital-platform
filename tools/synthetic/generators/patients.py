@@ -1,11 +1,11 @@
 """Generate deterministic fake Vietnamese FHIR Patient resources."""
 
 import random
-import unicodedata
 from datetime import date, timedelta
 from typing import Any
 
 from tools.synthetic.generators.ids import UUID7Generator
+from tools.synthetic.generators.names import random_name, slug
 
 # Cố định ngày tham chiếu để cùng seed luôn cho cùng kết quả.
 REFERENCE_DATE = date(2026, 11, 7)
@@ -25,27 +25,6 @@ AGE_GROUPS = [
     (65, 120, 18),
 ]
 
-SURNAMES = [
-    "Nguyễn", "Trần", "Lê", "Phạm", "Hoàng",
-    "Huỳnh", "Phan", "Vũ", "Võ", "Đặng",
-    "Bùi", "Đỗ", "Hồ", "Ngô", "Dương",
-    "Lý", "Đinh", "Mai", "Trịnh", "Đào",
-]
-
-MIDDLE_NAMES = [
-    "Văn", "Thị", "Hữu", "Đức", "Minh",
-    "Ngọc", "Thanh", "Quốc", "Gia", "Hoàng",
-    "Xuân", "Tuấn", "Khánh", "Bảo", "Anh",
-]
-
-GIVEN_NAMES = [
-    "An", "Bình", "Cường", "Dũng", "Hà",
-    "Hạnh", "Hiếu", "Hòa", "Hùng", "Khánh",
-    "Lan", "Linh", "Long", "Mai", "Minh",
-    "Nam", "Nga", "Ngọc", "Phúc", "Phong",
-    "Quân", "Quỳnh", "Sơn", "Thảo", "Thành",
-    "Trang", "Tuấn", "Uyên", "Việt", "Yến",
-]
 
 LOCATIONS = [
     ("Hà Nội", "Ba Đình"),
@@ -86,35 +65,16 @@ def _random_birth_date(
     return earliest + timedelta(days=rng.randint(0, days))
 
 
-def _slug(value: str) -> str:
-    """Convert Vietnamese text into an ASCII email slug."""
-    value = value.removesuffix(" (test)")
-    value = value.replace("đ", "d").replace("Đ", "D")
-    normalized = unicodedata.normalize("NFKD", value)
-    ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
-    return "-".join(ascii_value.lower().split())
+# Dải số giả theo ARC-11: 09000xxxxx (100.000 số) đủ cho small/medium. large cần 500.000 số nên mở rộng sang
+# 0900xxxxxx (1.000.000 số, vẫn là dải chưa cấp phát); 100.000 số đầu trùng dải gốc nên small/medium không đổi.
+PHONE_CAPACITY = 1_000_000
 
 
-def _generate_name(
-    rng: random.Random,
-) -> tuple[str, list[str], str]:
-    """Return family, given names, and full name."""
-    family = rng.choice(SURNAMES)
-    middle = rng.choice(MIDDLE_NAMES)
-    given = rng.choice(GIVEN_NAMES)
-
-    given_parts = [middle, given]
-    full_name = f"{family} {middle} {given}"
-
-    # NFC bảo đảm tên tiếng Việt ở dạng Unicode chuẩn.
-    full_name = unicodedata.normalize("NFC", full_name)
-    family = unicodedata.normalize("NFC", family)
-    given_parts = [
-        unicodedata.normalize("NFC", part)
-        for part in given_parts
-    ]
-
-    return family, given_parts, full_name
+def fake_phone(index: int) -> str:
+    """E.164 phone for the 1-based patient index: +84900000000, +84900000001... (unique per index)."""
+    if not 1 <= index <= PHONE_CAPACITY:
+        raise ValueError(f"Hết dải số giả: index {index} > {PHONE_CAPACITY}")
+    return f"+84900{index - 1:06d}"
 
 
 def _generate_age(rng: random.Random) -> date:
@@ -136,8 +96,7 @@ def generate_patients(
     """Generate fake FHIR Patient resources for the selected scale."""
     if scale not in PATIENT_COUNTS:
         raise ValueError(
-            f"Scale không hợp lệ: {scale}. "
-            f"Chọn một trong: {', '.join(PATIENT_COUNTS)}"
+            f"Scale không hợp lệ: {scale}. Chọn một trong: {', '.join(PATIENT_COUNTS)}"
         )
 
     count = PATIENT_COUNTS[scale]
@@ -149,25 +108,21 @@ def generate_patients(
     for index in range(1, count + 1):
         patient_id = str(id_generator.next())
 
-        family, given, full_name = _generate_name(rng)
-
-        if scale == "small":
-            full_name = f"{full_name} (test)"
-
         gender = rng.choices(
             ["male", "female"],
             weights=[49, 51],
             k=1,
         )[0]
 
+        family, given, full_name = random_name(rng, gender)
+        email_slug = slug(full_name)
+
+        if scale == "small":
+            full_name = f"{full_name} (test)"
+
         birth_date = _generate_age(rng)
 
-        # Dải số giả 09000xxxxx theo ARC-11.
-        # E.164: bỏ số 0 đầu và thêm mã quốc gia +84.
-        phone_suffix = (index - 1) % 100_000
-        phone = f"+849000{phone_suffix:05d}"
-
-        email_slug = _slug(full_name)
+        phone = fake_phone(index)
         email = f"{email_slug}-{index:06d}@example.test"
 
         city, district = rng.choice(LOCATIONS)

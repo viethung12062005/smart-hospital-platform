@@ -22,6 +22,7 @@ class Manifest(TypedDict):
     counts: dict[str, int]
     sha256: dict[str, str]
 
+
 DEFAULT_OUTPUT = Path("dev/.local/synthetic")
 
 

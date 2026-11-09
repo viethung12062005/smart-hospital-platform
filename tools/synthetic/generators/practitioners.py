@@ -1,10 +1,10 @@
 """Generate deterministic fake Vietnamese FHIR Practitioner resources."""
 
 import random
-import unicodedata
 from typing import Any
 
 from tools.synthetic.generators.ids import UUID7Generator
+from tools.synthetic.generators.names import random_name, slug
 
 PRACTITIONER_COUNTS = {
     "small": 12,
@@ -27,32 +27,11 @@ SPECIALTIES = {
     "general-surgery": "Ngoại tổng quát",
 }
 
-SPECIALTY_SYSTEM = (
-    "https://shp.example.org/fhir/CodeSystem/specialty"
-)
+SPECIALTY_SYSTEM = "https://shp.example.org/fhir/CodeSystem/specialty"
 
-# Domain model quy định code doctor/nurse nhưng chưa khai báo URL CodeSystem.
-ROLE_SYSTEM = "urn:shp:practitioner-role"
+# CodeSystem practitioner-role trong contracts/terminology (01-domain-model §3, §4.2).
+ROLE_SYSTEM = "https://shp.example.org/fhir/CodeSystem/practitioner-role"
 
-SURNAMES = [
-    "Nguyễn", "Trần", "Lê", "Phạm", "Hoàng",
-    "Huỳnh", "Phan", "Vũ", "Võ", "Đặng",
-    "Bùi", "Đỗ", "Hồ", "Ngô", "Dương",
-]
-
-MIDDLE_NAMES = [
-    "Văn", "Thị", "Hữu", "Đức", "Minh",
-    "Ngọc", "Thanh", "Quốc", "Gia", "Hoàng",
-]
-
-GIVEN_NAMES = [
-    "An", "Bình", "Cường", "Dũng", "Hà",
-    "Hạnh", "Hiếu", "Hòa", "Hùng", "Khánh",
-    "Lan", "Linh", "Long", "Mai", "Minh",
-    "Nam", "Nga", "Ngọc", "Phúc", "Phong",
-    "Quân", "Quỳnh", "Sơn", "Thảo", "Thành",
-    "Trang", "Tuấn", "Uyên", "Việt", "Yến",
-]
 
 DOCTOR_PREFIXES = [
     "BS.",
@@ -61,24 +40,6 @@ DOCTOR_PREFIXES = [
     "BS.CKII.",
     "BS.CKI.",
 ]
-
-
-def _normalize(value: str) -> str:
-    return unicodedata.normalize("NFC", value)
-
-
-def _slug(value: str) -> str:
-    value = value.replace("đ", "d").replace("Đ", "D")
-    normalized = unicodedata.normalize("NFKD", value)
-    ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
-    return "-".join(ascii_value.lower().split())
-
-
-def _generate_name(rng: random.Random) -> str:
-    family = rng.choice(SURNAMES)
-    middle = rng.choice(MIDDLE_NAMES)
-    given = rng.choice(GIVEN_NAMES)
-    return _normalize(f"{family} {middle} {given}")
 
 
 def generate_practitioners(
@@ -113,7 +74,8 @@ def generate_practitioners(
         is_doctor = index <= doctor_count
         role_code = "doctor" if is_doctor else "nurse"
 
-        full_name = _generate_name(rng)
+        gender = rng.choices(["male", "female"], weights=[49, 51], k=1)[0]
+        _, _, full_name = random_name(rng, gender)
         specialty_code = rng.choice(list(SPECIALTIES))
         specialty_display = SPECIALTIES[specialty_code]
 
@@ -122,9 +84,7 @@ def generate_practitioners(
         else:
             prefix = "ĐD."
 
-        email = (
-            f"{_slug(full_name)}-nv{index:04d}@example.test"
-        )
+        email = f"{slug(full_name)}-nv{index:04d}@example.test"
 
         practitioner = {
             "resourceType": "Practitioner",
@@ -149,6 +109,7 @@ def generate_practitioners(
                     "use": "work",
                 }
             ],
+            "gender": gender,
         }
 
         role = {
@@ -177,9 +138,7 @@ def generate_practitioners(
                         {
                             "system": ROLE_SYSTEM,
                             "code": role_code,
-                            "display": (
-                                "Bác sĩ" if is_doctor else "Điều dưỡng"
-                            ),
+                            "display": ("Bác sĩ" if is_doctor else "Điều dưỡng"),
                         }
                     ],
                     "text": "Bác sĩ" if is_doctor else "Điều dưỡng",
