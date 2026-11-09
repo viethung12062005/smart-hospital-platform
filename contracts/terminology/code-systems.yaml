@@ -71,3 +71,26 @@ codeSystems:
       M54.5: Low back pain
       N39.0: Urinary tract infection, site not specified
       R50.9: Fever, unspecified
+# URL của extension FHIR (StructureDefinition) do SHP định nghĩa, cùng gốc canonical với CodeSystem ở trên.
+# Nguồn: 01-domain-model §3.1; validate_terminology.py kiểm hai chiều với các dòng `extension[<khóa>]` trong tài liệu.
+extensions:
+  booking-channel:
+    url: https://shp.example.org/fhir/StructureDefinition/booking-channel
+    context: Appointment
+    value: "valueCode (CodeSystem booking-channel)"
+  rescheduled-from:
+    url: https://shp.example.org/fhir/StructureDefinition/rescheduled-from
+    context: Appointment
+    value: "valueReference (Appointment)"
+  clinical-note:
+    url: https://shp.example.org/fhir/StructureDefinition/clinical-note
+    context: Encounter
+    value: valueMarkdown
+  addendum:
+    url: https://shp.example.org/fhir/StructureDefinition/addendum
+    context: Encounter
+    value: "complex: author (valueReference Practitioner), recordedAt (valueDateTime), text (valueMarkdown)"
+  released-to-patient:
+    url: https://shp.example.org/fhir/StructureDefinition/released-to-patient
+    context: DocumentReference
+    value: "complex: releasedAt (valueDateTime), releasedBy (valueReference Practitioner)"
