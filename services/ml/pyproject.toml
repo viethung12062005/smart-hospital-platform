@@ -26,7 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 # huấn luyện (ML-01..05): image huấn luyện riêng (MLO-02), không vào image phục vụ
 train = [
-  "pyarrow>=18,<25",
+  "pyarrow>=18,<27",
   "scikit-learn>=1.6,<2",
 ]
 # MLflow tracking + registry (cụm, LOC-08); không cần cho test
