@@ -78,6 +78,24 @@
         }
       }
     },
+    "onBehalfOf": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(Patient|Practitioner)/[A-Za-z0-9-]+$"
+    },
+    "relationship": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "guardian",
+        "proxy",
+        null
+      ]
+    },
     "patientId": {
       "type": [
         "string",

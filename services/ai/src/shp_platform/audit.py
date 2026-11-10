@@ -38,6 +38,10 @@ EVENT_TYPE = "shp.audit.recorded.v1"
 _RESOURCE = re.compile(r"^[A-Za-z]+(/[A-Za-z0-9-]{1,64})?(\?[A-Za-z_:.,-]+(&[A-Za-z_:.,-]+)*)?$")
 
 
+RELATIONSHIPS = ("guardian", "proxy")
+_ON_BEHALF_OF = re.compile(r"^(Patient|Practitioner)/[A-Za-z0-9-]+$")
+
+
 def mask_ip(ip: str | None) -> str | None:
     if not ip:
         return None
@@ -61,6 +65,8 @@ def build(
     actor_role: str,
     resource: str,
     actor_fhir_user: str | None = None,
+    on_behalf_of: str | None = None,
+    relationship: str | None = None,
     patient_id: uuid.UUID | None = None,
     purpose_of_use: str | None = None,
     reason: str | None = None,
@@ -76,6 +82,10 @@ def build(
         raise ValueError(f"actor role không hợp lệ: {actor_role}")
     if not _RESOURCE.match(resource):
         raise ValueError("resource chỉ được chứa loại, id hoặc TÊN tham số tìm kiếm (không có giá trị)")
+    if on_behalf_of is not None and not _ON_BEHALF_OF.match(on_behalf_of):
+        raise ValueError("onBehalfOf phải là Patient/<id> hoặc Practitioner/<id>")
+    if relationship is not None and (on_behalf_of is None or relationship not in RELATIONSHIPS):
+        raise ValueError("relationship chỉ guardian/proxy và phải có onBehalfOf")
     if purpose_of_use is not None and purpose_of_use not in PURPOSES:
         raise ValueError(f"purposeOfUse không hợp lệ: {purpose_of_use}")
     if reason is not None and len(reason) > MAX_REASON_LENGTH:
@@ -94,6 +104,9 @@ def build(
         "resource": resource,
         "reason": reason,
     }
+    if on_behalf_of:
+        record["onBehalfOf"] = on_behalf_of
+        record["relationship"] = relationship
     if purpose_of_use:
         record["purposeOfUse"] = purpose_of_use
     if trace_id:

@@ -222,4 +222,51 @@ class AuditTest {
     var json = CloudEvents.toJson(build("Patient", null, null).toCloudEvent(CLOCK));
     assertThat(json).doesNotContain("\"reason\"").contains("\"purposeOfUse\":\"TREAT\"");
   }
+
+  // ---------- SHR-30: hành động thay mặt hồ sơ liên kết ----------
+  static AuditRecord delegated(String onBehalfOf, String relationship) {
+    return AuditRecordBuilder.build(
+        CLOCK,
+        "clinical",
+        "read",
+        "success",
+        DOCTOR,
+        onBehalfOf,
+        relationship,
+        "Encounter/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e06",
+        PATIENT,
+        "TREAT",
+        null,
+        null,
+        "10.1.2.3",
+        "Mozilla/5.0");
+  }
+
+  @Test
+  void onBehalfOfKeepsTheActingAccountAndTheAccessedProfile() {
+    var r = delegated("Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02", "guardian");
+    assertThat(r.actor().subject()).isEqualTo("kc-doctor"); // tài khoản thực hiện
+    assertThat(r.onBehalfOf()).isEqualTo("Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02");
+    assertThat(r.relationship()).isEqualTo("guardian");
+    assertThat(r.patientId()).isEqualTo(PATIENT); // hồ sơ được truy cập
+    assertThat(CloudEvents.toJson(r.toCloudEvent(CLOCK)))
+        .contains("\"onBehalfOf\":\"Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02\"")
+        .contains("\"relationship\":\"guardian\"");
+  }
+
+  @Test
+  void withoutDelegationTheFieldsAreAbsentFromTheEvent() {
+    var json = CloudEvents.toJson(build("Patient", null, null).toCloudEvent(CLOCK));
+    assertThat(json).doesNotContain("\"onBehalfOf\"").doesNotContain("\"relationship\"");
+  }
+
+  @Test
+  void invalidDelegationIsRejected() {
+    assertThatThrownBy(() -> delegated("not-a-reference", "guardian"))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> delegated("Patient/ok", "parent"))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> delegated(null, "guardian"))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
 }

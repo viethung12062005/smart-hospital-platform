@@ -9,6 +9,8 @@
     "role": "doctor",
     "fhirUser": "Practitioner/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03"
   },
+  "onBehalfOf": null,
+  "relationship": null,
   "patientId": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
   "resource": "Encounter/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e06",
   "purposeOfUse": "TREAT",
