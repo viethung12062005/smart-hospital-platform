@@ -47,6 +47,8 @@ spec:
           args: ["start-dev", "--import-realm", "--http-port=8080", "--hostname-strict=false"]
           env:
             - { name: KC_BOOTSTRAP_ADMIN_USERNAME, value: admin }
+            - { name: JAVA_OPTS_KC_HEAP, value: {{ .Values.keycloakJvm.heap | quote }} }
+            - { name: JAVA_OPTS_APPEND, value: {{ .Values.keycloakJvm.append | quote }} }
             - name: KC_BOOTSTRAP_ADMIN_PASSWORD
               valueFrom: { secretKeyRef: { name: {{ .Values.credentialsSecret }}, key: keycloak-admin-password } }
           ports: [{ containerPort: 8080 }]
