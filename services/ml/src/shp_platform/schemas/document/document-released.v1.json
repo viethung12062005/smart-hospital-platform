@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shp.example.org/schemas/document/document-released/v1.json",
   "title": "shp.document.document-released.v1",
-  "description": "E9: phát hành tài liệu cho bệnh nhân. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "description": "E9: document released to the patient. IDs/codes/timestamps/status only, no PII. Only optional fields may be added within the same version.",
   "type": "object",
   "required": [
     "documentId",

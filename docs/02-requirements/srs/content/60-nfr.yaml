@@ -1,92 +1,93 @@
-# Chương 5 – Yêu cầu phi chức năng. Mã NFR giữ nguyên theo non-functional-requirements.md (G2); NFR-SEC10..21 bổ sung ở v0.9.
+# Chapter 5 - Non-functional requirements. NFR IDs stay unchanged per non-functional-requirements.md (G2); NFR-SEC10..21 were added in v0.9.
 nfr:
   intro: >-
-    Chương này mô tả hệ thống phải hoạt động thế nào về hiệu năng, mở rộng, sẵn sàng, bảo mật, quyền riêng tư, vận hành,
-    chi phí và chất lượng AI. Mỗi yêu cầu có chỉ số đo được, điều kiện đo và loại kiểm thử dùng để chứng minh; Kế hoạch
-    kiểm thử truy vết từng mã NFR sang test case. Hệ thống xử lý dữ liệu sức khỏe – dữ liệu cá nhân nhạy cảm theo Nghị định
-    91/2025/QH15 (có hiệu lực từ 01/01/2026) – nên nhóm bảo mật và quyền riêng tư có ưu tiên cao nhất: không phát hành nếu một NFR-SEC bất kỳ không đạt.
+    This chapter describes how the system must perform in terms of performance, scalability, availability, security, privacy,
+    operations, cost and AI quality. Each requirement has a measurable indicator, a measurement condition and the type of test
+    used to prove it; the Test Plan traces each NFR ID to test cases. The system processes health data - sensitive personal data
+    under Law 91/2025/QH15 (effective from 01/01/2026) - so the security and privacy group has the highest priority: do not
+    release if any single NFR-SEC is not met.
   categories:
-    - name: Hiệu năng
-      intro: Đo trên môi trường UAT cỡ production, dữ liệu giả theo quy mô năm đầu (50.000 bệnh nhân), sau 5 phút làm nóng.
+    - name: Performance
+      intro: Measured in a production-sized UAT environment, with synthetic data at first-year scale (50,000 patients), after a 5-minute warm-up.
       items:
-        - {id: NFR-P1, title: Tìm slot trống, target: "p95 ≤ 300 ms tại 500 RPS", measure: "k6, 10 phút, tại gateway; tỉ lệ lỗi < 0,1%", test: Load test}
-        - {id: NFR-P2, title: Đặt lịch, target: "p95 ≤ 800 ms tại 50 RPS; lỗi 5xx < 0,1%", measure: "k6, 10 phút, kèm 20% yêu cầu tranh chấp cùng slot", test: Load test}
-        - {id: NFR-P3, title: Mở hồ sơ / timeline, target: "p95 ≤ 500 ms", measure: "k6 + trace, bệnh nhân có 50 lần khám", test: Load test}
-        - {id: NFR-P4, title: Cấp link upload/tải, target: "p95 ≤ 300 ms", measure: k6, test: Load test}
-        - {id: NFR-P5, title: Trợ lý RAG, target: "Token đầu ≤ 3 s; trả lời đủ ≤ 10 s (p95)", measure: "Eval harness + trace, 100 câu hỏi", test: AI eval}
-        - {id: NFR-P6, title: Tóm tắt hồ sơ, target: "≤ 15 s (p95)", measure: Eval harness, test: AI eval}
-        - {id: NFR-P7, title: Trích xuất tài liệu, target: "≤ 2 phút từ lúc upload (p95)", measure: Metric độ trễ hàng đợi, test: Load test}
-        - {id: NFR-P8, title: Gửi nhắc lịch, target: "≥ 99% gửi trong 5 phút sau giờ hẹn gửi", measure: Metric notification trên 1.000 lần nhắc, test: Integration}
-    - name: Khả năng mở rộng
+        - {id: NFR-P1, title: Find a free slot, target: "p95 <= 300 ms at 500 RPS", measure: "k6, 10 minutes, at the gateway; error rate < 0.1%", test: Load test}
+        - {id: NFR-P2, title: Book an appointment, target: "p95 <= 800 ms at 50 RPS; 5xx errors < 0.1%", measure: "k6, 10 minutes, with 20% of requests contending for the same slot", test: Load test}
+        - {id: NFR-P3, title: Open a record / timeline, target: "p95 <= 500 ms", measure: "k6 + trace, patient with 50 encounters", test: Load test}
+        - {id: NFR-P4, title: Issue upload/download links, target: "p95 <= 300 ms", measure: k6, test: Load test}
+        - {id: NFR-P5, title: RAG assistant, target: "First token <= 3 s; full answer <= 10 s (p95)", measure: "Eval harness + trace, 100 questions", test: AI eval}
+        - {id: NFR-P6, title: Record summary, target: "<= 15 s (p95)", measure: Eval harness, test: AI eval}
+        - {id: NFR-P7, title: Document extraction, target: "<= 2 minutes from upload (p95)", measure: Queue latency metric, test: Load test}
+        - {id: NFR-P8, title: Send appointment reminders, target: ">= 99% sent within 5 minutes after the scheduled send time", measure: "Notification metric over 1,000 reminders", test: Integration}
+    - name: Scalability
       items:
-        - {id: NFR-S1, title: Đợt tăng tải 07:00, target: "Tự scale đủ tải trong ≤ 2 phút, không can thiệp tay", measure: "k6 ramp 0 → 500 RPS trong 1 phút; KEDA cron + HPA", test: Load test}
-        - {id: NFR-S2, title: Tải 5×, target: "p95 không vượt 2× mục tiêu P1/P2", measure: k6, test: Load test}
-        - {id: NFR-S3, title: Tải 10×, target: "Xuống cấp có kiểm soát (429, hàng chờ) thay vì sập", measure: "k6; không có pod restart do OOM", test: Load test}
-        - {id: NFR-S4, title: Scale độc lập, target: "Tải AI/tài liệu không làm P1/P2 vượt mục tiêu", measure: "k6 chạy song song tải AI và đặt lịch", test: Load test}
-    - name: Tính sẵn sàng và phục hồi
+        - {id: NFR-S1, title: 07:00 load spike, target: "Auto-scale to the required load within <= 2 minutes, without manual intervention", measure: "k6 ramp 0 -> 500 RPS in 1 minute; KEDA cron + HPA", test: Load test}
+        - {id: NFR-S2, title: 5x load, target: "p95 does not exceed 2x the P1/P2 targets", measure: k6, test: Load test}
+        - {id: NFR-S3, title: 10x load, target: "Controlled degradation (429, queueing) instead of an outage", measure: "k6; no pod restarts due to OOM", test: Load test}
+        - {id: NFR-S4, title: Independent scaling, target: "AI/document load does not push P1/P2 beyond their targets", measure: "k6 running AI and booking load in parallel", test: Load test}
+    - name: Availability and recovery
       items:
-        - {id: NFR-A1, title: SLO API đặt lịch và hồ sơ, target: "99,9%/tháng (≤ 43 phút)", measure: "SLI từ gateway; dashboard error budget", test: Monitoring}
-        - {id: NFR-A2, title: SLO tính năng AI, target: "99,0%/tháng; AI lỗi không làm hỏng luồng khám", measure: SLI + failure test tắt model, test: Failure test}
-        - {id: NFR-A3, title: Mất một zone, target: "Không mất dữ liệu đã commit; phục hồi ≤ 5 phút", measure: "Cordon toàn bộ node một zone", test: Failure test}
-        - {id: NFR-A4, title: RPO/RTO lâm sàng và lịch hẹn, target: "RPO ≤ 5 phút; RTO ≤ 1 giờ", measure: Diễn tập khôi phục có biên bản, test: DR drill}
-        - {id: NFR-A5, title: RPO tài liệu và audit, target: "RPO = 0 cho dữ liệu đã xác nhận ghi", measure: "Lưu trữ dư thừa theo zone; kiểm tra sau failover", test: DR drill}
-        - {id: NFR-A6, title: Phụ thuộc bên ngoài lỗi, target: "Không mất dữ liệu; retry + dead-letter; có fallback", measure: "Giả lập SMS/LLM/ML lỗi", test: Failure test}
-        - {id: NFR-A7, title: Deploy không gián đoạn, target: "0 request lỗi do deploy", measure: "k6 chạy trong lúc rolling/canary", test: Load test}
-    - name: Bảo mật và quyền riêng tư (dữ liệu sức khỏe)
+        - {id: NFR-A1, title: API SLO for booking and records, target: "99.9%/month (<= 43 minutes)", measure: "Gateway SLI; error budget dashboard", test: Monitoring}
+        - {id: NFR-A2, title: AI feature SLO, target: "99.0%/month; an AI failure does not break the clinical flow", measure: SLI + failure test with the model disabled, test: Failure test}
+        - {id: NFR-A3, title: Loss of one zone, target: "No loss of committed data; recovery <= 5 minutes", measure: "Cordon every node in one zone", test: Failure test}
+        - {id: NFR-A4, title: Clinical and appointment RPO/RTO, target: "RPO <= 5 minutes; RTO <= 1 hour", measure: Restore drill with a written report, test: DR drill}
+        - {id: NFR-A5, title: Document and audit RPO, target: "RPO = 0 for data whose write is confirmed", measure: "Zone-redundant storage; check after failover", test: DR drill}
+        - {id: NFR-A6, title: External dependency failure, target: "No data loss; retry + dead-letter; fallback available", measure: "Simulate SMS/LLM/ML failures", test: Failure test}
+        - {id: NFR-A7, title: Zero-downtime deployment, target: "0 failed requests caused by deployment", measure: "k6 running during rolling/canary deployment", test: Load test}
+    - name: Security and privacy (health data)
       intro: >-
-        Yêu cầu bắt buộc. Kiểm chứng bằng test tự động trong CI (phân quyền, che dữ liệu, kiểm tra đầu vào), quét bảo mật
-        tự động (SAST, phụ thuộc, image, cấu hình, DAST) và rà soát thủ công theo OWASP ASVS mức 2 trước khi demo.
+        Mandatory requirements. Proven by automated tests in CI (authorization, data masking, input validation), automated
+        security scanning (SAST, dependencies, images, configuration, DAST) and manual review against OWASP ASVS level 2 before the demo.
       items:
-        - {id: NFR-SEC1, title: Xác thực, target: "OIDC + PKCE; nhân viên bắt buộc MFA (TOTP hoặc WebAuthn, không dùng SMS); access token ≤ 15 phút; service nghiệp vụ không lưu mật khẩu, nhà cung cấp định danh chỉ lưu băm Argon2id", measure: "Test tích hợp với IdP; kiểm tra claim MFA", test: "Integration, Security"}
-        - {id: NFR-SEC2, title: Phân quyền, target: "Đúng 100% ma trận phân quyền; mặc định từ chối", measure: "Test sinh từ contracts/authz/matrix.yaml: mỗi ô cho phép và từ chối; test 'mọi endpoint có quy tắc'", test: "Unit, Contract, API"}
-        - {id: NFR-SEC3, title: Mã hóa, target: "TLS 1.2+ mọi kết nối kể cả nội bộ cụm; mã hóa at-rest mọi kho dữ liệu và bản sao lưu", measure: "Quét cấu hình TLS; kiểm tra cấu hình Terraform", test: "Security, Config scan"}
-        - {id: NFR-SEC4, title: Secret, target: "Không secret trong code/config/image; Key Vault + workload identity; xoay vòng không cần deploy", measure: "gitleaks + push protection; diễn tập xoay khóa", test: Security}
-        - {id: NFR-SEC5, title: Audit, target: "100% truy cập dữ liệu bệnh nhân được audit (cả từ chối); tra cứu được ≤ 1 phút; bất biến", measure: "Test đối chiếu thao tác ↔ bản ghi audit; thử sửa/xóa kho WORM", test: "Integration, Security"}
-        - {id: NFR-SEC6, title: Chuỗi cung ứng, target: "Image quét lỗ hổng (chặn High/Critical có bản vá), ký, có SBOM; cụm chỉ chạy image đã ký", measure: "Pipeline CI; Kyverno từ chối image không ký", test: "CI, Security"}
-        - {id: NFR-SEC7, title: Cô lập mạng, target: "Mặc định chặn traffic giữa pod; CSDL không có endpoint public", measure: "Kiểm tra NetworkPolicy; thử kết nối trái phép", test: Security}
-        - {id: NFR-SEC8, title: An toàn AI, target: "Che PII trước khi gửi model bên ngoài; 0 lần vượt rào prompt injection; AI chỉ dùng quyền người gọi", measure: "Test chặn yêu cầu chứa PII; bộ 50 mẫu tấn công (NFR-AI3)", test: "AI eval, Security"}
-        - {id: NFR-SEC9, title: Dữ liệu giả, target: "Chỉ dữ liệu giả ở mọi môi trường", measure: "Công cụ sinh dữ liệu giả; rà soát", test: Review}
-        - {id: NFR-SEC10, title: Tối thiểu hóa dữ liệu, target: "Chỉ thu thập trường cần cho mục đích đã nêu; kết quả tìm kiếm và danh sách che SĐT, không có chẩn đoán", measure: "Rà soát schema API; test kết quả tìm kiếm", test: "API, Review"}
-        - {id: NFR-SEC11, title: Đồng ý xử lý dữ liệu, target: "Lưu đồng ý có phiên bản và thời điểm; rút đồng ý có hiệu lực ngay cho mọi xử lý AI", measure: "Test rút đồng ý rồi gọi tóm tắt/trích xuất/dự đoán", test: API}
-        - {id: NFR-SEC12, title: Quyền chủ thể dữ liệu, target: "Bệnh nhân xem được lịch sử truy cập hồ sơ và yêu cầu bản sao dữ liệu; DPO xử lý có theo dõi thời hạn", measure: Test luồng end-to-end, test: E2E}
-        - {id: NFR-SEC13, title: Không để lộ dữ liệu, target: "Không PII/PHI trong log, metric, trace, sự kiện, URL, thông báo lỗi; lỗi không lộ sự tồn tại hồ sơ (404)", measure: "Test quét log/sự kiện trong test tích hợp tìm mẫu PII; test 404 cho tài nguyên của người khác", test: "Integration, Security"}
-        - {id: NFR-SEC14, title: Phiên làm việc, target: "Nhân viên tự đăng xuất sau 15 phút không thao tác, bệnh nhân 30 phút; đăng nhập lại tối đa sau 12 giờ (nhân viên) / 24 giờ (bệnh nhân); token không lưu localStorage", measure: "Test E2E giao diện. Chặt hơn mức tối đa của NIST SP 800-63B-4 mức AAL2 (không thao tác 1 giờ, tổng 24 giờ) vì máy dùng chung tại phòng khám", test: E2E}
-        - {id: NFR-SEC15, title: Bảo vệ ứng dụng web, target: "CSP chặt, HSTS, chống clickjacking, cookie Secure/HttpOnly/SameSite; không có lỗi mức High theo OWASP ZAP baseline", measure: "ZAP baseline trên UAT trong pipeline", test: DAST}
-        - {id: NFR-SEC16, title: Chống lạm dụng, target: "Giới hạn tốc độ theo người dùng; khóa tạm sau 5 lần đăng nhập sai; tìm kiếm bệnh nhân không liệt kê toàn bộ", measure: "Test 429; test điều kiện tìm tối thiểu", test: "API, Security"}
-        - {id: NFR-SEC17, title: An toàn tệp tải lên, target: "Kiểm tra loại theo nội dung, ≤ 20 MB, quét mã độc trước khi dùng; tệp nhiễm bị cách ly", measure: "Test với EICAR, tệp đổi đuôi, tệp quá cỡ", test: "Integration, Security"}
-        - {id: NFR-SEC18, title: Phân tách nhiệm vụ, target: "Quản trị viên/DPO không đọc dữ liệu lâm sàng; gán vai trò đặc quyền và khôi phục dữ liệu cần người thứ hai duyệt", measure: Test phân quyền + rà soát quy trình, test: "API, Review"}
-        - {id: NFR-SEC19, title: Lưu trữ và xóa, target: "Thời hạn lưu theo bảng lưu trữ; dữ liệu tạm tự xóa đúng hạn; hồ sơ bệnh án lưu dài hạn", measure: Test job xóa dữ liệu hết hạn, test: Integration}
-        - {id: NFR-SEC20, title: Ẩn danh dữ liệu phân tích/huấn luyện, target: "Dữ liệu huấn luyện ML và báo cáo không chứa định danh trực tiếp; chỉ dữ liệu của bệnh nhân còn đồng ý", measure: "Test kiểm tra schema tập huấn luyện", test: "Unit, Review"}
-        - {id: NFR-SEC21, title: Sự cố và chuyển dữ liệu ra nước ngoài, target: "Thông báo vi phạm cho cơ quan chuyên trách chậm nhất 72 giờ kể từ khi phát hiện (Điều 23 khoản 1 Luật 91/2025/QH15); hồ sơ đánh giá tác động xử lý dữ liệu (Điều 21, nộp trong 60 ngày kể từ lần xử lý đầu tiên, cập nhật 6 tháng một lần theo Điều 22) và hồ sơ đánh giá tác động chuyển dữ liệu ra nước ngoài (Điều 20: vùng cloud ngoài Việt Nam, nhà cung cấp LLM nước ngoài) trước khi dùng dữ liệu thật", measure: "Runbook sự cố + diễn tập đo thời gian từ phát hiện đến thông báo; hồ sơ đánh giá tác động được duyệt", test: Review}
-    - name: Khả năng quan sát và vận hành
+        - {id: NFR-SEC1, title: Authentication, target: "OIDC + PKCE; staff must use MFA (TOTP or WebAuthn, not SMS); access token <= 15 minutes; business services never store passwords, and the identity provider stores only Argon2id hashes", measure: "Integration test with the IdP; check the MFA claim", test: "Integration, Security"}
+        - {id: NFR-SEC2, title: Authorization, target: "100% correct against the authorization matrix; deny by default", measure: "Tests generated from contracts/authz/matrix.yaml: allow and deny for every cell; test that every endpoint has a rule", test: "Unit, Contract, API"}
+        - {id: NFR-SEC3, title: Encryption, target: "TLS 1.2+ on every connection including intra-cluster; encryption at rest for every data store and backup", measure: "Scan the TLS configuration; check the Terraform configuration", test: "Security, Config scan"}
+        - {id: NFR-SEC4, title: Secrets, target: "No secrets in code/config/images; Key Vault + workload identity; rotation without redeployment", measure: "gitleaks + push protection; key rotation drill", test: Security}
+        - {id: NFR-SEC5, title: Audit, target: "100% of patient data access is audited (including denials); searchable within <= 1 minute; immutable", measure: "Test that correlates operations with audit entries; attempt to modify/delete the WORM store", test: "Integration, Security"}
+        - {id: NFR-SEC6, title: Supply chain, target: "Images scanned for vulnerabilities (block High/Critical with a fix), signed, with an SBOM; the cluster runs only signed images", measure: "CI pipeline; Kyverno rejects unsigned images", test: "CI, Security"}
+        - {id: NFR-SEC7, title: Network isolation, target: "Traffic between pods denied by default; databases have no public endpoint", measure: "Check NetworkPolicies; attempt unauthorized connections", test: Security}
+        - {id: NFR-SEC8, title: AI safety, target: "Mask PII before sending to an external model; 0 successful prompt-injection attempts; AI uses only the caller's permissions", measure: "Test that blocks requests containing PII; a set of 50 attack samples (NFR-AI3)", test: "AI eval, Security"}
+        - {id: NFR-SEC9, title: Synthetic data, target: "Synthetic data only in every environment", measure: "Synthetic data generator; review", test: Review}
+        - {id: NFR-SEC10, title: Data minimization, target: "Collect only the fields needed for the stated purpose; search results and lists mask phone numbers and contain no diagnoses", measure: "Review the API schema; test search results", test: "API, Review"}
+        - {id: NFR-SEC11, title: Data processing consent, target: "Store consent with its version and timestamp; withdrawal takes effect immediately for all AI processing", measure: "Test withdrawing consent and then requesting a summary/extraction/prediction", test: API}
+        - {id: NFR-SEC12, title: Data subject rights, target: "Patients can view their record access history and request a copy of their data; the DPO processes requests with deadline tracking", measure: End-to-end flow test, test: E2E}
+        - {id: NFR-SEC13, title: No data leakage, target: "No PII/PHI in logs, metrics, traces, events, URLs or error messages; errors do not reveal record existence (404)", measure: "Test that scans logs/events in integration tests for PII patterns; test 404 for another person's resources", test: "Integration, Security"}
+        - {id: NFR-SEC14, title: Sessions, target: "Staff log out automatically after 15 minutes of inactivity, patients after 30 minutes; login again after at most 12 hours (staff) / 24 hours (patients); tokens are not stored in localStorage", measure: "End-to-end UI test. Stricter than the maximum of NIST SP 800-63B-4 AAL2 (1 hour of inactivity, 24 hours total) because of shared machines at the clinic", test: E2E}
+        - {id: NFR-SEC15, title: Web application protection, target: "Strict CSP, HSTS, clickjacking protection, Secure/HttpOnly/SameSite cookies; no High-severity findings in the OWASP ZAP baseline", measure: "ZAP baseline on UAT in the pipeline", test: DAST}
+        - {id: NFR-SEC16, title: Abuse prevention, target: "Per-user rate limiting; temporary lock after 5 failed logins; patient search never lists all patients", measure: "Test 429; test minimum search conditions", test: "API, Security"}
+        - {id: NFR-SEC17, title: Uploaded file safety, target: "Validate the type by content, <= 20 MB, scan for malware before use; infected files are quarantined", measure: "Test with EICAR, a renamed file and an oversized file", test: "Integration, Security"}
+        - {id: NFR-SEC18, title: Separation of duties, target: "Administrators/DPOs cannot read clinical data; assigning privileged roles and restoring data require approval by a second person", measure: Authorization test + process review, test: "API, Review"}
+        - {id: NFR-SEC19, title: Retention and deletion, target: "Retention periods per the retention table; temporary data is deleted on schedule; medical records are retained long-term", measure: Test the job that deletes expired data, test: Integration}
+        - {id: NFR-SEC20, title: Anonymization of analytics/training data, target: "ML training data and reports contain no direct identifiers; only data from patients who still consent", measure: "Test that checks the training-set schema", test: "Unit, Review"}
+        - {id: NFR-SEC21, title: Incidents and cross-border data transfer, target: "Notify the competent authority of a breach within 72 hours of discovery (Article 23(1) of Law 91/2025/QH15); a data processing impact assessment (Article 21, submitted within 60 days of the first processing, updated every 6 months per Article 22) and a cross-border transfer impact assessment (Article 20: cloud regions outside Vietnam, foreign LLM providers) before using real data", measure: "Incident runbook + drill measuring the time from detection to notification; the impact assessments are approved", test: Review}
+    - name: Observability and operations
       items:
-        - {id: NFR-O1, title: Tracing phân tán, target: "100% request có trace xuyên service", measure: Kiểm tra trace mẫu qua gateway → service → bus, test: Integration}
-        - {id: NFR-O2, title: Dashboard SLO, target: "Dashboard SLI/SLO + error budget cho A1, P1, P2", measure: Rà soát dashboard, test: Review}
-        - {id: NFR-O3, title: Cảnh báo, target: "Cảnh báo burn rate, hàng lỗi có tin, chứng chỉ sắp hết hạn, truy cập khẩn cấp", measure: Kích hoạt từng điều kiện cảnh báo, test: Failure test}
-        - {id: NFR-O4, title: Log, target: "Log có cấu trúc, có trace-id, không chứa PII", measure: Test quét log (NFR-SEC13), test: Integration}
-    - name: Khả năng triển khai
+        - {id: NFR-O1, title: Distributed tracing, target: "100% of requests have a trace across services", measure: Check a sample trace through gateway -> service -> bus, test: Integration}
+        - {id: NFR-O2, title: SLO dashboards, target: "SLI/SLO + error budget dashboards for A1, P1, P2", measure: Dashboard review, test: Review}
+        - {id: NFR-O3, title: Alerting, target: "Alerts for burn rate, non-empty dead-letter queue, certificates nearing expiry, emergency access", measure: Trigger each alert condition, test: Failure test}
+        - {id: NFR-O4, title: Logs, target: "Structured logs with a trace-id, containing no PII", measure: Log scanning test (NFR-SEC13), test: Integration}
+    - name: Deployability
       items:
-        - {id: NFR-D1, title: Lead time, target: "Commit → image đã ký ≤ 15 phút; → UAT ≤ 30 phút", measure: Thống kê pipeline, test: CI}
-        - {id: NFR-D2, title: Rollback, target: "≤ 5 phút bằng một thao tác (GitOps revert)", measure: Diễn tập rollback, test: DR drill}
-        - {id: NFR-D3, title: Hạ tầng dưới dạng code, target: "100% hạ tầng tạo bằng IaC; dựng lại được từ đầu", measure: Dựng/hủy môi trường bằng workflow, test: DR drill}
-        - {id: NFR-D4, title: Cách ly môi trường, target: "prod tách cụm và resource group với uat; dev chạy local", measure: Rà soát cấu hình, test: Review}
-    - name: Chi phí
+        - {id: NFR-D1, title: Lead time, target: "Commit -> signed image <= 15 minutes; -> UAT <= 30 minutes", measure: Pipeline statistics, test: CI}
+        - {id: NFR-D2, title: Rollback, target: "<= 5 minutes with one action (GitOps revert)", measure: Rollback drill, test: DR drill}
+        - {id: NFR-D3, title: Infrastructure as code, target: "100% of infrastructure created with IaC; rebuildable from scratch", measure: Create/destroy environments with a workflow, test: DR drill}
+        - {id: NFR-D4, title: Environment isolation, target: "prod has separate clusters and resource groups from uat; dev runs locally", measure: Configuration review, test: Review}
+    - name: Cost
       items:
-        - {id: NFR-C1, title: Ngân sách hạ tầng, target: "Không có cụm thường trực; tài nguyên thường trực ≤ 10 USD/tháng; môi trường dựng khi cần", measure: Báo cáo chi phí Azure theo tag, test: Review}
-        - {id: NFR-C2, title: Chi phí AI, target: "≤ 0,005 USD/request RAG; hạn mức token theo ngày và cảnh báo", measure: Metric token/chi phí, test: Monitoring}
-        - {id: NFR-C3, title: Minh bạch chi phí, target: "Tag chi phí theo môi trường/service; báo cáo hằng tuần", measure: Rà soát, test: Review}
-    - name: Chất lượng AI / ML
+        - {id: NFR-C1, title: Infrastructure budget, target: "No always-on cluster; always-on resources <= 10 USD/month; environments created when needed", measure: Azure cost report by tag, test: Review}
+        - {id: NFR-C2, title: AI cost, target: "<= 0.005 USD per RAG request; daily token quotas with alerts", measure: Token/cost metrics, test: Monitoring}
+        - {id: NFR-C3, title: Cost transparency, target: "Cost tags per environment/service; weekly report", measure: Review, test: Review}
+    - name: AI / ML quality
       items:
-        - {id: NFR-AI1, title: Truy xuất RAG, target: "Recall@5 ≥ 0,8; MRR ≥ 0,6", measure: "Bộ eval ≥ 100 câu hỏi", test: AI eval}
-        - {id: NFR-AI2, title: Câu trả lời RAG, target: "Groundedness ≥ 0,9; độ đúng trích dẫn ≥ 0,9; từ chối đúng khi không có nguồn ≥ 0,9", measure: Eval harness, test: AI eval}
-        - {id: NFR-AI3, title: Prompt injection, target: "0 lần vượt rào trên ≥ 50 mẫu", measure: Bộ tấn công tự động, test: "AI eval, Security"}
-        - {id: NFR-AI4, title: Trích xuất, target: "F1 mức trường ≥ 0,85", measure: Bộ tài liệu giả có nhãn, test: AI eval}
-        - {id: NFR-AI5, title: Chatbot đặt lịch, target: "Hoàn thành ≥ 85%; 0 hành động không được xác nhận", measure: Kịch bản hội thoại tự động, test: AI eval}
-        - {id: NFR-AI6, title: Mô hình no-show, target: "AUC ≥ 0,75 và hơn baseline; theo dõi drift hằng tuần", measure: Đánh giá offline + giám sát, test: AI eval}
-        - {id: NFR-AI7, title: Fallback, target: "Mỗi model trong chuỗi đều được eval", measure: Báo cáo theo model, test: AI eval}
-    - name: Tương thích và khả dụng
+        - {id: NFR-AI1, title: RAG retrieval, target: "Recall@5 >= 0.8; MRR >= 0.6", measure: "Evaluation set of >= 100 questions", test: AI eval}
+        - {id: NFR-AI2, title: RAG answers, target: "Groundedness >= 0.9; citation accuracy >= 0.9; correct refusal when there is no source >= 0.9", measure: Eval harness, test: AI eval}
+        - {id: NFR-AI3, title: Prompt injection, target: "0 successful breaches over >= 50 samples", measure: Automated attack set, test: "AI eval, Security"}
+        - {id: NFR-AI4, title: Extraction, target: "Field-level F1 >= 0.85", measure: Labeled synthetic document set, test: AI eval}
+        - {id: NFR-AI5, title: Booking chatbot, target: "Completion >= 85%; 0 actions taken without confirmation", measure: Automated conversation scenarios, test: AI eval}
+        - {id: NFR-AI6, title: No-show model, target: "AUC >= 0.75 and above the baseline; weekly drift monitoring", measure: Offline evaluation + monitoring, test: AI eval}
+        - {id: NFR-AI7, title: Fallback, target: "Every model in the chain is evaluated", measure: Per-model report, test: AI eval}
+    - name: Compatibility and usability
       items:
-        - {id: NFR-I1, title: Chuẩn dữ liệu, target: "API theo FHIR R4 cho các resource trong phạm vi", measure: Validator FHIR trong test hợp đồng, test: Contract}
-        - {id: NFR-I2, title: Client, target: "Web dùng được trên desktop và mobile (Chrome, Edge, Safari – 2 phiên bản gần nhất), màn hình ≥ 360 px", measure: Test E2E đa trình duyệt, test: E2E}
-        - {id: NFR-I3, title: Hạ tầng, target: "Chạy trên Kubernetes bất kỳ (AKS là đích) và local", measure: Chạy cùng chart trên kind và AKS, test: CI}
-        - {id: NFR-U1, title: Ngôn ngữ và trợ năng, target: "Giao diện tiếng Việt và tiếng Anh; đạt WCAG 2.1 mức AA ở các màn hình bệnh nhân", measure: "axe-core trong test E2E", test: E2E}
+        - {id: NFR-I1, title: Data standards, target: "FHIR R4 APIs for in-scope resources", measure: FHIR validator in contract tests, test: Contract}
+        - {id: NFR-I2, title: Clients, target: "The web app works on desktop and mobile (Chrome, Edge, Safari - the 2 most recent versions), screen width >= 360 px", measure: Multi-browser E2E test, test: E2E}
+        - {id: NFR-I3, title: Infrastructure, target: "Runs on any Kubernetes (AKS is the target) and locally", measure: Run the same chart on kind and AKS, test: CI}
+        - {id: NFR-U1, title: Language and accessibility, target: "Vietnamese and English interfaces; WCAG 2.1 level AA on patient screens", measure: "axe-core in E2E tests", test: E2E}

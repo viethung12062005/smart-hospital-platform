@@ -1,4 +1,4 @@
-"""Kiểm chính bộ kiểm tra: ma trận sai phải bị bắt. Chạy: python3 -I -m unittest discover -s tools/contracts -p 'test_*.py'"""
+"""Self-test for the validators: a bad matrix must be caught. Run: python3 -I -m unittest discover -s tools/contracts -p 'test_*.py'"""
 import copy
 import sys
 import unittest
@@ -26,7 +26,7 @@ class AuthzMatrix(unittest.TestCase):
         self.assertEqual(validate_authz.validate(DOC), [])
 
     def test_admin_cannot_read_clinical_data(self):
-        self.assertTrue(any("lâm sàng" in e for e in mutated({"id": "X", "resource": "Patient", "action": "read", "role": "admin", "when": []})))
+        self.assertTrue(any("clinical" in e for e in mutated({"id": "X", "resource": "Patient", "action": "read", "role": "admin", "when": []})))
 
     def test_dpo_limited_to_audit(self):
         self.assertTrue(any("dpo" in e for e in mutated({"id": "X", "resource": "Slot", "action": "read", "role": "dpo", "when": []})))
@@ -36,7 +36,7 @@ class AuthzMatrix(unittest.TestCase):
 
     def test_unknown_predicate_and_duplicate_id(self):
         errs = mutated({"id": "PAT-READ-OWN", "resource": "Patient", "action": "read", "role": "patient", "when": ["nope"]})
-        self.assertTrue(any("predicate lạ" in e for e in errs) and any("id trùng" in e for e in errs))
+        self.assertTrue(any("unknown predicate" in e for e in errs) and any("duplicate id" in e for e in errs))
 
     def test_missing_rule_for_declared_action_is_caught(self):
         self.assertTrue(any("(BreakGlass,start)" in e for e in mutated(drop="BG-START-DOC")))

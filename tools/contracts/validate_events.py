@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Kiểm contracts/events: schema hợp lệ, ví dụ khớp schema, envelope mẫu hợp lệ, không có trường PII, khớp danh mục E1–E11.
-Dùng: python3 -I tools/contracts/validate_events.py"""
+"""Check contracts/events: valid schemas, examples match schemas, sample envelope valid, no PII fields, matches the E1–E11 catalog.
+Usage: python3 -I tools/contracts/validate_events.py"""
 from __future__ import annotations
 
 import json
@@ -42,27 +42,27 @@ def main() -> int:
         found.add(title)
         example = json.loads(sf.with_name(sf.stem + ".example.json").read_text(encoding="utf-8"))
         v = Draft202012Validator(schema, format_checker=Draft202012Validator.FORMAT_CHECKER)
-        errs += [f"{title}: ví dụ sai: {e.message}" for e in v.iter_errors(example)]
+        errs += [f"{title}: invalid example: {e.message}" for e in v.iter_errors(example)]
         for n in prop_names(schema):
             if PII.search(n) and n not in ALLOWED_PII_LIKE:
-                errs.append(f"{title}: tên trường nghi PII: {n}")
+                errs.append(f"{title}: suspicious PII field name: {n}")
         ctx, name = sf.parent.name, sf.stem.removesuffix(".v1")
         envl = {"specversion": "1.0", "id": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e6f", "source": f"/services/{ctx}", "type": title,
                 "subject": "Appointment/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e70", "time": "2026-11-20T02:15:00.123Z",
                 "datacontenttype": "application/json", "dataschema": schema["$id"],
                 "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01", "data": example}
-        errs += [f"{title}: envelope sai: {e.message}" for e in env_v.iter_errors(envl)]
+        errs += [f"{title}: invalid envelope: {e.message}" for e in env_v.iter_errors(envl)]
         if len(json.dumps(example)) > 64 * 1024:
-            errs.append(f"{title}: vượt 64 KB")
+            errs.append(f"{title}: exceeds 64 KB")
     for t in sorted(declared - found):
-        errs.append(f"{t}: có trong danh mục nhưng thiếu schema")
+        errs.append(f"{t}: in the catalog but missing a schema")
     for t in sorted(found - declared):
-        errs.append(f"{t}: có schema nhưng không có trong danh mục")
+        errs.append(f"{t}: has a schema but is not in the catalog")
     for e in errs:
         print("ERROR", e)
     if errs:
         return 1
-    print(f"OK: {len(found)} event schema khớp danh mục, ví dụ và envelope hợp lệ, không có trường PII")
+    print(f"OK: {len(found)} event schemas match the catalog, examples and envelope valid, no PII fields")
     return 0
 
 

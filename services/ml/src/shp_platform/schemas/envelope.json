@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shp.example.org/schemas/envelope.json",
-  "title": "CloudEvents 1.0 envelope của SHP",
+  "title": "SHP CloudEvents 1.0 envelope",
   "type": "object",
   "additionalProperties": false,
   "required": [

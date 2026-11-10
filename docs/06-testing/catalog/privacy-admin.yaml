@@ -1,7 +1,7 @@
-# Test case của module 'privacy-admin'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+# Test cases for module 'privacy-admin'. Source: acceptance criteria / NFRs in docs/02-requirements/srs. Automation: see automation.yaml
 testcases:
 - id: TC-AC-AL.1
-  title: 'Xem ai đã truy cập hồ sơ của tôi: AC-AL.1'
+  title: 'View who accessed my medical record: AC-AL.1'
   covers:
   - AC-AL.1
   srs_uc: view-my-access-log
@@ -9,9 +9,10 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given bác sĩ đã mở hồ sơ của bệnh nhân lúc 09:02, Then bệnh nhân thấy dòng truy cập đó trong ≤ 1 phút.
+  spec: Given a doctor opened the patient's medical record at 09:02, Then the patient sees that access entry within
+    <= 1 minute.
 - id: TC-AC-CS.1
-  title: 'Quản lý đồng ý xử lý dữ liệu: AC-CS.1'
+  title: 'Manage data processing consent: AC-CS.1'
   covers:
   - AC-CS.1
   srs_uc: manage-consent
@@ -19,9 +20,10 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given bệnh nhân rút đồng ý lúc T, When bác sĩ yêu cầu tóm tắt sau T, Then bị từ chối “consent-required”.
+  spec: Given the patient withdraws consent at T, When the doctor requests a summary after T, Then it is rejected with
+    "consent-required".
 - id: TC-AC-EX.1
-  title: 'Yêu cầu trích xuất dữ liệu cá nhân: AC-EX.1'
+  title: 'Personal data export request: AC-EX.1'
   covers:
   - AC-EX.1
   srs_uc: export-my-data
@@ -29,9 +31,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P1
-  spec: Given bệnh nhân đã có yêu cầu đang xử lý, When gửi thêm, Then không tạo yêu cầu mới.
+  spec: Given the patient already has a request being processed, When submitting another, Then no new request is created.
 - id: TC-AC-NP.1
-  title: 'Cài đặt nhận thông báo: AC-NP.1'
+  title: 'Notification preferences: AC-NP.1'
   covers:
   - AC-NP.1
   srs_uc: notification-preferences
@@ -39,9 +41,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P1
-  spec: Given bệnh nhân tắt mọi kênh, When lưu, Then báo lỗi.
+  spec: Given the patient disables all channels, When saving, Then an error is returned.
 - id: TC-AC-09.1
-  title: 'Tra cứu audit truy cập: AC-09.1'
+  title: 'Search access audit log: AC-09.1'
   covers:
   - AC-09.1
   srs_uc: search-audit
@@ -49,10 +51,10 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given mọi thao tác đọc/ghi dữ liệu bệnh nhân trong UC-01, 04, 05, 06, 10, 11–13, Then mỗi thao tác có một bản ghi
-    audit (ai, khi nào, cái gì, kết quả, từ đâu).
+  spec: Given every read/write operation on patient data in UC-01, 04, 05, 06, 10, 11-13, Then each operation has one
+    audit record (who, when, what, result, from where).
 - id: TC-AC-09.2
-  title: 'Tra cứu audit truy cập: AC-09.2'
+  title: 'Search access audit log: AC-09.2'
   covers:
   - AC-09.2
   srs_uc: search-audit
@@ -60,9 +62,10 @@ testcases:
   module: privacy-admin
   level: e2e
   priority: P0
-  spec: Given quản trị viên, When cố sửa hoặc xóa bản ghi audit (API, giao diện, kho lưu trữ), Then không thực hiện được.
+  spec: Given an administrator, When trying to modify or delete an audit record (API, UI, storage), Then it cannot be
+    done.
 - id: TC-AC-EA.1
-  title: 'Xuất báo cáo audit: AC-EA.1'
+  title: 'Export audit report: AC-EA.1'
   covers:
   - AC-EA.1
   srs_uc: export-audit
@@ -70,9 +73,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given xuất báo cáo, Then có bản ghi audit “export” với mục đích đã nhập.
+  spec: Given an audit report export, Then there is an "export" audit record with the entered purpose.
 - id: TC-AC-DR.1
-  title: 'Xử lý yêu cầu của chủ thể dữ liệu: AC-DR.1'
+  title: 'Process data subject request: AC-DR.1'
   covers:
   - AC-DR.1
   srs_uc: process-data-request
@@ -80,9 +83,10 @@ testcases:
   module: privacy-admin
   level: api
   priority: P1
-  spec: Given gói dữ liệu đã tạo, Then link chỉ mở được bởi tài khoản của chính bệnh nhân và hết hạn sau 24 giờ.
+  spec: Given the data package has been created, Then the link can only be opened by the patient's own account and
+    expires after 24 hours.
 - id: TC-AC-08.2
-  title: 'Mời nhân viên và gán vai trò: AC-08.2'
+  title: 'Invite staff and assign roles: AC-08.2'
   covers:
   - AC-08.2
   srs_uc: invite-staff
@@ -90,9 +94,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given nhân viên chưa đăng ký MFA, When đăng nhập, Then không truy cập được dữ liệu bệnh nhân.
+  spec: Given a staff member who has not enrolled MFA, When logging in, Then they cannot access patient data.
 - id: TC-AC-IS.1
-  title: 'Mời nhân viên và gán vai trò: AC-IS.1'
+  title: 'Invite staff and assign roles: AC-IS.1'
   covers:
   - AC-IS.1
   srs_uc: invite-staff
@@ -100,9 +104,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given quản trị viên tự gán vai trò DPO cho mình, Then bị từ chối.
+  spec: Given an administrator assigns the DPO role to themselves, Then it is rejected.
 - id: TC-AC-08.1
-  title: 'Khóa / mở khóa tài khoản: AC-08.1'
+  title: 'Lock / unlock account: AC-08.1'
   covers:
   - AC-08.1
   srs_uc: lock-account
@@ -110,9 +114,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given tài khoản bị khóa lúc T, When dùng token cũ lúc T + 5 phút, Then bị từ chối.
+  spec: Given the account was locked at T, When using an old token at T + 5 minutes, Then it is rejected.
 - id: TC-AC-LP.1
-  title: 'Liên kết tài khoản bác sĩ với hồ sơ bác sĩ: AC-LP.1'
+  title: 'Link doctor account to practitioner record: AC-LP.1'
   covers:
   - AC-LP.1
   srs_uc: link-practitioner
@@ -120,9 +124,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P0
-  spec: Given Practitioner đã gắn tài khoản A, When gắn cho tài khoản B, Then bị từ chối.
+  spec: Given a Practitioner already linked to account A, When linking to account B, Then it is rejected.
 - id: TC-AC-DL.1
-  title: 'Xử lý thông báo gửi lỗi: AC-DL.1'
+  title: 'Process failed notification deliveries: AC-DL.1'
   covers:
   - AC-DL.1
   srs_uc: manage-dead-letters
@@ -130,9 +134,9 @@ testcases:
   module: privacy-admin
   level: api
   priority: P1
-  spec: Given lịch hẹn đã hủy, When gửi lại mục lỗi, Then không có tin nào được gửi.
+  spec: Given an appointment has been cancelled, When resending failed items, Then no message is sent.
 - id: TC-AC-16.1
-  title: 'Sao lưu và khôi phục dữ liệu: AC-16.1'
+  title: 'Backup and restore data: AC-16.1'
   covers:
   - AC-16.1
   srs_uc: backup-restore
@@ -140,10 +144,10 @@ testcases:
   module: privacy-admin
   level: resilience
   priority: P1
-  spec: Given dữ liệu bị xóa nhầm lúc T, When khôi phục về T − 1 phút, Then dữ liệu lịch hẹn và hồ sơ khớp trạng thái tại
-    thời điểm đó.
+  spec: Given data was accidentally deleted at T, When restoring to T - 1 minute, Then appointment and medical record
+    data match the state at that moment.
 - id: TC-AC-16.2
-  title: 'Sao lưu và khôi phục dữ liệu: AC-16.2'
+  title: 'Backup and restore data: AC-16.2'
   covers:
   - AC-16.2
   srs_uc: backup-restore
@@ -151,4 +155,4 @@ testcases:
   module: privacy-admin
   level: resilience
   priority: P1
-  spec: Given diễn tập khôi phục, Then biên bản ghi thời gian thực tế và so với RTO 1 giờ.
+  spec: Given a restore drill, Then the report records the actual time and compares it to the RTO of 1 hour.

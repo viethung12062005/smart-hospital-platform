@@ -15,7 +15,7 @@ crash.log
 __pycache__/
 *.pyc
 
-# Dev local: mật khẩu sinh ngẫu nhiên và chuỗi kết nối
+# Local dev: generated passwords and connection strings
 dev/.local/
 
 # Build Java (Maven) / Python
@@ -32,7 +32,7 @@ TestResults/
 # Build Java (Maven)
 target/
 
-# File khóa/tạm của Office và trình soạn thảo (không bao giờ commit)
+# Office and editor lock/temp files (never committed)
 ~$*
 .~lock.*
 *.swp

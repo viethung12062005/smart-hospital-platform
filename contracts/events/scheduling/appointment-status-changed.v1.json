@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shp.example.org/schemas/scheduling/appointment-status-changed/v1.json",
   "title": "shp.scheduling.appointment-status-changed.v1",
-  "description": "E5: no-show (job) hoặc fulfilled (sau E6). Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "description": "E5: no-show (job) or fulfilled (after E6). IDs/codes/timestamps/status only, no PII. Only optional fields may be added within the same version.",
   "type": "object",
   "required": [
     "appointmentId",

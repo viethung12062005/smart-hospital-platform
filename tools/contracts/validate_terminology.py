@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm contracts/terminology: định dạng mã, không trùng, khớp 01-domain-model.md §3 và event E8. Dùng: python3 -I tools/contracts/validate_terminology.py"""
+"""Check contracts/terminology: code format, no duplicates, matches 01-domain-model.md §3 and event E8. Usage: python3 -I tools/contracts/validate_terminology.py"""
 from __future__ import annotations
 
 import json
@@ -22,31 +22,35 @@ def main() -> int:
     for name, spec in cs.items():
         for code, label in spec["concepts"].items():
             if not re.match(FMT[name], str(code)):
-                errs.append(f"{name}: mã sai định dạng: {code}")
+                errs.append(f"{name}: invalid code format: {code}")
             if not label:
-                errs.append(f"{name}: {code} thiếu nhãn")
+                errs.append(f"{name}: {code} is missing a label")
             if name in ("specialty", "cancel-reason", "booking-channel", "practitioner-role", "loinc-vital-signs",
                         "loinc-document-types") and f"`{code}`" not in doc:
-                errs.append(f"{name}: {code} không có trong 01-domain-model.md §3")
-    for code in re.findall(r"`(\d{2,5}-\d)` (?:kết quả|đơn|giấy|tóm|mạch|huyết|nhiệt|nhịp|SpO2|cân|chiều|BMI)", doc):
+                errs.append(f"{name}: {code} is not in 01-domain-model.md §3")
+    for code in re.findall(
+        r"`(\d{2,5}-\d)` (?:heart rate|blood pressure|temperature|respiratory rate|SpO2|weight|height|BMI|"
+        r"laboratory|diagnostic|prescription|referral|care encounter|administrative)",
+        doc,
+    ):
         if code not in {str(c) for s in ("loinc-vital-signs", "loinc-document-types") for c in cs[s]["concepts"]}:
-            errs.append(f"mã LOINC trong tài liệu nhưng thiếu ở danh mục: {code}")
+            errs.append(f"LOINC code in the docs but missing from the catalog: {code}")
     raw = yaml.safe_load((ROOT / "contracts/terminology/code-systems.yaml").read_text(encoding="utf-8"))
     ext = raw.get("extensions", {})
     for key, spec in ext.items():
         if spec.get("url") != f"https://shp.example.org/fhir/StructureDefinition/{key}":
-            errs.append(f"extension {key}: url phải là https://shp.example.org/fhir/StructureDefinition/{key}")
+            errs.append(f"extension {key}: url must be https://shp.example.org/fhir/StructureDefinition/{key}")
         for field in ("context", "value"):
             if not spec.get(field):
-                errs.append(f"extension {key}: thiếu {field}")
+                errs.append(f"extension {key}: missing {field}")
     documented = set(re.findall(r"`extension\[([a-z-]+)\]`", doc))
     for key in sorted(documented - set(ext)):
-        errs.append(f"extension[{key}] có trong 01-domain-model nhưng thiếu ở contracts/terminology")
+        errs.append(f"extension[{key}] is in 01-domain-model but missing from contracts/terminology")
     for key in sorted(set(ext) - documented):
-        errs.append(f"extension {key} có ở contracts/terminology nhưng không dùng trong 01-domain-model")
+        errs.append(f"extension {key} is in contracts/terminology but unused in 01-domain-model")
     ev = json.loads((ROOT / "contracts/events/document/document-uploaded.v1.example.json").read_text(encoding="utf-8"))
     if ev["type"] not in {str(c) for c in cs["loinc-document-types"]["concepts"]}:
-        errs.append("ví dụ E8 dùng loại tài liệu ngoài danh mục")
+        errs.append("E8 example uses a document type outside the catalog")
     for e in errs:
         print("ERROR", e)
     if errs:

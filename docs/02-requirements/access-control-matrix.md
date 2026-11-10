@@ -1,43 +1,43 @@
-# Pha 2 — Ma trận phân quyền
+# Phase 2 - Access control matrix
 
-> Đề bài yêu cầu demo "access-control matrix in action". Mỗi ô của bảng là một test tự động
-> (NFR-SEC2). Kết hợp RBAC (theo role) với ABAC (theo quan hệ với bệnh nhân).
+> The assignment requires demonstrating an "access-control matrix in action". Each cell of the table is an automated test
+> (NFR-SEC2). Combines RBAC (by role) with ABAC (by relationship to the patient).
 
-**Ký hiệu:** ✅ được phép · ❌ không · **Own** = chỉ dữ liệu của chính mình ·
-**Care** = chỉ bệnh nhân có quan hệ điều trị (có lịch hẹn/encounter với bác sĩ trong 12 tháng hoặc lịch hẹn tương lai) ·
-**BG** = được phép qua break-glass (UC-10) · **Rel** = chỉ tài liệu đã phát hành cho bệnh nhân.
+**Legend:** Yes = allowed, No = not allowed, **Own** = own data only,
+**Care** = only patients with a treatment relationship (an appointment/encounter with the doctor within 12 months or a future appointment),
+**BG** = allowed via break-glass (UC-10), **Rel** = only documents already released to the patient.
 
-| Tài nguyên / Hành động | Patient | Doctor | Nurse | Admin | DPO |
+| Resource / Action | Patient | Doctor | Nurse | Admin | DPO |
 |---|---|---|---|---|---|
-| Patient: đọc | Own | Care / BG | ✅ | ❌ | ❌ |
-| Patient: tạo / sửa | Own (thông tin hành chính) | ❌ | ✅ | ❌ | ❌ |
-| Patient: tìm kiếm (tên, năm sinh) | ❌ | ✅ | ✅ | ❌ | ❌ |
-| Schedule / Slot: xem slot trống | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Schedule / Slot: tạo / sửa / chặn | ❌ | ❌ | ✅ | ✅ | ❌ |
-| Appointment: đặt | Own | ❌ | ✅ | ❌ | ❌ |
-| Appointment: hủy | Own (≥ 2h trước giờ khám) | ❌ | ✅ | ❌ | ❌ |
-| Appointment: xem | Own | Của chính bác sĩ | ✅ | ❌ | ❌ |
-| Encounter / Observation: đọc | Own (đã kết thúc) | Care / BG | ✅ | ❌ | ❌ |
-| Encounter: tạo / check-in | ❌ | Care | ✅ | ❌ | ❌ |
-| Condition (chẩn đoán): ghi | ❌ | Care | ❌ | ❌ | ❌ |
-| Observation (sinh hiệu): ghi | ❌ | Care | ✅ | ❌ | ❌ |
-| Tài liệu: upload | ❌ | Care | ✅ | ❌ | ❌ |
-| Tài liệu: tải | Own + Rel | Care / BG | ✅ | ❌ | ❌ |
-| Tài liệu: phát hành cho bệnh nhân | ❌ | Care | ❌ | ❌ | ❌ |
-| Trợ lý RAG: hỏi | ❌ | ✅ | ✅ | ❌ | ❌ |
-| Kho tri thức: quản lý tài liệu | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Tóm tắt hồ sơ AI | ❌ | Care / BG | ❌ | ❌ | ❌ |
-| Duyệt kết quả trích xuất AI | ❌ | Care | ✅ | ❌ | ❌ |
-| Chatbot đặt lịch | Own | ❌ | ❌ | ❌ | ❌ |
-| Người dùng / role: quản lý | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Audit: xem / xuất báo cáo | ❌ | ❌ | ❌ | ✅ (không xem nội dung lâm sàng) | ✅ |
-| Audit: sửa / xóa | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Break-glass | ❌ | ✅ (bắt buộc lý do, 60 phút) | ❌ | ❌ | ❌ |
-| Sao lưu / khôi phục | ❌ | ❌ | ❌ | ✅ (qua pipeline vận hành, có duyệt) | ❌ |
+| Patient: read | Own | Care / BG | Yes | No | No |
+| Patient: create / update | Own (administrative information) | No | Yes | No | No |
+| Patient: search (name, year of birth) | No | Yes | Yes | No | No |
+| Schedule / Slot: view free slots | Yes | Yes | Yes | Yes | No |
+| Schedule / Slot: create / update / block | No | No | Yes | Yes | No |
+| Appointment: book | Own | No | Yes | No | No |
+| Appointment: cancel | Own (>= 2h before the visit) | No | Yes | No | No |
+| Appointment: view | Own | The doctor's own | Yes | No | No |
+| Encounter / Observation: read | Own (finished) | Care / BG | Yes | No | No |
+| Encounter: create / check-in | No | Care | Yes | No | No |
+| Condition (diagnosis): write | No | Care | No | No | No |
+| Observation (vital signs): write | No | Care | Yes | No | No |
+| Document: upload | No | Care | Yes | No | No |
+| Document: download | Own + Rel | Care / BG | Yes | No | No |
+| Document: release to patient | No | Care | No | No | No |
+| RAG assistant: ask | No | Yes | Yes | No | No |
+| Knowledge base: manage documents | No | No | No | Yes | No |
+| AI record summary | No | Care / BG | No | No | No |
+| Approve AI extraction results | No | Care | Yes | No | No |
+| Booking chatbot | Own | No | No | No | No |
+| Users / roles: manage | No | No | No | Yes | No |
+| Audit: view / export reports | No | No | No | Yes (no access to clinical content) | Yes |
+| Audit: modify / delete | No | No | No | No | No |
+| Break-glass | No | Yes (reason required, 60 minutes) | No | No | No |
+| Backup / restore | No | No | No | Yes (via operations pipeline, with approval) | No |
 
-## Quy tắc thực thi
-1. **Mặc định từ chối**: hành động không có trong bảng thì bị từ chối.
-2. Quyền kiểm ở **service sở hữu dữ liệu**; gateway chỉ xác thực token, không quyết định quyền.
-3. Từ chối trả `403` và **cũng được ghi audit** (phát hiện dò quyền).
-4. AI (RAG, tóm tắt, chatbot) gọi các service khác **bằng token của người dùng** (on-behalf-of), nên không có quyền nào rộng hơn người dùng.
-5. Service-to-service dùng workload identity và chỉ được gọi các endpoint đã khai báo.
+## Enforcement rules
+1. **Default deny**: an action not present in the table is denied.
+2. Permissions are checked in the **service that owns the data**; the gateway only validates the token and does not decide permissions.
+3. A denial returns `403` and **is also written to the audit log** (permission-probing detection).
+4. AI (RAG, summary, chatbot) calls other services **using the user's token** (on-behalf-of), so it never has broader permissions than the user.
+5. Service-to-service uses workload identity and may call only declared endpoints.

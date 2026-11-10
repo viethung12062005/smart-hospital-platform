@@ -1,14 +1,14 @@
-# 14 — Sequence diagram các luồng chính
+# 14 — Sequence diagrams for main flows
 
-Mỗi sơ đồ ghi rõ chỗ **đồng bộ** (mũi tên liền), **bất đồng bộ** (mũi tên đứt), và điểm lỗi. Mã API (S11, C14...) tham chiếu
-tài liệu 08–12; mã event (E1...) tham chiếu [13](13-events.md).
+Each diagram marks the **synchronous** points (solid arrows), **asynchronous** points (dashed arrows), and failure points. API codes (S11, C14, etc.) reference
+documents 08–12; event codes (E1, etc.) reference [13](13-events.md).
 
-## 1. Đặt lịch (UC-03) — S11, E1
+## 1. Booking (UC-03) — S11, E1
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor P as Bệnh nhân (web)
+    actor P as Patient (web)
     participant GW as Gateway
     participant SCH as Scheduling
     participant PG as PostgreSQL
@@ -19,40 +19,40 @@ sequenceDiagram
     participant CLN as Clinical
 
     P->>GW: GET /fhir/Slot?specialty=cardiology&start=ge...
-    GW->>SCH: (JWT hợp lệ, rate limit)
-    SCH->>R: GET cache khóa truy vấn
+    GW->>SCH: (valid JWT, rate limit)
+    SCH->>R: GET cache query key
     alt cache miss
-        SCH->>PG: SELECT slot trống (ix_slot_free_by_specialty)
+        SCH->>PG: SELECT free slots (ix_slot_free_by_specialty)
         SCH->>R: SET TTL 5s
     end
-    SCH-->>P: Bundle slot trống
+    SCH-->>P: Bundle of free slots
 
     P->>GW: POST /fhir/Appointment/$book (Idempotency-Key)
     GW->>SCH: forward
     SCH->>CLN: identity(sub) → fhirUser (cache 60s)
-    SCH->>PG: BEGIN, giành idempotency key, advisory lock bệnh nhân
-    SCH->>PG: đếm lịch tương lai (BR-03), UPDATE slot free→busy (có điều kiện)
-    alt slot đã bị đặt
+    SCH->>PG: BEGIN, acquire idempotency key, patient advisory lock
+    SCH->>PG: count future appointments (BR-03), UPDATE slot free→busy (conditional)
+    alt slot already booked
         SCH->>PG: ROLLBACK
-        SCH-->>P: 409 slot-unavailable + 3 slot gợi ý
-    else thành công
+        SCH-->>P: 409 slot-unavailable + 3 suggested slots
+    else success
         SCH->>PG: INSERT appointment, history, outbox(E1), outbox(E11), COMMIT
         SCH-->>P: 201 Appointment (booked)
-        SCH->>R: xóa cache slot của bác sĩ/ngày
+        SCH->>R: clear slot cache for the doctor/day
     end
 
-    Note over SCH,BUS: Relay (mỗi 1s) thêm ageBand rồi phát E1
+    Note over SCH,BUS: Relay (every 1s) adds ageBand then emits E1
     SCH--)BUS: E1 appointment-booked
-    BUS--)NTF: E1 → tạo 3 nhắc (xác nhận, T-24h, T-2h)
-    BUS--)ML: E1 → chấm điểm no-show
+    BUS--)NTF: E1 → create 3 reminders (confirmation, T-24h, T-2h)
+    BUS--)ML: E1 → no-show scoring
     BUS--)CLN: E1 → care_relationships
     ML--)BUS: E10 no-show-scored
-    BUS--)NTF: E10 → thêm nhắc T-6h nếu rủi ro cao
+    BUS--)NTF: E10 → add T-6h reminder if high risk
 ```
-**Điểm lỗi:** Redis chết → bỏ qua cache, đọc thẳng DB (chậm hơn, đúng). Clinical chậm → identity dùng cache; cache rỗng và clinical
-chết → 503 (không đặt lịch khi không xác định được người dùng). Bus chết → E1 nằm trong outbox, phát sau; lịch hẹn vẫn đặt thành công.
+**Failure points:** Redis down → skip the cache, read directly from the DB (slower, correct). Clinical slow → identity uses the cache; cache empty and clinical
+down → 503 (do not book when the user cannot be identified). Bus down → E1 stays in the outbox and is published later; the appointment is still booked successfully.
 
-## 2. Nhắc lịch và xử lý nhà cung cấp lỗi (UC-07)
+## 2. Reminders and provider failure handling (UC-07)
 
 ```mermaid
 sequenceDiagram
@@ -61,129 +61,129 @@ sequenceDiagram
     participant CLN as Clinical
     participant PUSH as Push provider
     participant SMS as SMS provider
-    participant OBS as Cảnh báo
+    participant OBS as Alerting
 
-    loop mỗi 10 giây
-        W->>DB: lấy reminder đến hạn (FOR UPDATE SKIP LOCKED) → sending
+    loop every 10 seconds
+        W->>DB: fetch due reminders (FOR UPDATE SKIP LOCKED) → sending
     end
     W->>CLN: GET /internal/v1/patients/{id}/contact (audit)
-    W->>PUSH: gửi (kênh ưu tiên 1)
-    alt push thành công
+    W->>PUSH: send (priority channel 1)
+    alt push succeeds
         W->>DB: delivery_attempt accepted, reminder = sent
-    else push lỗi tạm thời
-        W->>SMS: gửi (kênh dự phòng)
-        alt SMS thành công
+    else transient push error
+        W->>SMS: send (fallback channel)
+        alt SMS succeeds
             W->>DB: attempt accepted (channel=sms), reminder = sent
-        else mọi kênh lỗi
-            W->>DB: reminder = scheduled, due_at = now + backoff (1, 5, 15, 60 phút)
+        else all channels fail
+            W->>DB: reminder = scheduled, due_at = now + backoff (1, 5, 15, 60 minutes)
         end
     end
-    Note over W,DB: Lần thứ 5 thất bại → dead-lettered
-    W->>OBS: metric + cảnh báo DLQ
-    Note over W,DB: Worker chết giữa chừng: locked_until quá hạn → dòng được thu hồi và gửi lại (idempotent nhờ attempt unique)
+    Note over W,DB: 5th failure → dead-lettered
+    W->>OBS: metric + DLQ alert
+    Note over W,DB: Worker dies mid-way: locked_until expires → the row is reclaimed and sent again (idempotent thanks to the unique attempt)
 ```
 
-## 3. Check-in → lần khám → kết thúc (UC-04) — S16, C11, C14, E4–E6
+## 3. Check-in → visit → finish (UC-04) — S16, C11, C14, E4–E6
 
 ```mermaid
 sequenceDiagram
-    actor N as Điều dưỡng
-    actor D as Bác sĩ
+    actor N as Nurse
+    actor D as Doctor
     participant SCH as Scheduling
     participant BUS as Bus
     participant CLN as Clinical
     participant ML as ML
 
     N->>SCH: POST /Appointment/{id}/$check-in (If-Match)
-    SCH->>SCH: booked → arrived (cửa sổ -60'/+30')
+    SCH->>SCH: booked → arrived (window -60'/+30')
     SCH--)BUS: E4 checked-in
-    BUS--)CLN: E4 → tạo Encounter(arrived), idempotent theo appointmentId
-    N->>CLN: POST /Observation (sinh hiệu, gắn Encounter)
-    D->>CLN: POST /Encounter/{id}/$start (kiểm Care)
-    D->>CLN: POST /Condition (ICD-10), PUT /Encounter (bệnh sử)
-    D->>CLN: POST /Encounter/{id}/$finish (yêu cầu ≥1 chẩn đoán)
+    BUS--)CLN: E4 → create Encounter(arrived), idempotent by appointmentId
+    N->>CLN: POST /Observation (vital signs, attached to Encounter)
+    D->>CLN: POST /Encounter/{id}/$start (checks Care)
+    D->>CLN: POST /Condition (ICD-10), PUT /Encounter (history)
+    D->>CLN: POST /Encounter/{id}/$finish (requires ≥1 diagnosis)
     CLN--)BUS: E6 encounter-finished
     BUS--)SCH: E6 → Appointment arrived → fulfilled
     SCH--)BUS: E5 status-changed(fulfilled)
-    BUS--)ML: E5 → outcome=fulfilled, cập nhật attendance_stats
+    BUS--)ML: E5 → outcome=fulfilled, update attendance_stats
 ```
 
-## 4. Tải tài liệu và trích xuất AI (UC-05, UC-13) — D1, D2, E8, AI6
+## 4. Document upload and AI extraction (UC-05, UC-13) — D1, D2, E8, AI6
 
 ```mermaid
 sequenceDiagram
-    actor N as Điều dưỡng
+    actor N as Nurse
     participant DOC as Document
     participant BLOB as Blob Storage
-    participant AV as Trình quét mã độc
+    participant AV as Malware scanner
     participant BUS as Bus
     participant AI as AI service
     participant CLN as Clinical
-    actor D as Bác sĩ
+    actor D as Doctor
 
-    N->>DOC: POST /documents/uploads (kiểm loại, size, Care)
-    DOC-->>N: SAS ghi 10 phút
-    N->>BLOB: PUT file (trực tiếp)
+    N->>DOC: POST /documents/uploads (check type, size, Care)
+    DOC-->>N: SAS write 10 minutes
+    N->>BLOB: PUT file (direct)
     N->>DOC: POST /uploads/{id}/complete
-    DOC->>BLOB: kiểm size + SHA-256 + magic bytes
+    DOC->>BLOB: check size + SHA-256 + magic bytes
     DOC-->>N: 202 scanning
-    BLOB->>AV: quét khi blob tạo
-    AV-->>DOC: kết quả
-    alt nhiễm mã độc
-        DOC->>BLOB: chuyển sang quarantine, cảnh báo, KHÔNG phát E8
-    else sạch
+    BLOB->>AV: scan when blob is created
+    AV-->>DOC: result
+    alt malware
+        DOC->>BLOB: move to quarantine, alert, do NOT emit E8
+    else clean
         DOC--)BUS: E8 document-uploaded
         BUS--)AI: E8 → extraction_job (queued)
         AI->>DOC: POST /internal/documents/{id}/read-url (60s)
-        AI->>BLOB: đọc file → OCR → phân loại → trích trường → validate
-        Note over AI: Lỗi bước nào → retry (1/5/15') → failed (DLQ). Upload không bị ảnh hưởng
+        AI->>BLOB: read file → OCR → classify → extract fields → validate
+        Note over AI: Any failing step → retry (1/5/15') → failed (DLQ). The upload is not affected
         AI->>AI: status = needs-review
     end
-    D->>AI: GET /extractions (hàng chờ) → xem trường + tài liệu gốc
-    D->>AI: POST /extractions/{id}/review (accepted, có thể sửa)
-    AI->>CLN: POST /Observation (bằng TOKEN của bác sĩ), derivedFrom=DocumentReference
+    D->>AI: GET /extractions (queue) → view fields + original document
+    D->>AI: POST /extractions/{id}/review (accepted, may edit)
+    AI->>CLN: POST /Observation (with the DOCTOR's TOKEN), derivedFrom=DocumentReference
 ```
 
-## 5. Hỏi trợ lý tri thức với fallback (UC-11) — AI1
+## 5. Knowledge assistant with fallback (UC-11) — AI1
 
 ```mermaid
 sequenceDiagram
-    actor U as Bác sĩ
+    actor U as Doctor
     participant AI as AI service
     participant SRCH as AI Search
-    participant M1 as DeepSeek (chính)
-    participant M2 as Gemini free tier (dự phòng 1)
-    participant M3 as Ollama (dự phòng 2)
+    participant M1 as DeepSeek (primary)
+    participant M2 as Gemini free tier (fallback 1)
+    participant M3 as Ollama (fallback 2)
     participant AUD as Audit
 
     U->>AI: POST /assistant/ask
-    AI->>AI: kiểm đầu vào (độ dài, mẫu injection)
-    AI->>SRCH: hybrid (embedding local), filter role/khoa (security trimming)
-    alt không có đoạn đạt ngưỡng
-        AI-->>U: answered=false (không gọi LLM)
-    else có ngữ cảnh
-        AI->>M1: prompt đã redact PII (ngữ cảnh đánh dấu <document>)
-        alt M1 timeout / 5xx / 429 / circuit mở
-            AI->>M2: thử model kế (redact PII)
-            alt M2 lỗi
-                AI->>M3: thử model kế
+    AI->>AI: validate input (length, injection patterns)
+    AI->>SRCH: hybrid (local embedding), filter role/department (security trimming)
+    alt no chunk above the threshold
+        AI-->>U: answered=false (does not call the LLM)
+    else context available
+        AI->>M1: prompt with PII redacted (context marked <document>)
+        alt M1 timeout / 5xx / 429 / circuit open
+            AI->>M2: try the next model (PII redacted)
+            alt M2 fails
+                AI->>M3: try the next model
             end
         end
-        alt có câu trả lời
-            AI->>AI: kiểm schema + trích dẫn khớp chunk + không có chẩn đoán
+        alt answer available
+            AI->>AI: validate schema + citations match chunks + no diagnosis
             AI-->>U: answer + citations (+ model, fallbackLevel)
-        else mọi model lỗi
-            AI-->>U: mode=retrieval-only (danh sách mục liên quan)
+        else all models fail
+            AI-->>U: mode=retrieval-only (list of related sections)
         end
     end
-    AI--)AUD: E11 ai-query (model, token, chi phí, không có nội dung câu hỏi)
+    AI--)AUD: E11 ai-query (model, tokens, cost, no question content)
 ```
 
-## 6. Truy cập khẩn cấp — break-glass (UC-10) — C20
+## 6. Emergency access — break-glass (UC-10) — C20
 
 ```mermaid
 sequenceDiagram
-    actor D as Bác sĩ (không có Care)
+    actor D as Doctor (no Care)
     participant CLN as Clinical
     participant BUS as Bus
     participant AUD as Audit
@@ -192,13 +192,13 @@ sequenceDiagram
 
     D->>CLN: GET /fhir/Patient/{id}
     CLN-->>D: 403 break-glass-required (+ audit denied)
-    D->>CLN: POST /break-glass {patientId, reason ≥ 20 ký tự}
-    CLN->>CLN: tạo phiên 60 phút (TTL)
+    D->>CLN: POST /break-glass {patientId, reason ≥ 20 characters}
+    CLN->>CLN: create a 60-minute session (TTL)
     CLN--)BUS: E11 break-glass-start (ETREAT)
     CLN-->>D: 201 {expiresAt}
-    BUS--)AUD: ghi WORM + Log Analytics
-    AUD--)NTF: cảnh báo DPO (≤ 5 phút)
+    BUS--)AUD: write WORM + Log Analytics
+    AUD--)NTF: alert DPO (≤ 5 minutes)
     NTF--)DPO: email + push
-    D->>CLN: GET /fhir/Patient/{id}, /timeline (mỗi lần audit ETREAT)
-    DPO->>AUD: GET /audit/break-glass → xem xét (justified / unjustified)
+    D->>CLN: GET /fhir/Patient/{id}, /timeline (audit ETREAT each time)
+    DPO->>AUD: GET /audit/break-glass → review (justified / unjustified)
 ```

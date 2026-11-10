@@ -1,57 +1,57 @@
-# Đóng góp code
+# Contributing code
 
-Áp dụng cho mọi người trong nhóm. Bắt đầu từ [docs/onboarding.md](docs/onboarding.md) nếu bạn mới vào.
+Applies to everyone on the team. Start with [docs/onboarding.md](docs/onboarding.md) if you are new.
 
-## Nguyên tắc không thương lượng
-1. **Chỉ dữ liệu giả (synthetic).** Không bao giờ đưa dữ liệu bệnh nhân thật vào repo, test, log hay ảnh chụp màn hình.
-2. **Không secret trong repo.**
-   - Không có mật khẩu, key, token hay connection string trong code, cấu hình hay log.
-   - Ở local, secret được sinh vào `dev/.local/` (đã gitignore); trên cloud, secret nằm ở Key Vault.
-3. **Hợp đồng đi trước code.**
-   - Hợp đồng gồm API (`contracts/openapi`), event (`contracts/events`), phân quyền (`contracts/authz/matrix.yaml`) và danh mục mã (`contracts/terminology`).
-   - Muốn đổi hợp đồng thì sửa trong `contracts/` cùng tài liệu thiết kế, và SA phải đồng ý trước.
-4. **Dev chỉ viết logic nghiệp vụ.**
-   - Không sửa Dockerfile, `.github/`, `dev/`, Helm values, `libs/java/` hay `config/PlatformConfig.java`.
-   - Cần đổi những phần đó thì mở issue cho SA.
+## Non-negotiable rules
+1. **Synthetic data only.** Never put real patient data into the repo, tests, logs or screenshots.
+2. **No secrets in the repo.**
+   - No passwords, keys, tokens or connection strings in code, configuration or logs.
+   - Locally, secrets are generated into `dev/.local/` (git-ignored); in the cloud, secrets live in Key Vault.
+3. **Contract first.**
+   - Contracts cover APIs (`contracts/openapi`), events (`contracts/events`), authorization (`contracts/authz/matrix.yaml`) and code systems (`contracts/terminology`).
+   - To change a contract, edit `contracts/` together with the design doc, and the SA must agree beforehand.
+4. **Developers write business logic only.**
+   - Do not modify Dockerfile, `.github/`, `dev/`, Helm values, `libs/java/` or `config/PlatformConfig.java`.
+   - If those need changing, open an issue for the SA.
 
-## Quy trình một task
-1. Lấy task là issue gán cho bạn (milestone tuần này; tiêu đề `<ID>: ...`, sub-issue của issue User Story). Làm theo thứ tự tuần;
-   task còn *Blocked by* chưa đóng thì chưa bắt đầu. Cách theo dõi việc: [docs/00-workflow.md §2](docs/00-workflow.md#2-theo-dõi-việc-theo-user-story).
-2. Tạo nhánh từ `main`: `git switch -c <ID>-mo-ta-ngan`, ví dụ `NTF-02-consumer-booked`. **Một PR cho một task.**
-3. Đọc phần thiết kế ghi ở cột "Tài liệu" của task (`docs/03-architecture/detailed-design/`).
-4. Viết code kèm test.
-5. Chạy kiểm tra giống CI trước khi push (mục dưới).
-6. Mở PR theo template, ghi `Closes #<số issue>`. CI phải xanh, cần ít nhất 1 review (CODEOWNERS). Merge kiểu **squash**.
+## One-task workflow
+1. Take a task issue assigned to you (this week's milestone; title `<ID>: ...`, a sub-issue of a User Story issue). Work in week order;
+   do not start a task that is still *Blocked by* an open task. How to track work: [docs/00-workflow.md §2](docs/00-workflow.md#2-tracking-work-by-user-story).
+2. Create a branch from `main`: `git switch -c <ID>-short-description`, e.g. `NTF-02-consumer-booked`. **One PR per task.**
+3. Read the design section named in the task's "Docs" column (`docs/03-architecture/detailed-design/`).
+4. Write code with tests.
+5. Run the same checks as CI before pushing (section below).
+6. Open a PR from the template, writing `Closes #<issue number>`. CI must be green, at least 1 review (CODEOWNERS). Merge with **squash**.
 
-Tiêu đề commit và PR theo [docs/00-git-github.md](docs/00-git-github.md): `<story> (<task>): <mô tả>`,
-ví dụ `US-041 (NTF-02): create reminders on appointment-booked` hoặc `ENABLER (ARC-04): add architecture diagrams`.
+Commit and PR titles follow [docs/00-git-github.md](docs/00-git-github.md): `<story> (<task>): <description>`,
+e.g. `US-041 (NTF-02): create reminders on appointment-booked` or `ENABLER (ARC-04): add architecture diagrams`.
 
-## Kiểm tra trước khi push
-| Phần | Lệnh (chạy ở gốc repo) |
+## Checks before pushing
+| Part | Command (run at the repo root) |
 |---|---|
-| Service Java | `mvn -B spotless:apply` rồi `mvn -B -pl services/<svc> -am verify` (cần Docker cho Testcontainers) |
-| Service Python | trong `services/ai` hoặc `services/ml`: `ruff check . && ruff format --check . && mypy . && pytest --cov` |
-| Web app | trong `web/`: `npm run format:check && npm run lint -- --max-warnings=0 && npm run typecheck && npm run test -- --coverage` (xem `web/README.md`) |
-| Hợp đồng (nếu sửa `contracts/`) | `pip install -r tools/contracts/requirements.txt && tools/contracts/check_all.sh` |
-| Chạy thử trong cụm | `make -C dev deploy SVC=<svc>` (xem `dev/README.md`) |
+| Java service | `mvn -B spotless:apply` then `mvn -B -pl services/<svc> -am verify` (needs Docker for Testcontainers) |
+| Python service | in `services/ai` or `services/ml`: `ruff check . && ruff format --check . && mypy . && pytest --cov` |
+| Web app | in `web/`: `npm run format:check && npm run lint -- --max-warnings=0 && npm run typecheck && npm run test -- --coverage` (see `web/README.md`) |
+| Contracts (if editing `contracts/`) | `pip install -r tools/contracts/requirements.txt && tools/contracts/check_all.sh` |
+| Run in the cluster | `make -C dev deploy SVC=<svc>` (see `dev/README.md`) |
 
-CI chặn PR khi:
-- format sai (Spotless / ruff);
-- trình biên dịch có cảnh báo (`-Werror`);
-- test đỏ;
-- coverage dòng < 70% (JaCoCo / pytest-cov);
-- endpoint thiếu `@RequireShpAuthz`;
-- hợp đồng không hợp lệ.
+CI blocks a PR when:
+- formatting is wrong (Spotless / ruff);
+- the compiler emits warnings (`-Werror`);
+- tests fail;
+- line coverage < 70% (JaCoCo / pytest-cov);
+- an endpoint lacks `@RequireShpAuthz`;
+- the contract is invalid.
 
-## Quy ước code Java
-- Bố cục gói: `api/` → `app/` → `domain/`, cùng `infra/`, `messaging/`, `config/`. Xem [overview.md §4](docs/03-architecture/overview.md#4-bên-trong-một-service-java).
-- **Transaction chỉ mở ở `app/`.** Thay đổi dữ liệu và `outbox.add(CloudEvents.create(...))` nằm trong cùng một transaction.
-- Consumer luôn bọc trong `inbox.handleOnce(...)`, vì một event có thể đến nhiều lần.
-- Lỗi nghiệp vụ dùng `throw new ShpException("<mã>")`, với mã có trong danh mục 07 §5. Không tự tạo response lỗi.
-- Thời gian dùng `Clock` được inject (test cố định được), lưu UTC. ID dùng `Uuids.v7()`.
-- Log không chứa PII. Chỉ log ID, không log tên, số điện thoại, email hay nội dung hồ sơ.
-- Test dùng DB thật qua Testcontainers, không mock repository. Domain thuần thì test bằng JUnit.
+## Java code conventions
+- Package layout: `api/` -> `app/` -> `domain/`, plus `infra/`, `messaging/`, `config/`. See [overview.md §4](docs/03-architecture/overview.md#4-inside-a-java-service).
+- **Transactions open in `app/` only.** Data changes and `outbox.add(CloudEvents.create(...))` sit in the same transaction.
+- Consumers are always wrapped in `inbox.handleOnce(...)`, because an event may arrive more than once.
+- Business errors use `throw new ShpException("<code>")`, with the code in catalog 07 §5. Do not hand-build error responses.
+- Time uses an injected `Clock` (so tests can fix it), stored in UTC. IDs use `Uuids.v7()`.
+- Logs contain no PII. Log IDs only, never names, phone numbers, emails or record content.
+- Tests use real databases via Testcontainers, not repository mocks. Pure domain logic is tested with JUnit.
 
-## Cần giúp
-- Câu hỏi thiết kế hoặc hợp đồng: mở issue gắn nhãn `question` và mention SA.
-- Lỗi ở `libs/java`, `dev/` hay pipeline: mở issue cho SA, ghi lệnh đã chạy và log lỗi (bỏ secret).
+## Need help
+- Design or contract questions: open an issue labeled `question` and mention the SA.
+- Bugs in `libs/java`, `dev/` or the pipeline: open an issue for the SA, including the command run and the error log (with secrets removed).

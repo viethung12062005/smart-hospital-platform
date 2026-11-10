@@ -1,102 +1,98 @@
-# Quy trình làm việc: nhánh, PR, Definition of Ready/Done (ARC-10)
+# Workflow: branches, PRs, Definition of Ready/Done (ARC-10)
 
-## 1. Nhánh `main` được bảo vệ
-Không ai ghi thẳng vào `main` (ruleset `protect-main` ở cả 4 repo):
+## 1. The `main` branch is protected
+Nobody writes directly to `main` (ruleset `protect-main` in all 4 repos):
 
-| Quy tắc | Giá trị |
+| Rule | Value |
 |---|---|
-| Phải qua Pull Request | có |
-| Số review tối thiểu | 1, và review của Code Owner (xem `.github/CODEOWNERS`) |
-| Commit mới sau khi approve | hủy approval cũ |
-| Thread review | phải resolve hết trước khi merge |
-| Lịch sử | tuyến tính; merge kiểu **squash** (đã tắt merge commit và rebase) |
-| Force-push, xóa `main` | cấm |
-| Ngoại lệ | chỉ chủ repo (SA), và vẫn phải qua PR |
+| Must go through a Pull Request | yes |
+| Minimum reviews | 1, plus Code Owner review (see `.github/CODEOWNERS`) |
+| New commit after approval | cancels the previous approval |
+| Review threads | all must be resolved before merge |
+| History | linear; **squash** merge (merge commits and rebase are disabled) |
+| Force-push, deleting `main` | forbidden |
+| Exceptions | repo owner only (SA), and still through a PR |
 
-> Giới hạn gói GitHub hiện tại: repo private không có required reviewers cho Environment và không có secret scanning của GitHub. Cổng duyệt deploy được thay bằng review PR trên `shp-gitops` (đường dẫn `envs/prod/` do SA duyệt) và `gitleaks` trong CI. Khi nâng gói hoặc chuyển repo public thì bật lại theo `docs/04-devops/github-setup.md`.
+> Current GitHub plan limits: private repos have no required reviewers for Environments and no GitHub secret scanning. The deploy approval gate is replaced by PR review on `shp-gitops` (the `envs/prod/` path is approved by the SA) and `gitleaks` in CI. When upgrading the plan or making the repo public, re-enable it per `docs/04-devops/github-setup.md`.
 
-## 2. Theo dõi việc theo User Story
+## 2. Tracking work by User Story
 
-Việc được theo dõi theo **User Story (US)**, nhưng code vẫn đi theo **task**: một US gồm nhiều task, mỗi task do một người làm và
-có PR riêng. Không có nhánh chung hay PR chung cho cả US.
+Work is tracked by **User Story (US)**, but code still follows **tasks**: a US consists of several tasks, each done by one person and
+with its own PR. There is no shared branch or shared PR for a whole US.
 
-### 2.1 Nguồn dữ liệu
+### 2.1 Sources of truth
 
-| Nơi | Giữ gì | Ai cập nhật |
+| Where | What it holds | Who updates it |
 |---|---|---|
-| [backlog.csv](05-plan/backlog.csv) | Định nghĩa task: ID, story, "Xong khi", ước lượng, phụ thuộc | SA (qua `tools/plan`) |
-| Bảng kế hoạch nhóm (Google Sheet, tab *Công việc* và *Theo User Story*) | Người phụ trách, người review, tuần, trạng thái, % | Người làm task, SA đối chiếu cuối tuần |
-| GitHub Issues | Việc hằng ngày: issue US, issue task, liên kết PR, phụ thuộc | Người làm task |
+| [backlog.csv](05-plan/backlog.csv) | Task definitions: ID, story, "Done when", estimate, dependencies | SA (via `tools/plan`) |
+| Team planning sheet (Google Sheet, *Tasks* and *By User Story* tabs) | Owner, reviewer, week, status, % | Task owner; SA reconciles at the end of the week |
+| GitHub Issues | Daily work: US issues, task issues, PR links, dependencies | Task owner |
 
-Lệch nhau thì sửa theo thứ tự: backlog (định nghĩa) → sheet (phân công) → issue.
+If they disagree, fix them in this order: backlog (definition) -> sheet (assignment) -> issue.
 
-### 2.2 Cấu trúc issue
+### 2.2 Issue structure
 
-| Cấp | Trên GitHub | Tiêu đề | Label | Assignee | Milestone |
+| Level | On GitHub | Title | Labels | Assignee | Milestone |
 |---|---|---|---|---|---|
-| User Story | Issue cha | `US-015: Bệnh nhân đặt lịch khám` | `user-story`, `priority:must` / `should` / `could` | SA (người nghiệm thu) | Tuần kết thúc dự kiến |
-| Nhóm việc nền | Issue cha | `ENABLER: Hạ tầng Azure (Terraform)` | `enabler` | SA | Tuần kết thúc dự kiến |
-| Task | **Sub-issue** của US hoặc của nhóm việc nền | `SCH-12: <tên task>` | `task` và label loại (`enhancement`, `documentation`...) | **Một người**, đúng cột *Phụ trách* của sheet | Tuần của task |
+| User Story | Parent issue | `US-015: Patient books an appointment` | `user-story`, `priority:must` / `should` / `could` | SA (acceptance owner) | Planned end week |
+| Enabler | Parent issue | `ENABLER: Azure infrastructure (Terraform)` | `enabler` | SA | Planned end week |
+| Task | **Sub-issue** of the US or of the enabler | `SCH-12: <task name>` | `task` plus a type label (`enhancement`, `documentation`...) | **One person**, matching the sheet's *Owner* column | The task's week |
 
-- Task thuộc nhiều US: là sub-issue của US chính (cột *User Story* của sheet); các US còn lại ghi trong mô tả.
-- Phụ thuộc giữa task: dùng quan hệ **Blocked by** của GitHub theo cột *Phụ thuộc*. Label `blocked` chỉ dùng khi chờ việc ngoài
-  backlog (quyền Azure, quyết định của nhóm...), ghi rõ chờ gì.
-- Milestone đặt tên theo tuần của kế hoạch: `Tuần 6 (09/11–15/11)`.
-- Mô tả issue US: câu chuyện người dùng, tiêu chí nghiệm thu (AC) và test case liên quan trong `docs/06-testing/catalog`.
-  GitHub tự hiện danh sách sub-issue và tiến độ.
+- A task that belongs to several USs: it is a sub-issue of the primary US (the sheet's *User Story* column); the other USs are noted in the description.
+- Dependencies between tasks: use GitHub's **Blocked by** relationship per the *Dependencies* column. The `blocked` label is only used when waiting on something outside the backlog (Azure permissions, a team decision...), and states what it is waiting for.
+- Milestones are named by plan week: `Week 6 (09/11-15/11)`.
+- US issue description: the user story, acceptance criteria (AC) and related test cases in `docs/06-testing/catalog`. GitHub automatically shows the sub-issue list and progress.
 
-### 2.3 Vòng đời một task
-1. Chọn issue task của mình trong milestone tuần này, đủ **Definition of Ready** (mục 3) và không còn *Blocked by* nào mở.
-2. `git fetch origin && git switch -c <ID>-mo-ta-ngan origin/main` (ví dụ `SCH-12-book-appointment`). Luôn tách từ `main`, không tách từ nhánh task khác.
-3. Code + test, chạy kiểm tra giống CI ([CONTRIBUTING](../CONTRIBUTING.md)).
-4. `git push -u origin HEAD`, mở PR theo template, tiêu đề `<story> (<task>): <mô tả>`, phần Task ghi `Closes #<issue task>` và
-   `Part of #<issue US>`. Chi tiết nhánh, commit, PR, merge: [00-git-github.md](00-git-github.md).
-5. Chờ CI xanh và 1 review; sửa theo góp ý bằng commit mới (không force-push sau khi đã có review).
-6. SA hoặc reviewer **squash merge**; nhánh tự xóa, issue task tự đóng. Người làm cập nhật trạng thái và % ở sheet.
+### 2.3 Lifecycle of a task
+1. Pick your task issue in this week's milestone that meets the **Definition of Ready** (section 3) and has no open *Blocked by*.
+2. `git fetch origin && git switch -c <ID>-short-description origin/main` (for example `SCH-12-book-appointment`). Always branch from `main`, never from another task branch.
+3. Code + tests, run the same checks as CI ([CONTRIBUTING](../CONTRIBUTING.md)).
+4. `git push -u origin HEAD`, open a PR using the template, title `<story> (<task>): <description>`, and in the Task section write `Closes #<task issue>` and
+   `Part of #<US issue>`. Branch, commit, PR and merge details: [00-git-github.md](00-git-github.md).
+5. Wait for green CI and 1 review; address feedback with new commits (no force-push after review).
+6. The SA or reviewer **squash merges**; the branch is deleted automatically and the task issue closes automatically. The task owner updates the status and % in the sheet.
 
-Task lớn hơn 8 giờ thì tách thành nhiều task (nhiều issue, nhiều PR), không giữ một PR mở nhiều ngày.
+A task larger than 8 hours is split into several tasks (several issues, several PRs); do not keep one PR open for many days.
 
-### 2.4 US chưa xong khi đã merge một phần
-Task của một US merge vào `main` dần dần. Phần đã merge không được làm hỏng luồng đang chạy:
-- Tính năng dở dang nằm sau cờ `SHP_FEATURE_<TÊN>` ([00-conventions §4](00-conventions.md#4-cấu-hình)), mặc định tắt ở uat và prod;
-  hoặc chưa mở route ở gateway hay menu ở web.
-- API mới thêm vào hợp đồng trước; client chỉ gọi khi phía server đã merge.
-- Cờ được gỡ trong task cuối của US, sau khi nghiệm thu.
+### 2.4 A US is not done when only part has merged
+Tasks of a US merge into `main` gradually. Merged parts must not break the running flow:
+- Incomplete features sit behind the `SHP_FEATURE_<NAME>` flag ([00-conventions section 4](00-conventions.md#4-configuration)), off by default in uat and prod; or the route is not exposed at the gateway or the menu in web.
+- New APIs are added to the contract first; clients only call them after the server side has merged.
+- The flag is removed in the US's final task, after acceptance.
 
-### 2.5 Đóng một US
-SA đóng issue US khi:
-- Mọi sub-issue đã đóng (task xong hoặc chuyển sang US khác, có ghi lý do).
-- Mọi AC có test case trong catalog và test tự động đã xanh trên `main`.
-- Đã chạy thử luồng trên cụm (local hoặc uat) với cờ tính năng bật, chỉ dữ liệu giả; ghi kết quả trong comment của issue US.
+### 2.5 Closing a US
+The SA closes a US issue when:
+- Every sub-issue is closed (task done or moved to another US, with the reason recorded).
+- Every AC has a test case in the catalog and the automated tests are green on `main`.
+- The flow has been tried on the cluster (local or uat) with the feature flag on and synthetic data only; the result is recorded in a comment on the US issue.
 
-### 2.6 Bảo mật khi dùng issue
-- Repo này là **public**: issue, comment, ảnh chụp chỉ dùng dữ liệu giả. Không dán dữ liệu bệnh nhân thật, token, mật khẩu, connection
-  string hay log có PII.
-- Lỗ hổng bảo mật không mở issue thường: báo SA qua *Security → Report a vulnerability* (private) và chỉ ghi task sửa lỗi ở mức chung.
-- Task chạm dữ liệu bệnh nhân, phân quyền, audit hoặc AI thì issue ghi rõ kiểm soát cần có (phân quyền, audit, che PII) để reviewer kiểm.
+### 2.6 Security when using issues
+- This repo is **public**: issues, comments and screenshots must use synthetic data only. Never paste real patient data, tokens, passwords, connection strings or logs containing PII.
+- Do not open a regular issue for a security vulnerability: report it to the SA via *Security -> Report a vulnerability* (private) and only record the fix task at a general level.
+- For a task touching patient data, authorization, audit or AI, the issue states the required controls (authorization, audit, PII masking) so the reviewer can check them.
 
-## 3. Definition of Ready (được bắt đầu task)
-- Có story/FR liên quan, tiêu chí "Xong khi" rõ, ước lượng ≤ 8 giờ (to hơn thì tách).
-- Phụ thuộc đã xong hoặc đã có giao diện thống nhất (hợp đồng API/event trong `contracts/`).
-- Tài liệu thiết kế cần đọc đã chỉ rõ (`detailed-design/...`).
-- Dữ liệu test biết lấy ở đâu (bộ sinh dữ liệu giả hoặc seed).
+## 3. Definition of Ready (task can start)
+- The related story/FR exists, the "Done when" criteria are clear, the estimate is <= 8 hours (split if larger).
+- Dependencies are done or an agreed interface exists (API/event contract in `contracts/`).
+- The design documents to read are named (`detailed-design/...`).
+- It is clear where the test data comes from (synthetic data generator or seed).
 
-## 4. Definition of Done (được merge)
-- Test đơn vị + tích hợp xanh; coverage dòng ≥ 70%; lint/format sạch; không cảnh báo biên dịch.
-- Hợp đồng (`contracts/`) khớp code; `tools/contracts/check_all.sh` xanh nếu có đổi.
-- Endpoint có `@RequireShpAuthz` và dòng trong matrix phân quyền; audit được phát cho mọi quyết định.
-- Không secret, không PII trong code/log/test; chỉ dữ liệu giả.
-- Quét image/dependency không có High/Critical đã có bản vá.
-- Chạy thử trên cụm local (`make -C dev deploy SVC=<svc>`) nếu đổi hành vi runtime.
-- Kiểm thử theo yêu cầu: mỗi tiêu chí nghiệm thu (AC) của tính năng có test case trong `docs/06-testing/catalog` và test tự động tương ứng; cập nhật `catalog/automation.yaml` và chạy `python -I tools/qa/trace.py --update-baseline` để mức tự động hóa chỉ tăng. Test case thuộc dữ liệu bệnh nhân, phân quyền, audit hoặc AI (P0) bắt buộc có test tự động trước khi merge. Sửa lỗi thì kèm test hồi quy.
-- Tài liệu liên quan cập nhật; PR được review và squash merge qua pipeline.
+## 4. Definition of Done (can merge)
+- Unit + integration tests green; line coverage >= 70%; lint/format clean; no compiler warnings.
+- The contract (`contracts/`) matches the code; `tools/contracts/check_all.sh` is green if anything changed.
+- The endpoint has `@RequireShpAuthz` and a row in the authorization matrix; audit is emitted for every decision.
+- No secrets, no PII in code/logs/tests; synthetic data only.
+- Image/dependency scans have no High/Critical with an available fix.
+- Tried on the local cluster (`make -C dev deploy SVC=<svc>`) if runtime behavior changed.
+- Testing per requirements: every acceptance criterion (AC) of the feature has a test case in `docs/06-testing/catalog` and a corresponding automated test; update `catalog/automation.yaml` and run `python -I tools/qa/trace.py --update-baseline` so the automation level only increases. Test cases involving patient data, authorization, audit or AI (P0) must have automated tests before merge. Bug fixes come with a regression test.
+- Related documentation is updated; the PR is reviewed and squash merged through the pipeline.
 
-## 5. Ai sửa gì
-| Khu vực | Sửa bởi | Ghi chú |
+## 5. Who changes what
+| Area | Changed by | Note |
 |---|---|---|
-| `services/<svc>/src`, `tests`, `deploy/values-local.yaml` | Dev của service | Code Owner là chính dev đó, SA review chéo |
-| `contracts/`, `libs/`, `dev/`, `.github/`, `Dockerfile`, Helm, `config/` | SA | Dev cần đổi thì mở issue |
-| `shp-infra`, `shp-gitops`, `shp-platform-templates` | SA / DevOps | `envs/prod/` cần SA duyệt |
+| `services/<svc>/src`, `tests`, `deploy/values-local.yaml` | The service's dev | The Code Owner is that dev, with cross-review by the SA |
+| `contracts/`, `libs/`, `dev/`, `.github/`, `Dockerfile`, Helm, `config/` | SA | Devs open an issue if they need a change |
+| `shp-infra`, `shp-gitops`, `shp-platform-templates` | SA / DevOps | `envs/prod/` requires SA approval |
 
 ## 6. Hotfix
-Vẫn qua PR: nhánh `hotfix-<mo-ta>`, review nhanh bởi SA, gắn nhãn `hotfix`; không có đường tắt vào `main`.
+Still through a PR: branch `hotfix-<description>`, fast review by the SA, `hotfix` label; there is no shortcut into `main`.

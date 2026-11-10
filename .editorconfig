@@ -11,10 +11,10 @@ indent_size = 4
 [*.{yml,yaml,json,md}]
 indent_size = 2
 
-# Java: Spotless (google-java-format, thụt 2) là nguồn sự thật; chạy mvn spotless:apply.
+# Java: Spotless (google-java-format, 2-space indent) is the source of truth; run mvn spotless:apply.
 [{*.java,pom.xml}]
 indent_size = 2
 
-# Web app: Prettier (web/.prettierrc.json, thụt 2) là nguồn sự thật; chạy npm run format.
+# Web app: Prettier (web/.prettierrc.json, 2-space indent) is the source of truth; run npm run format.
 [web/**.{ts,tsx,js,cjs,css,html}]
 indent_size = 2

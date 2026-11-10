@@ -1,59 +1,59 @@
 # 08 — API scheduling
 
-Quy ước chung: [07-api-conventions.md](07-api-conventions.md). DB: [02-db-scheduling.md](02-db-scheduling.md).
-Ký hiệu quyền: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin. `own` = chỉ dữ liệu của chính mình.
+Common conventions: [07-api-conventions.md](07-api-conventions.md). DB: [02-db-scheduling.md](02-db-scheduling.md).
+Permission notation: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin. `own` = only one's own data.
 
-## 1. Tổng hợp endpoint
+## 1. Endpoint summary
 
-| # | Method + đường dẫn | Mục đích | Quyền | Use case |
+| # | Method + path | Purpose | Permission | Use case |
 |---|---|---|---|---|
-| S1 | `POST /fhir/Schedule` | Tạo lịch làm việc của bác sĩ | N, A | UC-02 |
-| S2 | `GET /fhir/Schedule/{id}` | Đọc lịch | N, A; D (của mình) | UC-02 |
-| S3 | `GET /fhir/Schedule` | Tìm lịch | N, A; D (của mình) | UC-02 |
-| S4 | `PUT /fhir/Schedule/{id}` | Sửa lịch (bật/tắt, ghi chú) | N, A | UC-02 |
-| S5 | `PUT /api/v1/scheduling/schedules/{id}/templates` | Đặt mẫu lịch tuần | N, A | UC-02 |
-| S6 | `GET /api/v1/scheduling/schedules/{id}/templates` | Xem mẫu lịch tuần | N, A; D (của mình) | UC-02 |
-| S7 | `POST /api/v1/scheduling/schedules/{id}/slots:generate` | Sinh slot theo mẫu cho khoảng ngày | N, A | UC-02 |
-| S8 | `GET /fhir/Slot` | Tìm slot | P, N, A, D | UC-03 |
-| S9 | `POST /fhir/Slot/{id}/$block` | Chặn slot | N, A | UC-02 |
-| S10 | `POST /fhir/Slot/{id}/$unblock` | Bỏ chặn slot | N, A | UC-02 |
-| S11 | `POST /fhir/Appointment/$book` | Đặt lịch | P (own), N | UC-03 |
-| S12 | `GET /fhir/Appointment/{id}` | Đọc lịch hẹn | P (own), D (của mình), N | UC-03 |
-| S13 | `GET /fhir/Appointment` | Tìm lịch hẹn | P (own), D (của mình), N | UC-03 |
-| S14 | `POST /fhir/Appointment/{id}/$cancel` | Hủy lịch | P (own, BR-02), N | UC-03 |
-| S15 | `POST /fhir/Appointment/{id}/$reschedule` | Đổi lịch | P (own), N | UC-03 |
+| S1 | `POST /fhir/Schedule` | Create a doctor's work schedule | N, A | UC-02 |
+| S2 | `GET /fhir/Schedule/{id}` | Read a schedule | N, A; D (own) | UC-02 |
+| S3 | `GET /fhir/Schedule` | Find schedules | N, A; D (own) | UC-02 |
+| S4 | `PUT /fhir/Schedule/{id}` | Edit a schedule (enable/disable, notes) | N, A | UC-02 |
+| S5 | `PUT /api/v1/scheduling/schedules/{id}/templates` | Set the weekly schedule template | N, A | UC-02 |
+| S6 | `GET /api/v1/scheduling/schedules/{id}/templates` | View the weekly schedule template | N, A; D (own) | UC-02 |
+| S7 | `POST /api/v1/scheduling/schedules/{id}/slots:generate` | Generate slots from the template for a date range | N, A | UC-02 |
+| S8 | `GET /fhir/Slot` | Find slots | P, N, A, D | UC-03 |
+| S9 | `POST /fhir/Slot/{id}/$block` | Block a slot | N, A | UC-02 |
+| S10 | `POST /fhir/Slot/{id}/$unblock` | Unblock a slot | N, A | UC-02 |
+| S11 | `POST /fhir/Appointment/$book` | Book an appointment | P (own), N | UC-03 |
+| S12 | `GET /fhir/Appointment/{id}` | Read an appointment | P (own), D (own), N | UC-03 |
+| S13 | `GET /fhir/Appointment` | Find appointments | P (own), D (own), N | UC-03 |
+| S14 | `POST /fhir/Appointment/{id}/$cancel` | Cancel an appointment | P (own, BR-02), N | UC-03 |
+| S15 | `POST /fhir/Appointment/{id}/$reschedule` | Reschedule an appointment | P (own), N | UC-03 |
 | S16 | `POST /fhir/Appointment/{id}/$check-in` | Check-in | N | UC-04 |
-| S17 | `GET /fhir/Appointment/{id}/_history` | Lịch sử phiên bản | N, A | UC-03 |
-| S18 | `GET /internal/v1/appointments/{id}` | Đọc lịch hẹn (service khác) | service `clinical`, `ml` | — |
+| S17 | `GET /fhir/Appointment/{id}/_history` | Version history | N, A | UC-03 |
+| S18 | `GET /internal/v1/appointments/{id}` | Read an appointment (other service) | service `clinical`, `ml` | — |
 
-Doctor **không** được đặt, hủy, đổi lịch; Admin không xem lịch hẹn của bệnh nhân (theo [ma trận phân quyền](../../02-requirements/access-control-matrix.md)).
+A doctor **must not** book, cancel, or reschedule; Admin does not view patient appointments (per the [access control matrix](../../02-requirements/access-control-matrix.md)).
 
-## 2. Lịch làm việc
+## 2. Work schedule
 
 ### S1 `POST /fhir/Schedule`
-Request (`Schedule`, `id`/`meta` do server cấp):
+Request (`Schedule`, `id`/`meta` issued by the server):
 ```json
 {
   "resourceType": "Schedule",
   "active": true,
-  "actor": [{ "reference": "Practitioner/0192f8a4-...", "display": "BS. Lê Minh Quân" }],
+  "actor": [{ "reference": "Practitioner/0192f8a4-...", "display": "Dr. Le Minh Quan" }],
   "specialty": [{ "coding": [{ "system": "https://shp.example.org/fhir/CodeSystem/specialty", "code": "cardiology" }] }],
-  "comment": "Phòng khám 204"
+  "comment": "Examination room 204"
 }
 ```
-| Kết quả | |
+| Result | |
 |---|---|
-| 201 | Resource kèm `id`, `ETag`, `Location`; `planningHorizon` do server điền (hôm nay → +30 ngày) |
-| 400 | `actor` không đúng 1 phần tử, `specialty` ngoài value set, `Practitioner` không tồn tại hoặc không có `PractitionerRole` khớp chuyên khoa (server kiểm bằng `/internal/v1/practitioners/{id}/roles` của clinical) |
-| 409 | Đã có Schedule hoạt động cho cùng bác sĩ và chuyên khoa (`ux_schedule_active_practitioner_specialty`) |
-| 403 | Role không phải N/A |
+| 201 | Resource with `id`, `ETag`, `Location`; `planningHorizon` filled by the server (today → +30 days) |
+| 400 | `actor` is not exactly 1 element, `specialty` is outside the value set, `Practitioner` does not exist or has no `PractitionerRole` matching the specialty (the server checks via clinical's `/internal/v1/practitioners/{id}/roles`) |
+| 409 | An active Schedule already exists for the same doctor and specialty (`ux_schedule_active_practitioner_specialty`) |
+| 403 | Role is not N/A |
 
 ### S3 `GET /fhir/Schedule`
-Tham số: `actor=Practitioner/{id}` · `specialty={code}` · `active=true|false` · `_count` · `_page_token`.
-Bác sĩ gọi mà không có `actor` của chính mình → server tự thêm `actor=<mình>`.
+Parameters: `actor=Practitioner/{id}` · `specialty={code}` · `active=true|false` · `_count` · `_page_token`.
+If a doctor calls without their own `actor`, the server adds `actor=<self>`.
 
 ### S5 `PUT /api/v1/scheduling/schedules/{id}/templates`
-Thay **toàn bộ** mẫu tuần của Schedule (`If-Match` bắt buộc trên Schedule).
+Replaces the Schedule's **entire** weekly template (`If-Match` required on the Schedule).
 ```json
 {
   "templates": [
@@ -62,132 +62,132 @@ Thay **toàn bộ** mẫu tuần của Schedule (`If-Match` bắt buộc trên S
   ]
 }
 ```
-| Kết quả | |
+| Result | |
 |---|---|
-| 200 | `{ "templates": [...], "affectedFutureSlots": 0 }`; không tự xóa slot đã sinh |
-| 400 | `startTime ≥ endTime`; `slotMinutes` ngoài {10,15,20,30}; khoảng thời gian không chia hết cho `slotMinutes`; hai mẫu cùng thứ chồng giờ |
-| 412 | `If-Match` sai |
+| 200 | `{ "templates": [...], "affectedFutureSlots": 0 }`; does not automatically delete already-generated slots |
+| 400 | `startTime ≥ endTime`; `slotMinutes` outside {10,15,20,30}; the time range is not divisible by `slotMinutes`; two templates on the same weekday overlap |
+| 412 | Wrong `If-Match` |
 
 ### S7 `POST /api/v1/scheduling/schedules/{id}/slots:generate`
 ```json
 { "from": "2026-12-01", "to": "2026-12-31" }
 ```
-- `to` tối đa hôm nay + 30 ngày (BR-04), tối đa 31 ngày mỗi lần gọi, `from ≥` hôm nay.
-- Sinh slot theo mẫu có hiệu lực, giờ địa phương `Asia/Ho_Chi_Minh`; `ON CONFLICT DO NOTHING` nên gọi lại an toàn.
-- 200: `{ "created": 14, "skippedExisting": 0 }` — ví dụ AC-02.1: mẫu 08:00–11:30 / 15 phút → **14 slot `free`** cho mỗi ngày.
-- 400: khoảng ngày vi phạm giới hạn. 404: Schedule không tồn tại hoặc `active=false` → 422 `schedule-inactive`.
+- `to` is at most today + 30 days (BR-04), at most 31 days per call, `from ≥` today.
+- Generates slots from effective templates, in local time `Asia/Ho_Chi_Minh`; `ON CONFLICT DO NOTHING` so it is safe to call again.
+- 200: `{ "created": 14, "skippedExisting": 0 }` — example AC-02.1: a template of 08:00–11:30 / 15 minutes → **14 `free` slots** per day.
+- 400: the date range violates the limit. 404: the Schedule does not exist or `active=false` → 422 `schedule-inactive`.
 
 ## 3. Slot
 
-### S8 `GET /fhir/Slot` — tìm slot trống (đường nóng, NFR-P1)
-| Tham số | Kiểu | Ghi chú |
+### S8 `GET /fhir/Slot` — find free slots (hot path, NFR-P1)
+| Parameter | Type | Note |
 |---|---|---|
-| `status` | token | mặc định `free` cho Patient; N/A/D được dùng `busy`, `busy-unavailable` |
-| `specialty` | token | **bắt buộc** nếu không có `schedule` hoặc `practitioner` |
+| `status` | token | default `free` for Patient; N/A/D may use `busy`, `busy-unavailable` |
+| `specialty` | token | **required** if there is no `schedule` or `practitioner` |
 | `practitioner` | reference | `Practitioner/{id}` |
 | `schedule` | reference | `Schedule/{id}` |
-| `start` | date | `ge`, `gt`, `le`, `lt`; ví dụ `start=ge2026-12-01&start=lt2026-12-08`; khoảng tối đa 31 ngày |
-| `_count`, `_page_token` | | keyset theo (`start_at`, `id`) |
+| `start` | date | `ge`, `gt`, `le`, `lt`; for example `start=ge2026-12-01&start=lt2026-12-08`; range at most 31 days |
+| `_count`, `_page_token` | | keyset by (`start_at`, `id`) |
 
-Response: `Bundle searchset` sắp theo `start` tăng dần; mỗi `Slot` là bản rút gọn (không có `comment`). Bệnh nhân luôn bị ép
-`status=free` và `start ≥ now`. Cache Redis 5 giây theo khóa truy vấn chuẩn hóa; vô hiệu hóa khi có event `appointment-*`
-của cùng bác sĩ/ngày (SCH-15). 400 nếu khoảng ngày > 31 hoặc thiếu bộ lọc chuyên khoa/bác sĩ/lịch.
+Response: `Bundle searchset` sorted by ascending `start`; each `Slot` is a shortened form (no `comment`). Patients are always forced to
+`status=free` and `start ≥ now`. Redis cache for 5 seconds keyed by the normalized query; invalidated when an `appointment-*` event
+occurs for the same doctor/day (SCH-15). 400 if the date range is > 31 days or the specialty/doctor/schedule filter is missing.
 
 ### S9 `POST /fhir/Slot/{id}/$block`
-Body: `{ "reason": "Bác sĩ nghỉ phép" }` (1–200 ký tự). Header `If-Match`.
-| Kết quả | |
+Body: `{ "reason": "Doctor on leave" }` (1–200 characters). Header `If-Match`.
+| Result | |
 |---|---|
 | 200 | Slot `busy-unavailable`, `comment = reason` |
-| 409 `slot-has-appointment` | Slot đang `busy` bởi lịch hẹn hiệu lực — phải hủy/đổi lịch hẹn trước (AC-02.2) |
-| 412 | `If-Match` sai |
+| 409 `slot-has-appointment` | The slot is `busy` due to a valid appointment — the appointment must be cancelled/rescheduled first (AC-02.2) |
+| 412 | Wrong `If-Match` |
 
-`$unblock`: chuyển `busy-unavailable → free`; 409 `invalid-state-transition` nếu slot không ở trạng thái đó.
+`$unblock`: changes `busy-unavailable → free`; 409 `invalid-state-transition` if the slot is not in that state.
 
-## 4. Lịch hẹn
+## 4. Appointment
 
 ### S11 `POST /fhir/Appointment/$book`
-Header bắt buộc: `Idempotency-Key`. Body là `Parameters`:
+Required header: `Idempotency-Key`. Body is `Parameters`:
 ```json
 {
   "resourceType": "Parameters",
   "parameter": [
     { "name": "slot", "valueReference": { "reference": "Slot/0192f8a4-..." } },
     { "name": "patient", "valueReference": { "reference": "Patient/0192f8a4-..." } },
-    { "name": "comment", "valueString": "Đau ngực khi gắng sức" },
+    { "name": "comment", "valueString": "Chest pain on exertion" },
     { "name": "channel", "valueCode": "web" }
   ]
 }
 ```
-- `patient`: Patient role chỉ được đặt cho **chính mình** hoặc cho hồ sơ trong `linkedProfiles` (con, người thân đã ủy quyền, phạm vi từ `booking`), ngược lại 403 (AC-03.6); đặt hộ được audit kèm `onBehalfOf` (AC-03.7). Giới hạn 3 lịch tương lai (BR-03) tính **theo từng hồ sơ**. Nurse đặt cho bất kỳ bệnh nhân (`channel=staff` bị ép).
-- `comment` tùy chọn ≤ 500 ký tự; `channel` ∈ {`web`,`chatbot`,`staff`} (Patient chỉ được `web`/`chatbot`).
+- `patient`: a Patient role may only book for **themselves** or for a profile in `linkedProfiles` (children, authorized relatives, scope from `booking`), otherwise 403 (AC-03.6); booking on behalf is audited with `onBehalfOf` (AC-03.7). The limit of 3 future appointments (BR-03) is counted **per profile**. A Nurse books for any patient (`channel=staff` is forced).
+- `comment` optional, ≤ 500 characters; `channel` ∈ {`web`,`chatbot`,`staff`} (Patient may only use `web`/`chatbot`).
 
-Kết quả:
-| HTTP | Điều kiện | `code` |
+Result:
+| HTTP | Condition | `code` |
 |---|---|---|
-| **201** | Đặt thành công; trả `Appointment` (`status=booked`), `Location`, `ETag` | |
-| **200** | Cùng `Idempotency-Key` + cùng body: trả đúng lịch hẹn đã tạo (AC-03.2) | |
-| 400 | Thiếu tham số / Parameters sai cấu trúc | `validation-failed` |
-| 403 | Đặt cho người khác | `forbidden` |
-| 404 | Slot hoặc bệnh nhân không tồn tại | `not-found` |
-| **409** | Slot đã bị đặt, bị chặn, đã qua | `slot-unavailable` — kèm `OperationOutcome` có `extension[suggested-slots]`: 3 slot trống gần nhất cùng bác sĩ/chuyên khoa |
-| 422 | Bệnh nhân đã có 3 lịch hẹn tương lai (BR-03) | `max-future-appointments` |
-| 422 | Slot ngoài cửa sổ 30 ngày (BR-04) | `outside-booking-window` |
-| 422 | Cùng key, body khác (AC-03.3) | `idempotency-key-reused` |
-| 428 | Thiếu `Idempotency-Key` | `idempotency-key-required` |
-| 429 | Quá 10 lần/phút | `rate-limited` |
+| **201** | Booking succeeded; returns the `Appointment` (`status=booked`), `Location`, `ETag` | |
+| **200** | Same `Idempotency-Key` + same body: returns exactly the appointment that was created (AC-03.2) | |
+| 400 | Missing parameter / structurally invalid Parameters | `validation-failed` |
+| 403 | Booking for someone else | `forbidden` |
+| 404 | Slot or patient does not exist | `not-found` |
+| **409** | Slot already booked, blocked, or in the past | `slot-unavailable` — with an `OperationOutcome` containing `extension[suggested-slots]`: the 3 nearest free slots for the same doctor/specialty |
+| 422 | Patient already has 3 future appointments (BR-03) | `max-future-appointments` |
+| 422 | Slot outside the 30-day window (BR-04) | `outside-booking-window` |
+| 422 | Same key, different body (AC-03.3) | `idempotency-key-reused` |
+| 428 | Missing `Idempotency-Key` | `idempotency-key-required` |
+| 429 | More than 10 times/minute | `rate-limited` |
 
-Hiệu ứng phụ: slot → `busy`; ghi `resource_history`; phát `shp.scheduling.appointment-booked.v1` (cùng transaction).
-Độ trễ mục tiêu p95 ≤ 800 ms tại 50 RPS (NFR-P2). Xử lý chi tiết từng bước: [02-db-scheduling.md](02-db-scheduling.md) §3.1.
+Side effects: slot → `busy`; write `resource_history`; emit `shp.scheduling.appointment-booked.v1` (same transaction).
+Target latency p95 ≤ 800 ms at 50 RPS (NFR-P2). Step-by-step processing: [02-db-scheduling.md](02-db-scheduling.md) §3.1.
 
 ### S13 `GET /fhir/Appointment`
-| Tham số | Ghi chú |
+| Parameter | Note |
 |---|---|
-| `patient=Patient/{id}` | Patient: ép = mình; D: phải là bệnh nhân có quan hệ điều trị |
-| `practitioner=Practitioner/{id}` | D: ép = mình |
-| `status` | `booked,arrived,fulfilled,cancelled,noshow` (phân cách bằng dấu phẩy = OR) |
-| `date` | `ge/le/gt/lt` theo `start`; khoảng ≤ 92 ngày |
+| `patient=Patient/{id}` | Patient: forced = self; D: must be a patient with a care relationship |
+| `practitioner=Practitioner/{id}` | D: forced = self |
+| `status` | `booked,arrived,fulfilled,cancelled,noshow` (comma-separated = OR) |
+| `date` | `ge/le/gt/lt` by `start`; range ≤ 92 days |
 | `specialty` | |
-| `_sort` | `date` hoặc `-date` (mặc định `date`) |
+| `_sort` | `date` or `-date` (default `date`) |
 | `_count`, `_page_token` | keyset |
 
-N không bị ép bộ lọc. Phải có ít nhất một trong `patient`, `practitioner`, `date`.
+N is not forced to a filter. At least one of `patient`, `practitioner`, `date` is required.
 
 ### S14 `POST /fhir/Appointment/{id}/$cancel`
 Header: `Idempotency-Key`, `If-Match`. Body:
 ```json
 { "resourceType": "Parameters", "parameter": [ { "name": "reason", "valueCode": "patient-request" } ] }
 ```
-| Kết quả | |
+| Result | |
 |---|---|
-| 200 | `Appointment.status=cancelled`; slot → `free` nếu còn trước giờ khám; phát `appointment-cancelled.v1` |
-| 403 | Patient hủy lịch của người khác |
-| 409 `invalid-state-transition` | Lịch hẹn không còn `booked` (đã `arrived`, `cancelled`...). Nurse được hủy lịch `arrived` kèm `reason=other` |
-| 412 | `If-Match` sai |
-| 422 `cancellation-too-late` | Patient hủy khi còn **< 2 giờ** (BR-02, AC-03.5); Nurse luôn được hủy |
+| 200 | `Appointment.status=cancelled`; slot → `free` if still before the appointment time; emits `appointment-cancelled.v1` |
+| 403 | Patient cancels someone else's appointment |
+| 409 `invalid-state-transition` | The appointment is no longer `booked` (already `arrived`, `cancelled`, etc.). A Nurse may cancel an `arrived` appointment with `reason=other` |
+| 412 | Wrong `If-Match` |
+| 422 `cancellation-too-late` | Patient cancels with **< 2 hours** remaining (BR-02, AC-03.5); a Nurse may always cancel |
 
 ### S15 `POST /fhir/Appointment/{id}/$reschedule`
 Header: `Idempotency-Key`, `If-Match`. Body: `{ "slot": Reference(Slot), "comment"? }`.
-Atomic: đặt slot mới + hủy lịch cũ (`cancelationReason = rescheduled`) + lịch mới có `extension[rescheduled-from]`.
-Lỗi ở bất kỳ bước nào (slot mới bị đặt, quy tắc BR-02 với lịch cũ, v.v.) → **không thay đổi gì**. BR-03 không tính lịch cũ đang đổi.
-Kết quả: 201 trả lịch hẹn **mới**; lỗi như `$book` và `$cancel`. Phát `appointment-rescheduled.v1`.
+Atomic: book the new slot + cancel the old appointment (`cancelationReason = rescheduled`) + the new appointment has `extension[rescheduled-from]`.
+A failure at any step (new slot booked, BR-02 rule with the old appointment, etc.) → **nothing changes**. BR-03 does not count the old appointment being rescheduled.
+Result: 201 returns the **new** appointment; errors as in `$book` and `$cancel`. Emits `appointment-rescheduled.v1`.
 
 ### S16 `POST /fhir/Appointment/{id}/$check-in`
-Chỉ Nurse. `If-Match` bắt buộc. `booked → arrived` trong khoảng từ **60 phút trước** đến **30 phút sau** `start`,
-ngoài khoảng → 422 `checkin-out-of-window`. Phát `appointment-checked-in.v1` (clinical nghe để tạo `Encounter`).
+Nurse only. `If-Match` required. `booked → arrived` within **60 minutes before** to **30 minutes after** `start`,
+outside that range → 422 `checkin-out-of-window`. Emits `appointment-checked-in.v1` (clinical listens to create the `Encounter`).
 
-## 5. API nội bộ
+## 5. Internal API
 
 ### S18 `GET /internal/v1/appointments/{id}`
-Trả `Appointment` đầy đủ. Chỉ gọi từ `clinical` (xác thực Encounter) và `ml`. Không có kiểm tra quyền người dùng
-(đã tin cậy theo service identity); mọi truy cập bị audit với `actor.role = system`.
+Returns the full `Appointment`. Only called from `clinical` (Encounter validation) and `ml`. There is no user permission check
+(trusted via service identity); every access is audited with `actor.role = system`.
 
-## 6. Ánh xạ trạng thái ↔ event
+## 6. State ↔ event mapping
 
-| Hành động | Event phát ra |
+| Action | Event emitted |
 |---|---|
 | `$book` | `shp.scheduling.appointment-booked.v1` |
 | `$cancel` | `shp.scheduling.appointment-cancelled.v1` |
-| `$reschedule` | `shp.scheduling.appointment-rescheduled.v1` (+ `appointment-cancelled`/`booked` **không** phát riêng để tránh nhắc trùng) |
-| `$check-in`, job no-show, `fulfilled` (nhận `encounter-finished`) | `shp.scheduling.appointment-status-changed.v1` (`checked-in` dùng `appointment-checked-in.v1`) |
+| `$reschedule` | `shp.scheduling.appointment-rescheduled.v1` (+ `appointment-cancelled`/`booked` are **not** emitted separately to avoid duplicate reminders) |
+| `$check-in`, no-show job, `fulfilled` (receives `encounter-finished`) | `shp.scheduling.appointment-status-changed.v1` (`checked-in` uses `appointment-checked-in.v1`) |
 
-Mỗi thao tác cũng phát `shp.audit.recorded.v1`. Schema chi tiết: [13-events.md](13-events.md).
+Each operation also emits `shp.audit.recorded.v1`. Detailed schema: [13-events.md](13-events.md).

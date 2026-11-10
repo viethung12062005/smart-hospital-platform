@@ -1,21 +1,22 @@
-"""Che PII trước khi gửi văn bản ra LLM ngoài Azure (PY-06, NFR-SEC8).
+"""Redact PII before sending text to an LLM outside Azure (PY-06, NFR-SEC8).
 
-Thay giá trị nhạy cảm bằng token giả ([PHONE_1], [PERSON_1] ...) và giữ bản đồ ngược để khôi phục câu trả lời.
-Bắt bằng mẫu: email, số điện thoại Việt Nam, CCCD/CMND, mã thẻ BHYT, UUID (id hồ sơ), ngày tháng.
-Họ tên và địa chỉ không bắt được bằng mẫu, nên người gọi PHẢI truyền các giá trị đã biết trong hồ sơ (`known`).
-Bản đồ ngược chỉ nằm trong bộ nhớ của request, không ghi log, không lưu DB.
+Replace sensitive values with fake tokens ([PHONE_1], [PERSON_1] ...) and keep a reverse map to restore the answer.
+Matched by pattern: email, Vietnamese phone numbers, CCCD/CMND, health-insurance card numbers, UUIDs (record ids),
+dates.
+Names and addresses cannot be matched by pattern, so the caller MUST pass the known values from the record (`known`).
+The reverse map lives only in request memory; it is not logged or stored in a DB.
 """
 
 import re
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 
-# Thứ tự quan trọng: mẫu dài/cụ thể trước để không bị mẫu ngắn cắt mất.
+# Order matters: longer/specific patterns first so shorter ones do not cut them off.
 _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")),
     ("ID", re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b")),
-    ("INSURANCE", re.compile(r"\b[A-Z]{2}\d{13}\b")),  # mã thẻ BHYT: 2 chữ + 13 số
-    ("NATIONAL_ID", re.compile(r"(?<!\d)(?:\d{12}|\d{9})(?!\d)")),  # CCCD 12 số, CMND 9 số
+    ("INSURANCE", re.compile(r"\b[A-Z]{2}\d{13}\b")),  # health-insurance card: 2 letters + 13 digits
+    ("NATIONAL_ID", re.compile(r"(?<!\d)(?:\d{12}|\d{9})(?!\d)")),  # CCCD 12 digits, CMND 9 digits
     ("PHONE", re.compile(r"(?<![\w+])(?:\+?84|0)(?:[\s.-]?\d){9}(?!\d)")),
     ("DATE", re.compile(r"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{4}|\d{4}-\d{2}-\d{2})\b")),
 ]
@@ -24,17 +25,18 @@ _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 @dataclass
 class Redaction:
     text: str
-    reverse: dict[str, str] = field(repr=False)  # token → giá trị gốc; repr=False để không lọt log
+    reverse: dict[str, str] = field(repr=False)  # token -> original value; repr=False so it never leaks into logs
 
     def restore(self, output: str) -> str:
-        """Khôi phục token trong câu trả lời của LLM (token lạ do model bịa thì giữ nguyên)."""
+        """Restore tokens in the LLM's answer (unknown tokens invented by the model are left as is)."""
         for token in sorted(self.reverse, key=len, reverse=True):
             output = output.replace(token, self.reverse[token])
         return output
 
 
 def redact(text: str, known: Mapping[str, Iterable[str]] | None = None) -> Redaction:
-    """`known`: {"PERSON": ["Nguyễn Văn A"], "ADDRESS": ["12 Lê Lợi, Q1"]}. Cùng giá trị luôn ra cùng token."""
+    """`known`: {"PERSON": ["Nguyễn Văn A"], "ADDRESS": ["12 Lê Lợi, Q1"]}. The same value always yields the same
+    token."""
     forward: dict[str, str] = {}
     counters: dict[str, int] = {}
 
@@ -59,5 +61,5 @@ def redact(text: str, known: Mapping[str, Iterable[str]] | None = None) -> Redac
 
 
 def contains_pii(text: str) -> bool:
-    """Kiểm tra nhanh (test, guardrail đầu ra): còn mẫu PII nào không."""
+    """Quick check (tests, output guardrail): whether any PII pattern remains."""
     return any(p.search(text) for _, p in _PATTERNS)

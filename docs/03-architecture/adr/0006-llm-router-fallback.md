@@ -1,27 +1,27 @@
-# ADR-0006: LLM router đa model với fallback
+# ADR-0006: Multi-model LLM router with fallback
 
-## Trạng thái
-Accepted (2026-10-26). **Bảng chuỗi model bên dưới bị thay bởi [ADR-0013](0013-llm-deepseek-gemini-local-embedding.md)** (2026-10-27); phần còn lại vẫn hiệu lực.
+## Status
+Accepted (2026-10-26). **The model chain table below is replaced by [ADR-0013](0013-llm-deepseek-gemini-local-embedding.md)** (2026-10-27); the rest remains in effect.
 
-## Quyết định
-`ai-service` có một router nhỏ tự viết. Mỗi tác vụ khai báo **chuỗi model theo thứ tự**:
+## Decision
+`ai-service` has a small hand-written router. Each task declares an **ordered model chain**:
 
-| Tác vụ | Chính | Fallback 1 | Fallback 2 | Cuối cùng |
+| Task | Primary | Fallback 1 | Fallback 2 | Last resort |
 |---|---|---|---|---|
-| RAG trợ lý tri thức | Azure OpenAI (GPT-4.x) | Claude (Azure AI Foundry / Anthropic API) | Model mở local (Ollama) | Trả về danh sách tài liệu liên quan, không sinh câu trả lời |
-| Tóm tắt hồ sơ | Azure OpenAI | Claude | — | Timeline có cấu trúc (không LLM) |
-| Trích xuất tài liệu | Azure Document Intelligence + LLM | Claude | Tesseract + regex | Đưa vào hàng đợi human review |
-| Chatbot đặt lịch | Model hỗ trợ tool calling | Model khác hỗ trợ tool calling | — | Chuyển sang form đặt lịch thường |
+| Knowledge assistant RAG | Azure OpenAI (GPT-4.x) | Claude (Azure AI Foundry / Anthropic API) | Local open model (Ollama) | Return a list of relevant documents, do not generate an answer |
+| Record summarization | Azure OpenAI | Claude | — | Structured timeline (no LLM) |
+| Document extraction | Azure Document Intelligence + LLM | Claude | Tesseract + regex | Place in the human review queue |
+| Booking chatbot | Model supporting tool calling | Another model supporting tool calling | — | Switch to the regular booking form |
 
-Chuyển sang fallback khi: timeout, lỗi 5xx/429, circuit breaker mở, vượt ngân sách token,
-hoặc output không qua kiểm tra schema. Mọi lần fallback được ghi metric và trace.
+Fallback is triggered when: timeout, 5xx/429 error, circuit breaker open, token budget exceeded,
+or output fails schema validation. Every fallback is recorded as a metric and trace.
 
-Dữ liệu chỉ gửi tới provider ngoài Azure **sau khi redact PII**.
+Data is sent to providers outside Azure **only after PII redaction**.
 
-## Phương án đã cân nhắc
-- **LiteLLM proxy**: nhiều tính năng nhưng là thêm một hệ thống phải vận hành và khó giải thích
-  hành vi fallback; router tự viết ~200 dòng, kiểm thử được.
-- **Một model duy nhất**: đơn giản nhưng không đáp ứng yêu cầu sẵn sàng cao.
+## Alternatives considered
+- **LiteLLM proxy**: feature-rich but one more system to operate and hard to explain
+  fallback behavior; a hand-written router is ~200 lines and testable.
+- **A single model**: simple but does not meet the high-availability requirement.
 
-## Hệ quả
-Cần bộ đánh giá (eval) chạy trên từng model trong chuỗi để biết chất lượng khi fallback.
+## Consequences
+Need an evaluation (eval) suite run on each model in the chain to know quality when falling back.

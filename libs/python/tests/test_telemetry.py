@@ -1,4 +1,4 @@
-"""LOC-04: service Python nối trace từ traceparent và không xuất OTLP khi chưa bật."""
+"""LOC-04: Python services continue the trace from traceparent and do not export OTLP when disabled."""
 
 import pytest
 from fastapi import FastAPI
@@ -34,7 +34,7 @@ def test_incoming_traceparent_is_continued() -> None:
     assert res.json() == {"traceId": TRACE_ID}
     spans = exporter.get_finished_spans()
     server = [s for s in spans if s.parent is not None and f"{s.parent.span_id:016x}" == PARENT_SPAN]
-    assert server, "span của request phải là con của span client"
+    assert server, "the request span must be a child of the client span"
     assert f"{server[0].context.trace_id:032x}" == TRACE_ID
     assert server[0].resource.attributes["service.name"] == "test-svc"
 

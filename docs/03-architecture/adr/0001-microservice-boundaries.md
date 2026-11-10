@@ -1,31 +1,31 @@
-# ADR-0001: Ranh giới microservice
+# ADR-0001: Microservice boundaries
 
-## Trạng thái
-Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
+## Status
+Accepted (2026-10-26) — approved by the Solution Architect/PM together with gate G3.
 
-## Bối cảnh
-Đề yêu cầu MVP hướng production, nhưng giảng viên ghi rõ *không* muốn "dozens of microservices".
-Nhóm muốn dùng microservice để thể hiện năng lực vận hành cloud.
+## Context
+The brief requires a production-oriented MVP, but the lecturer explicitly said they do *not* want "dozens of microservices".
+The team wants to use microservices to demonstrate cloud operations capability.
 
-## Quyết định
-Chia theo **đặc tính tải và yêu cầu phi chức năng**, không chia theo từng resource FHIR:
+## Decision
+Split by **load characteristics and non-functional requirements**, not by individual FHIR resource:
 
-- `scheduling` — tranh chấp ghi, cần tính nhất quán mạnh.
-- `clinical` — đọc nhiều, dữ liệu nhạy cảm nhất.
-- `document` — I/O file lớn, scale theo băng thông.
-- `notification`, `audit` — worker bất đồng bộ, phải chịu được lỗi phụ thuộc.
-- `ai`, `ml` — độ trễ cao, chi phí token, phụ thuộc nhà cung cấp ngoài, khác ngôn ngữ.
-- `api-gateway` — điểm vào duy nhất.
+- `scheduling` — write contention, requires strong consistency.
+- `clinical` — read-heavy, most sensitive data.
+- `document` — large file I/O, scales with bandwidth.
+- `notification`, `audit` — asynchronous workers, must tolerate dependency failures.
+- `ai`, `ml` — high latency, token cost, external provider dependencies, different language.
+- `api-gateway` — single entry point.
 
-Tối đa 8 deployable. Mỗi service một schema Postgres riêng; giao tiếp đồng bộ qua REST FHIR,
-bất đồng bộ qua event.
+At most 8 deployables. Each service has its own Postgres schema; synchronous communication via REST FHIR,
+asynchronous via events.
 
-## Phương án đã cân nhắc
-- **Modular monolith**: rẻ, đơn giản; nhưng không thể scale/deploy AI và document độc lập,
-  và không thể hiện được vận hành phân tán. Giữ làm phương án dự phòng: các service Java dùng
-  chung building block nên có thể gộp lại nếu thiếu thời gian.
-- **Mỗi resource một service**: quá nhiều, vi phạm hướng dẫn của đề.
+## Alternatives considered
+- **Modular monolith**: cheap, simple; but cannot scale/deploy AI and document independently,
+  and cannot demonstrate distributed operations. Kept as a fallback: the Java services share
+  common building blocks, so they can be merged if time is short.
+- **One service per resource**: too many, violates the brief's guidance.
 
-## Hệ quả
-- Cần distributed tracing (OpenTelemetry) và transactional outbox.
-- Không có transaction xuyên service → dùng event + eventual consistency (ví dụ notification).
+## Consequences
+- Requires distributed tracing (OpenTelemetry) and a transactional outbox.
+- No cross-service transactions → use events + eventual consistency (for example, notification).

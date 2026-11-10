@@ -26,13 +26,13 @@ NFR_LEVEL = {
 
 def ac_level(module: str, text: str) -> str:
     t = text.lower()
-    if module == "ai" and any(k in t for k in ("trích dẫn", "mô hình", "model", "prompt", "tóm tắt", "bot", "trợ lý")):
+    if module == "ai" and any(k in t for k in ("citation", "model", "prompt", "summary", "bot", "assistant")):
         return "ai-eval"
-    if any(k in t for k in ("giao diện", "màn hình", "hiển thị", "nút ", "form")):
+    if any(k in t for k in ("interface", "screen", "display", "button ", "form")):
         return "e2e"
-    if any(k in t for k in ("khôi phục", "failover", "diễn tập")):
+    if any(k in t for k in ("recovery", "failover", "drill")):
         return "resilience"
-    if module == "system" or any(k in t for k in ("sự kiện", "job", "hàng đợi", "worker")):
+    if module == "system" or any(k in t for k in ("event", "job", "queue", "worker")):
         return "integration"
     return "api"
 
@@ -77,7 +77,7 @@ def main() -> int:
                 "module": "nfr",
                 "level": level,
                 "priority": "P0" if item["id"].startswith("NFR-SEC") or item["id"] in ("NFR-A4", "NFR-A5") else "P1",
-                "spec": f"Chỉ số: {item['target']}. Cách đo: {item['measure']}",
+                "spec": f"Metric: {item['target']}. Measurement: {item['measure']}",
             })
     total = sum(len(v) for v in new.values())
     print(f"existing: {len(have)}, new stubs: {total}")
@@ -94,7 +94,7 @@ def main() -> int:
                 doc = yaml.safe_load(fh) or doc
         doc["testcases"].extend(cases)
         with open(path, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(f"# Test case của module '{mod}'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml\n")
+            fh.write(f"# Test cases for module '{mod}'. Source: acceptance criteria / NFRs in docs/02-requirements/srs. Automation: see automation.yaml\n")
             yaml.safe_dump(doc, fh, allow_unicode=True, sort_keys=False, width=120)
     print("written to", os.path.relpath(CATALOG, ROOT))
     return 0

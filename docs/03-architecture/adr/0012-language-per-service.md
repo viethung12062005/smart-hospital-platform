@@ -1,30 +1,30 @@
-# ADR-0012: Đánh giá lại ngôn ngữ cho từng service
+# ADR-0012: Re-evaluate the language for each service
 
-## Trạng thái
-**Superseded (2026-10-28)** bởi [ADR-0015](0015-java-for-all-services.md): toàn bộ service chuyển sang Java. Giữ lại để truy vết.
+## Status
+**Superseded (2026-10-28)** by [ADR-0015](0015-java-for-all-services.md): all services moved to Java. Retained for traceability.
 
-## Bối cảnh
-PM yêu cầu: "nếu có ngôn ngữ nào tối ưu hơn cho service nào đó thì hãy sử dụng". Đánh giá theo đặc tính tải (ADR-0001),
-NFR (P1–P8, S1, A1) và chi phí vận hành của một nhóm 3 dev.
+## Context
+The PM required: "if there is a language that is more optimal for a particular service, use it". Evaluation based on load characteristics (ADR-0001),
+NFRs (P1–P8, S1, A1), and the operating cost for a team of 3 devs.
 
-## Đánh giá
-| Service | Đặc tính chính | Ứng viên đã xét | Kết luận |
+## Evaluation
+| Service | Main characteristics | Candidates considered | Conclusion |
 |---|---|---|---|
-| gateway | Proxy HTTP, định tuyến, kiểm JWT, rate limit | Go, **Envoy Gateway thuần cấu hình** | Giữ **.NET + YARP**: độ trễ thêm < 1 ms, chung thư viện auth/OTel với service khác. Envoy Gateway vẫn là cửa vào cluster (TLS, HTTPRoute) |
-| scheduling | Giao dịch Postgres, chống double-booking, 500 RPS tìm slot | Go, Java | Giữ **.NET**: Npgsql + Native AOT/ReadyToRun đủ cho NFR-P1; Firely SDK cho FHIR |
-| clinical | FHIR CRUD/search trên MongoDB | Java + HAPI | Giữ **.NET**: Firely SDK tương đương HAPI cho R4, không cần JVM thứ hai |
-| document | Cấp SAS, theo dõi trạng thái quét | Go | Giữ **.NET**: tải nhẹ, Azure SDK .NET đầy đủ |
-| notification | Worker hàng đợi, `SKIP LOCKED`, gửi kênh | Go | Giữ **.NET**: MassTransit (RabbitMQ ↔ Service Bus) không có bản tương đương trong Go |
-| audit | Ghi append-only, chuỗi hash, truy vấn KQL | Go, Rust | Giữ **.NET**: thông lượng thấp, cần chung mô hình event |
-| ai | LLM router, RAG, trích xuất | TypeScript | Giữ **Python**: hệ sinh thái AI/eval, SDK AI Search, client OpenAI-compatible/Gemini |
-| ml | Huấn luyện, phục vụ mô hình, drift | — | Giữ **Python**: scikit-learn/LightGBM, MLflow, pandera |
+| gateway | HTTP proxy, routing, JWT validation, rate limit | Go, **Envoy Gateway configuration-only** | Keep **.NET + YARP**: added latency < 1 ms, shared auth/OTel libraries with other services. Envoy Gateway remains the cluster entry point (TLS, HTTPRoute) |
+| scheduling | Postgres transactions, double-booking prevention, 500 RPS slot search | Go, Java | Keep **.NET**: Npgsql + Native AOT/ReadyToRun sufficient for NFR-P1; Firely SDK for FHIR |
+| clinical | FHIR CRUD/search on MongoDB | Java + HAPI | Keep **.NET**: Firely SDK equivalent to HAPI for R4, no need for a second JVM |
+| document | SAS issuance, scan status tracking | Go | Keep **.NET**: light load, complete Azure SDK for .NET |
+| notification | Queue worker, `SKIP LOCKED`, channel delivery | Go | Keep **.NET**: MassTransit (RabbitMQ ↔ Service Bus) has no equivalent in Go |
+| audit | Append-only writes, hash chain, KQL queries | Go, Rust | Keep **.NET**: low throughput, needs a shared event model |
+| ai | LLM router, RAG, extraction | TypeScript | Keep **Python**: AI/eval ecosystem, AI Search SDK, OpenAI-compatible/Gemini clients |
+| ml | Training, model serving, drift | — | Keep **Python**: scikit-learn/LightGBM, MLflow, pandera |
 
-## Quyết định
-Không đổi ngôn ngữ. Lý do chung: thêm ngôn ngữ thứ ba (Go/Java) tạo thêm một pipeline, một bộ image cơ sở, một bộ thư viện
-auth/OTel/messaging phải duy trì, và đội 3 dev phải học thêm, trong khi không service nào có NFR mà .NET/Python không đạt.
-Điểm tối ưu được áp dụng **bên trong** ngôn ngữ thay vì đổi ngôn ngữ:
-- Image .NET dùng `aspnet:10.0-noble-chiseled` (không shell, non-root); có thể bật ReadyToRun/Native AOT cho scheduling nếu đo k6 cho thấy cần (khởi động nhanh hơn khi KEDA scale lúc 07:00).
-- Python dùng image slim, non-root.
+## Decision
+No language changes. Common rationale: adding a third language (Go/Java) creates another pipeline, base image set, and set of
+auth/OTel/messaging libraries to maintain, and the 3-dev team would have to learn it, while no service has an NFR that .NET/Python cannot meet.
+Optimizations are applied **within** the language instead of changing language:
+- .NET images use `aspnet:10.0-noble-chiseled` (no shell, non-root); ReadyToRun/Native AOT can be enabled for scheduling if k6 measurements show it is needed (faster startup when KEDA scales at 07:00).
+- Python uses slim, non-root images.
 
-## Hệ quả
-Xét lại nếu đo tải ở Pha 6 cho thấy service nào không đạt NFR vì runtime (ví dụ gateway p95 bị chi phối bởi GC).
+## Consequences
+Reconsider if Phase 6 load measurements show that any service misses an NFR because of the runtime (for example, gateway p95 dominated by GC).

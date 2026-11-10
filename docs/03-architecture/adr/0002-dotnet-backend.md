@@ -1,19 +1,19 @@
-# ADR-0002: .NET 10 cho service nghiệp vụ, Python cho AI/ML
+# ADR-0002: .NET 10 for business services, Python for AI/ML
 
-## Trạng thái
-**Superseded (2026-10-28)** bởi [ADR-0015](0015-java-for-all-services.md): toàn bộ service chuyển sang Java. Giữ lại để truy vết.
+## Status
+**Superseded (2026-10-28)** by [ADR-0015](0015-java-for-all-services.md): all services moved to Java. Retained for traceability.
 
-## Quyết định
-- Service nghiệp vụ: **.NET 10 (LTS)**, ASP.NET Core Minimal API, Npgsql + Dapper (SQL tường minh,
-  dễ tối ưu và giải thích), Firely SDK (`Hl7.Fhir.R4`) cho mô hình và serialize FHIR.
-- AI/ML: **Python** (FastAPI, scikit-learn/LightGBM, MLflow) vì hệ sinh thái AI tốt hơn hẳn.
+## Decision
+- Business services: **.NET 10 (LTS)**, ASP.NET Core Minimal API, Npgsql + Dapper (explicit SQL,
+  easy to optimize and explain), Firely SDK (`Hl7.Fhir.R4`) for FHIR models and serialization.
+- AI/ML: **Python** (FastAPI, scikit-learn/LightGBM, MLflow) because the AI ecosystem is markedly better.
 
-## Phương án đã cân nhắc
-- **Spring Boot + HAPI FHIR**: HAPI rất trưởng thành, nhưng .NET tích hợp tự nhiên với Azure
-  (Managed Identity, App Insights) và image nhỏ, khởi động nhanh (quan trọng khi HPA/KEDA scale lúc 07:00).
-- **Node.js/TypeScript**: hệ sinh thái FHIR tốt (Medplum), nhưng kiểu
-  tĩnh mạnh hơn giúp ít lỗi hơn với dữ liệu y tế.
-- **EF Core** thay Dapper: tiện, nhưng truy vấn JSONB/search index cần SQL thủ công.
+## Alternatives considered
+- **Spring Boot + HAPI FHIR**: HAPI is very mature, but .NET integrates naturally with Azure
+  (Managed Identity, App Insights) and has small images and fast startup (important when HPA/KEDA scales at 07:00).
+- **Node.js/TypeScript**: good FHIR ecosystem (Medplum), but stronger static
+  typing helps reduce errors with medical data.
+- **EF Core** instead of Dapper: convenient, but JSONB/search-index queries need hand-written SQL.
 
-## Hệ quả
-Hai ngôn ngữ → hai pipeline CI, hai bộ image cơ sở cần quét lỗ hổng.
+## Consequences
+Two languages → two CI pipelines, two sets of base images that need vulnerability scanning.

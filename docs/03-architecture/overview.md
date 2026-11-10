@@ -1,85 +1,85 @@
-# Kiến trúc tổng quan — Smart Hospital Platform
+# Architecture Overview — Smart Hospital Platform
 
-> Trạng thái: **Approved — G3 qua ngày 2026-10-26**.
+> Status: **Approved — G3 passed on 2026-10-26**.
 >
-> Project 5 — Cloud Application Development. Một hệ thống microservice gọn, FHIR-native, chạy trên Azure nhưng không khóa chặt vào Azure.
-> Chỉ dùng **dữ liệu bệnh nhân giả (synthetic)**.
+> Project 5 — Cloud Application Development. A concise, FHIR-native microservice system, running on Azure but not tightly locked to Azure.
+> Uses only **synthetic patient data**.
 >
-> Sơ đồ chi tiết theo từng góc nhìn (C4, triển khai Azure, vùng tin cậy mạng, danh tính, bảo vệ dữ liệu, CI/CD, môi trường, quan sát, AI/ML):
+> Detailed diagrams per view (C4, Azure deployment, network trust zones, identity, data protection, CI/CD, environments, observability, AI/ML):
 > [architecture-diagrams.md](architecture-diagrams.md).
 
-Mục lục: [1. Sơ đồ tổng thể](#1-sơ-đồ-kiến-trúc-tổng-thể) · [2. Giao tiếp giữa các module](#2-giao-tiếp-giữa-các-module) ·
-[3. Module mã nguồn](#3-module-mã-nguồn) · [4. Bên trong một service Java](#4-bên-trong-một-service-java) · [5. Luồng nghiệp vụ](#5-luồng-nghiệp-vụ-end-to-end-vertical-slice-chính) ·
-[6. Service catalog](#6-service-catalog) · [7. Hạ tầng Azure ↔ portable](#7-ánh-xạ-hạ-tầng-azure--portable) · [8. Bảo mật](#8-bảo-mật-tóm-tắt--chi-tiết-ở-threat-model-p3)
+Contents: [1. Overall architecture diagram](#1-overall-architecture-diagram) · [2. Communication between modules](#2-communication-between-modules) ·
+[3. Source modules](#3-source-modules) · [4. Inside a Java service](#4-inside-a-java-service) · [5. Business flows](#5-end-to-end-business-flow-main-vertical-slice) ·
+[6. Service catalog](#6-service-catalog) · [7. Infrastructure mapping: Azure ↔ portable](#7-infrastructure-mapping-azure--portable) · [8. Security](#8-security-summary--details-in-the-p3-threat-model)
 
-## 1. Sơ đồ kiến trúc tổng thể
+## 1. Overall architecture diagram
 
-Hệ thống gồm **8 service** chạy trên Kubernetes:
-- **6 service Java**: `api-gateway` + 5 service nghiệp vụ.
-- **2 service Python**: `ai`, `ml`.
+The system consists of **8 services** running on Kubernetes:
+- **6 Java services**: `api-gateway` + 5 business services.
+- **2 Python services**: `ai`, `ml`.
 
-Các service nói chuyện với nhau theo hai cách:
-- **Đồng bộ**: REST, luôn qua gateway từ phía client.
-- **Bất đồng bộ**: event CloudEvents trên message bus.
+Services communicate in two ways:
+- **Synchronous**: REST, always through the gateway from the client side.
+- **Asynchronous**: CloudEvents on the message bus.
 
-Mỗi service **sở hữu kho dữ liệu riêng**.
+Each service **owns its own data store**.
 
 ```mermaid
 flowchart LR
-  subgraph USERS["Người dùng — Web PWA (desktop + mobile)"]
+  subgraph USERS["Users — Web PWA (desktop + mobile)"]
     direction TB
-    PAT["Bệnh nhân"]
-    STF["Bác sĩ · Điều dưỡng"]
+    PAT["Patient"]
+    STF["Doctor · Nurse"]
     ADM["Admin · DPO"]
   end
 
-  IDP["Danh tính OIDC<br/>Keycloak (mọi môi trường)"]
+  IDP["OIDC identity<br/>Keycloak (every environment)"]
 
-  subgraph EDGE["Rìa"]
+  subgraph EDGE["Edge"]
     direction TB
-    WAF["Front Door + WAF<br/>(chỉ cloud)"] --> ING["Ingress TLS"]
+    WAF["Front Door + WAF<br/>(cloud only)"] --> ING["TLS Ingress"]
   end
 
-  WEBAPP["web — SPA trên nginx<br/>React · TypeScript · Mantine<br/>HTTPRoute /"]
-  GW["api-gateway<br/>Spring Cloud Gateway<br/>/fhir · /api · kiểm JWT · chặn /internal"]
+  WEBAPP["web — SPA on nginx<br/>React · TypeScript · Mantine<br/>HTTPRoute /"]
+  GW["api-gateway<br/>Spring Cloud Gateway<br/>/fhir · /api · JWT validation · block /internal"]
 
-  subgraph JAVA["Service nghiệp vụ — Java 21 · Spring Boot 4"]
+  subgraph JAVA["Business services — Java 21 · Spring Boot 4"]
     direction TB
-    SCH["scheduling<br/>lịch, slot, đặt lịch"]
-    CLI["clinical<br/>hồ sơ FHIR, liên kết tài khoản"]
-    DOC["document<br/>tài liệu, SAS"]
-    NTF["notification<br/>nhắc lịch, gửi tin"]
-    AUD["audit<br/>nhật ký bất biến"]
+    SCH["scheduling<br/>schedules, slots, booking"]
+    CLI["clinical<br/>FHIR records, account linking"]
+    DOC["document<br/>documents, SAS"]
+    NTF["notification<br/>reminders, message delivery"]
+    AUD["audit<br/>immutable log"]
   end
 
-  subgraph PY["Service AI/ML — Python 3.12"]
+  subgraph PY["AI/ML services — Python 3.12"]
     direction TB
-    AI["ai — FastAPI<br/>RAG, tóm tắt, trích xuất"]
-    ML["ml — FastAPI + LightGBM<br/>dự đoán no-show"]
+    AI["ai — FastAPI<br/>RAG, summarization, extraction"]
+    ML["ml — FastAPI + LightGBM<br/>no-show prediction"]
   end
 
   BUS[["Message bus — CloudEvents<br/>RabbitMQ (local) · Service Bus (cloud)"]]
 
-  subgraph DATA["Kho dữ liệu (mỗi service một database riêng)"]
+  subgraph DATA["Data stores (one database per service)"]
     direction TB
     PG[("PostgreSQL<br/>scheduling")]
-    RD[("Redis<br/>cache slot trống")]
+    RD[("Redis<br/>free slot cache")]
     MG[("MongoDB<br/>clinical · document · notification<br/>audit · ai · ml")]
-    BL[("Blob Storage<br/>tài liệu · audit WORM · Parquet")]
-    LA[("Log Analytics<br/>tra cứu audit (KQL)")]
-    SR[("AI Search / OpenSearch<br/>kho tri thức RAG")]
+    BL[("Blob Storage<br/>documents · WORM audit · Parquet")]
+    LA[("Log Analytics<br/>audit query (KQL)")]
+    SR[("AI Search / OpenSearch<br/>RAG knowledge base")]
     MF[("MLflow<br/>model registry")]
   end
 
-  subgraph EXT["Dịch vụ ngoài / mô hình"]
+  subgraph EXT["External services / models"]
     direction TB
     LLM["LLM: DeepSeek API → Gemini free tier"]
-    OLL["Ollama trong cụm<br/>embedding bge-m3 · fallback cuối"]
+    OLL["Ollama in cluster<br/>bge-m3 embeddings · last fallback"]
     MSG["Push FCM/APNs · SMS · Email"]
   end
 
   USERS --> WAF
-  USERS -. đăng nhập .-> IDP
+  USERS -. login .-> IDP
   ING -- "/" --> WEBAPP
   ING -- "/fhir, /api" --> GW
   GW -. JWKS .-> IDP
@@ -94,35 +94,35 @@ flowchart LR
   AUD --> BL & LA
   AI --> MG & SR
   ML --> MG & BL & MF
-  USERS -. "upload/tải trực tiếp bằng SAS ≤ 5 phút" .-> BL
+  USERS -. "direct upload/download via SAS ≤ 5 minutes" .-> BL
 
   AI --> LLM & OLL
   NTF --> MSG
 ```
 
-Ghi chú về sơ đồ:
-- **Giao diện web** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` chỉ phục vụ file tĩnh (SPA). Trình duyệt tải SPA từ `/`, đăng nhập OIDC (PKCE) với Keycloak (cùng giao diện đăng ký bằng số điện thoại hoặc email ở mọi môi trường),
-  rồi gọi API cùng origin qua `/fhir`, `/api` → gateway (không cần CORS). Menu theo vai trò chỉ để điều hướng; quyền thật do backend kiểm.
-- **Ranh giới tin cậy.** Mọi request từ ngoài đi qua WAF (cloud), Ingress, rồi gateway.
-  - Gateway kiểm token ở biên.
-  - Từng service **kiểm lại token** và phân quyền chi tiết theo [ma trận](detailed-design/15-authorization.md).
-  - Đường `/internal/**` không có route ở gateway; chỉ các service trong cụm gọi được.
-- **Dữ liệu ra ngoài cụm.**
-  - Chỉ `ai` gọi LLM bên ngoài, và phải che PII trước khi gửi.
-  - Chỉ `notification` gọi nhà cung cấp tin nhắn.
-  - Quy tắc cho values uat/prod: chỉ hai service này được mở egress ra Internet (chart `microservice` có `networkPolicy.egress`).
-    Local (kind) tắt NetworkPolicy.
-- **Quan sát.** Mọi service xuất trace/metric/log bằng OpenTelemetry (không vẽ cho gọn), xem §7.
+Notes on the diagram:
+- **Web interface** ([ADR-0016](adr/0016-frontend-web-app.md)): `web` only serves static files (SPA). The browser loads the SPA from `/`, logs in with OIDC (PKCE) against Keycloak (the same registration UI by phone number or email in every environment),
+  then calls same-origin APIs through `/fhir`, `/api` → gateway (no CORS needed). Role-based menus are navigation only; actual permissions are enforced by the backend.
+- **Trust boundary.** Every external request passes through WAF (cloud), Ingress, then the gateway.
+  - The gateway validates the token at the edge.
+  - Each service **re-validates the token** and enforces detailed authorization per the [matrix](detailed-design/15-authorization.md).
+  - The `/internal/**` path has no route at the gateway; only services inside the cluster can call it.
+- **Data leaving the cluster.**
+  - Only `ai` calls external LLMs, and must mask PII before sending.
+  - Only `notification` calls messaging providers.
+  - Rule for uat/prod values: only these two services may open egress to the Internet (the `microservice` chart has `networkPolicy.egress`).
+    Local (kind) disables NetworkPolicy.
+- **Observability.** All services export traces/metrics/logs via OpenTelemetry (not drawn for brevity), see §7.
 
-## 2. Giao tiếp giữa các module
+## 2. Communication between modules
 
-### 2.1 Bất đồng bộ — event trên bus
-Mô hình **outbox → bus → inbox**:
-- Producer ghi dữ liệu và event trong **cùng một transaction**.
-- Bus giao ít nhất một lần.
-- Consumer xử lý mỗi event **đúng một lần** nhờ inbox.
+### 2.1 Asynchronous — events on the bus
+**outbox → bus → inbox** model:
+- The producer writes data and the event in the **same transaction**.
+- The bus delivers at least once.
+- The consumer processes each event **exactly once** via the inbox.
 
-Mỗi hình lục giác là một nhóm event (topic `shp-events`, lọc theo `type`). Chi tiết: [13-events.md](detailed-design/13-events.md).
+Each hexagon is an event group (topic `shp-events`, filtered by `type`). Details: [13-events.md](detailed-design/13-events.md).
 
 ```mermaid
 flowchart LR
@@ -130,12 +130,12 @@ flowchart LR
   CLI["clinical"]
   DOC["document"]
   ML["ml"]
-  ALL(["mọi service"])
+  ALL(["all services"])
   NTF["notification"]
   AI["ai"]
   AUD["audit"]
 
-  EA{{"E1–E5 lịch hẹn<br/>booked · cancelled · rescheduled<br/>checked-in · status-changed"}}
+  EA{{"E1–E5 appointments<br/>booked · cancelled · rescheduled<br/>checked-in · status-changed"}}
   EB{{"E6 encounter-finished"}}
   EC{{"E7 patient-merged"}}
   ED{{"E8 document-uploaded"}}
@@ -152,7 +152,7 @@ flowchart LR
   ALL --> EG --> AUD
 ```
 
-Ai nhận event nào trong nhóm E1–E5 (sơ đồ gộp cho gọn):
+Which events each consumer receives in group E1–E5 (diagram merged for brevity):
 
 | Event | Consumer |
 |---|---|
@@ -160,44 +160,44 @@ Ai nhận event nào trong nhóm E1–E5 (sơ đồ gộp cho gọn):
 | E4 checked-in | clinical |
 | E5 status-changed | ml, clinical |
 
-### 2.2 Đồng bộ — REST nội bộ `/internal/v1/**`
-- Chỉ gọi được từ trong cụm; gateway không có route tới đây.
-- Có timeout; mỗi lần đọc dữ liệu nhạy cảm đều ghi audit.
+### 2.2 Synchronous — internal REST `/internal/v1/**`
+- Callable only from inside the cluster; the gateway has no route here.
+- Has a timeout; every read of sensitive data writes an audit record.
 - Endpoint: [09-api-clinical.md](detailed-design/09-api-clinical.md) §4.
 
-`ai` gọi API công khai của clinical **bằng token của người dùng** (on-behalf-of), không dùng quyền riêng.
+`ai` calls clinical's public API **with the user's token** (on-behalf-of), not with its own permissions.
 
 ```mermaid
 flowchart LR
-  SCH["scheduling"] -- "danh tính · vai trò bác sĩ · nhóm tuổi" --> CLI["clinical"]
-  NTF["notification"] -- "thông tin liên hệ (endpoint duy nhất có SĐT/email)" --> CLI
-  DOC["document"] -- "kiểm quan hệ điều trị" --> CLI
-  AI["ai"] -- "đọc hồ sơ bằng token người dùng" --> CLI
-  CLI -- "danh sách tài liệu cho timeline" --> DOC
+  SCH["scheduling"] -- "identity · doctor role · age group" --> CLI["clinical"]
+  NTF["notification"] -- "contact information (the only endpoint with phone/email)" --> CLI
+  DOC["document"] -- "check care relationship" --> CLI
+  AI["ai"] -- "read records with user token" --> CLI
+  CLI -- "document list for timeline" --> DOC
 ```
 
-## 3. Module mã nguồn
+## 3. Source modules
 
-Repo ứng dụng là một **Maven multi-module** cho phần Java, cộng hai project Python độc lập. Mỗi service có:
-- Dockerfile và pipeline `.github/workflows/svc-<tên>.yml` riêng;
-- `deploy/values-local.yaml` cho cụm kind.
+The application repo is one **Maven multi-module** for the Java part, plus two independent Python projects. Each service has:
+- A Dockerfile and its own `.github/workflows/svc-<name>.yml` pipeline;
+- `deploy/values-local.yaml` for the kind cluster.
 
 ```text
-pom.xml                         # Maven gốc: Spring Boot 4.1.2, Java 21, Spotless, JaCoCo ≥ 70%, -Werror
-libs/java/shp-*/                # 7 thư viện dùng chung (SA viết, dev chỉ dùng)
-services/<6 service Java>/      # gateway, scheduling, notification, clinical, document, audit
+pom.xml                         # Root Maven: Spring Boot 4.1.2, Java 21, Spotless, JaCoCo ≥ 70%, -Werror
+libs/java/shp-*/                # 7 shared libraries (written by SA, devs only use them)
+services/<6 Java services>/     # gateway, scheduling, notification, clinical, document, audit
 services/ai/  services/ml/      # Python 3.12 (pyproject, ruff, mypy, pytest)
-contracts/                      # nguồn sự thật: openapi, events (JSON Schema), authz/matrix.yaml, terminology, db
-dev/                            # cụm kind + Helm cho chạy local (make -C dev ...)
-tools/                          # scaffold service, kiểm hợp đồng, sinh kế hoạch
-docs/                           # BA, yêu cầu, kiến trúc, DevOps, kế hoạch
+contracts/                      # source of truth: openapi, events (JSON Schema), authz/matrix.yaml, terminology, db
+dev/                            # kind cluster + Helm for local runs (make -C dev ...)
+tools/                          # scaffold services, contract checks, generate plans
+docs/                           # BA, requirements, architecture, DevOps, plan
 ```
 
-Quan hệ phụ thuộc giữa các module (mũi tên = "dùng"):
+Dependency relationships between modules (arrow = "uses"):
 
 ```mermaid
 flowchart TB
-  subgraph SVC["services/ — dev viết logic nghiệp vụ"]
+  subgraph SVC["services/ — devs write business logic"]
     direction LR
     GW["gateway"]
     SCH["scheduling"]
@@ -209,19 +209,19 @@ flowchart TB
     ML["ml (Python)"]
   end
 
-  subgraph LIB["libs/java/ — nền tảng dùng chung (SA)"]
+  subgraph LIB["libs/java/ — shared foundation (SA)"]
     direction LR
     DP["shp-data-postgres<br/>outbox · inbox · Idempotency-Key<br/>Flyway V0_1"]
-    DM["shp-data-mongo<br/>outbox · inbox · Idempotency-Key<br/>transaction có thử lại"]
-    WEB["shp-web<br/>lỗi chuẩn (Problem/OperationOutcome)<br/>@RequireShpAuthz · danh tính · SecurityFilterChain"]
-    SEC["shp-security<br/>JWT: issuer · audience · MFA nhân viên"]
-    EV["shp-events<br/>CloudEvents · kiểm schema · bản ghi audit"]
-    MSG["shp-messaging<br/>Spring Cloud Stream: phát · nhận idempotent · DLQ<br/>RabbitMQ (local) · Service Bus (cloud)"]
-    AZ["shp-authz<br/>ma trận + engine phân quyền"]
+    DM["shp-data-mongo<br/>outbox · inbox · Idempotency-Key<br/>transaction with retry"]
+    WEB["shp-web<br/>standard errors (Problem/OperationOutcome)<br/>@RequireShpAuthz · identity · SecurityFilterChain"]
+    SEC["shp-security<br/>JWT: issuer · audience · staff MFA"]
+    EV["shp-events<br/>CloudEvents · schema validation · audit record"]
+    MSG["shp-messaging<br/>Spring Cloud Stream: publish · idempotent receive · DLQ<br/>RabbitMQ (local) · Service Bus (cloud)"]
+    AZ["shp-authz<br/>matrix + authorization engine"]
     SD["shp-service-defaults<br/>health · info · OTel · virtual threads"]
   end
 
-  subgraph CON["contracts/ — hợp đồng, review trước khi code"]
+  subgraph CON["contracts/ — contracts, reviewed before coding"]
     direction LR
     CEV["events/*.json"]
     CAZ["authz/matrix.yaml"]
@@ -237,149 +237,148 @@ flowchart TB
   GW --> SEC & SD
   WEB --> SEC & EV & SD
   EV --> AZ
-  EV -. nhúng lúc build .-> CEV
-  AZ -. nhúng lúc build .-> CAZ
+  EV -. embedded at build time .-> CEV
+  AZ -. embedded at build time .-> CAZ
   AI & ML -.-> CON
 ```
 
-Ghi chú:
-- Service chỉ khai báo trực tiếp `shp-data-*` và `shp-messaging`, phần còn lại (`shp-web`, `shp-events`, …) đi kèm theo.
-  Gateway là WebFlux nên chỉ dùng `shp-security` + `shp-service-defaults`, không kéo Spring MVC.
-- Schema event và ma trận phân quyền được **nhúng vào jar lúc build**, nên service luôn chạy đúng bản đã review.
-- Mọi service hiện thực đúng `contracts/openapi`; `contracts/db/*.js` khởi tạo collection cho notification/ml.
-- `ai`, `ml` đọc cùng schema/matrix qua thư viện Python (PY-01..05, SA).
+Notes:
+- Services declare only `shp-data-*` and `shp-messaging` directly; the rest (`shp-web`, `shp-events`, …) comes transitively.
+  The gateway is WebFlux, so it uses only `shp-security` + `shp-service-defaults` and does not pull in Spring MVC.
+- Event schemas and the authorization matrix are **embedded into the jar at build time**, so services always run the reviewed version.
+- All services implement `contracts/openapi` correctly; `contracts/db/*.js` initializes collections for notification/ml.
+- `ai`, `ml` read the same schema/matrix through Python libraries (PY-01..05, SA).
 
-| Module | Vai trò | Ai sửa |
+| Module | Role | Who edits |
 |---|---|---|
-| `shp-service-defaults` | Cấu hình chung mọi service: actuator `/health/{liveness,readiness}`, `/info`, `/prometheus`; OTel; tắt êm; virtual threads | SA |
-| `shp-authz` | Đọc `contracts/authz/matrix.yaml` (nhúng), `AuthorizationEngine.decide` — mặc định từ chối | SA |
-| `shp-events` | `CloudEvents.create` (UUIDv7, traceparent, ≤ 64 KB), `EventSchemas.validate`, `AuditRecordBuilder` (che IP) | SA |
-| `shp-security` | Quy tắc JWT dùng chung cho servlet (service) và reactive (gateway) | SA |
-| `shp-web` | Bắt lỗi → Problem Details; `@RequireShpAuthz` (test đỏ nếu endpoint quên); phân giải danh tính `sub → Patient/…`; `IdempotencyKeys` | SA |
-| `shp-data-postgres` | Outbox + relay (`SKIP LOCKED`), inbox, Idempotency-Key, sink audit — bảng do Flyway tạo | SA |
-| `shp-data-mongo` | Như trên cho MongoDB (`findAndModify` + `lockedUntil`), `MongoMessaging.inTransaction` | SA |
-| `shp-messaging` | `StreamEventPublisher` (relay outbox phát qua Spring Cloud Stream), `EventConsumers.idempotent` (kiểm schema + inbox), mặc định binder, retry và DLQ ([13-events §1.1](detailed-design/13-events.md#11-cài-đặt-thư-viện-libsjavashp-messaging)) | SA |
-| `services/*` (trừ gateway) | Controller, nghiệp vụ, truy cập dữ liệu, consumer của service | D1 (scheduling) · D2 (clinical) · D3 (notification, document, audit, gateway) · SA (ai, ml, Keycloak) |
+| `shp-service-defaults` | Common configuration for all services: actuator `/health/{liveness,readiness}`, `/info`, `/prometheus`; OTel; graceful shutdown; virtual threads | SA |
+| `shp-authz` | Reads `contracts/authz/matrix.yaml` (embedded), `AuthorizationEngine.decide` — deny by default | SA |
+| `shp-events` | `CloudEvents.create` (UUIDv7, traceparent, ≤ 64 KB), `EventSchemas.validate`, `AuditRecordBuilder` (IP masking) | SA |
+| `shp-security` | Shared JWT rules for servlet (services) and reactive (gateway) | SA |
+| `shp-web` | Error handling → Problem Details; `@RequireShpAuthz` (red test if an endpoint forgets it); identity resolution `sub → Patient/…`; `IdempotencyKeys` | SA |
+| `shp-data-postgres` | Outbox + relay (`SKIP LOCKED`), inbox, Idempotency-Key, audit sink — tables created by Flyway | SA |
+| `shp-data-mongo` | As above for MongoDB (`findAndModify` + `lockedUntil`), `MongoMessaging.inTransaction` | SA |
+| `shp-messaging` | `StreamEventPublisher` (outbox relay publishes via Spring Cloud Stream), `EventConsumers.idempotent` (schema check + inbox), default binder, retry and DLQ ([13-events §1.1](detailed-design/13-events.md#11-implementation-library-libsjavashp-messaging)) | SA |
+| `services/*` (except gateway) | Controllers, business logic, data access, service consumers | D1 (scheduling) · D2 (clinical) · D3 (notification, document, audit, gateway) · SA (ai, ml, Keycloak) |
 
-## 4. Bên trong một service Java
+## 4. Inside a Java service
 
-Mọi service Java dùng cùng một bố cục gói (khung do `tools/scaffold/java_service.py` sinh). Dev chỉ thêm code vào các gói
-`api`, `app`, `domain`, `infra`, `messaging`. Gói `config` là của SA.
+All Java services use the same package layout (the skeleton is generated by `tools/scaffold/java_service.py`). Devs only add code to the
+`api`, `app`, `domain`, `infra`, `messaging` packages. The `config` package belongs to SA.
 
 ```mermaid
 flowchart LR
-  REQ(["HTTP từ gateway<br/>hoặc /internal"]) --> F
+  REQ(["HTTP from gateway<br/>or /internal"]) --> F
   subgraph SVC["org.shp.&lt;service&gt;"]
     direction LR
-    F["shp-web filter + interceptor<br/>JWT → danh tính → @RequireShpAuthz<br/>(có sẵn)"]
-    API["api/<br/>*Controller: DTO, mã lỗi,<br/>ETag, Idempotency-Key"]
+    F["shp-web filter + interceptor<br/>JWT → identity → @RequireShpAuthz<br/>(built in)"]
+    API["api/<br/>*Controller: DTO, error codes,<br/>ETag, Idempotency-Key"]
     APP["app/<br/>use case @Transactional"]
-    DOM["domain/<br/>model + quy tắc nghiệp vụ<br/>(không phụ thuộc Spring)"]
-    INF["infra/<br/>repository (JDBC/Mongo),<br/>client REST nội bộ, Blob"]
+    DOM["domain/<br/>model + business rules<br/>(no Spring dependency)"]
+    INF["infra/<br/>repository (JDBC/Mongo),<br/>internal REST client, Blob"]
     MSG["messaging/<br/>consumer: inbox.handleOnce"]
-    CFG["config/PlatformConfig<br/>outbox · inbox · idempotency<br/>(SA, không sửa)"]
+    CFG["config/PlatformConfig<br/>outbox · inbox · idempotency<br/>(SA, do not edit)"]
   end
-  DB[("DB của service<br/>+ outbox · inbox")]
-  RELAY["Outbox relay<br/>(có sẵn)"]
+  DB[("service DB<br/>+ outbox · inbox")]
+  RELAY["Outbox relay<br/>(built in)"]
   BUS[["bus"]]
 
   F --> API --> APP --> DOM
   APP --> INF --> DB
-  APP -- "outbox.add(event)<br/>cùng transaction" --> DB
+  APP -- "outbox.add(event)<br/>same transaction" --> DB
   DB --> RELAY --> BUS
   BUS --> MSG --> APP
-  CFG -. cấp bean .-> APP
+  CFG -. provides beans .-> APP
 ```
 
-Quy tắc:
-- **Controller** chỉ làm việc HTTP: map DTO và gọi use case. Mọi endpoint có `@RequireShpAuthz`.
-- **Use case** (`app/`) là nơi duy nhất mở transaction. Thay đổi dữ liệu và `outbox.add(...)` nằm trong **cùng** một transaction.
-- **domain/** không import Spring/JDBC/Mongo, nên test thuần JUnit, nhanh.
-- **Test:**
-  - Unit test cho `domain/` và `app/`.
-  - Test tích hợp (Testcontainers, DB thật) cho `infra/`, API và consumer.
-  - Coverage dòng ≥ 70% mỗi module (CI chặn).
-- Service Python (`ai`, `ml`) chia module con trong `src/shp_ai`, `src/shp_ml` theo tính năng (vd. `assistant/`, `kb/`, `summary/`); quy tắc giống Java: router chỉ làm HTTP, transaction và outbox ở lớp use case, test tích hợp dùng Testcontainers ([00-conventions §1](../00-conventions.md#1-cấu-trúc-thư-mục)).
+Rules:
+- **Controller** only does HTTP work: maps DTOs and calls use cases. Every endpoint has `@RequireShpAuthz`.
+- **Use case** (`app/`) is the only place that opens a transaction. Data changes and `outbox.add(...)` are in the **same** transaction.
+- **domain/** does not import Spring/JDBC/Mongo, so tests are pure JUnit and fast.
+- **Tests:**
+  - Unit tests for `domain/` and `app/`.
+  - Integration tests (Testcontainers, real DB) for `infra/`, API, and consumers.
+  - Line coverage ≥ 70% per module (CI blocks).
+- Python services (`ai`, `ml`) split submodules in `src/shp_ai`, `src/shp_ml` by feature (e.g. `assistant/`, `kb/`, `summary/`); the rules are the same as Java: routers only do HTTP, transactions and outbox in the use-case layer, integration tests use Testcontainers ([00-conventions §1](../00-conventions.md#1-directory-layout)).
 
-## 5. Luồng nghiệp vụ end-to-end (vertical slice chính)
+## 5. End-to-end business flow (main vertical slice)
 
 ```
-Bệnh nhân tìm slot trống ──► đặt lịch (idempotent, chống double-booking)
+Patient searches for a free slot ──► books (idempotent, prevents double-booking)
         │                              │ AppointmentBooked (outbox → message bus)
         │                              ▼
-        │                   notification-service lên lịch nhắc (T-24h, T-2h)
-        │                              │  ml-service: điểm rủi ro no-show → nhắc thêm nếu cao
+        │                   notification-service schedules reminders (T-24h, T-2h)
+        │                              │  ml-service: no-show risk score → extra reminder if high
         ▼                              ▼
-Bác sĩ khám ──► Encounter ──► upload kết quả (PDF/ảnh) ──► document-service (Blob)
+Doctor sees patient ──► Encounter ──► uploads results (PDF/image) ──► document-service (Blob)
                                                   │ DocumentUploaded
                                                   ▼
-                                    ai-service: trích xuất trường (OCR + LLM, human review)
-Bác sĩ hỏi AI: tóm tắt hồ sơ / tra cứu phác đồ (RAG có trích dẫn)
-Mọi lần đọc/ghi dữ liệu nhạy cảm ──► audit-service (append-only)
+                                    ai-service: extracts fields (OCR + LLM, human review)
+Doctor asks AI: summarize record / look up protocol (RAG with citations)
+Every read/write of sensitive data ──► audit-service (append-only)
 ```
 
 ## 6. Service catalog
 
-| Service | Ngôn ngữ | Sở hữu dữ liệu (FHIR) | Đồng bộ / bất đồng bộ | Dev |
+| Service | Language | Owns data (FHIR) | Sync / async | Dev |
 |---|---|---|---|---|
-| `api-gateway` | Java (Spring Cloud Gateway) | — | Định tuyến, xác thực JWT, rate limit | SA |
-| `clinical-service` | Java | Patient, Practitioner, PractitionerRole, Encounter, Observation, Condition, AllergyIntolerance + liên kết tài khoản + quan hệ điều trị | REST FHIR; nghe event lịch hẹn | D2 |
-| `scheduling-service` | Java | Schedule, Slot, Appointment | REST FHIR + outbox; nghe `encounter-finished` | D1 |
-| `document-service` | Java | DocumentReference + file trên Blob | REST + event `document-uploaded`, `document-released` | D2 |
-| `notification-service` | Java worker | Nhắc lịch (`reminder`), lần gửi, tùy chọn nhận tin | Consume event, retry + DLQ | D1 |
-| `audit-service` | Java worker | AuditEvent (append-only) | Consume event | D2 |
-| `ai-service` | Python (FastAPI) | Kho tri thức RAG (AI Search) | REST; gọi các service khác bằng token của người dùng | SA |
-| `ml-service` | Python (LightGBM, MLflow) | Đặc trưng, dự đoán, model registry (MLflow) | Consume event, phát `no-show-scored` | SA |
+| `api-gateway` | Java (Spring Cloud Gateway) | — | Routing, JWT authentication, rate limit | SA |
+| `clinical-service` | Java | Patient, Practitioner, PractitionerRole, Encounter, Observation, Condition, AllergyIntolerance + account links + care relationships | REST FHIR; listens to appointment events | D2 |
+| `scheduling-service` | Java | Schedule, Slot, Appointment | REST FHIR + outbox; listens to `encounter-finished` | D1 |
+| `document-service` | Java | DocumentReference + files on Blob | REST + `document-uploaded`, `document-released` events | D2 |
+| `notification-service` | Java worker | Reminders (`reminder`), delivery attempts, notification preferences | Consume events, retry + DLQ | D1 |
+| `audit-service` | Java worker | AuditEvent (append-only) | Consume events | D2 |
+| `ai-service` | Python (FastAPI) | RAG knowledge base (AI Search) | REST; calls other services with the user's token | SA |
+| `ml-service` | Python (LightGBM, MLflow) | Features, predictions, model registry (MLflow) | Consume events, emit `no-show-scored` | SA |
 
-Nguyên tắc: **mỗi service sở hữu kho dữ liệu riêng, chọn theo đặc tính tải**
-(xem [ADR-0008](adr/0008-polyglot-persistence.md)); không join chéo service, chỉ tham chiếu
-bằng FHIR `Reference` (`Patient/123`).
+Principle: **each service owns its own data store, chosen by load characteristics**
+(see [ADR-0008](adr/0008-polyglot-persistence.md)); no cross-service joins, only references
+via FHIR `Reference` (`Patient/123`).
 
-| Service | Kho dữ liệu |
+| Service | Data store |
 |---|---|
-| scheduling | PostgreSQL (ACID, chống double-booking) + Redis (cache slot trống) |
-| clinical | MongoDB API / Cosmos DB for MongoDB vCore (document FHIR, partition theo bệnh nhân) |
-| notification | MongoDB (nhắc lịch: lấy việc nguyên tử + `lockedUntil`, TTL) — ADR-0014 |
-| document | MongoDB (metadata) + Azure Blob Storage (SAS ngắn hạn, lifecycle Hot→Cool) |
-| audit | Blob immutable (WORM) + Log Analytics (KQL); MongoDB chỉ cho inbox/outbox |
-| ai | Azure AI Search (hybrid + rerank) + MongoDB (hội thoại, job trích xuất) |
-| ml | MongoDB (trạng thái đặc trưng, nhật ký dự đoán) + Parquet trên Blob + MLflow — ADR-0014 |
+| scheduling | PostgreSQL (ACID, prevents double-booking) + Redis (free slot cache) |
+| clinical | MongoDB API / Cosmos DB for MongoDB vCore (FHIR documents, partitioned by patient) |
+| notification | MongoDB (reminders: atomic work fetch + `lockedUntil`, TTL) — ADR-0014 |
+| document | MongoDB (metadata) + Azure Blob Storage (short-lived SAS, Hot→Cool lifecycle) |
+| audit | Blob immutable (WORM) + Log Analytics (KQL); MongoDB only for inbox/outbox |
+| ai | Azure AI Search (hybrid + rerank) + MongoDB (conversations, extraction jobs) |
+| ml | MongoDB (feature state, prediction log) + Parquet on Blob + MLflow — ADR-0014 |
 
-Thiết kế chi tiết từng kho dữ liệu, API, event và phân quyền: [detailed-design](detailed-design/README.md).
+Detailed design of each data store, API, event, and authorization: [detailed-design](detailed-design/README.md).
 
-Ranh giới service dựa trên **khác biệt về tải và yêu cầu phi chức năng**, không chia theo
-từng resource: scheduling có tranh chấp ghi (concurrency), document có I/O file lớn,
-AI có độ trễ/chi phí token và phụ thuộc nhà cung cấp ngoài, notification phải chịu được
-provider lỗi. Xem [ADR-0001](adr/0001-microservice-boundaries.md).
+Service boundaries are based on **differences in load and non-functional requirements**, not split by
+individual resource: scheduling has write contention (concurrency), document has large file I/O,
+AI has latency/token cost and external provider dependencies, notification must tolerate
+provider failures. See [ADR-0001](adr/0001-microservice-boundaries.md).
 
-## 7. Ánh xạ hạ tầng: Azure ↔ portable
+## 7. Infrastructure mapping: Azure ↔ portable
 
-| Năng lực | Azure (production) | Portable / local (docker-compose, K8s bất kỳ) | Lớp trừu tượng |
+| Capability | Azure (production) | Portable / local (docker-compose, any K8s) | Abstraction layer |
 |---|---|---|---|
-| Compute | AKS (2 cluster: nonprod, prod) + Argo CD + KEDA | kind / K8s bất kỳ, cùng Helm chart | Container OCI + Helm |
-| DB quan hệ | Azure Database for PostgreSQL Flexible (PITR) | PostgreSQL 16 | Spring JDBC/Flyway (`shp-data-postgres`) |
-| DB document | Cosmos DB for MongoDB vCore | MongoDB 8 | Spring Data MongoDB (`shp-data-mongo`, `FhirStore` — SHR-10) |
+| Compute | AKS (2 clusters: nonprod, prod) + Argo CD + KEDA | kind / any K8s, same Helm chart | OCI containers + Helm |
+| Relational DB | Azure Database for PostgreSQL Flexible (PITR) | PostgreSQL 16 | Spring JDBC/Flyway (`shp-data-postgres`) |
+| Document DB | Cosmos DB for MongoDB vCore | MongoDB 8 | Spring Data MongoDB (`shp-data-mongo`, `FhirStore` — SHR-10) |
 | Search/vector | Azure AI Search | OpenSearch | `Retriever` (Python, ai) |
-| Audit | Blob immutable + Log Analytics | Azurite (không có WORM) + Loki (profile `full`) | `AuditSink` (`shp-events`) |
-| Message bus | Azure Service Bus | RabbitMQ | Spring Cloud Stream (Java) · client AMQP (Python) |
-| Object storage | Azure Blob Storage | Azurite (giả lập Azure Blob, cùng SDK) — ADR-0012 | Azure Storage SDK (`BlobStore`) |
+| Audit | Blob immutable + Log Analytics | Azurite (no WORM) + Loki (`full` profile) | `AuditSink` (`shp-events`) |
+| Message bus | Azure Service Bus | RabbitMQ | Spring Cloud Stream (Java) · AMQP client (Python) |
+| Object storage | Azure Blob Storage | Azurite (Azure Blob emulator, same SDK) — ADR-0012 | Azure Storage SDK (`BlobStore`) |
 | Cache | Azure Cache for Redis | Redis | Spring Data Redis |
-| Identity (người dùng ứng dụng) | Keycloak (OIDC), ADR-0017 | Keycloak (OIDC) | JWT Bearer chuẩn OIDC |
-| Identity (quản trị Azure, workload) | Microsoft Entra ID, managed identity | không dùng | Azure SDK `DefaultAzureCredential` |
-| Secret | Key Vault (CSI) + Workload Identity | env / K8s Secret | biến môi trường → Spring `Environment` |
+| Identity (application users) | Keycloak (OIDC), ADR-0017 | Keycloak (OIDC) | OIDC-standard JWT Bearer |
+| Identity (Azure administration, workload) | Microsoft Entra ID, managed identity | not used | Azure SDK `DefaultAzureCredential` |
+| Secret | Key Vault (CSI) + Workload Identity | env / K8s Secret | environment variables → Spring `Environment` |
 | Observability | Azure Monitor / App Insights | Grafana + Tempo + Prometheus | OpenTelemetry (OTLP) |
-| LLM | DeepSeek API → Gemini free tier → Ollama trong cụm (embedding bge-m3) — ADR-0013 | Ollama | router của `ai` |
+| LLM | DeepSeek API → Gemini free tier → Ollama in cluster (bge-m3 embeddings) — ADR-0013 | Ollama | `ai` router |
 | ML | Azure ML / MLflow | MLflow | MLflow model format |
 
-Xem [ADR-0004](adr/0004-azure-first-portable.md).
+See [ADR-0004](adr/0004-azure-first-portable.md).
 
-## 8. Bảo mật (tóm tắt — chi tiết ở threat model P3)
+## 8. Security (summary — details in the P3 threat model)
 
-- OIDC + JWT; role: `patient`, `practitioner`, `nurse`, `admin`. Claim `fhir_user`
-  (`Patient/123`) dùng cho phân quyền theo đối tượng (patient chỉ thấy dữ liệu của mình).
-- Ma trận phân quyền được kiểm thử tự động (xem `tests/`).
-- Tài liệu chỉ truy cập qua SAS URL ngắn hạn (≤ 5 phút), không public blob.
-- Mã hóa at-rest (Postgres, Blob) và TLS in-transit; secret chỉ nằm trong Key Vault.
-- AI: redact PII trước khi gửi tới provider ngoài Azure, chống prompt injection, giới hạn
-  tool theo quyền của người gọi.
-
+- OIDC + JWT; roles: `patient`, `practitioner`, `nurse`, `admin`. Claim `fhir_user`
+  (`Patient/123`) is used for object-level authorization (patients see only their own data).
+- The authorization matrix is automatically tested (see `tests/`).
+- Documents are accessible only via short-lived SAS URLs (≤ 5 minutes), no public blobs.
+- Encryption at rest (Postgres, Blob) and TLS in transit; secrets only in Key Vault.
+- AI: redact PII before sending to providers outside Azure, prevent prompt injection, limit
+  tools by caller permissions.

@@ -1,59 +1,59 @@
-# Test bảo mật bổ sung (ngoài tiêu chí nghiệm thu của SRS), theo OWASP ASVS 4 mức 2 và OWASP API Security Top 10.
-# Dữ liệu y tế: mọi test ở đây là P0. Test nào chưa có endpoint để chạy ghi rõ trong automation.yaml.
+# Additional security tests (beyond the SRS acceptance criteria), following OWASP ASVS 4 level 2 and OWASP API Security Top 10.
+# Medical data: every test here is P0. Any test without an endpoint to run against is noted in automation.yaml.
 testcases:
-  - {id: TC-SEC-01, title: "IDOR: đọc hồ sơ, lịch hẹn, tài liệu của bệnh nhân khác bằng ID đoán được", covers: [NFR-SEC2, NFR-SEC13], module: security, level: api, priority: P0, owasp: "API1 BOLA",
-     spec: "Given bệnh nhân A đăng nhập, When gọi GET /fhir/Patient|Appointment|DocumentReference với ID của bệnh nhân B, Then nhận 404 (không phải 403), nội dung phản hồi giống hệt trường hợp ID không tồn tại, và có bản ghi audit 'deny'."}
-  - {id: TC-SEC-02, title: "Leo thang đặc quyền theo chiều dọc: bệnh nhân gọi API nhân viên, nhân viên gọi API quản trị", covers: [NFR-SEC2], module: security, level: api, priority: P0, owasp: "API5 BFLA",
-     spec: "Given mỗi vai trò, When gọi mọi endpoint không có trong ma trận phân quyền của vai trò đó, Then bị từ chối và ghi audit; test sinh từ contracts/authz/matrix.yaml và openapi."}
-  - {id: TC-SEC-03, title: "Mass assignment: gửi thêm trường status, patientId, role, createdBy trong body", covers: [NFR-SEC2, NFR-SEC10], module: security, level: api, priority: P0, owasp: "API3",
-     spec: "Given body có thêm trường không thuộc schema (status, subject, role, id), Then bị từ chối 400; không trường lạ nào được lưu."}
-  - {id: TC-SEC-04, title: "JWT: chữ ký sai, alg=none, hết hạn, sai audience, sai issuer, thiếu claim roles", covers: [NFR-SEC1], module: security, level: unit, priority: P0, owasp: "API2",
-     spec: "Given từng loại token lỗi, When gọi API, Then 401 với Problem Details; không rò rỉ lý do chi tiết."}
-  - {id: TC-SEC-05, title: "Vai trò chỉ lấy từ claim đã ký; header, query hay body không thể tự gán vai trò", covers: [NFR-SEC1, NFR-SEC2], module: security, level: api, priority: P0,
-     spec: "Given request có header X-Role: admin hoặc tham số role=admin, Then bị bỏ qua; quyền vẫn theo token."}
-  - {id: TC-SEC-06, title: "Nhân viên chưa có MFA không truy cập được dữ liệu bệnh nhân; token thiếu amr bị từ chối", covers: [NFR-SEC1, AC-08.2], module: security, level: unit, priority: P0,
-     spec: "Given token nhân viên không có claim MFA, When truy cập dữ liệu, Then 403 mfa-required; bệnh nhân không cần MFA."}
-  - {id: TC-SEC-07, title: "Injection: ký tự đặc biệt trong tên, tìm kiếm, lý do khám (SQL, NoSQL, regex, LDAP)", covers: [NFR-SEC2], module: security, level: api, priority: P0, owasp: "A03",
-     spec: "Given đầu vào chứa ', \", $where, {$ne:null}, .*, ${jndi:...}, Then được xử lý như văn bản thường; không đổi hành vi truy vấn; không lỗi 500."}
-  - {id: TC-SEC-08, title: "XSS lưu trữ: script trong lý do khám, bệnh sử, tên, tên tệp", covers: [NFR-SEC15], module: security, level: e2e, priority: P0, owasp: "A03",
-     spec: "Given văn bản chứa <script> hoặc onerror=, When hiển thị trên mọi màn hình, Then được mã hóa; không thực thi mã; CSP chặn inline script."}
-  - {id: TC-SEC-09, title: "Tiêu đề bảo mật của web: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, không lộ phiên bản máy chủ", covers: [NFR-SEC15], module: security, level: security, priority: P0, owasp: "A05",
-     spec: "Given web được phục vụ, When kiểm tra phản hồi, Then đủ các tiêu đề; không có 'unsafe-inline' cho script."}
-  - {id: TC-SEC-10, title: "Quét bảo mật động (OWASP ZAP baseline) không có lỗi mức High", covers: [NFR-SEC15], module: security, level: security, priority: P0,
-     spec: "Given web chạy trong container, When ZAP baseline quét, Then 0 lỗi FAIL; cảnh báo được ghi vào báo cáo."}
-  - {id: TC-SEC-11, title: "Không có PII/PHI trong log, metric, trace, sự kiện, URL, thông báo lỗi", covers: [NFR-SEC13, NFR-O4], module: security, level: integration, priority: P0,
-     spec: "Given chạy luồng đặt lịch và hồ sơ với dữ liệu giả có tên, SĐT, email dễ nhận diện, When quét toàn bộ log, sự kiện, trace, Then không tìm thấy các giá trị đó."}
-  - {id: TC-SEC-12, title: "Thông báo lỗi không lộ stack trace, tên bảng, đường dẫn, phiên bản framework", covers: [NFR-SEC13], module: security, level: api, priority: P0, owasp: "API8",
-     spec: "Given yêu cầu gây lỗi (JSON sai, kiểu sai, ID lạ), Then phản hồi là Problem Details/OperationOutcome chuẩn không chứa chi tiết nội bộ."}
-  - {id: TC-SEC-13, title: "Tệp upload: đổi đuôi, tệp lai (polyglot), quá cỡ, tên tệp có ../, tệp EICAR", covers: [NFR-SEC17], module: security, level: integration, priority: P0, owasp: "A04",
-     spec: "Given từng loại tệp độc hại, Then bị từ chối hoặc cách ly; tên đối tượng do hệ thống sinh; không ghi ra ngoài thư mục đích."}
-  - {id: TC-SEC-14, title: "Link upload/tải: dùng lại, đổi đường dẫn, dùng sau khi hết hạn, dùng cho tệp khác", covers: [NFR-SEC17, AC-05.2], module: security, level: integration, priority: P0,
-     spec: "Given link đã cấp, When đổi đối tượng, dùng quá hạn hay dùng khác phương thức, Then bị từ chối."}
-  - {id: TC-SEC-15, title: "Giới hạn tốc độ và chống dò: khóa tạm sau 5 lần đăng nhập sai, 429 khi vượt, tìm kiếm không liệt kê hàng loạt", covers: [NFR-SEC16], module: security, level: api, priority: P0, owasp: "API4",
-     spec: "Given 11 yêu cầu đặt lịch/phút, Then yêu cầu thứ 11 nhận 429; Given điều kiện tìm 2 ký tự, Then bị từ chối."}
-  - {id: TC-SEC-16, title: "Phản hồi tìm kiếm chỉ có trường tối thiểu (che SĐT, không chẩn đoán, không địa chỉ)", covers: [NFR-SEC10], module: security, level: api, priority: P0,
-     spec: "Given kết quả tìm bệnh nhân, Then chỉ có họ tên, năm sinh, giới, mã, SĐT che 4 số giữa."}
-  - {id: TC-SEC-17, title: "Prompt injection: câu hỏi và tài liệu chứa chỉ thị độc hại (50 mẫu) không đổi hành vi", covers: [NFR-AI3, NFR-SEC8, AC-11.2], module: security, level: ai-eval, priority: P0, owasp: "LLM01",
-     spec: "Given bộ 50 mẫu tấn công trong câu hỏi và trong tài liệu nguồn, Then 0 lần vượt rào; không tiết lộ prompt hệ thống; không gọi công cụ ngoài danh sách."}
-  - {id: TC-SEC-18, title: "Dữ liệu gửi nhà cung cấp LLM bên ngoài đã được che định danh", covers: [NFR-SEC8, AC-SM.2], module: security, level: integration, priority: P0, owasp: "LLM06",
-     spec: "Given chặn kết nối ra ngoài bằng máy chủ giả, When tóm tắt, trích xuất, hỏi đáp, Then thân yêu cầu không có họ tên, SĐT, email, địa chỉ của dữ liệu giả."}
-  - {id: TC-SEC-19, title: "AI chỉ có quyền của người gọi (on-behalf-of): không đọc được dữ liệu ngoài quyền", covers: [NFR-SEC8, AC-12.1], module: security, level: integration, priority: P0, owasp: "LLM08",
-     spec: "Given người dùng không có quan hệ điều trị, When gọi tính năng AI với mã bệnh nhân đó, Then bị từ chối; dịch vụ AI không dùng thông tin đăng nhập riêng để đọc."}
-  - {id: TC-SEC-20, title: "Giả mạo giữa các service: gọi endpoint nội bộ /internal từ bên ngoài hoặc từ service không khai báo", covers: [NFR-SEC7, NFR-SEC2], module: security, level: integration, priority: P0,
-     spec: "Given yêu cầu từ ngoài tới /internal/*, Then gateway chặn; Given service không được khai báo, Then NetworkPolicy và kiểm tra danh tính chặn."}
-  - {id: TC-SEC-21, title: "Cách ly mạng: kết nối trái phép giữa pod, tới CSDL từ ngoài cụm bị chặn", covers: [NFR-SEC7], module: security, level: security, priority: P0,
-     spec: "Given NetworkPolicy mặc định chặn, When thử kết nối từ pod không được khai báo, Then thất bại."}
-  - {id: TC-SEC-22, title: "TLS: không chấp nhận TLS < 1.2, không có mã hóa yếu, chứng chỉ hợp lệ, kể cả trong cụm", covers: [NFR-SEC3], module: security, level: security, priority: P0,
-     spec: "Given quét cấu hình TLS của gateway và các kết nối nội bộ, Then chỉ TLS 1.2+ với bộ mã mạnh."}
-  - {id: TC-SEC-23, title: "Không có secret trong mã nguồn, image, lịch sử git; secret chỉ ở Key Vault", covers: [NFR-SEC4], module: security, level: ci, priority: P0,
-     spec: "Given quét gitleaks toàn bộ lịch sử, quét image và cấu hình, Then không có secret."}
-  - {id: TC-SEC-24, title: "Chuỗi cung ứng: thư viện, image, workflow đã ghim, quét, ký và có SBOM", covers: [NFR-SEC6], module: security, level: ci, priority: P0,
-     spec: "Given pipeline mỗi PR và nightly, Then Trivy, OSV, Dependency-Check, hadolint chạy; image ký cosign; cụm từ chối image không ký."}
-  - {id: TC-SEC-25, title: "Truy cập khẩn cấp: không vượt phạm vi một bệnh nhân, hết hạn 60 phút, báo DPO, ghi audit mục đích", covers: [AC-10.1, AC-BG.1, AC-BG.3], module: security, level: api, priority: P0,
-     spec: "Given quyền khẩn cấp cho bệnh nhân A, When mở bệnh nhân B hoặc sau 60 phút, Then bị từ chối."}
-  - {id: TC-SEC-26, title: "Audit bất biến: không sửa/xóa qua API, giao diện, tài khoản lưu trữ; chuỗi hash phát hiện sửa", covers: [AC-09.2, NFR-SEC5], module: security, level: integration, priority: P0,
-     spec: "Given bản ghi audit đã ghi, When cố sửa/xóa bằng mọi đường, Then thất bại; audit-verify phát hiện đứt chuỗi."}
-  - {id: TC-SEC-27, title: "Thiết bị dùng chung: đăng xuất xóa dữ liệu bệnh nhân khỏi bộ nhớ, nút Back không hiện lại", covers: [NFR-SEC14], module: security, level: e2e, priority: P0,
-     spec: "Given đã xem hồ sơ rồi đăng xuất, When bấm Back, Then không hiển thị dữ liệu; sessionStorage/localStorage không còn token hay dữ liệu bệnh nhân."}
-  - {id: TC-SEC-28, title: "Không lưu token trong localStorage; hết phiên theo thời gian không thao tác", covers: [NFR-SEC14, NFR-SEC1], module: security, level: e2e, priority: P0,
-     spec: "Given đăng nhập, Then localStorage không có token; Given 15 phút không thao tác (nhân viên), Then tự đăng xuất."}
+  - {id: TC-SEC-01, title: "IDOR: reading another patient's medical record, appointments or documents using a guessable ID", covers: [NFR-SEC2, NFR-SEC13], module: security, level: api, priority: P0, owasp: "API1 BOLA",
+     spec: "Given patient A is logged in, When calling GET /fhir/Patient|Appointment|DocumentReference with patient B's ID, Then they receive 404 (not 403), the response body is identical to the case where the ID does not exist, and a 'deny' audit record exists."}
+  - {id: TC-SEC-02, title: "Vertical privilege escalation: patient calls staff APIs, staff calls admin APIs", covers: [NFR-SEC2], module: security, level: api, priority: P0, owasp: "API5 BFLA",
+     spec: "Given each role, When calling every endpoint that is not in that role's authorization matrix, Then it is denied and audited; tests are generated from contracts/authz/matrix.yaml and openapi."}
+  - {id: TC-SEC-03, title: "Mass assignment: sending extra status, patientId, role, createdBy fields in the body", covers: [NFR-SEC2, NFR-SEC10], module: security, level: api, priority: P0, owasp: "API3",
+     spec: "Given the body contains fields not in the schema (status, subject, role, id), Then it is rejected with 400; no unknown fields are stored."}
+  - {id: TC-SEC-04, title: "JWT: wrong signature, alg=none, expired, wrong audience, wrong issuer, missing roles claim", covers: [NFR-SEC1], module: security, level: unit, priority: P0, owasp: "API2",
+     spec: "Given each type of invalid token, When calling the API, Then 401 with Problem Details; no detailed reason is leaked."}
+  - {id: TC-SEC-05, title: "Roles come only from the signed claim; headers, query or body cannot assign roles", covers: [NFR-SEC1, NFR-SEC2], module: security, level: api, priority: P0,
+     spec: "Given a request with header X-Role: admin or parameter role=admin, Then it is ignored; permissions still follow the token."}
+  - {id: TC-SEC-06, title: "Staff without MFA cannot access patient data; tokens missing amr are rejected", covers: [NFR-SEC1, AC-08.2], module: security, level: unit, priority: P0,
+     spec: "Given a staff token without an MFA claim, When accessing data, Then 403 mfa-required; patients do not need MFA."}
+  - {id: TC-SEC-07, title: "Injection: special characters in names, search, visit reason (SQL, NoSQL, regex, LDAP)", covers: [NFR-SEC2], module: security, level: api, priority: P0, owasp: "A03",
+     spec: "Given input containing ', \", $where, {$ne:null}, .*, ${jndi:...}, Then it is handled as plain text; query behavior is unchanged; no 500 errors."}
+  - {id: TC-SEC-08, title: "Stored XSS: script in visit reason, medical history, names, file names", covers: [NFR-SEC15], module: security, level: e2e, priority: P0, owasp: "A03",
+     spec: "Given text containing <script> or onerror=, When displayed on any screen, Then it is encoded; no code executes; CSP blocks inline script."}
+  - {id: TC-SEC-09, title: "Web security headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, no server version disclosure", covers: [NFR-SEC15], module: security, level: security, priority: P0, owasp: "A05",
+     spec: "Given the web is served, When checking responses, Then all headers are present; no 'unsafe-inline' for script."}
+  - {id: TC-SEC-10, title: "Dynamic security scan (OWASP ZAP baseline) has no High findings", covers: [NFR-SEC15], module: security, level: security, priority: P0,
+     spec: "Given the web runs in a container, When ZAP baseline scans, Then 0 FAIL findings; warnings are recorded in the report."}
+  - {id: TC-SEC-11, title: "No PII/PHI in logs, metrics, traces, events, URLs, error messages", covers: [NFR-SEC13, NFR-O4], module: security, level: integration, priority: P0,
+     spec: "Given running the booking and medical record flows with synthetic data containing recognizable names, phone numbers and emails, When scanning all logs, events and traces, Then those values are not found."}
+  - {id: TC-SEC-12, title: "Error messages do not leak stack traces, table names, paths or framework versions", covers: [NFR-SEC13], module: security, level: api, priority: P0, owasp: "API8",
+     spec: "Given a request that causes an error (invalid JSON, wrong type, unknown ID), Then the response is a standard Problem Details/OperationOutcome without internal details."}
+  - {id: TC-SEC-13, title: "File upload: renamed extension, polyglot file, oversized, file name containing ../, EICAR file", covers: [NFR-SEC17], module: security, level: integration, priority: P0, owasp: "A04",
+     spec: "Given each type of malicious file, Then it is rejected or quarantined; object names are generated by the system; nothing is written outside the target directory."}
+  - {id: TC-SEC-14, title: "Upload/download links: reuse, path change, use after expiry, use for another file", covers: [NFR-SEC17, AC-05.2], module: security, level: integration, priority: P0,
+     spec: "Given an issued link, When changing the target, using it after expiry or using it with a different method, Then it is rejected."}
+  - {id: TC-SEC-15, title: "Rate limiting and anti-enumeration: temporary lock after 5 failed logins, 429 when exceeding, search does not list in bulk", covers: [NFR-SEC16], module: security, level: api, priority: P0, owasp: "API4",
+     spec: "Given 11 booking requests per minute, Then the 11th request receives 429; Given a 2-character search condition, Then it is rejected."}
+  - {id: TC-SEC-16, title: "Search responses contain only minimal fields (phone masked, no diagnosis, no address)", covers: [NFR-SEC10], module: security, level: api, priority: P0,
+     spec: "Given patient search results, Then they contain only full name, year of birth, sex, code, and phone number with the middle 4 digits masked."}
+  - {id: TC-SEC-17, title: "Prompt injection: questions and documents containing malicious instructions (50 samples) do not change behavior", covers: [NFR-AI3, NFR-SEC8, AC-11.2], module: security, level: ai-eval, priority: P0, owasp: "LLM01",
+     spec: "Given a suite of 50 attack samples in questions and in source documents, Then 0 escapes; the system prompt is not disclosed; no tools outside the list are called."}
+  - {id: TC-SEC-18, title: "Data sent to external LLM providers is de-identified", covers: [NFR-SEC8, AC-SM.2], module: security, level: integration, priority: P0, owasp: "LLM06",
+     spec: "Given outbound connections blocked with a fake server, When summarizing, extracting or answering questions, Then the request body contains no names, phone numbers, emails or addresses from the synthetic data."}
+  - {id: TC-SEC-19, title: "AI has only the caller's permissions (on-behalf-of): cannot read data outside those permissions", covers: [NFR-SEC8, AC-12.1], module: security, level: integration, priority: P0, owasp: "LLM08",
+     spec: "Given a user with no treatment relationship, When calling an AI feature with that patient's ID, Then it is denied; the AI service does not use separate credentials to read."}
+  - {id: TC-SEC-20, title: "Service-to-service impersonation: calling /internal endpoints from outside or from an undeclared service", covers: [NFR-SEC7, NFR-SEC2], module: security, level: integration, priority: P0,
+     spec: "Given a request from outside to /internal/*, Then the gateway blocks it; Given an undeclared service, Then NetworkPolicy and identity checks block it."}
+  - {id: TC-SEC-21, title: "Network isolation: unauthorized pod-to-pod connections, and connections to the database from outside the cluster, are blocked", covers: [NFR-SEC7], module: security, level: security, priority: P0,
+     spec: "Given default-deny NetworkPolicy, When attempting a connection from an undeclared pod, Then it fails."}
+  - {id: TC-SEC-22, title: "TLS: TLS < 1.2 not accepted, no weak ciphers, valid certificates, including inside the cluster", covers: [NFR-SEC3], module: security, level: security, priority: P0,
+     spec: "Given scanning the gateway TLS configuration and internal connections, Then only TLS 1.2+ with strong cipher suites."}
+  - {id: TC-SEC-23, title: "No secrets in source code, images or git history; secrets only in Key Vault", covers: [NFR-SEC4], module: security, level: ci, priority: P0,
+     spec: "Given gitleaks scanning the entire history and scanning images and configuration, Then no secrets are found."}
+  - {id: TC-SEC-24, title: "Supply chain: pinned, scanned, signed libraries, images and workflows, with SBOM", covers: [NFR-SEC6], module: security, level: ci, priority: P0,
+     spec: "Given the pipeline on every PR and nightly, Then Trivy, OSV, Dependency-Check and hadolint run; images are signed with cosign; the cluster rejects unsigned images."}
+  - {id: TC-SEC-25, title: "Emergency access: does not exceed the scope of one patient, expires after 60 minutes, alerts the DPO, audits the purpose", covers: [AC-10.1, AC-BG.1, AC-BG.3], module: security, level: api, priority: P0,
+     spec: "Given emergency access to patient A, When opening patient B or acting after 60 minutes, Then it is denied."}
+  - {id: TC-SEC-26, title: "Immutable audit: cannot be modified/deleted via API, UI or storage account; a hash chain detects tampering", covers: [AC-09.2, NFR-SEC5], module: security, level: integration, priority: P0,
+     spec: "Given a written audit record, When attempting to modify/delete it by any route, Then it fails; audit-verify detects a broken chain."}
+  - {id: TC-SEC-27, title: "Shared device: logout clears patient data from memory, the Back button does not show it again", covers: [NFR-SEC14], module: security, level: e2e, priority: P0,
+     spec: "Given the medical record was viewed and the user logs out, When pressing Back, Then no data is displayed; sessionStorage/localStorage contains no token or patient data."}
+  - {id: TC-SEC-28, title: "No tokens stored in localStorage; session expires after idle time", covers: [NFR-SEC14, NFR-SEC1], module: security, level: e2e, priority: P0,
+     spec: "Given login, Then localStorage contains no token; Given 15 minutes idle (staff), Then the user is automatically logged out."}

@@ -121,11 +121,11 @@ def analyse():
         gap = entry.get("gap") or entry.get("blocked_by") or ""
         if not status:
             if live_e2e:
-                status, gap = "partial", "Chỉ kiểm ở giao diện với dữ liệu giả; chưa kiểm API/dịch vụ thật."
+                status, gap = "partial", "Checked only in the UI with fake data; the real API/service is not tested yet."
             elif tc["level"] in ("review", "manual", "monitoring"):
-                status, gap = "manual", "Rà soát/đo thủ công theo kế hoạch kiểm thử."
+                status, gap = "manual", "Manual review/measurement per the test plan."
             else:
-                status, gap = "planned", "Chờ tính năng hoặc môi trường tương ứng được hiện thực."
+                status, gap = "planned", "Waiting for the corresponding feature or environment to be implemented."
         if status not in AUTOMATION:
             errors.append(f"{tc_id}: unknown automation status '{status}'")
         if status in ("automated", "partial") and not (refs or live_e2e):
@@ -160,27 +160,27 @@ def write_reports(m, rows, ac_to_uc, nfr_ids, stats):
     for r in rows:
         for c in r["covers"]:
             by_req[c].append(r)
-    lines = ["# Truy vết yêu cầu ↔ test case", "",
-             "> Sinh tự động bằng `python -I tools/qa/trace.py`. Không sửa tay. Nguồn: `docs/06-testing/catalog/`, SRS v"
+    lines = ["# Requirement ↔ test case traceability", "",
+             "> Generated automatically by `python -I tools/qa/trace.py`. Do not edit by hand. Source: `docs/06-testing/catalog/`, SRS v"
              f"{m['document']['version']}.", ""]
-    lines += ["## Tóm tắt", "", "| Chỉ số | Giá trị |", "|---|---|",
+    lines += ["## Summary", "", "| Metric | Value |", "|---|---|",
               f"| Test case | {stats['total']} |",
-              f"| Đã tự động hóa hoặc một phần | {stats['automated_or_partial']} ({stats['automated_or_partial'] * 100 // stats['total']}%) |",
-              f"| Tự động hóa đầy đủ | {stats['automated']} |",
-              f"| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | {stats['p0_total']}, tự động hóa ít nhất một phần: {stats['p0_automated_or_partial']} |", ""]
-    lines += ["## Theo module và trạng thái", "", "| Module | Tổng | Tự động | Một phần | Chờ viết | Thủ công |", "|---|---|---|---|---|---|"]
+              f"| Automated or partially automated | {stats['automated_or_partial']} ({stats['automated_or_partial'] * 100 // stats['total']}%) |",
+              f"| Fully automated | {stats['automated']} |",
+              f"| P0 (security, patient data, patient safety) | {stats['p0_total']}, automated at least partially: {stats['p0_automated_or_partial']} |", ""]
+    lines += ["## By module and status", "", "| Module | Total | Automated | Partial | Planned | Manual |", "|---|---|---|---|---|---|"]
     for mod in sorted({r["module"] for r in rows}):
         c = Counter(r["status"] for r in rows if r["module"] == mod)
         lines.append(f"| {mod} | {sum(c.values())} | {c['automated']} | {c['partial']} | {c['planned']} | {c['manual']} |")
-    lines += ["", "## Theo mức kiểm thử", "", "| Mức | Tổng | Tự động | Một phần | Chờ viết | Thủ công |", "|---|---|---|---|---|---|"]
+    lines += ["", "## By test level", "", "| Level | Total | Automated | Partial | Planned | Manual |", "|---|---|---|---|---|---|"]
     for lv in LEVELS:
         c = Counter(r["status"] for r in rows if r["level"] == lv)
         if sum(c.values()):
             lines.append(f"| {lv} | {sum(c.values())} | {c['automated']} | {c['partial']} | {c['planned']} | {c['manual']} |")
-    lines += ["", "## P0 chưa có test tự động (ưu tiên viết khi tính năng sẵn sàng)", "", "| Test case | Chặn bởi | Người phụ trách |", "|---|---|---|"]
+    lines += ["", "## P0 without automated tests (write first when the feature is ready)", "", "| Test case | Blocked by | Owner |", "|---|---|---|"]
     for r in sorted((x for x in rows if x["priority"] == "P0" and x["status"] == "planned"), key=lambda x: x["id"]):
         lines.append(f"| {r['id']} | {r['gap']} | {r['owner']} |")
-    lines += ["", "## Ma trận yêu cầu → test case", "", "| Yêu cầu | Test case | Trạng thái |", "|---|---|---|"]
+    lines += ["", "## Requirement → test case matrix", "", "| Requirement | Test case | Status |", "|---|---|---|"]
     for req in sorted(set(ac_to_uc) | nfr_ids):
         for r in by_req.get(req, []):
             lines.append(f"| {req} | {r['id']} ({r['level']}, {r['priority']}) | {r['status']} |")
