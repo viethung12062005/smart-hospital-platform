@@ -77,6 +77,29 @@ GitHub App riêng: quyền **Contents: read/write** và **Pull requests: read/wr
 App ID và private key lưu ở **Environment secret** của app repo (một nơi duy nhất), CI dùng để mở PR hoặc commit digest image vào `shp-gitops`.
 Xoay key mỗi 90 ngày (nhắc trong `cost-guard`/issue định kỳ).
 
+### 7.1. Các bước tạo App (làm trên giao diện, không có API/CLI)
+
+1. GitHub → **Settings → Developer settings → GitHub Apps → New GitHub App**.
+2. Name `shp-gitops-bot`, Homepage là URL repo bất kỳ; **bỏ tick Webhook Active** (không cần webhook).
+3. Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**; **Metadata: Read-only** (tự bật). Không cấp quyền Actions, Secrets, Administration.
+4. "Where can this GitHub App be installed": **Only on this account**.
+5. **Create GitHub App** → ghi lại **App ID** → **Generate a private key** (tải `.pem`, chỉ tải được một lần).
+6. **Install App** → chọn **Only select repositories → `shp-gitops`**.
+7. Lưu thông tin ở **một nơi duy nhất** là Environment `deploy-uat`/`deploy-prod` của repo ứng dụng và templates:
+   - variable `GITOPS_APP_ID` = App ID;
+   - secret `gitops-app-private-key` = toàn bộ nội dung `.pem` (kể cả dòng BEGIN/END).
+8. Không đặt App ID/private key vào repo, workflow hay biến thường.
+
+### 7.2. Kiểm tra
+
+- `gitops-promote.yml` gọi `actions/create-github-app-token` với `app-id` và secret ở trên; log bước này phải in ra token ngắn hạn (không in private key).
+- Chạy workflow ở chế độ `pr`: phải mở được PR trong `shp-gitops` với tác giả là bot (`shp-gitops-bot[bot]`), không phải tài khoản cá nhân.
+- Kiểm quyền tối thiểu: bot **không** mở được PR ở repo khác và **không** đọc được secret/Actions.
+
+### 7.3. Xoay khóa
+
+Tạo private key mới trên trang App → cập nhật secret → chạy lại một workflow `gitops-promote` → xóa key cũ trên trang App. Ghi ngày xoay gần nhất vào issue định kỳ của `cost-guard`.
+
 ## 8. Kiểm tra sau khi cài (đưa vào ENV-05)
 
 - [ ] Push trực tiếp lên `main` bị chặn ở cả 4 repo
