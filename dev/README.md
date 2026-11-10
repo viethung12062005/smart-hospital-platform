@@ -6,8 +6,8 @@ và các service đều chạy trong một cụm kind trên máy bạn, bằng *
 ## 1. Chuẩn bị máy (một lần)
 | Cần | Ghi chú |
 |---|---|
-| 4 CPU, **16 GB RAM**, 15 GB ổ trống | profile `core` + 8 service dùng ~6 GB |
-| **Docker** | Windows/macOS: Docker Desktop (Settings → Resources: RAM ≥ 6 GB). Linux: Docker Engine |
+| 4 CPU, **16 GB RAM**, 15 GB ổ trống | profile `core` + 8 service dùng ~6 GB; profile `full` cần thêm ~5 GB |
+| **Docker** | Windows/macOS: Docker Desktop (Settings → Resources: RAM ≥ 8 GB cho `core`, **≥ 12 GB khi dùng `full`**). Linux: Docker Engine |
 | Windows | Làm mọi thứ **trong WSL2 (Ubuntu)**, clone repo vào thư mục của WSL (không phải `/mnt/c`). Hướng dẫn từng bước và script cài tự động: [docs/onboarding-windows.md](../docs/onboarding-windows.md) |
 | `git`, `make`, `curl`, `openssl` | có sẵn trên macOS/Ubuntu (`sudo apt install make curl openssl` nếu thiếu) |
 
@@ -86,6 +86,8 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | `doctor` báo cổng bị chiếm | Tắt chương trình đang dùng cổng (Postgres/Redis/Keycloak cài sẵn trên máy), hoặc đổi cổng trong `dev/kind/cluster.yaml` |
 | `Docker chưa chạy` | Mở Docker Desktop / `sudo systemctl start docker` |
 | Pod `Pending`/`OOMKilled` | Tăng RAM cho Docker; deploy ít service hơn (`make deploy SVC=<chỉ cái cần>`) |
+| Cả cụm mất kết nối, `docker inspect` thấy node `OOMKilled` | Docker VM hết RAM khi dựng `full` + 8 service cùng lúc: tăng RAM cho Docker Desktop, rồi `docker start shp-local-control-plane` |
+| Pod `Not Ready` kèm `probe ... timed out after 1s` | Máy đang quá tải lúc khởi động; chờ vài phút, probe đã đặt `timeoutSeconds: 5` nên tự hết |
 | `helm ... timed out` | Kéo image chậm: chạy lại lệnh vừa lỗi (các bước đều chạy lại được) |
 | `deploy` lỗi `ErrImageNeverPull` | Image chưa được nạp: chạy lại `make -C dev deploy SVC=<svc>` |
 | Pod service `CrashLoopBackOff` | `make -C dev app-logs SVC=<svc>`: thường do thiếu cấu hình hoặc DB chưa sẵn |
@@ -95,7 +97,9 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | Muốn xóa sạch | `make -C dev down && rm -rf dev/.local` |
 
 ## 7. Profile `full` (LOC-08)
-Chỉ bật khi task cần: `make -C dev up PROFILE=full` (cụm đã tạo bằng profile `core` trước đây: `make -C dev down` rồi `up` lại để có cổng mới). Cần **Docker ≥ 10 GB RAM** (core ~6 GB + full ~4.5 GB), 25 GB ổ trống. Sau đó `make -C dev pull-models` (một lần, vài GB) để có `bge-m3` và `qwen2.5:3b`.
+Chỉ bật khi task cần: `make -C dev up PROFILE=full` (cụm đã tạo bằng profile `core` trước đây: `make -C dev down` rồi `up` lại để có cổng mới). Cần **Docker ≥ 12 GB RAM** (core ~6 GB + full ~5 GB), 25 GB ổ trống.
+
+Đo trên cụm kind (10/11/2026, Docker VM 15,6 GB): dựng `core` + `full` dùng 6,9 GB; lúc mới khởi động CPU lên ~300% trong 1–2 phút (OpenSearch đánh index, ClamAV nạp chữ ký, Ollama khởi tạo). Nếu dựng `full` cùng lúc với 8 service, Docker VM có thể hết RAM và node kind bị `OOMKilled` — dựng `up` trước, đợi pod Ready rồi mới `deploy`. Sau đó `make -C dev pull-models` (một lần, vài GB) để có `bge-m3` và `qwen2.5:3b`.
 
 | Thành phần | Từ máy bạn | Từ service trong cụm | Dùng cho |
 |---|---|---|---|
