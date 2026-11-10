@@ -35,4 +35,11 @@ resources:            # giới hạn nhỏ để chạy được trên máy 16 G
   redis:    { requests: { cpu: 50m,  memory: 32Mi  }, limits: { memory: 128Mi } }
   rabbitmq: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 512Mi } }
   azurite:  { requests: { cpu: 50m,  memory: 64Mi  }, limits: { memory: 256Mi } }
-  keycloak: { requests: { cpu: 200m, memory: 512Mi }, limits: { memory: 1Gi } }
+  # Keycloak start-dev build lại Quarkus lúc khởi động nên RAM vọt lên trong vài giây đầu; 1Gi bị OOMKilled trên máy nhiều lõi.
+  keycloak: { requests: { cpu: 200m, memory: 768Mi }, limits: { memory: 1536Mi } }
+
+# JVM của Keycloak: mặc định heap = 70% giới hạn và số thread GC/JIT theo số lõi của MÁY (không theo cụm),
+# nên cùng chart mà máy nhiều lõi bị OOM. Heap 50% (768Mi) + cố định 2 CPU cho bộ nhớ ổn định trên mọi máy.
+keycloakJvm:
+  heap: "-XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=25"
+  append: "-XX:ActiveProcessorCount=2"
