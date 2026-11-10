@@ -28,6 +28,7 @@ from shp_platform import audit, events, mongo
 from shp_platform.bus import Bus, RabbitBus, ServiceBus, start_consumer
 from shp_platform.errors import ShpError, install_error_handlers
 from shp_platform.security import Authenticator, AuthSettings, Principal
+from shp_platform.telemetry import install_tracing
 
 LOG = logging.getLogger("shp.ml")
 
@@ -112,6 +113,7 @@ def build_app(
 
     app = FastAPI(title="shp-ml", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)
+    install_tracing(app, "ml")
 
     def state() -> State:
         return holder_box["state"]
