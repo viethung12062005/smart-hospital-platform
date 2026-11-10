@@ -48,6 +48,7 @@ bằng việc chỉ tạo tham chiếu từ ID nhận qua event hoặc API đã 
 | Chuyên khoa (`specialty`) | `internal-medicine` Nội tổng quát · `cardiology` Tim mạch · `pediatrics` Nhi · `obstetrics-gynecology` Sản phụ khoa · `dermatology` Da liễu · `ent` Tai mũi họng · `ophthalmology` Mắt · `orthopedics` Chấn thương chỉnh hình · `neurology` Thần kinh · `gastroenterology` Tiêu hóa · `endocrinology` Nội tiết · `general-surgery` Ngoại tổng quát |
 | Lý do hủy lịch (`cancel-reason`) | `patient-request` · `practitioner-unavailable` · `duplicate` · `rescheduled` · `system-noshow-cleanup` · `other` |
 | Kênh đặt lịch (`booking-channel`) | `web` · `chatbot` · `staff` |
+| Vai trò lâm sàng (`practitioner-role`, `PractitionerRole.code`) | `doctor` Bác sĩ · `nurse` Điều dưỡng |
 | Sinh hiệu (LOINC) | `8867-4` mạch (/min) · `85354-9` huyết áp (panel: `8480-6` tâm thu, `8462-4` tâm trương, mm[Hg]) · `8310-5` nhiệt độ (Cel) · `9279-1` nhịp thở (/min) · `59408-5` SpO2 (%) · `29463-7` cân nặng (kg) · `8302-2` chiều cao (cm) · `39156-5` BMI (kg/m2) |
 | Loại tài liệu (LOINC) | `11502-2` kết quả xét nghiệm · `18748-4` kết quả chẩn đoán hình ảnh · `57833-6` đơn thuốc · `57133-1` giấy chuyển viện · `34133-9` tóm tắt đợt điều trị · `51851-4` giấy tờ hành chính |
 | Chẩn đoán | ICD-10 (`http://hl7.org/fhir/sid/icd-10`) |
