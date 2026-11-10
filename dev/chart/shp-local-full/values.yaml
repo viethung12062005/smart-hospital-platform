@@ -19,7 +19,7 @@ resources:          # tổng ~4.5 GB RAM trên nền profile core (~6 GB); cần
   clamav:     { requests: { cpu: 100m, memory: 1Gi },   limits: { memory: 2Gi } }
   opensearch: { requests: { cpu: 200m, memory: 768Mi }, limits: { memory: 1280Mi } }
   ollama:     { requests: { cpu: 500m, memory: 1Gi },   limits: { memory: 6Gi } }
-  mlflow:     { requests: { cpu: 50m,  memory: 128Mi }, limits: { memory: 384Mi } }
+  mlflow:     { requests: { cpu: 50m,  memory: 256Mi }, limits: { memory: 1Gi } }   # 384Mi bị OOMKilled khi khởi động
   loki:       { requests: { cpu: 50m,  memory: 128Mi }, limits: { memory: 384Mi } }
   grafana:    { requests: { cpu: 50m,  memory: 128Mi }, limits: { memory: 384Mi } }
   otel:       { requests: { cpu: 50m,  memory: 64Mi },  limits: { memory: 256Mi } }
