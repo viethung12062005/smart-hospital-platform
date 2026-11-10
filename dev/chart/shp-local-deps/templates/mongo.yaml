@@ -43,7 +43,9 @@ spec:
           readinessProbe:
             exec: { command: ["mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"] }
             initialDelaySeconds: 10
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           resources: {{- toYaml .Values.resources.mongo | nindent 12 }}
           volumeMounts:
             - { name: data, mountPath: /data/db }

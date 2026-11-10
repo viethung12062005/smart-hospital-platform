@@ -49,5 +49,7 @@ spec:
             exec: { command: ["rabbitmq-diagnostics", "-q", "ping"] }
             initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           resources: {{- toYaml .Values.resources.rabbitmq | nindent 12 }}
 {{- end }}

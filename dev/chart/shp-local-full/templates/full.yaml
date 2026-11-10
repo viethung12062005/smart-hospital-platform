@@ -115,11 +115,15 @@ spec:
           image: {{ .Values.images.mlflow }}
           command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000",
                     "--backend-store-uri", "sqlite:////mlflow/mlflow.db",
-                    "--default-artifact-root", "/mlflow/artifacts"]
+                    "--default-artifact-root", "/mlflow/artifacts",
+                    "--workers", "1"]   # 1 worker: 4 worker mặc định vượt giới hạn bộ nhớ local
           ports: [{ containerPort: 5000 }]
           readinessProbe:
             httpGet: { path: /health, port: 5000 }
-            periodSeconds: 5
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           volumeMounts: [{ name: data, mountPath: /mlflow }]
           resources: {{- toYaml .Values.resources.mlflow | nindent 12 }}
   volumeClaimTemplates:
