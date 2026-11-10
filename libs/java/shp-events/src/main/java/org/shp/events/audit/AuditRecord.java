@@ -17,6 +17,8 @@ public record AuditRecord(
     String action,
     String outcome,
     Actor actor,
+    String onBehalfOf,
+    String relationship,
     UUID patientId,
     String resource,
     String purposeOfUse,
