@@ -31,6 +31,19 @@ def main() -> int:
     for code in re.findall(r"`(\d{2,5}-\d)` (?:kết quả|đơn|giấy|tóm|mạch|huyết|nhiệt|nhịp|SpO2|cân|chiều|BMI)", doc):
         if code not in {str(c) for s in ("loinc-vital-signs", "loinc-document-types") for c in cs[s]["concepts"]}:
             errs.append(f"mã LOINC trong tài liệu nhưng thiếu ở danh mục: {code}")
+    raw = yaml.safe_load((ROOT / "contracts/terminology/code-systems.yaml").read_text(encoding="utf-8"))
+    ext = raw.get("extensions", {})
+    for key, spec in ext.items():
+        if spec.get("url") != f"https://shp.example.org/fhir/StructureDefinition/{key}":
+            errs.append(f"extension {key}: url phải là https://shp.example.org/fhir/StructureDefinition/{key}")
+        for field in ("context", "value"):
+            if not spec.get(field):
+                errs.append(f"extension {key}: thiếu {field}")
+    documented = set(re.findall(r"`extension\[([a-z-]+)\]`", doc))
+    for key in sorted(documented - set(ext)):
+        errs.append(f"extension[{key}] có trong 01-domain-model nhưng thiếu ở contracts/terminology")
+    for key in sorted(set(ext) - documented):
+        errs.append(f"extension {key} có ở contracts/terminology nhưng không dùng trong 01-domain-model")
     ev = json.loads((ROOT / "contracts/events/document/document-uploaded.v1.example.json").read_text(encoding="utf-8"))
     if ev["type"] not in {str(c) for c in cs["loinc-document-types"]["concepts"]}:
         errs.append("ví dụ E8 dùng loại tài liệu ngoài danh mục")
@@ -38,7 +51,7 @@ def main() -> int:
         print("ERROR", e)
     if errs:
         return 1
-    print("OK: " + ", ".join(f"{n}={len(s['concepts'])}" for n, s in cs.items()))
+    print("OK: " + ", ".join(f"{n}={len(s['concepts'])}" for n, s in cs.items()) + f", extensions={len(ext)}")
     return 0
 
 

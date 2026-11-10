@@ -53,6 +53,18 @@ bằng việc chỉ tạo tham chiếu từ ID nhận qua event hoặc API đã 
 | Loại tài liệu (LOINC) | `11502-2` kết quả xét nghiệm · `18748-4` kết quả chẩn đoán hình ảnh · `57833-6` đơn thuốc · `57133-1` giấy chuyển viện · `34133-9` tóm tắt đợt điều trị · `51851-4` giấy tờ hành chính |
 | Chẩn đoán | ICD-10 (`http://hl7.org/fhir/sid/icd-10`) |
 
+### 3.1 Extension do SHP định nghĩa
+
+URL theo quy ước canonical (`https://shp.example.org/fhir/StructureDefinition/<khóa>`); danh sách máy đọc ở `contracts/terminology/code-systems.yaml` (`extensions`).
+
+| Khóa | Gắn vào | Kiểu giá trị |
+|---|---|---|
+| `booking-channel` | Appointment | `valueCode` (value set `booking-channel`) |
+| `rescheduled-from` | Appointment | `valueReference` (`Appointment`) |
+| `clinical-note` | Encounter | `valueMarkdown` |
+| `addendum` | Encounter | complex: `author` (`valueReference` Practitioner), `recordedAt` (`valueDateTime`), `text` (`valueMarkdown`) |
+| `released-to-patient` | DocumentReference | complex: `releasedAt` (`valueDateTime`), `releasedBy` (`valueReference` Practitioner) |
+
 ## 4. Profile từng resource
 
 Ký hiệu: **1..1** bắt buộc · **0..1** tùy chọn · **0..\*** nhiều. Trường không liệt kê thì **không dùng** và bị từ chối

@@ -32,6 +32,7 @@
 | Canonical URL | `https://shp.example.org/fhir/...` (domain giả định) |
 | Identifier system | `urn:shp:mrn` (mã bệnh nhân `BN-YYYY-NNNNNN`), `urn:shp:practitioner` (mã nhân viên `NV-NNNN`), `urn:shp:subject` (định danh tài khoản OIDC) |
 | Code system | ICD-10 `http://hl7.org/fhir/sid/icd-10`, LOINC `http://loinc.org`, chuyên khoa `https://shp.example.org/fhir/CodeSystem/specialty`, lý do hủy `https://shp.example.org/fhir/CodeSystem/cancel-reason` |
+| Extension | `https://shp.example.org/fhir/StructureDefinition/<khóa>`; danh sách ở 01 §3.1 và `contracts/terminology` |
 | Tiền tố tên | Event `shp.<context>.<event>.v<N>`; bảng/collection snake_case số ít cho Postgres, số nhiều cho MongoDB |
 | Dữ liệu | Chỉ dữ liệu giả; event và log **không chứa PII** (chỉ ID) |
 
