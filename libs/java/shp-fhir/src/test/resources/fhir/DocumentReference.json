@@ -1,0 +1,33 @@
+{
+  "resourceType": "DocumentReference",
+  "id": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e11",
+  "meta": { "versionId": "3", "lastUpdated": "2026-12-03T10:00:00.000+07:00" },
+  "extension": [
+    {
+      "url": "https://shp.example.org/fhir/StructureDefinition/released-to-patient",
+      "extension": [
+        { "url": "releasedAt", "valueDateTime": "2026-12-03T10:00:00+07:00" },
+        { "url": "releasedBy", "valueReference": { "reference": "Practitioner/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02" } }
+      ]
+    }
+  ],
+  "status": "current",
+  "docStatus": "final",
+  "type": { "coding": [ { "system": "http://loinc.org", "code": "11502-2", "display": "Laboratory report" } ] },
+  "subject": { "reference": "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01" },
+  "date": "2026-12-03T09:50:00+07:00",
+  "author": [ { "reference": "Practitioner/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02" } ],
+  "description": "Kết quả xét nghiệm máu (DỮ LIỆU GIẢ)",
+  "content": [
+    {
+      "attachment": {
+        "contentType": "application/pdf",
+        "size": 48213,
+        "hash": "2jmj7l5rSw0yVb/vlWAYkK/YBwk=",
+        "title": "xet-nghiem-mau.pdf",
+        "creation": "2026-12-03T09:45:00+07:00"
+      }
+    }
+  ],
+  "context": { "encounter": [ { "reference": "Encounter/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e07" } ] }
+}
