@@ -7,6 +7,8 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:15432/scheduling}
     username: ${SPRING_DATASOURCE_USERNAME:shp}
     password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      connection-init-sql: SET search_path TO scheduling, public
   flyway:
     # Bảng nền tảng (outbox, inbox, idempotency_key) đến từ shp-data-postgres; migration của service đặt ở db/migration (V1+).
     locations: classpath:db/migration,classpath:db/shp-messaging/postgres
