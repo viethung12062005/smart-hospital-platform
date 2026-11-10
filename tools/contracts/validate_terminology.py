@@ -11,7 +11,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 FMT = {"loinc-vital-signs": r"^\d{1,5}-\d$", "loinc-document-types": r"^\d{1,5}-\d$", "icd10-subset": r"^[A-Z]\d{2}(\.\d{1,2})?$",
-       "specialty": r"^[a-z]+(-[a-z]+)*$", "cancel-reason": r"^[a-z]+(-[a-z]+)*$", "booking-channel": r"^[a-z]+$"}
+       "specialty": r"^[a-z]+(-[a-z]+)*$", "cancel-reason": r"^[a-z]+(-[a-z]+)*$", "booking-channel": r"^[a-z]+$",
+       "practitioner-role": r"^[a-z]+$"}
 
 
 def main() -> int:
@@ -24,7 +25,8 @@ def main() -> int:
                 errs.append(f"{name}: mã sai định dạng: {code}")
             if not label:
                 errs.append(f"{name}: {code} thiếu nhãn")
-            if name in ("specialty", "cancel-reason", "booking-channel", "loinc-vital-signs", "loinc-document-types") and f"`{code}`" not in doc:
+            if name in ("specialty", "cancel-reason", "booking-channel", "practitioner-role", "loinc-vital-signs",
+                        "loinc-document-types") and f"`{code}`" not in doc:
                 errs.append(f"{name}: {code} không có trong 01-domain-model.md §3")
     for code in re.findall(r"`(\d{2,5}-\d)` (?:kết quả|đơn|giấy|tóm|mạch|huyết|nhiệt|nhịp|SpO2|cân|chiều|BMI)", doc):
         if code not in {str(c) for s in ("loinc-vital-signs", "loinc-document-types") for c in cs[s]["concepts"]}:

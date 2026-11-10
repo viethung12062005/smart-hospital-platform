@@ -31,6 +31,9 @@ codeSystems:
   booking-channel:
     url: https://shp.example.org/fhir/CodeSystem/booking-channel
     concepts: { web: Web, chatbot: Chatbot, staff: Nhân viên đặt }
+  practitioner-role:
+    url: https://shp.example.org/fhir/CodeSystem/practitioner-role
+    concepts: { doctor: Bác sĩ, nurse: Điều dưỡng }
   loinc-vital-signs:
     url: http://loinc.org
     concepts:
