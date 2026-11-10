@@ -1,0 +1,27 @@
+{
+  "resourceType": "Patient",
+  "id": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01",
+  "meta": { "versionId": "3", "lastUpdated": "2026-11-20T09:15:00.000+07:00" },
+  "identifier": [
+    { "system": "urn:shp:mrn", "value": "BN-2026-000123" },
+    { "system": "urn:shp:cccd", "value": "********1234" }
+  ],
+  "active": true,
+  "name": [ { "use": "official", "text": "Nguyễn Văn An (test)", "family": "Nguyễn", "given": [ "Văn", "An" ] } ],
+  "telecom": [
+    { "system": "phone", "value": "+84900012345" },
+    { "system": "email", "value": "an.nguyen@example.test" }
+  ],
+  "gender": "male",
+  "birthDate": "1985-04-12",
+  "address": [ { "text": "(giả) Phường Bến Nghé, Quận 1", "district": "Quận 1", "city": "TP. Hồ Chí Minh" } ],
+  "contact": [
+    {
+      "relationship": [ { "text": "Vợ" } ],
+      "name": { "text": "Trần Thị Bình (test)" },
+      "telecom": [ { "system": "phone", "value": "+84900067890" } ]
+    }
+  ],
+  "communication": [ { "language": { "coding": [ { "system": "urn:ietf:bcp:47", "code": "vi" } ] } } ],
+  "link": [ { "other": { "reference": "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e09" }, "type": "replaced-by" } ]
+}

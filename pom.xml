@@ -27,6 +27,7 @@
     <module>libs/java/shp-data-postgres</module>
     <module>libs/java/shp-data-mongo</module>
     <module>libs/java/shp-messaging</module>
+    <module>libs/java/shp-fhir</module>
     <module>services/gateway</module>
     <module>services/scheduling</module>
     <module>services/notification</module>
@@ -100,6 +101,11 @@
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-data-mongo</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.shp</groupId>
+        <artifactId>shp-fhir</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

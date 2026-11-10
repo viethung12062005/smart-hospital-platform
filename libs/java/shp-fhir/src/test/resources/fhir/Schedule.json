@@ -1,0 +1,12 @@
+{
+  "resourceType": "Schedule",
+  "id": "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e04",
+  "meta": { "versionId": "5", "lastUpdated": "2026-11-20T00:05:00.000+07:00" },
+  "active": true,
+  "specialty": [
+    { "coding": [ { "system": "https://shp.example.org/fhir/CodeSystem/specialty", "code": "cardiology", "display": "Tim mạch" } ] }
+  ],
+  "actor": [ { "reference": "Practitioner/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02", "display": "BS. Lê Minh Châu (test)" } ],
+  "planningHorizon": { "start": "2026-11-20T00:00:00+07:00", "end": "2026-12-20T00:00:00+07:00" },
+  "comment": "Lịch khám buổi sáng"
+}
