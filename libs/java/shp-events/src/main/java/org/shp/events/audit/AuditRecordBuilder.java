@@ -18,6 +18,8 @@ import org.shp.events.Uuids;
 public final class AuditRecordBuilder {
   public static final int MAX_REASON_LENGTH = 200;
   public static final int MAX_USER_AGENT_LENGTH = 120;
+  private static final java.util.regex.Pattern ON_BEHALF_OF =
+      java.util.regex.Pattern.compile("^(Patient|Practitioner)/[A-Za-z0-9-]+$");
 
   private static final Pattern RESOURCE =
       Pattern.compile("^[A-Za-z]+(/[A-Za-z0-9-]{1,64})?(\\?[A-Za-z_:.,-]+(&[A-Za-z_:.,-]+)*)?$");
@@ -27,6 +29,7 @@ public final class AuditRecordBuilder {
 
   /**
    * Tham số tùy chọn có thể null: patientId, purposeOfUse, reason, traceId, clientIp, userAgent.
+   * Không ủy quyền: onBehalfOf/relationship = null.
    */
   public static AuditRecord build(
       Clock clock,
@@ -34,6 +37,42 @@ public final class AuditRecordBuilder {
       String action,
       String outcome,
       AuditRecord.Actor actor,
+      String resource,
+      UUID patientId,
+      String purposeOfUse,
+      String reason,
+      String traceId,
+      String clientIp,
+      String userAgent) {
+    return build(
+        clock,
+        service,
+        action,
+        outcome,
+        actor,
+        null,
+        null,
+        resource,
+        patientId,
+        purposeOfUse,
+        reason,
+        traceId,
+        clientIp,
+        userAgent);
+  }
+
+  /**
+   * Hành động thay mặt người được quản lý (ADR-0018): {@code onBehalfOf} là hồ sơ truy cập thật sự,
+   * {@code actor} vẫn là tài khoản đang đăng nhập; {@code relationship} = guardian/proxy.
+   */
+  public static AuditRecord build(
+      Clock clock,
+      String service,
+      String action,
+      String outcome,
+      AuditRecord.Actor actor,
+      String onBehalfOf,
+      String relationship,
       String resource,
       UUID patientId,
       String purposeOfUse,
@@ -53,6 +92,14 @@ public final class AuditRecordBuilder {
       throw new IllegalArgumentException(
           "resource chỉ được chứa loại, id hoặc TÊN tham số tìm kiếm (không có giá trị)");
     }
+    if (onBehalfOf != null && !ON_BEHALF_OF.matcher(onBehalfOf).matches()) {
+      throw new IllegalArgumentException("onBehalfOf phải là Patient/<id> hoặc Practitioner/<id>");
+    }
+    if (relationship != null
+        && (onBehalfOf == null
+            || !(relationship.equals("guardian") || relationship.equals("proxy")))) {
+      throw new IllegalArgumentException("relationship chỉ guardian/proxy và phải có onBehalfOf");
+    }
     if (reason != null && reason.length() > MAX_REASON_LENGTH) {
       throw new IllegalArgumentException("reason dài quá " + MAX_REASON_LENGTH + " ký tự");
     }
@@ -70,6 +117,8 @@ public final class AuditRecordBuilder {
         action,
         outcome,
         actor,
+        onBehalfOf,
+        relationship,
         patientId,
         resource,
         purposeOfUse,

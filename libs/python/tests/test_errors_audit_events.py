@@ -77,6 +77,48 @@ def test_audit_record_masks_ip_and_matches_schema() -> None:
     assert audit.mask_ip("example.com") is None
 
 
+def test_audit_records_on_behalf_of_when_acting_for_a_linked_profile() -> None:
+    rec = audit.build(
+        service="clinical",
+        action="read",
+        outcome="success",
+        actor_subject="kc-parent",
+        actor_role="patient",
+        resource="Encounter/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e06",
+        on_behalf_of="Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
+        relationship="guardian",
+        purpose_of_use="PATRQT",
+    )
+    assert rec["actor"]["subject"] == "kc-parent"  # tài khoản thực hiện
+    assert rec["onBehalfOf"] == "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02"  # hồ sơ được truy cập
+    assert rec["relationship"] == "guardian"
+
+
+def test_audit_without_delegation_has_no_on_behalf_of() -> None:
+    rec = audit.build(
+        service="clinical", action="read", outcome="success", actor_subject="kc-1", actor_role="doctor",
+        resource="Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
+    )  # fmt: skip
+    assert "onBehalfOf" not in rec
+
+
+@pytest.mark.parametrize(
+    ("on_behalf_of", "relationship"),
+    [
+        ("Patient/ok", "parent"),  # quan hệ lạ
+        ("not-a-reference", "guardian"),
+        ("Patient/has space", "guardian"),
+    ],
+)
+def test_audit_rejects_invalid_delegation(on_behalf_of: str, relationship: str | None) -> None:
+    with pytest.raises(ValueError):
+        audit.build(
+            service="clinical", action="read", outcome="success", actor_subject="s", actor_role="patient",
+            resource="Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02",
+            on_behalf_of=on_behalf_of, relationship=relationship,
+        )  # fmt: skip
+
+
 @pytest.mark.parametrize("resource", ["Patient?name=Nguyen", "Patient/abc def", ""])
 def test_audit_rejects_search_values_in_resource(resource: str) -> None:
     with pytest.raises(ValueError):

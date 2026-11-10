@@ -84,6 +84,8 @@ EVENTS = [
         "outcome": (enum("success", "denied", "error"), True),
         "actor": ({"type": "object", "additionalProperties": False, "required": ["subject", "role"], "properties": {
             "subject": NS, "role": enum("patient", "doctor", "nurse", "admin", "dpo", "system"), "fhirUser": S}}, True),
+        "onBehalfOf": ({"type": ["string", "null"], "pattern": "^(Patient|Practitioner)/[A-Za-z0-9-]+$"}, False),
+        "relationship": ({"type": ["string", "null"], "enum": ["guardian", "proxy", None]}, False),
         "patientId": ({"type": ["string", "null"], "format": "uuid"}, False),
         "resource": (NS, True),
         "purposeOfUse": (enum("TREAT", "ETREAT", "HOPERAT", "PATRQT"), False),
@@ -91,7 +93,8 @@ EVENTS = [
         "traceId": (S, False),
         "client": ({"type": "object", "additionalProperties": False, "properties": {"ip": S, "userAgent": S}}, False),
     }, {"eventId": _U[10], "occurredAt": _N, "service": "clinical", "action": "read", "outcome": "success",
-        "actor": {"subject": "kc-doctor-demo", "role": "doctor", "fhirUser": "Practitioner/" + _U[2]}, "patientId": _U[1],
+        "actor": {"subject": "kc-doctor-demo", "role": "doctor", "fhirUser": "Practitioner/" + _U[2]},
+        "onBehalfOf": None, "relationship": None, "patientId": _U[1],
         "resource": "Encounter/" + _U[5], "purposeOfUse": "TREAT", "reason": None,
         "traceId": "4bf92f3577b34da6a3ce929d0e0e4736", "client": {"ip": "10.1.2.x", "userAgent": "Mozilla/5.0"}}),
 ]
