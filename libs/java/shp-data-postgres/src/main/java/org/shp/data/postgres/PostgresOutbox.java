@@ -9,8 +9,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Ghi event vào {@code outbox} TRONG CÙNG transaction với thay đổi dữ liệu (13-events §1): cả hai
- * cùng thành công hoặc cùng không.
+ * Write the event to {@code outbox} IN THE SAME transaction as the data change (13-events §1): both
+ * succeed or both fail.
  */
 public final class PostgresOutbox {
   private final JdbcClient jdbc;
@@ -19,24 +19,27 @@ public final class PostgresOutbox {
     this.jdbc = jdbc;
   }
 
-  /** Phải gọi bên trong transaction ({@code @Transactional} hoặc {@code TransactionTemplate}). */
+  /**
+   * Must be called inside a transaction ({@code @Transactional} or {@code TransactionTemplate}).
+   */
   public void add(CloudEvent evt) {
     add(evt, false);
   }
 
   /**
-   * @param validate true: kiểm schema trước khi ghi (bật trong test/dev; production đã có test hợp
-   *     đồng)
+   * @param validate true: validate the schema before writing (enabled in test/dev; production
+   *     already has contract tests)
    */
   public void add(CloudEvent evt, boolean validate) {
     if (!TransactionSynchronizationManager.isActualTransactionActive()) {
       throw new IllegalStateException(
-          "PostgresOutbox.add phải chạy trong transaction cùng thay đổi dữ liệu");
+          "PostgresOutbox.add must run in a transaction with the data change");
     }
     if (validate) {
       var errors = EventSchemas.validate(evt);
       if (!errors.isEmpty()) {
-        throw new IllegalArgumentException("Event không khớp schema: " + String.join("; ", errors));
+        throw new IllegalArgumentException(
+            "Event does not match schema: " + String.join("; ", errors));
       }
     }
     jdbc.sql(

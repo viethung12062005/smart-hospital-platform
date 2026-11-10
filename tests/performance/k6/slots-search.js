@@ -1,8 +1,8 @@
-// NFR-P1 (tìm slot p95 ≤ 300 ms tại 500 RPS), NFR-S2 (5×), NFR-S3 (10×).
-// Chạy trên UAT cỡ production, dữ liệu giả 50.000 bệnh nhân, sau khi làm nóng:
-//   k6 run -e BASE_URL=https://api.uat.example.org -e TOKEN=<token bệnh nhân giả> -e SCENARIO=load tests/performance/k6/slots-search.js
-// SCENARIO: smoke (mặc định, 1 phút, 5 RPS) | load (500 RPS, 10 phút, NFR-P1) | x5 (NFR-S2) | x10 (NFR-S3, chấp nhận 429).
-// Token và địa chỉ truyền bằng biến môi trường: không ghi vào mã.
+// NFR-P1 (slot search p95 ≤ 300 ms at 500 RPS), NFR-S2 (5x), NFR-S3 (10x).
+// Run on production-sized UAT with 50,000 fake patients, after warm-up:
+//   k6 run -e BASE_URL=https://api.uat.example.org -e TOKEN=<fake patient token> -e SCENARIO=load tests/performance/k6/slots-search.js
+// SCENARIO: smoke (default, 1 minute, 5 RPS) | load (500 RPS, 10 minutes, NFR-P1) | x5 (NFR-S2) | x10 (NFR-S3, 429 accepted).
+// Token and address are passed via environment variables: never hardcode them.
 import http from 'k6/http';
 import { check } from 'k6';
 import { Rate } from 'k6/metrics';
@@ -20,7 +20,7 @@ const scenarios = {
   x10: { executor: 'constant-arrival-rate', rate: 5000, timeUnit: '1s', duration: '5m', preAllocatedVUs: 3000, maxVUs: 12000 },
 };
 
-// Ngưỡng theo NFR. 5× nới tới 2× mục tiêu (NFR-S2); 10× chỉ yêu cầu xuống cấp có kiểm soát: không 5xx (NFR-S3).
+// Thresholds per NFR. 5x allows up to 2x the target (NFR-S2); 10x only requires controlled degradation: no 5xx (NFR-S3).
 const thresholdsByScenario = {
   smoke: { http_req_duration: ['p(95)<300'], http_req_failed: ['rate<0.001'] },
   load: { http_req_duration: ['p(95)<300'], http_req_failed: ['rate<0.001'] },
@@ -41,5 +41,5 @@ export default function () {
     tags: { name: 'GET /fhir/Slot' },
   });
   throttled.add(res.status === 429);
-  check(res, { 'status 200 hoặc 429 khi quá tải': (r) => r.status === 200 || r.status === 429 });
+  check(res, { 'status 200 or 429 under overload': (r) => r.status === 200 || r.status === 429 });
 }

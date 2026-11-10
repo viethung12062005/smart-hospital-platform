@@ -7,7 +7,7 @@ import { searchEncounters } from '@/api/clinical';
 import { conceptText, formatDateTime, refId } from '@/api/fhir';
 import { Card, EmptyState, Loading, PageHeader, ProblemAlert, StatusChip } from '@/components/ui';
 
-/** Danh sách lần khám (theo bố cục Encounters của portal PoC trước), lọc theo trạng thái. */
+/** Encounter list (following the previous PoC portal's Encounters layout), filtered by status. */
 export function EncountersPage() {
   const { t } = useTranslation();
   const [status, setStatus] = useState('all');

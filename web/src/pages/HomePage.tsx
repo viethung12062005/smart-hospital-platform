@@ -10,7 +10,7 @@ import { useAuth } from '@/auth/useAuth';
 import { Card, KpiTile, PageHeader, StatusChip } from '@/components/ui';
 import { menusFor } from '@/layout/menus';
 
-/** Trang chủ theo vai trò: KPI nhanh và lối tắt tới các màn hình được phép. */
+/** Home page by role: quick KPIs and shortcuts to the permitted screens. */
 export function HomePage() {
   const { t } = useTranslation();
   const { user } = useAuth();

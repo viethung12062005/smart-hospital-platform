@@ -1,1 +1,1 @@
-"""Chatbot đặt lịch (US-062; 12 §5)."""
+"""Booking chatbot (US-062; 12 §5)."""

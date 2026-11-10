@@ -1,4 +1,4 @@
-"""US-064, US-046: consumer + chấm điểm + API (ML-06..09, ML-11, ML-12, ML-24, ML-25) trên MongoDB thật."""
+"""US-064, US-046: consumer + scoring + API (ML-06..09, ML-11, ML-12, ML-24, ML-25) on a real MongoDB."""
 
 import time
 import uuid
@@ -106,13 +106,13 @@ def test_booked_is_scored_once_with_model_version_and_features(
     _, db, c, _ = env
     e = booked(str(uuid.uuid4()))
     c.handle(e)
-    c.handle(e)  # giao lại: inbox bỏ qua
+    c.handle(e)  # redelivery: the inbox skips it
     p = db.predictions.find_one({})
     assert db.predictions.count_documents({}) == 1
     assert p["modelVersion"] == "1" and 0 <= p["score"] <= 1 and p["features"]["is_first_visit"] == 1  # AC-15.2
     out = list(db.outbox.find({}))
     assert len(out) == 1 and out[0]["eventType"] == "shp.ml.no-show-scored.v1"
-    events.validate(out[0]["payload"])  # ML-12: hợp đồng E10
+    events.validate(out[0]["payload"])  # ML-12: E10 contract
     assert out[0]["payload"]["data"]["highRisk"] == (p["score"] >= p["threshold"])
 
 
@@ -125,7 +125,7 @@ def test_outcomes_feed_next_prediction_and_old_versions_are_ignored(
     c.handle(first)
     appt = first["data"]["appointmentId"]
     c.handle(status(pid, appt, "noshow", version=4))
-    c.handle(status(pid, appt, "fulfilled", version=3))  # cũ hơn: bỏ qua
+    c.handle(status(pid, appt, "fulfilled", version=3))  # older: skipped
     stats = db.patient_stats.find_one({"_id": pid})
     assert (stats["bookedTotal"], stats["noshowTotal"]) == (1, 1)
     assert db.appointment_facts.find_one({"_id": appt})["outcome"] == "noshow"
@@ -212,7 +212,7 @@ def test_shadow_scores_candidate_without_affecting_production(
     assert db.predictions.count_documents({"shadow": False, "modelVersion": "1"}) == 1
     assert db.predictions.count_documents({"shadow": True, "modelVersion": "2"}) == 1
     out = db.outbox.find_one({})
-    assert out["payload"]["data"]["modelVersion"] == "1"  # E10 luôn từ production
+    assert out["payload"]["data"]["modelVersion"] == "1"  # E10 always comes from production
 
 
 def test_alias_change_is_picked_up_without_redeploy(registry: FileRegistry, tmp_path: Path) -> None:

@@ -9,11 +9,11 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-security</artifactId>
-  <name>shp-security — quy tắc JWT dùng chung (servlet và reactive)</name>
-  <description>Không phụ thuộc Spring MVC/WebFlux để cả gateway (WebFlux) và service (MVC) dùng chung.</description>
+  <name>shp-security — shared JWT rules (servlet and reactive)</name>
+  <description>Does not depend on Spring MVC/WebFlux so both gateway (WebFlux) and services (MVC) can share it.</description>
 
   <properties>
-    <!-- Logic được kiểm qua test của shp-web và gateway; module này không có test riêng -->
+    <!-- Logic is exercised by shp-web and gateway tests; this module has no tests of its own -->
     <shp.coverage.minimum>0.00</shp.coverage.minimum>
   </properties>
 
@@ -36,7 +36,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <!-- Test với Keycloak thật (SHR-20) -->
+      <!-- Tests against real Keycloak (SHR-20) -->
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>

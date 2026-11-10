@@ -75,7 +75,9 @@ class GatewayTest {
   @DynamicPropertySource
   static void upstreams(DynamicPropertyRegistry r) {
     r.add("SHP_UPSTREAM_SCHEDULING", () -> "http://127.0.0.1:" + UPSTREAM.getAddress().getPort());
-    r.add("SHP_UPSTREAM_CLINICAL", () -> "http://127.0.0.1:1"); // không có ai nghe → lỗi kết nối
+    r.add(
+        "SHP_UPSTREAM_CLINICAL",
+        () -> "http://127.0.0.1:1"); // nobody listening -> connection error
   }
 
   @TestConfiguration
@@ -132,7 +134,7 @@ class GatewayTest {
     assertThat(r.statusCode()).isEqualTo(200);
     assertThat(r.body()).contains("scheduling");
     assertThat(SEEN_PATH.get()).isEqualTo("/fhir/Slot?schedule=x");
-    assertThat(SEEN_AUTH.get()).isEqualTo("Bearer " + t); // service kiểm lại token
+    assertThat(SEEN_AUTH.get()).isEqualTo("Bearer " + t); // the service validates the token again
   }
 
   @Test
@@ -176,7 +178,7 @@ class GatewayTest {
     assertThat(get("/info", null).body()).contains("gateway");
   }
 
-  // ---------- GW-01: truyền trace context (NFR-O1, 07 §3) ----------
+  // ---------- GW-01: propagate trace context (NFR-O1, 07 §3) ----------
   @Test
   void incomingTraceContextIsContinuedToTheUpstream() throws Exception {
     String traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
@@ -187,7 +189,7 @@ class GatewayTest {
             "traceparent",
             "00-" + traceId + "-00f067aa0ba902b7-01");
     assertThat(r.statusCode()).isEqualTo(200);
-    // cùng trace, span mới của gateway (span-id khác span của client)
+    // same trace, a new gateway span (span-id different from the client's span)
     assertThat(SEEN_TRACEPARENT.get())
         .matches("00-" + traceId + "-[0-9a-f]{16}-[0-9a-f]{2}")
         .doesNotContain("00f067aa0ba902b7");

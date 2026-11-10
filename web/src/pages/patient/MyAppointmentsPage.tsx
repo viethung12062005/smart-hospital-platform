@@ -13,7 +13,7 @@ import { cancelAppointment, participantName, searchAppointments } from '@/api/sc
 import { CANCEL_REASONS, specialtyName } from '@/api/terminology';
 import { Card, EmptyState, Loading, PageHeader, ProblemAlert, StatusChip } from '@/components/ui';
 
-// Lý do bệnh nhân được chọn khi tự hủy (các lý do khác do hệ thống/nhân viên dùng).
+// Reasons a patient may pick when self-cancelling (other reasons are for the system/staff use).
 const PATIENT_REASONS = CANCEL_REASONS.filter((r) => ['patient-request', 'other'].includes(r.code));
 
 export function MyAppointmentsPage() {

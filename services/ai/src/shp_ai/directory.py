@@ -1,7 +1,8 @@
-"""Tra khoa (chuyên khoa) và quan hệ điều trị của người gọi qua API nội bộ của clinical (09 §4), cache 5 phút.
+"""Look up the caller's department (specialty) and care relationships via the clinical internal API (09 §4), cached
+for 5 minutes.
 
-sub → /internal/v1/identity/{sub} → Practitioner/<id> → /internal/v1/practitioners/{id}/roles → chuyên khoa.
-Gọi bằng token dịch vụ của ai (client credentials). Lỗi clinical → 503, không đoán quyền.
+sub → /internal/v1/identity/{sub} → Practitioner/<id> → /internal/v1/practitioners/{id}/roles → specialty.
+Called with the ai service token (client credentials). A clinical error → 503; never guess permissions.
 """
 
 import time
@@ -70,7 +71,7 @@ class ClinicalDirectory:
     def departments(self, principal: Principal) -> tuple[str, ...]:
         claimed = principal.claims.get("shp_departments")
         if isinstance(claimed, list) and all(isinstance(d, str) for d in claimed):
-            return tuple(claimed)  # mapper Keycloak có thể gắn sẵn; không có thì tra clinical
+            return tuple(claimed)  # the Keycloak mapper may already set it; otherwise look it up in clinical
         fu = self.fhir_user(principal)
         if not fu or not fu.startswith("Practitioner/"):
             return ()
@@ -88,7 +89,7 @@ class ClinicalDirectory:
         return bool(res and res.get("care"))
 
     def care_via(self, principal: Principal, patient_id: str) -> str | None:
-        """appointment | encounter | break-glass, hoặc None nếu không có quan hệ điều trị."""
+        """appointment | encounter | break-glass, or None when there is no care relationship."""
         fu = self.fhir_user(principal)
         if not fu or not fu.startswith("Practitioner/"):
             return None
@@ -100,7 +101,7 @@ class ClinicalDirectory:
 
 
 class StaticDirectory:
-    """Bản giả cho test/dev: khoa theo subject, quan hệ điều trị theo (subject, patient)."""
+    """Fake for test/dev: departments by subject, care relationships by (subject, patient)."""
 
     def __init__(
         self,

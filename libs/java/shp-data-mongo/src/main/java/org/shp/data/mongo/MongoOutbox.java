@@ -8,7 +8,9 @@ import org.shp.events.EventSchemas;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/** Ghi event vào {@code outbox} TRONG CÙNG transaction với thay đổi dữ liệu (03 §2.5, 13 §1). */
+/**
+ * Write the event to {@code outbox} IN THE SAME transaction as the data change (03 §2.5, 13 §1).
+ */
 public final class MongoOutbox {
   private final MongoTemplate mongo;
 
@@ -21,17 +23,18 @@ public final class MongoOutbox {
   }
 
   /**
-   * @param validate true: kiểm schema trước khi ghi (bật trong test/dev)
+   * @param validate true: validate the schema before writing (enabled in test/dev)
    */
   public void add(CloudEvent evt, boolean validate) {
     if (!TransactionSynchronizationManager.isActualTransactionActive()) {
       throw new IllegalStateException(
-          "MongoOutbox.add phải chạy trong transaction cùng thay đổi dữ liệu");
+          "MongoOutbox.add must run in a transaction with the data change");
     }
     if (validate) {
       var errors = EventSchemas.validate(evt);
       if (!errors.isEmpty()) {
-        throw new IllegalArgumentException("Event không khớp schema: " + String.join("; ", errors));
+        throw new IllegalArgumentException(
+            "Event does not match schema: " + String.join("; ", errors));
       }
     }
     mongo.insert(

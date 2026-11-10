@@ -16,7 +16,7 @@ import { Card, EmptyState, KpiTile, Loading, PageHeader, ProblemAlert, StatusChi
 
 const STATUSES = ['booked', 'arrived', 'fulfilled', 'noshow', 'cancelled'] as const;
 
-/** Hàng đợi hôm nay (theo bố cục AppointmentQueue của portal PoC trước): KPI theo trạng thái làm bộ lọc, check-in. */
+/** Today's queue (following the previous PoC portal's AppointmentQueue layout): status KPIs as filters, check-in. */
 export function QueuePage() {
   const { t } = useTranslation();
   const { user } = useAuth();

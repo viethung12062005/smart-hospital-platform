@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
- * API gateway: định tuyến theo 07-api-conventions §1, kiểm JWT (lớp 1 của 15-authorization). Không
- * quyết định quyền nghiệp vụ.
+ * API gateway: routes per 07-api-conventions §1, validates JWT (layer 1 of 15-authorization). Does
+ * not decide business authorization.
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan("org.shp.security")

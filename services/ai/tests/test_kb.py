@@ -1,4 +1,4 @@
-"""US-052: kho tri thức (AI-01..AI-05)."""
+"""US-052: knowledge base (AI-01..AI-05)."""
 
 import io
 import time
@@ -22,7 +22,7 @@ MD = (DATA / "tang-huyet-ap.md").read_bytes()
 
 
 def minimal_pdf(lines: list[str]) -> bytes:
-    """PDF một trang có lớp chữ (Helvetica, ASCII) cho test parser."""
+    """Single-page PDF with a text layer (Helvetica, ASCII) for parser tests."""
     text = "BT /F1 12 Tf 50 750 Td " + " ".join(f"({ln}) Tj 0 -16 Td" for ln in lines) + " ET"
     objs = [
         "<< /Type /Catalog /Pages 2 0 R >>",
@@ -65,7 +65,7 @@ def test_parsers_keep_sections_and_pages() -> None:
     )
     assert [b.section for b in pdf] == ["1. Muc tieu", "2. Chuyen tuyen"] and pdf[0].page == 1
     with pytest.raises(parsers.ParseError):
-        parsers.parse(minimal_pdf([]), parsers.PDF)  # không có lớp chữ
+        parsers.parse(minimal_pdf([]), parsers.PDF)  # no text layer
 
 
 def test_chunker_respects_sections_size_and_overlap() -> None:
@@ -96,7 +96,7 @@ def test_lifecycle_versioning_without_gap_and_retire(make_deps: Any) -> None:
     index: MemoryIndex = deps.index
     v1 = {c.id for c in index.chunks.values()}
     kb.replace(doc["_id"], MD.replace(b"180/110", b"170/105"), "text/markdown", "admin-1")
-    assert {c.id for c in index.chunks.values()} == v1  # version cũ vẫn phục vụ khi chờ duyệt
+    assert {c.id for c in index.chunks.values()} == v1  # the old version keeps serving while awaiting approval
     kb.approve(doc["_id"], "admin-1", (), True)
     kb.index_document(doc["_id"])
     assert all(c.document_version == 2 for c in index.chunks.values())

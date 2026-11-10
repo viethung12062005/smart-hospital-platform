@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Danh mục mã lỗi duy nhất của hệ thống. Thêm mã mới ở đây VÀ trong bảng §5 của 07; test đối chiếu
- * hai nơi.
+ * The system's single error code catalog. Add new codes here AND in table §5 of 07; a test
+ * cross-checks the two places.
  */
 public final class ErrorCatalog {
   private static final Map<String, ErrorInfo> BY_CODE = new LinkedHashMap<>();
@@ -177,7 +177,7 @@ public final class ErrorCatalog {
   public static ErrorInfo get(String code) {
     ErrorInfo info = BY_CODE.get(code);
     if (info == null) {
-      throw new IllegalArgumentException("Mã lỗi chưa khai báo: " + code);
+      throw new IllegalArgumentException("Unknown error code: " + code);
     }
     return info;
   }

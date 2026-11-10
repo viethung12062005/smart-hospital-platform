@@ -1,8 +1,8 @@
-"""Pipeline huấn luyện có kiểm soát (US-063, US-071, US-072; 16-mlops §2-3).
+"""Controlled training pipeline (US-063, US-071, US-072; 16-mlops §2-3).
 
-dataset Parquet (hash) → kiểm tra dữ liệu → đặc trưng dùng chung → baseline LR + LightGBM (tìm tham số)
-→ đánh giá (tổng, nhóm con, calibration, độ trễ) → cổng chất lượng → đăng ký + alias `candidate` + model card.
-Không bao giờ đổi alias `production` (việc của shadow/canary). Cùng hash dataset + seed → cùng model.
+Parquet dataset (hash) → data checks → shared features → LR baseline + LightGBM (parameter search)
+→ evaluation (overall, subgroups, calibration, latency) → quality gates → registration + `candidate` alias + model card.
+Never changes the `production` alias (that is shadow/canary's job). Same dataset hash + seed → same model.
 
   python -m shp_ml.pipeline --data data/noshow.parquet --registry runs/registry [--promote-first]
 """
@@ -10,7 +10,7 @@ Không bao giờ đổi alias `production` (việc của shadow/canary). Cùng h
 import argparse
 import hashlib
 import json
-import subprocess  # noqa: S404 - chỉ đọc git SHA
+import subprocess  # noqa: S404 - reads the git SHA only
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -73,7 +73,7 @@ def _params(p: dict[str, Any], seed: int) -> dict[str, Any]:
 
 
 def train_lightgbm(train: pd.DataFrame, seed: int) -> tuple[lgb.Booster, dict[str, Any], float]:
-    """Tìm tham số trên 3 tháng cuối của tập train (early stopping), rồi huấn luyện lại trên cả tập train."""
+    """Tune parameters on the last 3 months of the train set (early stopping), then retrain on the full train set."""
     fit, tune = time_split(train, TUNING_MONTHS)
     best: tuple[float, dict[str, Any], int, np.ndarray] | None = None
     for p in PARAM_GRID:
@@ -110,7 +110,7 @@ def train_candidate(
     seed: int = 42,
     trigger: str = "manual",
 ) -> TrainingResult:
-    check(facts)  # sai → DataCheckError, pipeline dừng trước khi train
+    check(facts)  # failure → DataCheckError, the pipeline stops before training
     frame = training_frame(facts)
     train, valid = time_split(frame)
     y = valid["label"].to_numpy()
@@ -168,7 +168,7 @@ def train_candidate(
         "scores": [round(float(v), 6) for v in candidate.predict_frame(ref)],
     }
     meta = {
-        "reference": reference,  # mẫu phân phối lúc đăng ký cho detector drift (ML-19), không có PII
+        "reference": reference,  # distribution sample at registration for the drift detector (ML-19), no PII
         "threshold": threshold,
         "datasetSha256": dataset_sha256,
         "seed": seed,
@@ -187,13 +187,13 @@ def train_candidate(
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", type=Path, required=True)
-    ap.add_argument("--registry", type=Path, help="thư mục FileRegistry (bỏ trống khi dùng --mlflow)")
+    ap.add_argument("--registry", type=Path, help="FileRegistry directory (leave empty when using --mlflow)")
     ap.add_argument("--mlflow", help="MLflow tracking URI")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument(
         "--promote-first",
         action="store_true",
-        help="chỉ khi registry chưa có production: đặt luôn candidate làm production (khởi tạo lần đầu)",
+        help="only when the registry has no production yet: promote the candidate to production (first-time bootstrap)",
     )
     a = ap.parse_args()
     from shp_ml.registry import FileRegistry, MlflowRegistry

@@ -12,15 +12,17 @@ import org.shp.web.errors.ShpException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 
-/** Phần không phụ thuộc DB của Idempotency-Key (07 §3): kiểm header và băm body chuẩn hóa. */
+/**
+ * DB-independent part of Idempotency-Key (07 §3): validate the header and hash the normalized body.
+ */
 public final class IdempotencyKeys {
   public static final String HEADER = "Idempotency-Key";
 
   private IdempotencyKeys() {}
 
   /**
-   * Thiếu → 428 {@code idempotency-key-required}; sai → 400 {@code validation-failed} (8–128 ký tự
-   * in được, không khoảng trắng).
+   * Missing → 428 {@code idempotency-key-required}; invalid → 400 {@code validation-failed} (8–128
+   * printable characters, no whitespace).
    */
   public static String require(String header) {
     if (header == null || header.isBlank()) {
@@ -36,8 +38,8 @@ public final class IdempotencyKeys {
   }
 
   /**
-   * SHA-256 của body chuẩn hóa (JSON: sắp xếp tên thuộc tính, bỏ khoảng trắng; không phải JSON: băm
-   * nguyên byte).
+   * SHA-256 of the normalized body (JSON: sort property names, strip whitespace; not JSON: hash the
+   * raw bytes).
    */
   public static byte[] hashBody(byte[] body) {
     byte[] canonical;

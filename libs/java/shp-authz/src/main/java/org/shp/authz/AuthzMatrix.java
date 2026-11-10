@@ -16,8 +16,8 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 /**
- * Ma trận phân quyền đã nạp và kiểm hợp lệ từ {@code contracts/authz/matrix.yaml} (bất biến, an
- * toàn đa luồng). Các bất biến giống {@code tools/contracts/validate_authz.py}.
+ * Authorization matrix loaded and validated from {@code contracts/authz/matrix.yaml} (immutable,
+ * thread-safe). The invariants match {@code tools/contracts/validate_authz.py}.
  */
 public final class AuthzMatrix {
   static final String RESOURCE = "shp/authz/matrix.yaml";
@@ -43,23 +43,23 @@ public final class AuthzMatrix {
     return rules;
   }
 
-  /** Resource → có phải dữ liệu lâm sàng hay không. */
+  /** Resource → whether it is clinical data. */
   public Map<String, Boolean> clinicalByResource() {
     return clinicalByResource;
   }
 
-  /**
-   * Rule của (resource, action) theo đúng thứ tự trong file; rỗng nếu không có (mặc định từ chối).
-   */
+  /** Rules for (resource, action) in file order; empty if none (deny by default). */
   public List<AuthzRule> rulesFor(String resource, String action) {
     return index.getOrDefault(key(resource, action), List.of());
   }
 
-  /** Nạp ma trận được nhúng trong thư viện (đúng file contracts/authz/matrix.yaml lúc build). */
+  /**
+   * Load the matrix embedded in the library (the exact contracts/authz/matrix.yaml at build time).
+   */
   public static AuthzMatrix loadEmbedded() {
     try (InputStream in = AuthzMatrix.class.getClassLoader().getResourceAsStream(RESOURCE)) {
       if (in == null) {
-        throw new IllegalStateException("Thiếu resource " + RESOURCE + " trong shp-authz");
+        throw new IllegalStateException("Missing resource " + RESOURCE + " in shp-authz");
       }
       return parse(new String(in.readAllBytes(), StandardCharsets.UTF_8));
     } catch (IOException e) {
@@ -67,11 +67,14 @@ public final class AuthzMatrix {
     }
   }
 
-  /** Phân tích và kiểm YAML; ném {@link AuthzMatrixException} nếu vi phạm bất biến an toàn. */
+  /**
+   * Parse and validate the YAML; throws {@link AuthzMatrixException} if a safety invariant is
+   * violated.
+   */
   public static AuthzMatrix parse(String yaml) {
     Object loaded = new Yaml(new SafeConstructor(new LoaderOptions())).load(yaml);
     if (!(loaded instanceof Map<?, ?> doc)) {
-      throw new AuthzMatrixException(List.of("File rỗng hoặc không phải mapping"));
+      throw new AuthzMatrixException(List.of("File is empty or not a mapping"));
     }
     Set<String> roles = Set.copyOf(strings(doc.get("roles")));
     Set<String> purposes = Set.copyOf(strings(doc.get("purposes")));
@@ -116,7 +119,7 @@ public final class AuthzMatrix {
         (res, acts) -> {
           for (String a : acts) {
             if (!covered.contains(key(res, a)) && !deny.contains(key(res, a))) {
-              errors.add("(" + res + "," + a + "): không có rule và không nằm trong denyAll");
+              errors.add("(" + res + "," + a + "): no rule and not listed in denyAll");
             }
           }
         });
@@ -138,44 +141,44 @@ public final class AuthzMatrix {
       List<String> errors) {
     String id = r.id();
     if (!ids.add(id)) {
-      errors.add(id + ": id trùng");
+      errors.add(id + ": duplicate id");
     }
     if (!actions.containsKey(r.resource())) {
-      errors.add(id + ": resource lạ " + r.resource());
+      errors.add(id + ": unknown resource " + r.resource());
       return;
     }
     if (!actions.get(r.resource()).contains(r.action())) {
-      errors.add(id + ": action " + r.action() + " không khai báo cho " + r.resource());
+      errors.add(id + ": action " + r.action() + " is not declared for " + r.resource());
     }
     if (!roles.contains(r.role())) {
-      errors.add(id + ": role lạ " + r.role());
+      errors.add(id + ": unknown role " + r.role());
     }
     r.when().stream()
         .filter(p -> !predicates.contains(p))
-        .forEach(p -> errors.add(id + ": predicate lạ " + p));
+        .forEach(p -> errors.add(id + ": unknown predicate " + p));
     if (r.purpose() != null && !purposes.contains(r.purpose())) {
-      errors.add(id + ": purpose lạ " + r.purpose());
+      errors.add(id + ": unknown purpose " + r.purpose());
     }
     if (deny.contains(key(r.resource(), r.action()))) {
-      errors.add(id + ": vi phạm denyAll");
+      errors.add(id + ": violates denyAll");
     }
     if (clinical.get(r.resource()) && (r.role().equals("admin") || r.role().equals("dpo"))) {
-      errors.add(id + ": admin/dpo không được chạm dữ liệu lâm sàng");
+      errors.add(id + ": admin/dpo must not touch clinical data");
     }
     if (r.role().equals("dpo") && !r.resource().equals("Audit")) {
-      errors.add(id + ": dpo chỉ được có rule cho Audit");
+      errors.add(id + ": dpo may only have rules for Audit");
     }
     if (r.when().contains(Predicates.BREAK_GLASS) && !r.role().equals("doctor")) {
-      errors.add(id + ": break-glass chỉ dành cho doctor");
+      errors.add(id + ": break-glass is for doctor only");
     }
     if (r.when().contains(Predicates.OWN) && !r.role().equals("patient")) {
-      errors.add(id + ": predicate own chỉ dành cho patient");
+      errors.add(id + ": predicate own is for patient only");
     }
     if ((r.when().contains(Predicates.LINKED)
             || r.when().contains(Predicates.LINKED_RECORDS)
             || r.when().contains(Predicates.GUARDIAN))
         && !r.role().equals("patient")) {
-      errors.add(id + ": predicate linked, linked-records, guardian chỉ dành cho patient");
+      errors.add(id + ": predicates linked, linked-records, guardian are for patient only");
     }
   }
 

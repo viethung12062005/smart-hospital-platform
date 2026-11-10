@@ -1,4 +1,5 @@
-"""Prompt template có version (AI-07): `prompts/<task>/v<N>.md`; ID `<task>/v<N>` ghi vào messages để truy vết."""
+"""Versioned prompt templates (AI-07): `prompts/<task>/v<N>.md`; ID `<task>/v<N>` recorded in messages for
+traceability."""
 
 from functools import cache
 from importlib import resources

@@ -42,7 +42,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-/** GW-02: token sai → 401; vượt hạn mức → 429 (07 §6, NFR-S3), bộ đếm trên Redis thật. */
+/**
+ * GW-02: wrong token -> 401; exceeding the limit -> 429 (07 §6, NFR-S3), counters on real Redis.
+ */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {"shp.auth.authority=https://idp.test/realms/shp", "shp.auth.audience=shp-api"})
@@ -108,7 +110,7 @@ class GatewayRateLimitTest {
 
   @Autowired Environment env;
 
-  /** Mỗi test một người dùng riêng để bộ đếm không ảnh hưởng nhau. */
+  /** One user per test so counters do not affect each other. */
   static String token(String sub) throws Exception {
     var c =
         new JWTClaimsSet.Builder()
@@ -158,8 +160,10 @@ class GatewayRateLimitTest {
     String t = token("u-" + UUID.randomUUID());
     List<Integer> codes = burst(30, "GET", "/fhir/Slot", t);
     assertThat(codes).containsOnly(200);
-    // Trong lúc gửi 30 yêu cầu bucket đã nạp lại vài token (2/giây); gửi tiếp nhanh hơn tốc độ nạp
-    // thì phải chạm 429. 60 yêu cầu dư sức dù máy CI chậm (mỗi yêu cầu > 0,5 giây mới không chạm).
+    // While sending 30 requests the bucket has already replenished a few tokens (2/second); sending
+    // faster than the replenish rate
+    // must hit 429. 60 requests are ample even on a slow CI machine (only if each request takes >
+    // 0.5 seconds would it not hit).
     var limited = send("GET", "/fhir/Slot", t);
     int extra = 1;
     while (limited.statusCode() == 200 && extra < 60) {
@@ -183,7 +187,8 @@ class GatewayRateLimitTest {
 
   @Test
   void invalidTokenIs401NotRateLimited() throws Exception {
-    // xác thực chạy trước rate limit: token sai không bao giờ thành 429 và không tốn hạn mức
+    // authentication runs before rate limit: a wrong token never becomes 429 and does not consume
+    // quota
     assertThat(burst(40, "GET", "/fhir/Slot", "not-a-jwt")).containsOnly(401);
     assertThat(burst(5, "GET", "/fhir/Slot", null)).containsOnly(401);
   }
@@ -196,7 +201,7 @@ class GatewayRateLimitTest {
     assertThat(codes.get(10)).isEqualTo(429);
     var r = send("POST", "/fhir/Appointment/$book", t);
     assertThat(r.headers().firstValue("Retry-After")).hasValue("6");
-    // giới hạn đặt lịch không ăn vào hạn mức mặc định của cùng người dùng
+    // the booking limit does not eat into the same user's default quota
     assertThat(send("GET", "/fhir/Slot", t).statusCode()).isEqualTo(200);
   }
 
@@ -217,7 +222,7 @@ class GatewayRateLimitTest {
         send(
             "POST", "/api/v1/registration", token("u-" + UUID.randomUUID()), "X-Forwarded-For", ip);
     assertThat(r.headers().firstValue("Retry-After")).hasValue("720");
-    // IP khác vẫn đăng ký được
+    // a different IP can still register
     assertThat(
             send(
                     "POST",
@@ -239,7 +244,7 @@ class GatewayRateLimitTest {
     assertThat(policy("POST", "/api/v1/registration")).isEqualTo(RateLimitFilter.REGISTRATION);
     assertThat(policy("GET", "/fhir/Appointment/$book")).isEqualTo(RateLimitFilter.DEFAULT);
     assertThat(policy("GET", "/fhir/Slot")).isEqualTo(RateLimitFilter.DEFAULT);
-    // số yêu cầu mỗi phút / giờ đúng bảng
+    // number of requests per minute / hour matches the table
     assertThat(perMinute(RateLimitFilter.DEFAULT)).isEqualTo(120);
     assertThat(perMinute(RateLimitFilter.BOOKING)).isEqualTo(10);
     assertThat(perMinute(RateLimitFilter.PATIENT_SEARCH)).isEqualTo(60);

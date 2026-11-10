@@ -11,9 +11,10 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Kiểm header bắt buộc (07 §3): {@code Idempotency-Key} theo {@link RequireIdempotencyKey}; {@code
- * If-Match} cho mọi PUT và theo {@link RequireIfMatch}. Chạy TRƯỚC phân quyền: request thiếu header
- * không tra dữ kiện tài nguyên và không sinh bản ghi audit "success" cho truy cập chưa diễn ra.
+ * Check required headers (07 §3): {@code Idempotency-Key} per {@link RequireIdempotencyKey}; {@code
+ * If-Match} for every PUT and per {@link RequireIfMatch}. Runs BEFORE authorization: a request
+ * missing a header does not look up resource facts and does not emit an audit "success" record for
+ * an access that never happened.
  */
 public final class PreconditionInterceptor implements HandlerInterceptor {
   private static final String ATTR_VERSION = "shp.precondition.version";
@@ -28,8 +29,10 @@ public final class PreconditionInterceptor implements HandlerInterceptor {
       req.setAttribute(ATTR_KEY, IdempotencyKeys.require(req.getHeader(IdempotencyKeys.HEADER)));
     }
     if (HttpMethod.PUT.matches(req.getMethod()) || hm.hasMethodAnnotation(RequireIfMatch.class)) {
-      // Nhiều dòng If-Match tương đương danh sách phân cách phẩy → cũng là 412, không lặng lẽ lấy
-      // dòng đầu (getHeader chỉ trả giá trị đầu, làm sai lệch ngữ nghĩa "khớp một trong các bản").
+      // Multiple If-Match lines are equivalent to a comma-separated list → also 412, do not
+      // silently take
+      // the first line (getHeader returns only the first value, distorting the "matches one of the
+      // versions" semantics).
       var values = Collections.list(req.getHeaders(HttpHeaders.IF_MATCH));
       if (values.size() > 1) {
         throw new ShpException("version-conflict");
@@ -40,17 +43,18 @@ public final class PreconditionInterceptor implements HandlerInterceptor {
     return true;
   }
 
-  /** Version trong If-Match của request hiện tại (đã kiểm định dạng). */
+  /** Version in the current request's If-Match (format already validated). */
   public static long expectedVersion(HttpServletRequest req) {
     if (req.getAttribute(ATTR_VERSION) instanceof Long v) {
       return v;
     }
-    throw new IllegalStateException("Endpoint không bắt buộc If-Match (PUT hoặc @RequireIfMatch)");
+    throw new IllegalStateException("Endpoint does not require If-Match (PUT or @RequireIfMatch)");
   }
 
   /**
-   * Version hiện tại của resource khác If-Match → 412 {@code version-conflict}. Store vẫn phải ghi
-   * có điều kiện theo version (CAS) để chặn ghi đè đồng thời giữa lúc đọc và lúc ghi.
+   * Current resource version differs from If-Match → 412 {@code version-conflict}. The store must
+   * still write conditionally by version (CAS) to block concurrent overwrites between read and
+   * write.
    */
   public static void checkVersion(HttpServletRequest req, long currentVersion) {
     if (expectedVersion(req) != currentVersion) {
@@ -58,11 +62,11 @@ public final class PreconditionInterceptor implements HandlerInterceptor {
     }
   }
 
-  /** Idempotency-Key của request hiện tại (đã kiểm định dạng). */
+  /** Idempotency-Key of the current request (format already validated). */
   public static String idempotencyKey(HttpServletRequest req) {
     if (req.getAttribute(ATTR_KEY) instanceof String k) {
       return k;
     }
-    throw new IllegalStateException("Endpoint chưa dùng @RequireIdempotencyKey");
+    throw new IllegalStateException("Endpoint does not use @RequireIdempotencyKey");
   }
 }

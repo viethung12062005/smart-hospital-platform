@@ -3,16 +3,16 @@ package org.shp.authz;
 import java.time.Instant;
 
 /**
- * Dữ kiện về tài nguyên đang được truy cập. Service tra cứu trước (quan hệ điều trị,
- * break-glass...) rồi truyền vào; engine là hàm thuần. Dữ kiện thiếu (null) luôn được coi là
- * predicate KHÔNG thỏa (từ chối khi không chắc).
+ * Facts about the resource being accessed. The service looks them up first (care relationship,
+ * break-glass...) then passes them in; the engine is a pure function. A missing fact (null) is
+ * always treated as a predicate that does NOT hold (deny when unsure).
  *
- * @param encounterFinished true = encounter đã finished, false = chưa, null = không liên quan/không
- *     biết
- * @param linkedProfile hồ sơ nằm trong linkedProfiles của người gọi (liên kết active, phạm vi từ
+ * @param encounterFinished true = encounter already finished, false = not yet, null = irrelevant or
+ *     unknown
+ * @param linkedProfile the record is in the caller's linkedProfiles (active link, scope from
  *     booking); ADR-0018
- * @param linkedRecords như linkedProfile nhưng phạm vi records hoặc full (kết quả khám, tài liệu)
- * @param guardianLink liên kết có quan hệ người giám hộ
+ * @param linkedRecords like linkedProfile but scope records or full (visit results, documents)
+ * @param guardianLink the link has a guardian relationship
  */
 public record ResourceContext(
     String patientId,
@@ -34,7 +34,7 @@ public record ResourceContext(
     return new Builder();
   }
 
-  /** Builder để service chỉ đặt dữ kiện mình có. */
+  /** Builder so a service only sets the facts it has. */
   public static final class Builder {
     private String patientId;
     private String practitionerId;

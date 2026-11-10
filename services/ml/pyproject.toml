@@ -1,25 +1,25 @@
 [project]
 name = "shp-ml"
 version = "0.1.0"
-description = "Mô hình no-show: phục vụ dự đoán, drift, huấn luyện lại tự động"
+description = "No-show model: prediction serving, drift, automatic retraining"
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115,<1",
   "uvicorn[standard]>=0.32,<1",
   "pydantic-settings>=2.6,<3",
-  # shp_platform (libs/python, chép bằng tools/pylib/sync.py)
+  # shp_platform (libs/python, copied by tools/pylib/sync.py)
   "pyjwt[crypto]>=2.10,<3",
   "httpx>=0.28,<1",
   "jsonschema>=4.23,<5",
   "opentelemetry-sdk>=1.29,<2",
   "opentelemetry-instrumentation-fastapi>=0.50b0,<1",
   "opentelemetry-exporter-otlp-proto-http>=1.29,<2",
-  # đặc trưng và dự đoán (ML-15, ML-07)
+  # features and prediction (ML-15, ML-07)
   "numpy>=2.1,<3",
   "pandas>=2.2,<4",
   "lightgbm>=4.5,<5",
   "prometheus-client>=0.21,<1",
-  # bus và MongoDB (shp_platform.mongo, shp_platform.bus)
+  # bus and MongoDB (shp_platform.mongo, shp_platform.bus)
   "pymongo>=4.10,<5",
   "pika>=1.3,<2",
   "azure-servicebus>=7.13,<8",
@@ -27,12 +27,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# huấn luyện (ML-01..05): image huấn luyện riêng (MLO-02), không vào image phục vụ
+# training (ML-01..05): separate training image (MLO-02), not included in the serving image
 train = [
   "pyarrow>=18,<27",
   "scikit-learn>=1.6,<2",
 ]
-# MLflow tracking + registry (cụm, LOC-08); không cần cho test
+# MLflow tracking + registry (cluster, LOC-08); not needed for tests
 mlflow = [
   "mlflow-skinny>=2.17,<4",
 ]

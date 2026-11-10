@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# In access token của một người dùng thử (để gọi API khi phát triển). Dùng: scripts/token.sh doctor.demo
+# Print the access token of a test user (for calling APIs during development). Usage: scripts/token.sh doctor.demo
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-user="${1:-}"; [ -n "$user" ] || die "Dùng: scripts/token.sh <username>   (ví dụ doctor.demo)"
+user="${1:-}"; [ -n "$user" ] || die "Usage: scripts/token.sh <username>   (e.g. doctor.demo)"
 var="$(echo "${user//./_}_PASSWORD" | tr '[:lower:]' '[:upper:]')"
 # shellcheck disable=SC1090
 . "$LOCAL_DIR/users.env"

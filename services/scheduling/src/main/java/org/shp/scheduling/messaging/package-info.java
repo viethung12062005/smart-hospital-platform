@@ -1,2 +1,5 @@
-/** Consumer event: mỗi handler bọc trong inbox.handleOnce(...) rồi gọi use case ở app/. */
+/**
+ * Event consumers: each handler is wrapped in inbox.handleOnce(...) then calls the use case in
+ * app/.
+ */
 package org.shp.scheduling.messaging;

@@ -6,9 +6,9 @@ import { MOCK_USERS } from '@/auth/session';
 import { createDb, type MockDb } from './data';
 
 /**
- * Máy chủ giả cho chế độ mock và test. Mô phỏng đúng hợp đồng 08-api-scheduling / 09-api-clinical ở mức đủ cho giao diện:
- * định dạng lỗi (OperationOutcome), Idempotency-Key, If-Match/ETag, các quy tắc BR-02/03/04 và 409 kèm slot gợi ý.
- * Không thay thế test của backend; khi backend có endpoint thật, chạy `npm run dev` (không mock) để thử thật.
+ * Mock server for mock mode and tests. Mimics the 08-api-scheduling / 09-api-clinical contracts closely enough for the UI:
+ * error format (OperationOutcome), Idempotency-Key, If-Match/ETag, rules BR-02/03/04 and 409 with suggested slots.
+ * It does not replace backend tests; once the backend has real endpoints, run `npm run dev` (no mock) to try them.
  */
 let db: MockDb = createDb();
 const idempotency = new Map<string, { body: string; appointmentId: string }>();
@@ -96,7 +96,7 @@ function caller(request: Request): Caller | undefined {
   return { sub: String(claims['sub'] ?? ''), roles, fhirUser: known?.fhirUser };
 }
 
-/** Bọc handler: bắt buộc đăng nhập như gateway thật. */
+/** Wrap a handler: requires sign-in like the real gateway. */
 function authed(
   resolver: (args: { request: Request; params: Record<string, string>; me: Caller }) => Response | Promise<Response>,
 ): HttpResponseResolver {
@@ -107,7 +107,7 @@ function authed(
   };
 }
 
-/** Lọc ngày theo các giá trị ge/gt/le/lt của một tham số. */
+/** Filter dates by a parameter's ge/gt/le/lt values. */
 function inRange(value: string | undefined, filters: string[]): boolean {
   if (!value) return false;
   const v = dayjs(value);

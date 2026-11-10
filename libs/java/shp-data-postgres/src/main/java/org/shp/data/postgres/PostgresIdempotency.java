@@ -12,8 +12,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Idempotency-Key cho PostgreSQL (07 §3, 02 §3.1). Claim nằm trong CÙNG transaction với thay đổi dữ
- * liệu.
+ * Idempotency-Key for PostgreSQL (07 §3, 02 §3.1). The claim lives in the SAME transaction as the
+ * data change.
  */
 public final class PostgresIdempotency {
   public static final Duration RETENTION = Duration.ofHours(24);
@@ -27,17 +27,18 @@ public final class PostgresIdempotency {
   }
 
   /**
-   * Giành quyền xử lý (subject, key). Lần đầu: ghi dòng, cấp sẵn ResourceId. Cùng key + thao tác +
-   * body: replay. Khác thao tác hoặc body: 422 {@code idempotency-key-reused}. Request song song
-   * cùng key: request sau chờ request trước rồi thành replay (hoặc giành lại nếu request trước
-   * rollback).
+   * Claim processing rights for (subject, key). First time: insert the row, allocate a ResourceId.
+   * Same key + action + body: replay. Different action or body: 422 {@code idempotency-key-reused}.
+   * Concurrent requests with the same key: the later request waits for the earlier one then becomes
+   * a replay (or claims again if the earlier rollback).
    */
   public IdempotencyClaim claim(String subject, String key, String operation, byte[] requestHash) {
     if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-      throw new IllegalStateException("claim phải chạy trong transaction cùng thay đổi dữ liệu");
+      throw new IllegalStateException("claim must run in a transaction with the data change");
     }
     Instant now = clock.instant();
-    // Dòng quá 24 giờ coi như hết hạn (job dọn dẹp chỉ xóa vật lý).
+    // Rows older than 24 hours are treated as expired (the cleanup job only deletes them
+    // physically).
     jdbc.sql("DELETE FROM idempotency_key WHERE subject = ? AND key = ? AND created_at < ?")
         .params(subject, key, Timestamp.from(now.minus(RETENTION)))
         .update();

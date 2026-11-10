@@ -28,10 +28,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.shp.events.CloudEvents;
 import org.shp.web.errors.ShpException;
 
-/** Parse/serialize FHIR R4 JSON cho mọi resource trong phạm vi (01 §4, SHR-01); dữ liệu giả. */
+/** Parse/serialize FHIR R4 JSON for every in-scope resource (01 §4, SHR-01); synthetic data. */
 class FhirJsonTest {
 
-  /** Mỗi resource type trong 01 §1 có ít nhất một fixture (src/test/resources/fhir). */
+  /** Every resource type in 01 §1 has at least one fixture (src/test/resources/fhir). */
   static Stream<Arguments> fixtures() {
     return Stream.of(
         Arguments.of("Patient.json", Patient.class),
@@ -63,12 +63,12 @@ class FhirJsonTest {
             e -> {
               assertThat(e.info().code()).isEqualTo("validation-failed");
               assertThat(e.info().status()).isEqualTo(400);
-              // Không chuyển thông điệp của HAPI (có thể chứa giá trị gửi lên) cho client.
+              // Do not pass HAPI messages (which may contain submitted values) to the client.
               assertThat(e.detail()).isNull();
             });
   }
 
-  // ---------- vòng khứ hồi ----------
+  // ---------- round trip ----------
   @ParameterizedTest(name = "{0}")
   @MethodSource("fixtures")
   void roundTripKeepsEveryElement(String file, Class<? extends Resource> type) {
@@ -97,7 +97,7 @@ class FhirJsonTest {
 
   @Test
   void decimalPrecisionIsKept() {
-    // 37.20 khác 37.2 về độ chính xác đo (FHIR decimal giữ nguyên chữ số).
+    // 37.20 differs from 37.2 in measured precision (FHIR decimal preserves digits).
     String out =
         FhirJson.serialize(
             FhirJson.parse(fixture("Observation-temperature.json"), Observation.class));
@@ -126,11 +126,12 @@ class FhirJsonTest {
         "{\"resourceType\":\"Patient\",\"gender\":\"nam\"}",
         "{\"resourceType\":\"Patient\",\"active\":\"yes\"}",
         "{\"resourceType\":\"Observation\",\"status\":\"final\"}",
-        // khóa trùng: HAPI lấy giá trị sau, bộ đọc khác có thể lấy giá trị trước
+        // duplicate keys: HAPI keeps the later value, another reader may keep the earlier one
         "{\"resourceType\":\"Patient\",\"active\":true,\"active\":false}",
         "{\"resourceType\":\"Patient\",\"active\":null}",
         "{\"resourceType\":\"Patient\",\"name\":[{\"family\":null}]}",
-        // id sai kiểu FHIR id: ký tự cấm, quá 64 ký tự, không phải chuỗi; cả resource lồng
+        // id invalid as an FHIR id: forbidden characters, longer than 64 characters, not a string;
+        // nested resources too
         "{\"resourceType\":\"Patient\",\"id\":\"a b/../c\"}",
         "{\"resourceType\":\"Patient\",\"id\":\"%s\"}",
         "{\"resourceType\":\"Patient\",\"id\":42}",
@@ -143,7 +144,8 @@ class FhirJsonTest {
 
   @Test
   void validIdsAndNullsInsideArraysAreAccepted() {
-    // 64 ký tự, có '-' và '.'; null trong mảng hợp lệ khi căn hàng với _given (extension)
+    // 64 characters, with '-' and '.'; a null in an array is valid when aligning with _given
+    // (extension)
     String id = "a-b.c" + "x".repeat(59);
     Patient p =
         FhirJson.parse(
@@ -158,7 +160,7 @@ class FhirJsonTest {
 
   @Test
   void versionedReferencesSurviveSerialization() {
-    // HAPI mặc định cắt "_history/2" khi ghi ra; 07 §3 và Location dùng tham chiếu có version
+    // HAPI strips "_history/2" on write by default; 07 §3 and Location use versioned references
     String json =
         "{\"resourceType\":\"Observation\",\"status\":\"final\",\"code\":{\"text\":\"x\"},"
             + "\"derivedFrom\":[{\"reference\":\"DocumentReference/abc/_history/2\"}]}";

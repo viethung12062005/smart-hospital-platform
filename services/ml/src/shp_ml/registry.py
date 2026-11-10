@@ -1,9 +1,10 @@
-"""Model registry và ghi run (ML-05, ML-13; ADR-0007).
+"""Model registry and run logging (ML-05, ML-13; ADR-0007).
 
-Hai bản cùng giao diện:
-- `FileRegistry`: thư mục cục bộ (dev, test, CI). models/<version>/{model.txt, meta.json, card.md}, aliases.json.
-- `MlflowRegistry`: MLflow tracking + model registry (cụm). Cần extra `mlflow`; model lưu dạng artifact văn bản.
-Alias: `candidate` (job huấn luyện được đặt) và `production` (chỉ quy trình shadow/canary hoặc người được đổi).
+Two implementations with the same interface:
+- `FileRegistry`: local directory (dev, test, CI). models/<version>/{model.txt, meta.json, card.md}, aliases.json.
+- `MlflowRegistry`: MLflow tracking + model registry (cluster). Requires the `mlflow` extra; the model is stored as a
+  text artifact.
+Aliases: `candidate` (set by the training job) and `production` (changed only by the shadow/canary process or a person).
 """
 
 import hashlib
@@ -61,13 +62,13 @@ class FileRegistry:
             "modelVersion": version,
             "modelSha256": hashlib.sha256(model_text.encode()).hexdigest(),
         }
-        body = json.dumps(full, ensure_ascii=False, indent=2)  # lỗi tuần tự hóa xảy ra trước khi ghi gì
+        body = json.dumps(full, ensure_ascii=False, indent=2)  # serialization errors happen before anything is written
         (self.root / "models").mkdir(parents=True, exist_ok=True)
         tmp = Path(tempfile.mkdtemp(dir=self.root / "models", prefix=".tmp-"))
         _atomic_write(tmp / "model.txt", model_text)
         _atomic_write(tmp / "card.md", card)
         _atomic_write(tmp / "meta.json", body)
-        os.replace(tmp, self.root / "models" / version)  # version chỉ xuất hiện khi đủ ba tệp
+        os.replace(tmp, self.root / "models" / version)  # version appears only once all three files exist
         return version
 
     def _aliases(self) -> dict[str, str]:
@@ -77,9 +78,9 @@ class FileRegistry:
 
     def set_alias(self, alias: str, version: str) -> None:
         if alias not in ALIASES:
-            raise ValueError(f"alias không hợp lệ: {alias}")
+            raise ValueError(f"invalid alias: {alias}")
         if not (self.root / "models" / version / "model.txt").exists():
-            raise ValueError(f"version chưa đăng ký: {version}")
+            raise ValueError(f"version not registered: {version}")
         a = self._aliases()
         a[alias] = version
         _atomic_write(self.root / "aliases.json", json.dumps(a, indent=2))
@@ -99,11 +100,11 @@ class FileRegistry:
         return run_id
 
 
-class MlflowRegistry:  # pragma: no cover - cần MLflow server; thử ở môi trường cụm (LOC-08)
-    """MLflow: run ghi tham số/metric/hash dataset; model là artifact văn bản; alias qua model registry."""
+class MlflowRegistry:  # pragma: no cover - needs an MLflow server; exercised in the cluster (LOC-08)
+    """MLflow: runs log params/metrics/dataset hash; the model is a text artifact; aliases via the model registry."""
 
     def __init__(self, tracking_uri: str, experiment: str = "shp-no-show") -> None:
-        import mlflow  # extra "mlflow", không có trong image phục vụ
+        import mlflow  # "mlflow" extra, not present in the serving image
 
         self._mlflow = mlflow
         mlflow.set_tracking_uri(tracking_uri)
@@ -129,13 +130,13 @@ class MlflowRegistry:  # pragma: no cover - cần MLflow server; thử ở môi 
 
     def set_alias(self, alias: str, version: str) -> None:
         if alias not in ALIASES:
-            raise ValueError(f"alias không hợp lệ: {alias}")
+            raise ValueError(f"invalid alias: {alias}")
         self._client.set_registered_model_alias(MODEL_NAME, alias, version)
 
     def alias_version(self, alias: str) -> str | None:
         try:
             return str(self._client.get_model_version_by_alias(MODEL_NAME, alias).version)
-        except Exception:  # noqa: BLE001 - alias chưa có
+        except Exception:  # noqa: BLE001 - alias not set yet
             return None
 
     def load(self, version: str) -> tuple[NoShowModel, dict[str, Any]]:

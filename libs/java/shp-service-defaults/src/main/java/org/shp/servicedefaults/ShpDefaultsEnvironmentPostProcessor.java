@@ -12,10 +12,10 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePropertySource;
 
 /**
- * Nạp mặc định của các thư viện SHP ({@code classpath*:META-INF/shp/*.properties}, theo tên file)
- * với ĐỘ ƯU TIÊN THẤP NHẤT, TRƯỚC khi auto-configuration được đánh giá. (Không dùng
- * {@code @PropertySource} trên auto-configuration: nó được nạp quá muộn nên điều kiện như "endpoint
- * có được expose" có thể đã bị đánh giá sai.)
+ * Load SHP library defaults ({@code classpath*:META-INF/shp/*.properties}, by file name) with the
+ * LOWEST PRIORITY, BEFORE auto-configuration is evaluated. (Do not use {@code @PropertySource} on
+ * auto-configuration: it loads too late, so conditions such as "endpoint is exposed" may already
+ * have been evaluated incorrectly.)
  */
 public class ShpDefaultsEnvironmentPostProcessor implements EnvironmentPostProcessor {
   @Override

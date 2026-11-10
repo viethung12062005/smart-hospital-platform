@@ -1,6 +1,6 @@
 /*
- * Chuyển thể từ Header của Medplum AppShell (Apache-2.0, xem web/NOTICE).
- * Đã sửa: bỏ ô tìm resource kiểu Medplum, thêm đổi ngôn ngữ, menu người dùng có vai trò và đăng xuất.
+ * Adapted from the Medplum AppShell Header (Apache-2.0, see web/NOTICE).
+ * Changed: removed the Medplum-style resource search box, added the language switch and a user menu with role and sign-out.
  */
 import {
   Avatar,

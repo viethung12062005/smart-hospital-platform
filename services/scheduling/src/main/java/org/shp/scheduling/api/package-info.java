@@ -1,5 +1,5 @@
 /**
- * Controller REST/FHIR của scheduling. Mỗi endpoint: {@code @RequireShpAuthz(...)} (xem README của
- * service).
+ * REST/FHIR controllers for scheduling. Each endpoint: {@code @RequireShpAuthz(...)} (see the
+ * service's README).
  */
 package org.shp.scheduling.api;

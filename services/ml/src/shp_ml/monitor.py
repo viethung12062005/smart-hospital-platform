@@ -1,12 +1,12 @@
-"""Job giám sát hằng ngày (ML-10, ML-20; 16-mlops §4-5).
+"""Daily monitoring job (ML-10, ML-20; 16-mlops §4-5).
 
-1. Drift: phân phối đặc trưng chính và điểm của dự đoán 7 ngày gần nhất (lấy từ `predictions.features`) so với mẫu
-   tham chiếu lưu cùng model lúc đăng ký.
-2. Hiệu năng thực tế: ghép dự đoán production với kết quả thật đã biết trong 14 ngày, AUC so với lúc đăng ký.
-3. Xuất metric Prometheus (cảnh báo và dashboard ở MLO-05) và, nếu `decide_retrain` cho phép, tạo yêu cầu huấn luyện
-   lại trong `retrain_requests` để job ML-23 xử lý. Job này không tự huấn luyện và không đổi model.
+1. Drift: distribution of key features and prediction scores over the last 7 days (from `predictions.features`) vs the
+   reference sample saved with the model at registration.
+2. Live performance: join production predictions with known real outcomes over 14 days, AUC vs at registration.
+3. Export Prometheus metrics (alerts and dashboard in MLO-05) and, if `decide_retrain` allows, create a retraining
+   request in `retrain_requests` for the ML-23 job to process. This job does not train and does not change the model.
 
-Chạy trong service (thread, 02:00 giờ VN) hoặc `python -m shp_ml.monitor` (CronJob).
+Runs inside the service (thread, 02:00 Vietnam time) or as `python -m shp_ml.monitor` (CronJob).
 """
 
 import logging
@@ -142,14 +142,14 @@ def seconds_until(hour_utc: int, now: datetime) -> float:
 
 
 def start_daily(db: Database[Doc], holder: ModelHolder, stop: threading.Event, hour_utc: int = 19) -> threading.Thread:
-    """19:00 UTC = 02:00 giờ VN. Lỗi một lần chạy được ghi log, lần sau chạy lại bình thường."""
+    """19:00 UTC = 02:00 Vietnam time. A failed run is logged; the next run proceeds normally."""
 
     def loop() -> None:
         while not stop.wait(seconds_until(hour_utc, datetime.now(UTC))):
             try:
                 run_daily(db, holder)
             except Exception as exc:  # noqa: BLE001
-                LOG.warning("monitor lỗi: %s", type(exc).__name__)
+                LOG.warning("monitor failed: %s", type(exc).__name__)
 
     t = threading.Thread(target=loop, name="ml-monitor", daemon=True)
     t.start()

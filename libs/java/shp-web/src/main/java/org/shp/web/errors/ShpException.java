@@ -3,8 +3,8 @@ package org.shp.web.errors;
 import java.time.Duration;
 
 /**
- * Lỗi nghiệp vụ/giao thức có mã chuẩn. Ném từ bất kỳ đâu; handler đổi thành HTTP đúng quy ước.
- * {@code detail} không chứa PII.
+ * Business/protocol error with a standard code. Throw from anywhere; the handler turns it into the
+ * conventional HTTP response. {@code detail} must not contain PII.
  */
 public class ShpException extends RuntimeException {
   private static final long serialVersionUID = 1L;
@@ -33,8 +33,8 @@ public class ShpException extends RuntimeException {
   }
 
   /**
-   * Thông điệp riêng cho người dùng (thay thông điệp mặc định), không chứa PII; null = dùng mặc
-   * định.
+   * Custom user-facing message (replaces the default message), no PII; null = use the default
+   * message.
    */
   public String detail() {
     return detail;

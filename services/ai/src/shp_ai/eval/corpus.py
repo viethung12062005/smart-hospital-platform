@@ -1,5 +1,6 @@
-"""Kho tri thức GIẢ cho đánh giá RAG (AI-14, AI-15). Nội dung do nhóm viết để kiểm thử, KHÔNG phải phác đồ thật,
-không dùng cho người bệnh. Mỗi mục có một câu dữ kiện và một câu hỏi diễn đạt khác đi; đáp án chuẩn = mục đó.
+"""SYNTHETIC knowledge base for RAG evaluation (AI-14, AI-15). Content was written by the team for testing, NOT a
+real protocol, and must not be used for patients. Each item has a fact sentence and a differently worded question;
+the ground-truth answer is that item. The corpus is intentionally Vietnamese.
 """
 
 from dataclasses import dataclass
@@ -489,7 +490,7 @@ DOCS: tuple[KbDoc, ...] = (
     ),
 )
 
-# Câu hỏi KHÔNG có đáp án trong kho (từ chối đúng: answered=false)
+# Questions with NO answer in the knowledge base (correct refusal: answered=false)
 UNANSWERABLE: tuple[str, ...] = (
     "Giá một lần chụp MRI ở bệnh viện là bao nhiêu?",
     "Quy trình xin nghỉ phép năm của nhân viên?",

@@ -1,4 +1,4 @@
-# Values riêng của document khi chạy trên kind (make -C dev deploy SVC=document); nạp sau dev/chart/app-values-local.yaml.
+# Document-specific values when running on kind (make -C dev deploy SVC=document); loaded after dev/chart/app-values-local.yaml.
 image:
   repository: localhost/shp-document
   tag: dev

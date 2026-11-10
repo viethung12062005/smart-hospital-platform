@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 import org.shp.events.Uuids;
 
 /**
- * Dựng bản ghi audit đúng quy tắc: che IP, rút gọn user-agent, chặn giá trị nhạy cảm trong resource
- * và reason.
+ * Build audit records by the rules: mask IPs, shorten the user-agent, reject sensitive values in
+ * resource and reason.
  */
 public final class AuditRecordBuilder {
   public static final int MAX_REASON_LENGTH = 200;
@@ -28,8 +28,8 @@ public final class AuditRecordBuilder {
   private AuditRecordBuilder() {}
 
   /**
-   * Tham số tùy chọn có thể null: patientId, purposeOfUse, reason, traceId, clientIp, userAgent.
-   * Không ủy quyền: onBehalfOf/relationship = null.
+   * Optional parameters may be null: patientId, purposeOfUse, reason, traceId, clientIp, userAgent.
+   * No delegation: onBehalfOf/relationship = null.
    */
   public static AuditRecord build(
       Clock clock,
@@ -62,8 +62,8 @@ public final class AuditRecordBuilder {
   }
 
   /**
-   * Hành động thay mặt người được quản lý (ADR-0018): {@code onBehalfOf} là hồ sơ truy cập thật sự,
-   * {@code actor} vẫn là tài khoản đang đăng nhập; {@code relationship} = guardian/proxy.
+   * Acting on behalf of a managed person (ADR-0018): {@code onBehalfOf} is the record actually
+   * accessed, {@code actor} is still the signed-in account; {@code relationship} = guardian/proxy.
    */
   public static AuditRecord build(
       Clock clock,
@@ -81,27 +81,28 @@ public final class AuditRecordBuilder {
       String clientIp,
       String userAgent) {
     if (!AuditActions.ALL.contains(action)) {
-      throw new IllegalArgumentException("action không hợp lệ: " + action);
+      throw new IllegalArgumentException("invalid action: " + action);
     }
     if (!AuditActions.OUTCOMES.contains(outcome)) {
-      throw new IllegalArgumentException("outcome không hợp lệ: " + outcome);
+      throw new IllegalArgumentException("invalid outcome: " + outcome);
     }
     if (resource == null || !RESOURCE.matcher(resource).matches()) {
-      // Chỉ cho "Loại", "Loại/id" hoặc "Loại?tên-tham-số&..." — không bao giờ có giá trị tìm kiếm
-      // (có thể là PII).
+      // Allow only "Type", "Type/id" or "Type?param-name&..." — never a search value
+      // (which may be PII).
       throw new IllegalArgumentException(
-          "resource chỉ được chứa loại, id hoặc TÊN tham số tìm kiếm (không có giá trị)");
+          "resource may contain only the type, id or search PARAMETER NAMES (no values)");
     }
     if (onBehalfOf != null && !ON_BEHALF_OF.matcher(onBehalfOf).matches()) {
-      throw new IllegalArgumentException("onBehalfOf phải là Patient/<id> hoặc Practitioner/<id>");
+      throw new IllegalArgumentException("onBehalfOf must be Patient/<id> or Practitioner/<id>");
     }
     if (relationship != null
         && (onBehalfOf == null
             || !(relationship.equals("guardian") || relationship.equals("proxy")))) {
-      throw new IllegalArgumentException("relationship chỉ guardian/proxy và phải có onBehalfOf");
+      throw new IllegalArgumentException(
+          "relationship may only be guardian/proxy and requires onBehalfOf");
     }
     if (reason != null && reason.length() > MAX_REASON_LENGTH) {
-      throw new IllegalArgumentException("reason dài quá " + MAX_REASON_LENGTH + " ký tự");
+      throw new IllegalArgumentException("reason longer than " + MAX_REASON_LENGTH + " characters");
     }
     String ip = maskIp(clientIp);
     String ua =
@@ -128,8 +129,8 @@ public final class AuditRecordBuilder {
   }
 
   /**
-   * IPv4: che octet cuối ({@code 10.1.2.x}). IPv6: giữ 3 nhóm đầu ({@code 2001:0db8:0001::x}).
-   * Không phải IP → null. Chỉ phân tích chuỗi IP dạng số, không bao giờ tra DNS.
+   * IPv4: mask the last octet ({@code 10.1.2.x}). IPv6: keep the first 3 groups ({@code
+   * 2001:0db8:0001::x}). Not an IP → null. Only parses numeric IP strings, never does a DNS lookup.
    */
   public static String maskIp(String ip) {
     if (ip == null || ip.isEmpty() || !(IPV4.matcher(ip).matches() || ip.contains(":"))) {
@@ -137,7 +138,7 @@ public final class AuditRecordBuilder {
     }
     InetAddress address;
     try {
-      address = InetAddress.getByName(ip); // chuỗi số/IPv6 literal: không tra DNS
+      address = InetAddress.getByName(ip); // numeric string/IPv6 literal: no DNS lookup
     } catch (UnknownHostException | SecurityException e) {
       return null;
     }

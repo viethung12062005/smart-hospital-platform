@@ -17,8 +17,8 @@ import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 /**
- * Quy tắc JWT dùng chung: issuer, audience, hạn (có độ lệch), MFA cho nhân viên; đổi claim {@code
- * roles} thành quyền.
+ * Shared JWT rules: issuer, audience, expiry (with clock skew), MFA for staff; converts the {@code
+ * roles} claim into authorities.
  */
 public final class ShpJwt {
   private ShpJwt() {}
@@ -34,7 +34,7 @@ public final class ShpJwt {
         jwt -> mfa(jwt, props));
   }
 
-  /** Role hợp lệ trong claim {@code roles} (bỏ giá trị lạ, không phân biệt hoa thường). */
+  /** Valid roles in the {@code roles} claim (unknown values dropped, case-insensitive). */
   public static List<String> roles(Jwt jwt) {
     List<String> raw = jwt.getClaimAsStringList("roles");
     return raw == null

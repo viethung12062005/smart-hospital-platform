@@ -5,13 +5,13 @@ import { setConfigForTest } from './src/config';
 import './src/i18n';
 import { server } from './src/mocks/server';
 
-// findBy*/waitFor chờ tối đa 5 giây (mặc định 1 giây dễ đỏ oan trên runner CI chậm).
+// findBy*/waitFor waits up to 5 seconds (the 1-second default causes false failures on slow CI runners).
 configure({ asyncUtilTimeout: 5000 });
 
-// Node fetch cần URL tuyệt đối: gọi API qua origin của jsdom, MSW chặn theo đường dẫn.
+// Node fetch needs absolute URLs: call the API through the jsdom origin, MSW intercepts by path.
 setConfigForTest({ authMode: 'mock', apiBase: window.location.origin });
 
-// Mantine cần các API trình duyệt mà jsdom không có.
+// Mantine needs browser APIs that jsdom does not provide.
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({

@@ -15,9 +15,9 @@ import { SPECIALTIES, specialtyName } from '@/api/terminology';
 import { Card, EmptyState, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 
 /**
- * Đặt lịch 3 bước (theo luồng BookAppointment của portal PoC trước): chuyên khoa → bác sĩ và giờ → xác nhận.
- * Chống bấm đúp: một Idempotency-Key cho mỗi lần xác nhận; bấm lại cùng nội dung máy chủ trả đúng lịch đã tạo.
- * 409 slot-unavailable: hiện các giờ gợi ý máy chủ trả về.
+ * Three-step booking (following the previous PoC portal's BookAppointment flow): specialty → doctor and time → confirm.
+ * Double-click protection: one Idempotency-Key per confirmation; clicking again with the same content returns the already-created appointment.
+ * 409 slot-unavailable: shows the suggested times returned by the server.
  */
 export function BookAppointmentPage() {
   const { t } = useTranslation();
@@ -64,18 +64,18 @@ export function BookAppointmentPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['appointments'] });
       void queryClient.invalidateQueries({ queryKey: ['home-appointments'] });
-      // Slot vừa đặt phải biến khỏi danh sách giờ trống ngay, không chờ hết hạn bộ nhớ đệm.
+      // The slot just booked must disappear from the free-times list immediately, without waiting for the cache to expire.
       void queryClient.invalidateQueries({ queryKey: ['slots'] });
       setStep(3);
     },
     onError: (e) => {
-      // Lỗi nghiệp vụ là kết quả cuối của yêu cầu này: lần thử sau là yêu cầu mới, cần key mới.
+      // A business error is the final result of this request: the next attempt is a new request and needs a new key.
       if (e instanceof ApiError && e.status < 500) idemKey.current = undefined;
       if (e instanceof ApiError && e.code === 'slot-unavailable') void slots.refetch();
     },
   });
 
-  /** Đổi lựa chọn = yêu cầu khác: bỏ key cũ và lỗi cũ. */
+  /** Changing the selection means a different request: drop the old key and the old error. */
   function choose(next: () => void): void {
     next();
     idemKey.current = undefined;
@@ -89,7 +89,7 @@ export function BookAppointmentPage() {
   const doctorLabel = doctorOptions.find((d) => d.value === practitioner)?.label ?? '';
   const suggestedIds =
     book.error instanceof ApiError ? book.error.suggestedSlots.map((r) => r.replace('Slot/', '')) : [];
-  // Máy chủ chỉ trả tham chiếu Slot/{id}: tra giờ của chúng trong slot trống 31 ngày tới của cùng bác sĩ.
+  // The server returns only Slot/{id} references: look up their times among the same doctor's free slots over the next 31 days.
   const suggestedLookup = useQuery({
     queryKey: ['slots-suggested', practitioner, suggestedIds.join(',')],
     queryFn: () =>

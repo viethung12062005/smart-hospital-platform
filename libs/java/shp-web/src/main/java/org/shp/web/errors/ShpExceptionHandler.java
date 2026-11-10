@@ -18,8 +18,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
- * Đổi mọi lỗi thành định dạng chuẩn. Lỗi lạ → 500 {@code internal-error} và KHÔNG lộ nội dung
- * exception (có thể chứa PII).
+ * Convert every error into the standard format. Unknown error → 500 {@code internal-error} and do
+ * NOT expose the exception content (which may contain PII).
  */
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)

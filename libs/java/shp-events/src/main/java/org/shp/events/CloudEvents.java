@@ -12,12 +12,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Tạo, tuần tự hóa và đọc {@link CloudEvent}. */
+/** Create, serialize and read {@link CloudEvent}. */
 public final class CloudEvents {
-  /** Giới hạn kích thước một event (13-events §1). */
+  /** Size limit for one event (13-events §1). */
   public static final int MAX_BYTES = 64 * 1024;
 
-  /** JSON mapper dùng cho event: bỏ trường null, thời gian ISO-8601. */
+  /** JSON mapper used for events: drops null fields, ISO-8601 timestamps. */
   public static final JsonMapper JSON =
       JsonMapper.builder()
           .changeDefaultPropertyInclusion(i -> i.withValueInclusion(JsonInclude.Include.NON_NULL))
@@ -32,18 +32,18 @@ public final class CloudEvents {
   }
 
   /**
-   * Tạo event hợp lệ: id UUIDv7, thời điểm UTC, {@code dataschema} suy từ type, {@code traceparent}
-   * từ span hiện tại. {@code subject} dạng {@code Appointment/{id}} (giữ thứ tự theo đối tượng trên
-   * bus).
+   * Create a valid event: UUIDv7 id, UTC timestamp, {@code dataschema} derived from the type,
+   * {@code traceparent} from the current span. {@code subject} in the form {@code Appointment/{id}}
+   * (preserves per-object ordering on bus).
    */
   public static CloudEvent create(
       String service, String type, String subject, Object data, Clock clock, UUID id) {
     if (service == null || service.isBlank()) {
-      throw new IllegalArgumentException("service bắt buộc");
+      throw new IllegalArgumentException("service is required");
     }
     Matcher m = TYPE.matcher(type);
     if (!m.matches()) {
-      throw new IllegalArgumentException("type phải dạng shp.<context>.<event>.v<N>: " + type);
+      throw new IllegalArgumentException("type must be shp.<context>.<event>.v<N>: " + type);
     }
     CloudEvent evt =
         new CloudEvent(
@@ -59,7 +59,7 @@ public final class CloudEvents {
             traceParent(),
             JSON.valueToTree(data));
     if (toJson(evt).getBytes(StandardCharsets.UTF_8).length > MAX_BYTES) {
-      throw new IllegalArgumentException("Event vượt " + MAX_BYTES + " byte");
+      throw new IllegalArgumentException("Event exceeds " + MAX_BYTES + " bytes");
     }
     return evt;
   }

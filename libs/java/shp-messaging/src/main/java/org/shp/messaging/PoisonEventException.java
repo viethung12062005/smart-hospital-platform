@@ -3,17 +3,18 @@ package org.shp.messaging;
 import java.util.List;
 
 /**
- * Event không đọc được hoặc sai schema: không bao giờ xử lý được, đi vào DLQ sau số lần giao tối
- * đa. Thông điệp chỉ có id, type và vị trí trường lỗi, không có giá trị của {@code data}.
+ * Event cannot be read or has a bad schema: it can never be processed, so it goes to the DLQ after
+ * the maximum delivery count. The message contains only the id, type and failing field locations,
+ * not the {@code data} values.
  */
 public final class PoisonEventException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
   public PoisonEventException(String id, String type, List<String> locations) {
-    super("Event không hợp lệ id=" + id + " type=" + type + " tại " + locations);
+    super("Invalid event id=" + id + " type=" + type + " at " + locations);
   }
 
   public PoisonEventException(Throwable cause) {
-    super("Event không đọc được (không phải CloudEvent JSON)", cause);
+    super("Event cannot be read (not CloudEvent JSON)", cause);
   }
 }

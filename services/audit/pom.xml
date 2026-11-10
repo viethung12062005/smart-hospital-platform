@@ -9,7 +9,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>audit</artifactId>
-  <name>audit — Nhận và tra cứu audit, chuỗi hash bất biến</name>
+  <name>audit — Receive and query audits, immutable hash chain</name>
 
   <dependencies>
     <dependency>

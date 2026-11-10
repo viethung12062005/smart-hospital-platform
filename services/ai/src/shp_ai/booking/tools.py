@@ -1,5 +1,6 @@
-"""4 tool của bot đặt lịch, tham số kiểm bằng schema (AI-29; 12 §5). Đúng khớp value set `specialty` trong
-contracts/terminology/code-systems.yaml (chép tay vào đây vì build context của service không có repo gốc).
+"""The booking bot's 4 tools, with parameters validated by schema (AI-29; 12 §5). Exactly matches the `specialty`
+value set in contracts/terminology/code-systems.yaml (copied by hand here because the service build context does not
+include the repo root).
 """
 
 import re
@@ -28,8 +29,8 @@ LIST_MY_APPOINTMENTS = "list_my_appointments"
 PROPOSE_BOOKING = "propose_booking"
 PROPOSE_CANCEL = "propose_cancel"
 ALLOWED_TOOLS = frozenset({SEARCH_SLOTS, LIST_MY_APPOINTMENTS, PROPOSE_BOOKING, PROPOSE_CANCEL})
-READ_TOOLS = frozenset({SEARCH_SLOTS, LIST_MY_APPOINTMENTS})  # tự chạy, không cần xác nhận
-PROPOSE_TOOLS = frozenset({PROPOSE_BOOKING, PROPOSE_CANCEL})  # chỉ tạo pending_action, không thực hiện
+READ_TOOLS = frozenset({SEARCH_SLOTS, LIST_MY_APPOINTMENTS})  # run automatically, no confirmation needed
+PROPOSE_TOOLS = frozenset({PROPOSE_BOOKING, PROPOSE_CANCEL})  # only create a pending_action, never execute
 
 TOOL_SCHEMAS: list[dict[str, Any]] = [
     {

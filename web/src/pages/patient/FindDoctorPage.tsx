@@ -10,7 +10,7 @@ import { SPECIALTIES, specialtyName } from '@/api/terminology';
 import { useAuth } from '@/auth/useAuth';
 import { Card, EmptyState, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 
-/** Tìm bác sĩ: bộ lọc chuyên khoa bên trái, danh sách bác sĩ bên phải (theo bố cục FindDoctor của portal PoC trước). */
+/** Find a doctor: specialty filter on the left, doctor list on the right (following the previous PoC portal's FindDoctor layout). */
 export function FindDoctorPage() {
   const { t } = useTranslation();
   const { user } = useAuth();

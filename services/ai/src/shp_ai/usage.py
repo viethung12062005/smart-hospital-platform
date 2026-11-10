@@ -1,8 +1,8 @@
-"""Theo dõi token, chi phí, fallback (AI-13, PY-09; 12 §6 AI10, NFR-C2).
+"""Track tokens, cost, fallback (AI-13, PY-09; 12 §6 AI10, NFR-C2).
 
-- Mỗi lời gọi LLM ghi một dòng `usage` (ngày, tác vụ, provider, model, token, chi phí, fallbackLevel, có trả lời).
-  Không có nội dung câu hỏi hay câu trả lời.
-- `MongoTokenBudget`: hạn mức token/ngày dùng chung cho mọi replica (bộ đếm `$inc` nguyên tử), cảnh báo ở 80%.
+- Every LLM call writes one `usage` row (day, task, provider, model, tokens, cost, fallbackLevel, answered).
+  No question or answer content.
+- `MongoTokenBudget`: daily token budget shared by every replica (atomic `$inc` counter), warning at 80%.
 """
 
 from collections.abc import Callable
@@ -15,12 +15,12 @@ from pymongo.database import Database
 
 from shp_platform.llm.router import RouterResult, TokenBudget
 
-LLM_CALLS = Counter(
-    "shp_ai_llm_calls_total", "Lời gọi LLM theo provider/model/kết quả", ["provider", "model", "outcome"]
+LLM_CALLS = Counter("shp_ai_llm_calls_total", "LLM calls by provider/model/outcome", ["provider", "model", "outcome"])
+LLM_TOKENS = Counter(
+    "shp_ai_llm_tokens_total", "Tokens by provider/model/direction", ["provider", "model", "direction"]
 )
-LLM_TOKENS = Counter("shp_ai_llm_tokens_total", "Token theo provider/model/chiều", ["provider", "model", "direction"])
-BUDGET_USED = Gauge("shp_ai_budget_used_ratio", "Tỉ lệ hạn mức token trong ngày đã dùng")
-BUDGET_ALERT = Gauge("shp_ai_budget_alert", "1 khi đã dùng ≥ 80% hạn mức ngày")
+BUDGET_USED = Gauge("shp_ai_budget_used_ratio", "Fraction of the daily token budget used")
+BUDGET_ALERT = Gauge("shp_ai_budget_alert", "1 when ≥ 80% of the daily budget is used")
 ALERT_AT = 0.8
 Doc = dict[str, Any]
 

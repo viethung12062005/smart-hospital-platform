@@ -1,5 +1,5 @@
-# Cấu hình service scheduling. Giá trị nhạy cảm (mật khẩu) KHÔNG đặt ở đây: lấy từ biến môi trường (local: dev/.local/connection.env
-# hoặc Secret do dev/scripts/deploy.sh tạo; cloud: Key Vault qua CSI).
+# Configuration for the scheduling service. Sensitive values (passwords) must NOT go here: read from environment variables (local: dev/.local/connection.env
+# or a Secret created by dev/scripts/deploy.sh; cloud: Key Vault via CSI).
 spring:
   application:
     name: scheduling
@@ -10,7 +10,7 @@ spring:
     hikari:
       connection-init-sql: SET search_path TO scheduling, public
   flyway:
-    # Bảng nền tảng (outbox, inbox, idempotency_key) đến từ shp-data-postgres; migration của service đặt ở db/migration (V1+).
+    # Platform tables (outbox, inbox, idempotency_key) come from shp-data-postgres; the service's migrations live in db/migration (V1+).
     locations: classpath:db/migration,classpath:db/shp-messaging/postgres
 shp:
   clinical:

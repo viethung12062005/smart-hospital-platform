@@ -1,9 +1,10 @@
 package org.shp.web.auth;
 
 /**
- * Liên kết tài khoản (OIDC sub) ↔ Patient/Practitioner, lưu ở clinical ({@code identity_links}).
+ * Link between an account (OIDC sub) and Patient/Practitioner, stored in clinical ({@code
+ * identity_links}).
  *
- * @param fhirUserType Patient hoặc Practitioner
- * @param fhirUserId id (không kèm loại)
+ * @param fhirUserType Patient or Practitioner
+ * @param fhirUserId id (without the type)
  */
 public record IdentityLink(String fhirUserType, String fhirUserId, boolean disabled) {}

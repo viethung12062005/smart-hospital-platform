@@ -9,7 +9,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>clinical</artifactId>
-  <name>clinical — Hồ sơ bệnh nhân, encounter, tìm kiếm lịch sử, liên kết tài khoản (FHIR)</name>
+  <name>clinical — Patient records, encounters, history search, account linking (FHIR)</name>
 
   <dependencies>
     <dependency>

@@ -12,8 +12,8 @@ import java.util.UUID;
 import org.shp.events.CloudEvents;
 
 /**
- * Ghi lỗi đúng định dạng: {@code /fhir/*} → OperationOutcome; còn lại → Problem Details (RFC 9457)
- * có trường {@code code}.
+ * Write errors in the right format: {@code /fhir/*} → OperationOutcome; everything else → Problem
+ * Details (RFC 9457) with a {@code code} field.
  */
 public final class ErrorWriter {
   public static final String FHIR_ERROR_SYSTEM = "https://shp.example.org/fhir/CodeSystem/error";

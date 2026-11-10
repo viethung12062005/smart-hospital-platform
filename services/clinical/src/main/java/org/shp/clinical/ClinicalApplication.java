@@ -3,7 +3,7 @@ package org.shp.clinical;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-/** Hồ sơ bệnh nhân, encounter, tìm kiếm lịch sử, liên kết tài khoản (FHIR). */
+/** Patient records, encounters, history search, account linking (FHIR). */
 @SpringBootApplication
 public class ClinicalApplication {
   public static void main(String[] args) {

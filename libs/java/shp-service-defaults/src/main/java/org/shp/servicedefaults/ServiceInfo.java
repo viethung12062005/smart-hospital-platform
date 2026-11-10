@@ -1,4 +1,4 @@
 package org.shp.servicedefaults;
 
-/** Thông tin phiên bản của service, trả ở {@code GET /info}. */
+/** Service version information, returned at {@code GET /info}. */
 public record ServiceInfo(String name, String version, String gitSha) {}

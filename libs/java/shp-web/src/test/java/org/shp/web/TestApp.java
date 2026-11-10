@@ -47,7 +47,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.JsonNode;
 
-/** Ứng dụng thử: dùng đúng auto-config của shp-web; IdP được thay bằng khóa ký HMAC cục bộ. */
+/**
+ * Test application: uses the real shp-web auto-config; the IdP is replaced by a local HMAC signing
+ * key.
+ */
 @SpringBootApplication
 public class TestApp {
   static final String ISSUER = "https://idp.test/realms/shp";
@@ -57,7 +60,7 @@ public class TestApp {
   static final byte[] OTHER_KEY =
       "another-signing-key-32-bytes-minimum!!!!".getBytes(StandardCharsets.UTF_8);
 
-  /** Liên kết giả: test thêm/xóa trực tiếp. */
+  /** Fake links: tests add/remove directly. */
   static final class FakeLinks implements IdentityLinkClient {
     final Map<String, IdentityLink> links = new ConcurrentHashMap<>();
     int calls;
@@ -69,7 +72,7 @@ public class TestApp {
     }
   }
 
-  /** Quan hệ điều trị giả: cặp "practitionerId|patientId". */
+  /** Fake care relationships: pair "practitionerId|patientId". */
   static final Set<String> CARE = ConcurrentHashMap.newKeySet();
 
   @Bean
@@ -222,7 +225,7 @@ public class TestApp {
       return "ok";
     }
 
-    // ---------- header bắt buộc + ETag (resource giả có version hiện tại là 3) ----------
+    // ---------- required headers + ETag (fake resource has current version 3) ----------
     @PutMapping("/fhir/Patient/{id}")
     @ShpPublicEndpoint
     Map<String, Object> updatePatient(@PathVariable String id, HttpServletRequest req) {

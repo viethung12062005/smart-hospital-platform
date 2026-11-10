@@ -1,4 +1,4 @@
-# Values riêng của notification khi chạy trên kind (make -C dev deploy SVC=notification); nạp sau dev/chart/app-values-local.yaml.
+# Notification-specific values when running on kind (make -C dev deploy SVC=notification); loaded after dev/chart/app-values-local.yaml.
 image:
   repository: localhost/shp-notification
   tag: dev

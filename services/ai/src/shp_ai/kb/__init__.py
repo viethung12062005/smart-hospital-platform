@@ -1,1 +1,1 @@
-"""Kho tri thức RAG (US-052): parser, chunker, embedding, index, vòng đời tài liệu (06 §1)."""
+"""RAG knowledge base (US-052): parser, chunker, embedding, index, document lifecycle (06 §1)."""

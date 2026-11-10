@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
-# Build image của service và deploy lên cụm kind. Dùng: scripts/deploy.sh <svc|all>
-# Image không đẩy lên registry nào: build bằng Docker rồi nạp thẳng vào node kind.
+# Build a service image and deploy it to the kind cluster. Usage: scripts/deploy.sh <svc|all>
+# Images are not pushed to any registry: build with Docker and load straight into the kind node.
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-export DOCKER_BUILDKIT=1   # Dockerfile dùng RUN --mount (cache Maven); cần BuildKit kể cả với Docker Engine thuần
+export DOCKER_BUILDKIT=1   # Dockerfiles use RUN --mount (Maven cache); BuildKit is required even with plain Docker Engine
 ROOT="$(cd "$DEV_DIR/.." && pwd)"
 APP_NS="shp-apps"
 JAVA="gateway scheduling notification clinical document audit"
 PYTHON="ai ml"
 CHART="${SHP_CHART_DIR:-$LOCAL_DIR/templates/charts/microservice}"
 
-target="${1:-}"; [ -n "$target" ] || die "Dùng: make deploy SVC=<tên service|all>"
-kind get clusters 2>/dev/null | grep -qx "$CLUSTER_NAME" || die "Chưa có cụm. Chạy: make up"
+target="${1:-}"; [ -n "$target" ] || die "Usage: make deploy SVC=<service name|all>"
+kind get clusters 2>/dev/null | grep -qx "$CLUSTER_NAME" || die "No cluster yet. Run: make up"
 
-# Chart dùng chung nằm ở repo shp-platform-templates; kéo về một lần (hoặc đặt SHP_CHART_DIR trỏ tới bản clone sẵn).
+# The shared chart lives in the shp-platform-templates repo; it is pulled once (or set SHP_CHART_DIR to an existing clone).
 if [ ! -f "$CHART/Chart.yaml" ]; then
-  log "Kéo chart microservice từ $TEMPLATES_GIT"
+  log "Pulling the microservice chart from $TEMPLATES_GIT"
   rm -rf "$LOCAL_DIR/templates"
   git clone -q --depth 1 --branch "$TEMPLATES_REF" "$TEMPLATES_GIT" "$LOCAL_DIR/templates"
 fi
 
 ensure_credentials
 k create namespace "$APP_NS" --dry-run=client -o yaml | k apply -f - >/dev/null
-# Mật khẩu + chuỗi kết nối TRONG cụm (tên DNS service của shp-deps), đưa vào Secret; values chung nạp bằng secretEnv.
-# Host/user/URL không bí mật nằm ở dev/chart/app-values-local.yaml và services/<svc>/deploy/values-local.yaml.
+# Passwords + connection strings INSIDE the cluster (shp-deps service DNS names), stored in a Secret; common values are injected via secretEnv.
+# Non-secret hosts/users/URLs live in dev/chart/app-values-local.yaml and services/<svc>/deploy/values-local.yaml.
 d="$NAMESPACE.svc.cluster.local"
 k -n "$APP_NS" create secret generic shp-local-conn \
   --from-literal=postgres-password="$POSTGRES_PASSWORD" \
@@ -37,19 +37,19 @@ deploy_one() {
   local svc="$1" ctx file
   case " $JAVA " in
     *" $svc "*) ctx="$ROOT"; file="$ROOT/services/$svc/Dockerfile" ;;
-    *) case " $PYTHON " in *" $svc "*) ctx="$ROOT/services/$svc"; file="$ctx/Dockerfile" ;; *) die "Service không tồn tại: $svc" ;; esac ;;
+    *) case " $PYTHON " in *" $svc "*) ctx="$ROOT/services/$svc"; file="$ctx/Dockerfile" ;; *) die "Unknown service: $svc" ;; esac ;;
   esac
   log "[$svc] build image localhost/shp-$svc:dev"
   docker build -q -t "localhost/shp-$svc:dev" -f "$file" "$ctx" >/dev/null
-  log "[$svc] nạp image vào cụm kind"
+  log "[$svc] loading image into the kind cluster"
   kind load docker-image "localhost/shp-$svc:dev" --name "$CLUSTER_NAME" >/dev/null
   log "[$svc] helm upgrade --install"
   helm --kube-context "$CTX" upgrade --install "$svc" "$CHART" -n "$APP_NS" \
     -f "$DEV_DIR/chart/app-values-local.yaml" -f "$ROOT/services/$svc/deploy/values-local.yaml" \
     --set fullnameOverride="$svc" --set-string podAnnotations.redeployedAt="$(date +%s)" \
     --wait --timeout 5m >/dev/null
-  log "[$svc] chạy OK"
+  log "[$svc] running OK"
 }
 
 if [ "$target" = all ]; then for s in $JAVA $PYTHON; do deploy_one "$s"; done; else deploy_one "$target"; fi
-log "Gọi thử qua gateway: make port-forward  rồi  curl http://localhost:18000/info"
+log "Try it through the gateway: make port-forward  then  curl http://localhost:18000/info"

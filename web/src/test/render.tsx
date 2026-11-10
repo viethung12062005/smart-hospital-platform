@@ -5,7 +5,7 @@ import type { Role } from '@/auth/roles';
 import { signInMock } from '@/auth/session';
 import { createQueryClient } from '@/queryClient';
 
-/** Render toàn bộ ứng dụng ở một đường dẫn, đã đăng nhập bằng người dùng giả của vai trò cho trước. */
+/** Render the whole app at a route, already signed in as the mock user for the given role. */
 export function renderApp(path: string, role: Role) {
   signInMock(role);
   const queryClient = createQueryClient();

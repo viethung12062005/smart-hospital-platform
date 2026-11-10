@@ -1,10 +1,12 @@
-"""Vòng lặp tool của bot đặt lịch (AI-29, AI-31; 12 §5, AC-14.1, AC-14.2).
+"""The booking bot's tool loop (AI-29, AI-31; 12 §5, AC-14.1, AC-14.2).
 
-- Tối đa 6 lượt gọi tool mỗi tin nhắn, tổng thời gian 10 giây (AC-14.2 giới hạn vòng lặp).
-- `search_slots`/`list_my_appointments` tự chạy ngay. `propose_booking`/`propose_cancel` KHÔNG thực hiện: chỉ tạo
-  `pending_actions` (TTL 5 phút) và kết thúc lượt — việc thật chỉ chạy ở AI8 sau khi người dùng xác nhận.
-- Mọi model lỗi (router không trả lời được) → `BookingUnavailableError` để API trả 503 kèm fallback form (AC-14.3).
-- Bot chỉ thấy `patientId` của chính người gọi; không có tool đọc hồ sơ lâm sàng (AC-14.2).
+- At most 6 tool calls per message, 10 seconds total (AC-14.2 loop limit).
+- `search_slots`/`list_my_appointments` run immediately. `propose_booking`/`propose_cancel` do NOT execute: they
+  only create
+  `pending_actions` (TTL 5 minutes) and end the turn — the real action runs only at AI8 after user confirmation.
+- Any model failure (the router cannot answer) → `BookingUnavailableError` so the API returns 503 with a fallback
+  form (AC-14.3).
+- The bot only sees the caller's own `patientId`; there is no tool to read clinical records (AC-14.2).
 """
 
 import json
@@ -38,7 +40,7 @@ DEFAULT_REPLY_NO_CONVERGENCE = (
 
 
 class BookingUnavailableError(Exception):
-    """Mọi model trong chuỗi lỗi (AC-14.3): web tự chuyển sang form đặt lịch thường."""
+    """Every model in the chain failed (AC-14.3): the web falls back to the regular booking form."""
 
 
 @dataclass
@@ -64,8 +66,9 @@ class TurnResult:
 
 
 def format_slot(slot: dict[str, Any]) -> Option:
-    # Slot (S8) không kèm sẵn tên bác sĩ (chỉ có schedule reference); tra Practitioner cần thêm một lời gọi tới
-    # clinical (C9) — để ở việc sau (web có thể hiển thị thêm bằng slotId nếu cần). Nhãn hiện chỉ có ngày giờ.
+    # A Slot (S8) does not include the doctor's name (only a schedule reference); looking up the Practitioner
+    # needs an extra call to clinical (C9) — left for later work (the web can display more via slotId if needed).
+    # The label currently has only date and time.
     start = slot.get("start", "")
     try:
         dt = datetime.fromisoformat(start.replace("Z", "+00:00"))
