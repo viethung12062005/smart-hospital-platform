@@ -44,6 +44,7 @@ class GatewayTest {
       "test-only-signing-key-32-bytes-minimum!!".getBytes(StandardCharsets.UTF_8);
   static final AtomicReference<String> SEEN_AUTH = new AtomicReference<>();
   static final AtomicReference<String> SEEN_PATH = new AtomicReference<>();
+  static final AtomicReference<String> SEEN_TRACEPARENT = new AtomicReference<>();
   static final HttpServer UPSTREAM;
 
   static {
@@ -54,6 +55,7 @@ class GatewayTest {
           ex -> {
             SEEN_AUTH.set(ex.getRequestHeaders().getFirst("Authorization"));
             SEEN_PATH.set(ex.getRequestURI().toString());
+            SEEN_TRACEPARENT.set(ex.getRequestHeaders().getFirst("traceparent"));
             byte[] b = "{\"from\":\"scheduling\"}".getBytes(StandardCharsets.UTF_8);
             ex.sendResponseHeaders(200, b.length);
             ex.getResponseBody().write(b);
@@ -108,12 +110,15 @@ class GatewayTest {
     return jwt.serialize();
   }
 
-  HttpResponse<String> get(String path, String token) throws Exception {
+  HttpResponse<String> get(String path, String token, String... headers) throws Exception {
     var b =
         HttpRequest.newBuilder(
             URI.create("http://localhost:" + env.getProperty("local.server.port") + path));
     if (token != null) {
       b.header("Authorization", "Bearer " + token);
+    }
+    if (headers.length > 0) {
+      b.headers(headers);
     }
     try (var c = HttpClient.newHttpClient()) {
       return c.send(b.build(), HttpResponse.BodyHandlers.ofString());
@@ -169,5 +174,29 @@ class GatewayTest {
   void healthIsPublic() throws Exception {
     assertThat(get("/health/ready", null).statusCode()).isEqualTo(200);
     assertThat(get("/info", null).body()).contains("gateway");
+  }
+
+  // ---------- GW-01: truyền trace context (NFR-O1, 07 §3) ----------
+  @Test
+  void incomingTraceContextIsContinuedToTheUpstream() throws Exception {
+    String traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+    var r =
+        get(
+            "/fhir/Slot",
+            token(List.of("patient"), null, "shp-api"),
+            "traceparent",
+            "00-" + traceId + "-00f067aa0ba902b7-01");
+    assertThat(r.statusCode()).isEqualTo(200);
+    // cùng trace, span mới của gateway (span-id khác span của client)
+    assertThat(SEEN_TRACEPARENT.get())
+        .matches("00-" + traceId + "-[0-9a-f]{16}-[0-9a-f]{2}")
+        .doesNotContain("00f067aa0ba902b7");
+  }
+
+  @Test
+  void gatewayStartsATraceWhenTheClientSendsNone() throws Exception {
+    var r = get("/fhir/Slot", token(List.of("patient"), null, "shp-api"));
+    assertThat(r.statusCode()).isEqualTo(200);
+    assertThat(SEEN_TRACEPARENT.get()).matches("00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}");
   }
 }
