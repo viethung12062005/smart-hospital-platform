@@ -14,6 +14,7 @@ from shp_ai.deps import Deps
 from shp_ai.settings import Settings
 from shp_platform.errors import ShpError, install_error_handlers
 from shp_platform.security import Authenticator, AuthSettings
+from shp_platform.telemetry import install_tracing
 
 LOG = logging.getLogger("shp.ai")
 Registrar = Callable[[FastAPI, Callable[[], Deps], Authenticator], None]
@@ -38,6 +39,7 @@ def build_app(
 
     app = FastAPI(title="shp-ai", version="0.1.0", lifespan=lifespan)
     install_error_handlers(app)
+    install_tracing(app, "ai")
 
     def deps() -> Deps:
         return box["deps"]

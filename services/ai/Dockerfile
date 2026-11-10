@@ -8,6 +8,10 @@ RUN pip install --no-cache-dir --prefix=/install .
 FROM mirror.gcr.io/library/python:3.15-slim
 RUN useradd --uid 10001 --no-create-home app
 # pip/setuptools are not needed at runtime and their vendored libs (urllib3, msgpack) carry unpatched CVEs: remove them.
+# Ghim phiên bản (hadolint DL3008); đổi image gốc thì cập nhật bằng `apt-cache policy <gói>`.
+# zlib1g: bản vá CVE-2026-76844, CVE-2026-85091 (HIGH) mà image gốc chưa có; quét image chặn HIGH có bản vá.
+RUN apt-get update && apt-get install -y --no-install-recommends zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1 \
+    && rm -rf /var/lib/apt/lists/*
 RUN pip uninstall -y pip setuptools wheel
 COPY --from=build /install /usr/local
 USER 10001
