@@ -37,3 +37,4 @@ target/
 .~lock.*
 *.swp
 .DS_Store
+.vscode/
