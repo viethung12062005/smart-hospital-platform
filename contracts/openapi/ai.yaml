@@ -29,31 +29,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/ai/messages/{id}/feedback:
     post:
       operationId: AI2
@@ -71,31 +85,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -117,31 +145,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/ai/conversations/{id}:
     get:
       operationId: AI3-2
@@ -157,31 +199,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -204,31 +260,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -252,31 +322,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/ai/extractions/{id}:
     get:
       operationId: AI5-2
@@ -294,31 +378,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -342,31 +440,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -389,31 +501,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/ai/booking/actions/{actionId}/confirm:
     post:
       operationId: AI8
@@ -430,31 +556,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: actionId
         in: path
@@ -478,31 +618,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
     post:
       operationId: AI9-2
       summary: Quản lý kho tri thức
@@ -519,31 +673,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/ai/kb/documents/{id}:
     put:
       operationId: AI9-3
@@ -561,31 +729,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -609,31 +791,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -657,31 +853,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -704,32 +914,118 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
+  schemas:
+    OperationOutcome:
+      type: object
+      required:
+      - resourceType
+      - issue
+      properties:
+        resourceType:
+          const: OperationOutcome
+        issue:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+            - severity
+            - code
+            properties:
+              severity:
+                enum:
+                - fatal
+                - error
+                - warning
+                - information
+              code:
+                type: string
+                description: Mã trong 07 §5, ví dụ validation-failed
+              diagnostics:
+                type: string
+                description: Bản dịch vi/en, không chứa giá trị gửi lên
+              details:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  coding:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        system:
+                          type: string
+                        code:
+                          type: string
+                        display:
+                          type: string
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - code
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+          description: Bản dịch vi/en của mã lỗi
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+          description: Mã trong ErrorCatalog (07 §5)
+        detail:
+          type: string
+        traceId:
+          type: string
+          description: Trace id để đối chiếu log
   securitySchemes:
     oidc:
       type: openIdConnect

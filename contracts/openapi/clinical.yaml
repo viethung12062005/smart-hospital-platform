@@ -27,31 +27,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/me:
     get:
       operationId: C2
@@ -67,31 +81,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /fhir/Patient:
     post:
       operationId: C3
@@ -108,31 +136,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /fhir/Patient/{id}:
     get:
       operationId: C4
@@ -151,31 +193,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -198,31 +254,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -246,31 +316,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /fhir/Patient/{id}/_history:
     get:
       operationId: C7
@@ -287,31 +371,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -334,31 +432,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -380,31 +492,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
     post:
       operationId: C10-1
       summary: Quản lý nhân sự
@@ -420,31 +546,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /fhir/PractitionerRole:
     get:
       operationId: C9-2
@@ -460,31 +600,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
     post:
       operationId: C10-2
       summary: Quản lý nhân sự
@@ -500,31 +654,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /fhir/Encounter/{id}/$start:
     post:
       operationId: C11
@@ -541,31 +709,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -590,31 +772,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -636,31 +832,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -685,31 +895,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /fhir/Encounter/{id}/$finish:
     post:
       operationId: C14
@@ -726,31 +950,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -773,31 +1011,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
       parameters:
       - name: id
         in: path
@@ -821,31 +1073,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /{id}:
     get:
       operationId: C16-2
@@ -863,31 +1129,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -911,31 +1191,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /fhir/AllergyIntolerance:
     post:
       operationId: C18
@@ -952,31 +1246,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '401':
           description: Chưa xác thực
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '404':
           description: Không tìm thấy
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/fhir+json: {}
+            application/fhir+json:
+              schema:
+                $ref: '#/components/schemas/OperationOutcome'
   /api/v1/clinical/patients/{id}/timeline:
     get:
       operationId: C19
@@ -994,31 +1302,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -1041,31 +1363,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/admin/users/{subject}:
     put:
       operationId: C21
@@ -1082,31 +1418,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: subject
         in: path
@@ -1129,31 +1479,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/me/profiles/dependents:
     post:
       operationId: C23
@@ -1170,31 +1534,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/me/profile-links:
     post:
       operationId: C24
@@ -1211,31 +1589,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/me/profile-links/{id}/confirm:
     post:
       operationId: C25
@@ -1252,31 +1644,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -1300,31 +1706,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -1347,31 +1767,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/me/claim-record/verify:
     post:
       operationId: C28
@@ -1388,31 +1822,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /api/v1/clinical/patients/{id}/profile-links:
     post:
       operationId: C29
@@ -1429,31 +1877,45 @@ paths:
         '400':
           description: Yêu cầu sai
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '401':
           description: Chưa xác thực
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '403':
           description: Không đủ quyền (có ghi audit)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '404':
           description: Không tìm thấy
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '409':
           description: Xung đột (version/idempotency)
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           description: Dữ liệu không hợp lệ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '429':
           description: Quá giới hạn tốc độ
           content:
-            application/problem+json: {}
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
       parameters:
       - name: id
         in: path
@@ -1461,6 +1923,78 @@ paths:
         schema:
           type: string
 components:
+  schemas:
+    OperationOutcome:
+      type: object
+      required:
+      - resourceType
+      - issue
+      properties:
+        resourceType:
+          const: OperationOutcome
+        issue:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+            - severity
+            - code
+            properties:
+              severity:
+                enum:
+                - fatal
+                - error
+                - warning
+                - information
+              code:
+                type: string
+                description: Mã trong 07 §5, ví dụ validation-failed
+              diagnostics:
+                type: string
+                description: Bản dịch vi/en, không chứa giá trị gửi lên
+              details:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  coding:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        system:
+                          type: string
+                        code:
+                          type: string
+                        display:
+                          type: string
+    Problem:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - code
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+          description: Bản dịch vi/en của mã lỗi
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+          description: Mã trong ErrorCatalog (07 §5)
+        detail:
+          type: string
+        traceId:
+          type: string
+          description: Trace id để đối chiếu log
   securitySchemes:
     oidc:
       type: openIdConnect

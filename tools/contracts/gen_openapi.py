@@ -61,6 +61,61 @@ def roles_of(perm: str) -> list[str]:
     return found
 
 
+SCHEMAS = {
+    # FHIR R4 OperationOutcome: dạng lỗi của mọi endpoint /fhir/** (07 §5)
+    "OperationOutcome": {
+        "type": "object",
+        "required": ["resourceType", "issue"],
+        "properties": {
+            "resourceType": {"const": "OperationOutcome"},
+            "issue": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "object",
+                    "required": ["severity", "code"],
+                    "properties": {
+                        "severity": {"enum": ["fatal", "error", "warning", "information"]},
+                        "code": {"type": "string", "description": "Mã trong 07 §5, ví dụ validation-failed"},
+                        "diagnostics": {"type": "string", "description": "Bản dịch vi/en, không chứa giá trị gửi lên"},
+                        "details": {
+                            "type": "object",
+                            "properties": {
+                                "text": {"type": "string"},
+                                "coding": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "system": {"type": "string"},
+                                            "code": {"type": "string"},
+                                            "display": {"type": "string"},
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+    # RFC 9457 Problem Details: dạng lỗi của mọi endpoint /api/**
+    "Problem": {
+        "type": "object",
+        "required": ["type", "title", "status", "code"],
+        "properties": {
+            "type": {"type": "string", "format": "uri"},
+            "title": {"type": "string", "description": "Bản dịch vi/en của mã lỗi"},
+            "status": {"type": "integer", "minimum": 400, "maximum": 599},
+            "code": {"type": "string", "description": "Mã trong ErrorCatalog (07 §5)"},
+            "detail": {"type": "string"},
+            "traceId": {"type": "string", "description": "Trace id để đối chiếu log"},
+        },
+    },
+}
+
+
 def build(service: str, ops: list[dict]) -> dict:
     paths: dict[str, dict] = {}
     for o in ops:
@@ -69,11 +124,13 @@ def build(service: str, ops: list[dict]) -> dict:
         params = [{"name": n, "in": "path", "required": True, "schema": {"type": "string"}} for n in re.findall(r"\{([A-Za-z]+)\}", path)]
         fhir = path.startswith("/fhir/")
         err_ct = "application/fhir+json" if fhir else "application/problem+json"
+        err_schema = "#/components/schemas/OperationOutcome" if fhir else "#/components/schemas/Problem"
         entry = {
             "operationId": o["id"], "summary": o["summary"], "tags": [service],
             "x-permission": o["perm"], "x-roles": roles_of(o["perm"]), "x-doc": f"detailed-design/{o['doc']}",
             "responses": {"200": {"description": "Thành công"}} | {
-                code: {"description": d, "content": {err_ct: {}}} for code, d in STD_ERRORS.items()},
+                code: {"description": d, "content": {err_ct: {"schema": {"$ref": err_schema}}}}
+                for code, d in STD_ERRORS.items()},
         }
         if params:
             entry["parameters"] = params
@@ -88,7 +145,7 @@ def build(service: str, ops: list[dict]) -> dict:
         "servers": [{"url": "https://api.{env}.shp.example.org", "variables": {"env": {"default": "uat"}}}],
         "security": [{"oidc": []}],
         "paths": paths,
-        "components": {"securitySchemes": {
+        "components": {"schemas": SCHEMAS, "securitySchemes": {
             "oidc": {"type": "openIdConnect", "openIdConnectUrl": "https://login.example.org/.well-known/openid-configuration"},
             "workloadIdentity": {"type": "http", "scheme": "bearer", "description": "Token workload identity của service gọi (nội bộ)"}}},
     }

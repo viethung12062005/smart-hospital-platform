@@ -35,6 +35,17 @@ def main() -> int:
         errs += [f"{service}: thiếu {i}" for i in sorted(want - have)] + [f"{service}: thừa {i}" for i in sorted(have - want)]
         seen += len(have)
         for path, item in spec["paths"].items():
+            fhir = path.startswith("/fhir/")
+            want_ref = "#/components/schemas/OperationOutcome" if fhir else "#/components/schemas/Problem"
+            for method, op in item.items():
+                for code, resp in (op.get("responses") or {}).items():
+                    if not str(code).startswith(("4", "5")) or code == "default":
+                        continue
+                    content = (resp.get("content") or {})
+                    schemas = [c.get("schema", {}).get("$ref") for c in content.values()]
+                    if want_ref not in schemas:
+                        errs.append(f"{service}: {method.upper()} {path} {code} thiếu schema {want_ref.split('/')[-1]}")
+
             for method, op in item.items():
                 if not path.startswith("/internal/") and not op.get("x-roles") and "x-permission" in op:
                     perm = op["x-permission"]
