@@ -38,6 +38,11 @@ spring:
                 - Path=/api/v1/ml/**
 server:
   port: 8080
+management:
+  health:
+    # Redis chỉ giữ bộ đếm rate limit và fail-open (RateLimitFilter): Redis lỗi không được làm gateway hết ready.
+    redis:
+      enabled: false
 shp:
   auth:
     authority: ${OIDC_AUTHORITY:}
