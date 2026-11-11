@@ -45,7 +45,29 @@ export async function currentUser(): Promise<SessionUser | undefined> {
 export async function accessToken(): Promise<string | undefined> {
   if (getConfig().authMode === 'mock') return mockUser?.token;
   const user = await oidc().getUser();
-  return user && !user.expired ? user.access_token : undefined;
+  if (!user) return undefined;
+  // An expired token (tab asleep, failed background renewal) is renewed before the request goes out.
+  return user.expired ? renewAccessToken() : user.access_token;
+}
+
+/**
+ * Get a fresh access token without user interaction (refresh token / silent renew). Returns undefined when that is not
+ * possible any more (the Keycloak session itself has ended), so the caller can send the user to sign in.
+ */
+export async function renewAccessToken(): Promise<string | undefined> {
+  if (getConfig().authMode === 'mock') return mockUser?.token;
+  try {
+    const user = await oidc().signinSilent();
+    return user && !user.expired ? user.access_token : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The session cannot be renewed: sign in again and come back to the current page (no-op in mock mode). */
+export async function onSessionExpired(): Promise<void> {
+  if (getConfig().authMode === 'mock') return;
+  await signIn(`${window.location.pathname}${window.location.search}`);
 }
 
 export async function signIn(returnTo = '/'): Promise<void> {
