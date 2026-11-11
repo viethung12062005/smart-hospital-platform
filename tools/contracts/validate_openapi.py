@@ -15,6 +15,20 @@ import gen_openapi  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 
 
+# Every public or internal path starts with one of these (07-api-conventions §1).
+PATH_PREFIXES = ("/fhir/", "/api/v1/", "/internal/v1/")
+
+
+def bad_paths(paths) -> list[str]:
+    """Paths that cannot be real endpoints, e.g. `/{id}` produced from shorthand like `GET /{id}` in a design table."""
+    return [
+        f"path {path} does not start with {', '.join(PATH_PREFIXES)} "
+        "(shorthand in the design table? write every method and path out in full)"
+        for path in paths
+        if not path.startswith(PATH_PREFIXES)
+    ]
+
+
 def main() -> int:
     errs: list[str] = []
     expected = gen_openapi.parse()
@@ -34,6 +48,7 @@ def main() -> int:
         want = {o["id"] for o in ops}
         errs += [f"{service}: missing {i}" for i in sorted(want - have)] + [f"{service}: extra {i}" for i in sorted(have - want)]
         seen += len(have)
+        errs += [f"{service}: {e}" for e in bad_paths(spec["paths"])]
         for path, item in spec["paths"].items():
             fhir = path.startswith("/fhir/")
             want_ref = "#/components/schemas/OperationOutcome" if fhir else "#/components/schemas/Problem"
