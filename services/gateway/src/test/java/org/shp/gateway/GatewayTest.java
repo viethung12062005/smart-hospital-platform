@@ -14,11 +14,15 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
@@ -27,9 +31,13 @@ import org.shp.security.ShpJwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cloud.gateway.route.Route;
+import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
+import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
+import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
@@ -95,6 +103,7 @@ class GatewayTest {
   }
 
   @Autowired Environment env;
+  @Autowired RouteLocator routes;
 
   static String token(List<String> roles, List<String> amr, String audience) throws Exception {
     var c =
@@ -135,6 +144,56 @@ class GatewayTest {
     assertThat(r.body()).contains("scheduling");
     assertThat(SEEN_PATH.get()).isEqualTo("/fhir/Slot?schedule=x");
     assertThat(SEEN_AUTH.get()).isEqualTo("Bearer " + t); // the service validates the token again
+  }
+
+  /** Id of the route that would take this path, or null when the gateway has no route for it. */
+  String routeFor(String path) {
+    var exchange = MockServerWebExchange.from(MockServerHttpRequest.get(path));
+    return routes
+        .getRoutes()
+        .filterWhen(r -> r.getPredicate().apply(exchange))
+        .next()
+        .map(Route::getId)
+        .block();
+  }
+
+  /**
+   * GW-01: the route table must not drift from the contracts. Every public path of
+   * contracts/openapi/&lt;service&gt;.yaml is routed to that service; /internal paths are never
+   * routed.
+   */
+  @Test
+  void everyPublicContractPathIsRoutedToItsOwningService() throws Exception {
+    Path dir = Path.of("").toAbsolutePath();
+    while (dir != null && !Files.isDirectory(dir.resolve("contracts/openapi"))) {
+      dir = dir.getParent();
+    }
+    assertThat(dir).isNotNull();
+    var pathKey = Pattern.compile("(?m)^  (/[^\\s:]*):\\s*$");
+    List<String> problems = new ArrayList<>();
+    int checked = 0;
+    try (var files = Files.list(dir.resolve("contracts/openapi"))) {
+      for (Path file : files.filter(f -> f.toString().endsWith(".yaml")).sorted().toList()) {
+        String service = file.getFileName().toString().replace(".yaml", "");
+        var m = pathKey.matcher(Files.readString(file));
+        while (m.find()) {
+          String path = m.group(1);
+          String routed = routeFor(path.replaceAll("\\{[^}]+}", "x"));
+          if (path.startsWith("/internal/")) {
+            if (routed != null) {
+              problems.add(service + " " + path + " is exposed through route " + routed);
+            }
+          } else if (path.startsWith("/fhir/") || path.startsWith("/api/")) {
+            checked++;
+            if (!service.equals(routed)) {
+              problems.add(service + " " + path + " -> " + routed);
+            }
+          }
+        }
+      }
+    }
+    assertThat(checked).isGreaterThan(50);
+    assertThat(problems).isEmpty();
   }
 
   @Test
