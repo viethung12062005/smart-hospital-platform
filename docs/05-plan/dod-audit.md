@@ -17,7 +17,7 @@ is not met) · **UNVERIFIED** (cannot be checked without a cloud environment; sa
 
 ## Summary
 
-125 tasks audited: **84 pass, 32 partial, 6 fail**, 3 are still `In Progress` (OBS-04, GOV-05, GOV-08) and were not judged.
+125 tasks audited: **82 pass, 32 partial, 8 fail** (AI-07 and AI-31 were downgraded from pass after the PR checklist review), 3 are still `In Progress` (OBS-04, GOV-05, GOV-08) and were not judged.
 
 Build evidence on the audited tree: `mvn -B -o verify` BUILD SUCCESS (16 modules, every module >= 80% line coverage);
 `pytest` libs/python 61 passed (83%), services/ai 56 passed (88%, `TZ=UTC`), services/ml 46 passed (87%); web 30 Vitest
@@ -32,6 +32,8 @@ tests (86.6% lines); every workflow green on `main`.
 | LOC-02 | Realm has no `fhir_user` claim and no staff MFA; `dev/README.md` itself lists LOC-02 as not available | Realm + docs, ~3 h |
 | ML-12 | "AC-15.1 has a test in notification" — notification is still a scaffold | Blocked on the notification reminder tasks; reopen |
 | CIT-07 | No CodeQL (no workflow, default setup `not-configured`) | Config, < 1 h |
+| AI-07 | Prompt templates missing from the ai image: every prompt-based feature fails when deployed | Fixed in #559 |
+| AI-31 | 503 `ai-unavailable` without the booking-form `fallback` the design requires | Fixed in #560 |
 | GOV-06 | No `dependabot.yml` in `shp-infra`, `shp-gitops`, `shp-platform-templates` | Config, < 1 h |
 
 ### Tasks that are partial
@@ -93,6 +95,58 @@ tests (86.6% lines); every workflow green on `main`.
 6. Platform hardening: GOP-08 (egress), SCF-04/05/06, IAC-04, CIT-05, ML-10 alerts.
 7. Link the existing AI/ML/PY tests in `catalog/automation.yaml`, add `TC-AC-12.3`, raise the trace baseline.
 8. Reopen what cannot be done yet and say why: ML-12 (needs notification), SHR-08 / AI-01 / CIT-06 / GOP-03 (need UAT).
+
+## Pull request checklist review (all merged PRs, four repos)
+
+Method: every merged PR body was scanned for checklist lines (`- [ ]` / `- [x]`) on 2026-11-11.
+
+| | Count |
+|---|---|
+| Merged PRs | 100 (75 application repo, 9 infra, 6 gitops, 10 templates) |
+| Opened by a bot (Dependabot, pin bumps) — exempt | 22 |
+| **No Definition of Done section at all** | **42** — merged 2026-10-29 to 2026-11-02, before the template carried a DoD |
+| Have at least one unticked box | 38 |
+| ...of which the unticked box is a Definition of Done item | 26 |
+
+### Findings
+
+1. **42 PRs have no checklist at all.** They include the large AI, ML and shared-Python PRs (#45–#53), which delivered
+   most of the PY-, AI- and ML- tasks. This is consistent with the catalog finding above: those tasks never went through
+   the DoD, so nobody asked for the test-catalog links. PRs: #24, #23, #22, #21, #20, #17, #10, #8, #7, shp-infra#3, shp-infra#2, shp-infra#1, shp-gitops#2, shp-gitops#1, shp-platform-templates#4, shp-platform-templates#3, shp-platform-templates#2, shp-platform-templates#1, #32, #30, #29, #28, shp-infra#4, shp-gitops#4, shp-gitops#3, shp-platform-templates#6, shp-platform-templates#5, #57, #55, #54, #53, #51, #50, #49, #48, #47, #46, #45, #44, #43, shp-platform-templates#8, shp-platform-templates#7.
+2. **Most unticked boxes are form, not substance.** In 9 PRs the only unticked box is the second option of *Contract
+   impact* (one of the two always applies); in most others the unticked item says itself that it does not apply
+   ("— not applicable", "— no new endpoint"). The rule (`docs/00-workflow.md` §4, since #553) is to tick such items with
+   "(not applicable: reason)".
+3. **Real open items** — the unticked item was not done, or was done only after merge:
+
+| PR | Unticked item | State on 2026-11-11 |
+|---|---|---|
+| shp-infra#6 | CI green, plan read | Verified after merge: all 8 check runs on the merged head succeeded |
+| shp-platform-templates#7, #57 | Real CI run with `mongo:8` | Verified after merge: #57's 30 check runs succeeded; the sysctl workaround was later removed as ineffective (templates #8) |
+| #9 (WEB-01) | Whole DoD left empty | Verified after merge: 30 Vitest tests pass (86.6% lines); mocks are synthetic; the SA-owned files were created by the SA. **Never run on the local cluster** — the web app is not deployed by `dev/` |
+| #52 (AI-19..21, AI-29..31) | Ran on the local cluster | **Done 2026-11-11 — and it found two defects**: the booking chat returned 500 (prompt templates missing from the image, AI-07, fixed in #559) and the 503 lacked the designed `fallback` (AI-31, fixed in #560). Roles work: nurse 403, anonymous 401 |
+| #55 (SHR-12, AI-21, AI-30) | Follow-up: `MongoMessaging.ensureIndexes` creates `idempotency_keys` in clinical, notification and audit, which need none | **Still open**: the index is still created unconditionally (`MongoMessaging.java`) |
+| #55 | Follow-up: rename the ai collection to `idempotency_keys` | Resolved the other way in #59 (design adopted `idempotency`) |
+| #55 | Follow-up: no PY- task for Python idempotency | **Still open**: no backlog task; `shp_platform/idempotency.py` has 0% test coverage (see PY section) |
+| #62, #513, #514, #515, #529, #532 | "No changes to Dockerfile, pipeline, Helm, PlatformConfig" | Changes were the SA's own tasks; the rule restricts service developers (`00-workflow.md` §5). Item should be ticked "(not applicable: SA task)" |
+| #527 (SHR-01) | Same item: a developer changed `libs-java.yml` | Approved by the SA in review before merge |
+| #524 (SHR-05) | Ran on the local cluster | Not applicable at merge (no service used the library); it now runs in every deployed Java service |
+| #525 (PY-03, ML-11) | Ran on the local cluster | **Verified 2026-11-11**: ml redeployed and started without index conflicts; MongoDB shows the contract names `ttl_inbox_14d`, `ix_outbox_unpublished` |
+| #530 (SCH-01) | Ran on the local cluster | **Verified 2026-11-11**: on the local cluster Flyway applied `V001 - schedule template slot` on PostgreSQL 16.15; `ex_slot_no_overlap` and `btree_gist` exist |
+| #534 (GW-02) | Ran on the local cluster | **Verified 2026-11-11** through the gateway: one user's burst gets `429` with `Retry-After: 1` and `application/problem+json`; another user right after is not rate limited; an invalid token gets `401`. The run also exposed the SHR-21 500 (see SHR-21) |
+| #536 (LOC-04) | Ran on the local cluster | **Verified 2026-11-11 with a manual switch**: with `SHP_OTLP_EXPORT=true` set on ai, the collector received the request's trace (4 spans). By default nothing exports locally (see LOC-08) |
+| #540 (GOV-05) | GitHub UI work (creating the App) | **Still open** — GOV-05 is In Progress |
+
+### Correcting the PR bodies
+
+The checklists of merged PRs were not rewritten: editing 40 merged PR descriptions is a change to shared records that
+needs the owner's go-ahead. The corrections are prepared item by item (tick "not applicable" items with their reason,
+record the after-merge evidence above, leave the still-open items unticked).
+
+Running the open "local cluster" items also surfaced a regression in this audit's own translation PR: translating the
+comments of two already-applied Flyway migrations changed their checksums, and scheduling refused to start. The files
+were restored byte for byte in #546, and `AGENTS.md` (#555) now forbids editing a merged migration.
+
 
 ## Catalog trace per task (DoD §4: every acceptance criterion has a test case and an automated test)
 
@@ -526,6 +580,10 @@ MLflow, Loki, Grafana, OTel Collector) and 8 application pods `Running` in `shp-
 - Gap: nothing seeds synthetic data into the cluster. `dev/README.md:113` says fake data is created "by `make seed-users`
   and by each service's seed" — `seed-users` only creates Keycloak accounts and no service has a seed. The generator
   (`tools/synthetic/generate.py`, DAT-01) writes files only; there is no loader.
+- Gap 2 (found 2026-11-11): no service sends telemetry to the local OTel Collector. `dev/README.md` says "services send
+  traces/metrics/logs", but nothing in the local values sets `SHP_OTLP_EXPORT=true`, so the collector receives nothing.
+  With the switch set by hand on ai, the collector received the trace of a request (4 spans) — the code works, the
+  local wiring is missing.
 - Fix: a `make seed-data` target that loads the DAT-01 output into the cluster databases (possible only once the owning
   services have their collections/tables), or remove the claim from the title until then.
 
@@ -667,7 +725,11 @@ Group-wide limits that apply to several tasks below (recorded once):
   test triggers it. No reranker exists (documented as optional pending eval).
 - Fix: one test with an embedder that raises, asserting `retrieval_mode` and that an answer is still produced.
 
-#### AI-07 — Versioned prompt template + context assembly · PASS
+#### AI-07 — Versioned prompt template + context assembly · FAIL (found after the first pass; fix in #559)
+- **Correction (2026-11-11, PR checklist review):** deploying ai to the local cluster showed the prompt templates are not
+  in the image — `services/ai/pyproject.toml` declared package data for `shp_platform` only, so `pip install .` left out
+  `shp_ai/prompts/*/*.md`. Every prompt-based feature failed in any deployed environment with `FileNotFoundError`
+  (the booking chat returned 500). Tests import from `src/` and never noticed. Fixed in #559 with a packaging test.
 - Evidence: `prompts/{rag-answer,patient-summary,booking-agent}`; `api_assistant.py:98` stores `promptVersion` on the
   assistant message.
 - Note: no test asserts the stored `promptVersion`.
@@ -734,7 +796,11 @@ Group-wide limits that apply to several tasks below (recorded once):
   `test_confirm_books_with_patients_own_token_and_is_idempotent`, `test_confirm_rejects_non_owner_and_expired`,
   `test_slot_conflict_on_confirm_suggests_alternatives`.
 
-#### AI-31 — Booking chat API (AI7) + fallback · PASS
+#### AI-31 — Booking chat API (AI7) + fallback · FAIL (found after the first pass; fix in #560)
+- **Correction (2026-11-11):** the design requires 503 `ai-unavailable` **with**
+  `fallback: { "type": "booking-form", "url": "/booking" }` (12-api-ai, AC-14.3). The response had no `fallback` member and
+  `test_all_models_down_returns_503_booking_form_fallback` only checked the status and code. Fixed in #560; the web app
+  has no chatbot screen yet, so the client half of AC-14.3 stays with that future web task.
 - Evidence: `test_all_models_down_returns_503_booking_form_fallback`, `test_only_patients_can_use_booking_chat`.
 
 #### AI-33 — Token and cost report by task/model · PARTIAL
