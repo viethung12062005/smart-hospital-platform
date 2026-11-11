@@ -34,4 +34,4 @@ Build and test all Java code: `mvn -B verify` (needs JDK 21, Maven 3.9, Docker).
 | 3. Architecture | [Overview](docs/03-architecture/overview.md) · [ADR](docs/03-architecture/adr/README.md) · [Detailed design](docs/03-architecture/detailed-design/README.md) | Approved (G3) |
 | 4. Platform & DevOps | [Plan](docs/04-devops/README.md) · [Step-by-step log](docs/04-devops/progress-log.md) · [Run locally](dev/README.md) | In progress: libraries, the 8 service scaffolds and the dev kit are done |
 | Project plan | [Plan](docs/05-plan/project-plan.md) · [Backlog](docs/05-plan/backlog.md) · [CSV](docs/05-plan/backlog.csv) · per-person work: [SA](docs/05-plan/by-person/SA.md), [D1](docs/05-plan/by-person/D1.md), [D2](docs/05-plan/by-person/D2.md), [D3](docs/05-plan/by-person/D3.md) · [Definition of Done audit](docs/05-plan/dod-audit.md) | Approved |
-| 5. Development | [Onboarding](docs/onboarding.md) · [CONTRIBUTING](CONTRIBUTING.md) | Ready for tasks |
+| 5. Development | [Onboarding](docs/onboarding.md) · [CONTRIBUTING](CONTRIBUTING.md) · [instructions for AI agents](AGENTS.md) | Ready for tasks |

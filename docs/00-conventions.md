@@ -66,4 +66,5 @@ Python services (`ai`, `ml`): packages `src/shp_ai`, `src/shp_ml` split by featu
 
 ## 8. Code style
 - Java: Spotless (`mvn spotless:apply`), `-Werror`, no `@SuppressWarnings` without a documented reason. Python: `ruff` + `mypy` strict.
+- Language: everything written into the repos and on GitHub is English — code, identifiers, comments, documentation, commit messages, PR and issue text. Vietnamese stays only where it is product data: the `vi` locale of the web app, terminology display labels, synthetic names, and the Vietnamese corpora of the AI evaluation.
 - Small commits; titles `<story> (<task>): <description>` per [00-git-github.md](00-git-github.md), e.g. `US-041 (NTF-02): create reminders on appointment-booked`.
