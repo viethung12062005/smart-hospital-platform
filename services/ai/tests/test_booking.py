@@ -198,6 +198,7 @@ def test_all_models_down_returns_503_booking_form_fallback(api: Any) -> None:
     with tc:
         r = tc.post(CHAT, json={"message": "đặt lịch tim mạch"}, headers=bearer(**PATIENT))
         assert r.status_code == 503 and r.json()["code"] == "ai-unavailable"
+        assert r.json()["fallback"] == {"type": "booking-form", "url": "/booking"}  # AC-14.3
 
 
 def test_prompt_injection_is_blocked_before_any_model_call(api: Any) -> None:
