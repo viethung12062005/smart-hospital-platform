@@ -4,6 +4,7 @@ Matches org.shp.web.errors.ErrorCatalog and table 07-api-conventions §5. `detai
 Accept-Language and never contains PII or a stack trace.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -147,14 +148,29 @@ def all_errors() -> list[ErrorInfo]:
     return list(_CATALOG.values())
 
 
+_STANDARD_MEMBERS = frozenset({"type", "title", "status", "code", "detail", "traceId", "instance"})
+
+
 class ShpError(Exception):
     """Business error with a code from the catalog. `detail` (optional) replaces the default message; do not include
     PII."""
 
-    def __init__(self, code: str, detail: str | None = None, retry_after_seconds: int | None = None) -> None:
+    def __init__(
+        self,
+        code: str,
+        detail: str | None = None,
+        retry_after_seconds: int | None = None,
+        extensions: Mapping[str, Any] | None = None,
+    ) -> None:
         self.info = error_info(code)
         self.detail = detail
         self.retry_after_seconds = retry_after_seconds
+        # RFC 9457 extension members added to the body, e.g. the booking-form fallback of AI7 (12-api-ai). They may not
+        # replace a standard member and must not carry PII.
+        self.extensions = dict(extensions or {})
+        clash = set(self.extensions) & _STANDARD_MEMBERS
+        if clash:
+            raise ValueError(f"extension members may not replace standard members: {sorted(clash)}")
         super().__init__(code)
 
 
@@ -163,7 +179,11 @@ def _wants_english(request: Request) -> bool:
 
 
 def problem_response(
-    request: Request, info: ErrorInfo, detail: str | None = None, retry_after_seconds: int | None = None
+    request: Request,
+    info: ErrorInfo,
+    detail: str | None = None,
+    retry_after_seconds: int | None = None,
+    extensions: Mapping[str, Any] | None = None,
 ) -> JSONResponse:
     trace_id = request.headers.get("x-request-id") or uuid7().hex
     message = detail or (info.message_en if _wants_english(request) else info.message_vi)
@@ -178,6 +198,7 @@ def problem_response(
         "detail": message,
         "traceId": trace_id,
     }
+    body.update(extensions or {})
     return JSONResponse(body, status_code=info.status, headers=headers, media_type="application/problem+json")
 
 
@@ -199,7 +220,7 @@ def install_error_handlers(app: FastAPI) -> None:
 
     async def on_shp(request: Request, exc: Exception) -> JSONResponse:
         assert isinstance(exc, ShpError)
-        return problem_response(request, exc.info, exc.detail, exc.retry_after_seconds)
+        return problem_response(request, exc.info, exc.detail, exc.retry_after_seconds, exc.extensions)
 
     async def on_validation(request: Request, exc: Exception) -> JSONResponse:
         # Do not echo submitted values (which may be PII); report only the position of the bad field.

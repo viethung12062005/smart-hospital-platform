@@ -162,3 +162,22 @@ def test_consume_is_idempotent_retries_then_dead_letters() -> None:
 
     assert events.consume(other, "ml", permanent, inbox, 1).outcome is events.Outcome.DEAD_LETTER
     assert events.consume("{bad", "ml", fail, inbox, 1).outcome is events.Outcome.DEAD_LETTER
+
+
+def test_extension_members_are_added_to_the_problem_body() -> None:
+    app = FastAPI()
+    install_error_handlers(app)
+
+    @app.get("/down")
+    def down() -> None:
+        raise ShpError("ai-unavailable", extensions={"fallback": {"type": "booking-form", "url": "/booking"}})
+
+    r = TestClient(app).get("/down")
+    assert r.status_code == 503 and r.headers["content-type"].startswith("application/problem+json")
+    body = r.json()
+    assert body["code"] == "ai-unavailable" and body["fallback"] == {"type": "booking-form", "url": "/booking"}
+
+
+def test_extension_members_cannot_replace_standard_members() -> None:
+    with pytest.raises(ValueError, match="code"):
+        ShpError("ai-unavailable", extensions={"code": "something-else"})
