@@ -342,6 +342,12 @@ Coverage figures for this group are in the "Coverage" table at the end of the se
   service filling `ResourceContext.linkedProfile/linkedRecords/guardianLink` by itself, with no shared source.
 - Gap 4 — the issue's own closing note says "the internal clinical endpoint is a dev task": the endpoint the resolver
   calls does not exist yet, so the resolver has only ever run against a stub.
+- Live evidence (local cluster, 2026-11-11): every authenticated request to scheduling — e.g. `GET /fhir/Slot` with a
+  `doctor.demo` token through the gateway — returns **500 `internal-error`**. The scheduling log shows
+  `IllegalStateException: identity service returned 401`: the identity lookup to clinical is rejected (service-to-service
+  token not accepted) and the resolver turns it into an unhandled exception. The same happens in the gateway's
+  rate-limit run (58 of 160 requests were 500). So the missing 503/fallback is not theoretical, and the internal call
+  between services does not authenticate on the local cluster.
 - Fix: (a) keep the last known link and serve it when `client.find` fails; throw a 503 catalog error when there is none;
   (b) extend `IdentityLink` with `linkedProfiles`; (c) tests for stale-on-failure, 503-without-cache, linked profiles.
 
