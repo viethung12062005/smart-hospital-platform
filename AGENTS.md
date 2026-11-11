@@ -37,6 +37,7 @@ toolkit (`dev/`) and all documentation (`docs/`). Three sibling repositories hol
    ticked with "(not applicable: reason)". Do not mark the PR ready, and do not tell the user the work is done, while
    any item is unticked or untested. The same holds for the "Done when" line of the task.
 8. **Never hand-edit a generated file.** Change the source and run the generator (table below).
+   Never edit a merged database migration (`**/db/migration/*.sql`, `**/db/shp-messaging/**/*.sql`); add a new one.
 9. **Contract first.** An API, event, authorization or terminology change starts in the design document and
    `contracts/`, and needs the Solution Architect's agreement before code.
 10. **Stay inside the task.** Do not change `Dockerfile`, `.github/`, `dev/`, Helm values, `libs/java/` or
@@ -127,6 +128,9 @@ Because of these generators, a change to a design document can require regenerat
 - Tests existed but were never linked in `docs/06-testing/catalog/automation.yaml`, so the trace report understated
   the automation. Link the test in the PR that adds it.
 - A document was translated without regenerating the contracts built from it, and CI failed on drift.
+- Comments in an already-merged Flyway migration were translated. Flyway checksums the whole file, so every database
+  that had applied it refused to start ("Migration checksum mismatch"). **A merged migration file is immutable — not
+  even a comment or whitespace changes.** Change the schema with a new `V<next>__...sql`.
 - Time-zone dependent tests: use the injected `Clock` (Java) or one explicit clock (Python); never compare a UTC date
   with a local date.
 - `gh pr edit` can fail on repositories that still carry classic-project fields; `gh api -X PATCH
