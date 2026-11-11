@@ -25,10 +25,15 @@
 <!-- Work intentionally left for another PR, with task/issue. Delete this section if none. -->
 
 ## Definition of Done
+<!-- Same list as docs/00-workflow.md §4. Tick every item before leaving Draft; if one does not apply, tick it and add "(not applicable: reason)". -->
 - [ ] Self-reviewed the diff on GitHub: no debug code, dead code, or unrelated changes
-- [ ] Tests written alongside and passing: `mvn -B -pl services/<svc> -am verify` (Java) or `ruff`/`mypy`/`pytest` with Docker (Python)
-- [ ] New endpoints carry `@RequireShpAuthz`; business errors use catalog codes (07 §5)
+- [ ] Unit + integration tests green, line coverage >= 70%, lint/format clean, no compiler warnings: `mvn -B -pl services/<svc> -am verify` (Java), `ruff`/`mypy`/`pytest --cov` (Python), `npm run lint && npm test` (web)
+- [ ] `contracts/` matches the code; `tools/contracts/check_all.sh` green if anything changed
+- [ ] New endpoints carry `@RequireShpAuthz` and have a row in the authorization matrix; audit is emitted for every decision; business errors use catalog codes (07 §5)
 - [ ] Events published via `outbox.add(...)` in the same transaction; consumers wrapped in `inbox.handleOnce(...)`
-- [ ] Fake data only; no secrets/keys/passwords in code, config or logs; logs contain no PII
+- [ ] Fake data only; no secrets/keys/passwords in code, config, tests or logs; logs contain no PII
+- [ ] Image/dependency scans show no High/Critical with an available fix (the `checks` and `container` jobs of this PR)
 - [ ] No changes to Dockerfile, pipeline, Helm, `config/PlatformConfig` (changes -> open an issue for SA)
 - [ ] Ran on the local cluster if runtime behavior changed: `make -C dev deploy SVC=<svc>`
+- [ ] Every acceptance criterion touched has a test case in `docs/06-testing/catalog` and an automated test; `catalog/automation.yaml` updated and `python -I tools/qa/trace.py --check` green; P0 cases are automated; a bug fix has a regression test
+- [ ] Related documentation is updated
