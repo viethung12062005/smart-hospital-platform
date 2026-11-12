@@ -210,24 +210,56 @@ class TestPractitionerGenerator(unittest.TestCase):
 
 class TestReproducibleOutput(unittest.TestCase):
     def test_same_seed_same_files_and_manifest_hashes(self) -> None:
-        # §7: cùng seed cho cùng hash đầu ra (so sánh từng byte, không chỉ so object)
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
             generate(scale="small", seed=42, output_root=Path(a))
             generate(scale="small", seed=42, output_root=Path(b))
-            files = sorted(p.name for p in (Path(a) / "small-seed-42").iterdir())
-            self.assertEqual(
-                files,
-                [
-                    "manifest.json",
-                    "patients.json",
-                    "practitioner_roles.json",
-                    "practitioners.json",
-                ],
+
+            output_a = Path(a) / "small-seed-42"
+            output_b = Path(b) / "small-seed-42"
+
+            expected_json_files = {
+                "manifest.json",
+                "patients.json",
+                "practitioners.json",
+                "practitioner_roles.json",
+                "schedules.json",
+                "slots.json",
+                "appointments.json",
+                "encounters.json",
+                "conditions.json",
+                "observations.json",
+                "document_references.json",
+            }
+
+            actual_json_files = {
+                p.relative_to(output_a).as_posix() for p in output_a.rglob("*.json")
+            }
+
+            self.assertEqual(actual_json_files, expected_json_files)
+
+            files_a = sorted(
+                p.relative_to(output_a).as_posix()
+                for p in output_a.rglob("*")
+                if p.is_file()
             )
-            for name in files:
+
+            files_b = sorted(
+                p.relative_to(output_b).as_posix()
+                for p in output_b.rglob("*")
+                if p.is_file()
+            )
+
+            self.assertEqual(files_a, files_b)
+
+            document_files = [name for name in files_a if name.startswith("documents/")]
+
+            self.assertEqual(len(document_files), 100)
+
+            for name in files_a:
                 self.assertEqual(
-                    (Path(a) / "small-seed-42" / name).read_bytes(),
-                    (Path(b) / "small-seed-42" / name).read_bytes(),
+                    (output_a / name).read_bytes(),
+                    (output_b / name).read_bytes(),
+                    f"File không deterministic: {name}",
                 )
 
 
