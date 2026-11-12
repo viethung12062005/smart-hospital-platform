@@ -1,6 +1,7 @@
 # Contributing code
 
 Applies to everyone on the team. Start with [docs/onboarding.md](docs/onboarding.md) if you are new.
+AI agents working in this repo start from [AGENTS.md](AGENTS.md); it carries the same rules and points to the documents below.
 
 ## Non-negotiable rules
 1. **Synthetic data only.** Never put real patient data into the repo, tests, logs or screenshots.
