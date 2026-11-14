@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **346 tasks**, **1187 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **347 tasks**, **1195 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -11,7 +11,7 @@ Total: **346 tasks**, **1187 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W1 | 30 |  |  |  |
 | W2 | **49** |  |  | 7 |
 | W3 | **61** |  | 27 |  |
-| W4 | **84** | 30 | 29 | 27 |
+| W4 | **92** | 30 | 29 | 27 |
 | W5 | 35 | 30 | 30 | 29 |
 | W6 | 37 | 30 | 30 | 30 |
 | W7 | **62** | 30 | 30 | 30 |
@@ -20,7 +20,7 @@ Total: **346 tasks**, **1187 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **494** | **128** | **171** | **131** |
+| **Total** | **502** | **128** | **171** | **131** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -82,6 +82,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | GOV-09 | US-070 | Translate the Java services, web app and dev scripts to English | Comments, docstrings and developer-facing text in libs/java, services/, web/, dev/ and tests/ are English; product data stays Vietnamese (vi locale, Vietnamese test corpora); linters, tests and the web build pass | SA | 8 | GOV-08 | S1 | ARC-09 |
 | GOV-10 | US-070 | Convert GitHub issues, pull requests and comments to English | Every issue, PR title/body and comment in the 4 repos is English; task and user-story bodies match the English backlog; no Vietnamese left in GitHub records | SA | 8 | GOV-08 | S1 | ADR-0009 |
 | GOV-11 | US-070 | Translate the infra, GitOps and templates repositories to English | Comments, descriptions, READMEs and templates in shp-infra, shp-gitops and shp-platform-templates contain no Vietnamese prose; terraform fmt/validate, the GitOps validate script and the chart checks are green | SA | 4 | GOV-10 | S1 | ARC-09 |
+| GOV-12 | US-070 | Definition of Done audit of every completed task | docs/05-plan/dod-audit.md gives a verdict with evidence for every task marked Done, lists each gap with a proposed fix, and traces the acceptance criteria to the test catalog | SA | 8 | GOV-11 | S1 | ARC-10 |
 | GOV-06 | US-070 | Dependabot for actions, maven, pip, docker, terraform | dependabot.yml in every repo; actions pinned by commit SHA | SA | 2 | GOV-01 | S4 | NFR-SEC6 |
 
 ## IAC — Azure infrastructure with Terraform
