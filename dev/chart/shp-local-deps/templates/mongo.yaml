@@ -1,6 +1,6 @@
 {{- if .Values.components.mongo }}
-# MongoDB dạng replica set 1 node (cần cho transaction). Không bật xác thực: chỉ nghe trên 127.0.0.1 của máy dev.
-# Kết nối từ máy dev: mongodb://localhost:27117/?directConnection=true
+# MongoDB as a single-node replica set (required for transactions). Authentication is off: it listens only on the dev machine 127.0.0.1.
+# Connect from the dev machine: mongodb://localhost:27117/?directConnection=true
 apiVersion: v1
 kind: Service
 metadata:

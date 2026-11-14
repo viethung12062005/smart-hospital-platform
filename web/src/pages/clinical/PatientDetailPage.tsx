@@ -7,7 +7,7 @@ import { conceptText, formatDateTime } from '@/api/fhir';
 import { PatientBanner, PatientSummary } from '@/components/PatientSummary';
 import { Card, EmptyState, Loading, ProblemAlert, StatusChip } from '@/components/ui';
 
-/** Hồ sơ bệnh nhân: banner, tóm tắt (dị ứng, chẩn đoán, sinh hiệu) và dòng thời gian các lần khám. */
+/** Patient record: banner, summary (allergies, diagnoses, vital signs) and the encounter timeline. */
 export function PatientDetailPage() {
   const { t } = useTranslation();
   const { id = '' } = useParams();

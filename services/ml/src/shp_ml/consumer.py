@@ -1,9 +1,10 @@
-"""Consumer event lịch hẹn và chấm điểm no-show (ML-06, ML-07; 04 §2.4).
+"""Appointment event consumer and no-show scoring (ML-06, ML-07; 04 §2.4).
 
-Mỗi event xử lý trong MỘT transaction cùng dấu inbox: cập nhật `appointment_facts`, `patient_stats`, ghi `predictions`
-và outbox `shp.ml.no-show-scored.v1`. Event có `version` ≤ version đã lưu bị bỏ qua (giao lại, sai thứ tự).
-Chưa có model production: lịch hẹn vẫn được ghi, chỉ không chấm điểm (AC-15.1: ML lỗi không ảnh hưởng nhắc lịch).
-Không có PII: chỉ ID, nhóm tuổi 10 năm và thời điểm.
+Each event is processed in ONE transaction together with the inbox mark: update `appointment_facts`, `patient_stats`,
+write `predictions` and the `shp.ml.no-show-scored.v1` outbox event. Events with a `version` ≤ the stored version
+are ignored (redelivery, out of order). No production model yet: appointments are still recorded, just not scored
+(AC-15.1: an ML failure must not affect reminders). No PII: only IDs, 10-year age band and timestamps.
+No PII: only IDs, 10-year age band and timestamps.
 """
 
 from collections.abc import Callable
@@ -40,7 +41,7 @@ def iso(value: datetime) -> str:
 
 
 def _aware(value: datetime) -> datetime:
-    return value if value.tzinfo else value.replace(tzinfo=UTC)  # pymongo trả datetime naive (UTC)
+    return value if value.tzinfo else value.replace(tzinfo=UTC)  # pymongo returns naive datetimes (UTC)
 
 
 class NoShowConsumer:
@@ -58,10 +59,11 @@ class NoShowConsumer:
         }
 
     def handle(self, event: dict[str, Any]) -> None:
-        """Gọi từ shp_platform.events.consume (đã kiểm lược đồ). Lỗi → transaction rollback → thử lại hoặc DLQ."""
+        """Called from shp_platform.events.consume (schema already validated). Error → transaction rollback → retry or
+        DLQ."""
         handler = self._handlers.get(event["type"])
         if handler is None:
-            raise events.PermanentError(f"type không đăng ký: {event['type']}")
+            raise events.PermanentError(f"unregistered type: {event['type']}")
         processed = mongo.handle_once(self.client, self.db, self.consumer, event, lambda s: handler(s, event))
         EVENTS.labels(type=event["type"].split(".")[2], outcome="processed" if processed else "duplicate").inc()
 
@@ -90,7 +92,7 @@ class NoShowConsumer:
         d = evt["data"]
         old = self.db.appointment_facts.find_one({"_id": d["oldAppointmentId"]}, session=s)
         if old is not None and old["outcome"] == "pending":
-            # dời lịch không phải hủy muộn: không tăng lateCancelTotal
+            # rescheduling is not a late cancellation: do not increment lateCancelTotal
             self.db.appointment_facts.update_one(
                 {"_id": old["_id"]}, {"$set": {"outcome": "cancelled", "outcomeAt": ts(evt["time"])}}, session=s
             )
@@ -236,7 +238,7 @@ class NoShowConsumer:
                 "score": r.score,
                 "threshold": r.threshold,
                 "highRisk": r.high_risk,
-                "features": feats,  # AC-15.2: lưu đặc trưng đã dùng
+                "features": feats,  # AC-15.2: store the features that were used
                 "predictedAt": now,
                 "latencyMs": r.latency_ms,
                 "shadow": shadow,

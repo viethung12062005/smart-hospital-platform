@@ -7,7 +7,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Ghi audit thành event E11 vào outbox trong transaction RIÊNG; xem {@code
+ * Write the audit as an E11 event to the outbox in its OWN transaction; see {@code
  * PostgresOutboxAuditSink}.
  */
 public final class MongoOutboxAuditSink implements AuditSink {

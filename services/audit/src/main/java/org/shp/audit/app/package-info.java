@@ -1,5 +1,5 @@
 /**
- * Use case: nơi duy nhất mở transaction (@Transactional); ghi dữ liệu và outbox.add(...) trong cùng
- * transaction.
+ * Use cases: the only place that opens a transaction (@Transactional); writes data and
+ * outbox.add(...) in the same transaction.
  */
 package org.shp.audit.app;

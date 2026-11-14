@@ -13,8 +13,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Lớp 2 + 3 của 15-authorization: thiếu role hợp lệ → 403; chưa liên kết hoặc bị khóa → 403 (trừ
- * endpoint {@link AllowUnlinkedIdentity}, nhưng tài khoản bị khóa vẫn 403). Kết quả: {@link
+ * Layers 2 + 3 of 15-authorization: missing valid role → 403; not linked or locked → 403 (except
+ * the {@link AllowUnlinkedIdentity} endpoint, but a locked account is still 403). Result: {@link
  * Principal} trong request.
  */
 public final class IdentityInterceptor implements HandlerInterceptor {
@@ -30,7 +30,7 @@ public final class IdentityInterceptor implements HandlerInterceptor {
   public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) {
     if (!(SecurityContextHolder.getContext().getAuthentication()
         instanceof JwtAuthenticationToken jwt)) {
-      return true; // endpoint công khai: không có người gọi
+      return true; // public endpoint: no caller
     }
     String subject = jwt.getToken().getSubject();
     var roles = new HashSet<>(ShpJwt.roles(jwt.getToken()));
@@ -50,7 +50,7 @@ public final class IdentityInterceptor implements HandlerInterceptor {
     return true;
   }
 
-  /** Người gọi đã xác thực và đã tra danh tính; ném 401 nếu chưa có. */
+  /** The caller is authenticated and identity-resolved; throws 401 if not yet. */
   public static Principal principal(HttpServletRequest req) {
     if (req.getAttribute(ATTR) instanceof Principal p) {
       return p;

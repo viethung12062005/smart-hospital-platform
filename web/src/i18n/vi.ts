@@ -1,4 +1,4 @@
-// Chuỗi giao diện tiếng Việt (ngôn ngữ mặc định). Thêm khóa ở đây trước, rồi thêm bản dịch ở en.ts.
+// Vietnamese UI strings (the default language). Add keys here first, then add the translation in en.ts.
 export const vi = {
   app: { name: 'Bệnh viện thông minh', short: 'SHP' },
   common: {

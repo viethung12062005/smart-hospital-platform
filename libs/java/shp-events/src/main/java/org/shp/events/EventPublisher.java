@@ -1,8 +1,9 @@
 package org.shp.events;
 
 /**
- * Đưa một CloudEvent lên bus. Cài đặt thật: Spring Cloud Stream (RabbitMQ local, Azure Service Bus
- * cloud); test dùng bản giả. Ném exception nếu bus từ chối — relay outbox sẽ ghi nhận và thử lại.
+ * Put a CloudEvent on the bus. Real implementation: Spring Cloud Stream (RabbitMQ locally, Azure
+ * Service Bus in the cloud); tests use a fake. Throws if the bus rejects it — the outbox relay
+ * records it and retries.
  */
 @FunctionalInterface
 public interface EventPublisher {

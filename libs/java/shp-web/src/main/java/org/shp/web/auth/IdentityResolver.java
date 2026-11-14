@@ -7,8 +7,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Tra identity link có cache. Link tìm thấy giữ 60 giây (khóa tài khoản có hiệu lực ≤ 60 giây,
- * AC-08.1); "chưa liên kết" chỉ giữ 5 giây để người vừa đăng ký (C1) dùng được ngay.
+ * Look up the identity link with a cache. A found link is kept for 60 seconds (account lock takes
+ * effect within ≤ 60 seconds, AC-08.1); "not linked" is kept for only 5 seconds so a newly
+ * registered user (C1) can use it right away.
  */
 public final class IdentityResolver {
   public static final Duration LINK_TTL = Duration.ofSeconds(60);
@@ -28,7 +29,7 @@ public final class IdentityResolver {
 
   public Optional<IdentityLink> resolve(String subject) {
     if (subject == null || subject.isEmpty()) {
-      throw new IllegalArgumentException("subject bắt buộc");
+      throw new IllegalArgumentException("subject is required");
     }
     Instant now = clock.instant();
     Entry hit = cache.get(subject);
@@ -37,7 +38,7 @@ public final class IdentityResolver {
     }
     Optional<IdentityLink> link = client.find(subject);
     if (cache.size() >= MAX_ENTRIES) {
-      cache.clear(); // đơn giản, an toàn: chỉ tốn thêm vài lần gọi lại
+      cache.clear(); // simple and safe: only costs a few extra lookups
     }
     cache.put(subject, new Entry(link, now.plus(link.isPresent() ? LINK_TTL : MISS_TTL)));
     return link;

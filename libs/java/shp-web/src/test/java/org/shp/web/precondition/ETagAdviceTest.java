@@ -8,8 +8,8 @@ import org.shp.events.CloudEvents;
 import tools.jackson.databind.JsonNode;
 
 /**
- * ETag chỉ được phát khi If-Match đọc lại được đúng version đó (07 §3). Test đơn vị cho {@link
- * ETagAdvice#versionOf}: body FHIR thật đi qua đây dưới cả dạng Map và JsonNode.
+ * An ETag is only emitted when If-Match can read that exact version back (07 §3). Unit tests for
+ * {@link ETagAdvice#versionOf}: real FHIR bodies pass through here as both Map and JsonNode.
  */
 class ETagAdviceTest {
   private static JsonNode json(String s) {
@@ -28,7 +28,7 @@ class ETagAdviceTest {
 
   @Test
   void versionThatIfMatchWouldRejectPublishesNoETag() {
-    // âm hoặc quá 18 chữ số: phát ra thì client không dùng lại được làm If-Match
+    // negative or more than 18 digits: if emitted, the client could not reuse it as If-Match
     assertThat(ETagAdvice.versionOf(versioned(-1))).isNull();
     assertThat(ETagAdvice.versionOf(versioned(1_000_000_000_000_000_000L))).isNull();
   }
@@ -43,7 +43,8 @@ class ETagAdviceTest {
 
   @Test
   void fhirJsonNodeReadsMetaVersionId() {
-    // Jackson đọc FHIR thành JsonNode; nhánh này từng bị bỏ sót nên ETag mất trên response thật
+    // Jackson reads FHIR into JsonNode; this branch was once missed, so ETags disappeared on real
+    // responses
     assertThat(ETagAdvice.versionOf(json("{\"meta\":{\"versionId\":5}}"))).isEqualTo(5L);
     assertThat(ETagAdvice.versionOf(json("{\"meta\":{\"versionId\":\"5\"}}"))).isEqualTo(5L);
     assertThat(ETagAdvice.versionOf(json("{\"meta\":{\"versionId\":null}}"))).isNull();

@@ -1,15 +1,15 @@
 import type { Appointment, Bundle, Parameters, Practitioner, PractitionerRole, Slot } from '@medplum/fhirtypes';
 import { apiRequest, bundleEntries, etagOf } from './client';
 
-// Endpoint theo docs/03-architecture/detailed-design/08-api-scheduling.md (S8, S11, S13, S14, S16)
-// và 09-api-clinical.md (C9: danh bạ bác sĩ).
+// Endpoints per docs/03-architecture/detailed-design/08-api-scheduling.md (S8, S11, S13, S14, S16)
+// and 09-api-clinical.md (C9: doctor directory).
 
 export interface DoctorEntry {
   readonly practitioner: Practitioner;
   readonly specialty?: string;
 }
 
-/** Bác sĩ theo chuyên khoa (C9): PractitionerRole kèm Practitioner. */
+/** Doctors by specialty (C9): PractitionerRole with Practitioner. */
 export async function searchDoctors(specialty: string | undefined): Promise<DoctorEntry[]> {
   const qs = new URLSearchParams({ _include: 'PractitionerRole:practitioner' });
   if (specialty) qs.set('specialty', specialty);
@@ -37,7 +37,7 @@ export interface SlotQuery {
   readonly status?: string;
 }
 
-/** S8: slot trống; khoảng ngày tối đa 31 ngày. */
+/** S8: free slots; maximum date range 31 days. */
 export async function searchSlots(q: SlotQuery): Promise<Slot[]> {
   const qs = new URLSearchParams();
   if (q.specialty) qs.set('specialty', q.specialty);
@@ -50,7 +50,7 @@ export async function searchSlots(q: SlotQuery): Promise<Slot[]> {
   return bundleEntries<Slot>(data);
 }
 
-/** S11: đặt lịch. Cùng idempotencyKey + cùng nội dung trả lại đúng lịch hẹn đã tạo (bấm đúp không tạo 2 lịch). */
+/** S11: book an appointment. Same idempotencyKey + same content returns the already-created appointment (double click does not create 2 appointments). */
 export async function bookAppointment(input: {
   slotId: string;
   patient: string;
@@ -82,7 +82,7 @@ export interface AppointmentQuery {
   readonly to?: string;
 }
 
-/** S13: phải có ít nhất một trong patient, practitioner, date. */
+/** S13: at least one of patient, practitioner, date is required. */
 export async function searchAppointments(q: AppointmentQuery): Promise<Appointment[]> {
   const qs = new URLSearchParams({ _sort: 'date', _count: '100' });
   if (q.patient) qs.set('patient', q.patient);
@@ -94,7 +94,7 @@ export async function searchAppointments(q: AppointmentQuery): Promise<Appointme
   return bundleEntries<Appointment>(data);
 }
 
-/** S14: hủy; cần If-Match của bản đang hiển thị (tránh hủy nhầm bản đã bị người khác đổi). */
+/** S14: cancel; needs the If-Match of the version being displayed (avoids cancelling a version someone else changed). */
 export async function cancelAppointment(
   appt: Appointment,
   reason: string,

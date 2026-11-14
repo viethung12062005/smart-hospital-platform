@@ -1,8 +1,8 @@
-"""Service ml: consumer event lịch hẹn, chấm điểm no-show, API quan sát (11 §3), metric Prometheus.
+"""ml service: appointment event consumer, no-show scoring, observability API (11 §3), Prometheus metrics.
 
-M1 GET /api/v1/ml/predictions?appointment=  (nurse, admin; có audit)
+M1 GET /api/v1/ml/predictions?appointment=  (nurse, admin; audited)
 M2 GET /api/v1/ml/model                     (admin)
-M3 POST /internal/v1/ml/predict             (token dịch vụ: scheduling, CI)
+M3 POST /internal/v1/ml/predict             (service token: scheduling, CI)
 """
 
 import logging
@@ -34,7 +34,7 @@ LOG = logging.getLogger("shp.ml")
 
 
 class State:
-    """Phụ thuộc runtime; test thay bằng bản giả qua `build_app`."""
+    """Runtime dependencies; tests swap in a fake via `build_app`."""
 
     def __init__(self, settings: Settings, client: Any, holder: ModelHolder, registry: Registry | None) -> None:
         self.settings = settings
@@ -94,7 +94,7 @@ def build_app(
             ensure_schema(st.db)
             st.holder.refresh()
             start_poller(st.holder, st.settings.model_poll_seconds, stop)
-            start_daily(st.db, st.holder, stop)  # ML-10: 02:00 giờ VN
+            start_daily(st.db, st.holder, stop)  # ML-10: 02:00 Vietnam time
             bus = make_bus(st.settings)
             if bus is not None:
                 consumer = NoShowConsumer(st.client, st.db, st.holder, st.settings.consumer_name)
@@ -207,7 +207,8 @@ def build_app(
 
 
 class _NoInbox:
-    """Inbox thật nằm trong transaction của NoShowConsumer (mongo.handle_once); lớp ngoài không ghi lần nữa."""
+    """The real inbox lives inside NoShowConsumer's transaction (mongo.handle_once); the outer layer does not write it
+    again."""
 
     def seen(self, consumer: str, event_id: str) -> bool:
         return False
@@ -244,8 +245,8 @@ def _start_relay(st: State, bus: Bus, stop: threading.Event) -> None:
         while not stop.wait(1.0):
             try:
                 mongo.relay_once(db, bus)
-            except Exception as exc:  # noqa: BLE001 - bus lỗi: thử lại lượt sau, event vẫn trong outbox
-                LOG.warning("relay outbox lỗi: %s", type(exc).__name__)
+            except Exception as exc:  # noqa: BLE001 - bus error: retry next round, the event stays in the outbox
+                LOG.warning("outbox relay failed: %s", type(exc).__name__)
 
     threading.Thread(target=loop, name="outbox-relay", daemon=True).start()
 

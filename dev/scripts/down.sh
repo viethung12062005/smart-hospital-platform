@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Xóa cụm local (mất dữ liệu trong cụm). Mật khẩu ở dev/.local được giữ lại.
+# Delete the local cluster (data in the cluster is lost). Passwords in dev/.local are kept.
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
-need kind "Cài kind."
+need kind "Install kind."
 kind delete cluster --name "$CLUSTER_NAME"
-log "Đã xóa cụm $CLUSTER_NAME. Xóa luôn mật khẩu: rm -rf dev/.local"
+log "Deleted cluster $CLUSTER_NAME. To delete the passwords too: rm -rf dev/.local"

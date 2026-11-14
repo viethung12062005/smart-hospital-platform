@@ -13,7 +13,7 @@ function initialLang(): Lang {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'vi' || saved === 'en') return saved;
   } catch {
-    // localStorage bị chặn: dùng mặc định.
+    // localStorage is blocked: use the default.
   }
   return 'vi';
 }
@@ -32,11 +32,11 @@ export function setLanguage(lang: Lang): void {
   try {
     localStorage.setItem(STORAGE_KEY, lang);
   } catch {
-    // bỏ qua
+    // ignore
   }
 }
 
-/** Ngôn ngữ hiện tại, gửi kèm Accept-Language để máy chủ trả thông báo lỗi đúng ngôn ngữ. */
+/** The current language, sent in Accept-Language so the server returns error messages in the right language. */
 export function currentLang(): Lang {
   return i18n.language === 'en' ? 'en' : 'vi';
 }

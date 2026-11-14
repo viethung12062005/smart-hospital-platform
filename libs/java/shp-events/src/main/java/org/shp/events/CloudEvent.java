@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import tools.jackson.databind.JsonNode;
 
-/** Envelope CloudEvents 1.0 của SHP (13-events §1; schema: contracts/events/envelope.json). */
+/** SHP's CloudEvents 1.0 envelope (13-events §1; schema: contracts/events/envelope.json). */
 public record CloudEvent(
     @JsonProperty("specversion") String specVersion,
     @JsonProperty("id") String id,

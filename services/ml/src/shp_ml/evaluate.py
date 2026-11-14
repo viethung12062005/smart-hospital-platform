@@ -1,7 +1,8 @@
-"""Đánh giá và cổng chất lượng (ML-17, ML-05; 16-mlops §3).
+"""Evaluation and quality gates (ML-17, ML-05; 16-mlops §3).
 
-Cổng: AUC ≥ 0,75 và hơn baseline; mỗi nhóm con (chuyên khoa, nhóm tuổi, kênh; ≥ 300 mẫu) không thấp hơn AUC tổng quá
-0,07; ECE ≤ 0,05; p95 dự đoán một lịch hẹn ≤ 100 ms; không kém model production quá 0,01 AUC trên cùng tập.
+Gate: AUC ≥ 0.75 and above baseline; each subgroup (specialty, age band, channel; ≥ 300 samples) must not be more than
+0.07 below the overall AUC; ECE ≤ 0.05; p95 prediction latency ≤ 100 ms; no more than 0.01 AUC worse than the
+production model on the same set.
 """
 
 import time
@@ -29,7 +30,7 @@ def auc(y: np.ndarray, s: np.ndarray) -> float:
 
 
 def ece(y: np.ndarray, s: np.ndarray, bins: int = 10) -> float:
-    """Expected Calibration Error, chia đều 10 khoảng điểm."""
+    """Expected Calibration Error, split into 10 equal score bins."""
     edges = np.linspace(0, 1, bins + 1)
     idx = np.clip(np.digitize(s, edges[1:-1]), 0, bins - 1)
     total = 0.0
@@ -41,7 +42,7 @@ def ece(y: np.ndarray, s: np.ndarray, bins: int = 10) -> float:
 
 
 def choose_threshold(y: np.ndarray, s: np.ndarray) -> float:
-    """Ngưỡng cho recall lớn nhất mà precision ≥ 0,5 (11 §3); không có thì dùng mặc định 0,60."""
+    """Threshold giving the largest recall with precision ≥ 0.5 (11 §3); otherwise the default 0.60."""
     best: tuple[float, float] | None = None
     for t in np.round(np.arange(0.10, 0.91, 0.01), 2):
         pred = s >= t
@@ -84,7 +85,7 @@ class Check:
     limit: float
     passed: bool
 
-    def __post_init__(self) -> None:  # numpy → kiểu Python để ghi JSON
+    def __post_init__(self) -> None:  # numpy → Python types for JSON serialization
         self.value, self.limit, self.passed = float(self.value), float(self.limit), bool(self.passed)
 
 

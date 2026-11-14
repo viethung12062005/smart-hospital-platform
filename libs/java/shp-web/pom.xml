@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-web</artifactId>
-  <name>shp-web — lỗi chuẩn, xác thực JWT, danh tính, phân quyền endpoint</name>
+  <name>shp-web — standard errors, JWT authentication, identity, endpoint authorization</name>
 
   <dependencies>
     <dependency>

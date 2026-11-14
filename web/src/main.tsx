@@ -11,7 +11,7 @@ import { isMockMode, loadConfig } from './config';
 async function start(): Promise<void> {
   await loadConfig();
   if (isMockMode) {
-    // Chỉ nạp MSW ở chế độ mock: bản build thật không chứa máy chủ giả.
+    // Only load MSW in mock mode: the real build does not include the mock server.
     const { worker } = await import('./mocks/browser');
     await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
   }

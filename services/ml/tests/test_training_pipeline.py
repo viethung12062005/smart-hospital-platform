@@ -26,12 +26,12 @@ def test_gate_passes_registers_candidate_only(trained: tuple[FileRegistry, Train
     reg, result = trained
     assert result.gate.passed, [c.name for c in result.gate.failed()]
     assert result.version == "1" and reg.alias_version("candidate") == "1"
-    assert reg.alias_version("production") is None  # job huấn luyện không bao giờ đổi production
+    assert reg.alias_version("production") is None  # the training job never changes production
     assert result.metrics["auc"] > result.metrics["baselineAuc"]
     model, meta = reg.load("1")
     assert meta["datasetSha256"] == "a" * 64 and meta["runId"] == result.run_id
     card = (reg.root / "models" / "1" / "card.md").read_text(encoding="utf-8")
-    assert "dữ liệu giả" in card and "Cổng chất lượng" in card
+    assert "synthetic data" in card and "Quality gates" in card
 
 
 def test_same_dataset_and_seed_give_same_model(
@@ -113,7 +113,7 @@ def test_registry_rejects_bad_alias_and_unknown_version(tmp_path: Path) -> None:
 def test_ece_and_threshold() -> None:
     rng = np.random.default_rng(0)
     s = rng.random(5000)
-    y = (rng.random(5000) < s).astype(int)  # điểm đã hiệu chuẩn
+    y = (rng.random(5000) < s).astype(int)  # calibrated scores
     assert ece(y, s) < 0.03 and ece(y, np.clip(s + 0.3, 0, 1)) > 0.2
     t = choose_threshold(y, s)
     assert 0.1 <= t <= 0.6

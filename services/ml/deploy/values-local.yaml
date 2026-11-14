@@ -1,14 +1,14 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=ml).
+# Values for the microservice chart when running on kind (make deploy SVC=ml).
 image:
   repository: localhost/shp-ml
   tag: dev
 replicaCount: 1
 env:
   OTEL_SERVICE_NAME: ml
-  # MONGODB_URI, RABBITMQ_URL: chart local truyền từ secret shp-local-conn (dev/chart/app-values-local.yaml)
+  # MONGODB_URI, RABBITMQ_URL: the local chart passes them from the shp-local-conn secret (dev/chart/app-values-local.yaml)
   MONGODB_DB: ml
   CONSUMER_NAME: ml
   MODEL_POLL_SECONDS: "30"
   SHADOW_ENABLED: "true"
-  # Registry: profile full có MLflow (LOC-08) → MLFLOW_TRACKING_URI; không có thì service chạy, chỉ không chấm điểm
+  # Registry: the full profile has MLflow (LOC-08) → MLFLOW_TRACKING_URI; otherwise the service still runs, it just does not score
   # MLFLOW_TRACKING_URI: http://mlflow.shp-deps:5000

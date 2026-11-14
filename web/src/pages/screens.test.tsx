@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockDb, resetMockDb } from '@/mocks/handlers';
 import { renderApp } from '@/test/render';
 
-// Thứ Tư 04/11/2026 09:00 giờ máy: ngày làm việc, có slot ngày mai và hàng đợi hôm nay.
+// Wednesday 04/11/2026 09:00 system time: a workday with a slot tomorrow and today's queue.
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date(2026, 10, 4, 9, 0, 0));
@@ -14,8 +14,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('đặt lịch (bệnh nhân)', () => {
-  it('chọn giờ, xác nhận và đặt thành công', async () => {
+describe('booking (patient)', () => {
+  it('picks a time, confirms and books successfully', async () => {
     const user = userEvent.setup();
     renderApp('/book?specialty=cardiology&practitioner=pr-001', 'patient');
 
@@ -30,14 +30,14 @@ describe('đặt lịch (bệnh nhân)', () => {
     ).toHaveLength(4);
   });
 
-  it('slot vừa bị đặt: báo lỗi và gợi ý giờ khác', async () => {
+  it('slot just booked: reports an error and suggests other times', async () => {
     const user = userEvent.setup();
     renderApp('/book?specialty=cardiology&practitioner=pr-001', 'patient');
 
     const slots = await screen.findAllByRole('option');
     await user.click(slots[0]!);
     await user.click(screen.getByRole('button', { name: 'Tiếp tục' }));
-    // Người khác đặt mất giờ đã chọn (ngày mai 05/11) trước khi bấm xác nhận.
+    // Someone else takes the chosen time (tomorrow 05/11) before the user confirms.
     const tomorrow = mockDb().slots.filter(
       (s) => s.schedule.reference === 'Schedule/sch-pr-001' && s.status === 'free' && s.start.startsWith('2026-11-05'),
     );
@@ -50,8 +50,8 @@ describe('đặt lịch (bệnh nhân)', () => {
   });
 });
 
-describe('lịch hẹn của tôi', () => {
-  it('hủy lịch hẹn sắp tới', async () => {
+describe('my appointments', () => {
+  it('cancels an upcoming appointment', async () => {
     const user = userEvent.setup();
     renderApp('/appointments', 'patient');
 
@@ -64,8 +64,8 @@ describe('lịch hẹn của tôi', () => {
   });
 });
 
-describe('hàng đợi (điều dưỡng)', () => {
-  it('check-in bệnh nhân trong khung giờ', async () => {
+describe('queue (nurse)', () => {
+  it('checks in a patient within the time window', async () => {
     const user = userEvent.setup();
     renderApp('/queue', 'nurse');
 
@@ -77,13 +77,13 @@ describe('hàng đợi (điều dưỡng)', () => {
   });
 });
 
-describe('phân quyền giao diện', () => {
-  it('bệnh nhân không vào được hàng đợi', async () => {
+describe('UI authorization', () => {
+  it('a patient cannot access the queue', async () => {
     renderApp('/queue', 'patient');
     expect(await screen.findByText('Bạn không có quyền xem trang này.')).toBeInTheDocument();
   });
 
-  it('bác sĩ xem hồ sơ bệnh nhân có dị ứng và chẩn đoán', async () => {
+  it('a doctor sees a patient record with allergies and diagnoses', async () => {
     renderApp('/patients/p-002', 'doctor');
     expect(await screen.findByText('Trần Văn Bình')).toBeInTheDocument();
     expect(await screen.findByText('Penicillin')).toBeInTheDocument();
@@ -91,9 +91,9 @@ describe('phân quyền giao diện', () => {
   });
 });
 
-// WEB-01 (US-066): màn hình đăng nhập/trang chủ/callback — 3 trang nền tảng khi chạy ở chế độ mock.
-describe('đăng nhập (chế độ mock)', () => {
-  it('hiển thị đủ 5 vai trò giả và đăng nhập chuyển sang trang chủ', async () => {
+// WEB-01 (US-066): login/home/callback screens — the 3 foundation pages when running in mock mode.
+describe('login (mock mode)', () => {
+  it('shows all 5 mock roles and signs in to the home page', async () => {
     const user = userEvent.setup();
     renderApp('/login', 'patient');
 
@@ -109,8 +109,8 @@ describe('đăng nhập (chế độ mock)', () => {
   });
 });
 
-describe('trang chủ', () => {
-  it('bệnh nhân thấy KPI lịch hẹn sắp tới và lối tắt', async () => {
+describe('home page', () => {
+  it('a patient sees an upcoming-appointments KPI and shortcuts', async () => {
     renderApp('/', 'patient');
 
     expect(await screen.findByText('Xin chào, Nguyễn Thị Lan')).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe('trang chủ', () => {
     expect(screen.getAllByRole('link', { name: 'Tìm bác sĩ' }).length).toBeGreaterThan(0);
   });
 
-  it('điều dưỡng thấy KPI lịch hẹn hôm nay theo trạng thái', async () => {
+  it('a nurse sees KPI for today’s appointments by status', async () => {
     renderApp('/', 'nurse');
 
     await screen.findByText('Đang chờ khám');
@@ -126,8 +126,8 @@ describe('trang chủ', () => {
   });
 });
 
-describe('callback đăng nhập', () => {
-  it('callback không có phiên đăng nhập hợp lệ: báo lỗi và cho đăng nhập lại', async () => {
+describe('login callback', () => {
+  it('callback without a valid session: reports an error and offers to sign in again', async () => {
     renderApp('/auth/callback', 'patient');
 
     expect(await screen.findByText('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')).toBeInTheDocument();
@@ -135,16 +135,16 @@ describe('callback đăng nhập', () => {
   });
 });
 
-// WEB-07 (US-011, US-012, US-013): lịch bác sĩ theo tuần.
-describe('lịch bác sĩ', () => {
-  it('bác sĩ xem lịch của chính mình, không có bộ chọn bác sĩ', async () => {
+// WEB-07 (US-011, US-012, US-013): the doctor's weekly schedule.
+describe('doctor schedule', () => {
+  it('a doctor sees their own schedule, with no doctor picker', async () => {
     renderApp('/schedule', 'doctor');
 
     expect(await screen.findByText('Trống', { selector: 'span' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Bác sĩ')).not.toBeInTheDocument();
   });
 
-  it('điều dưỡng chọn bác sĩ và chuyển sang tuần sau', async () => {
+  it('a nurse picks a doctor and moves to the next week', async () => {
     const user = userEvent.setup();
     renderApp('/schedule', 'nurse');
 
@@ -156,14 +156,14 @@ describe('lịch bác sĩ', () => {
   });
 });
 
-// WEB-20 (US-031): tìm bệnh nhân.
-describe('tìm bệnh nhân', () => {
-  it('chưa nhập từ khóa: gợi ý nhập từ khóa, chưa gọi API tìm kiếm', async () => {
+// WEB-20 (US-031): find a patient.
+describe('find a patient', () => {
+  it('no keyword yet: prompts for one and does not call the search API', async () => {
     renderApp('/patients', 'nurse');
     expect(await screen.findByText('Nhập từ khóa để tìm bệnh nhân.')).toBeInTheDocument();
   });
 
-  it('tìm theo tên ra đúng bệnh nhân', async () => {
+  it('searching by name finds the right patient', async () => {
     const user = userEvent.setup();
     renderApp('/patients', 'nurse');
 
@@ -175,9 +175,9 @@ describe('tìm bệnh nhân', () => {
   });
 });
 
-// WEB-22 (US-024, US-025): danh sách lần khám.
-describe('danh sách lần khám', () => {
-  it('hiển thị lần khám gần nhất, lọc theo trạng thái', async () => {
+// WEB-22 (US-024, US-025): encounter list.
+describe('encounter list', () => {
+  it('shows the latest encounter, filtered by status', async () => {
     const user = userEvent.setup();
     renderApp('/encounters', 'doctor');
 
@@ -186,13 +186,13 @@ describe('danh sách lần khám', () => {
     await user.click(screen.getByRole('radio', { name: 'Hoàn tất' }));
 
     await waitFor(() => expect(screen.getAllByText('Hoàn tất').length).toBeGreaterThan(0));
-    expect(screen.queryByText('Hồi hộp, khó thở')).not.toBeInTheDocument(); // đang khám, bị lọc bỏ
+    expect(screen.queryByText('Hồi hộp, khó thở')).not.toBeInTheDocument(); // in progress, filtered out
   });
 });
 
-// WEB-03/WEB-06 phạm vi tìm bác sĩ (US-014 giai đoạn chọn bác sĩ trước khi xem slot).
-describe('tìm bác sĩ', () => {
-  it('mặc định hiện bác sĩ tim mạch, lọc theo tên và có nút đặt lịch cho bệnh nhân', async () => {
+// WEB-03/WEB-06 find-doctor scope (US-014 choose a doctor before seeing slots).
+describe('find a doctor', () => {
+  it('shows cardiologists by default, filters by name and offers a book button for patients', async () => {
     const user = userEvent.setup();
     renderApp('/doctors?specialty=cardiology', 'patient');
 
@@ -206,7 +206,7 @@ describe('tìm bác sĩ', () => {
     expect(screen.getByText('BS. Lê Minh Quân')).toBeInTheDocument();
   });
 
-  it('điều dưỡng không thấy nút đặt lịch', async () => {
+  it('a nurse does not see the book button', async () => {
     renderApp('/doctors?specialty=cardiology', 'nurse');
     expect(await screen.findByText('BS. Lê Minh Quân')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Đặt lịch' })).not.toBeInTheDocument();

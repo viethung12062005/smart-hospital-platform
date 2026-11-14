@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { goClient, loginAs, pickFirstSlot } from './helpers';
 
-// Tiêu đề test mang mã test case (TC-...) của docs/06-testing/catalog để công cụ truy vết tự nhận ra.
+// Test titles carry the test case ID (TC-...) from docs/06-testing/catalog so traceability tooling recognizes them.
 
-test.describe('Đặt, hủy lịch khám (bệnh nhân)', () => {
-  test('TC-AC-FS.1 tìm slot: thấy các giờ trống của bác sĩ theo thứ tự tăng dần', async ({ page }) => {
+test.describe('Book and cancel an appointment (patient)', () => {
+  test('TC-AC-FS.1 find a slot: sees the doctor’s free times in ascending order', async ({ page }) => {
     await loginAs(page, 'patient');
     await goClient(page, '/book?specialty=cardiology&practitioner=pr-001');
     const slots = page.getByRole('option');
@@ -14,7 +14,7 @@ test.describe('Đặt, hủy lịch khám (bệnh nhân)', () => {
     expect(times).toEqual([...times].sort());
   });
 
-  test('TC-AC-03.2 bấm xác nhận hai lần liên tiếp chỉ tạo một lịch hẹn', async ({ page }) => {
+  test('TC-AC-03.2 confirming twice in a row creates only one appointment', async ({ page }) => {
     await loginAs(page, 'patient');
     await goClient(page, '/appointments');
     await expect(page.getByRole('tab', { name: /Sắp tới \(1\)/ })).toBeVisible();
@@ -27,7 +27,7 @@ test.describe('Đặt, hủy lịch khám (bệnh nhân)', () => {
     await expect(page.getByRole('tab', { name: /Sắp tới \(2\)/ })).toBeVisible();
   });
 
-  test('TC-AC-03.4 bệnh nhân đã có 3 lịch hẹn tương lai không đặt thêm được', async ({ page }) => {
+  test('TC-AC-03.4 a patient who already has 3 future appointments cannot book more', async ({ page }) => {
     await loginAs(page, 'patient');
     for (let i = 0; i < 2; i++) {
       await pickFirstSlot(page);
@@ -41,9 +41,9 @@ test.describe('Đặt, hủy lịch khám (bệnh nhân)', () => {
     await expect(page.getByRole('tab', { name: /Sắp tới \(3\)/ })).toBeVisible();
   });
 
-  test('TC-AC-03.5 còn dưới 2 giờ thì bệnh nhân không hủy được lịch hẹn', async ({ page }) => {
+  test('TC-AC-03.5 with less than 2 hours left a patient cannot cancel the appointment', async ({ page }) => {
     await loginAs(page, 'patient');
-    // Lịch hẹn a-001 lúc 09:00 ngày làm việc thứ 2 kể từ hôm nay (06/11). Lùi đồng hồ tới 08:00 ngày đó: còn 1 giờ.
+    // Appointment a-001 is at 09:00 on the 2nd workday from today (06/11). Move the clock back to 08:00 that day: 1 hour left.
     await page.clock.setFixedTime(new Date('2026-11-06T08:00:00+07:00'));
     await goClient(page, '/appointments');
     await page.getByText('Hủy lịch', { exact: true }).first().click();
@@ -54,7 +54,7 @@ test.describe('Đặt, hủy lịch khám (bệnh nhân)', () => {
     await expect(page.getByRole('tab', { name: /Sắp tới \(1\)/ })).toBeVisible();
   });
 
-  test('TC-AC-CN.1 hủy trước hạn thành công và danh sách sắp tới giảm đi một', async ({ page }) => {
+  test('TC-AC-CN.1 cancelling before the deadline succeeds and the upcoming list drops by one', async ({ page }) => {
     await loginAs(page, 'patient');
     await goClient(page, '/appointments');
     await page.getByText('Hủy lịch', { exact: true }).first().click();
@@ -63,17 +63,17 @@ test.describe('Đặt, hủy lịch khám (bệnh nhân)', () => {
     await expect(page.getByRole('tab', { name: /Sắp tới \(0\)/ })).toBeVisible();
   });
 
-  test('TC-AC-MA.1 bệnh nhân chỉ thấy lịch hẹn của chính mình', async ({ page }) => {
+  test('TC-AC-MA.1 a patient only sees their own appointments', async ({ page }) => {
     await loginAs(page, 'patient');
     await goClient(page, '/appointments');
-    // Dữ liệu giả có lịch hẹn của nhiều bệnh nhân; p-001 có đúng 1 sắp tới và 2 đã qua.
+    // The mock data has appointments for several patients; p-001 has exactly 1 upcoming and 2 past.
     await expect(page.getByRole('tab', { name: /Sắp tới \(1\)/ })).toBeVisible();
     await expect(page.getByRole('tab', { name: /Đã qua \(2\)/ })).toBeVisible();
   });
 });
 
-test.describe('Bảo mật giao diện', () => {
-  test('TC-NFR-SEC2 bệnh nhân vào trang nhân viên thì bị chặn', async ({ page }) => {
+test.describe('UI security', () => {
+  test('TC-NFR-SEC2 a patient visiting a staff page is blocked', async ({ page }) => {
     await loginAs(page, 'patient');
     await goClient(page, '/queue');
     await expect(page.getByText('Bạn không có quyền xem trang này.')).toBeVisible();
@@ -81,7 +81,7 @@ test.describe('Bảo mật giao diện', () => {
     await expect(page.getByText('Bạn không có quyền xem trang này.')).toBeVisible();
   });
 
-  test('TC-NFR-SEC2-DPO DPO không thấy menu nghiệp vụ lâm sàng', async ({ page }) => {
+  test('TC-NFR-SEC2-DPO the DPO does not see the clinical business menu', async ({ page }) => {
     await loginAs(page, 'dpo');
     const nav = page.getByRole('navigation');
     await expect(nav.getByText('Bệnh nhân', { exact: true })).toHaveCount(0);
@@ -90,13 +90,13 @@ test.describe('Bảo mật giao diện', () => {
     await expect(page.getByText('Bạn không có quyền xem trang này.')).toBeVisible();
   });
 
-  test('TC-SEC-28 token không nằm trong localStorage', async ({ page }) => {
+  test('TC-SEC-28 the token is not in localStorage', async ({ page }) => {
     await loginAs(page, 'doctor');
     const keys = await page.evaluate(() => Object.keys(window.localStorage));
     expect(keys).toEqual([]);
   });
 
-  test('TC-SEC-08 văn bản độc hại trong lý do khám được hiển thị như chữ, không thực thi', async ({ page }) => {
+  test('TC-SEC-08 malicious text in the visit reason is rendered as text, not executed', async ({ page }) => {
     let dialogs = 0;
     page.on('dialog', async (d) => {
       dialogs++;
@@ -113,16 +113,16 @@ test.describe('Bảo mật giao diện', () => {
     expect(dialogs).toBe(0);
   });
 
-  // Chưa hiện thực trong giao diện: giữ test ở trạng thái fixme để không quên (xem backlog WEB-xx).
-  test.fixme('TC-NFR-SEC14 nhân viên tự đăng xuất sau 15 phút không thao tác', async ({ page }) => {
+  // Not implemented in the UI yet: keep the test as fixme so it is not forgotten (see the WEB-xx backlog).
+  test.fixme('TC-NFR-SEC14 staff are signed out automatically after 15 minutes of inactivity', async ({ page }) => {
     await loginAs(page, 'doctor');
     await page.clock.fastForward('16:00');
     await expect(page).toHaveURL(/\/login/);
   });
 });
 
-test.describe('Phân quyền theo màn hình lịch', () => {
-  test('TC-AC-02.3 bác sĩ chỉ xem lịch của chính mình, không chọn được bác sĩ khác', async ({ page }) => {
+test.describe('Authorization by schedule screen', () => {
+  test('TC-AC-02.3 a doctor only sees their own schedule and cannot pick another doctor', async ({ page }) => {
     await loginAs(page, 'doctor');
     await goClient(page, '/schedule');
     await expect(page.getByRole('heading', { name: 'Lịch bác sĩ' })).toBeVisible();

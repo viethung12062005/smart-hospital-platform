@@ -1,4 +1,4 @@
-"""US-053..US-056: trợ lý RAG (AI-06..AI-13)."""
+"""US-053..US-056: RAG assistant (AI-06..AI-13)."""
 
 import json
 import re
@@ -21,7 +21,7 @@ ASK = "/api/v1/ai/assistant/ask"
 
 
 def grounded(msgs: Sequence[ChatMessage]) -> str:
-    """Model giả trung thực: trích nguyên văn đoạn có chứa từ khóa câu hỏi."""
+    """Honest fake model: quotes verbatim a passage containing a question keyword."""
     user = msgs[-1].content
     docs = re.findall(r'<document index="(\d+)"[^>]*>\n(.*?)\n</document>', user, re.S)
     for idx, body in docs:
@@ -68,7 +68,7 @@ def test_grounded_answer_with_valid_citation_audit_and_usage(api: Any) -> None:
         assert r.status_code == 200 and body["answered"], body
         assert body["model"] == {"provider": "deepseek", "name": "deepseek-chat", "fallbackLevel": 0}
         assert body["citations"][0]["section"].endswith("4.2 Chỉ định chuyển tuyến")
-        assert "0912345678" not in ds.received[0][-1].content  # đã che PII trước khi ra ngoài Azure
+        assert "0912345678" not in ds.received[0][-1].content  # PII redacted before leaving for Azure
         audit = deps.db.outbox.find_one({"eventType": "shp.audit.recorded.v1"})["payload"]["data"]
         assert audit["action"] == "ai-query" and "chuyển tuyến" not in json.dumps(audit, ensure_ascii=False)
         stored = deps.db.messages.find_one({"role": "user"})
@@ -140,7 +140,7 @@ def test_security_trimming_by_role_and_department(api: Any) -> None:
     with tc:
         indexed(deps, roles=("doctor",))
         r = tc.post(ASK, json={"question": "chuyển tuyến tăng huyết áp"}, headers=bearer(**NURSE)).json()
-        assert r["answered"] is False and r["mode"] == "no-context"  # điều dưỡng không được thấy tài liệu này
+        assert r["answered"] is False and r["mode"] == "no-context"  # nurses must not see this document
         derm = bearer(sub="dr-derm", roles=["doctor"])
         assert (
             tc.post(ASK, json={"question": "chuyển tuyến", "department": "cardiology"}, headers=derm).status_code == 403

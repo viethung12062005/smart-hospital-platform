@@ -1,4 +1,4 @@
-/* Chuyển thể từ Medplum AppShell (Apache-2.0), màu nền theo hệ thiết kế SHP. */
+/* Adapted from the Medplum AppShell (Apache-2.0), background color per the SHP design system. */
 .main {
   flex: 1;
   background-color: var(--shp-bg);

@@ -1,2 +1,2 @@
-/** Model và quy tắc nghiệp vụ; KHÔNG import Spring/JDBC/Mongo (test bằng JUnit thuần). */
+/** Domain model and business rules; do NOT import Spring/JDBC/Mongo (test with plain JUnit). */
 package org.shp.clinical.domain;

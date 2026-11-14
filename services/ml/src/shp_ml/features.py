@@ -1,8 +1,9 @@
-"""Đặc trưng no-show dùng chung cho huấn luyện và phục vụ (ML-15, 04 §2.3).
+"""No-show features shared by training and serving (ML-15, 04 §2.3).
 
-Một nguồn duy nhất: `features_for` tính đặc trưng cho MỘT lịch hẹn từ thống kê bệnh nhân tại thời điểm đặt
-(phục vụ, ML-07); `training_frame` phát lại lịch sử theo thời gian và gọi đúng hàm đó cho từng lịch hẹn (huấn luyện).
-Chỉ dùng thông tin có trước `bookedAt`: kết quả của lịch hẹn cũ chỉ được tính khi đã biết (startAt + 1 giờ ≤ bookedAt).
+Single source: `features_for` computes the features of ONE appointment from the patient statistics at booking time
+(serving, ML-07); `training_frame` replays history over time and calls that same function for each appointment
+(training). Only uses information available before `bookedAt`: the outcome of an earlier appointment counts only
+once known (startAt + 1 hour ≤ bookedAt).
 """
 
 from collections import defaultdict
@@ -14,7 +15,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 VN = ZoneInfo("Asia/Ho_Chi_Minh")
-OUTCOME_KNOWN_AFTER = timedelta(hours=1)  # no-show chốt sau end + 30 phút (SCH-24)
+OUTCOME_KNOWN_AFTER = timedelta(hours=1)  # no-show is final after end + 30 minutes (SCH-24)
 LATE_CANCEL = timedelta(hours=24)
 NO_NOSHOW_DAYS = 9999
 
@@ -33,7 +34,7 @@ FEATURES = NUMERIC + CATEGORICAL
 
 @dataclass
 class PatientStats:
-    """Giống document `ml.patient_stats` (bookedTotal = số lịch đã có kết quả fulfilled/noshow)."""
+    """Same shape as the `ml.patient_stats` document (bookedTotal = appointments with a fulfilled/noshow outcome)."""
 
     booked_total: int = 0
     noshow_total: int = 0
@@ -68,7 +69,7 @@ def features_for(
 
 
 def apply_outcome(stats: PatientStats, outcome: str, start_at: datetime, cancelled_at: datetime | None) -> None:
-    """Cập nhật thống kê khi biết kết quả (consumer E2/E5, ML-06)."""
+    """Update the statistics when an outcome becomes known (consumer E2/E5, ML-06)."""
     if outcome == "noshow":
         stats.booked_total += 1
         stats.noshow_total += 1
@@ -83,17 +84,17 @@ def training_frame(facts: pd.DataFrame) -> pd.DataFrame:
     """facts: appointment_id, patient_id, booked_at, start_at, specialty, channel, age_band, outcome,
     cancelled_at (UTC, tz-aware).
 
-    Trả đặc trưng + `label` (1 = noshow) + `start_at`, `appointment_id`; lịch hẹn cancelled bị loại khỏi tập
-    huấn luyện nhưng vẫn được tính vào prior_late_cancel của các lịch sau.
+    Return features + `label` (1 = noshow) + `start_at`, `appointment_id`; cancelled appointments are excluded from the
+    training set but still count toward prior_late_cancel of later appointments.
     """
     df = facts.sort_values(["booked_at", "start_at"], kind="stable").reset_index(drop=True)
     stats: dict[str, PatientStats] = defaultdict(PatientStats)
-    # Hàng đợi kết quả chưa được "biết" theo từng bệnh nhân: (thời điểm biết, outcome, start_at, cancelled_at)
+    # Per-patient queue of outcomes not yet "known": (known time, outcome, start_at, cancelled_at)
     pending: dict[str, list[tuple[datetime, str, datetime, datetime | None]]] = defaultdict(list)
     rows: list[dict[str, Any]] = []
     for r in df.to_dict("records"):
         pid = str(r["patient_id"])
-        booked_at: datetime = r["booked_at"]  # pd.Timestamp là datetime
+        booked_at: datetime = r["booked_at"]  # pd.Timestamp is a datetime
         start_at: datetime = r["start_at"]
         cancelled_at: datetime | None = None if pd.isna(r["cancelled_at"]) else r["cancelled_at"]
         outcome = str(r["outcome"])
@@ -121,6 +122,6 @@ def training_frame(facts: pd.DataFrame) -> pd.DataFrame:
 
 
 def time_split(frame: pd.DataFrame, validation_months: int = 6) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Chia theo thời gian (ML-02): `validation_months` tháng cuối làm validation, không xáo trộn."""
+    """Time-based split (ML-02): the last `validation_months` months are validation, no shuffling."""
     cutoff = frame["start_at"].max() - pd.DateOffset(months=validation_months)
     return frame[frame["start_at"] <= cutoff].copy(), frame[frame["start_at"] > cutoff].copy()

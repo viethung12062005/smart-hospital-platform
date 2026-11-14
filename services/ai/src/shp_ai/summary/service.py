@@ -1,8 +1,9 @@
-"""Tóm tắt hồ sơ (AI-20, AI-21; 12 §3, AC-12.1..12.3).
+"""Record summary (AI-20, AI-21; 12 §3, AC-12.1..12.3).
 
-Bản ghi đánh số [E1]..[En] → LLM tóm tắt theo schema cố định → kiểm tra: mỗi ý phải có `sources` trỏ tới bản ghi có
-thật; con số trong ý phải xuất hiện trong bản ghi nguồn; không có câu chẩn đoán/chỉ định trực tiếp hay chỉ dẫn gửi AI.
-Ý không đạt bị LOẠI (AC-12.2). Mọi model lỗi hoặc đầu ra hỏng → chế độ `structured-timeline` dựng thẳng từ dữ liệu.
+Records are numbered [E1]..[En] → the LLM summarizes against a fixed schema → check: every point must have
+`sources` pointing to a real record; numbers in a point must appear in the source record; no
+diagnostic/direct-instruction sentence or AI-directed instruction. Failing points are DROPPED (AC-12.2). If every
+model fails or the output is broken → `structured-timeline` mode built directly from the data.
 """
 
 import html
@@ -68,7 +69,7 @@ def _valid_item(item: Any, by_key: dict[str, Evidence]) -> dict[str, Any] | None
         return None
     source_text = " ".join(f"{by_key[k].text} {by_key[k].time}" for k in keys)
     if any(n not in source_text for n in _NUM.findall(text)):
-        return None  # con số không có trong nguồn: có thể là bịa
+        return None  # number not found in the source: possibly fabricated
     return {"text": text, "sources": [by_key[k].ref for k in keys]}
 
 

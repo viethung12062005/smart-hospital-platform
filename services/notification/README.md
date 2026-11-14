@@ -1,23 +1,23 @@
 # notification
 
-Nhắc lịch, gửi thông báo qua kênh, chống trùng. Chủ sở hữu: **D1**. Lưu trữ: MongoDB (database `notification`).
+Appointment reminders, sending notifications over channels, deduplication. Owner: **D1**. Storage: MongoDB (database `notification`).
 
-| Lệnh (chạy ở gốc repo) | Việc |
+| Command (run at repo root) | Task |
 |---|---|
-| `mvn -B -pl services/notification -am verify` | build + test như CI (cần Docker cho Testcontainers) |
-| `set -a; . dev/.local/connection.env; set +a; mvn -pl services/notification -am spring-boot:run` | chạy local với hạ tầng của `make -C dev up` |
-| `make -C dev deploy SVC=notification` | build image và deploy lên cụm kind |
+| `mvn -B -pl services/notification -am verify` | build + test like CI (needs Docker for Testcontainers) |
+| `set -a; . dev/.local/connection.env; set +a; mvn -pl services/notification -am spring-boot:run` | run locally with infrastructure from `make -C dev up` |
+| `make -C dev deploy SVC=notification` | build image and deploy to the kind cluster |
 
-## Dev viết gì, ở đâu
-- Bố cục gói (`docs/03-architecture/overview.md` §4): `api/` (controller) → `app/` (use case, transaction) → `domain/` (quy tắc, không Spring)
-  → `infra/` (repository, client); `messaging/` (consumer); `config/` của SA.
-- Endpoint: `src/main/java/org/shp/notification/api/*Controller.java`. **Mọi endpoint** phải có `@RequireShpAuthz(resource, action, context)`
-  (test `everyEndpointDeclaresItsAuthorizationRule` đỏ nếu quên). Dữ kiện cho phân quyền: bean `ResourceContextResolver`.
-- Lỗi nghiệp vụ: `throw new ShpException("slot-unavailable")` (mã trong `contracts` + 07 §5).
-- Event: `outbox.add(CloudEvents.create("notification", "shp.<context>.<event>.v1", subject, payload))` **trong transaction** của thay đổi dữ liệu;
-  test hợp đồng: `EventSchemas.validate(...)` rỗng.
+## What devs write, and where
+- Package layout (`docs/03-architecture/overview.md` §4): `api/` (controller) → `app/` (use case, transaction) → `domain/` (rules, no Spring)
+  → `infra/` (repository, client); `messaging/` (consumer); SA's `config/`.
+- Endpoint: `src/main/java/org/shp/notification/api/*Controller.java`. **Every endpoint** must have `@RequireShpAuthz(resource, action, context)`
+  (the `everyEndpointDeclaresItsAuthorizationRule` test goes red if you forget). Input for authorization: the `ResourceContextResolver` bean.
+- Business errors: `throw new ShpException("slot-unavailable")` (codes in `contracts` + 07 §5).
+- Event: `outbox.add(CloudEvents.create("notification", "shp.<context>.<event>.v1", subject, payload))` **inside the transaction** of the data change;
+  contract test: `EventSchemas.validate(...)` empty.
 - Consumer: `inbox.handleOnce("notification", event, () -> ...)`.
 - Idempotency-Key: `idempotency.claim(subject, IdempotencyKeys.require(header), operation, IdempotencyKeys.hashBody(body))`.
-- Bean nền tảng đã cấu hình sẵn ở `config/PlatformConfig.java` — không cần sửa.
+- Platform beans are already configured in `config/PlatformConfig.java` — no need to change.
 
-Tài liệu: `docs/03-architecture/detailed-design/` (API, DB, event của service) và `docs/05-plan/by-person/D1.md` (task).
+Docs: `docs/03-architecture/detailed-design/` (the service's API, DB, events) and `docs/05-plan/by-person/D1.md` (tasks).

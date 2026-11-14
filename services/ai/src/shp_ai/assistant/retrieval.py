@@ -1,10 +1,11 @@
-"""Truy xuất hybrid (AI-06; 06 §1.2): BM25 top 50 + vector top 50 → Reciprocal Rank Fusion → top 5.
+"""Hybrid retrieval (AI-06; 06 §1.2): BM25 top 50 + vector top 50 → Reciprocal Rank Fusion → top 5.
 
-Security trimming do index thực hiện trong truy vấn (Scope). Embedding lỗi → chỉ BM25 (xuống cấp có kiểm soát).
-Ngưỡng liên quan: đoạn phải chứa ≥ 60% từ nội dung (bỏ hư từ) của câu hỏi, hoặc rất gần về vector;
-không đạt → không có đoạn nào
-(→ answered=false, không gọi LLM sinh nội dung, AC-11.1). Reranker cross-encoder là tùy chọn theo kết quả eval (AI-16)
-và chưa bật.
+Security trimming is done by the index inside the query (Scope). Embedding failure → BM25 only (controlled degradation).
+Relevance threshold: a passage must contain ≥ 60% of the question's content terms (stopwords removed), or be very
+close in vector space;
+otherwise → no passage at all
+(→ answered=false, no LLM content generation, AC-11.1). A cross-encoder reranker is optional per eval results (AI-16)
+and is not enabled yet.
 """
 
 import re
@@ -17,10 +18,10 @@ CANDIDATES = 50
 TOP_K = 5
 RRF_K = 60
 MIN_COSINE = 0.35
-STRONG_COSINE = 0.75  # vector rất gần (embedding thật) thì giữ dù ít trùng từ
-MIN_TERM_COVERAGE = 0.6  # chọn theo eval AI-16: từ chối đúng 1,0, Recall@5 0,91 (dữ liệu giả; đo lại với bge-m3)
+STRONG_COSINE = 0.75  # very close vector (real embedding): keep it even with little term overlap
+MIN_TERM_COVERAGE = 0.6  # chosen from eval AI-16: refusal 1.0, Recall@5 0.91 (synthetic data; re-measure with bge-m3)
 _WORD = re.compile(r"\w+", re.UNICODE)
-# Hư từ và từ quá phổ biến trong tài liệu y khoa tiếng Việt: không dùng để quyết định "có liên quan"
+# Stopwords and very common terms in Vietnamese medical documents: not used to decide "relevant"
 STOPWORDS = frozenset(
     """
 và của là có cho khi thì bao nhiêu lâu nào gì thế như người bệnh nhân cần được các những một lần trong sau trước
@@ -38,7 +39,8 @@ def content_terms(text: str) -> set[str]:
 def relevant(query_terms: set[str], chunk: IndexedChunk) -> bool:
     if not query_terms:
         return False
-    have = content_terms(f"{chunk.section} {chunk.content}")  # không tính tiêu đề: từ chung của cả tài liệu
+    # do not count the heading: words common to the whole document
+    have = content_terms(f"{chunk.section} {chunk.content}")
     matched = len(query_terms & have)
     return matched >= min(2, len(query_terms)) and matched / len(query_terms) >= MIN_TERM_COVERAGE
 

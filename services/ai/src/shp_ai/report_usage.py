@@ -1,4 +1,4 @@
-"""Báo cáo token và chi phí AI theo tác vụ, model, ngày (AI-33; NFR-C2). Đọc collection `usage` (không có nội dung).
+"""Token and cost report for AI, by task, model and day (AI-33; NFR-C2). Reads the `usage` collection (no content).
 
 python -m shp_ai.report_usage --from 2026-11-01 --to 2026-11-30 --out reports/ai-usage.md
 """
@@ -13,17 +13,17 @@ from shp_ai.usage import default_range, summary
 
 def render(db: Any, start: date, end: date, daily_limit: int) -> str:
     out = [
-        f"# Chi phí AI {start.isoformat()} → {end.isoformat()}",
+        f"# AI cost {start.isoformat()} → {end.isoformat()}",
         "",
-        f"Hạn mức: {daily_limit:,} token/ngày (cảnh báo ở 80%).",
+        f"Budget: {daily_limit:,} tokens/day (warning at 80%).",
         "",
     ]
-    for group, title in (("task", "Theo tác vụ"), ("model", "Theo model"), ("day", "Theo ngày")):
+    for group, title in (("task", "By task"), ("model", "By model"), ("day", "By day")):
         rows = summary(db, start, end, group)
         out += [
             f"## {title}",
             "",
-            "| Khóa | Lượt | Token vào | Token ra | Chi phí (USD) | Tỉ lệ fallback |",
+            "| Key | Calls | Input tokens | Output tokens | Cost (USD) | Fallback rate |",
             "|---|---|---|---|---|---|",
         ]
         out += [
@@ -33,12 +33,12 @@ def render(db: Any, start: date, end: date, daily_limit: int) -> str:
         ]
         if group == "day":
             over = [r["key"] for r in rows if (r["inputTokens"] + r["outputTokens"]) >= 0.8 * daily_limit]
-            out += ["", f"Ngày chạm 80% hạn mức: {', '.join(over) if over else 'không có'}."]
+            out += ["", f"Days hitting the 80% budget: {', '.join(over) if over else 'none'}."]
         out.append("")
     return "\n".join(out)
 
 
-def main() -> None:  # pragma: no cover - cần MongoDB
+def main() -> None:  # pragma: no cover - needs MongoDB
     from pymongo import MongoClient
 
     from shp_ai.settings import Settings

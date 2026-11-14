@@ -44,7 +44,7 @@ def test_checks_stop_pipeline_on_bad_data(facts: pd.DataFrame) -> None:
     bad.loc[:500, "channel"] = None
     with pytest.raises(DataCheckError) as e:
         check(bad)
-    assert any("channel thiếu" in p for p in e.value.problems)
+    assert any("channel missing" in p for p in e.value.problems)
     bad = facts.copy()
     bad["outcome"] = "noshow"
     with pytest.raises(DataCheckError):
@@ -54,7 +54,8 @@ def test_checks_stop_pipeline_on_bad_data(facts: pd.DataFrame) -> None:
 
 
 def test_training_features_equal_serving_features(facts: pd.DataFrame) -> None:
-    """Một nguồn đặc trưng: phát lại sự kiện như consumer (ML-06) phải ra đúng hàng của training_frame."""
+    """Single source of features: replaying events like the consumer (ML-06) must produce the same row as
+    training_frame."""
     frame = training_frame(facts)
     pid = facts["patient_id"].value_counts().index[0]
     mine = facts[facts["patient_id"] == pid].sort_values(["booked_at", "start_at"], kind="stable")
@@ -94,7 +95,7 @@ def test_features_ignore_outcomes_not_yet_known() -> None:
         }
     )
     frame = training_frame(facts)
-    # lịch thứ hai đặt trước khi lịch đầu diễn ra: chưa được biết no-show
+    # the second appointment is booked before the first one happens: its no-show is not known yet
     assert frame.iloc[1]["prior_noshow"] == 0 and frame.iloc[1]["is_first_visit"] == 1
 
 

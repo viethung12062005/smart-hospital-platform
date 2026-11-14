@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-service-defaults</artifactId>
-  <name>shp-service-defaults — health, info, tracing chung cho mọi service</name>
+  <name>shp-service-defaults — health, info, tracing shared by every service</name>
 
   <dependencies>
     <dependency>
@@ -21,7 +21,7 @@
       <artifactId>spring-boot-starter-opentelemetry</artifactId>
     </dependency>
     <dependency>
-      <!-- Annotation dùng trong kiểu của actuator; thiếu thì javac cảnh báo (cảnh báo = lỗi) -->
+      <!-- Annotation used in actuator types; without it javac warns (warnings = errors) -->
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
     </dependency>

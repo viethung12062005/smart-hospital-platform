@@ -7,9 +7,9 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Ghi bản ghi audit thành event E11 vào outbox trong transaction RIÊNG (REQUIRES_NEW): audit của
- * một lần truy cập vẫn được lưu kể cả khi giao dịch nghiệp vụ rollback, và không mất khi bus lỗi
- * (relay phát sau).
+ * Write the audit record as an E11 event to the outbox in its OWN transaction (REQUIRES_NEW): the
+ * audit of one access is still stored even when the business transaction rolls back, and is not
+ * lost when the bus fails (the relay publishes it later).
  */
 public final class PostgresOutboxAuditSink implements AuditSink {
   private final PostgresOutbox outbox;

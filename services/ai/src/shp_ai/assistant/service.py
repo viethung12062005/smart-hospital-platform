@@ -1,9 +1,9 @@
-"""Sinh câu trả lời RAG có trích dẫn (AI-08; 12 §2, BR-09, AC-11.1..11.3).
+"""Generate RAG answers with citations (AI-08; 12 §2, BR-09, AC-11.1..11.3).
 
-kiểm đầu vào → truy xuất (trimming) → không có đoạn liên quan: answered=false, KHÔNG gọi LLM → ghép ngữ cảnh ≤ 3.500
-token trong khối <documents> → router (DeepSeek → Gemini → Ollama, che PII khi ra ngoài) → kiểm đầu ra (schema,
-quote khớp nguyên văn, không chỉ định) → sai thì thử một lần với model kế → vẫn sai: answered=false.
-Mọi model lỗi: chế độ retrieval-only (trả danh sách mục liên quan). Hết hạn mức: budget_exceeded.
+input check → retrieval (trimming) → no relevant passage: answered=false, NO LLM call → assemble context ≤ 3,500
+tokens in a <documents> block → router (DeepSeek → Gemini → Ollama, PII redacted when leaving) → output check (schema,
+verbatim quote, no directives) → on failure retry once with the next model → still failing: answered=false.
+All models fail: retrieval-only mode (return the list of relevant items). Budget exhausted: budget_exceeded.
 """
 
 import html
@@ -44,7 +44,7 @@ _TAG = re.compile(r"<\s*/?\s*(documents?|question|system|assistant|user)\b[^>]*>
 
 
 def neutralize(text: str) -> str:
-    """Nội dung tài liệu không được đóng/mở khối dữ liệu của prompt (chống injection qua tài liệu)."""
+    """Document content must not close/open the prompt's data block (prevents injection via documents)."""
     return _TAG.sub("[thẻ đã bị loại]", text)
 
 
@@ -72,7 +72,7 @@ def build_messages(question: str, chunks: list[IndexedChunk]) -> tuple[list[Chat
         )
         cost = count(body)
         if cost > budget:
-            if not used:  # đoạn đầu quá dài: cắt bớt thay vì bỏ hết
+            if not used:  # first passage too long: truncate instead of dropping everything
                 body = truncate(body, budget)
             else:
                 break
@@ -95,7 +95,7 @@ def ask(router: Router, index: SearchIndex, embedder: Embedder, question: str, s
     result = AskResult(False, NO_ANSWER, [], prompt_version=version, retrieval_mode=found.mode)
     level = 0
     rejected: str | None = None
-    for _ in range(2):  # lần đầu + thử lại một lần với model kế khi đầu ra không đạt
+    for _ in range(2):  # first attempt + one retry with the next model when the output fails
         r = router.complete(TASK, messages, start_level=level)
         result.attempts.append(r)
         result.router = r
@@ -121,7 +121,7 @@ def ask(router: Router, index: SearchIndex, embedder: Embedder, question: str, s
         result.guardrail = f"blocked:{rejected}"
         result.mode = "guardrail"
         return result
-    # mọi model lỗi hoặc hết hạn mức: chỉ trả danh sách mục liên quan (không có nội dung sinh)
+    # every model failed or the budget is exhausted: return only the list of relevant items (no generated content)
     result.mode = "retrieval-only"
     result.citations = [citation(i, c) for i, c in enumerate(used, start=1)]
     return result

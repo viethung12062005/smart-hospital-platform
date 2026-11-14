@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-authz</artifactId>
-  <name>shp-authz — ma trận phân quyền và engine quyết định</name>
+  <name>shp-authz — authorization matrix and decision engine</name>
 
   <dependencies>
     <dependency>
@@ -25,7 +25,7 @@
 
   <build>
     <resources>
-      <!-- Nhúng ma trận phân quyền đã review: service luôn chạy đúng bản trong contracts/ -->
+      <!-- Embed the reviewed authorization matrix: every service always runs the exact version in contracts/ -->
       <resource>
         <directory>${project.basedir}/../../../contracts/authz</directory>
         <targetPath>shp/authz</targetPath>

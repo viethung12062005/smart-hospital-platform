@@ -8,8 +8,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Inbox chống xử lý trùng: mỗi (consumer, messageId) chỉ được xử lý một lần, kể cả khi bus giao
- * nhiều lần hoặc nhiều replica cùng nhận.
+ * Inbox that prevents duplicate processing: each (consumer, messageId) is processed only once, even
+ * when the bus delivers it multiple times or several replicas receive it.
  */
 public final class PostgresInbox {
   private final JdbcClient jdbc;
@@ -23,9 +23,10 @@ public final class PostgresInbox {
   }
 
   /**
-   * Xử lý event đúng một lần: mở transaction → ghi dấu inbox → chạy {@code handler} (dùng cùng
-   * transaction cho dữ liệu và outbox) → commit. Handler lỗi → rollback TOÀN BỘ (cả dấu inbox) nên
-   * lần giao lại sẽ xử lý lại. Trả false nếu đã xử lý (bỏ qua).
+   * Process an event exactly once: open transaction → record inbox marker → run {@code handler}
+   * (using the same transaction for data and outbox) → commit. Handler failure → roll back
+   * EVERYTHING (including the inbox marker), so a redelivery processes it again. Returns false if
+   * already processed (skipped).
    */
   public boolean handleOnce(String consumer, CloudEvent evt, Runnable handler) {
     Boolean done =

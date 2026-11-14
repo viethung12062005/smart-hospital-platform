@@ -1,7 +1,8 @@
-"""Khởi tạo MongoDB `ml` khi service khởi động (ML-11; 04 §2.2). Idempotent, chạy lại không lỗi.
+"""Initialize the `ml` MongoDB database at service startup (ML-11; 04 §2.2). Idempotent, safe to re-run.
 
-Cùng quy tắc với contracts/db/mongo-notification-ml.js (validator ageBand/channel/outcome). `predictions` là time-series
-nếu script hạ tầng đã tạo như vậy; nếu service tự tạo thì là collection thường có unique (appointmentId, shadow).
+Same rules as contracts/db/mongo-notification-ml.js (ageBand/channel/outcome validators). `predictions` is a time
+series if the infrastructure script created it that way; if the service creates it, it is a regular collection with
+a unique (appointmentId, shadow) index.
 """
 
 from typing import Any

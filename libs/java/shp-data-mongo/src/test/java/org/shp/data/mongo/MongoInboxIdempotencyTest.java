@@ -103,8 +103,8 @@ class MongoInboxIdempotencyTest extends MongoTestBase {
     }
     assertThat(committedRuns).hasValue(1);
     assertThat(count("thing"))
-        .isEqualTo(
-            1); // handler có thể chạy lại khi transaction xung đột, nhưng chỉ một lần được commit
+        .isEqualTo(1); // the handler may run again when the transaction conflicts, but only one run
+    // commits
   }
 
   @Test

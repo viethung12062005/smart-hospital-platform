@@ -4,18 +4,19 @@ import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Cấu hình xác thực ({@code shp.auth.*}); mặc định đọc env {@code OIDC_AUTHORITY}, {@code
- * OIDC_AUDIENCE} (Helm values local đã đặt).
+ * Authentication configuration ({@code shp.auth.*}); by default reads env {@code OIDC_AUTHORITY},
+ * {@code OIDC_AUDIENCE} (local Helm values already set them).
  *
- * @param authority issuer của Keycloak (cloud: https://<tên miền>/idp/realms/shp; local:
+ * @param authority Keycloak issuer (cloud: https://<domain>/idp/realms/shp; local:
  *     http://.../realms/shp)
- * @param audience audience token phải nhắm tới (local: shp-api)
- * @param requireMfaForStaff nhân viên phải có amr chứa "mfa"; tắt ở local vì realm local chưa mô
- *     phỏng MFA (LOC-02)
- * @param clockSkew độ lệch đồng hồ cho phép khi kiểm hạn token
- * @param jwkSetUri tùy chọn: tải khóa ký từ địa chỉ này thay vì qua discovery của {@code
- *     authority}. Dùng khi service tới IdP bằng địa chỉ nội bộ khác với issuer trong token (local:
- *     token có iss=http://localhost:18080/..., service trong cụm gọi http://keycloak.shp-deps...)
+ * @param audience audience the token must target (local: shp-api)
+ * @param requireMfaForStaff staff must have amr containing "mfa"; disabled locally because the
+ *     local realm does not simulate MFA yet (LOC-02)
+ * @param clockSkew allowed clock skew when validating token expiry
+ * @param jwkSetUri optional: load signing keys from this address instead of via {@code authority}
+ *     discovery. Use when the service reaches the IdP through a different internal address than the
+ *     token issuer (local: tokens carry iss=http://localhost:18080/..., the in-cluster service
+ *     calls http://keycloak.shp-deps...)
  */
 @ConfigurationProperties("shp.auth")
 public record ShpAuthProperties(

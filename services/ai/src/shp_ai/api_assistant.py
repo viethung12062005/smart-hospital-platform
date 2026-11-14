@@ -1,4 +1,4 @@
-"""AI1 (hỏi trợ lý, JSON hoặc SSE), AI2 (feedback), AI3 (lịch sử), AI10 (usage) — 12 §2, §6."""
+"""AI1 (ask the assistant, JSON or SSE), AI2 (feedback), AI3 (history), AI10 (usage) — 12 §2, §6."""
 
 import json
 from collections.abc import Callable, Iterator
@@ -21,8 +21,9 @@ from shp_platform.security import Authenticator, Principal
 
 
 class AskBody(BaseModel):
-    conversationId: str | None = Field(default=None, max_length=64)  # noqa: N815 - tên trường theo hợp đồng
-    question: str = Field(min_length=1, max_length=2000)  # độ dài 3-1.000 kiểm ở guardrail (trả answered=false)
+    conversationId: str | None = Field(default=None, max_length=64)  # noqa: N815 - field name per the contract
+    # 3-1,000 length check happens in the guardrail (returns answered=false)
+    question: str = Field(min_length=1, max_length=2000)
     department: str | None = Field(default=None, pattern=r"^[a-z][a-z-]{1,40}$")
 
 
@@ -56,7 +57,7 @@ def _sse(payload: dict[str, Any]) -> Iterator[bytes]:
         return f"event: {name}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n".encode()
 
     text = payload["answer"]
-    for i in range(0, len(text), 24):  # chia câu trả lời đã kiểm tra thành các mảnh token
+    for i in range(0, len(text), 24):  # split the checked answer into token chunks
         yield ev("token", {"text": text[i : i + 24]})
     yield ev("citations", payload["citations"])
     yield ev("done", {k: v for k, v in payload.items() if k not in ("answer", "citations")})

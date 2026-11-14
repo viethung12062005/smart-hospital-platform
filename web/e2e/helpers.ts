@@ -10,12 +10,12 @@ const ROLE_LABEL: Record<Role, string> = {
   dpo: 'DPO',
 };
 
-/** Thứ Tư 04/11/2026 09:00: ngày làm việc, có slot ngày mai và hàng đợi hôm nay (cùng thời điểm với test đơn vị). */
+/** Wednesday 04/11/2026 09:00: a workday with a slot tomorrow and today's queue (same time as the unit tests). */
 export const NOW = new Date('2026-11-04T09:00:00+07:00');
 
 /**
- * Mở web ở chế độ dữ liệu giả và đăng nhập bằng vai trò đã chọn. Phiên giả nằm trong bộ nhớ trang, nên các bước sau
- * phải điều hướng phía client (goClient) chứ không tải lại trang.
+ * Open the web app in mock-data mode and sign in with the chosen role. The mock session lives in page memory, so later steps
+ * must navigate client-side (goClient) instead of reloading the page.
  */
 export async function loginAs(page: Page, role: Role, now: Date = NOW) {
   await page.clock.setFixedTime(now);
@@ -31,9 +31,9 @@ export async function goClient(page: Page, path: string) {
   }, path);
 }
 
-/** Chọn slot đầu tiên của bác sĩ pr-001 (Tim mạch) và tới bước xác nhận. */
+/** Pick doctor pr-001's first slot (Cardiology) and go to the confirmation step. */
 export async function pickFirstSlot(page: Page) {
-  await goClient(page, '/doctors'); // rời trang đặt lịch trước để trình hướng dẫn được dựng lại từ bước đầu
+  await goClient(page, '/doctors'); // leave the booking page first so the wizard is rebuilt from the first step
   await goClient(page, '/book?specialty=cardiology&practitioner=pr-001');
   const slots = page.getByRole('option');
   await slots.first().waitFor();

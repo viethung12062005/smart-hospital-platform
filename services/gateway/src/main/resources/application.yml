@@ -1,5 +1,5 @@
-# Bảng định tuyến: docs/03-architecture/detailed-design/07-api-conventions.md §1. /internal/* KHÔNG có route.
-# Địa chỉ service đổi được bằng biến môi trường SHP_UPSTREAM_<SERVICE> (local/test).
+# Route table: docs/03-architecture/detailed-design/07-api-conventions.md §1. /internal/* has NO route.
+# Service addresses can be changed with the SHP_UPSTREAM_<SERVICE> environment variable (local/test).
 spring:
   application:
     name: gateway
@@ -40,7 +40,7 @@ server:
   port: 8080
 management:
   health:
-    # Redis chỉ giữ bộ đếm rate limit và fail-open (RateLimitFilter): Redis lỗi không được làm gateway hết ready.
+    # Redis only holds rate limit counters and fails open (RateLimitFilter): a Redis failure must not make the gateway unready.
     redis:
       enabled: false
 shp:

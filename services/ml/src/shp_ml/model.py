@@ -1,7 +1,7 @@
-"""Model no-show dùng khi phục vụ: LightGBM Booster lưu dạng văn bản (không pickle, nạp không chạy mã lạ).
+"""No-show model used at serving time: LightGBM Booster stored as text (no pickle, loading runs no foreign code).
 
-Danh mục giá trị của đặc trưng phân loại nằm trong chính văn bản model (pandas_categorical), nên dự đoán tại thời điểm
-phục vụ dùng đúng mã hóa lúc huấn luyện; giá trị lạ thành thiếu (NaN) thay vì lệch mã.
+The value sets of categorical features live in the model text itself (pandas_categorical), so predictions at serving
+time use exactly the encoding from training; unknown values become missing (NaN) instead of a shifted encoding.
 """
 
 import hashlib
@@ -47,5 +47,5 @@ class NoShowModel:
     @staticmethod
     def from_text(text: str, version: str, threshold: float, sha256: str | None = None) -> "NoShowModel":
         if sha256 is not None and hashlib.sha256(text.encode()).hexdigest() != sha256:
-            raise ValueError("model không khớp hash đã đăng ký")
+            raise ValueError("model does not match the registered hash")
         return NoShowModel(version=version, threshold=threshold, booster=lgb.Booster(model_str=text))

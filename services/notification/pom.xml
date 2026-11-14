@@ -9,7 +9,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>notification</artifactId>
-  <name>notification — Nhắc lịch, gửi thông báo qua kênh, chống trùng</name>
+  <name>notification — Appointment reminders, sending notifications over channels, deduplication</name>
 
   <dependencies>
     <dependency>

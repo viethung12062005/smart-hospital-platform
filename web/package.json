@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Web app (PWA) cho bệnh nhân, bác sĩ, điều dưỡng, quản trị và DPO",
+  "description": "Web app (PWA) for patients, doctors, nurses, administrators and the DPO",
   "engines": {
     "node": ">=20.19"
   },

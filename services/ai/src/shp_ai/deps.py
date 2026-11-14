@@ -1,4 +1,4 @@
-"""Phụ thuộc runtime của ai service, dựng một lần khi khởi động; test thay bằng bản giả."""
+"""Runtime dependencies of the ai service, built once at startup; tests replace them with fakes."""
 
 from dataclasses import dataclass, field
 from typing import Any
@@ -55,7 +55,7 @@ def record_audit(
     purpose: str | None = None,
     reason: str | None = None,
 ) -> None:
-    """Audit E11 qua outbox (relay phát lên bus). Không bao giờ chứa câu hỏi, prompt hay câu trả lời."""
+    """Audit E11 via the outbox (the relay publishes to the bus). Never contains questions, prompts or answers."""
     import uuid
 
     rec = audit.build(

@@ -7,8 +7,8 @@ import org.shp.events.CloudEvent;
 import org.shp.events.CloudEvents;
 
 /**
- * Bản ghi audit — payload của event {@code shp.audit.recorded.v1}. KHÔNG chứa nội dung lâm sàng,
- * tên, SĐT hay giá trị tìm kiếm. Dựng bằng {@link AuditRecordBuilder}.
+ * Audit record — payload of the {@code shp.audit.recorded.v1} event. Contains NO clinical content,
+ * names, phone numbers or search values. Build with {@link AuditRecordBuilder}.
  */
 public record AuditRecord(
     UUID eventId,
@@ -30,7 +30,7 @@ public record AuditRecord(
 
   public record Client(String ip, String userAgent) {}
 
-  /** Đóng gói thành CloudEvent E11 (subject = {@code Audit/{eventId}}). */
+  /** Wrap as an E11 CloudEvent (subject = {@code Audit/{eventId}}). */
   public CloudEvent toCloudEvent(Clock clock) {
     return CloudEvents.create(
         service, "shp.audit.recorded.v1", "Audit/" + eventId, this, clock, eventId);

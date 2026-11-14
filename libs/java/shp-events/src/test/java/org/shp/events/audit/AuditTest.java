@@ -141,7 +141,9 @@ class AuditTest {
         .distinct()
         .forEach(
             a -> {
-              assertThat(AuthzAudit.ACTION_MAP).as("thiếu ánh xạ audit cho '%s'", a).containsKey(a);
+              assertThat(AuthzAudit.ACTION_MAP)
+                  .as("missing audit mapping for '%s'", a)
+                  .containsKey(a);
               assertThat(AuditActions.ALL).contains(AuthzAudit.ACTION_MAP.get(a));
             });
   }
@@ -223,7 +225,7 @@ class AuditTest {
     assertThat(json).doesNotContain("\"reason\"").contains("\"purposeOfUse\":\"TREAT\"");
   }
 
-  // ---------- SHR-30: hành động thay mặt hồ sơ liên kết ----------
+  // ---------- SHR-30: acting on behalf of a linked record ----------
   static AuditRecord delegated(String onBehalfOf, String relationship) {
     return AuditRecordBuilder.build(
         CLOCK,
@@ -245,10 +247,10 @@ class AuditTest {
   @Test
   void onBehalfOfKeepsTheActingAccountAndTheAccessedProfile() {
     var r = delegated("Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02", "guardian");
-    assertThat(r.actor().subject()).isEqualTo("kc-doctor"); // tài khoản thực hiện
+    assertThat(r.actor().subject()).isEqualTo("kc-doctor"); // the account that acted
     assertThat(r.onBehalfOf()).isEqualTo("Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02");
     assertThat(r.relationship()).isEqualTo("guardian");
-    assertThat(r.patientId()).isEqualTo(PATIENT); // hồ sơ được truy cập
+    assertThat(r.patientId()).isEqualTo(PATIENT); // the record accessed
     assertThat(CloudEvents.toJson(r.toCloudEvent(CLOCK)))
         .contains("\"onBehalfOf\":\"Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02\"")
         .contains("\"relationship\":\"guardian\"");

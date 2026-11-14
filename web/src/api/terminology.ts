@@ -1,5 +1,5 @@
 import { load } from 'js-yaml';
-// Một nguồn duy nhất với backend: đọc thẳng file hợp đồng, không chép tay danh mục mã.
+// A single source shared with the backend: read the contract file directly, do not copy the code catalog by hand.
 import raw from '../../../contracts/terminology/code-systems.yaml?raw';
 
 interface CodeSystemFile {
@@ -15,7 +15,7 @@ export interface Concept {
 
 function concepts(system: string): Concept[] {
   const cs = file.codeSystems[system];
-  if (!cs) throw new Error(`Thiếu code system ${system} trong contracts/terminology/code-systems.yaml`);
+  if (!cs) throw new Error(`Missing code system ${system} in contracts/terminology/code-systems.yaml`);
   return Object.entries(cs.concepts).map(([code, display]) => ({ code: String(code), display }));
 }
 

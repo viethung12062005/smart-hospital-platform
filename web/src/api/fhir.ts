@@ -1,7 +1,7 @@
 import type { CodeableConcept, HumanName, Reference } from '@medplum/fhirtypes';
 import dayjs from 'dayjs';
 
-/** "Nguyễn Thị Lan": tên hiển thị theo thứ tự Việt Nam (họ trước), có tiền tố (BS., ĐD.) nếu có. */
+/** "Nguyễn Thị Lan": display name in Vietnamese order (family name first), with a prefix (BS., ĐD.) if present. */
 export function formatName(names: HumanName[] | undefined): string {
   const n = names?.[0];
   if (!n) return '';

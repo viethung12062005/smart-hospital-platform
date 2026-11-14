@@ -69,7 +69,7 @@ def _register(reg: FileRegistry, seed: int) -> str:
 
 @pytest.fixture(scope="session")
 def registry(tmp_path_factory: pytest.TempPathFactory) -> FileRegistry:
-    """Hai model nhỏ: v1 production, v2 để test shadow và đổi alias."""
+    """Two small models: v1 production, v2 for testing shadow and alias changes."""
     reg = FileRegistry(Path(tmp_path_factory.mktemp("registry")))
     v1 = _register(reg, 1)
     _register(reg, 2)

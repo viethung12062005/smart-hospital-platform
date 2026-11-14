@@ -1,9 +1,11 @@
-"""Job huấn luyện lại (ML-23; 16-mlops §5). Chạy trong image huấn luyện (extra `train`) như Kubernetes Job (MLO-04).
+"""Retrain job (ML-23; 16-mlops §5). Runs in the training image (`train` extra) as a Kubernetes Job (MLO-04).
 
-Lấy một yêu cầu `pending` do job giám sát tạo → giành khóa (tối đa một lần chạy) → xuất snapshot Parquet các lịch hẹn đã
-có kết quả trong 24 tháng (hash nội dung) → `train_candidate` (kiểm tra dữ liệu, cổng chất lượng) → đăng ký alias
-`candidate` nếu đạt. KHÔNG BAO GIỜ đổi `production`: candidate đi tiếp shadow và canary (§6).
-Không đạt cổng: giữ nguyên production, yêu cầu ghi `failed` kèm cổng không đạt. Mọi lần chạy có audit E11.
+Takes a `pending` request created by the monitoring job → acquires the lock (at most one run) → exports a Parquet
+snapshot of appointments with a known outcome over 24 months (content hash) → `train_candidate` (data checks, quality
+gates) → registers the `candidate` alias if it passes. NEVER changes `production`: the candidate goes on to shadow and
+canary (§6).
+Gate failure: production stays as is and the request is recorded as `failed` with the failed gates. Every run has an
+E11 audit record.
 
   python -m shp_ml.retrain --datasets /data/datasets
 """
@@ -57,7 +59,7 @@ def export_facts(db: Database[Doc], now: datetime) -> pd.DataFrame:
 
 
 def snapshot(df: pd.DataFrame, datasets: Path, now: datetime) -> tuple[Path, str]:
-    """Parquet bất biến: datasets/no-show/<yyyy-MM-dd>/<sha256>.parquet (04 §2.2)."""
+    """Immutable Parquet: datasets/no-show/<yyyy-MM-dd>/<sha256>.parquet (04 §2.2)."""
     tmp = datasets / "no-show" / ".tmp.parquet"
     tmp.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(tmp, index=False)
@@ -69,7 +71,7 @@ def snapshot(df: pd.DataFrame, datasets: Path, now: datetime) -> tuple[Path, str
 
 
 def _claim(db: Database[Doc], now: datetime) -> Doc | None:
-    """Khóa toàn cục: tối đa một lần huấn luyện lại tại một thời điểm (khóa có hạn, job chết thì hết hạn)."""
+    """Global lock: at most one retrain at a time (the lock expires, so a dead job frees it)."""
     try:
         state = db.retrain_state.find_one_and_update(
             {"_id": STATE_ID, "$or": [{"running": {"$ne": True}}, {"lockedUntil": {"$lt": now}}]},
@@ -78,7 +80,7 @@ def _claim(db: Database[Doc], now: datetime) -> Doc | None:
             return_document=ReturnDocument.AFTER,
         )
     except DuplicateKeyError:
-        return None  # đang có lần chạy khác giữ khóa
+        return None  # another run currently holds the lock
     if state is None:
         return None
     req = db.retrain_requests.find_one_and_update(
@@ -117,8 +119,8 @@ def run_pending(
         }
     except DataCheckError as exc:
         result = {"status": "rejected", "failedChecks": ["data-check"], "problems": exc.problems}
-    except Exception as exc:  # noqa: BLE001 - ghi lại, nhả khóa; production không đổi
-        LOG.exception("retrain lỗi")
+    except Exception as exc:  # noqa: BLE001 - record it, release the lock; production unchanged
+        LOG.exception("retrain failed")
         result = {"status": "failed", "error": type(exc).__name__}
     finally:
         rec = audit.build(
@@ -159,7 +161,7 @@ def main() -> None:
     s = Settings()
     registry = make_registry(s)
     if registry is None:
-        raise SystemExit("cần REGISTRY_DIR hoặc MLFLOW_TRACKING_URI")
+        raise SystemExit("REGISTRY_DIR or MLFLOW_TRACKING_URI is required")
     client: MongoClient[Doc] = MongoClient(s.mongodb_uri, tz_aware=True)
     out = run_pending(client, client[s.mongodb_db], registry, a.datasets)
     print(out and {k: out.get(k) for k in ("status", "candidateVersion", "failedChecks", "auc")})

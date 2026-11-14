@@ -5,9 +5,9 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * Quyết định Allow/Deny theo {@link AuthzMatrix}. Mặc định TỪ CHỐI: chỉ cho phép khi có rule khớp
- * role và mọi predicate thỏa. Nhiều rule khớp: lấy rule đầu tiên theo thứ tự trong file (rule
- * thường đặt trước break-glass nên purpose là TREAT khi cả hai cùng thỏa).
+ * Allow/Deny decision based on {@link AuthzMatrix}. Deny by DEFAULT: allow only when a rule matches
+ * the role and every predicate holds. Multiple matching rules: take the first in file order (the
+ * regular rule comes before break-glass, so purpose is TREAT when both match).
  */
 public final class AuthorizationEngine {
   static final Duration CANCEL_WINDOW = Duration.ofHours(2);
@@ -68,7 +68,7 @@ public final class AuthorizationEngine {
           c.appointmentStart() != null
               && Duration.between(clock.instant(), c.appointmentStart()).compareTo(CANCEL_WINDOW)
                   >= 0;
-      default -> false; // predicate lạ: từ chối (bộ nạp đã chặn từ trước)
+      default -> false; // unknown predicate: deny (the loader already rejected it)
     };
   }
 

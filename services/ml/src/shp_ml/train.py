@@ -1,8 +1,9 @@
-"""Huấn luyện baseline Logistic Regression (ML-03) và đánh giá theo validation thời gian.
+"""Train the Logistic Regression baseline (ML-03) and evaluate with time-based validation.
 
   python -m shp_ml.train --data data/noshow.parquet --out runs/baseline
 
-Ghi metrics.json (AUC, precision/recall tại ngưỡng, hash dataset, seed). Ghi MLflow là bước kế tiếp (ML-03, ML-04).
+Writes metrics.json (AUC, precision/recall at the threshold, dataset hash, seed). Writing to MLflow is the next step
+(ML-03, ML-04).
 """
 
 import argparse
@@ -22,7 +23,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from shp_ml.checks import check
 from shp_ml.features import CATEGORICAL, FEATURES, NUMERIC, time_split, training_frame
 
-THRESHOLD = 0.35  # điểm ≥ ngưỡng → "nguy cơ cao" (nhắc thêm, US-046); chọn lại khi có LightGBM
+THRESHOLD = 0.35  # score ≥ threshold → "high risk" (extra reminder, US-046); re-tuned once LightGBM lands
 
 
 def baseline_pipeline(seed: int) -> Pipeline:

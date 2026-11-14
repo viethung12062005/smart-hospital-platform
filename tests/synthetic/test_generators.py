@@ -1,4 +1,4 @@
-"""Kiểm bộ sinh dữ liệu giả DAT-01 theo docs/00-synthetic-data.md (ARC-11), nhất là các kiểm tra tự động ở §7."""
+"""Test the DAT-01 fake data generator against docs/00-synthetic-data.md (ARC-11), especially the automated checks in §7."""
 
 import re
 import tempfile
@@ -93,7 +93,7 @@ class TestPatientGenerator(unittest.TestCase):
         self.assertEqual(len(mrn), len(set(mrn)))
 
     def test_phones_are_fake_and_unique(self) -> None:
-        # §7: chỉ dải giả; 01 §4.1: SĐT dùng để chống trùng hồ sơ nên không được lặp
+        # §7: fake range only; 01 §4.1: the phone number detects duplicate records, so it must be unique
         phones = [p["telecom"][0]["value"] for p in self.medium]
         self.assertTrue(all(FAKE_PHONE.fullmatch(x) for x in phones))
         self.assertEqual(len(phones), len(set(phones)))
@@ -102,7 +102,7 @@ class TestPatientGenerator(unittest.TestCase):
         large = PATIENT_COUNTS["large"]
         self.assertGreaterEqual(PHONE_CAPACITY, large)
         self.assertEqual(len({fake_phone(i) for i in range(1, large + 1)}), large)
-        # 100.000 số đầu nằm trong dải gốc 09000xxxxx của ARC-11
+        # The first 100,000 numbers are in the original ARC-11 09000xxxxx range
         self.assertEqual(fake_phone(1), "+84900000000")
         self.assertTrue(fake_phone(100_000).startswith("+849000"))
         with self.assertRaises(ValueError):
@@ -114,7 +114,7 @@ class TestPatientGenerator(unittest.TestCase):
         self.assertEqual(len(emails), len(set(emails)))
 
     def test_names_follow_gender(self) -> None:
-        # ARC-11 §3: tên theo giới; không có nam tên đệm "Thị" hay tên nữ
+        # ARC-11 §3: names follow gender; no male with the middle name "Thị" and no female name
         for p in self.medium:
             self.assertTrue(
                 _gender_matches_name(p["gender"], p["name"][0]["given"]),
@@ -172,7 +172,7 @@ class TestPractitionerGenerator(unittest.TestCase):
         self.assertTrue(all(r["practitioner"]["reference"] in known for r in roles))
 
     def test_codes_come_from_contracts_terminology(self) -> None:
-        # 00-synthetic-data §2: không tự bịa mã
+        # 00-synthetic-data §2: do not invent codes
         self.assertEqual(SPECIALTY_SYSTEM, TERMINOLOGY["specialty"]["url"])
         self.assertEqual(SPECIALTIES, TERMINOLOGY["specialty"]["concepts"])
         self.assertEqual(ROLE_SYSTEM, TERMINOLOGY["practitioner-role"]["url"])
@@ -210,7 +210,7 @@ class TestPractitionerGenerator(unittest.TestCase):
 
 class TestReproducibleOutput(unittest.TestCase):
     def test_same_seed_same_files_and_manifest_hashes(self) -> None:
-        # §7: cùng seed cho cùng hash đầu ra (so sánh từng byte, không chỉ so object)
+        # §7: the same seed yields the same output hash (byte-for-byte comparison, not just object comparison)
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
             generate(scale="small", seed=42, output_root=Path(a))
             generate(scale="small", seed=42, output_root=Path(b))

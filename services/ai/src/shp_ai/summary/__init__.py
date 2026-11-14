@@ -1,1 +1,1 @@
-"""Tóm tắt hồ sơ bệnh nhân (US-058)."""
+"""Patient record summaries (US-058)."""

@@ -30,7 +30,7 @@ class EventTest {
       dir = dir.getParent();
     }
     if (dir == null) {
-      throw new IllegalStateException("Không tìm thấy thư mục gốc repo");
+      throw new IllegalStateException("Could not find the repository root directory");
     }
     return dir.resolve(Path.of("", parts));
   }
@@ -103,7 +103,7 @@ class EventTest {
   @Test
   void unknownEventTypeIsAnError() {
     var evt = CloudEvents.create("x", "shp.nothing.happened.v1", SUBJECT, Map.of());
-    assertThat(EventSchemas.validate(evt)).anyMatch(e -> e.contains("chưa có schema"));
+    assertThat(EventSchemas.validate(evt)).anyMatch(e -> e.contains("has no schema"));
   }
 
   @Test

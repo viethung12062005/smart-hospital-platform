@@ -1,4 +1,5 @@
-"""Kho file: Azure Blob (cloud: account URL + managed identity; local: Azurite qua connection string) và bản bộ nhớ."""
+"""File store: Azure Blob (cloud: account URL + managed identity; local: Azurite via connection string) and an
+in-memory version."""
 
 from typing import Protocol
 
@@ -20,7 +21,7 @@ class MemoryBlobStore:
         return self.items[(container, path)][0]
 
 
-class AzureBlobStore:  # pragma: no cover - cần Azurite/Azure; thử ở cụm local
+class AzureBlobStore:  # pragma: no cover - needs Azurite/Azure; exercised on the local cluster
     def __init__(self, connection_string: str = "", account_url: str = "") -> None:
         from azure.storage.blob import BlobServiceClient
 

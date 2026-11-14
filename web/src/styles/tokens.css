@@ -1,7 +1,7 @@
 /*
- * Hệ thiết kế SHP: token và thành phần dùng chung cho mọi màn hình.
- * Chuyển từ bộ thiết kế UI của portal PoC trước đây (màu, chữ, bảng, chip, KPI, stepper, timeline),
- * đổi tiền tố thành "shp-" để không đụng class của Mantine. Màu chính cũng được khai báo trong src/theme.ts.
+ * SHP design system: tokens and shared components for every screen.
+ * Ported from the previous PoC portal's UI design kit (colors, type, tables, chips, KPIs, stepper, timeline),
+ * with the prefix changed to "shp-" so it does not collide with Mantine classes. The primary color is also declared in src/theme.ts.
  */
 :root {
   --shp-teal: #0f6d62;
@@ -9,7 +9,7 @@
   --shp-teal-soft: #e6f2ef;
   --shp-mint: #d7e9e1;
   --shp-ink: #263238;
-  --shp-muted: #4f6672; /* >= 4,5:1 trên nền trắng và nền xám nhạt (WCAG 2.1 AA, NFR-U1) */
+  --shp-muted: #4f6672; /* >= 4.5:1 on white and light gray backgrounds (WCAG 2.1 AA, NFR-U1) */
   --shp-hair: #e3e8ec;
   --shp-bg: #f5f7f8;
   --shp-card: #ffffff;
@@ -237,7 +237,7 @@ button.shp-kpi:hover {
   opacity: 0.9;
 }
 
-/* ---------- facets (bộ lọc bên trái) ---------- */
+/* ---------- facets (left-hand filters) ---------- */
 .shp-with-side {
   display: grid;
   grid-template-columns: 246px minmax(0, 1fr);
@@ -349,7 +349,7 @@ button.shp-kpi:hover {
   margin-top: 2px;
 }
 
-/* ---------- week grid (lịch bác sĩ) ---------- */
+/* ---------- week grid (doctor schedule) ---------- */
 .shp-week {
   display: grid;
   grid-template-columns: 64px repeat(7, minmax(0, 1fr));
@@ -388,7 +388,7 @@ button.shp-kpi:hover {
   margin-bottom: 5px;
 }
 
-/* Chữ phụ (dimmed) mặc định của Mantine là #868e96 (3,3:1): thay bằng màu đạt WCAG AA. */
+/* Mantine's default dimmed text is #868e96 (3.3:1): replace it with a color that meets WCAG AA. */
 :root[data-mantine-color-scheme='light'] {
   --mantine-color-dimmed: #566a75;
 }

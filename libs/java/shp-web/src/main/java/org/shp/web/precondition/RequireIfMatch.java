@@ -6,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Bắt buộc {@code If-Match: W/"<versionId>"} cho thao tác đổi trạng thái không phải PUT ({@code
- * $cancel}, {@code $reschedule}, {@code $check-in}, {@code $finish}; 07 §3). Mọi endpoint PUT đã
- * bắt buộc sẵn, không cần chú thích này. Handler so version bằng {@link
- * PreconditionInterceptor#checkVersion}.
+ * Require {@code If-Match: W/"<versionId>"} for state-changing operations other than PUT ({@code
+ * $cancel}, {@code $reschedule}, {@code $check-in}, {@code $finish}; 07 §3). Every PUT endpoint
+ * already requires it, so this annotation is not needed there. The handler compares versions with
+ * {@link PreconditionInterceptor#checkVersion}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

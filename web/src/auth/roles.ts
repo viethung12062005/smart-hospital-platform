@@ -9,11 +9,11 @@ export interface SessionUser {
   readonly sub: string;
   readonly name: string;
   readonly roles: readonly Role[];
-  /** Tham chiếu FHIR của người dùng, ví dụ Patient/123 (claim fhir_user / fhirUser). */
+  /** The user's FHIR reference, for example Patient/123 (fhir_user / fhirUser claim). */
   readonly fhirUser?: string;
 }
 
-/** Đọc payload của JWT (không kiểm chữ ký: việc đó do gateway làm; ở đây chỉ để hiển thị menu). */
+/** Read the JWT payload (no signature check: the gateway does that; here it is only used to render the menu). */
 export function decodeJwtPayload(token: string): Record<string, unknown> {
   const part = token.split('.')[1];
   if (!part) return {};

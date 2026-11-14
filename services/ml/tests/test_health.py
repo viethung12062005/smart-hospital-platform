@@ -11,6 +11,6 @@ def test_platform_endpoints_return_ok(path: str) -> None:
 
 
 def test_tracing_is_installed() -> None:
-    # LOC-04: FastAPIInstrumentor bọc build_middleware_stack của app; chi tiết hành vi (nối traceparent,
-    # bỏ probe, bật/tắt OTLP) kiểm ở libs/python/tests/test_telemetry.py
+    # LOC-04: FastAPIInstrumentor wraps app.build_middleware_stack; detailed behavior (traceparent continuation,
+    # probe skipping, OTLP on/off) is checked in libs/python/tests/test_telemetry.py
     assert "build_middleware_stack" in app.__dict__

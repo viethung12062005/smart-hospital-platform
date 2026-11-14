@@ -1,6 +1,6 @@
 {{- if .Values.components.azurite }}
-# Trình giả lập Azure Storage (blob + queue). Tài khoản "shp" với khóa ngẫu nhiên sinh trên từng máy (AZURITE_ACCOUNTS).
-# Khác cloud: SAS ký bằng khóa tài khoản của emulator (không có user delegation SAS), không có immutability/WORM.
+# Azure Storage emulator (blob + queue). Account "shp" with a random key generated on each machine (AZURITE_ACCOUNTS).
+# Unlike cloud: SAS is signed with the emulator account key (no user delegation SAS), and there is no immutability/WORM.
 apiVersion: v1
 kind: Service
 metadata:

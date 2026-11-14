@@ -1,13 +1,13 @@
-"""Harness đánh giá RAG (AI-14, AI-15, AI-16, AI-18; NFR-AI1, NFR-AI2, NFR-AI7).
+"""RAG evaluation harness (AI-14, AI-15, AI-16, AI-18; NFR-AI1, NFR-AI2, NFR-AI7).
 
-Chỉ số:
-- Recall@5, MRR: đoạn đúng mục (gold) có trong top 5 truy xuất / thứ hạng nghịch đảo (câu có đáp án).
-- Groundedness: tỉ lệ câu có đáp án được trả lời với trích dẫn đã kiểm (quote khớp nguyên văn).
-- Độ đúng trích dẫn: trong các câu đã trả lời, tỉ lệ có trích dẫn trỏ đúng mục gold.
-- Từ chối đúng: tỉ lệ câu không có đáp án trả answered=false.
+Metrics:
+- Recall@5, MRR: the gold passage is in the retrieved top 5 / reciprocal rank (questions with an answer).
+- Groundedness: fraction of answerable questions answered with a verified citation (verbatim quote match).
+- Citation accuracy: among answered questions, the fraction whose citation points to the gold item.
+- Correct refusal: fraction of unanswerable questions returned with answered=false.
 
-  python -m shp_ai.eval.rag --out reports/rag            # truy xuất + model "oracle" (kiểm pipeline, chạy trong CI)
-  python -m shp_ai.eval.rag --out reports/rag --live     # từng model thật trong chuỗi (cần key), báo cáo theo model
+  python -m shp_ai.eval.rag --out reports/rag            # retrieval + "oracle" model (pipeline check, runs in CI)
+  python -m shp_ai.eval.rag --out reports/rag --live     # each real model in the chain (needs keys), report per model
 """
 
 import argparse
@@ -89,9 +89,10 @@ def _gold(c: IndexedChunk, q: Question) -> bool:
 
 
 def oracle(msgs: Sequence[ChatMessage]) -> str:
-    """Model 'oracle' cho CI: trả lời bằng câu đầu của đoạn số 1 nếu có từ nội dung chung với câu hỏi.
+    """'oracle' model for CI: answer with the first sentence of passage 1 if it shares content words with the question.
 
-    Đo pipeline (truy xuất, ngưỡng liên quan, kiểm trích dẫn), không đo chất lượng model; model thật đo bằng --live.
+    Measures the pipeline (retrieval, relevance threshold, citation checks), not model quality; real models are
+    measured with --live.
     """
     user = msgs[-1].content
     q = re.search(r"<question>\n(.*?)\n</question>", user, re.S)
@@ -161,28 +162,28 @@ def single_model_router(provider: Provider, model: str) -> Router:
 
 def report_markdown(results: dict[str, dict[str, Any]]) -> str:
     lines = [
-        "# Báo cáo đánh giá RAG",
+        "# RAG evaluation report",
         "",
-        "Dữ liệu: kho tri thức GIẢ (shp_ai/eval/corpus.py).",
+        "Data: SYNTHETIC knowledge base (shp_ai/eval/corpus.py).",
         "",
-        "| Model | Recall@5 | MRR | Groundedness | Trích dẫn đúng | Từ chối đúng | Đạt |",
+        "| Model | Recall@5 | MRR | Groundedness | Citation accuracy | Correct refusal | Pass |",
         "|---|---|---|---|---|---|---|",
     ]
     for name, r in results.items():
         m = r["metrics"]
         lines.append(
             f"| {name} | {m['recallAt5']} | {m['mrr']} | {m['groundedness']} | {m['citationAccuracy']} | "
-            f"{m['refusalAccuracy']} | {'có' if all(r['passed'].values()) else 'KHÔNG'} |"
+            f"{m['refusalAccuracy']} | {'yes' if all(r['passed'].values()) else 'NO'} |"
         )
-    lines += ["", "Ngưỡng: " + ", ".join(f"{k} ≥ {v}" for k, v in THRESHOLDS.items())]
+    lines += ["", "Thresholds: " + ", ".join(f"{k} ≥ {v}" for k, v in THRESHOLDS.items())]
     return "\n".join(lines) + "\n"
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--live", action="store_true", help="đánh giá từng model thật trong chuỗi rag-answer (AI-18)")
-    ap.add_argument("--ollama", default="", help="URL Ollama để dùng bge-m3 thay embedder băm")
+    ap.add_argument("--live", action="store_true", help="evaluate each real model in the rag-answer chain (AI-18)")
+    ap.add_argument("--ollama", default="", help="Ollama URL to use bge-m3 instead of the hashing embedder")
     a = ap.parse_args()
     embedder: Embedder = HashingEmbedder()
     if a.ollama:
@@ -192,7 +193,7 @@ def main() -> None:
     index = MemoryIndex()
     build_index(index, embedder)
     qs = questions()
-    results: dict[str, dict[str, Any]] = {"oracle (kiểm pipeline)": run(oracle_router(), index, embedder, qs)}
+    results: dict[str, dict[str, Any]] = {"oracle (pipeline check)": run(oracle_router(), index, embedder, qs)}
     if a.live:
         from shp_ai.llm_config import providers_from
         from shp_ai.settings import Settings

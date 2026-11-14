@@ -1,9 +1,10 @@
-"""Guardrail đầu vào (AI-10) và đầu ra (AI-11) cho trợ lý (12 §2, US-054).
+"""Input (AI-10) and output (AI-11) guardrails for the assistant (12 §2, US-054).
 
-Đầu vào: độ dài 3-1.000 ký tự, mẫu prompt injection phổ biến (tiếng Việt và tiếng Anh).
-Không chặn câu hỏi y khoa thường.
-Đầu ra: đúng schema JSON; mọi [n] trong câu trả lời có trích dẫn; `quote` khớp nguyên văn đoạn n; không có câu chẩn đoán
-hay chỉ định điều trị trực tiếp cho người bệnh; con số liều dùng phải xuất hiện trong đoạn được trích.
+Input: 3-1,000 characters, common prompt-injection patterns (Vietnamese and English).
+Do not block ordinary medical questions.
+Output: valid JSON schema; every [n] in the answer has a citation; `quote` matches passage n verbatim; no
+diagnostic sentence
+or direct treatment instruction for the patient; dosage numbers must appear in the cited passage.
 """
 
 import json
@@ -32,7 +33,7 @@ _INJECTION = [
 ]
 _INJECTION_RE = [re.compile(p, re.IGNORECASE) for p in _INJECTION]
 
-# Câu nói với AI/model (chỉ dẫn cài trong tài liệu): không bao giờ là nội dung phác đồ hợp lệ
+# Statements addressed to the AI/model (instructions embedded in documents): never valid protocol content
 _ADDRESSING_AI = [
     r"\b(trợ lý|AI|model|mô hình|assistant|chatbot)\b[^.\n]{0,40}\b(phải|hãy|cần|must|should|shall)\b",
     r"\b(nếu bạn là|if you are)\s+(một\s+)?(AI|model|trợ lý|assistant)\b",
@@ -47,13 +48,14 @@ _ADDRESSING_RE = [re.compile(p, re.IGNORECASE) for p in _ADDRESSING_AI]
 
 
 def looks_like_instruction(text: str) -> bool:
-    """Văn bản có dạng chỉ dẫn gửi AI (prompt injection), dùng cho câu hỏi, đoạn tài liệu và câu trả lời."""
+    """Text that looks like instructions to an AI (prompt injection), used for questions, document passages and
+    answers."""
     norm = unicodedata.normalize("NFC", text)
     return any(r.search(norm) for r in _INJECTION_RE) or any(r.search(norm) for r in _ADDRESSING_RE)
 
 
 _DIRECT_CLINICAL = [
-    r"\b(bạn|anh|chị|ông|bà|bệnh nhân này)\s+(bị|mắc|đã mắc)\s+",  # không có "em": "trẻ em bị" là câu tài liệu
+    r"\b(bạn|anh|chị|ông|bà|bệnh nhân này)\s+(bị|mắc|đã mắc)\s+",  # no "em": "trẻ em bị" is a document sentence
     r"\b(tôi|ai)\s+chẩn đoán\b",
     r"\bchẩn đoán (của tôi|xác định) là\b",
     r"\b(bạn|anh|chị|ông|bà) (nên|hãy|cần) (uống|dùng|tiêm|ngưng|ngừng|tăng liều|giảm liều)\b",
@@ -123,7 +125,7 @@ def parse_answer(text: str) -> Answer:
 
 
 def check_output(ans: Answer, chunks: list[str]) -> Answer:
-    """Trả lại Answer đã chuẩn hóa hoặc ném OutputRejectedError(lý do)."""
+    """Return the normalized Answer or raise OutputRejectedError(reason)."""
     if not ans.answered:
         return Answer(False, ans.answer, [])
     if not ans.answer or len(ans.answer) > 4000:
@@ -154,5 +156,5 @@ def check_output(ans: Answer, chunks: list[str]) -> Answer:
 
 
 def is_clinical_directive(text: str) -> bool:
-    """Câu chẩn đoán hoặc chỉ định điều trị trực tiếp cho người bệnh (AI không được tự đưa ra)."""
+    """A diagnostic statement or direct treatment instruction for the patient (the AI must not give these)."""
     return any(r.search(text) for r in _DIRECT_RE)

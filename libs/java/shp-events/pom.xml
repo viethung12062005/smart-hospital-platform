@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-events</artifactId>
-  <name>shp-events — CloudEvents, kiểm schema, audit</name>
+  <name>shp-events — CloudEvents, schema validation, audit</name>
 
   <dependencies>
     <dependency>
@@ -41,7 +41,7 @@
 
   <build>
     <resources>
-      <!-- Nhúng schema event (trừ file ví dụ): producer và test hợp đồng luôn dùng đúng bản trong contracts/events -->
+      <!-- Embed the event schemas (except example files): producers and contract tests always use the exact version in contracts/events -->
       <resource>
         <directory>${project.basedir}/../../../contracts/events</directory>
         <targetPath>shp/events</targetPath>

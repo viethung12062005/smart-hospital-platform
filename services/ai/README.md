@@ -1,13 +1,13 @@
 # ai
 
-Trợ lý RAG, tóm tắt hồ sơ, trích xuất tài liệu, chatbot đặt lịch; LLM router có fallback. Chủ sở hữu: **SA** (từ 2026-11-01).
+RAG assistant, record summaries, document extraction, booking chatbot; LLM router with fallback. Owner: **SA** (since 2026-11-01).
 
-| Lệnh | Việc |
+| Command | Task |
 |---|---|
-| `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"` | cài môi trường |
-| `ruff check . && ruff format --check . && mypy . && pytest --cov` | đúng các bước CI chạy |
-| `uvicorn shp_ai.main:app --reload --port 8090` | chạy local |
-| `make -C ../../dev deploy SVC=ai` | build image và deploy lên cụm kind |
+| `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"` | set up the environment |
+| `ruff check . && ruff format --check . && mypy . && pytest --cov` | exactly the CI steps |
+| `uvicorn shp_ai.main:app --reload --port 8090` | run locally |
+| `make -C ../../dev deploy SVC=ai` | build the image and deploy to the kind cluster |
 
-`shp_platform` trong `src/` là bản chép của `libs/python` (xác thực, lỗi, CloudEvents, audit, che PII, LLM router):
-không sửa ở đây, sửa ở nguồn rồi chạy `python tools/pylib/sync.py`.
+`shp_platform` in `src/` is a copy of `libs/python` (authentication, errors, CloudEvents, audit, PII redaction, LLM router):
+do not edit it here; edit the source and run `python tools/pylib/sync.py`.
