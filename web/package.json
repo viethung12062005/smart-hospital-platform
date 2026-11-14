@@ -26,7 +26,7 @@
     "@mantine/hooks": "7.17.8",
     "@mantine/notifications": "7.17.8",
     "@tabler/icons-react": "3.50.0",
-    "@tanstack/react-query": "5.105.0",
+    "@tanstack/react-query": "5.107.1",
     "dayjs": "1.11.23",
     "i18next": "26.7.2",
     "js-yaml": "5.5.0",
