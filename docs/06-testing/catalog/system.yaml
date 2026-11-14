@@ -1,7 +1,7 @@
-# Test case của module 'system'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+# Test cases for module 'system'. Source: acceptance criteria / NFRs in docs/02-requirements/srs. Automation: see automation.yaml
 testcases:
 - id: TC-AC-SR.1
-  title: 'Lên lịch nhắc khi lịch hẹn được tạo: AC-SR.1'
+  title: 'Schedule reminders when an appointment is created: AC-SR.1'
   covers:
   - AC-SR.1
   srs_uc: schedule-reminders
@@ -9,9 +9,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given cùng sự kiện “đã đặt lịch” được giao 2 lần, Then chỉ có một bộ lần nhắc.
+  spec: Given the same "appointment booked" event is delivered twice, Then there is only one set of reminders.
 - id: TC-AC-07.2
-  title: 'Gửi nhắc lịch: AC-07.2'
+  title: 'Send appointment reminder: AC-07.2'
   covers:
   - AC-07.2
   srs_uc: send-reminder
@@ -19,9 +19,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given nhà cung cấp lỗi tạm thời 2 lần rồi thành công, Then bệnh nhân nhận đúng 1 tin.
+  spec: Given the provider fails temporarily twice and then succeeds, Then the patient receives exactly 1 message.
 - id: TC-AC-SN.1
-  title: 'Gửi nhắc lịch: AC-SN.1'
+  title: 'Send appointment reminder: AC-SN.1'
   covers:
   - AC-SN.1
   srs_uc: send-reminder
@@ -29,9 +29,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given tin nhắc gửi đi, Then không chứa lý do khám hay chẩn đoán.
+  spec: Given a reminder message is sent, Then it contains no visit reason or diagnosis.
 - id: TC-AC-07.1-cancel-reminders
-  title: 'Hủy nhắc khi lịch hẹn bị hủy: AC-07.1'
+  title: 'Cancel reminders when an appointment is cancelled: AC-07.1'
   covers:
   - AC-07.1
   srs_uc: cancel-reminders
@@ -39,9 +39,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given lịch hẹn bị hủy trước giờ nhắc, Then không gửi nhắc.
+  spec: Given the appointment is cancelled before the reminder time, Then no reminder is sent.
 - id: TC-AC-15.1
-  title: 'Dự đoán nguy cơ không đến khám: AC-15.1'
+  title: 'Predict no-show risk: AC-15.1'
   covers:
   - AC-15.1
   srs_uc: predict-noshow
@@ -49,9 +49,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given service ML lỗi, Then lịch nhắc T-24h và T-2h vẫn được tạo.
+  spec: Given the ML service fails, Then the T-24h and T-2h reminders are still created.
 - id: TC-AC-15.2
-  title: 'Dự đoán nguy cơ không đến khám: AC-15.2'
+  title: 'Predict no-show risk: AC-15.2'
   covers:
   - AC-15.2
   srs_uc: predict-noshow
@@ -59,9 +59,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given một dự đoán, Then có phiên bản mô hình đi kèm.
+  spec: Given a prediction, Then it comes with the model version.
 - id: TC-AC-NS.1
-  title: 'Đánh dấu không đến khám: AC-NS.1'
+  title: 'Mark no-show: AC-NS.1'
   covers:
   - AC-NS.1
   srs_uc: mark-noshow
@@ -69,9 +69,9 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given lịch hẹn 08:00 chưa check-in, When job chạy lúc 08:40, Then lịch hẹn “noshow”.
+  spec: Given an 08:00 appointment with no check-in, When the job runs at 08:40, Then the appointment is "noshow".
 - id: TC-AC-13.2
-  title: 'Trích xuất dữ liệu từ tài liệu: AC-13.2'
+  title: 'Extract data from documents: AC-13.2'
   covers:
   - AC-13.2
   srs_uc: extract-document
@@ -79,9 +79,10 @@ testcases:
   module: system
   level: integration
   priority: P1
-  spec: Given OCR lỗi liên tục, Then tài liệu vẫn “available” và tải được; mục trích xuất “failed”.
+  spec: Given OCR fails repeatedly, Then the document remains "available" and downloadable; the extraction item is
+    "failed".
 - id: TC-AC-10.1-break-glass-alert
-  title: 'Cảnh báo truy cập khẩn cấp cho DPO: AC-10.1'
+  title: 'Emergency access alert to the DPO: AC-10.1'
   covers:
   - AC-10.1
   srs_uc: break-glass-alert
@@ -89,9 +90,9 @@ testcases:
   module: system
   level: integration
   priority: P0
-  spec: Given truy cập khẩn cấp lúc T, Then DPO nhận cảnh báo trước T + 5 phút.
+  spec: Given emergency access at T, Then the DPO receives an alert before T + 5 minutes.
 - id: TC-AC-PG.1
-  title: 'Xóa dữ liệu hết thời hạn lưu trữ: AC-PG.1'
+  title: 'Purge data past its retention period: AC-PG.1'
   covers:
   - AC-PG.1
   srs_uc: purge-expired
@@ -99,5 +100,5 @@ testcases:
   module: system
   level: integration
   priority: P0
-  spec: Given hội thoại tạo 31 ngày trước, When job chạy, Then hội thoại bị xóa; Given lần khám 31 ngày trước, Then không
-    bị xóa.
+  spec: Given a conversation created 31 days ago, When the job runs, Then the conversation is deleted; Given an encounter
+    31 days ago, Then it is not deleted.

@@ -1,23 +1,23 @@
 # 10 — API document
 
-Quy ước: [07-api-conventions.md](07-api-conventions.md). DB và Blob: [03](03-db-clinical-document.md) §3, [05](05-storage-audit-blob.md) §2.
-Quyền: **P** Patient, **D** Doctor, **N** Nurse. Care/own như [15-authorization.md](15-authorization.md).
+Conventions: [07-api-conventions.md](07-api-conventions.md). DB and Blob: [03](03-db-clinical-document.md) §3, [05](05-storage-audit-blob.md) §2.
+Permissions: **P** Patient, **D** Doctor, **N** Nurse. Care/own as in [15-authorization.md](15-authorization.md).
 
-## 1. Tổng hợp endpoint
+## 1. Endpoint summary
 
-| # | Method + đường dẫn | Mục đích | Quyền | UC |
+| # | Method + path | Purpose | Permission | UC |
 |---|---|---|---|---|
-| D1 | `POST /api/v1/documents/uploads` | Bắt đầu upload, nhận SAS | D (Care), N | UC-05 |
-| D2 | `POST /api/v1/documents/uploads/{uploadId}/complete` | Xác nhận đã upload xong | người đã tạo upload | UC-05 |
-| D3 | `GET /fhir/DocumentReference/{id}` | Đọc metadata | P (own + đã phát hành), D (Care/BG), N | UC-05 |
-| D4 | `GET /fhir/DocumentReference` | Tìm tài liệu | như D3 | UC-05, UC-06 |
-| D5 | `POST /api/v1/documents/{id}/download-url` | Cấp link tải 5 phút | như D3 | UC-05 |
-| D6 | `POST /api/v1/documents/{id}/release` | Phát hành cho bệnh nhân | D (Care) | UC-05 |
-| D7 | `PUT /fhir/DocumentReference/{id}` | Đánh dấu nhập nhầm (`entered-in-error`) | D (Care, người tải lên) | UC-05 |
-| D8 | `GET /internal/v1/documents?patient={id}` | Danh sách cho timeline | service `clinical` | UC-06 |
-| D9 | `POST /internal/v1/documents/{id}/read-url` | Link đọc cho OCR (60 giây) | service `ai` | UC-13 |
+| D1 | `POST /api/v1/documents/uploads` | Start an upload, receive a SAS | D (Care), N | UC-05 |
+| D2 | `POST /api/v1/documents/uploads/{uploadId}/complete` | Confirm the upload is finished | the upload creator | UC-05 |
+| D3 | `GET /fhir/DocumentReference/{id}` | Read metadata | P (own + released), D (Care/BG), N | UC-05 |
+| D4 | `GET /fhir/DocumentReference` | Find documents | as in D3 | UC-05, UC-06 |
+| D5 | `POST /api/v1/documents/{id}/download-url` | Issue a 5-minute download link | as in D3 | UC-05 |
+| D6 | `POST /api/v1/documents/{id}/release` | Release to the patient | D (Care) | UC-05 |
+| D7 | `PUT /fhir/DocumentReference/{id}` | Mark as entered in error (`entered-in-error`) | D (Care, uploader) | UC-05 |
+| D8 | `GET /internal/v1/documents?patient={id}` | List for the timeline | service `clinical` | UC-06 |
+| D9 | `POST /internal/v1/documents/{id}/read-url` | Read link for OCR (60 seconds) | service `ai` | UC-13 |
 
-## 2. Upload (hai bước, file đi thẳng lên Blob)
+## 2. Upload (two steps, the file goes directly to Blob)
 
 ### D1 `POST /api/v1/documents/uploads`
 Header: `Idempotency-Key`. Body:
@@ -26,22 +26,22 @@ Header: `Idempotency-Key`. Body:
   "patientId": "0192f8a4-...",
   "encounterId": "0192f8a4-...",
   "type": "11502-2",
-  "title": "Kết quả xét nghiệm máu 20/11/2026",
-  "description": "Công thức máu, đường huyết",
+  "title": "Blood test result 20/11/2026",
+  "description": "Complete blood count, blood glucose",
   "fileName": "xet-nghiem-mau.pdf",
   "contentType": "application/pdf",
   "size": 482113,
   "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
 }
 ```
-Kiểm tra tại chỗ, **trước khi cấp SAS**:
-| Điều kiện | HTTP / `code` |
+Checks performed up front, **before issuing the SAS**:
+| Condition | HTTP / `code` |
 |---|---|
-| `contentType` không thuộc `application/pdf`, `image/jpeg`, `image/png` | 415 `invalid-file-type` (AC-05.1) |
-| `size` > 20.971.520 byte hoặc ≤ 0 | 413 `file-too-large` (AC-05.1) |
-| `type` ngoài value set; `fileName` có ký tự đường dẫn | 400 `validation-failed` |
-| Người gọi không có Care với bệnh nhân (D) hoặc `encounterId` không thuộc bệnh nhân | 403 `no-care-relationship` / 400 |
-| 429 | quá 30 upload/giờ/người dùng |
+| `contentType` is not one of `application/pdf`, `image/jpeg`, `image/png` | 415 `invalid-file-type` (AC-05.1) |
+| `size` > 20,971,520 bytes or ≤ 0 | 413 `file-too-large` (AC-05.1) |
+| `type` is outside the value set; `fileName` contains path characters | 400 `validation-failed` |
+| The caller has no Care with the patient (D) or `encounterId` does not belong to the patient | 403 `no-care-relationship` / 400 |
+| 429 | more than 30 uploads/hour/user |
 
 201:
 ```json
@@ -56,57 +56,57 @@ Kiểm tra tại chỗ, **trước khi cấp SAS**:
   }
 }
 ```
-SAS chỉ cho `create + write` đúng một blob, hiệu lực 10 phút, ràng buộc `Content-Type`; ghi `upload_sessions` (TTL 15 phút).
-Document được tạo với `docStatus = preliminary`, `processing.state = pending-upload`.
+The SAS grants only `create + write` on exactly one blob, valid for 10 minutes, with a `Content-Type` constraint; writes `upload_sessions` (TTL 15 minutes).
+The Document is created with `docStatus = preliminary`, `processing.state = pending-upload`.
 
 ### D2 `POST /api/v1/documents/uploads/{uploadId}/complete`
-Server kiểm blob thật sự tồn tại, **`size` và SHA-256 khớp** giá trị khai báo, `contentType` thật (đọc magic bytes) khớp.
-| Kết quả | |
+The server checks that the blob actually exists, that **`size` and SHA-256 match** the declared values, and that the real `contentType` (read from magic bytes) matches.
+| Result | |
 |---|---|
-| 202 | `processing.state = scanning`; trả `{ "documentId", "state": "scanning" }` |
-| 422 `upload-incomplete` | Chưa có blob, hoặc size/hash/type không khớp (blob bị xóa) |
-| 409 | Phiên đã `completed` hoặc hết hạn (`expired`) |
+| 202 | `processing.state = scanning`; returns `{ "documentId", "state": "scanning" }` |
+| 422 `upload-incomplete` | No blob yet, or size/hash/type mismatch (the blob was deleted) |
+| 409 | Session already `completed` or expired (`expired`) |
 
-Khi trình quét trả kết quả: sạch → `available`, `docStatus = final`, phát `shp.document.document-uploaded.v1`;
-nhiễm → chuyển blob sang container `quarantine`, `quarantined`, phát audit và cảnh báo (không phát `document-uploaded`).
-Client theo dõi bằng `GET /fhir/DocumentReference/{id}` (không trả `content` cho tới khi `available`).
+When the scanner returns a result: clean → `available`, `docStatus = final`, emits `shp.document.document-uploaded.v1`;
+infected → move the blob to the `quarantine` container, `quarantined`, emit audit and an alert (does not emit `document-uploaded`).
+The client polls with `GET /fhir/DocumentReference/{id}` (no `content` is returned until `available`).
 
-## 3. Đọc và tìm
+## 3. Read and search
 
 ### D3 `GET /fhir/DocumentReference/{id}`
-Trả metadata, **không có URL tải**. `content[0].attachment` có `contentType`, `size`, `hash`, `title`. Patient chỉ thấy khi
-`released-to-patient` đã đặt và là tài liệu của mình, ngược lại 404. Tài liệu `quarantined`/`pending-upload` chỉ người tải lên và Admin bảo mật thấy trạng thái.
+Returns metadata, **with no download URL**. `content[0].attachment` has `contentType`, `size`, `hash`, `title`. A Patient only sees it when
+`released-to-patient` is set and it is their own document, otherwise 404. For a `quarantined`/`pending-upload` document, only the uploader and the Security Admin can see the status.
 
 ### D4 `GET /fhir/DocumentReference`
-Tham số: `patient` (**bắt buộc**), `encounter`, `type`, `date` (ge/le), `status`, `_count`, `_page_token`. Patient bị ép
-`patient = mình` và chỉ tài liệu đã phát hành.
+Parameters: `patient` (**required**), `encounter`, `type`, `date` (ge/le), `status`, `_count`, `_page_token`. Patient is forced to
+`patient = self` and only released documents.
 
 ### D5 `POST /api/v1/documents/{id}/download-url`
-Header: `Idempotency-Key` không cần (không thay đổi trạng thái). Response:
+Header: `Idempotency-Key` not needed (does not change state). Response:
 ```json
 { "url": "https://stshpdocs....blob.core.windows.net/documents/...?<sas>", "expiresAt": "2026-11-20T02:20:00Z", "fileName": "xet-nghiem-mau.pdf", "contentType": "application/pdf" }
 ```
-- SAS **read-only cho đúng một blob, hiệu lực 5 phút**, `Content-Disposition: attachment` (BR-08, AC-05.2): sau 5 phút Blob trả 403.
-- Chỉ cấp khi `processing.state = available`; ngược lại 409 `document-not-available`.
-- **Mỗi lần cấp** phát `audit-recorded` (`download-url`) — kể cả bị từ chối.
-- Giới hạn 30 lần/phút/người dùng.
+- The SAS is **read-only for exactly one blob, valid for 5 minutes**, with `Content-Disposition: attachment` (BR-08, AC-05.2): after 5 minutes Blob returns 403.
+- Only issued when `processing.state = available`; otherwise 409 `document-not-available`.
+- **Every issuance** emits `audit-recorded` (`download-url`) — including denials.
+- Limit 30 times/minute/user.
 
 ### D6 `POST /api/v1/documents/{id}/release`
-Body `{ "note": "Kết quả bình thường" }` tùy chọn. Đặt `released-to-patient` (người, thời điểm), phát
-`shp.document.document-released.v1` → notification gửi "có kết quả mới" (UC-07). 409 nếu đã phát hành hoặc chưa `available`.
-Không thu hồi được sau khi phát hành (chỉ `entered-in-error`).
+Body `{ "note": "Normal result" }` optional. Sets `released-to-patient` (who, when), emits
+`shp.document.document-released.v1` → notification sends "new result available" (UC-07). 409 if already released or not yet `available`.
+Cannot be revoked after release (only `entered-in-error`).
 
-## 4. API nội bộ
+## 4. Internal API
 
-| Endpoint | Gọi bởi | Ghi chú |
+| Endpoint | Called by | Note |
 |---|---|---|
-| D8 `GET /internal/v1/documents?patient={id}&limit=` | clinical | metadata đã rút gọn để dựng timeline |
-| D9 `POST /internal/v1/documents/{id}/read-url` | ai | SAS đọc 60 giây cho đúng blob của job trích xuất; audit actor `system` |
+| D8 `GET /internal/v1/documents?patient={id}&limit=` | clinical | shortened metadata to build the timeline |
+| D9 `POST /internal/v1/documents/{id}/read-url` | ai | 60-second read SAS for exactly the extraction job's blob; audit actor `system` |
 
-## 5. Xử lý lỗi và dọn dẹp
+## 5. Error handling and cleanup
 
-| Tình huống | Hành vi |
+| Situation | Behavior |
 |---|---|
-| Client upload xong nhưng không gọi `complete` | Blob được dọn sau khi `upload_sessions` hết hạn (job mỗi giờ xóa blob mồ côi + `pending-upload` > 24 giờ) |
-| Trình quét lỗi/timeout | Retry 3 lần; vẫn lỗi → giữ `scanning`, cảnh báo vận hành (OBS-03); tài liệu **không** được cấp link tải |
-| Upload cùng `Idempotency-Key` hai lần | Trả lại cùng `documentId`/SAS chưa hết hạn |
+| Client finishes uploading but does not call `complete` | The blob is cleaned up after `upload_sessions` expires (hourly job deletes orphan blobs + `pending-upload` > 24 hours) |
+| Scanner error/timeout | Retry 3 times; still failing → keep `scanning`, operational alert (OBS-03); the document is **not** given a download link |
+| Upload with the same `Idempotency-Key` twice | Return the same `documentId`/SAS if not expired |

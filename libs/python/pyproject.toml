@@ -1,7 +1,7 @@
 [project]
 name = "shp-platform"
 version = "0.1.0"
-description = "Thư viện dùng chung cho service Python (ai, ml): xác thực, lỗi, CloudEvents, audit, che PII, LLM router"
+description = "Shared library for Python services (ai, ml): authentication, errors, CloudEvents, audit, PII redaction, LLM router"
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115,<1",

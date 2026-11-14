@@ -1,279 +1,279 @@
-# Wireframe cho các màn hình chưa có trong giao diện web (khóa = khóa màn hình trong 50-screens.yaml).
-# Dữ liệu minh họa là dữ liệu giả. Màn hình đã có trong web dùng ảnh chụp thật ở docs/02-requirements/srs/mockups/.
+# Wireframes for screens not yet present in the web interface (keys = screen keys in 50-screens.yaml).
+# Illustration data is synthetic data. Screens already present in the web interface use real screenshots in docs/02-requirements/srs/mockups/.
 wireframes:
   register:
-    user: "Chưa có hồ sơ"
-    nav: ["#Đăng ký", "Thông tin cá nhân"]
-    active: "Thông tin cá nhân"
+    user: "No record yet"
+    nav: ["#Register", "Personal information"]
+    active: "Personal information"
     blocks:
-      - {t: h, text: "Đăng ký tài khoản"}
-      - {t: p, text: "Điền thông tin hành chính để tạo hồ sơ bệnh nhân. Số điện thoại và email lấy từ tài khoản đã xác minh; tài khoản email thì nhập và xác minh số điện thoại bằng mã OTP."}
+      - {t: h, text: "Create an account"}
+      - {t: p, text: "Enter administrative information to create a patient record. The phone number and email come from the verified account; for an email account, enter and verify the phone number with an OTP code."}
       - t: form
         fields:
-          - ["Họ và tên *", text, "Nguyễn Thị Lan"]
-          - ["Ngày sinh *", text, "12/04/1988"]
-          - ["Giới tính *", select, "Nữ"]
-          - ["Số điện thoại *", text, "0900 010 001 (đã xác minh OTP)"]
-          - ["Email", label, "lan.nguyen@example.org (từ tài khoản, không sửa)"]
-      - {t: banner, text: "Điều khoản xử lý dữ liệu cá nhân: mục đích, thời hạn lưu, quyền của bạn. Xem toàn văn trước khi đồng ý."}
+          - ["Full name *", text, "Nguyen Thi Lan"]
+          - ["Date of birth *", text, "12/04/1988"]
+          - ["Gender *", select, "Female"]
+          - ["Phone number *", text, "0900 010 001 (OTP verified)"]
+          - ["Email", label, "lan.nguyen@example.org (from the account, not editable)"]
+      - {t: banner, text: "Personal data processing terms: purpose, retention period, your rights. Read the full text before consenting."}
       - t: form
         cols: 1
         fields:
-          - ["Bắt buộc", check, "Tôi đã đọc và đồng ý điều khoản xử lý dữ liệu cá nhân"]
-          - ["Tùy chọn", check, "Cho phép xử lý dữ liệu sức khỏe của tôi bằng AI (tóm tắt, trích xuất, dự đoán). Mặc định không chọn."]
-      - {t: buttons, items: [["Đăng ký", primary], ["Hủy", secondary]]}
+          - ["Required", check, "I have read and accept the personal data processing terms"]
+          - ["Optional", check, "Allow processing my health data with AI (summary, extraction, prediction). Unchecked by default."]
+      - {t: buttons, items: [["Create account", primary], ["Cancel", secondary]]}
   claim-record:
-    user: "Chưa có hồ sơ"
-    nav: ["#Đăng ký", "Thông tin cá nhân"]
-    active: "Thông tin cá nhân"
+    user: "No record yet"
+    nav: ["#Register", "Personal information"]
+    active: "Personal information"
     blocks:
-      - {t: h, text: "Tôi đã từng khám tại bệnh viện"}
-      - {t: p, text: "Nhập đúng thông tin đã đăng ký tại bệnh viện. Mã xác minh chỉ được gửi tới số điện thoại lưu trong hồ sơ."}
+      - {t: h, text: "I have visited the hospital before"}
+      - {t: p, text: "Enter the information exactly as registered at the hospital. The verification code is sent only to the phone number stored in the record."}
       - t: form
         fields:
-          - ["Họ và tên *", text, "Nguyễn Thị Lan"]
-          - ["Ngày sinh *", text, "12/04/1988"]
-          - ["Số điện thoại đã đăng ký tại bệnh viện *", text, "0900 010 001"]
-          - ["Mã xác minh *", text, "6 chữ số (gửi qua Zalo, hoặc SMS nếu không có Zalo)"]
-      - {t: banner, text: "Nếu thông tin khớp, mã đã được gửi. Chưa nhận được sau 30 giây? Bấm “Gửi bằng SMS”. Không khớp? Đến quầy tiếp đón để được hỗ trợ."}
-      - {t: buttons, items: [["Gửi yêu cầu", primary], ["Gửi bằng SMS", secondary]]}
+          - ["Full name *", text, "Nguyen Thi Lan"]
+          - ["Date of birth *", text, "12/04/1988"]
+          - ["Phone number registered at the hospital *", text, "0900 010 001"]
+          - ["Verification code *", text, "6 digits (sent via Zalo, or SMS if Zalo is unavailable)"]
+      - {t: banner, text: "If the information matches, the code has been sent. Not received after 30 seconds? Click \"Send by SMS\". No match? Go to the reception desk for assistance."}
+      - {t: buttons, items: [["Submit request", primary], ["Send by SMS", secondary]]}
   relatives:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Lịch hẹn của tôi", "Hồ sơ người thân"]
-    active: "Hồ sơ người thân"
+    user: "Nguyen Thi Lan"
+    nav: ["#Overview", "Home", "#Booking", "Find a doctor", "Book an appointment", "My appointments", "Relatives' records"]
+    active: "Relatives' records"
     blocks:
-      - {t: h, text: "Hồ sơ người thân"}
-      - {t: p, text: "Bạn đang quản lý 3 hồ sơ (tối đa 10). Bạn chỉ xem và đặt lịch trong phạm vi đã được đồng ý."}
+      - {t: h, text: "Relatives' records"}
+      - {t: p, text: "You manage 3 records (maximum 10). You can only view and book within the scope you have consented to."}
       - t: table
-        cols: ["Họ và tên", "Quan hệ", "Phạm vi", "Hết hạn", ""]
+        cols: ["Full name", "Relationship", "Scope", "Expires", ""]
         widths: [260, 180, 260, 200, 120]
         rows:
-          - ["Nguyễn Thị Lan", "Bản thân", "Toàn bộ", "-", ""]
-          - ["Trần Minh Khôi (8 tuổi)", "Người giám hộ", "Toàn quyền", "đến sinh nhật 16 tuổi", "#Thu hồi"]
-          - ["Nguyễn Văn Hậu", "Người được ủy quyền", "Đặt lịch", "31/10/2027", "#Thu hồi"]
-      - {t: buttons, items: [["Thêm con", primary], ["Thêm người thân", secondary]]}
+          - ["Nguyen Thi Lan", "Self", "All", "-", ""]
+          - ["Tran Minh Khoi (8 years old)", "Guardian", "Full", "until the 16th birthday", "#Revoke"]
+          - ["Nguyen Van Hau", "Authorized person", "Booking", "31/10/2027", "#Revoke"]
+      - {t: buttons, items: [["Add child", primary], ["Add relative", secondary]]}
   chatbot:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Chatbot đặt lịch", "Lịch hẹn của tôi"]
-    active: "Chatbot đặt lịch"
+    user: "Nguyen Thi Lan"
+    nav: ["#Overview", "Home", "#Booking", "Find a doctor", "Book an appointment", "Booking chatbot", "My appointments"]
+    active: "Booking chatbot"
     blocks:
-      - {t: h, text: "Chatbot đặt lịch"}
-      - {t: banner, text: "Trợ lý AI chỉ giúp tìm và đề xuất lịch. Mọi lịch hẹn chỉ được đặt hoặc hủy sau khi bạn bấm “Xác nhận”."}
+      - {t: h, text: "Booking chatbot"}
+      - {t: banner, text: "The AI assistant only helps find and suggest appointments. An appointment is booked or cancelled only after you click \"Confirm\"."}
       - t: chat
         msgs:
-          - [bot, "Xin chào, bạn muốn đặt lịch khám chuyên khoa nào?"]
-          - [me, "Tôi muốn khám tim mạch sáng thứ Năm"]
-          - [bot, "Có 3 khung giờ trống sáng thứ Năm 05/11 với BS. Lê Minh Quân: 08:00, 08:30, 09:30."]
-          - [me, "Đặt giúp tôi 08:30"]
-      - {t: card, title: "Chờ xác nhận (hết hạn sau 04:32)", lines: ["Đặt lịch khám Tim mạch, BS. Lê Minh Quân, 08:30 ngày 05/11/2026"]}
-      - {t: buttons, items: [["Xác nhận", primary], ["Hủy đề xuất", secondary]]}
-      - {t: form, cols: 1, fields: [["Nhập tin nhắn (tối đa 500 ký tự)", text, "Nhập yêu cầu của bạn…"]]}
+          - [bot, "Hello, which specialty would you like to book?"]
+          - [me, "I would like a cardiology visit on Thursday morning"]
+          - [bot, "There are 3 free slots on Thursday morning 05/11 with Dr. Le Minh Quan: 08:00, 08:30, 09:30."]
+          - [me, "Book 08:30 for me"]
+      - {t: card, title: "Awaiting confirmation (expires in 04:32)", lines: ["Cardiology visit, Dr. Le Minh Quan, 08:30 on 05/11/2026"]}
+      - {t: buttons, items: [["Confirm", primary], ["Cancel the suggestion", secondary]]}
+      - {t: form, cols: 1, fields: [["Enter a message (at most 500 characters)", text, "Enter your request..."]]}
   my-documents:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tổng quan", "Trang chủ", "#Đặt lịch", "Tìm bác sĩ", "Đặt lịch khám", "Lịch hẹn của tôi", "Tài liệu của tôi"]
-    active: "Tài liệu của tôi"
+    user: "Nguyen Thi Lan"
+    nav: ["#Overview", "Home", "#Booking", "Find a doctor", "Book an appointment", "My appointments", "My documents"]
+    active: "My documents"
     blocks:
-      - {t: h, text: "Tài liệu của tôi"}
-      - {t: p, text: "Chỉ hiển thị tài liệu bác sĩ đã phát hành cho bạn. Liên kết xem có hiệu lực 5 phút."}
+      - {t: h, text: "My documents"}
+      - {t: p, text: "Only documents the doctor has released to you are shown. View links are valid for 5 minutes."}
       - t: table
-        cols: ["Loại tài liệu", "Ngày phát hành", "Bác sĩ phát hành", ""]
+        cols: ["Document type", "Release date", "Issuing doctor", ""]
         widths: [300, 220, 300, 200]
         rows:
-          - ["Kết quả xét nghiệm", "29/10/2026", "BS. Lê Minh Quân", "#Xem"]
-          - ["Giấy chuyển viện", "09/10/2026", "BS. Đỗ Văn Hải", "#Xem"]
-          - ["Đơn thuốc", "02/09/2026", "BS. Lê Minh Quân", "#Xem"]
+          - ["Laboratory results", "29/10/2026", "Dr. Le Minh Quan", "#View"]
+          - ["Referral form", "09/10/2026", "Dr. Do Van Hai", "#View"]
+          - ["Prescription", "02/09/2026", "Dr. Le Minh Quan", "#View"]
   my-profile:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
-    active: "Thông tin cá nhân"
+    user: "Nguyen Thi Lan"
+    nav: ["#Account", "Personal information", "Notifications", "Privacy", "Record access history"]
+    active: "Personal information"
     blocks:
-      - {t: h, text: "Thông tin cá nhân"}
-      - {t: banner, text: "Họ tên, ngày sinh, giới tính chỉ thay đổi được tại quầy tiếp đón (có đối chiếu giấy tờ)."}
+      - {t: h, text: "Personal information"}
+      - {t: banner, text: "Full name, date of birth and gender can only be changed at the reception desk (with document verification)."}
       - t: form
         fields:
-          - ["Mã bệnh nhân", label, "BN-2026-000001"]
-          - ["Họ và tên", label, "Nguyễn Thị Lan"]
-          - ["Ngày sinh", label, "12/04/1988"]
-          - ["Giới tính", label, "Nữ"]
-          - ["Số điện thoại", text, "0900 010 001"]
-          - ["Người liên hệ khẩn cấp", text, "Nguyễn Văn An – 0900 010 002"]
-          - ["Địa chỉ", text, "12 Lê Lợi, TP. Huế"]
-          - ["Ngôn ngữ ưu tiên", select, "Tiếng Việt"]
-      - {t: buttons, items: [["Lưu", primary], ["Hủy", secondary]]}
+          - ["Patient ID", label, "BN-2026-000001"]
+          - ["Full name", label, "Nguyen Thi Lan"]
+          - ["Date of birth", label, "12/04/1988"]
+          - ["Gender", label, "Female"]
+          - ["Phone number", text, "0900 010 001"]
+          - ["Emergency contact", text, "Nguyen Van An - 0900 010 002"]
+          - ["Address", text, "12 Le Loi, Hue"]
+          - ["Preferred language", select, "Vietnamese"]
+      - {t: buttons, items: [["Save", primary], ["Cancel", secondary]]}
   notification-preferences:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
-    active: "Thông báo"
+    user: "Nguyen Thi Lan"
+    nav: ["#Account", "Personal information", "Notifications", "Privacy", "Record access history"]
+    active: "Notifications"
     blocks:
-      - {t: h, text: "Cài đặt thông báo"}
-      - {t: p, text: "Chọn cách nhận nhắc lịch khám. Nội dung tin chỉ gồm giờ khám, bác sĩ và cách hủy, không có thông tin bệnh."}
-      - {t: toggle, label: "Thông báo đẩy (push)", on: true}
+      - {t: h, text: "Notification settings"}
+      - {t: p, text: "Choose how to receive appointment reminders. Message content contains only the visit time, doctor and cancellation method, with no health information."}
+      - {t: toggle, label: "Push notification", on: true}
       - {t: toggle, label: "Email", on: true}
-      - {t: toggle, label: "Tin nhắn SMS", on: false}
+      - {t: toggle, label: "SMS message", on: false}
       - t: form
         fields:
-          - ["Ngôn ngữ", select, "Tiếng Việt"]
-          - ["Khung giờ yên tĩnh", select, "22:00 – 06:30 (không áp dụng cho nhắc T-2h)"]
-      - {t: buttons, items: [["Lưu", primary]]}
+          - ["Language", select, "Vietnamese"]
+          - ["Quiet hours", select, "22:00 - 06:30 (does not apply to the T-2h reminder)"]
+      - {t: buttons, items: [["Save", primary]]}
   privacy:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
-    active: "Quyền riêng tư"
+    user: "Nguyen Thi Lan"
+    nav: ["#Account", "Personal information", "Notifications", "Privacy", "Record access history"]
+    active: "Privacy"
     blocks:
-      - {t: h, text: "Quyền riêng tư"}
-      - {t: card, title: "Xử lý dữ liệu sức khỏe bằng AI", lines: ["Tóm tắt hồ sơ cho bác sĩ, trích xuất dữ liệu từ tài liệu, dự đoán nguy cơ không đến khám.", "Dữ liệu gửi tới nhà cung cấp mô hình bên ngoài đã được che họ tên, SĐT, email, địa chỉ.", "Bạn có thể rút đồng ý bất kỳ lúc nào; có hiệu lực ngay."]}
-      - {t: toggle, label: "Cho phép xử lý dữ liệu của tôi bằng AI", on: true}
-      - {t: h, text: "Lịch sử đồng ý"}
+      - {t: h, text: "Privacy"}
+      - {t: card, title: "Processing health data with AI", lines: ["Summarizing the record for the doctor, extracting data from documents, predicting the no-show risk.", "Data sent to the external model provider has full names, phone numbers, email addresses and addresses masked.", "You can withdraw consent at any time; it takes effect immediately."]}
+      - {t: toggle, label: "Allow processing my data with AI", on: true}
+      - {t: h, text: "Consent history"}
       - t: table
-        cols: ["Thời điểm", "Phiên bản điều khoản", "Hành động"]
+        cols: ["Time", "Terms version", "Action"]
         widths: [340, 340, 340]
         rows:
-          - ["30/10/2026 09:12", "v1", "Đồng ý xử lý bằng AI"]
-          - ["30/10/2026 09:12", "v1", "Đồng ý điều khoản"]
-      - {t: card, title: "Bản sao dữ liệu cá nhân", lines: ["Yêu cầu nhận bản sao hồ sơ của bạn. Cần xác thực lại. Cán bộ bảo vệ dữ liệu xử lý và gửi liên kết tải (hiệu lực 24 giờ)."]}
-      - {t: buttons, items: [["Yêu cầu bản sao dữ liệu", secondary]]}
+          - ["30/10/2026 09:12", "v1", "Consented to AI processing"]
+          - ["30/10/2026 09:12", "v1", "Accepted the terms"]
+      - {t: card, title: "Copy of personal data", lines: ["Request a copy of your record. Reauthentication is required. The Data Protection Officer processes it and sends a download link (valid for 24 hours)."]}
+      - {t: buttons, items: [["Request a copy of my data", secondary]]}
   my-access-log:
-    user: "Nguyễn Thị Lan"
-    nav: ["#Tài khoản", "Thông tin cá nhân", "Thông báo", "Quyền riêng tư", "Lịch sử truy cập hồ sơ"]
-    active: "Lịch sử truy cập hồ sơ"
+    user: "Nguyen Thi Lan"
+    nav: ["#Account", "Personal information", "Notifications", "Privacy", "Record access history"]
+    active: "Record access history"
     blocks:
-      - {t: h, text: "Ai đã truy cập hồ sơ của tôi"}
-      - {t: p, text: "12 tháng gần nhất. Không hiển thị nội dung đã xem."}
+      - {t: h, text: "Who accessed my record"}
+      - {t: p, text: "Last 12 months. The content viewed is not shown."}
       - t: table
-        cols: ["Thời điểm", "Người truy cập", "Vai trò / khoa", "Hành động", "Mục đích"]
+        cols: ["Time", "Accessor", "Role / department", "Action", "Purpose"]
         widths: [190, 210, 210, 210, 200]
         rows:
-          - ["29/10/2026 09:02", "BS. Lê Minh Quân", "Bác sĩ · Tim mạch", "Xem hồ sơ", "Điều trị"]
-          - ["29/10/2026 08:41", "ĐD. Trần Thu Hà", "Điều dưỡng · Tiếp đón", "Check-in", "Điều trị"]
-          - ["11/10/2026 14:20", "BS. Phạm Văn Long", "Bác sĩ · Cấp cứu", "Xem hồ sơ", "#Truy cập khẩn cấp"]
-          - ["09/10/2026 10:50", "BS. Đỗ Văn Hải", "Bác sĩ · Nội tổng quát", "Tải tài liệu", "Điều trị"]
+          - ["29/10/2026 09:02", "Dr. Le Minh Quan", "Doctor - Cardiology", "View record", "Treatment"]
+          - ["29/10/2026 08:41", "Nurse Tran Thu Ha", "Nurse - Reception", "Check-in", "Treatment"]
+          - ["11/10/2026 14:20", "Dr. Pham Van Long", "Doctor - Emergency", "View record", "#Emergency access"]
+          - ["09/10/2026 10:50", "Dr. Do Van Hai", "Doctor - General internal medicine", "Download document", "Treatment"]
   patient-form:
-    user: "ĐD. Trần Thu Hà"
-    nav: ["#Tổng quan", "Trang chủ", "#Tiếp đón", "Hàng đợi hôm nay", "Hồ sơ bệnh nhân", "#Phòng khám", "Lịch bác sĩ"]
-    active: "Hồ sơ bệnh nhân"
+    user: "Nurse Tran Thu Ha"
+    nav: ["#Overview", "Home", "#Reception", "Today's queue", "Patient records", "#Clinic", "Doctor schedules"]
+    active: "Patient records"
     blocks:
-      - {t: h, text: "Tạo hồ sơ bệnh nhân"}
-      - {t: banner, kind: warn, text: "Nghi trùng: đã có hồ sơ cùng SĐT và ngày sinh – Trần Văn B., sinh 1990, SĐT 0900 ** *** 12. Kiểm tra giấy tờ trước khi tạo mới hoặc gộp."}
+      - {t: h, text: "Create a patient record"}
+      - {t: banner, kind: warn, text: "Possible duplicate: a record already exists with the same phone number and date of birth - Tran V. B., born 1990, phone 0900 ** *** 12. Check the documents before creating a new record or merging."}
       - t: form
         fields:
-          - ["Họ và tên *", text, "Trần Văn Bình"]
-          - ["Ngày sinh *", text, "05/03/1990"]
-          - ["Giới tính *", select, "Nam"]
-          - ["Số điện thoại *", text, "0900 010 012"]
-          - ["Địa chỉ", text, "45 Trần Phú, Đà Nẵng"]
-          - ["Người liên hệ khẩn cấp", text, ""]
-      - {t: buttons, items: [["Lưu hồ sơ", primary], ["Gộp vào hồ sơ có sẵn", secondary], ["Hủy", secondary]]}
+          - ["Full name *", text, "Tran Van Binh"]
+          - ["Date of birth *", text, "05/03/1990"]
+          - ["Gender *", select, "Male"]
+          - ["Phone number *", text, "0900 010 012"]
+          - ["Address", text, "45 Tran Phu, Da Nang"]
+          - ["Emergency contact", text, ""]
+      - {t: buttons, items: [["Save the record", primary], ["Merge into an existing record", secondary], ["Cancel", secondary]]}
   encounter:
-    user: "BS. Lê Minh Quân"
-    nav: ["#Tổng quan", "Trang chủ", "#Phòng khám", "Hàng đợi hôm nay", "Lịch bác sĩ", "#Lâm sàng", "Bệnh nhân", "Lần khám"]
-    active: "Lần khám"
+    user: "Dr. Le Minh Quan"
+    nav: ["#Overview", "Home", "#Clinic", "Today's queue", "Doctor schedules", "#Clinical", "Patients", "Encounter"]
+    active: "Encounter"
     blocks:
-      - {t: h, text: "Lần khám – Phạm Quang Dũng (BN-2026-000004)"}
-      - {t: tabs, items: ["Sinh hiệu", "Bệnh sử và khám", "Chẩn đoán", "Bổ sung"], active: 1}
+      - {t: h, text: "Encounter - Pham Quang Dung (BN-2026-000004)"}
+      - {t: tabs, items: ["Vital signs", "History and examination", "Diagnosis", "Addendum"], active: 1}
       - t: form
         fields:
-          - ["Huyết áp (mmHg)", text, "135 / 85"]
-          - ["Mạch (lần/phút)", text, "88"]
-          - ["Nhiệt độ (°C)", text, "36,8"]
+          - ["Blood pressure (mmHg)", text, "135 / 85"]
+          - ["Pulse (beats/min)", text, "88"]
+          - ["Temperature (C)", text, "36.8"]
           - ["SpO2 (%)", text, "97"]
       - t: form
         cols: 1
         fields:
-          - ["Lý do khám / bệnh sử", area, "Hồi hộp, khó thở khi gắng sức 2 tuần, tăng khi leo cầu thang…"]
-          - ["Chẩn đoán chính (ICD-10) *", select, "I20.9  Cơn đau thắt ngực, không đặc hiệu"]
-      - {t: buttons, items: [["Lưu", primary], ["Kết thúc khám", primary], ["Tóm tắt hồ sơ (AI)", secondary]]}
+          - ["Visit reason / history", area, "Palpitations, exertional dyspnea for 2 weeks, worse when climbing stairs..."]
+          - ["Primary diagnosis (ICD-10) *", select, "I20.9  Angina pectoris, unspecified"]
+      - {t: buttons, items: [["Save", primary], ["Finish the encounter", primary], ["Summarize the record (AI)", secondary]]}
   assistant:
-    user: "BS. Lê Minh Quân"
-    nav: ["#Tổng quan", "Trang chủ", "#Lâm sàng", "Bệnh nhân", "Lần khám", "#Trợ lý AI", "Hỏi trợ lý", "Duyệt trích xuất"]
-    active: "Hỏi trợ lý"
+    user: "Dr. Le Minh Quan"
+    nav: ["#Overview", "Home", "#Clinical", "Patients", "Encounter", "#AI assistant", "Ask the assistant", "Review extractions"]
+    active: "Ask the assistant"
     blocks:
-      - {t: h, text: "Hỏi trợ lý tri thức y tế"}
-      - {t: banner, text: "Trả lời dựa trên phác đồ nội bộ đã duyệt, kèm trích dẫn. Không nhập thông tin định danh bệnh nhân. Do AI tạo, cần kiểm tra."}
+      - {t: h, text: "Ask the medical knowledge assistant"}
+      - {t: banner, text: "Answers are based on approved internal protocols, with citations. Do not enter identifying patient information. AI-generated, needs review."}
       - t: chat
         msgs:
-          - [me, "Ngưỡng xử trí tăng huyết áp độ 2 ở người lớn theo phác đồ khoa?"]
-          - [bot, "Theo phác đồ, tăng huyết áp độ 2 là huyết áp ≥ 160/100 mmHg; cần phối hợp thuốc và tái khám sau 1 tuần [1][2]."]
-      - {t: card, title: "Nguồn trích dẫn", lines: ["[1] Phác đồ điều trị tăng huyết áp – mục 3.2, trang 7", "[2] Quy trình tái khám bệnh mạn tính – mục 2.1"]}
-      - {t: buttons, items: [["Hữu ích", secondary], ["Không hữu ích", secondary]]}
-      - {t: form, cols: 1, fields: [["Câu hỏi (3–2.000 ký tự)", text, "Nhập câu hỏi…"]]}
+          - [me, "What is the management threshold for stage 2 hypertension in adults according to the department protocol?"]
+          - [bot, "According to the protocol, stage 2 hypertension is blood pressure >= 160/100 mmHg; combination drug therapy and a follow-up visit after 1 week are required [1][2]."]
+      - {t: card, title: "Cited sources", lines: ["[1] Hypertension treatment protocol - section 3.2, page 7", "[2] Chronic disease follow-up procedure - section 2.1"]}
+      - {t: buttons, items: [["Helpful", secondary], ["Not helpful", secondary]]}
+      - {t: form, cols: 1, fields: [["Question (3-2000 characters)", text, "Enter a question..."]]}
   extraction-review:
-    user: "ĐD. Trần Thu Hà"
-    nav: ["#Lâm sàng", "Bệnh nhân", "#Trợ lý AI", "Hỏi trợ lý", "Duyệt trích xuất"]
-    active: "Duyệt trích xuất"
+    user: "Nurse Tran Thu Ha"
+    nav: ["#Clinical", "Patients", "#AI assistant", "Ask the assistant", "Review extractions"]
+    active: "Review extractions"
     blocks:
-      - {t: h, text: "Duyệt trích xuất: Kết quả xét nghiệm máu"}
-      - {t: banner, kind: warn, text: "Mọi trường mặc định “chưa xác nhận”. Chỉ trường bạn xác nhận mới được ghi vào hồ sơ. Không có nút “chấp nhận tất cả”."}
+      - {t: h, text: "Review extraction: Blood test results"}
+      - {t: banner, kind: warn, text: "Every field defaults to \"not yet confirmed\". Only fields you confirm are written to the record. There is no \"accept all\" button."}
       - t: table
-        cols: ["Trường", "Giá trị trích xuất", "Đơn vị", "Độ tin cậy", "Quyết định"]
+        cols: ["Field", "Extracted value", "Unit", "Confidence", "Decision"]
         widths: [260, 220, 130, 150, 260]
         rows:
-          - ["Hemoglobin", "13,2", "g/dL", "0,97", "#Xác nhận  Sửa  Bỏ"]
-          - ["Glucose lúc đói", "6,9", "mmol/L", "0,91", "#Xác nhận  Sửa  Bỏ"]
-          - ["Creatinine", "1,8", "mg/dL", "0,72 (thấp)", "Xác nhận  #Sửa  Bỏ"]
-      - {t: buttons, items: [["Lưu kết quả", primary], ["Từ chối tất cả", danger]]}
+          - ["Hemoglobin", "13.2", "g/dL", "0.97", "#Confirm  Edit  Discard"]
+          - ["Fasting glucose", "6.9", "mmol/L", "0.91", "#Confirm  Edit  Discard"]
+          - ["Creatinine", "1.8", "mg/dL", "0.72 (low)", "Confirm  #Edit  Discard"]
+      - {t: buttons, items: [["Save the result", primary], ["Reject all", danger]]}
   kb:
-    user: "Phạm Quang Huy"
-    nav: ["#Trợ lý AI", "Kho tri thức", "#Quản trị", "Người dùng", "Audit truy cập", "Thông báo lỗi"]
-    active: "Kho tri thức"
+    user: "Pham Quang Huy"
+    nav: ["#AI assistant", "Knowledge base", "#Administration", "Users", "Access audit", "Failed notifications"]
+    active: "Knowledge base"
     blocks:
-      - {t: h, text: "Kho tri thức"}
-      - {t: buttons, items: [["Thêm tài liệu", primary]]}
+      - {t: h, text: "Knowledge base"}
+      - {t: buttons, items: [["Add a document", primary]]}
       - t: table
-        cols: ["Tài liệu", "Phiên bản", "Phạm vi xem", "Trạng thái", ""]
+        cols: ["Document", "Version", "Viewing scope", "Status", ""]
         widths: [330, 120, 250, 150, 170]
         rows:
-          - ["Phác đồ điều trị tăng huyết áp", "v3", "Bác sĩ khoa Tim mạch", "#approved", "Thay phiên bản"]
-          - ["Quy trình tái khám bệnh mạn tính", "v2", "Bác sĩ, Điều dưỡng", "#approved", "Thay phiên bản"]
-          - ["Hướng dẫn dùng kháng sinh", "v1", "Bác sĩ", "draft", "Duyệt"]
-      - {t: banner, text: "Tài liệu kho tri thức không được chứa dữ liệu bệnh nhân. Hệ thống quét mẫu thông tin định danh khi tải lên."}
+          - ["Hypertension treatment protocol", "v3", "Cardiology department doctors", "#approved", "Replace the version"]
+          - ["Chronic disease follow-up procedure", "v2", "Doctors, Nurses", "#approved", "Replace the version"]
+          - ["Antibiotic use guidance", "v1", "Doctors", "draft", "Approve"]
+      - {t: banner, text: "Knowledge base documents must not contain patient data. The system scans for identifying information patterns on upload."}
   users:
-    user: "Phạm Quang Huy"
-    nav: ["#Trợ lý AI", "Kho tri thức", "#Quản trị", "Người dùng", "Audit truy cập", "Thông báo lỗi"]
-    active: "Người dùng"
+    user: "Pham Quang Huy"
+    nav: ["#AI assistant", "Knowledge base", "#Administration", "Users", "Access audit", "Failed notifications"]
+    active: "Users"
     blocks:
-      - {t: h, text: "Người dùng"}
-      - {t: buttons, items: [["Mời nhân viên", primary]]}
+      - {t: h, text: "Users"}
+      - {t: buttons, items: [["Invite staff", primary]]}
       - t: table
-        cols: ["Họ tên", "Vai trò", "Bác sĩ liên kết", "MFA", "Trạng thái", ""]
+        cols: ["Full name", "Role", "Linked doctor", "MFA", "Status", ""]
         widths: [250, 150, 220, 100, 140, 160]
         rows:
-          - ["BS. Lê Minh Quân", "Bác sĩ", "Practitioner pr-001", "Đã bật", "#Hoạt động", "Khóa"]
-          - ["ĐD. Trần Thu Hà", "Điều dưỡng", "", "Đã bật", "#Hoạt động", "Khóa"]
-          - ["Vũ Hải Yến", "DPO", "", "Đã bật", "#Hoạt động", "Khóa"]
-          - ["BS. Phạm Văn Long", "Bác sĩ", "Practitioner pr-004", "Chưa đăng ký", "Chờ kích hoạt", "Gửi lại lời mời"]
-      - {t: banner, text: "Gán vai trò Quản trị viên hoặc DPO cần một quản trị viên khác phê duyệt. Khóa tài khoản có hiệu lực trong tối đa 5 phút."}
+          - ["Dr. Le Minh Quan", "Doctor", "Practitioner pr-001", "Enabled", "#Active", "Lock"]
+          - ["Nurse Tran Thu Ha", "Nurse", "", "Enabled", "#Active", "Lock"]
+          - ["Vu Hai Yen", "DPO", "", "Enabled", "#Active", "Lock"]
+          - ["Dr. Pham Van Long", "Doctor", "Practitioner pr-004", "Not registered", "Pending activation", "Resend invitation"]
+      - {t: banner, text: "Assigning the Administrator or DPO role requires approval by another administrator. Locking an account takes effect within at most 5 minutes."}
   audit:
-    user: "Vũ Hải Yến"
-    nav: ["#Bảo vệ dữ liệu", "Audit truy cập", "Yêu cầu của bệnh nhân"]
-    active: "Audit truy cập"
+    user: "Vu Hai Yen"
+    nav: ["#Data protection", "Access audit", "Patient requests"]
+    active: "Access audit"
     blocks:
-      - {t: h, text: "Audit truy cập"}
-      - {t: tabs, items: ["Tra cứu", "Cần rà soát (2)", "Yêu cầu của bệnh nhân (1)"], active: 1}
+      - {t: h, text: "Access audit"}
+      - {t: tabs, items: ["Search", "Needs review (2)", "Patient requests (1)"], active: 1}
       - t: form
         cols: 4
         fields:
-          - ["Mã bệnh nhân", text, ""]
-          - ["Người truy cập", text, ""]
-          - ["Mục đích", select, "Truy cập khẩn cấp"]
-          - ["Khoảng thời gian (tối đa 92 ngày)", text, "24 giờ gần nhất"]
+          - ["Patient ID", text, ""]
+          - ["Accessor", text, ""]
+          - ["Purpose", select, "Emergency access"]
+          - ["Time range (at most 92 days)", text, "Last 24 hours"]
       - t: table
-        cols: ["Thời điểm", "Bác sĩ / khoa", "Mã bệnh nhân", "Lý do", "Cờ", ""]
+        cols: ["Time", "Doctor / department", "Patient ID", "Reason", "Flag", ""]
         widths: [170, 200, 150, 280, 110, 110]
         rows:
-          - ["29/10 14:20", "BS. Phạm Văn Long / Cấp cứu", "BN-2026-000007", "Ngừng tuần hoàn, chưa có hồ sơ", "#Bất thường", "Đã rà soát"]
-          - ["29/10 09:45", "BS. Đỗ Văn Hải / Nội", "BN-2026-000012", "Bệnh nhân chuyển từ khoa khác khi cấp cứu", "", "Đã rà soát"]
-      - {t: buttons, items: [["Xuất CSV (nhập mục đích)", secondary]]}
+          - ["29/10 14:20", "Dr. Pham Van Long / Emergency", "BN-2026-000007", "Cardiac arrest, no record yet", "#Abnormal", "Reviewed"]
+          - ["29/10 09:45", "Dr. Do Van Hai / Internal medicine", "BN-2026-000012", "Patient transferred from another department during an emergency", "", "Reviewed"]
+      - {t: buttons, items: [["Export CSV (enter a purpose)", secondary]]}
   dead-letters:
-    user: "Phạm Quang Huy"
-    nav: ["#Quản trị", "Người dùng", "Audit truy cập", "Thông báo lỗi"]
-    active: "Thông báo lỗi"
+    user: "Pham Quang Huy"
+    nav: ["#Administration", "Users", "Access audit", "Failed notifications"]
+    active: "Failed notifications"
     blocks:
-      - {t: h, text: "Thông báo gửi lỗi"}
-      - {t: p, text: "Chỉ hiển thị mã lịch hẹn, kênh và lỗi; không có nội dung tin, SĐT hay email."}
+      - {t: h, text: "Failed notifications"}
+      - {t: p, text: "Only the appointment ID, channel and error are shown; there is no message content, phone number or email."}
       - t: table
-        cols: ["Mã lịch hẹn", "Loại nhắc", "Kênh", "Lỗi", "Số lần thử", ""]
+        cols: ["Appointment ID", "Reminder type", "Channel", "Error", "Attempts", ""]
         widths: [200, 140, 120, 300, 110, 150]
         rows:
-          - ["LH-20261103-0042", "T-24h", "SMS", "Nhà cung cấp từ chối: số không khả dụng", "5", "#Gửi lại"]
-          - ["LH-20261103-0057", "T-2h", "Email", "Hết thời gian chờ nhà cung cấp", "5", "#Gửi lại"]
-      - {t: banner, text: "Không gửi lại nếu lịch hẹn đã hủy hoặc đã qua giờ khám."}
+          - ["LH-20261103-0042", "T-24h", "SMS", "Provider rejected: number unavailable", "5", "#Resend"]
+          - ["LH-20261103-0057", "T-2h", "Email", "Provider timeout", "5", "#Resend"]
+      - {t: banner, text: "Do not resend if the appointment has been cancelled or the visit time has passed."}

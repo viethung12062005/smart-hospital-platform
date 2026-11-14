@@ -1,106 +1,106 @@
-# Nhật ký dựng Pha 4 (Platform & DevOps) — để review và làm lại
+# Phase 4 build log (Platform & DevOps) - for review and redoing
 
-> Chi tiết từng bước theo thứ tự thời gian: [progress-log.md](progress-log.md).
-> Mục đích: ghi lại **từng bước đã làm xong**, lệnh để làm lại, cách kiểm chứng và việc còn lại. Cập nhật mỗi khi xong một bước.
-> Mọi dữ liệu là dữ liệu giả. Không có secret nào trong 4 repo (đăng nhập Azure bằng OIDC, mật khẩu local sinh ngẫu nhiên trên máy).
-> Chưa chạy `terraform apply` hay tạo tài nguyên cloud nào.
+> Step-by-step details in chronological order: [progress-log.md](progress-log.md).
+> Purpose: record **each step that has been completed**, the commands to redo it, how to verify it, and what remains. Updated each time a step is finished.
+> All data is synthetic data. There are no secrets in the 4 repos (Azure login via OIDC, local passwords randomly generated on the machine).
+> No `terraform apply` has been run and no cloud resources have been created.
 
-## 0. Bản đồ repo (ADR-0010)
-| Repo (bản scratch) | Nhánh | Nội dung |
+## 0. Repo map (ADR-0010)
+| Repo (scratch copy) | Branch | Content |
 |---|---|---|
-| `smart-hospital-platform-scratch` | `work/initial-baseline` | tài liệu, kế hoạch, code service, bộ công cụ local `dev/` |
-| `shp-platform-templates-scratch` | 〃 | chart Helm `microservice`, reusable workflow CI/CD |
-| `shp-infra-scratch` | 〃 | Terraform bootstrap + môi trường uat/prod, workflow provision/destroy |
-| `shp-gitops-scratch` | 〃 | (chưa có nội dung — bước 9) |
+| `smart-hospital-platform-scratch` | `work/initial-baseline` | documents, plan, service code, local `dev/` toolkit |
+| `shp-platform-templates-scratch` | same | `microservice` Helm chart, reusable CI/CD workflows |
+| `shp-infra-scratch` | same | Terraform bootstrap + uat/prod environments, provision/destroy workflows |
+| `shp-gitops-scratch` | same | (no content yet - step 9) |
 
-Khi chuyển sang repo thật: copy nội dung, rồi sửa tham chiếu `viethung12062005/shp-platform-templates-scratch@work/initial-baseline`
-trong `.github/workflows/svc-*.yml`, `tools/scaffold/*.py`, `dev/scripts/lib.sh` thành repo thật và tag phiên bản (ví dụ `@v0.1.0`).
+When moving to the real repos: copy the content, then change the reference `viethung12062005/shp-platform-templates-scratch@work/initial-baseline`
+in `.github/workflows/svc-*.yml`, `tools/scaffold/*.py`, `dev/scripts/lib.sh` to the real repo and a version tag (for example `@v0.1.0`).
 
-## 1. Pha 1–3: phân tích, yêu cầu, thiết kế (đã duyệt G1–G3 ngày 2026-10-26)
-| Bước | Kết quả | Commit |
+## 1. Phases 1-3: analysis, requirements, design (G1-G3 approved on 2026-10-26)
+| Step | Result | Commit |
 |---|---|---|
-| BA, FR/NFR, ma trận phân quyền, workload, truy vết | `docs/01-*`, `docs/02-requirements/` | trước 3cace72 |
-| 11 ADR + kiến trúc | `docs/03-architecture/` | — |
-| Thiết kế chi tiết 01–16 (DB, API, event, authz, MLOps) | `docs/03-architecture/detailed-design/` | 3cace72, 4826847 |
-| 74 user story, 317 task, phân theo người | `docs/02-requirements/user-stories.md`, `docs/05-plan/` | c378bfc |
+| BA, FR/NFR, authorization matrix, workload, traceability | `docs/01-*`, `docs/02-requirements/` | before 3cace72 |
+| 11 ADRs + architecture | `docs/03-architecture/` | - |
+| Detailed design 01-16 (DB, API, event, authz, MLOps) | `docs/03-architecture/detailed-design/` | 3cace72, 4826847 |
+| 74 user stories, 317 tasks, split by person | `docs/02-requirements/user-stories.md`, `docs/05-plan/` | c378bfc |
 
-Làm lại kế hoạch: `python3 -I tools/plan/build.py` (tự kiểm: mọi AC có story, mọi API/event có task, task dev ≤ 4h, thứ tự phụ thuộc, tải ≤ 30h/tuần).
-Kiểm chứng đã làm: DDL chạy trên PostgreSQL 16 (50 lượt đặt đồng thời → đúng 1 thành công), validator/index/transaction trên MongoDB 8, sơ đồ mermaid parse được.
+Redo the plan: `python3 -I tools/plan/build.py` (self-checks: every AC has a story, every API/event has a task, dev tasks <= 4h, dependency order, load <= 30h/week).
+Verification performed: DDL runs on PostgreSQL 16 (50 concurrent bookings -> exactly 1 success), validator/index/transaction on MongoDB 8, the mermaid diagram parses.
 
-## 2. ADR-0011: chỉ 2 môi trường cloud (uat, prod) + dev trên kind — commit 3a72b78
+## 2. ADR-0011: only 2 cloud environments (uat, prod) + dev on kind - commit 3a72b78
 
-## 3. Runbook GitHub — commit 63d873b
-`docs/04-devops/github-setup.md`. **Việc của bạn (cần quyền admin GitHub)**: ruleset `main`, CODEOWNERS, Environments
-(`deploy-uat`, `deploy-prod`, `infra-*`), GitHub App bot GitOps, Variables. Chưa làm.
+## 3. GitHub runbook - commit 63d873b
+`docs/04-devops/github-setup.md`. **Your work (requires GitHub admin rights)**: `main` ruleset, CODEOWNERS, Environments
+(`deploy-uat`, `deploy-prod`, `infra-*`), GitOps bot GitHub App, Variables. Not done yet.
 
-## 4. Repo templates — commits c352248, ab2a514 (+ bước 7 dưới)
-- `charts/microservice`: Deployment hoặc Argo Rollout, HPA/KEDA, PDB, NetworkPolicy, HTTPRoute, Workload Identity, Key Vault CSI, `values.schema.json`.
-- Workflows: `dotnet-ci`, `python-ci`, `container` (hadolint, Trivy, SBOM, cosign keyless, push ACR qua OIDC), `helm-validate`, `terraform-checks`, `pr-checks`, `gitops-promote`, `release-chart`.
-- Action ghim theo commit SHA; Trivy chạy bằng image ghim digest.
+## 4. Templates repo - commits c352248, ab2a514 (+ step 7 below)
+- `charts/microservice`: Deployment or Argo Rollout, HPA/KEDA, PDB, NetworkPolicy, HTTPRoute, Workload Identity, Key Vault CSI, `values.schema.json`.
+- Workflows: `dotnet-ci`, `python-ci`, `container` (hadolint, Trivy, SBOM, cosign keyless, push to ACR via OIDC), `helm-validate`, `terraform-checks`, `pr-checks`, `gitops-promote`, `release-chart`.
+- Actions pinned by commit SHA; Trivy runs from an image pinned by digest.
 
-Làm lại kiểm chứng:
+Redo verification:
 ```bash
 helm lint charts/microservice && for f in charts/microservice/ci/*.yaml; do helm template t charts/microservice -f $f | kubeconform -strict -summary; done
 actionlint
 ```
 
-## 5. Repo infra — commit 3918ddc
+## 5. Infra repo - commit 3918ddc
 `bootstrap/` (state, ACR, managed identity + federated credential, budget), `modules/{network,monitoring,keyvault,aks,environment}`, `envs/{uat,prod}`,
-workflow `env-provision` / `env-destroy` (chờ duyệt), `cost-guard`.
-Kiểm chứng: `terraform init -backend=false && terraform validate`, `tflint`, `trivy config` (0 High/Critical). **Không apply.**
-**Việc của bạn**: chạy bootstrap một lần bằng tài khoản Azure của bạn, điền GitHub Variables theo `bootstrap/README.md`.
+workflows `env-provision` / `env-destroy` (pending approval), `cost-guard`.
+Verification: `terraform init -backend=false && terraform validate`, `tflint`, `trivy config` (0 High/Critical). **No apply.**
+**Your work**: run bootstrap once with your Azure account, fill in GitHub Variables per `bootstrap/README.md`.
 
-## 6. Bộ công cụ local `dev/` — commit 365405e (+ bước 8)
-Cụm kind + chart `shp-local-deps` (PostgreSQL, MongoDB rs, Redis, RabbitMQ, Azurite, Keycloak realm `shp`). Hướng dẫn cho dev: [`dev/README.md`](../../dev/README.md).
+## 6. Local `dev/` toolkit - commit 365405e (+ step 8)
+kind cluster + `shp-local-deps` chart (PostgreSQL, MongoDB rs, Redis, RabbitMQ, Azurite, Keycloak realm `shp`). Developer guide: [`dev/README.md`](../../dev/README.md).
 
-## 7. Khung code cho 8 service (walking skeleton) — commit của phase này
-| Thành phần | Đường dẫn |
+## 7. Code skeleton for 8 services (walking skeleton) - commit of this phase
+| Component | Path |
 |---|---|
-| Cấu hình .NET chung | `global.json` (SDK 10.0.100+), `Directory.Build.props` (nullable, warning = lỗi, analyzer), `Directory.Packages.props` (phiên bản tập trung), `.editorconfig` |
-| Thư viện nền | `libs/dotnet/Shp.ServiceDefaults`: ProblemDetails, `/health/live`, `/health/ready`, `/info`, OpenTelemetry (OTLP khi có `OTEL_EXPORTER_OTLP_ENDPOINT`) |
-| 6 service .NET | `services/{gateway,scheduling,notification,clinical,document,audit}`: `.slnx`, `src/…Api`, `tests/…Tests`, `Dockerfile` (chiseled, non-root), `deploy/values-local.yaml`, README |
-| Gateway | YARP, bảng định tuyến đúng `07-api-conventions.md §1`, `/internal/*` không có route (có test) |
-| 2 service Python | `services/{ai,ml}`: FastAPI, `pyproject.toml` (ruff, mypy strict, pytest-cov, pip-audit), Dockerfile non-root |
-| Pipeline từng service | `.github/workflows/svc-<svc>.yml`: CI → image (quét/SBOM/ký) → promote uat (chờ duyệt) |
-| Bộ sinh | `tools/scaffold/dotnet_service.py`, `tools/scaffold/python_service.py` (không ghi đè file đã có) |
+| Shared .NET configuration | `global.json` (SDK 10.0.100+), `Directory.Build.props` (nullable, warnings = errors, analyzers), `Directory.Packages.props` (centralized versions), `.editorconfig` |
+| Base library | `libs/dotnet/Shp.ServiceDefaults`: ProblemDetails, `/health/live`, `/health/ready`, `/info`, OpenTelemetry (OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set) |
+| 6 .NET services | `services/{gateway,scheduling,notification,clinical,document,audit}`: `.slnx`, `src/...Api`, `tests/...Tests`, `Dockerfile` (chiseled, non-root), `deploy/values-local.yaml`, README |
+| Gateway | YARP, routing table matching `07-api-conventions.md section 1`, `/internal/*` has no route (tested) |
+| 2 Python services | `services/{ai,ml}`: FastAPI, `pyproject.toml` (ruff, mypy strict, pytest-cov, pip-audit), non-root Dockerfile |
+| Per-service pipeline | `.github/workflows/svc-<svc>.yml`: CI -> image (scan/SBOM/sign) -> promote to uat (pending approval) |
+| Generators | `tools/scaffold/dotnet_service.py`, `tools/scaffold/python_service.py` (do not overwrite existing files) |
 
-Sửa ở repo templates: `gitops-promote` tự gắn Environment `deploy-<env>` (job gọi reusable workflow không khai báo được `environment`, nên cổng duyệt phải nằm trong workflow được gọi).
+Fix in the templates repo: `gitops-promote` attaches the `deploy-<env>` Environment itself (a job calling a reusable workflow cannot declare `environment`, so the approval gate must live in the called workflow).
 
-Làm lại / kiểm chứng:
+Redo / verify:
 ```bash
 python3 -I tools/scaffold/dotnet_service.py && python3 -I tools/scaffold/python_service.py
 for s in gateway scheduling notification clinical document audit; do (cd services/$s && dotnet format --verify-no-changes && dotnet test -c Release); done
 for s in ai ml; do (cd services/$s && pip install -e ".[dev]" && ruff check . && ruff format --check . && mypy . && pytest --cov --cov-fail-under=70); done
-docker build -f services/scheduling/Dockerfile .   # context = gốc repo cho .NET
-docker build services/ml                            # context = thư mục service cho Python
+docker build -f services/scheduling/Dockerfile .   # context = repo root for .NET
+docker build services/ml                            # context = service directory for Python
 ```
-Kết quả: 6 × 3 test .NET + 3 test routing gateway xanh; 2 × 3 test Python xanh, ruff/mypy sạch; image scheduling và ml build và chạy (`/info` 200, user không phải root).
+Results: 6 x 3 .NET tests + 3 gateway routing tests green; 2 x 3 Python tests green, ruff/mypy clean; the scheduling and ml images build and run (`/info` 200, user is not root).
 
-## 8. Chạy toàn hệ thống trên máy dev bằng một lệnh — commit của phase này
-| Thành phần | Việc |
+## 8. Run the whole system on a dev machine with one command - commit of this phase
+| Component | Work |
 |---|---|
-| `dev/scripts/install-tools.sh` (`make tools`) | tải kind v0.29.0, kubectl v1.33.4, helm v3.18.6 vào `dev/.local/bin`, kiểm sha256, chạy lại không tải lại |
-| `dev/scripts/deploy.sh` (`make deploy SVC=<svc|all>`) | build image → `kind load` → `helm upgrade --install` chart `microservice` với `dev/chart/app-values-local.yaml` + values của service; tạo Secret chuỗi kết nối trong cụm |
-| `make quickstart` | tools → up → seed-users → deploy all |
-| `make apps / app-logs / undeploy / port-forward` | vận hành service trong namespace `shp-apps`; gateway ở `localhost:18000` |
-| Azurite | tài khoản `shp` với khóa sinh ngẫu nhiên (`AZURITE_ACCOUNTS`), không dùng khóa emulator công khai |
-| Image Python | base `mirror.gcr.io/library/python:3.12-slim` (tránh Docker Hub 429) |
+| `dev/scripts/install-tools.sh` (`make tools`) | download kind v0.29.0, kubectl v1.33.4, helm v3.18.6 into `dev/.local/bin`, verify sha256, re-running does not download again |
+| `dev/scripts/deploy.sh` (`make deploy SVC=<svc\|all>`) | build image -> `kind load` -> `helm upgrade --install` the `microservice` chart with `dev/chart/app-values-local.yaml` + the service's values; create connection-string Secrets in the cluster |
+| `make quickstart` | tools -> up -> seed-users -> deploy all |
+| `make apps / app-logs / undeploy / port-forward` | operate services in the `shp-apps` namespace; gateway at `localhost:18000` |
+| Azurite | account `shp` with a randomly generated key (`AZURITE_ACCOUNTS`), does not use the public emulator key |
+| Python images | base `mirror.gcr.io/library/python:3.12-slim` (avoids Docker Hub 429) |
 
-Kiểm chứng đã làm: shellcheck sạch; `install-tools.sh` chạy thật 2 lần; chart render cho 8 service + `kubeconform --strict`.
-**Chưa chạy được** `make quickstart` trọn vẹn trên kind (môi trường dựng không chạy được kubelet) → người đầu tiên chạy trên máy thật báo lỗi.
+Verification performed: shellcheck clean; `install-tools.sh` actually run twice; chart renders for 8 services + `kubeconform --strict`.
+**Could not run** `make quickstart` fully on kind (the build environment cannot run kubelet) -> the first person to run it on a real machine should report errors.
 
-## 8b. Quyết định ngày 2026-10-27
-- ADR-0012 **Accepted**: giữ .NET cho 6 service nghiệp vụ, Python cho ai/ml.
-- Local dùng **Azurite** thay MinIO: cùng Azure Blob SDK với cloud. Đã sửa LOC-01, DOC-02, AUD-08 (WORM kiểm trên UAT), ADR-0008/0011.
+## 8b. Decision on 2026-10-27
+- ADR-0012 **Accepted**: keep .NET for the 6 business services, Python for ai/ml.
+- Local uses **Azurite** instead of MinIO: the same Azure Blob SDK as the cloud. Updated LOC-01, DOC-02, AUD-08 (WORM checked on UAT), ADR-0008/0011.
 
-## 9. Việc còn lại
-| Việc | Ai | Ghi chú |
+## 9. Remaining work
+| Work | Who | Note |
 |---|---|---|
-| Cài đặt GitHub (bước 3), bootstrap Azure (bước 5) | Bạn | cần quyền admin GitHub / Azure |
-| Chuyển repo templates/infra sang private | Bạn | đang public |
-| Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | kế tiếp |
-| ENV-01: cài Argo CD trong `env-provision` | SA | sau repo GitOps |
-| Hợp đồng: `contracts/authz/matrix.yaml`, JSON schema event, OpenAPI, terminology | SA | ARC-06/07/19/20 |
-| Thư viện dùng chung cho dev: auth (JWT + role + identity link), outbox/MassTransit, FHIR helper, test fixture Testcontainers | SA | để dev chỉ viết logic |
-| Profile local `full` (LOC-08), realm MFA (LOC-02) | SA | |
-| Xoay key bị lộ ở repo PoC cũ + xóa lịch sử | Bạn | ngoài phạm vi các repo dự án |
+| GitHub setup (step 3), Azure bootstrap (step 5) | You | requires GitHub / Azure admin rights |
+| Move the templates/infra repos to private | You | currently public |
+| GitOps repo: Argo CD bootstrap, AppProject, ApplicationSet, add-ons, Kyverno, `envs/{uat,prod}` | SA | next |
+| ENV-01: install Argo CD in `env-provision` | SA | after the GitOps repo |
+| Contracts: `contracts/authz/matrix.yaml`, event JSON schema, OpenAPI, terminology | SA | ARC-06/07/19/20 |
+| Shared libraries for devs: auth (JWT + role + identity link), outbox/MassTransit, FHIR helper, Testcontainers test fixture | SA | so devs only write logic |
+| Local `full` profile (LOC-08), MFA realm (LOC-02) | SA | |
+| Rotate keys exposed in the old PoC repo + purge history | You | outside the scope of the project repos |

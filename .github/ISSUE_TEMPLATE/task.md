@@ -1,16 +1,16 @@
 ---
 name: Task
-about: Một task trong backlog, là sub-issue của một User Story (docs/00-workflow.md §2)
-title: "<ID task>: <tên task>"
+about: A backlog task, a sub-issue of a User Story (docs/00-workflow.md §2)
+title: "<task ID>: <task name>"
 labels: task, enhancement
 ---
-**ID task:** <!-- vd. NTF-02; việc chưa có task thì thêm vào backlog trước (docs/00-git-github.md §1) -->
-**User Story:** <!-- vd. #12 (US-041). Sau khi tạo, thêm issue này làm sub-issue của issue US. Việc nền: ENABLER -->
-**Story khác liên quan:** <!-- nếu task phục vụ nhiều US -->
-**Tài liệu thiết kế đã theo:** <!-- vd. detailed-design/04-db-notification-ml.md §1.3 -->
-**Xong khi:**
-**Phụ thuộc:** <!-- task ID; đặt quan hệ Blocked by tới issue tương ứng -->
-**Ước lượng (giờ):** <!-- ≤ 8; lớn hơn thì tách -->
-**Bảo mật và dữ liệu:** <!-- có chạm dữ liệu bệnh nhân, phân quyền, audit, AI không; kiểm soát cần có -->
+**Task ID:** <!-- e.g. NTF-02; work with no task must be added to the backlog first (docs/00-git-github.md §1) -->
+**User Story:** <!-- e.g. #12 (US-041). After creating, add this issue as a sub-issue of the US issue. Enabler work: ENABLER -->
+**Related stories:** <!-- if the task serves several US -->
+**Design docs followed:** <!-- e.g. detailed-design/04-db-notification-ml.md §1.3 -->
+**Done when:**
+**Depends on:** <!-- task ID; set the Blocked by relation to the matching issue -->
+**Estimate (h):** <!-- <= 8; split if larger -->
+**Security and data:** <!-- touches patient data, authorization, audit, AI? which controls are needed -->
 
-> Repo public: chỉ dữ liệu giả. Assignee là một người, đúng cột Phụ trách của bảng kế hoạch.
+> Public repo: fake data only. A single assignee, matching the Owner column of the plan.

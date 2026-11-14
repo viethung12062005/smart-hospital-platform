@@ -1,17 +1,17 @@
 # DAT-01 – Vietnamese Synthetic Data Generator
 
-## 1. Giới thiệu
+## 1. Introduction
 
-DAT-01 là bộ sinh dữ liệu giả tiếng Việt cho dự án Smart Hospital Platform.
+DAT-01 is the Vietnamese fake-data generator for the Smart Hospital Platform project.
 
-Mục tiêu:
-- Sinh dữ liệu giả cho bệnh nhân, bác sĩ và điều dưỡng.
-- Không sử dụng dữ liệu cá nhân hoặc hồ sơ bệnh án thật.
-- Hỗ trợ nhiều quy mô dữ liệu phục vụ phát triển và kiểm thử.
-- Đảm bảo tính tái lập: cùng `seed` và `scale` phải tạo ra cùng dữ liệu.
-- Đảm bảo tính toàn vẹn tham chiếu giữa các tài nguyên.
+Goals:
+- Generate fake data for patients, doctors and nurses.
+- Never use real personal data or medical records.
+- Support several data scales for development and testing.
+- Guarantee reproducibility: the same `seed` and `scale` must produce the same data.
+- Guarantee referential integrity between resources.
 
-## 2. Danh sách tài nguyên và quy mô
+## 2. Resource list and scale
 
 | Resource | Small | Medium | Large |
 |---|---:|---:|---:|
@@ -19,12 +19,12 @@ Mục tiêu:
 | Practitioner | 12 | 120 | 600 |
 | PractitionerRole | 12 | 120 | 600 |
 
-Trong đó:
-- **Patient:** thông tin bệnh nhân giả.
-- **Practitioner:** thông tin nhân viên y tế.
-- **PractitionerRole:** vai trò chuyên môn của nhân viên y tế, gồm bác sĩ (`doctor`) và điều dưỡng (`nurse`).
+Where:
+- **Patient:** fake patient information.
+- **Practitioner:** healthcare staff information.
+- **PractitionerRole:** the professional role of healthcare staff, covering doctors (`doctor`) and nurses (`nurse`).
 
-## 3. Cấu trúc thư mục
+## 3. Directory structure
 
 ```text
 tools/synthetic/
@@ -42,52 +42,52 @@ tests/
     └── test_generators.py
 ```
 
-Chức năng các thành phần:
+What each component does:
 
-| File | Chức năng |
+| File | Purpose |
 |---|---|
-| `generate.py` | Giao diện dòng lệnh, điều phối sinh dữ liệu và tạo manifest |
-| `generators/ids.py` | Sinh UUIDv7 có tính tái lập |
-| `generators/names.py` | Họ, tên đệm, tên tiếng Việt theo giới; slug cho email |
-| `generators/patients.py` | Sinh dữ liệu Patient |
-| `generators/practitioners.py` | Sinh Practitioner và PractitionerRole |
-| `tests/synthetic/test_generators.py` | Kiểm thử các generator |
+| `generate.py` | Command-line interface, coordinates data generation and builds the manifest |
+| `generators/ids.py` | Deterministic UUIDv7 generation |
+| `generators/names.py` | Vietnamese surnames, middle names and given names by gender; email slugs |
+| `generators/patients.py` | Generate Patient data |
+| `generators/practitioners.py` | Generate Practitioner and PractitionerRole |
+| `tests/synthetic/test_generators.py` | Tests for the generators |
 
-## 4. Yêu cầu môi trường
+## 4. Environment requirements
 
 - Python >= 3.12.
-- Không yêu cầu thư viện bên thứ ba cho chức năng sinh dữ liệu.
-- Chạy lệnh từ thư mục gốc repository.
+- No third-party libraries are required for data generation.
+- Run commands from the repository root.
 
-## 5. Cách sử dụng
+## 5. Usage
 
-### 5.1. Sinh dữ liệu Small
+### 5.1. Generate Small data
 
 ```bash
 python3 -m tools.synthetic.generate --scale small --seed 42
 ```
 
-### 5.2. Sinh dữ liệu Medium
+### 5.2. Generate Medium data
 
 ```bash
 python3 -m tools.synthetic.generate --scale medium --seed 42
 ```
 
-### 5.3. Sinh dữ liệu Large
+### 5.3. Generate Large data
 
 ```bash
 python3 -m tools.synthetic.generate --scale large --seed 42
 ```
 
-### 5.4. Các tham số
+### 5.4. Parameters
 
-| Tham số | Ý nghĩa | Mặc định |
+| Parameter | Meaning | Default |
 |---|---|---|
-| `--scale` | Quy mô dữ liệu: `small`, `medium`, `large` | `small` |
-| `--seed` | Số nguyên dùng làm random seed | `42` |
-| `--output-dir` | Thư mục gốc lưu dữ liệu | `dev/.local/synthetic` |
+| `--scale` | Data scale: `small`, `medium`, `large` | `small` |
+| `--seed` | Integer used as the random seed | `42` |
+| `--output-dir` | Root directory for the data | `dev/.local/synthetic` |
 
-Có thể thay đổi thư mục đầu ra:
+You can change the output directory:
 
 ```bash
 python3 -m tools.synthetic.generate \
@@ -96,9 +96,9 @@ python3 -m tools.synthetic.generate \
     --output-dir /tmp/synthetic-data
 ```
 
-## 6. Cấu trúc dữ liệu đầu ra
+## 6. Output data structure
 
-Dữ liệu được lưu theo cấu trúc:
+Data is stored as follows:
 
 ```text
 dev/.local/synthetic/
@@ -119,38 +119,37 @@ dev/.local/synthetic/
     └── manifest.json
 ```
 
-Ý nghĩa các file:
+What each file contains:
 
-| File | Nội dung |
+| File | Content |
 |---|---|
-| `patients.json` | Danh sách Patient |
-| `practitioners.json` | Danh sách Practitioner |
-| `practitioner_roles.json` | Danh sách PractitionerRole |
-| `manifest.json` | Thông tin generator, scale, seed, số lượng bản ghi và SHA-256 |
+| `patients.json` | Patient list |
+| `practitioners.json` | Practitioner list |
+| `practitioner_roles.json` | PractitionerRole list |
+| `manifest.json` | Generator information, scale, seed, record counts and SHA-256 |
 
-Các file dữ liệu được mã hóa UTF-8 để hỗ trợ tiếng Việt có dấu.
+Data files are UTF-8 encoded to support Vietnamese with diacritics.
 
-Dữ liệu sinh ra là artifact phục vụ phát triển và kiểm thử tại máy local, không đưa vào Git.
+Generated data is a development and testing artifact for the local machine and is not committed to Git.
 
-## 7. Tính tái lập và định danh
+## 7. Reproducibility and identifiers
 
-Generator sử dụng random seed để đảm bảo:
+The generator uses a random seed to guarantee:
+- The same `scale` and `seed` produce the same data.
+- A different `seed` produces different data.
+- UUIDv7 values are generated deterministically from the seed.
+- A SHA-256 is computed for each data file to support integrity and reproducibility checks.
 
-- Cùng `scale` và `seed` tạo ra cùng dữ liệu.
-- Khác `seed` tạo ra dữ liệu khác nhau.
-- UUIDv7 được sinh theo cơ chế xác định từ seed.
-- SHA-256 được tính cho từng file dữ liệu để phục vụ kiểm tra tính toàn vẹn và tái lập.
-
-Manifest lưu lại:
-- Tên generator.
+The manifest records:
+- Generator name.
 - Scale.
 - Seed.
-- Số lượng từng resource.
-- SHA-256 của từng file dữ liệu.
+- Count of each resource.
+- SHA-256 of each data file.
 
-## 8. Kiểm thử
+## 8. Testing
 
-Test chạy bằng `pytest` (hoặc `unittest`), tự động trong CI ở job `synthetic` của workflow `qa` (ruff, mypy strict, test):
+Tests run with `pytest` (or `unittest`), automatically in CI in the `synthetic` job of the `qa` workflow (ruff, mypy strict, tests):
 
 ```bash
 pip install -r tools/contracts/requirements.txt ruff mypy pytest types-PyYAML
@@ -159,35 +158,35 @@ mypy --strict --explicit-package-bases tools/synthetic tests/synthetic
 python -m pytest -q tests/synthetic
 ```
 
-Các nhóm kiểm thử (theo `docs/00-synthetic-data.md` §7):
+Test groups (per `docs/00-synthetic-data.md` §7):
 
-| Nhóm | Nội dung |
+| Group | Content |
 |---|---|
-| UUIDv7 | Phiên bản UUID, tái lập, khác seed thì khác |
-| Patient | Số lượng; ID/MRN/email/SĐT duy nhất; SĐT chỉ trong dải giả; email `.test`; tên theo giới; tỉ lệ giới 49/51; phân bố tuổi 18/35/29/18; ngày sinh hợp lệ; dấu hiệu giả `(test)`, `(giả)` |
-| Dải số điện thoại | Đủ 500.000 số không trùng cho `large`; 100.000 số đầu thuộc dải gốc `09000xxxxx` |
-| Practitioner / Role | ID không trùng với nhau và với Patient; tham chiếu tồn tại; chuyên khoa và vai trò lấy từ `contracts/terminology`; tên theo giới |
-| Tái lập | Cùng seed + scale cho cùng file đầu ra từng byte |
+| UUIDv7 | UUID version, reproducibility, different seed means different values |
+| Patient | Counts; unique ID/MRN/email/phone; phone only within the fake range; `.test` email; names by gender; 49/51 gender ratio; age distribution 18/35/29/18; valid birth dates; fake markers `(test)`, `(giả)` |
+| Phone number range | 500,000 unique numbers for `large`; the first 100,000 numbers are in the original `09000xxxxx` range |
+| Practitioner / Role | IDs unique among themselves and against Patient; references exist; specialty and role come from `contracts/terminology`; names by gender |
+| Reproducibility | The same seed + scale produce byte-identical output files |
 
-## 9. Quy ước đã chốt
+## 9. Agreed conventions
 
-| Nội dung | Quy ước |
+| Item | Convention |
 |---|---|
-| Họ tên | Tên đệm và tên chọn theo giới (`names.py`); tỉ lệ giới 49/51 |
-| Số điện thoại | `+84900` + 6 chữ số theo thứ tự bệnh nhân, không trùng. `small`/`medium` nằm trong dải `09000xxxxx` của ARC-11; `large` mở rộng sang `0900xxxxxx` (đã ghi vào `docs/00-synthetic-data.md` §3) |
-| Patient email | `<slug>-<số thứ tự>@example.test` (thêm số thứ tự để không trùng) |
-| Practitioner email | `<slug>-nv<mã nhân viên>@example.test` |
-| Tỉ lệ bác sĩ/điều dưỡng | 2:1 |
-| Mã vai trò | CodeSystem `practitioner-role` (`https://shp.example.org/fhir/CodeSystem/practitioner-role`) trong `contracts/terminology`, khớp 01-domain-model §3 |
+| Full name | Middle and given names chosen by gender (`names.py`); 49/51 gender ratio |
+| Phone number | `+84900` + 6 digits in patient order, no duplicates. `small`/`medium` stay in the ARC-11 `09000xxxxx` range; `large` extends to `0900xxxxxx` (documented in `docs/00-synthetic-data.md` §3) |
+| Patient email | `<slug>-<sequence number>@example.test` (sequence number added to avoid duplicates) |
+| Practitioner email | `<slug>-nv<staff code>@example.test` |
+| Doctor/nurse ratio | 2:1 |
+| Role code | CodeSystem `practitioner-role` (`https://shp.example.org/fhir/CodeSystem/practitioner-role`) in `contracts/terminology`, matching 01-domain-model §3 |
 
-## 10. Lưu ý khi sử dụng
+## 10. Usage notes
 
-- Chỉ sử dụng dữ liệu sinh ra cho phát triển, demo và kiểm thử.
-- Không nhập dữ liệu thật vào generator.
-- Không commit các file JSON dữ liệu sinh ra.
-- Giữ lại `seed` và `scale` để tái tạo cùng bộ dữ liệu.
-- Kiểm tra manifest và SHA-256 khi cần xác minh dữ liệu.
-- Khi thay đổi generator, cần chạy lại automated tests và kiểm tra tính tái lập.
+- Use generated data only for development, demos and testing.
+- Do not feed real data into the generator.
+- Do not commit generated JSON data files.
+- Keep the `seed` and `scale` to regenerate the same data set.
+- Check the manifest and SHA-256 when you need to verify the data.
+- When changing the generator, re-run the automated tests and check reproducibility.
 
 ---
 

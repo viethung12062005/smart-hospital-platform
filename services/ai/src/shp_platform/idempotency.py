@@ -1,8 +1,8 @@
-"""Idempotency-Key trên MongoDB cho service Python (giống SHR-12 bên Java; 07 §4).
+"""Idempotency-Key on MongoDB for Python services (same as SHR-12 in Java; 07 §4).
 
-- Khóa = (người gọi, Idempotency-Key). Lần đầu giành khóa rồi xử lý; cùng khóa + cùng thân yêu cầu → trả lại đúng
-  phản hồi đã lưu; cùng khóa + thân khác → 422 `idempotency-key-reused`; đang xử lý → 409.
-- Lưu 24 giờ (TTL). Thân yêu cầu chỉ lưu băm, không lưu nội dung.
+- Key = (caller, Idempotency-Key). The first request claims the key then processes; same key + same request body →
+  return the exact stored response; same key + different body → 422 `idempotency-key-reused`; in progress → 409.
+- Stored for 24 hours (TTL). Only a hash of the request body is stored, never its content.
 """
 
 import hashlib
@@ -40,7 +40,7 @@ class Idempotency:
         return hashlib.sha256(f"{subject}|{scope}|{key}".encode()).hexdigest()
 
     def begin(self, subject: str, scope: str, key: str, body_hash: str) -> dict[str, Any] | None:
-        """Trả phản hồi đã lưu (replay) hoặc None nếu đã giành khóa để xử lý lần đầu."""
+        """Return the stored response (replay), or None if the key was claimed for first-time processing."""
         _id = self._id(subject, scope, key)
         try:
             self._c.insert_one({"_id": _id, "hash": body_hash, "state": "processing", "createdAt": datetime.now(UTC)})
@@ -63,5 +63,5 @@ class Idempotency:
         )
 
     def abandon(self, subject: str, scope: str, key: str) -> None:
-        """Lỗi trong lúc xử lý: nhả khóa để người dùng thử lại với cùng khóa."""
+        """Processing failed: release the key so the user can retry with the same key."""
         self._c.delete_one({"_id": self._id(subject, scope, key), "state": "processing"})

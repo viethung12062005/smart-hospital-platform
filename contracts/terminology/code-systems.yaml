@@ -1,7 +1,7 @@
-# Danh mục mã dùng chung (value set). Nguồn: docs/03-architecture/detailed-design/01-domain-model.md §3.
-# - specialty, cancel-reason, booking-channel: do SHP định nghĩa (canonical URL giả định shp.example.org).
-# - LOINC / ICD-10: TẬP CON chọn lọc đủ cho dữ liệu giả của đồ án, không phải toàn bộ danh mục.
-#   Mã LOINC/ICD-10 do SA đối chiếu theo kiến thức chuẩn, chưa đối chiếu bản chính thức: đối chiếu trước khi dùng ngoài đồ án.
+# Shared code catalogs (value sets). Source: docs/03-architecture/detailed-design/01-domain-model.md §3.
+# - specialty, cancel-reason, booking-channel: defined by SHP (canonical URL assumed to be shp.example.org).
+# - LOINC / ICD-10: a curated SUBSET sufficient for the project's fake data, not the full catalog.
+#   LOINC/ICD-10 codes were checked by the SA against standard knowledge, not against the official release: verify before use outside the project.
 version: 1
 codeSystems:
   specialty:
@@ -71,8 +71,8 @@ codeSystems:
       M54.5: Low back pain
       N39.0: Urinary tract infection, site not specified
       R50.9: Fever, unspecified
-# URL của extension FHIR (StructureDefinition) do SHP định nghĩa, cùng gốc canonical với CodeSystem ở trên.
-# Nguồn: 01-domain-model §3.1; validate_terminology.py kiểm hai chiều với các dòng `extension[<khóa>]` trong tài liệu.
+# URLs of FHIR extensions (StructureDefinitions) defined by SHP, under the same canonical root as the CodeSystems above.
+# Source: 01-domain-model §3.1; validate_terminology.py checks both directions against the `extension[<key>]` lines in the document.
 extensions:
   booking-channel:
     url: https://shp.example.org/fhir/StructureDefinition/booking-channel

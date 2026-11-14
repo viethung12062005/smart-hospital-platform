@@ -1,8 +1,8 @@
-# Ai phải review thay đổi ở đâu (docs/04-devops/github-setup.md §3). Dòng sau ghi đè dòng trước.
-# Khi có tài khoản GitHub của D1/D2/D3: bỏ dấu # ở dòng tương ứng và thay @D1/@D2/@D3 bằng tên tài khoản thật
-# (tên không tồn tại làm GitHub bỏ qua cả dòng). Không ghi email hay thông tin cá nhân.
+# Who must review changes where (docs/04-devops/github-setup.md §3). A later line overrides an earlier one.
+# When the D1/D2/D3 GitHub accounts exist: uncomment the matching lines and replace @D1/@D2/@D3 with the real accounts
+# (a non-existent account makes GitHub ignore the whole line). Do not write emails or personal information.
 
-# Mặc định: SA (nền tảng, hợp đồng, pipeline, tài liệu kiến trúc)
+# Default: SA (platform, contracts, pipelines, architecture docs)
 *                           @viethung12062005
 
 # /services/scheduling/     @D1 @viethung12062005
@@ -14,7 +14,7 @@
 /services/ml/               @viethung12062005
 # /web/src/pages/           @D1 @D2 @D3 @viethung12062005
 
-# Luôn cần SA, kể cả khi đã mở các dòng trên
+# Always need SA, even when the lines above are enabled
 /libs/                      @viethung12062005
 /contracts/                 @viethung12062005
 /.github/                   @viethung12062005
@@ -24,7 +24,7 @@
 /services/*/deploy/         @viethung12062005
 /services/*/src/main/java/org/shp/*/config/ @viethung12062005
 /docs/03-architecture/      @viethung12062005
-# Nền web app (đăng nhập, client API, khung giao diện, image): luôn cần SA
+# Web app foundation (login, API client, layout shell, image): always need SA
 /web/src/api/               @viethung12062005
 /web/src/auth/              @viethung12062005
 /web/src/layout/            @viethung12062005

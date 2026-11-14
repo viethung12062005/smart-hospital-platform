@@ -1,6 +1,6 @@
-"""Token dịch vụ (OAuth2 client credentials, Keycloak) để gọi `/internal/*` của service khác (15 §7, IAM-02).
+"""Service token (OAuth2 client credentials, Keycloak) for calling another service's `/internal/*` (15 §7, IAM-02).
 
-Cache tới trước khi hết hạn 30 giây. Secret client lấy từ Key Vault/secret Kubernetes; không bao giờ log token.
+Cached until 30 seconds before expiry. The client secret comes from Key Vault/Kubernetes secrets; never log the token.
 """
 
 import threading
@@ -48,9 +48,9 @@ class ServiceTokenProvider:
 
 
 class StaticToken:
-    """Bản giả cho dev/test."""
+    """Fake implementation for dev/test."""
 
-    def __init__(self, value: str = "test-service-token") -> None:  # noqa: S107 - giá trị giả cho test
+    def __init__(self, value: str = "test-service-token") -> None:  # noqa: S107 - fake value for tests
         self.value = value
 
     def token(self) -> str:

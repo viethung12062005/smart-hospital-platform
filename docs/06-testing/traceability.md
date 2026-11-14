@@ -1,19 +1,19 @@
-# Truy vết yêu cầu ↔ test case
+# Requirements <-> test case traceability
 
-> Sinh tự động bằng `python -I tools/qa/trace.py`. Không sửa tay. Nguồn: `docs/06-testing/catalog/`, SRS v0.96.
+> Generated automatically by `python -I tools/qa/trace.py`. Do not edit by hand. Source: `docs/06-testing/catalog/`, SRS v0.96.
 
-## Tóm tắt
+## Summary
 
-| Chỉ số | Giá trị |
+| Metric | Value |
 |---|---|
-| Test case | 202 |
-| Đã tự động hóa hoặc một phần | 38 (18%) |
-| Tự động hóa đầy đủ | 9 |
-| P0 (bảo mật, dữ liệu bệnh nhân, an toàn người bệnh) | 121, tự động hóa ít nhất một phần: 25 |
+| Test cases | 202 |
+| Automated or partially automated | 38 (18%) |
+| Fully automated | 9 |
+| P0 (security, patient data, patient safety) | 121, automated at least partially: 25 |
 
-## Theo module và trạng thái
+## By module and status
 
-| Module | Tổng | Tự động | Một phần | Chờ viết | Thủ công |
+| Module | Total | Automated | Partial | Awaiting implementation | Manual |
 |---|---|---|---|---|---|
 | ai | 15 | 0 | 0 | 15 | 0 |
 | clinical | 44 | 0 | 0 | 44 | 0 |
@@ -24,9 +24,9 @@
 | security | 28 | 4 | 6 | 18 | 0 |
 | system | 10 | 1 | 1 | 8 | 0 |
 
-## Theo mức kiểm thử
+## By test level
 
-| Mức | Tổng | Tự động | Một phần | Chờ viết | Thủ công |
+| Level | Total | Automated | Partial | Awaiting implementation | Manual |
 |---|---|---|---|---|---|
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
@@ -41,109 +41,109 @@
 | ci | 5 | 1 | 2 | 2 | 0 |
 | review | 6 | 1 | 0 | 0 | 5 |
 
-## P0 chưa có test tự động (ưu tiên viết khi tính năng sẵn sàng)
+## P0 without automated tests (write first when the feature is ready)
 
-| Test case | Chặn bởi | Người phụ trách |
+| Test case | Blocked by | Owner |
 |---|---|---|
-| TC-AC-01.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-01.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-01.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-03.6 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-03.7 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-04.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-04.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-05.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-05.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-05.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-05.3-download-document | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-06.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-09.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-09.2 | Chưa có kho audit WORM và API tra cứu (AUD-02, AUD-06). | D2 |
-| TC-AC-10.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-10.1-break-glass-alert | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-11.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-12.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-14.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-AL.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-BG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-BG.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-BG.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-BK.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-CI.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-CL.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-CL.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-CL.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-CL.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-CP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-CS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-EA.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-FB.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-FS.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-ID.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-ID.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-ID.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-IS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-LK.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-LK.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-LK.3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-LK.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-LP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-PG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-PX.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-RE.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-RG.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-RG.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-RG.4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-RS.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | qnt124 |
-| TC-AC-RV.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-SM.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-SM.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | 24021501-hunglk |
-| TC-AC-SP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-TL.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-TL.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-UD.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-UD.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-UP.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-VD.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-VT.1 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-AC-VT.2 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | Her55chers |
-| TC-NFR-A4 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-A5 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC10 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC11 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC12 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC13 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC14 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC16 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC17 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC18 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC19 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC20 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC3 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC7 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-NFR-SEC8 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-01 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-03 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-05 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-07 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-12 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-13 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-14 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-15 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-16 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-17 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-18 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-19 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-20 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-21 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-22 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-25 | Chờ tính năng hoặc môi trường tương ứng được hiện thực. | viethung12062005 |
-| TC-SEC-26 | Cần audit-verify và Blob WORM (AUD-02, AUD-06, IAC-12). | D2 |
-| TC-SEC-27 | Giao diện chưa có đăng xuất xóa dữ liệu và chặn Back (WEB-xx). | SA |
+| TC-AC-01.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-01.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-01.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-03.6 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-03.7 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-04.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-04.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-05.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-05.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-05.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-05.3-download-document | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-06.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-09.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-09.2 | No WORM audit store and query API yet (AUD-02, AUD-06). | D2 |
+| TC-AC-10.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-10.1-break-glass-alert | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-11.2 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-12.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-14.2 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-AL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-BG.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-BG.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-BG.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-BK.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-CI.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-CL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-CL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-CL.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-CL.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-CP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-CS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-EA.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-FB.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-FS.3 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-ID.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-ID.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-ID.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-IS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-LK.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-LK.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-LK.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-LK.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-LP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-PG.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-PX.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-RE.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-RG.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-RG.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-RG.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-RS.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
+| TC-AC-RV.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-SM.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-SM.2 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
+| TC-AC-SP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-TL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-TL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-UD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-UD.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-UP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-VD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-VT.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-AC-VT.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
+| TC-NFR-A4 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-A5 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC10 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC11 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC12 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC13 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC14 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC16 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC17 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC18 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC19 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC20 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC3 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC7 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-NFR-SEC8 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-01 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-03 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-05 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-07 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-12 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-13 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-14 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-15 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-16 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-17 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-18 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-19 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-20 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-21 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-22 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-25 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
+| TC-SEC-26 | Requires audit-verify and Blob WORM (AUD-02, AUD-06, IAC-12). | D2 |
+| TC-SEC-27 | The UI has no logout that clears data and blocks Back (WEB-xx). | SA |
 
-## Ma trận yêu cầu → test case
+## Requirements -> test case matrix
 
-| Yêu cầu | Test case | Trạng thái |
+| Requirement | Test case | Status |
 |---|---|---|
 | AC-01.1 | TC-AC-01.1 (api, P0) | planned |
 | AC-01.2 | TC-AC-01.2 (api, P0) | planned |

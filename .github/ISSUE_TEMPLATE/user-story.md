@@ -1,18 +1,18 @@
 ---
 name: User Story
-about: Issue cha của một US; các task là sub-issue (docs/00-workflow.md §2)
-title: "US-xxx: <tên story>"
+about: Parent issue of a US; tasks are sub-issues (docs/00-workflow.md §2)
+title: "US-xxx: <story name>"
 labels: user-story
 ---
-**Câu chuyện:** Là <vai trò>, tôi muốn <mong muốn> để <lợi ích>.
-**Mức ưu tiên:** <!-- Must / Should / Could; gắn label priority:* tương ứng -->
-**Use case, API, yêu cầu liên quan:** <!-- vd. UC-07; S10; FR-07 -->
+**Story:** As a <role>, I want <want> so that <benefit>.
+**Priority:** <!-- Must / Should / Could; add the matching priority:* label -->
+**Use cases, APIs, related requirements:** <!-- e.g. UC-07; S10; FR-07 -->
 
-**Tiêu chí nghiệm thu (AC):**
-- [ ] <!-- AC-xx.y — test case trong docs/06-testing/catalog/<file>.yaml -->
+**Acceptance criteria (AC):**
+- [ ] <!-- AC-xx.y - test case in docs/06-testing/catalog/<file>.yaml -->
 
-**Cờ tính năng:** <!-- SHP_FEATURE_<TÊN> nếu task merge trước khi US xong; không cần thì ghi "không" -->
+**Feature flag:** <!-- SHP_FEATURE_<NAME> if a task merges before the US is done; write "none" if not needed -->
 
-**Đóng khi:** mọi sub-issue đóng, mọi AC có test tự động xanh trên main, đã chạy thử luồng trên cụm với dữ liệu giả (ghi kết quả ở comment).
+**Close when:** every sub-issue is closed, every AC has an automated test green on main, and the flow has been run on a cluster with fake data (record the result in a comment).
 
-> Repo public: chỉ dữ liệu giả. Không dán dữ liệu bệnh nhân thật, token, mật khẩu hay log có PII.
+> Public repo: fake data only. Do not paste real patient data, tokens, passwords or logs containing PII.

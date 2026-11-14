@@ -1,34 +1,34 @@
-# ADR-0013: DeepSeek làm model chính, Gemini free tier dự phòng, embedding chạy local
+# ADR-0013: DeepSeek as primary model, Gemini free tier as fallback, local embeddings
 
-## Trạng thái
-Accepted (2026-10-27) — SA/PM quyết định. Thay phần chuỗi model của [ADR-0006](0006-llm-router-fallback.md); cơ chế router, circuit breaker, ngân sách token giữ nguyên.
+## Status
+Accepted (2026-10-27) — SA/PM decision. Replaces the model chain part of [ADR-0006](0006-llm-router-fallback.md); the router mechanism, circuit breaker, and token budget remain unchanged.
 
-## Bối cảnh
-Chi phí là ràng buộc chính của đồ án; không dùng model chạy trên cloud trả phí (Azure OpenAI, Claude, Azure Document Intelligence).
-Dữ liệu chỉ là dữ liệu giả, nhưng thiết kế vẫn phải đúng cho hệ thống thật (NFR-SEC8).
+## Context
+Cost is the main constraint of the capstone project; do not use paid cloud-hosted models (Azure OpenAI, Claude, Azure Document Intelligence).
+The data is synthetic, but the design must still be correct for a real system (NFR-SEC8).
 
-## Quyết định
-| Tác vụ | Chính | Dự phòng 1 | Dự phòng 2 | Cuối cùng |
+## Decision
+| Task | Primary | Fallback 1 | Fallback 2 | Last resort |
 |---|---|---|---|---|
-| RAG trợ lý tri thức | **DeepSeek** (API, qua OpenAI-compatible) | **Gemini free tier** | Ollama `qwen2.5` trong cluster | Chỉ trả danh sách tài liệu liên quan |
-| Tóm tắt hồ sơ | DeepSeek | Gemini | — | Timeline có cấu trúc (không LLM) |
-| Trích xuất tài liệu | **Tesseract (OCR local)** → DeepSeek tách trường | Gemini | — | Hàng đợi người duyệt |
-| Chatbot đặt lịch | DeepSeek (tool calling) | Gemini (tool calling) | — | Form đặt lịch thường |
-| Embedding | **bge-m3 chạy local** (Ollama, 1024 chiều) | — | — | Chỉ BM25 |
+| Knowledge assistant RAG | **DeepSeek** (API, via OpenAI-compatible) | **Gemini free tier** | Ollama `qwen2.5` in the cluster | Return only a list of relevant documents |
+| Record summarization | DeepSeek | Gemini | — | Structured timeline (no LLM) |
+| Document extraction | **Tesseract (local OCR)** → DeepSeek extracts fields | Gemini | — | Human review queue |
+| Booking chatbot | DeepSeek (tool calling) | Gemini (tool calling) | — | Regular booking form |
+| Embedding | **bge-m3 running locally** (Ollama, 1024 dimensions) | — | — | BM25 only |
 
-- **Mọi lời gọi tới DeepSeek và Gemini bắt buộc qua redact PII** (không còn cờ `redactPii: false` ngoài Ollama).
-- Gemini free tier có hạn mức thấp và dữ liệu có thể được dùng để cải thiện sản phẩm: chỉ là dự phòng, chỉ nhận văn bản đã redact, và chỉ dữ liệu giả.
-- Embedding và Ollama chạy trong cluster (node pool `ai`, CPU). Đổi model embedding = index `v2` (không trộn vector).
-- Retrieval: hybrid BM25 + vector (RRF) trong AI Search; **không dùng semantic ranker của Azure**. Bước rerank bằng cross-encoder local là tùy chọn, chỉ bật nếu eval (NFR-AI1) cho thấy cần.
-- Key DeepSeek/Gemini là secret: Key Vault + CSI trên cloud; local nằm ở `dev/.local/` (không commit), hoặc để trống để chạy bằng Ollama.
-- Eval chạy trên **từng** model trong chuỗi (NFR-AI7), kể cả khi DeepSeek/Gemini đổi phiên bản.
+- **Every call to DeepSeek and Gemini must go through PII redaction** (no more `redactPii: false` flag except for Ollama).
+- The Gemini free tier has low quotas and data may be used to improve the product: fallback only, receives only redacted text, and synthetic data only.
+- Embeddings and Ollama run in the cluster (`ai` node pool, CPU). Changing the embedding model = index `v2` (do not mix vectors).
+- Retrieval: hybrid BM25 + vector (RRF) in AI Search; **do not use Azure's semantic ranker**. The rerank step with a local cross-encoder is optional, enabled only if eval (NFR-AI1) shows it is needed.
+- DeepSeek/Gemini keys are secrets: Key Vault + CSI in the cloud; locally in `dev/.local/` (not committed), or left empty to run with Ollama.
+- Eval runs on **each** model in the chain (NFR-AI7), including when DeepSeek/Gemini change versions.
 
-## Phương án đã cân nhắc
-- DeepSeek trên Azure AI Foundry: dữ liệu ở lại Azure nhưng giá cao hơn và không còn "free"; bị loại theo yêu cầu chi phí.
-- Gemini làm model chính: free tier giới hạn lượt gọi quá thấp cho tải RAG; chỉ hợp làm dự phòng.
+## Alternatives considered
+- DeepSeek on Azure AI Foundry: data stays in Azure but costs more and is no longer "free"; rejected per the cost requirement.
+- Gemini as the primary model: free-tier call limits are too low for RAG load; only suitable as fallback.
 
-## Hệ quả
-- Rủi ro ổn định/độ trễ của API bên ngoài → giữ chuỗi dự phòng và Ollama cuối chuỗi; NFR-P5/P6 đo cả đường dự phòng.
-- Cần node pool `ai` đủ RAM cho Ollama (bge-m3 + qwen2.5-7b ≈ 8–10 GB); trên UAT có thể dùng model nhỏ hơn.
-- Bỏ module Azure OpenAI/Document Intelligence khỏi IaC (IAC-19 đổi nội dung).
-- Khi bảo vệ cần nêu: hệ thống thật chỉ gửi văn bản đã redact, hoặc dùng model tự host.
+## Consequences
+- External API stability/latency risk → keep the fallback chain and Ollama at the end; NFR-P5/P6 measure the fallback path too.
+- Need an `ai` node pool with enough RAM for Ollama (bge-m3 + qwen2.5-7b ≈ 8–10 GB); UAT can use smaller models.
+- Remove the Azure OpenAI/Document Intelligence modules from IaC (IAC-19 content changes).
+- During the defense, state: the real system only sends redacted text, or uses self-hosted models.

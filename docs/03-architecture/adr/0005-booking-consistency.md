@@ -1,29 +1,29 @@
-# ADR-0005: Chống double-booking và request lặp
+# ADR-0005: Prevent double-booking and duplicate requests
 
-## Trạng thái
-Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
+## Status
+Accepted (2026-10-26) — approved by the Solution Architect/PM together with gate G3.
 
-## Bối cảnh
-Cách làm phổ biến là tạo Appointment mà không khóa Slot → hai bệnh nhân có thể đặt cùng slot. Client
-mobile hay retry khi timeout → tạo lịch trùng.
+## Context
+A common approach is creating an Appointment without locking the Slot → two patients can book the same slot. Mobile
+clients often retry on timeout → create a duplicate appointment.
 
-## Quyết định
-`POST /fhir/Appointment/$book` trong **một transaction Postgres**:
-1. Giành idempotency key (`INSERT ... ON CONFLICT DO NOTHING`).
-2. Advisory lock theo bệnh nhân (tuần tự hóa kiểm tra BR-03: tối đa 3 lịch hẹn tương lai).
-3. **Compare-and-set** trên slot: `UPDATE slot SET status='busy' WHERE id=@id AND status='free' ...`; 0 dòng bị ảnh hưởng →
-   có người đặt trước → `409` (không giữ lock lâu, không cần đọc trước).
-4. Tạo Appointment, ghi lịch sử và event `appointment-booked` vào outbox.
-5. **Lớp bảo vệ cuối ở tầng DB:** `UNIQUE INDEX ON appointment(slot_id) WHERE status IN ('booked','arrived','fulfilled')` và
-   exclusion constraint chống slot chồng lấn — đúng ngay cả khi code có lỗi.
+## Decision
+`POST /fhir/Appointment/$book` in **one Postgres transaction**:
+1. Acquire the idempotency key (`INSERT ... ON CONFLICT DO NOTHING`).
+2. Advisory lock per patient (serialize the BR-03 check: at most 3 future appointments).
+3. **Compare-and-set** on the slot: `UPDATE slot SET status='busy' WHERE id=@id AND status='free' ...`; 0 rows affected →
+   someone booked first → `409` (no long-held lock, no prior read needed).
+4. Create the Appointment, write history and the `appointment-booked` event into the outbox.
+5. **Final safeguard at the DB layer:** `UNIQUE INDEX ON appointment(slot_id) WHERE status IN ('booked','arrived','fulfilled')` and
+   an exclusion constraint preventing overlapping slots — correct even if the code has bugs.
 
-Header `Idempotency-Key` bắt buộc: kết quả được lưu theo (user, key); request lặp trả lại đúng
-Appointment cũ thay vì tạo mới.
+The `Idempotency-Key` header is mandatory: the result is stored by (user, key); a repeated request returns the same
+old Appointment instead of creating a new one.
 
-## Phương án đã cân nhắc
-- `SELECT ... FOR UPDATE` (pessimistic): cũng đúng, nhưng giữ lock lâu hơn khi tải cao.
-- Distributed lock bằng Redis: thêm phụ thuộc và thêm cách hỏng.
+## Alternatives considered
+- `SELECT ... FOR UPDATE` (pessimistic): also correct, but holds locks longer under high load.
+- Distributed lock with Redis: adds a dependency and another failure mode.
 
-## Hệ quả
-Đã kiểm chứng trên PostgreSQL 16: 50 phiên song song cùng đặt một slot → đúng 1 lịch hẹn
-(xem `detailed-design/02-db-scheduling.md` §6). Test tích hợp tương ứng (SCH-13) chạy trong CI.
+## Consequences
+Verified on PostgreSQL 16: 50 concurrent sessions booking the same slot → exactly 1 appointment
+(see `detailed-design/02-db-scheduling.md` §6). The corresponding integration test (SCH-13) runs in CI.

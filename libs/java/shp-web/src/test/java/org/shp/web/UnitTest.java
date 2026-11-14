@@ -60,7 +60,7 @@ class UnitTest {
     clock.now = clock.now.plusSeconds(59);
     resolver.resolve("s");
     assertThat(links.calls).isEqualTo(1);
-    links.links.put("s", new IdentityLink("Patient", "p1", true)); // admin khóa tài khoản
+    links.links.put("s", new IdentityLink("Patient", "p1", true)); // admin locks the account
     clock.now = clock.now.plusSeconds(2);
     assertThat(resolver.resolve("s")).hasValueSatisfying(l -> assertThat(l.disabled()).isTrue());
     assertThat(links.calls).isEqualTo(2);
@@ -72,12 +72,15 @@ class UnitTest {
     var clock = new MutableClock();
     var resolver = new IdentityResolver(links, clock);
     assertThat(resolver.resolve("s")).isEmpty();
-    links.links.put("s", new IdentityLink("Patient", "p1", false)); // vừa đăng ký xong
+    links.links.put("s", new IdentityLink("Patient", "p1", false)); // just registered
     clock.now = clock.now.plusSeconds(6);
     assertThat(resolver.resolve("s")).isPresent();
   }
 
-  /** Mỗi kịch bản một server giả (MockRestServiceServer không cho thêm kỳ vọng sau khi đã gọi). */
+  /**
+   * One fake server per scenario (MockRestServiceServer does not allow adding expectations after a
+   * call).
+   */
   private static HttpIdentityLinkClient clientReturning(
       String path, HttpStatus status, String body) {
     var builder = RestClient.builder().baseUrl("http://clinical");
@@ -151,7 +154,7 @@ class UnitTest {
     assertThat(dir).isNotNull();
     String text =
         Files.readString(dir.resolve("docs/03-architecture/detailed-design/07-api-conventions.md"));
-    String section = text.substring(text.indexOf("## 5. Lỗi"), text.indexOf("## 6."));
+    String section = text.substring(text.indexOf("## 5. Errors"), text.indexOf("## 6."));
     List<Map.Entry<String, Integer>> documented = new ArrayList<>();
     var row = Pattern.compile("(?m)^\\| (\\d{3}) \\|[^|]*\\|(.*)\\|\\s*$").matcher(section);
     while (row.find()) {

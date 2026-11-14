@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Kiểm contracts/openapi: hợp lệ OpenAPI, đủ endpoint như tài liệu, mọi endpoint ngoài /internal có role khớp ma trận hoặc ghi chú.
-Dùng: python3 -I tools/contracts/validate_openapi.py"""
+"""Check contracts/openapi: valid OpenAPI, all endpoints present as in the docs, every non-/internal endpoint has a role matching the matrix or a note.
+Usage: python3 -I tools/contracts/validate_openapi.py"""
 from __future__ import annotations
 
 import sys
@@ -22,17 +22,17 @@ def main() -> int:
     for service, ops in expected.items():
         f = ROOT / "contracts/openapi" / f"{service}.yaml"
         if not f.exists():
-            errs.append(f"{service}: thiếu {f.name}")
+            errs.append(f"{service}: missing {f.name}")
             continue
         spec = yaml.safe_load(f.read_text(encoding="utf-8"))
         try:
             validate(spec)
         except Exception as e:  # noqa: BLE001
-            errs.append(f"{service}: OpenAPI không hợp lệ: {str(e)[:200]}")
+            errs.append(f"{service}: invalid OpenAPI: {str(e)[:200]}")
             continue
         have = {(op["operationId"]) for p in spec["paths"].values() for op in p.values()}
         want = {o["id"] for o in ops}
-        errs += [f"{service}: thiếu {i}" for i in sorted(want - have)] + [f"{service}: thừa {i}" for i in sorted(have - want)]
+        errs += [f"{service}: missing {i}" for i in sorted(want - have)] + [f"{service}: extra {i}" for i in sorted(have - want)]
         seen += len(have)
         for path, item in spec["paths"].items():
             fhir = path.startswith("/fhir/")
@@ -44,18 +44,18 @@ def main() -> int:
                     content = (resp.get("content") or {})
                     schemas = [c.get("schema", {}).get("$ref") for c in content.values()]
                     if want_ref not in schemas:
-                        errs.append(f"{service}: {method.upper()} {path} {code} thiếu schema {want_ref.split('/')[-1]}")
+                        errs.append(f"{service}: {method.upper()} {path} {code} missing schema {want_ref.split('/')[-1]}")
 
             for method, op in item.items():
                 if not path.startswith("/internal/") and not op.get("x-roles") and "x-permission" in op:
                     perm = op["x-permission"]
                     if not perm:
-                        errs.append(f"{service} {op['operationId']}: thiếu quyền")
+                        errs.append(f"{service} {op['operationId']}: missing permission")
     for e in errs:
         print("ERROR", e)
     if errs:
         return 1
-    print(f"OK: {seen} operation, {len(expected)} service khớp tài liệu thiết kế")
+    print(f"OK: {seen} operations, {len(expected)} services match the design docs")
     return 0
 
 

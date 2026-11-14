@@ -1,28 +1,28 @@
-# ADR-0010: Chiến lược repository
+# ADR-0010: Repository strategy
 
-## Trạng thái
-Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
+## Status
+Accepted (2026-10-26) — approved by the Solution Architect/PM together with gate G3.
 
-## Bối cảnh
-Nhóm 4 người (1 Solution Architect/PM/DevOps, 3 dev), 8 service, yêu cầu pipeline riêng cho từng service,
-template dùng chung, GitOps, phân quyền rõ giữa code ứng dụng, hạ tầng và cấu hình triển khai.
+## Context
+A team of 4 (1 Solution Architect/PM/DevOps, 3 devs), 8 services, a requirement for a separate pipeline per service,
+shared templates, GitOps, and clear permission separation between application code, infrastructure, and deployment configuration.
 
-## Quyết định: 4 repository
+## Decision: 4 repositories
 
-| Repo | Nội dung | Ai được merge | Lý do tách |
+| Repo | Contents | Who can merge | Reason for separation |
 |---|---|---|---|
-| `smart-hospital-platform` (repo hiện tại) | Monorepo ứng dụng: `services/*`, `libs/*`, `web/`, `docs/`, workflow caller của từng service | Dev (PR + review) | Ít service, ít người → monorepo giảm chi phí phối hợp; pipeline vẫn tách theo đường dẫn |
-| `shp-platform-templates` | Reusable workflows (CI templates) + Helm chart chung `microservice`, phát hành có version (tag `vX.Y.Z`, chart OCI trên ACR) | DevOps | Template có version: thay đổi template không làm vỡ mọi service cùng lúc; service ghim version |
-| `shp-infra` | Terraform: `bootstrap/`, `modules/`, `envs/{uat,prod}`; workflow `env-provision`, `env-destroy`, `cost-guard` | DevOps | Quyền tạo/hủy hạ tầng tách khỏi dev; identity Azure chỉ trust repo này |
-| `shp-gitops` | Argo CD bootstrap, platform add-on, policy, values từng service theo môi trường | Bot (uat) + DevOps (prod) | Nguồn sự thật của cluster; CI ghi tag image vào đây mà không kích hoạt CI ứng dụng; CODEOWNERS khóa `envs/prod` |
+| `smart-hospital-platform` (current repo) | Application monorepo: `services/*`, `libs/*`, `web/`, `docs/`, caller workflow for each service | Dev (PR + review) | Few services, few people → monorepo reduces coordination cost; pipelines are still separated by path |
+| `shp-platform-templates` | Reusable workflows (CI templates) + shared `microservice` Helm chart, versioned release (tag `vX.Y.Z`, OCI chart on ACR) | DevOps | Versioned templates: a template change does not break all services at once; services pin a version |
+| `shp-infra` | Terraform: `bootstrap/`, `modules/`, `envs/{uat,prod}`; `env-provision`, `env-destroy`, `cost-guard` workflows | DevOps | Permission to create/destroy infrastructure is separated from dev; the Azure identity only trusts this repo |
+| `shp-gitops` | Argo CD bootstrap, platform add-ons, policies, per-service values by environment | Bot (uat) + DevOps (prod) | Source of truth for the cluster; CI writes image tags here without triggering application CI; CODEOWNERS locks `envs/prod` |
 
-## Phương án đã cân nhắc
-- **Một monorepo cho tất cả**: đơn giản nhất, nhưng bot GitOps commit vào cùng repo gây vòng lặp CI, và không
-  tách được quyền hạ tầng/prod.
-- **Mỗi service một repo (polyrepo)**: đúng kiểu hệ thống lớn, nhưng 8 repo cho 3 dev tạo nhiều chi phí
-  (đồng bộ thư viện chung, đổi nhiều repo cho một tính năng); lợi ích chỉ có khi có nhiều team độc lập.
+## Alternatives considered
+- **One monorepo for everything**: simplest, but the GitOps bot committing to the same repo causes CI loops, and
+  infrastructure/prod permissions cannot be separated.
+- **One repo per service (polyrepo)**: appropriate for large systems, but 8 repos for 3 devs creates overhead
+  (shared library syncing, changing multiple repos for one feature); the benefits only appear with many independent teams.
 
-## Hệ quả
-- Reusable workflow ở repo private khác chỉ gọi được khi bật "Accessible from repositories owned by the user"
-  trong cài đặt Actions của `shp-platform-templates`.
-- Cần một GitHub App (bot) có quyền ghi vào `shp-gitops` để CI cập nhật tag image.
+## Consequences
+- Reusable workflows in another private repo can only be called when "Accessible from repositories owned by the user"
+  is enabled in the Actions settings of `shp-platform-templates`.
+- Need a GitHub App (bot) with write access to `shp-gitops` so CI can update image tags.

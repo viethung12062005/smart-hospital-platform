@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shp.example.org/schemas/scheduling/appointment-rescheduled/v1.json",
   "title": "shp.scheduling.appointment-rescheduled.v1",
-  "description": "E3: đổi lịch (một event cho cặp hủy + đặt mới). Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "description": "E3: reschedule (one event for the cancel + new booking pair). IDs/codes/timestamps/status only, no PII. Only optional fields may be added within the same version.",
   "type": "object",
   "required": [
     "oldAppointmentId",

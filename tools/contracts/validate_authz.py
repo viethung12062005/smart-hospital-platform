@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm tra contracts/authz/matrix.yaml: cấu trúc, bất biến an toàn, độ phủ. Dùng: python3 -I tools/contracts/validate_authz.py"""
+"""Check contracts/authz/matrix.yaml: structure, security invariants, coverage. Usage: python3 -I tools/contracts/validate_authz.py"""
 from __future__ import annotations
 
 import sys
@@ -21,37 +21,37 @@ def validate(doc: dict) -> list[str]:
     for r in doc["rules"]:
         rid = r.get("id", "?")
         if rid in ids:
-            errs.append(f"{rid}: id trùng")
+            errs.append(f"{rid}: duplicate id")
         ids.add(rid)
         if r["resource"] not in resources:
-            errs.append(f"{rid}: resource lạ {r['resource']}")
+            errs.append(f"{rid}: unknown resource {r['resource']}")
             continue
         if r["action"] not in resources[r["resource"]]["actions"]:
-            errs.append(f"{rid}: action {r['action']} không khai báo cho {r['resource']}")
+            errs.append(f"{rid}: action {r['action']} not declared for {r['resource']}")
         if r["role"] not in roles:
-            errs.append(f"{rid}: role lạ {r['role']}")
+            errs.append(f"{rid}: unknown role {r['role']}")
         for p in r.get("when", []):
             if p not in preds:
-                errs.append(f"{rid}: predicate lạ {p}")
+                errs.append(f"{rid}: unknown predicate {p}")
         if "purpose" in r and r["purpose"] not in purposes:
-            errs.append(f"{rid}: purpose lạ {r['purpose']}")
+            errs.append(f"{rid}: unknown purpose {r['purpose']}")
         if (r["resource"], r["action"]) in deny:
-            errs.append(f"{rid}: vi phạm denyAll")
+            errs.append(f"{rid}: violates denyAll")
         covered.add((r["resource"], r["action"]))
         clinical = resources[r["resource"]]["clinical"]
         if clinical and r["role"] in ("admin", "dpo"):
-            errs.append(f"{rid}: admin/dpo không được chạm dữ liệu lâm sàng")
+            errs.append(f"{rid}: admin/dpo may not touch clinical data")
         if r["role"] == "dpo" and r["resource"] != "Audit":
-            errs.append(f"{rid}: dpo chỉ được có rule cho Audit")
+            errs.append(f"{rid}: dpo may only have rules for Audit")
         if "breakglass" in r.get("when", []) and r["role"] != "doctor":
-            errs.append(f"{rid}: break-glass chỉ dành cho doctor")
+            errs.append(f"{rid}: break-glass is only for doctor")
         if "own" in r.get("when", []) and r["role"] != "patient":
-            errs.append(f"{rid}: predicate own chỉ dành cho patient")
+            errs.append(f"{rid}: the own predicate is only for patient")
 
     for res, spec in resources.items():
         for a in spec["actions"]:
             if (res, a) not in covered and (res, a) not in deny:
-                errs.append(f"({res},{a}): không có rule và không nằm trong denyAll")
+                errs.append(f"({res},{a}): no rule and not in denyAll")
     return errs
 
 

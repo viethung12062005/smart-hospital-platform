@@ -1,8 +1,9 @@
-"""Tracing OpenTelemetry cho service FastAPI (NFR-O1): nối trace từ header `traceparent`, mỗi request một span.
+"""OpenTelemetry tracing for FastAPI services (NFR-O1): continue the trace from the `traceparent` header, one span
+per request.
 
-Cùng hành vi với service Java (shp-service-defaults): luôn tạo và truyền trace context; chỉ xuất OTLP khi cụm bật
-`SHP_OTLP_EXPORT=true` (endpoint lấy từ `OTEL_EXPORTER_OTLP_ENDPOINT`). Span không mang nội dung request/response,
-nên không có dữ liệu cá nhân (NFR-O4).
+Same behavior as Java services (shp-service-defaults): always create and propagate trace context; export OTLP only
+when the cluster sets `SHP_OTLP_EXPORT=true` (endpoint from `OTEL_EXPORTER_OTLP_ENDPOINT`). Spans carry no
+request/response content, so there is no personal data (NFR-O4).
 """
 
 import os
@@ -14,7 +15,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-# Endpoint nền tảng bị gọi liên tục (probe, scrape): không tạo span.
+# Platform endpoints called constantly (probes, scrapes): create no span.
 EXCLUDED_URLS = "health/live,health/ready,metrics"
 
 
@@ -25,7 +26,7 @@ def otlp_export_enabled() -> bool:
 def install_tracing(
     app: FastAPI, service_name: str, *, processors: list[SpanProcessor] | None = None
 ) -> TracerProvider:
-    """Gắn tracing cho `app`. `processors` chỉ dùng trong test (thay cho OTLP)."""
+    """Attach tracing to `app`. `processors` are test-only (instead of OTLP)."""
     provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
     for processor in processors or []:
         provider.add_span_processor(processor)
@@ -39,6 +40,6 @@ def install_tracing(
 
 
 def current_trace_id() -> str | None:
-    """Trace id (32 ký tự hex) của request đang xử lý, để ghi log; None nếu không trong span."""
+    """Trace id (32 hex characters) of the request being processed, for logging; None when not inside a span."""
     ctx = trace.get_current_span().get_span_context()
     return f"{ctx.trace_id:032x}" if ctx.is_valid else None
