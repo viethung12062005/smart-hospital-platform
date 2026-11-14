@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Build context = repo root (needs contracts/terminology):  docker build -f web/Dockerfile .
-FROM mirror.gcr.io/library/node:22-alpine AS build
+FROM mirror.gcr.io/library/node:26-alpine AS build
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
