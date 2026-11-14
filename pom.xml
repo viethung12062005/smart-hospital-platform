@@ -53,7 +53,7 @@
     <!-- azure-core-amqp pulls proton-j 0.34.1 (CVE-2026-66274, patch 0.35.0); same reason, the image scan blocks it -->
     <proton-j.version>0.35.0</proton-j.version>
     <archunit.version>1.5.1</archunit.version>
-    <spotless.version>3.10.4</spotless.version>
+    <spotless.version>3.11.0</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
     <!-- Checked on Maven Central on 2026-11-03 (06/10 build): JDBC plugin that obtains Entra tokens for PostgreSQL on Azure (02-db-scheduling §5) -->
     <azure-identity-extensions.version>1.2.10</azure-identity-extensions.version>
