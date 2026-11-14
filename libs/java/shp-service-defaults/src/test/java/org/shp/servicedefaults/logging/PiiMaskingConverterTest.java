@@ -56,9 +56,7 @@ class PiiMaskingConverterTest {
 
   @Test
   void masksNineDigitCmnd() {
-    assertThat(mask("Legacy CMND 012345678"))
-        .doesNotContain("012345678")
-        .contains("[REDACTED]");
+    assertThat(mask("Legacy CMND 012345678")).doesNotContain("012345678").contains("[REDACTED]");
   }
 
   @Test
