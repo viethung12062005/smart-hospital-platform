@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **219 tasks, 755 hours**. Done: **79**, partially done: **22** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **220 tasks, 763 hours**. Done: **79**, partially done: **22** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -92,7 +92,7 @@ Total: **219 tasks, 755 hours**. Done: **79**, partially done: **22** (☑ done,
 | ☐ | SHR-30 | Authz: linked, linked-records, guardian conditions; onBehalfOf in audit; generate tests from the matrix for linked records | Every *-LINKED rule has Allow and Deny tests; audit records the acting account and the accessed record | 3 | SHR-24, SHR-21 | US-076, US-077 |
 | ◐ | WEB-01 | React/Vite web shell: OIDC (Keycloak), role-based router, layout frame, i18n vi/en **[partially done, commit branch WEB-01-frontend-base: web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), role-based routes/menu, vi/en i18n, ErrorBoundary, design system + AppShell ported from the portal PoC (Apache-2.0); 6 sample screens run with MSW; NOT YET real Keycloak login tested in a browser]** | Login, role-based menu, ErrorBoundary; build via pipeline | 4 | LOC-02, SHR-20 | US-066 |
 
-## Week 4 — 115 hours
+## Week 4 — 123 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -112,6 +112,7 @@ Total: **219 tasks, 755 hours**. Done: **79**, partially done: **22** (☑ done,
 | ☐ | GOV-09 | Translate the Java services, web app and dev scripts to English | Comments, docstrings and developer-facing text in libs/java, services/, web/, dev/ and tests/ are English; product data stays Vietnamese (vi locale, Vietnamese test corpora); linters, tests and the web build pass | 8 | GOV-08 | US-070 |
 | ☐ | GOV-10 | Convert GitHub issues, pull requests and comments to English | Every issue, PR title/body and comment in the 4 repos is English; task and user-story bodies match the English backlog; no Vietnamese left in GitHub records | 8 | GOV-08 | US-070 |
 | ☐ | GOV-11 | Translate the infra, GitOps and templates repositories to English | Comments, descriptions, READMEs and templates in shp-infra, shp-gitops and shp-platform-templates contain no Vietnamese prose; terraform fmt/validate, the GitOps validate script and the chart checks are green | 4 | GOV-10 | US-070 |
+| ☐ | GOV-12 | Definition of Done audit of every completed task | docs/05-plan/dod-audit.md gives a verdict with evidence for every task marked Done, lists each gap with a proposed fix, and traces the acceptance criteria to the test catalog | 8 | GOV-11 | US-070 |
 | ☐ | IAC-04 | Bootstrap: budget alert + tag policy | Budget alerts at 50/80/100%; shp-env, created-at, ttl-hours tags required | 2 | IAC-01 | ENABLER |
 | ☐ | IAC-08 | Module key vault | RBAC mode, private endpoint, purge protection only in prod, name with random suffix | 2 | IAC-05 | ENABLER |
 | ◐ | LOC-05 | Run services on the local cluster with the shared microservice chart (make deploy SVC=...) **[partially done, commit c909d5b: deploy.sh + app-values-local for Java (SPRING_*, in-cluster JWKS); chart renders per service; NOT YET make quickstart run on real kind]** | Sample service builds, loads into kind and runs with the same chart used for UAT/prod; debug guide included | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |
