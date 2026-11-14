@@ -48,6 +48,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 shp_platform = ["schemas/**/*.json", "COPIED_FROM_LIBS.txt"]
+# Prompt templates are read at runtime (shp_ai.prompts); without this line the image ships without them.
+shp_ai = ["prompts/*/*.md"]
 
 [tool.ruff]
 line-length = 120
