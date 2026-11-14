@@ -34,9 +34,7 @@ def test_mask_pii_leaves_ordinary_text_intact() -> None:
 
 def test_formatter_masks_pii_and_adds_trace_id() -> None:
     formatter = PiiMaskingFormatter("%(trace_id)s|%(message)s")
-    record = logging.LogRecord(
-        "shp.test", logging.INFO, __file__, 1, "email an.nguyen@example.com", (), None
-    )
+    record = logging.LogRecord("shp.test", logging.INFO, __file__, 1, "email an.nguyen@example.com", (), None)
     out = formatter.format(record)
     assert "an.nguyen@example.com" not in out
     assert "[REDACTED]" in out
