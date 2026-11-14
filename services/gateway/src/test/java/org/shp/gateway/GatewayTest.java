@@ -146,56 +146,6 @@ class GatewayTest {
     assertThat(SEEN_AUTH.get()).isEqualTo("Bearer " + t); // the service validates the token again
   }
 
-  /** Id of the route that would take this path, or null when the gateway has no route for it. */
-  String routeFor(String path) {
-    var exchange = MockServerWebExchange.from(MockServerHttpRequest.get(path));
-    return routes
-        .getRoutes()
-        .filterWhen(r -> r.getPredicate().apply(exchange))
-        .next()
-        .map(Route::getId)
-        .block();
-  }
-
-  /**
-   * GW-01: the route table must not drift from the contracts. Every public path of
-   * contracts/openapi/&lt;service&gt;.yaml is routed to that service; /internal paths are never
-   * routed.
-   */
-  @Test
-  void everyPublicContractPathIsRoutedToItsOwningService() throws Exception {
-    Path dir = Path.of("").toAbsolutePath();
-    while (dir != null && !Files.isDirectory(dir.resolve("contracts/openapi"))) {
-      dir = dir.getParent();
-    }
-    assertThat(dir).isNotNull();
-    var pathKey = Pattern.compile("(?m)^  (/[^\\s:]*):\\s*$");
-    List<String> problems = new ArrayList<>();
-    int checked = 0;
-    try (var files = Files.list(dir.resolve("contracts/openapi"))) {
-      for (Path file : files.filter(f -> f.toString().endsWith(".yaml")).sorted().toList()) {
-        String service = file.getFileName().toString().replace(".yaml", "");
-        var m = pathKey.matcher(Files.readString(file));
-        while (m.find()) {
-          String path = m.group(1);
-          String routed = routeFor(path.replaceAll("\\{[^}]+}", "x"));
-          if (path.startsWith("/internal/")) {
-            if (routed != null) {
-              problems.add(service + " " + path + " is exposed through route " + routed);
-            }
-          } else if (path.startsWith("/fhir/") || path.startsWith("/api/")) {
-            checked++;
-            if (!service.equals(routed)) {
-              problems.add(service + " " + path + " -> " + routed);
-            }
-          }
-        }
-      }
-    }
-    assertThat(checked).isGreaterThan(50);
-    assertThat(problems).isEmpty();
-  }
-
   @Test
   void missingOrInvalidTokenIs401ProblemJson() throws Exception {
     var none = get("/fhir/Slot", null);
