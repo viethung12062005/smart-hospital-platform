@@ -41,7 +41,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Versions checked on Maven Central on 2026-10-28 (docs/04-devops/progress-log.md, Part J) -->
     <hapi-fhir.version>8.12.1</hapi-fhir.version>
-    <json-schema-validator.version>3.0.8</json-schema-validator.version>
+    <json-schema-validator.version>3.0.9</json-schema-validator.version>
     <cloudevents.version>5.1.0</cloudevents.version>
     <!-- Messaging (13-events §1.1), checked on Maven Central on 2026-11-03: same Spring Cloud as the gateway (works with Boot 4.1);
          Spring Cloud Azure 7.4.0 released 07/2026 -->
