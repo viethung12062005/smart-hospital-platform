@@ -9,7 +9,7 @@
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <artifactId>scheduling</artifactId>
-  <name>scheduling — Lịch bác sĩ, slot, đặt/hủy lịch hẹn (FHIR Schedule/Slot/Appointment)</name>
+  <name>scheduling — Doctor schedules, slots, booking/cancellation of appointments (FHIR Schedule/Slot/Appointment)</name>
 
   <dependencies>
     <dependency>
@@ -36,7 +36,7 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
-    <!-- Azure: đăng nhập PostgreSQL bằng token Workload Identity, không mật khẩu (02-db-scheduling §5). Local không dùng tới -->
+    <!-- Azure: log in to PostgreSQL with a Workload Identity token, no password (02-db-scheduling §5). Not used locally -->
     <dependency>
       <groupId>com.azure</groupId>
       <artifactId>azure-identity-extensions</artifactId>

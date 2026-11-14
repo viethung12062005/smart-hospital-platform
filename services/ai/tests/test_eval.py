@@ -1,4 +1,4 @@
-"""US-057 (AI-14..AI-16), US-054 (AI-17): bộ eval là cổng CI."""
+"""US-057 (AI-14..AI-16), US-054 (AI-17): the eval suite is a CI gate."""
 
 from typing import Any
 
@@ -68,4 +68,7 @@ def test_usage_report_renders_from_usage_rows(make_deps: Any) -> None:
     usage.record(deps.db, "rag-answer", r, 0.0003, "doctor")
     today = date.today()
     md = render(deps.db, today, today, daily_limit=1000)
-    assert "| rag-answer | 1 | 1000 | 50 | 0.0003 | 1.0 |" in md and f"chạm 80% hạn mức: {today.isoformat()}" in md
+    assert (
+        "| rag-answer | 1 | 1000 | 50 | 0.0003 | 1.0 |" in md
+        and f"Days hitting the 80% budget: {today.isoformat()}" in md
+    )

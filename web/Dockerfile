@@ -1,17 +1,17 @@
 # syntax=docker/dockerfile:1
-# Build context = gốc repo (cần contracts/terminology):  docker build -f web/Dockerfile .
+# Build context = repo root (needs contracts/terminology):  docker build -f web/Dockerfile .
 FROM mirror.gcr.io/library/node:22-alpine AS build
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 COPY contracts/terminology /src/contracts/terminology
 COPY web/ ./
-# Bản build thật không chứa máy chủ giả (MSW chỉ nạp ở chế độ mock); bỏ luôn file service worker của nó.
+# The real build does not include the mock server (MSW is only loaded in mock mode); also drop its service worker file.
 RUN npm run build && rm -f dist/mockServiceWorker.js
 
 FROM mirror.gcr.io/library/nginx:1.31-alpine
-# Vá gói Alpine còn lỗi đã có bản sửa (Trivy chặn HIGH/CRITICAL), gỡ curl không dùng lúc chạy,
-# bỏ entrypoint mặc định (cần quyền ghi /etc/nginx) để chạy được với user không phải root.
+# Patch Alpine packages with known bugs that already have fixes (Trivy blocks HIGH/CRITICAL), remove the unused curl,
+# and drop the default entrypoint (needs write access to /etc/nginx) so it can run as a non-root user.
 # hadolint ignore=DL3017,DL3018
 RUN apk upgrade --no-cache \
  && apk del --no-cache curl \

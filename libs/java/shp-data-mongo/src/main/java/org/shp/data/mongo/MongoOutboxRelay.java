@@ -19,10 +19,11 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 /**
- * Relay outbox → bus cho MongoDB. MongoDB không có {@code SKIP LOCKED}: mỗi event được "giành"
- * nguyên tử bằng {@code findAndModify} (đặt {@code lockedUntil}, {@code lockedBy}), nên nhiều
- * replica không phát trùng; replica chết thì khóa hết hạn và event được giành lại. Bus lỗi: ghi
- * {@code attempts}/{@code lastError}, nhả khóa, DỪNG lượt (giữ thứ tự), thử lại với backoff.
+ * Outbox relay → bus for MongoDB. MongoDB has no {@code SKIP LOCKED}: each event is "claimed"
+ * atomically via {@code findAndModify} (setting {@code lockedUntil}, {@code lockedBy}), so multiple
+ * replicas do not publish duplicates; if a replica dies the lock expires and the event is
+ * reclaimed. Bus failure: record {@code attempts}/{@code lastError}, release the lock, STOP the
+ * round (preserving order), retry with backoff.
  */
 public final class MongoOutboxRelay implements SmartLifecycle {
   private static final Logger LOG = LoggerFactory.getLogger(MongoOutboxRelay.class);
@@ -51,8 +52,8 @@ public final class MongoOutboxRelay implements SmartLifecycle {
   }
 
   /**
-   * Một lượt; trả số event đã phát. Ném {@link OutboxPublishException} (sau khi đã ghi nhận) nếu
-   * bus lỗi giữa chừng.
+   * One round; returns the number of events published. Throws {@link OutboxPublishException} (after
+   * recording) if the bus fails midway.
    */
   public int relayOnce() {
     int sent = 0;
@@ -145,13 +146,13 @@ public final class MongoOutboxRelay implements SmartLifecycle {
     }
   }
 
-  /** Bus từ chối một event; các event trước đó trong lượt vẫn được ghi nhận đã phát. */
+  /** Bus rejected one event; earlier events in the round are still marked as published. */
   public static final class OutboxPublishException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     private final int publishedBeforeFailure;
 
     OutboxPublishException(int publishedBeforeFailure, Throwable cause) {
-      super("Không phát được event từ outbox", cause);
+      super("Could not publish event from outbox", cause);
       this.publishedBeforeFailure = publishedBeforeFailure;
     }
 

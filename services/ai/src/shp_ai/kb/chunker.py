@@ -1,7 +1,7 @@
-"""Chunker (AI-03; 06 §1.2): 600 token, overlap 80, tách theo tiêu đề mục trước rồi mới theo độ dài.
+"""Chunker (AI-03; 06 §1.2): 600 tokens, 80 overlap, split by heading first, then by length.
 
-Một chunk không bao giờ chứa văn bản của hai mục khác nhau. Token đếm gần đúng theo từ và dấu câu (tokens.count);
-sai lệch so với tokenizer của model được bù bằng giới hạn ngữ cảnh ở bước ghép prompt.
+A chunk never contains text from two different sections. Tokens are counted approximately by words and punctuation
+(tokens.count); the difference from the model's tokenizer is covered by the context limit at prompt assembly.
 """
 
 from dataclasses import dataclass
@@ -24,8 +24,8 @@ class Chunk:
 
 def chunk(blocks: list[Block], max_tokens: int = MAX_TOKENS, overlap: int = OVERLAP) -> list[Chunk]:
     if overlap >= max_tokens:
-        raise ValueError("overlap phải nhỏ hơn max_tokens")
-    # gộp các khối liên tiếp cùng mục (PDF tách theo trang) nhưng nhớ trang đầu
+        raise ValueError("overlap must be smaller than max_tokens")
+    # merge consecutive blocks from the same section (PDF splits by page) but remember the first page
     merged: list[tuple[str, int, str]] = []
     for b in blocks:
         if merged and merged[-1][0] == b.section:

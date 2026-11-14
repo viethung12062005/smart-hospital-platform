@@ -1,8 +1,11 @@
-"""Giữ model đang phục vụ và nạp lại khi đổi alias (ML-09), chế độ shadow (ML-24), metric theo phiên bản (ML-25).
+"""Keeps the serving model and reloads it when the alias changes (ML-09), shadow mode (ML-24), per-version metrics
+(ML-25).
 
-- `production` trả lời; nếu `candidate` khác `production` và shadow bật, candidate chấm điểm song song: kết quả chỉ ghi
-  nhận (metric, prediction đánh dấu shadow), không bao giờ dùng cho nhắc lịch. Lỗi ở candidate không ảnh hưởng gì.
-- Poll registry mỗi 30 giây; model mới được nạp xong mới thay (đổi tham chiếu nguyên tử), không cần deploy lại.
+- `production` answers; if `candidate` differs from `production` and shadow is enabled, the candidate scores in
+  parallel: the result is only recorded (metrics, prediction marked as shadow) and never used for reminders.
+  Candidate errors have no effect.
+- Polls the registry every 30 seconds; a new model replaces the old one only once fully loaded (atomic reference
+  swap), no redeploy needed.
 """
 
 import logging
@@ -37,7 +40,8 @@ class ModelHolder:
         self._candidate: NoShowModel | None = None
 
     def refresh(self) -> bool:
-        """Đọc alias; nạp model mới nếu đổi. Trả True nếu có thay đổi. Lỗi registry giữ nguyên model đang chạy."""
+        """Read the aliases; load a new model if it changed. Returns True if anything changed. Registry errors keep
+        the running model."""
         if self._registry is None:
             return False
         try:
@@ -50,7 +54,7 @@ class ModelHolder:
                 with self._lock:
                     self._production = loaded
                 MODEL_INFO.labels(model_version=prod_v, role="production").set(1)
-                LOG.info("đã nạp model production %s", prod_v)
+                LOG.info("loaded production model %s", prod_v)
                 changed = True
             want_cand = cand_v if (self._shadow_enabled and cand_v is not None and cand_v != prod_v) else None
             have_cand = self._candidate.version if self._candidate else None
@@ -60,8 +64,8 @@ class ModelHolder:
                     self._candidate = cand
                 changed = True
             return changed
-        except Exception as exc:  # noqa: BLE001 - registry lỗi: giữ model đang chạy
-            LOG.warning("không đọc được registry: %s", type(exc).__name__)
+        except Exception as exc:  # noqa: BLE001 - registry error: keep the running model
+            LOG.warning("cannot read registry: %s", type(exc).__name__)
             return False
 
     def production(self) -> tuple[NoShowModel, dict[str, Any]] | None:
@@ -95,7 +99,7 @@ class ModelHolder:
         t0 = time.perf_counter()
         try:
             value = cand.score(features)
-        except Exception:  # noqa: BLE001 - lỗi shadow không bao giờ ảnh hưởng luồng chính
+        except Exception:  # noqa: BLE001 - a shadow error never affects the main path
             PREDICT_ERRORS.labels(model_version=cand.version).inc()
             return None
         elapsed = time.perf_counter() - t0

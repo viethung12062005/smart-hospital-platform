@@ -1,6 +1,8 @@
-"""Đếm token gần đúng: mỗi từ (chữ, số) hoặc dấu câu là một token, cộng thêm cho từ dài (tiếng Việt có dấu).
+"""Approximate token counting: each word (letters, digits) or punctuation mark is a token, plus extra for long words
+(Vietnamese with diacritics).
 
-Dùng để chia chunk và giới hạn ngữ cảnh; con số thật do provider trả về ở `usage` (ghi vào messages và usage).
+Used to split chunks and limit context; the real numbers come from the provider's `usage` (recorded in messages and
+usage).
 """
 
 import re
@@ -9,7 +11,7 @@ _PIECE = re.compile(r"\s*(\w+|[^\w\s])", re.UNICODE)
 
 
 def split_tokens(text: str) -> list[str]:
-    """Các mảnh giữ nguyên khoảng trắng phía trước để ghép lại đúng văn bản gốc."""
+    """Fragments that keep leading whitespace so the original text can be reassembled exactly."""
     return [m.group(0) for m in _PIECE.finditer(text)]
 
 

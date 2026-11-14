@@ -6,8 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Gắn vào endpoint (ví dụ đăng ký C1) cho phép tài khoản đã xác thực nhưng CHƯA liên kết. Tài khoản
- * bị khóa vẫn bị từ chối.
+ * Attach to an endpoint (for example C1 registration) to allow an authenticated account that is NOT
+ * yet linked. A locked account is still rejected.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})

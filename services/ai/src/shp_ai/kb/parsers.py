@@ -1,8 +1,8 @@
-"""Parser tài liệu tri thức (AI-02): PDF, DOCX, Markdown → các khối văn bản có tiêu đề mục và số trang.
+"""Knowledge document parsers (AI-02): PDF, DOCX, Markdown → text blocks with heading path and page number.
 
-Tiêu đề mục: Markdown `#`; DOCX style Heading; PDF dòng dạng "1.", "2.3 ...", "CHƯƠNG", hoặc dòng in hoa ngắn.
-Không thực thi gì từ tài liệu: chỉ đọc văn bản. Tài liệu ảnh (PDF scan) không có văn bản → lỗi rõ ràng (kho tri thức
-cần tài liệu có lớp chữ; OCR chỉ dùng cho trích xuất hồ sơ, US-059).
+Headings: Markdown `#`; DOCX Heading style; PDF lines like "1.", "2.3 ...", "CHƯƠNG", or short all-caps lines.
+Executes nothing from the document: text only. Image-only documents (scanned PDF) have no text → clear error (the
+knowledge base needs documents with a text layer; OCR is used only for record extraction, US-059).
 """
 
 import io
@@ -24,8 +24,8 @@ class ParseError(ValueError):
 
 @dataclass(frozen=True)
 class Block:
-    section: str  # đường dẫn tiêu đề, ví dụ "4. Điều trị > 4.2 Chỉ định chuyển tuyến"
-    page: int  # trang (PDF); 1 với định dạng không có trang
+    section: str  # heading path, e.g. "4. Treatment > 4.2 Referral indications"
+    page: int  # page (PDF); 1 for formats without pages
     text: str
 
 
@@ -100,7 +100,7 @@ def parse_pdf(data: bytes) -> list[Block]:
     b = _Builder()
     reader = PdfReader(io.BytesIO(data))
     if reader.is_encrypted:
-        raise ParseError("PDF có mật khẩu")
+        raise ParseError("PDF is password-protected")
     for i, page in enumerate(reader.pages, start=1):
         b.flush()
         b.page = i
@@ -115,7 +115,7 @@ def parse_pdf(data: bytes) -> list[Block]:
 
 def parse(data: bytes, content_type: str) -> list[Block]:
     if len(data) > MAX_BYTES:
-        raise ParseError("tệp vượt 30 MB")
+        raise ParseError("file exceeds 30 MB")
     if content_type == MARKDOWN:
         blocks = parse_markdown(data)
     elif content_type == DOCX:
@@ -123,7 +123,7 @@ def parse(data: bytes, content_type: str) -> list[Block]:
     elif content_type == PDF:
         blocks = parse_pdf(data)
     else:
-        raise ParseError(f"loại tệp không hỗ trợ: {content_type}")
+        raise ParseError(f"unsupported file type: {content_type}")
     if not any(bl.text.strip() for bl in blocks):
-        raise ParseError("tài liệu không có văn bản (PDF scan cần lớp chữ)")
+        raise ParseError("document has no text (scanned PDF needs a text layer)")
     return blocks

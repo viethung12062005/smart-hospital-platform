@@ -2,7 +2,7 @@ package org.shp.events.audit;
 
 import java.util.Set;
 
-/** Giá trị hợp lệ của {@code action} và {@code outcome} (05-storage-audit-blob §1.1). */
+/** Valid values of {@code action} and {@code outcome} (05-storage-audit-blob §1.1). */
 public final class AuditActions {
   public static final String READ = "read";
   public static final String SEARCH = "search";

@@ -1,7 +1,7 @@
 """AI4 `POST /api/v1/ai/patients/{id}/summary` (AI-21; 12 §3).
 
-Chỉ bác sĩ có quan hệ điều trị hoặc đang break-glass (403 `no-care-relationship`). Bắt buộc Idempotency-Key.
-Cache 10 phút theo (bệnh nhân, bác sĩ, phiên bản dữ liệu = băm các bản ghi). Audit `ai-summary` (TREAT hoặc ETREAT).
+Only a doctor with a care relationship or an active break-glass (403 `no-care-relationship`). Idempotency-Key required.
+Cached 10 minutes per (patient, doctor, data version = hash of the records). Audit `ai-summary` (TREAT or ETREAT).
 """
 
 import hashlib

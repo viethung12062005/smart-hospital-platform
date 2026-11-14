@@ -8,7 +8,7 @@ import { ApiError, apiRequest, etagOf, NetworkError } from './client';
 const url = (p: string) => `${window.location.origin}${p}`;
 
 describe('apiRequest', () => {
-  it('gửi token, Accept-Language, Idempotency-Key và If-Match', async () => {
+  it('sends the token, Accept-Language, Idempotency-Key and If-Match', async () => {
     signInMock('patient');
     setLanguage('en');
     let seen: Headers | undefined;
@@ -33,7 +33,7 @@ describe('apiRequest', () => {
     expect(res.etag).toBe('W/"2"');
   });
 
-  it('gửi form-urlencoded cho _search', async () => {
+  it('sends form-urlencoded for _search', async () => {
     let body = '';
     let type = '';
     server.use(
@@ -48,7 +48,7 @@ describe('apiRequest', () => {
     expect(body).toBe('name=lan');
   });
 
-  it('đọc OperationOutcome: mã, thông điệp, mã truy vết và slot gợi ý', async () => {
+  it('reads an OperationOutcome: code, message, trace ID and suggested slots', async () => {
     server.use(
       http.post(url('/fhir/Appointment/$book'), () =>
         HttpResponse.json(
@@ -83,7 +83,7 @@ describe('apiRequest', () => {
     expect(e.suggestedSlots).toEqual(['Slot/s-9']);
   });
 
-  it('đọc Problem Details cho /api', async () => {
+  it('reads Problem Details for /api', async () => {
     server.use(
       http.get(url('/api/v1/me'), () =>
         HttpResponse.json(
@@ -103,12 +103,12 @@ describe('apiRequest', () => {
     expect(e.message).toBe('Chưa đăng nhập');
   });
 
-  it('báo lỗi mạng riêng', async () => {
+  it('reports a distinct network error', async () => {
     server.use(http.get(url('/api/v1/me'), () => HttpResponse.error()));
     await expect(apiRequest('/api/v1/me')).rejects.toBeInstanceOf(NetworkError);
   });
 
-  it('tạo ETag từ meta.versionId', () => {
+  it('builds an ETag from meta.versionId', () => {
     expect(etagOf({ resourceType: 'Appointment', meta: { versionId: '3' } } as never)).toBe('W/"3"');
     expect(etagOf(undefined)).toBeUndefined();
   });

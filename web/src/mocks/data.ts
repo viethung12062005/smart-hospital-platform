@@ -13,9 +13,9 @@ import dayjs, { type Dayjs } from 'dayjs';
 import { SPECIALTIES, systemUrl } from '@/api/terminology';
 
 /**
- * Dữ liệu GIẢ cho chế độ mock và test, theo docs/00-synthetic-data.md:
- * tên tiếng Việt tự đặt, số điện thoại dải dành riêng 09000xxxxx, mã BN tiền tố BN-2026, không phải người thật.
- * Tạo lại mỗi lần gọi createDb() theo ngày hiện tại, để lịch luôn nằm quanh "hôm nay".
+ * FAKE data for mock mode and tests, per docs/00-synthetic-data.md:
+ * made-up Vietnamese names, phone numbers in the reserved 09000xxxxx range, MR numbers prefixed BN-2026, not real people.
+ * Recreated on every createDb() call relative to the current date, so schedules always sit around "today".
  */
 export interface MockDb {
   practitioners: Practitioner[];
@@ -30,7 +30,7 @@ export interface MockDb {
 }
 
 const DOCTORS: [string, string, string, string][] = [
-  // id, họ, tên, chuyên khoa
+  // id, family name, given name, specialty
   ['pr-001', 'Lê', 'Minh Quân', 'cardiology'],
   ['pr-002', 'Phạm', 'Thu Trang', 'cardiology'],
   ['pr-003', 'Đỗ', 'Văn Hải', 'internal-medicine'],
@@ -46,7 +46,7 @@ const DOCTORS: [string, string, string, string][] = [
 ];
 
 const PATIENTS: [string, string, string, 'male' | 'female', string][] = [
-  // id, họ, tên đệm + tên, giới, ngày sinh
+  // id, family name, middle name + given name, sex, date of birth
   ['p-001', 'Nguyễn', 'Thị Lan', 'female', '1988-04-12'],
   ['p-002', 'Trần', 'Văn Bình', 'male', '1956-09-03'],
   ['p-003', 'Lê', 'Hoàng Yến', 'female', '2015-01-27'],
@@ -82,7 +82,7 @@ function at(day: Dayjs, hhmm: string): Dayjs {
     .millisecond(0);
 }
 
-/** Số giả ổn định theo chuỗi (để dữ liệu giống nhau giữa các lần tạo). */
+/** Stable pseudo-random number from a string (so data is identical across runs). */
 function hash(s: string): number {
   let h = 2166136261;
   for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
@@ -137,7 +137,7 @@ export function createDb(now: Dayjs = dayjs()): MockDb {
     telecom: [{ system: 'phone', value: `09000${String(10001 + i * 37).padStart(5, '0')}` }],
   }));
 
-  // Slot: từ thứ Hai tuần này đến 21 ngày sau, ngày làm việc (T2–T6), mỗi bác sĩ 13 slot/ngày.
+  // Slots: from this Monday to 21 days later, workdays (Mon–Fri), 13 slots per doctor per day.
   const slots: Slot[] = [];
   const monday = now.startOf('day').subtract((now.day() + 6) % 7, 'day');
   for (let d = 0; d < 28; d++) {
@@ -190,7 +190,7 @@ export function createDb(now: Dayjs = dayjs()): MockDb {
     });
   }
 
-  // Ngày làm việc gần nhất kể từ hôm nay (cuối tuần thì lùi về thứ Sáu để hàng đợi có dữ liệu).
+  // The nearest workday from today (on weekends, step back to Friday so the queue has data).
   let workday = now.startOf('day');
   while (workday.day() === 0 || workday.day() === 6) workday = workday.subtract(1, 'day');
   const nextWorkday = (n: number) => {
@@ -203,12 +203,12 @@ export function createDb(now: Dayjs = dayjs()): MockDb {
     return d;
   };
 
-  // Bệnh nhân p-001: 1 lịch sắp tới, 2 lịch đã qua.
+  // Patient p-001: 1 upcoming appointment, 2 past appointments.
   addAppt('a-001', 'p-001', 'pr-001', at(nextWorkday(2), '09:00'), 'booked', 'Đau ngực khi gắng sức');
   addAppt('a-002', 'p-001', 'pr-003', at(now.subtract(20, 'day'), '10:00'), 'fulfilled', 'Khám sức khỏe định kỳ');
   addAppt('a-003', 'p-001', 'pr-007', at(now.subtract(45, 'day'), '14:00'), 'cancelled', 'Ngứa da');
 
-  // Hàng đợi hôm nay của BS. Lê Minh Quân (pr-001) và vài bác sĩ khác.
+  // Today's queue for Dr. Lê Minh Quân (pr-001) and a few other doctors.
   const queue: [string, string, string, Appointment['status']][] = [
     ['p-002', 'pr-001', '08:00', 'fulfilled'],
     ['p-004', 'pr-001', '08:30', 'arrived'],

@@ -16,8 +16,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Kiểm event theo schema trong contracts/events (nhúng vào jar). Dùng trong test hợp đồng của
- * producer và consumer.
+ * Validate events against the schemas in contracts/events (embedded in the jar). Used in contract
+ * tests of producers and consumers.
  */
 public final class EventSchemas {
   private static final SchemaRegistry REGISTRY =
@@ -45,7 +45,7 @@ public final class EventSchemas {
         }
       }
       if (envelope == null) {
-        throw new IllegalStateException("Thiếu shp/events/envelope.json trong shp-events");
+        throw new IllegalStateException("Missing shp/events/envelope.json in shp-events");
       }
       ENVELOPE = envelope;
       DATA = Map.copyOf(data);
@@ -56,18 +56,18 @@ public final class EventSchemas {
 
   private EventSchemas() {}
 
-  /** Các type có schema (ví dụ shp.scheduling.appointment-booked.v1). */
+  /** Types that have a schema (for example shp.scheduling.appointment-booked.v1). */
   public static Set<String> knownTypes() {
     return DATA.keySet();
   }
 
-  /** Danh sách lỗi; rỗng nếu hợp lệ. Type lạ cũng là lỗi. */
+  /** List of errors; empty if valid. An unknown type is also an error. */
   public static List<String> validate(CloudEvent evt) {
     List<String> errors = new ArrayList<>();
     collect(ENVELOPE, CloudEvents.JSON.valueToTree(evt), "envelope", errors);
     Schema schema = DATA.get(evt.type());
     if (schema == null) {
-      errors.add("type chưa có schema: " + evt.type());
+      errors.add("type has no schema: " + evt.type());
       return errors;
     }
     collect(schema, evt.data(), "data", errors);

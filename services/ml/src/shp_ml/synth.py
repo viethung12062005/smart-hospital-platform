@@ -1,11 +1,11 @@
-"""Bộ sinh dữ liệu lịch hẹn giả có quy luật no-show (ML-01, ML-21, 16-mlops §1). Không có dữ liệu thật.
+"""Generator of synthetic appointment data with no-show patterns (ML-01, ML-21, 16-mlops §1). No real data.
 
-Quy luật (hệ số ghi ở COEF, mô tả trong services/ml/README.md):
-  logit(p) = β0 + f(lead_time) + β2·logit_rate(prior) + β3·is_first_visit + g(giờ khám, tuổi) + β5·channel
-             + h(kênh, tuổi)
-             + β6·specialty + mùa(tháng) + u_bệnh_nhân
-u_bệnh_nhân là thiên hướng ẩn (không có trong đặc trưng) để AUC dừng ở khoảng 0,78-0,82.
-β0 được hiệu chỉnh để tỉ lệ no-show ≈ 18%.
+Rules (coefficients in COEF, described in services/ml/README.md):
+  logit(p) = β0 + f(lead_time) + β2·logit_rate(prior) + β3·is_first_visit + g(start hour, age) + β5·channel
+             + h(channel, age)
+             + β6·specialty + season(month) + u_patient
+u_patient is a latent propensity (not a feature) so that AUC levels off around 0.78-0.82.
+β0 is calibrated so the no-show rate ≈ 18%.
 
   python -m shp_ml.synth --out data/noshow.parquet [--rows 80000 --seed 42 --shifted]
 """
@@ -42,29 +42,29 @@ AGE_WEIGHTS = [0.1, 0.08, 0.15, 0.17, 0.15, 0.13, 0.11, 0.07, 0.04]
 
 @dataclass(frozen=True)
 class Coef:
-    lead_short: float = -1.3  # đặt trong vòng 1 ngày: ít vắng
-    lead_long: float = 1.4  # đặt trước > 14 ngày: dễ quên (ngưỡng, không tuyến tính)
+    lead_short: float = -1.3  # booked within 1 day: rarely misses
+    lead_long: float = 1.4  # booked > 14 days ahead: easy to forget (threshold, non-linear)
     lead_per_week: float = 0.1
-    prior_rate: float = 1.1  # nhân với logit của tỉ lệ vắng làm mượt
+    prior_rate: float = 1.1  # multiplies the logit of the smoothed no-show rate
     first_visit: float = 0.35
-    early_morning: float = 0.15  # khám trước 8 giờ, mọi tuổi
-    early_morning_elderly: float = 1.6  # cộng thêm với người từ 60 tuổi (tương tác)
-    chatbot_young: float = 1.4  # kênh chatbot với người 10-29 tuổi (tương tác)
+    early_morning: float = 0.15  # visit before 8 am, all ages
+    early_morning_elderly: float = 1.6  # additional effect for people aged 60+ (interaction)
+    chatbot_young: float = 1.4  # chatbot channel for people aged 10-29 (interaction)
     channel: tuple[float, float, float] = (0.0, -0.45, 0.3)  # web, staff, chatbot
     specialty_dermatology: float = 0.35
     specialty_pediatrics: float = -0.25
-    season_amplitude: float = 0.2  # ≈ ±3 điểm phần trăm theo tháng
+    season_amplitude: float = 0.2  # ≈ ±3 percentage points by month
     patient_sd: float = 0.9
 
 
 @dataclass(frozen=True)
 class Shift:
-    """Bộ dữ liệu dịch chuyển (ML-21): lead time +40%, tỉ lệ vắng +6 điểm, nhiều chatbot, nhiều ca sáng sớm."""
+    """Shifted dataset (ML-21): lead time +40%, no-show rate +6 points, more chatbot, more early-morning slots."""
 
     lead_factor: float = 1.0
     extra_rate_points: float = 0.0
     channel_weights: tuple[float, float, float] = (0.55, 0.35, 0.10)
-    early_share: float = 0.1  # tỉ lệ lịch 07:00-07:45 (4 trong 40 khung)
+    early_share: float = 0.1  # share of appointments at 07:00-07:45 (4 of 40 slots)
 
 
 SHIFTED = Shift(lead_factor=1.4, extra_rate_points=0.06, channel_weights=(0.4, 0.25, 0.35), early_share=0.35)
@@ -97,7 +97,8 @@ def generate(
 
     span_days = int(months * 30.4)
     day = rng.integers(0, span_days, rows)
-    # 07:00 → 16:45 giờ VN, mỗi 15 phút; `early_share` lịch rơi vào 4 khung đầu (07:00-07:45)
+    # 07:00 → 16:45 Vietnam time, every 15 minutes; `early_share` of appointments fall in the first 4 slots
+    # (07:00-07:45)
     early_pick = rng.random(rows) < shift.early_share
     slot = np.where(early_pick, rng.integers(0, 4, rows), rng.integers(4, 40, rows))
     local_start = [
@@ -107,7 +108,7 @@ def generate(
         )
         for d, s in zip(day, slot, strict=True)
     ]
-    # Chủ nhật dời sang thứ hai
+    # Sundays move to Monday
     local_start = [t + timedelta(days=1) if t.isoweekday() == 7 else t for t in local_start]
     start_at = pd.to_datetime([t.astimezone(UTC) for t in local_start], utc=True)
     lead_days = np.minimum(rng.exponential(6.0 * shift.lead_factor, rows) + rng.uniform(0.05, 1, rows), 30.0)
@@ -128,7 +129,7 @@ def generate(
     base += np.select([channel == c for c in CHANNELS], COEF.channel)
     base += COEF.specialty_dermatology * (specialty == "dermatology")
     base += COEF.specialty_pediatrics * (specialty == "pediatrics")
-    base += COEF.season_amplitude * np.cos(2 * math.pi * (month - 1) / 12)  # cao vào tháng 1 (Tết)
+    base += COEF.season_amplitude * np.cos(2 * math.pi * (month - 1) / 12)  # peaks in January (Tet)
     base += latent[patient_idx]
     cancelled = rng.random(rows) < CANCEL_RATE * (0.6 + lead_days / 10)
     u = rng.random(rows)
@@ -136,7 +137,7 @@ def generate(
     def simulate(b0: float) -> np.ndarray:
         booked = np.zeros(n_p, dtype=np.int64)
         noshow = np.zeros(n_p, dtype=np.int64)
-        # thời điểm biết kết quả (start + 1h) để tính prior đúng thời điểm
+        # outcome-known time (start + 1h) so prior is computed at the right moment
         known_at = (start_at + pd.Timedelta(hours=1)).tz_convert(None).to_numpy()
         pending: dict[int, list[int]] = {}
         out = np.zeros(rows, dtype=np.int8)
@@ -162,7 +163,7 @@ def generate(
         return out
 
     lo, hi = -8.0, 2.0
-    for _ in range(14):  # hiệu chỉnh β0 cho tỉ lệ ≈ 18% (trên lịch không hủy, trước dịch chuyển)
+    for _ in range(14):  # calibrate β0 to a rate ≈ 18% (on non-cancelled appointments, before shift)
         mid = (lo + hi) / 2
         rate = simulate(mid)[~cancelled].mean() - shift.extra_rate_points
         lo, hi = (mid, hi) if rate < TARGET_RATE else (lo, mid)
@@ -203,7 +204,8 @@ def describe(df: pd.DataFrame, path: Path, seed: int, shifted: bool) -> dict[str
         "cancelledRate": round(float((df["outcome"] == "cancelled").mean()), 4),
         "columns": {c: str(t) for c, t in df.dtypes.items()},
         "warning": (
-            "Dữ liệu giả do bộ sinh tạo; mô hình chỉ học lại quy luật này, không chứng minh khả năng dự đoán thực tế."
+            "Synthetic data produced by the generator; the model only relearns these rules, it does not demonstrate "
+            "real predictive ability."
         ),
     }
 
@@ -214,7 +216,7 @@ def main() -> None:
     ap.add_argument("--rows", type=int, default=80_000)
     ap.add_argument("--patients", type=int, default=50_000)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--shifted", action="store_true", help="bộ dữ liệu dịch chuyển cho test drift (ML-21)")
+    ap.add_argument("--shifted", action="store_true", help="shifted dataset for drift tests (ML-21)")
     a = ap.parse_args()
     df = generate(a.rows, a.patients, seed=a.seed, shift=SHIFTED if a.shifted else None)
     a.out.parent.mkdir(parents=True, exist_ok=True)

@@ -1,4 +1,4 @@
-"""US-062: chatbot đặt lịch (AI-29, AI-30, AI-31)."""
+"""US-062: booking chatbot (AI-29, AI-30, AI-31)."""
 
 import json
 from collections.abc import Sequence
@@ -79,7 +79,7 @@ def book_model(scenario: str) -> Any:
         else:
             last = json.loads(tool_msgs[-1].content)
             if scenario == "search":
-                return None  # vòng 2: trả lời bằng văn bản, không gọi tool nữa
+                return None  # round 2: answer in text, no more tool calls
             if scenario == "list_then_cancel":
                 return _call(PROPOSE_CANCEL, {"appointmentId": last["appointments"][0]["appointmentId"]})
             if scenario == "loop_forever":
@@ -105,7 +105,7 @@ def test_search_then_text_reply_shows_options(api: Any) -> None:
         assert r.status_code == 200 and body["pendingAction"] is None
         assert body["options"] and body["options"][0]["slotId"] == SLOT_ID
         assert "Mình tìm được" in body["reply"]
-        assert deps.db.usage.count_documents({"task": "booking-agent"}) == 2  # 2 lượt gọi model
+        assert deps.db.usage.count_documents({"task": "booking-agent"}) == 2  # 2 model calls
 
 
 def test_propose_booking_creates_pending_action_without_booking(api: Any) -> None:
@@ -117,7 +117,7 @@ def test_propose_booking_creates_pending_action_without_booking(api: Any) -> Non
         action_id = body["pendingAction"]["actionId"]
         doc = deps.db.pending_actions.find_one({"_id": action_id})
         assert doc["tool"] == "book_appointment" and doc["arguments"]["patientId"] == PATIENT["sub"]
-        assert doc["confirmedAt"] is None  # chưa thực hiện, chỉ tạo đề xuất
+        assert doc["confirmedAt"] is None  # not executed, only a proposal created
 
 
 def test_confirm_books_with_patients_own_token_and_is_idempotent(api: Any) -> None:
@@ -129,10 +129,10 @@ def test_confirm_books_with_patients_own_token_and_is_idempotent(api: Any) -> No
         confirm = f"/api/v1/ai/booking/actions/{action_id}/confirm"
         r2 = tc.post(confirm, headers={**bearer(**PATIENT), "Idempotency-Key": "k1"})
         assert r2.status_code == 200 and r2.json()["status"] == "done"
-        # đã xác nhận: lần hai cùng action phải hết hạn (không gọi lại $book)
+        # already confirmed: a second use of the same action must be expired (no second $book)
         r3 = tc.post(confirm, headers={**bearer(**PATIENT), "Idempotency-Key": "k1"})
         assert r3.status_code == 422 and r3.json()["code"] == "confirmation-expired"
-        assert tc.post(confirm, headers=bearer(**PATIENT)).status_code == 428  # thiếu Idempotency-Key
+        assert tc.post(confirm, headers=bearer(**PATIENT)).status_code == 428  # missing Idempotency-Key
 
 
 def test_confirm_rejects_non_owner_and_expired(api: Any) -> None:

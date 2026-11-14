@@ -20,8 +20,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * SCH-01 (US-009, US-011): Kiểm tra migration V001 chạy sạch trên Postgres 16 thật và bảo đảm các
- * ràng buộc nghiệp vụ, đặc biệt là exclusion constraint chống slot chồng lấn.
+ * SCH-01 (US-009, US-011): Verify that migration V001 runs cleanly on a real Postgres 16 and assert
+ * the business constraints, especially the exclusion constraint that prevents overlapping slots.
  */
 @Testcontainers
 class SchedulingMigrationV001Test {
@@ -56,13 +56,13 @@ class SchedulingMigrationV001Test {
     }
 
     jdbc = JdbcClient.create(ds);
-    // Đặt search_path cho connection test để truy vấn trực tiếp bảng trong scheduling
+    // Set search_path for the test connection so we can query tables in scheduling directly
     jdbc.sql("SET search_path TO scheduling, public").update();
   }
 
   @Test
   @DisplayName(
-      "Migration V001 tạo thành công extension btree_gist và các bảng schedule, schedule_template, slot")
+      "Migration V001 successfully creates the btree_gist extension and the schedule, schedule_template, slot tables")
   void tablesAndExtensionExist() {
     Boolean extensionInstalled =
         jdbc.sql("SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'btree_gist')")
@@ -77,16 +77,16 @@ class SchedulingMigrationV001Test {
               .param(table)
               .query(Boolean.class)
               .single();
-      assertThat(tableExists).as("Bảng scheduling.%s phải tồn tại", table).isTrue();
+      assertThat(tableExists).as("Table scheduling.%s must exist", table).isTrue();
     }
   }
 
   @Nested
-  @DisplayName("Kiểm tra bảng schedule")
+  @DisplayName("Check the schedule table")
   class ScheduleTests {
 
     @Test
-    @DisplayName("Thêm schedule hợp lệ thành công")
+    @DisplayName("Inserting a valid schedule succeeds")
     void insertValidSchedule() {
       UUID id = UUID.randomUUID();
       UUID practitionerId = UUID.randomUUID();
@@ -107,7 +107,7 @@ class SchedulingMigrationV001Test {
     }
 
     @Test
-    @DisplayName("horizon_end < horizon_start vi phạm ck_schedule_horizon")
+    @DisplayName("horizon_end < horizon_start violates ck_schedule_horizon")
     void horizonCheckConstraint() {
       UUID id = UUID.randomUUID();
       UUID practitionerId = UUID.randomUUID();
@@ -126,7 +126,7 @@ class SchedulingMigrationV001Test {
 
     @Test
     @DisplayName(
-        "Mỗi bác sĩ tối đa 1 schedule active cho mỗi chuyên khoa (ux_schedule_active_practitioner_specialty)")
+        "Each doctor has at most 1 active schedule per specialty (ux_schedule_active_practitioner_specialty)")
     void activeScheduleUniqueConstraint() {
       UUID practitionerId = UUID.randomUUID();
       String specialty = "neurology";
@@ -139,7 +139,7 @@ class SchedulingMigrationV001Test {
           .params(UUID.randomUUID(), practitionerId, specialty)
           .update();
 
-      // Thêm schedule active thứ 2 cùng bác sĩ + chuyên khoa phải thất bại
+      // Adding a 2nd active schedule with the same doctor + specialty must fail
       assertThatThrownBy(
               () ->
                   jdbc.sql(
@@ -152,7 +152,8 @@ class SchedulingMigrationV001Test {
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ux_schedule_active_practitioner_specialty");
 
-      // Thêm schedule không active (active=false) cùng bác sĩ + chuyên khoa vẫn được phép
+      // Adding a non-active schedule (active=false) with the same doctor + specialty is still
+      // allowed
       jdbc.sql(
               """
               INSERT INTO scheduling.schedule (id, version_id, last_updated, active, practitioner_id, specialty, horizon_start, horizon_end, content)
@@ -164,7 +165,7 @@ class SchedulingMigrationV001Test {
   }
 
   @Nested
-  @DisplayName("Kiểm tra bảng schedule_template")
+  @DisplayName("Check the schedule_template table")
   class ScheduleTemplateTests {
 
     private UUID createSchedule() {
@@ -180,11 +181,11 @@ class SchedulingMigrationV001Test {
     }
 
     @Test
-    @DisplayName("Thêm template hợp lệ và kiểm tra các ràng buộc weekday, slot_minutes, thời gian")
+    @DisplayName("Add a valid template and check the weekday, slot_minutes, and time constraints")
     void templateValidations() {
       UUID scheduleId = createSchedule();
 
-      // Hợp lệ: thứ Hai (1), 08:00 - 11:30, slot 15 phút
+      // Valid: Monday (1), 08:00 - 11:30, 15-minute slot
       jdbc.sql(
               """
               INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
@@ -193,7 +194,7 @@ class SchedulingMigrationV001Test {
           .params(UUID.randomUUID(), scheduleId)
           .update();
 
-      // Vi phạm weekday (8 > 7)
+      // weekday violation (8 > 7)
       assertThatThrownBy(
               () ->
                   jdbc.sql(
@@ -205,7 +206,7 @@ class SchedulingMigrationV001Test {
                       .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
-      // Vi phạm slot_minutes (25 không nằm trong (10, 15, 20, 30))
+      // slot_minutes violation (25 is not in (10, 15, 20, 30))
       assertThatThrownBy(
               () ->
                   jdbc.sql(
@@ -217,7 +218,7 @@ class SchedulingMigrationV001Test {
                       .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
-      // Vi phạm end_time <= start_time (ck_template_time)
+      // end_time <= start_time violation (ck_template_time)
       assertThatThrownBy(
               () ->
                   jdbc.sql(
@@ -230,7 +231,7 @@ class SchedulingMigrationV001Test {
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_template_time");
 
-      // Vi phạm valid_to < valid_from (ck_template_valid)
+      // valid_to < valid_from violation (ck_template_valid)
       assertThatThrownBy(
               () ->
                   jdbc.sql(
@@ -246,7 +247,7 @@ class SchedulingMigrationV001Test {
   }
 
   @Nested
-  @DisplayName("Kiểm tra bảng slot và ràng buộc chống chồng lấn (ex_slot_no_overlap)")
+  @DisplayName("Check the slot table and the overlap-prevention constraint (ex_slot_no_overlap)")
   class SlotTests {
 
     private UUID createSchedule(UUID practitionerId, String specialty) {
@@ -262,12 +263,12 @@ class SchedulingMigrationV001Test {
     }
 
     @Test
-    @DisplayName("Ràng buộc trạng thái và khoảng thời gian của slot")
+    @DisplayName("Slot status and time range constraints")
     void slotStatusAndPeriodChecks() {
       UUID practitionerId = UUID.randomUUID();
       UUID scheduleId = createSchedule(practitionerId, "dermatology");
 
-      // Trạng thái không hợp lệ
+      // Invalid status
       assertThatThrownBy(
               () ->
                   jdbc.sql(
@@ -279,7 +280,7 @@ class SchedulingMigrationV001Test {
                       .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
-      // end_at <= start_at vi phạm ck_slot_period
+      // end_at <= start_at violates ck_slot_period
       OffsetDateTime now = OffsetDateTime.parse("2026-11-20T08:00:00Z");
       assertThatThrownBy(
               () ->
@@ -296,7 +297,7 @@ class SchedulingMigrationV001Test {
 
     @Test
     @DisplayName(
-        "Hai slot liền kề nhau trong cùng một schedule được phép lưu (ranh giới chạm nhau)")
+        "Two adjacent slots in the same schedule are allowed to be stored (boundaries touch)")
     void adjacentSlotsAreAllowed() {
       UUID practitionerId = UUID.randomUUID();
       UUID scheduleId = createSchedule(practitionerId, "orthopedics");
@@ -314,7 +315,7 @@ class SchedulingMigrationV001Test {
           .params(UUID.randomUUID(), scheduleId, practitionerId, start1, end1)
           .update();
 
-      // Slot 2: [08:15, 08:30) — chạm ranh giới 08:15 nhưng không chồng lấn
+      // Slot 2: [08:15, 08:30) — touches the 08:15 boundary but does not overlap
       jdbc.sql(
               """
               INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
@@ -332,7 +333,7 @@ class SchedulingMigrationV001Test {
     }
 
     @Test
-    @DisplayName("Hai slot chồng lấn trong cùng một schedule bị chặn bởi ex_slot_no_overlap")
+    @DisplayName("Two overlapping slots in the same schedule are blocked by ex_slot_no_overlap")
     void overlappingSlotsOnSameScheduleAreRejected() {
       UUID practitionerId = UUID.randomUUID();
       UUID scheduleId = createSchedule(practitionerId, "ophthalmology");
@@ -349,7 +350,7 @@ class SchedulingMigrationV001Test {
           .params(UUID.randomUUID(), scheduleId, practitionerId, start1, end1)
           .update();
 
-      // Slot 2: [09:15, 09:45) chồng lấn với Slot 1 tại [09:15, 09:30)
+      // Slot 2: [09:15, 09:45) overlaps Slot 1 at [09:15, 09:30)
       OffsetDateTime start2 = OffsetDateTime.parse("2026-11-20T09:15:00Z");
       OffsetDateTime end2 = OffsetDateTime.parse("2026-11-20T09:45:00Z");
 
@@ -367,7 +368,7 @@ class SchedulingMigrationV001Test {
     }
 
     @Test
-    @DisplayName("Hai slot cùng thời gian nhưng ở hai schedule khác nhau được phép tồn tại")
+    @DisplayName("Two slots with the same time but in two different schedules are allowed to exist")
     void overlappingTimeOnDifferentSchedulesAllowed() {
       UUID practitioner1 = UUID.randomUUID();
       UUID practitioner2 = UUID.randomUUID();
@@ -385,7 +386,7 @@ class SchedulingMigrationV001Test {
           .params(UUID.randomUUID(), schedule1, practitioner1, start, end)
           .update();
 
-      // Cùng khoảng giờ nhưng schedule khác
+      // Same time range but a different schedule
       jdbc.sql(
               """
               INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)

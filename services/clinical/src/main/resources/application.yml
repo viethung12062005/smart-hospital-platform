@@ -1,5 +1,5 @@
-# Cấu hình service clinical. Giá trị nhạy cảm (mật khẩu) KHÔNG đặt ở đây: lấy từ biến môi trường (local: dev/.local/connection.env
-# hoặc Secret do dev/scripts/deploy.sh tạo; cloud: Key Vault qua CSI).
+# Configuration for the clinical service. Sensitive values (passwords) must NOT go here: read from environment variables (local: dev/.local/connection.env
+# or a Secret created by dev/scripts/deploy.sh; cloud: Key Vault via CSI).
 spring:
   application:
     name: clinical

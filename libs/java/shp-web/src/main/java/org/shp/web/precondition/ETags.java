@@ -3,7 +3,7 @@ package org.shp.web.precondition;
 import java.util.regex.Pattern;
 import org.shp.web.errors.ShpException;
 
-/** ETag/If-Match của SHP (07 §3): weak ETag {@code W/"<versionId>"}, versionId là số nguyên. */
+/** SHP's ETag/If-Match (07 §3): weak ETag {@code W/"<versionId>"}, versionId is an integer. */
 public final class ETags {
   private static final String DIGITS = "\\d{1,18}";
   private static final Pattern WEAK = Pattern.compile("W/\"(" + DIGITS + ")\"");
@@ -17,9 +17,9 @@ public final class ETags {
   }
 
   /**
-   * Version trong {@code meta.versionId}/{@link Versioned#version()}, hoặc null nếu không phải số
-   * trong khoảng {@link #format} sinh ra mà {@link #parseIfMatch} đọc lại được. Dùng chung để ETag
-   * phát ra luôn dùng được làm If-Match.
+   * Version in {@code meta.versionId}/{@link Versioned#version()}, or null if it is not a number in
+   * the range produced by {@link #format} that {@link #parseIfMatch} can read back. Shared so
+   * emitted ETags can always be used as If-Match.
    */
   static Long tryParseVersion(Object versionId) {
     String s =
@@ -30,9 +30,9 @@ public final class ETags {
   }
 
   /**
-   * Version trong If-Match. Thiếu → 428 {@code precondition-required}; không đúng dạng {@code
-   * W/"<số>"} (kể cả {@code *}, ETag mạnh, nhiều giá trị) → 412 {@code version-conflict} vì không
-   * khớp được version nào.
+   * Version in If-Match. Missing → 428 {@code precondition-required}; wrong form {@code
+   * W/"<number>"} (including {@code *}, strong ETags, multiple values) → 412 {@code
+   * version-conflict} because it matches no version.
    */
   public static long parseIfMatch(String header) {
     if (header == null || header.isBlank()) {

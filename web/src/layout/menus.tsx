@@ -13,7 +13,7 @@ import type { Role } from '@/auth/roles';
 
 export interface MenuLink {
   readonly href: string;
-  /** Khóa i18n trong nhóm nav. */
+  /** i18n key within the nav group. */
   readonly label: string;
   readonly icon: ReactNode;
   readonly roles: readonly Role[];
@@ -27,8 +27,8 @@ export interface MenuGroup {
 const ALL: readonly Role[] = ['patient', 'doctor', 'nurse', 'admin', 'dpo'];
 
 /**
- * Menu theo vai trò (ma trận phân quyền: docs/02-requirements/access-control-matrix.md).
- * Menu chỉ để điều hướng; quyền thật do máy chủ kiểm ở mọi endpoint.
+ * Menu by role (permission matrix: docs/02-requirements/access-control-matrix.md).
+ * The menu is for navigation only; real permissions are enforced by the server on every endpoint.
  */
 export const MENU: readonly MenuGroup[] = [
   { title: 'groupMain', links: [{ href: '/', label: 'home', icon: <IconHome />, roles: ALL }] },
@@ -56,7 +56,7 @@ export const MENU: readonly MenuGroup[] = [
   },
 ];
 
-/** Link khớp dài nhất với đường dẫn hiện tại (ví dụ /patients/p-001 → /patients). */
+/** The longest link matching the current path (for example /patients/p-001 → /patients). */
 export function activeHref(pathname: string, menus: readonly MenuGroup[]): string | undefined {
   let best: string | undefined;
   for (const m of menus) {

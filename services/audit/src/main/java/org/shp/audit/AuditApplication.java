@@ -3,7 +3,7 @@ package org.shp.audit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-/** Nhận và tra cứu audit, chuỗi hash bất biến. */
+/** Receive and query audits, immutable hash chain. */
 @SpringBootApplication
 public class AuditApplication {
   public static void main(String[] args) {

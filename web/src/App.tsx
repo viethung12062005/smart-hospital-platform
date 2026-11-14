@@ -17,7 +17,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { createQueryClient } from '@/queryClient';
 import { theme } from '@/theme';
 
-// Tách code theo màn hình: người dùng chỉ tải màn hình của vai trò mình.
+// Split code by screen: users only load the screens for their role.
 const EncountersPage = lazy(() =>
   import('@/pages/clinical/EncountersPage').then((m) => ({ default: m.EncountersPage })),
 );
@@ -37,7 +37,7 @@ const MyAppointmentsPage = lazy(() =>
 const QueuePage = lazy(() => import('@/pages/staff/QueuePage').then((m) => ({ default: m.QueuePage })));
 const SchedulePage = lazy(() => import('@/pages/staff/SchedulePage').then((m) => ({ default: m.SchedulePage })));
 
-/** Bắt buộc đăng nhập; chưa đăng nhập thì sang /login và nhớ trang định vào. */
+/** Requires sign-in; when signed out, goes to /login and remembers the intended page. */
 function Protected({ children }: { readonly children: ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -91,7 +91,7 @@ export function AppRoutes() {
 
 export function Providers(props: { readonly children: ReactNode; readonly queryClient?: QueryClient }) {
   const { i18n } = useTranslation();
-  // Một QueryClient cho cả vòng đời ứng dụng (tạo lại mỗi lần render sẽ mất cache).
+  // One QueryClient for the whole app lifetime (recreating it on every render would lose the cache).
   const [client] = useState(() => props.queryClient ?? createQueryClient());
   return (
     <MantineProvider theme={theme}>

@@ -3,8 +3,8 @@ package org.shp.authz;
 import java.util.List;
 
 /**
- * Kết quả quyết định. Khi từ chối, {@code denyReason} dùng làm {@code reason} trong audit (không
- * trả cho client).
+ * Decision result. On denial, {@code denyReason} is used as {@code reason} in the audit (not
+ * returned to the client).
  */
 public record AuthzDecision(
     boolean allowed,

@@ -1,7 +1,8 @@
-"""Dựng LLM router từ cấu hình (06 §4, ADR-0013). Chuỗi mặc định khớp tài liệu; ConfigMap (YAML) ghi đè được.
+"""Build the LLM router from configuration (06 §4, ADR-0013). The default chains match the docs; a ConfigMap (YAML)
+can override them.
 
-Provider thiếu API key thì bị bỏ khỏi mọi chuỗi (không gọi được). Ollama chạy trong cụm nên `external=False`;
-DeepSeek và Gemini ở ngoài Azure nên luôn nhận văn bản đã che PII.
+A provider missing its API key is dropped from every chain (it cannot be called). Ollama runs in-cluster so
+`external=False`; DeepSeek and Gemini are outside Azure so they always receive PII-redacted text.
 """
 
 from pathlib import Path
@@ -55,7 +56,7 @@ DEFAULT: dict[str, Any] = {
         },
     },
     "circuitBreaker": {"failureThreshold": 5, "windowSeconds": 60, "openSeconds": 30},
-    # Giá USD / 1 triệu token (vào, ra) để ước chi phí (AI-13); cập nhật theo bảng giá lúc triển khai
+    # USD per 1 million tokens (input, output) for cost estimates (AI-13); update with the price list at deployment
     "pricing": {"deepseek": [0.27, 1.10], "gemini": [0.10, 0.40], "ollama": [0.0, 0.0]},
 }
 

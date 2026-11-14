@@ -1,19 +1,19 @@
 /**
- * Cấu hình lúc chạy: đọc /config.json để một image dùng được cho mọi môi trường (local, uat, prod).
- * Trên cụm, file này do ConfigMap ghi đè; khi dev, mặc định nằm ở public/config.json.
+ * Runtime configuration: reads /config.json so one image works for every environment (local, uat, prod).
+ * On the cluster, this file is overridden by a ConfigMap; in dev it defaults to public/config.json.
  */
 export interface AppConfig {
-  /** 'oidc' (Keycloak) hoặc 'mock' (chọn vai trò, không cần backend). */
+  /** 'oidc' (Keycloak) or 'mock' (pick a role, no backend needed). */
   readonly authMode: 'oidc' | 'mock';
-  /** Issuer OIDC, ví dụ http://localhost:18080/realms/shp */
+  /** OIDC issuer, for example http://localhost:18080/realms/shp */
   readonly authority: string;
   readonly clientId: string;
   /**
-   * Scope xin khi đăng nhập. Keycloak local: mapper audience shp-api đã gắn sẵn nên chỉ cần openid.
-   * Entra ID: PHẢI thêm scope của API (vd. api://shp-api-uat/access_as_user), nếu không access token là của Graph và gateway trả 401.
+   * Scope requested at sign-in. Local Keycloak: the shp-api audience mapper is already attached, so only openid is needed.
+   * Entra ID: you MUST add the API's scope (e.g. api://shp-api-uat/access_as_user), otherwise the access token is a Graph token and the gateway returns 401.
    */
   readonly scope: string;
-  /** Tiền tố API; rỗng = cùng origin (Vite proxy khi dev, gateway khi chạy trên cụm). */
+  /** API prefix; empty = same origin (Vite proxy in dev, gateway when running on the cluster). */
   readonly apiBase: string;
 }
 
@@ -27,7 +27,7 @@ const DEFAULTS: AppConfig = {
 
 let current: AppConfig = DEFAULTS;
 
-/** Chế độ dữ liệu giả: `npm run dev:mock` (VITE_MOCK=true). Bật MSW và đăng nhập giả. */
+/** Mock-data mode: `npm run dev:mock` (VITE_MOCK=true). Enables MSW and mock sign-in. */
 export const isMockMode = import.meta.env.VITE_MOCK === 'true';
 
 export async function loadConfig(): Promise<AppConfig> {
@@ -41,7 +41,7 @@ export async function loadConfig(): Promise<AppConfig> {
       current = { ...DEFAULTS, ...((await res.json()) as Partial<AppConfig>) };
     }
   } catch {
-    // Không có config.json: dùng mặc định cho local.
+    // No config.json: use the local defaults.
   }
   return current;
 }

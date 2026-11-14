@@ -34,9 +34,10 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Cấu hình web dùng chung cho mọi service Spring MVC: xác thực JWT, tra danh tính, phân quyền theo
- * ma trận, audit, lỗi chuẩn, header bắt buộc (If-Match, Idempotency-Key) và ETag. Service chỉ cần
- * cung cấp bean {@link IdentityLinkClient} và {@link AuditSink}.
+ * Shared web configuration for every Spring MVC service: JWT authentication, identity lookup,
+ * matrix-based authorization, audit, standard errors, required headers (If-Match, Idempotency-Key)
+ * and ETag. A service only needs to provide the {@link IdentityLinkClient} and {@link AuditSink}
+ * beans.
  */
 @AutoConfiguration
 @EnableConfigurationProperties(ShpAuthProperties.class)
@@ -62,19 +63,20 @@ public class ShpWebAutoConfiguration {
   }
 
   /**
-   * Giải mã JWT lười (chỉ tải cấu hình OIDC khi có token đầu tiên) để service khởi động được khi
-   * IdP chưa sẵn.
+   * Lazy JWT decoding (loads OIDC configuration only on the first token) so a service can start
+   * when the IdP is not ready yet.
    */
   @Bean
   @ConditionalOnMissingBean
   JwtDecoder shpJwtDecoder(ShpAuthProperties props, Clock clock) {
     if (props.authority().isBlank() || props.audience().isBlank()) {
       throw new IllegalStateException(
-          "Thiếu shp.auth.authority/audience (hoặc OIDC_AUTHORITY, OIDC_AUDIENCE)");
+          "Missing shp.auth.authority/audience (or OIDC_AUTHORITY, OIDC_AUDIENCE)");
     }
     return new SupplierJwtDecoder(
         () -> {
-          // jwk-set-uri: lấy khóa từ địa chỉ trong cụm khi issuer (localhost) không gọi được từ
+          // jwk-set-uri: load keys from the in-cluster address when the issuer (localhost) is
+          // unreachable from
           // pod.
           var decoder =
               props.jwkSetUri().isBlank()

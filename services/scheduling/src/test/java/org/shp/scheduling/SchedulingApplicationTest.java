@@ -29,8 +29,8 @@ import org.testcontainers.rabbitmq.RabbitMQContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Test khung: service khởi động với DB thật, endpoint nền tảng đúng, KHÔNG có endpoint nào thiếu
- * khai báo quyền.
+ * Framework test: the service starts with a real DB, platform endpoints are correct, and NO
+ * endpoint is missing its authorization declaration.
  */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -44,7 +44,7 @@ class SchedulingApplicationTest {
                   System.getenv().getOrDefault("SHP_TEST_POSTGRES_IMAGE", "postgres:16-alpine"))
               .asCompatibleSubstituteFor("postgres"));
 
-  /** Bus local (13-events §1.1): relay outbox phát lên RabbitMQ thật. */
+  /** Local bus (13-events §1.1): the outbox relay publishes to a real RabbitMQ. */
   @Container @ServiceConnection
   static final RabbitMQContainer BUS =
       new RabbitMQContainer(
@@ -79,7 +79,8 @@ class SchedulingApplicationTest {
 
   @Test
   void azurePasswordlessPluginIsPackaged() throws Exception {
-    // uat/prod đăng nhập PostgreSQL bằng plugin này (02-db-scheduling §5); thiếu thì không có DB
+    // uat/prod log in to PostgreSQL with this plugin (02-db-scheduling §5); without it there is no
+    // DB
     assertThat(
             Class.forName(
                 "com.azure.identity.extensions.jdbc.postgresql.AzurePostgresqlAuthenticationPlugin"))

@@ -6,7 +6,7 @@ import { useAuth } from '@/auth/useAuth';
 import { completeSignIn } from '@/auth/session';
 import { Loading } from '@/components/ui';
 
-/** Nhận mã ủy quyền từ Keycloak (redirect URI /auth/callback), đổi lấy token rồi quay về trang cũ. */
+/** Receive the authorization code from Keycloak (redirect URI /auth/callback), exchange it for tokens, then return to the previous page. */
 export function AuthCallbackPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export function AuthCallbackPage() {
   const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return; // StrictMode gọi effect 2 lần; mã ủy quyền chỉ dùng được một lần.
+    if (started.current) return; // StrictMode runs effects twice; the authorization code can only be used once.
     started.current = true;
     completeSignIn()
       .then(async (returnTo) => {
@@ -23,7 +23,7 @@ export function AuthCallbackPage() {
         navigate(returnTo, { replace: true });
       })
       .catch((e: unknown) => {
-        console.error('Đăng nhập thất bại', e);
+        console.error('Sign-in failed', e);
         setFailed(true);
       });
   }, [navigate, refresh]);

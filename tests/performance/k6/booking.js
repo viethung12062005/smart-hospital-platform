@@ -1,7 +1,7 @@
-// NFR-P2: đặt lịch p95 ≤ 800 ms tại 50 RPS, lỗi 5xx < 0,1%, kèm 20% yêu cầu tranh chấp cùng một slot (AC-03.1).
-//   k6 run -e BASE_URL=... -e TOKEN=<token> -e PATIENTS=<số bệnh nhân giả> tests/performance/k6/booking.js
-// Mỗi lần lặp lấy một slot trống rồi đặt bằng Idempotency-Key mới. 409 (slot vừa bị đặt) và 422 (đủ 3 lịch) là kết quả
-// nghiệp vụ hợp lệ, không tính là lỗi; chỉ 5xx và các mã khác mới tính.
+// NFR-P2: booking p95 ≤ 800 ms at 50 RPS, 5xx error rate < 0.1%, with 20% of requests contending for the same slot (AC-03.1).
+//   k6 run -e BASE_URL=... -e TOKEN=<token> -e PATIENTS=<number of fake patients> tests/performance/k6/booking.js
+// Each iteration picks a free slot and books it with a new Idempotency-Key. 409 (slot just booked) and 422 (3 appointments already) are valid
+// business outcomes and are not counted as errors; only 5xx and other codes are.
 import http from 'k6/http';
 import { check } from 'k6';
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
@@ -9,7 +9,7 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:18000';
 const TOKEN = __ENV.TOKEN || '';
 const SCENARIO = __ENV.SCENARIO || 'smoke';
-const HOT_SLOT = __ENV.HOT_SLOT || ''; // slot dùng chung để tạo tranh chấp (20% yêu cầu)
+const HOT_SLOT = __ENV.HOT_SLOT || ''; // shared slot used to create contention (20% of requests)
 
 http.setResponseCallback(http.expectedStatuses(200, 201, 409, 422));
 
@@ -42,5 +42,5 @@ export default function () {
     headers: { ...auth, 'Idempotency-Key': uuidv4() },
     tags: { name: 'POST $book' },
   });
-  check(res, { 'đặt lịch cho kết quả nghiệp vụ hợp lệ': (r) => [200, 201, 409, 422].includes(r.status) });
+  check(res, { 'booking returns a valid business result': (r) => [200, 201, 409, 422].includes(r.status) });
 }

@@ -1,5 +1,5 @@
 /**
- * Controller REST/FHIR của document. Mỗi endpoint: {@code @RequireShpAuthz(...)} (xem README của
- * service).
+ * REST/FHIR controllers for document. Each endpoint: {@code @RequireShpAuthz(...)} (see the
+ * service's README).
  */
 package org.shp.document.api;

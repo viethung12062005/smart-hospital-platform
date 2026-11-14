@@ -1,10 +1,10 @@
-"""Vòng đời tài liệu tri thức (AI-05; 06 §1.1, 12 §6): draft → approved → indexed → retired.
+"""Knowledge document lifecycle (AI-05; 06 §1.1, 12 §6): draft → approved → indexed → retired.
 
-- Admin tải lên (PDF, DOCX, Markdown ≤ 30 MB, kiểm chữ ký tệp chứ không tin Content-Type) → `draft`.
-- Bác sĩ của khoa (hoặc admin) duyệt → `approved` → index (parse, chunk, embed, upsert) → `indexed`.
-  Lỗi index thử 3 lần; vẫn lỗi thì giữ `approved` kèm `indexError` và metric cảnh báo.
-- Thay file → `version+1`, cần duyệt lại; chunk của version cũ vẫn phục vụ cho tới khi version mới index xong.
-- Gỡ → xóa khỏi index, giữ bản ghi (`retired`).
+- Admins upload (PDF, DOCX, Markdown ≤ 30 MB, check the file signature rather than trusting Content-Type) → `draft`.
+- A doctor of the department (or an admin) approves → `approved` → index (parse, chunk, embed, upsert) → `indexed`.
+  Indexing is retried 3 times; still failing keeps `approved` with `indexError` and an alert metric.
+- Replacing the file → `version+1`, needs re-approval; old-version chunks keep serving until the new version is indexed.
+- Remove → delete from the index, keep the record (`retired`).
 """
 
 import hashlib
@@ -28,13 +28,16 @@ from shp_platform.errors import ShpError
 
 INDEX_ATTEMPTS = 3
 ROLES = frozenset({"doctor", "nurse"})
-KB_SUSPICIOUS = Counter("shp_ai_kb_suspicious_chunks_total", "Đoạn tài liệu bị loại vì giống chỉ dẫn gửi AI")
-KB_INDEXED = Counter("shp_ai_kb_index_total", "Kết quả index tài liệu tri thức", ["outcome"])
+KB_SUSPICIOUS = Counter(
+    "shp_ai_kb_suspicious_chunks_total",
+    "Document chunks rejected for looking like AI-directed instructions",
+)
+KB_INDEXED = Counter("shp_ai_kb_index_total", "Knowledge document indexing outcome", ["outcome"])
 Doc = dict[str, Any]
 
 
 def sniff(data: bytes, declared: str) -> str:
-    """Xác định loại tệp từ nội dung (magic bytes)."""
+    """Determine the file type from its content (magic bytes)."""
     if data.startswith(b"%PDF-"):
         return parsers.PDF
     if data.startswith(b"PK\x03\x04") and b"word/" in data[:4096] + data[-65536:]:
@@ -136,7 +139,8 @@ class KnowledgeBase:
     def approve(self, doc_id: str, actor: str, actor_departments: tuple[str, ...], is_admin: bool) -> Doc:
         cur = self.get(doc_id)
         if not is_admin and (cur["department"] == HOSPITAL_WIDE or cur["department"] not in actor_departments):
-            raise ShpError("forbidden")  # bác sĩ chỉ duyệt tài liệu khoa mình; toàn viện do admin duyệt
+            # a doctor may approve only their own department's documents; hospital-wide is admin-approved
+            raise ShpError("forbidden")
         updated = self.db.kb_documents.find_one_and_update(
             {"_id": doc_id, "status": "draft", "version": cur["version"]},
             {"$set": {"status": "approved", "approvedBy": actor, "approvedAt": self.clock()}},
@@ -147,7 +151,8 @@ class KnowledgeBase:
         return updated
 
     def index_document(self, doc_id: str) -> Doc:
-        """Chạy sau approve (thread nền). Chunk mới vào index xong mới xóa chunk version cũ: không có khoảng trống."""
+        """Runs after approve (background thread). New chunks enter the index before old-version chunks are deleted:
+        no coverage gap."""
         doc = self.get(doc_id)
         if doc["status"] != "approved":
             return doc
@@ -175,8 +180,8 @@ class KnowledgeBase:
                 return out or self.get(doc_id)
             except parsers.ParseError as exc:
                 last = exc
-                break  # tài liệu hỏng: thử lại vô ích
-            except Exception as exc:  # noqa: BLE001 - index/embedding lỗi tạm thời
+                break  # broken document: retrying is pointless
+            except Exception as exc:  # noqa: BLE001 - transient index/embedding error
                 last = exc
         KB_INDEXED.labels(outcome="failed").inc()
         reason = str(last) if isinstance(last, parsers.ParseError) else type(last).__name__
@@ -196,7 +201,7 @@ class KnowledgeBase:
         assert out is not None
         return out
 
-    # ---------------- đọc ----------------
+    # ---------------- read ----------------
     def get(self, doc_id: str) -> Doc:
         doc = self.db.kb_documents.find_one({"_id": doc_id})
         if doc is None:
@@ -211,7 +216,7 @@ class KnowledgeBase:
             q["status"] = status
         return list(self.db.kb_documents.find(q).sort("updatedAt", -1).limit(200))
 
-    # ---------------- nội bộ ----------------
+    # ---------------- internal ----------------
     def _store(self, doc_id: str, version: int, data: bytes, ctype: str) -> Doc:
         sha = hashlib.sha256(data).hexdigest()
         path = f"{doc_id}/v{version}/{sha}"
@@ -221,9 +226,9 @@ class KnowledgeBase:
     def _build_chunks(self, doc: Doc) -> list[IndexedChunk]:
         data = self.blobs.get(self.container, doc["blobPath"])
         if hashlib.sha256(data).hexdigest() != doc["sha256"]:
-            raise parsers.ParseError("tệp trong kho không khớp hash")
+            raise parsers.ParseError("file in the store does not match the hash")
         pieces = chunk(parsers.parse(data, doc["contentType"]))
-        # đoạn có chỉ dẫn gửi AI không bao giờ vào index (prompt injection qua tài liệu, AI-17)
+        # chunks containing AI-directed instructions never enter the index (prompt injection via documents, AI-17)
         flagged = [p for p in pieces if looks_like_instruction(p.text)]
         if flagged:
             KB_SUSPICIOUS.inc(len(flagged))

@@ -1,6 +1,6 @@
 import { createTheme, type MantineColorsTuple } from '@mantine/core';
 
-// Màu teal của hệ thiết kế (src/styles/tokens.css): shade 6 = --shp-teal, 8 = --shp-teal-d, 0 = --shp-teal-soft.
+// The design system's teal color (src/styles/tokens.css): shade 6 = --shp-teal, 8 = --shp-teal-d, 0 = --shp-teal-soft.
 const teal: MantineColorsTuple = [
   '#e6f2ef',
   '#cde5df',

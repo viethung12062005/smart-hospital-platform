@@ -1,14 +1,14 @@
 # gateway
 
-Cổng vào duy nhất (Spring Cloud Gateway, WebFlux): định tuyến tới 7 service, xác thực JWT (OIDC), chặn `/internal/**`.
-Chủ sở hữu: **D3** (làm lại xác thực ở gateway, từ 2026-11-01). Thêm route mới thì báo D3.
+The single entry point (Spring Cloud Gateway, WebFlux): routes to 7 services, validates JWT (OIDC), blocks `/internal/**`.
+Owner: **D3** (gateway auth rework, from 2026-11-01). Report new routes to D3.
 
-| Lệnh (chạy ở gốc repo) | Việc |
+| Command (run at repo root) | Task |
 |---|---|
-| `mvn -B -pl services/gateway -am verify` | build + test như CI |
-| `set -a; . dev/.local/connection.env; set +a; mvn -pl services/gateway -am spring-boot:run` | chạy local (cổng 8080; upstream đặt qua `SHP_UPSTREAM_<SVC>`) |
-| `make -C dev deploy SVC=gateway` | build image và deploy lên cụm kind |
+| `mvn -B -pl services/gateway -am verify` | build + test like CI |
+| `set -a; . dev/.local/connection.env; set +a; mvn -pl services/gateway -am spring-boot:run` | run locally (port 8080; upstream set via `SHP_UPSTREAM_<SVC>`) |
+| `make -C dev deploy SVC=gateway` | build image and deploy to the kind cluster |
 
-- Bảng route: `src/main/resources/application.yml` (nguồn: `docs/03-architecture/detailed-design/07-api-conventions.md` §1).
-- Bảo mật: `src/main/java/org/shp/gateway/GatewaySecurity.java` — `/internal/**` luôn 403, `/actuator/health/**` và `/actuator/info` công khai,
-  còn lại cần JWT hợp lệ (issuer, audience, MFA cho nhân viên theo `shp.auth.*`). Phân quyền chi tiết nằm ở từng service (`@RequireShpAuthz`).
+- Route table: `src/main/resources/application.yml` (source: `docs/03-architecture/detailed-design/07-api-conventions.md` §1).
+- Security: `src/main/java/org/shp/gateway/GatewaySecurity.java` — `/internal/**` is always 403, `/actuator/health/**` and `/actuator/info` are public,
+  the rest require a valid JWT (issuer, audience, staff MFA per `shp.auth.*`). Fine-grained authorization lives in each service (`@RequireShpAuthz`).

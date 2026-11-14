@@ -141,7 +141,7 @@ class OutboxTest extends PostgresTestBase {
                 .query(Integer.class)
                 .single())
         .isZero();
-    pub.failOnVersion = null; // bus sống lại
+    pub.failOnVersion = null; // bus is back
     assertThat(relay(pub, 100).relayOnce()).isEqualTo(2);
     assertThat(pub.versions()).containsExactly(1, 2, 3);
   }

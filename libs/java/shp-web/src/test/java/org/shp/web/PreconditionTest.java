@@ -23,7 +23,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import tools.jackson.databind.JsonNode;
 
-/** Header bắt buộc If-Match / Idempotency-Key (428, 412) và ETag trên response (07 §3, SHR-05). */
+/** Required If-Match / Idempotency-Key headers (428, 412) and response ETag (07 §3, SHR-05). */
 @SpringBootTest(
     classes = TestApp.class,
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -68,7 +68,7 @@ class PreconditionTest {
     }
   }
 
-  /** Mã lỗi từ OperationOutcome (/fhir) hoặc Problem Details. */
+  /** Error code from OperationOutcome (/fhir) or Problem Details. */
   static String code(HttpResponse<String> r) {
     JsonNode body = CloudEvents.JSON.readTree(r.body());
     return body.has("issue")
@@ -76,7 +76,7 @@ class PreconditionTest {
         : body.get("code").asString();
   }
 
-  // ---------- If-Match trên PUT ----------
+  // ---------- If-Match on PUT ----------
   @Test
   void putWithoutIfMatchIs428() throws Exception {
     var r = send("PUT", "/fhir/Patient/p1", WebTest.patient());
@@ -103,9 +103,10 @@ class PreconditionTest {
 
   @Test
   void multipleIfMatchLinesAreRejectedEvenIfTheFirstOneMatches() throws Exception {
-    // RFC 9110 cho phép lặp header; chỉ đọc dòng đầu thì "W/\"2\"" phía sau bị bỏ qua và request
+    // RFC 9110 allows repeated headers; reading only the first line ignores the later "W/\"2\"" and
+    // the request
     // ghi
-    // đè lên bản mới hơn vẫn qua
+    // overwriting a newer version still passes
     var r =
         send(
             "PUT",
@@ -119,7 +120,7 @@ class PreconditionTest {
     assertThat(code(r)).isEqualTo("version-conflict");
   }
 
-  // ---------- Idempotency-Key + If-Match trên thao tác đổi trạng thái ----------
+  // ---------- Idempotency-Key + If-Match on state-changing operations ----------
   @Test
   void stateChangeWithoutIdempotencyKeyIs428() throws Exception {
     var r = send("POST", CANCEL, WebTest.nurse(), "If-Match", "W/\"3\"");
@@ -159,7 +160,8 @@ class PreconditionTest {
 
   @Test
   void headersAreCheckedBeforeAuthorization() throws Exception {
-    // Bệnh nhân không có dữ kiện "own" → bị từ chối; nhưng thiếu header thì 428 trước, không audit.
+    // The patient has no "own" facts → denied; but a missing header yields 428 first, with no
+    // audit.
     var missing = send("POST", CANCEL, WebTest.patient());
     assertThat(missing.statusCode()).isEqualTo(428);
     assertThat(audit.records()).isEmpty();
@@ -191,7 +193,7 @@ class PreconditionTest {
     assertThat(list.headers().firstValue("ETag")).isEmpty();
   }
 
-  // ---------- đơn vị ----------
+  // ---------- unit ----------
   @Test
   void ifMatchFormatAndParse() {
     assertThat(ETags.format(12)).isEqualTo("W/\"12\"");

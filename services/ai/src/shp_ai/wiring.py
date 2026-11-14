@@ -1,5 +1,5 @@
-"""Dựng phụ thuộc thật từ cấu hình và chạy tác vụ nền (consumer, relay outbox). Thiếu cấu hình thì dùng bản cục bộ
-(ghi cảnh báo) để dev chạy được; ở UAT/prod Helm values đặt đủ."""
+"""Build real dependencies from configuration and run background tasks (consumers, outbox relay). If configuration
+is missing, use local fallbacks (with a warning) so devs can run it; UAT/prod Helm values provide everything."""
 
 import logging
 import threading
@@ -22,17 +22,17 @@ from shp_platform.service_token import ServiceTokenProvider, StaticToken
 from shp_platform.token_exchange import ExchangeSettings, TokenExchanger
 
 LOG = logging.getLogger("shp.ai.wiring")
-STARTERS: list[Any] = []  # (deps, bus, stop) -> None: consumer của từng tính năng
+STARTERS: list[Any] = []  # (deps, bus, stop) -> None: each feature's consumer
 
 
-def from_settings(s: Settings) -> Deps:  # pragma: no cover - hạ tầng thật
+def from_settings(s: Settings) -> Deps:  # pragma: no cover - real infrastructure
     from pymongo import MongoClient
 
     blobs: BlobStore
     if s.azure_storage_connection_string or s.azure_storage_account_url:
         blobs = AzureBlobStore(s.azure_storage_connection_string, s.azure_storage_account_url)
     else:
-        LOG.warning("không có Blob: dùng bộ nhớ (chỉ dev)")
+        LOG.warning("no Blob configured: using in-memory (dev only)")
         blobs = MemoryBlobStore()
     index: SearchIndex
     if s.azure_search_endpoint:
@@ -40,7 +40,7 @@ def from_settings(s: Settings) -> Deps:  # pragma: no cover - hạ tầng thật
     elif s.opensearch_url:
         index = OpenSearchIndex(s.opensearch_url, s.search_index, s.embedding_dimensions)
     else:
-        LOG.warning("không có index tìm kiếm: dùng bộ nhớ (chỉ dev)")
+        LOG.warning("no search index configured: using in-memory (dev only)")
         index = MemoryIndex()
     embedder: Embedder = (
         OllamaEmbedder(s.ollama_url, s.embedding_model, s.embedding_dimensions)
@@ -51,7 +51,7 @@ def from_settings(s: Settings) -> Deps:  # pragma: no cover - hạ tầng thật
     directory: Directory = ClinicalDirectory(s.clinical_url, tokens) if s.token_endpoint else StaticDirectory()
     config = load_config(s.llm_config_path)
     client: MongoClient[dict[str, Any]] = MongoClient(s.mongodb_uri, tz_aware=True)
-    budget = MongoTokenBudget(client[s.mongodb_db], s.daily_token_limit)  # chung cho mọi replica
+    budget = MongoTokenBudget(client[s.mongodb_db], s.daily_token_limit)  # shared by every replica
     router = build_router(config, providers_from(s), budget, usage.on_call)
     exchanger = TokenExchanger(ExchangeSettings(s.token_endpoint, s.client_id, s.client_secret))
     extras = {"llm_config": config, "service_tokens": tokens, "exchanger": exchanger}
@@ -59,7 +59,7 @@ def from_settings(s: Settings) -> Deps:  # pragma: no cover - hạ tầng thật
 
 
 def offline_deps(s: Settings) -> Deps:
-    """Không có MongoDB: chỉ phục vụ endpoint nền tảng (health, info, metrics)."""
+    """No MongoDB: serve only the platform endpoints (health, info, metrics)."""
     config = load_config("")
     return Deps(
         s,
@@ -81,7 +81,7 @@ def make_bus(s: Settings) -> Bus | None:  # pragma: no cover
     return None
 
 
-def start_background(deps: Deps, stop: threading.Event) -> None:  # pragma: no cover - hạ tầng thật
+def start_background(deps: Deps, stop: threading.Event) -> None:  # pragma: no cover - real infrastructure
     ensure_indexes(deps.db)
     conversations.ensure_indexes(deps.db)
     usage.ensure_indexes(deps.db)
@@ -91,8 +91,8 @@ def start_background(deps: Deps, stop: threading.Event) -> None:  # pragma: no c
     mongo.ensure_messaging_indexes(deps.db)
     try:
         deps.index.ensure()
-    except Exception as exc:  # noqa: BLE001 - index chưa sẵn sàng: truy xuất sẽ báo lỗi, service vẫn chạy
-        LOG.warning("không tạo được index: %s", type(exc).__name__)
+    except Exception as exc:  # noqa: BLE001 - index not ready: retrieval will report an error, the service keeps running
+        LOG.warning("could not create index: %s", type(exc).__name__)
     bus = make_bus(deps.settings)
     if bus is None:
         return
@@ -104,6 +104,6 @@ def start_background(deps: Deps, stop: threading.Event) -> None:  # pragma: no c
             try:
                 mongo.relay_once(deps.db, bus)
             except Exception as exc:  # noqa: BLE001
-                LOG.warning("relay outbox lỗi: %s", type(exc).__name__)
+                LOG.warning("outbox relay failed: %s", type(exc).__name__)
 
     threading.Thread(target=relay, name="outbox-relay", daemon=True).start()

@@ -3,8 +3,8 @@ package org.shp.messaging;
 import org.shp.events.CloudEvent;
 
 /**
- * Inbox chống xử lý trùng của service ({@code PostgresInbox::handleOnce} hoặc {@code
- * MongoInbox::handleOnce}): chạy {@code handler} đúng một lần cho mỗi (consumer, id event).
+ * Inbox that prevents duplicate processing by the service ({@code PostgresInbox::handleOnce} or
+ * {@code MongoInbox::handleOnce}): runs {@code handler} exactly once for each (consumer, event id).
  */
 @FunctionalInterface
 public interface Inbox {

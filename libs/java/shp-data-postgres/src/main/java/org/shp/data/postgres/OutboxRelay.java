@@ -15,10 +15,11 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Relay outbox → bus. Mỗi lượt: khóa tối đa {@code batchSize} dòng chưa phát bằng {@code FOR UPDATE
- * SKIP LOCKED} (nhiều replica chạy song song không trùng), phát theo thời gian, đánh dấu {@code
- * published_at}. Bus lỗi: ghi {@code attempts}/{@code last_error} (không ghi payload), DỪNG lượt
- * (giữ thứ tự), thử lại với backoff. Giao ít nhất một lần: consumer bắt buộc idempotent.
+ * Outbox relay → bus. Each round: lock up to {@code batchSize} unpublished rows with {@code FOR
+ * UPDATE SKIP LOCKED} (many replicas run in parallel without duplicates), publish in time order,
+ * mark {@code published_at}. Bus failure: record {@code attempts}/{@code last_error} (never the
+ * payload), STOP the round (preserving order), retry with backoff. At-least-once delivery:
+ * consumers must be idempotent.
  */
 public final class OutboxRelay implements SmartLifecycle {
   private static final Logger LOG = LoggerFactory.getLogger(OutboxRelay.class);
@@ -52,8 +53,8 @@ public final class OutboxRelay implements SmartLifecycle {
   private record Row(UUID id, String payload) {}
 
   /**
-   * Một lượt phát; trả số event đã phát. Ném {@link OutboxPublishException} (sau khi đã ghi nhận)
-   * nếu bus lỗi giữa chừng.
+   * One publish round; returns the number of events published. Throws {@link
+   * OutboxPublishException} (after recording) if the bus fails midway.
    */
   public int relayOnce() {
     int[] sent = {0};
@@ -82,7 +83,7 @@ public final class OutboxRelay implements SmartLifecycle {
                 .update();
             sent[0]++;
           }
-        }); // commit: giữ các dòng đã phát và bộ đếm lỗi
+        }); // commit: keep the published rows and the failure counter
     if (failure[0] != null) {
       throw new OutboxPublishException(sent[0], failure[0]);
     }
@@ -114,7 +115,10 @@ public final class OutboxRelay implements SmartLifecycle {
     while (running.get()) {
       try {
         int sent = relayOnce();
-        delay = sent >= batchSize ? Duration.ZERO : pollInterval; // còn việc thì phát tiếp ngay
+        delay =
+            sent >= batchSize
+                ? Duration.ZERO
+                : pollInterval; // more work: publish again immediately
       } catch (RuntimeException e) {
         LOG.warn("Outbox relay failed; will retry with backoff", e);
         long next = Math.max(delay.toMillis(), pollInterval.toMillis()) * 2;
@@ -129,13 +133,13 @@ public final class OutboxRelay implements SmartLifecycle {
     }
   }
 
-  /** Bus từ chối một event; các event trước đó trong lượt vẫn được ghi nhận đã phát. */
+  /** Bus rejected one event; earlier events in the round are still marked as published. */
   public static final class OutboxPublishException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     private final int publishedBeforeFailure;
 
     OutboxPublishException(int publishedBeforeFailure, Throwable cause) {
-      super("Không phát được event từ outbox", cause);
+      super("Could not publish event from outbox", cause);
       this.publishedBeforeFailure = publishedBeforeFailure;
     }
 

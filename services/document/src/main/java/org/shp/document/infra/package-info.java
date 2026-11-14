@@ -1,2 +1,2 @@
-/** Repository (JDBC/Mongo), client REST nội bộ, Blob — chỉ app/ gọi tới. */
+/** Repositories (JDBC/Mongo), internal REST clients, Blob — only app/ calls these. */
 package org.shp.document.infra;

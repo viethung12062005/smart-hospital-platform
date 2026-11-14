@@ -3,9 +3,9 @@ import { getConfig } from '@/config';
 import { decodeJwtPayload, rolesFromClaims, type Role, type SessionUser } from './roles';
 
 /**
- * Nguồn token duy nhất cho lớp gọi API. Hai chế độ:
- * - oidc: Authorization Code + PKCE với client shp-web (realm Keycloak, giống nhau ở mọi môi trường);
- * - mock: người dùng giả chọn ở màn hình đăng nhập, token giả (MSW không kiểm chữ ký).
+ * The single token source for the API-calling layer. Two modes:
+ * - oidc: Authorization Code + PKCE with the shp-web client (Keycloak realm, identical in every environment);
+ * - mock: a mock user picked on the login screen, with a fake token (MSW does not verify signatures).
  */
 let manager: UserManager | undefined;
 let mockUser: (SessionUser & { token: string }) | undefined;
@@ -20,7 +20,7 @@ function oidc(): UserManager {
       post_logout_redirect_uri: window.location.origin,
       response_type: 'code',
       scope: cfg.scope,
-      // sessionStorage: token mất khi đóng tab, giảm rủi ro trên máy dùng chung ở bệnh viện.
+      // sessionStorage: the token is lost when the tab closes, reducing risk on shared hospital machines.
       userStore: new WebStorageStateStore({ store: window.sessionStorage }),
       automaticSilentRenew: true,
     });
@@ -66,7 +66,7 @@ export async function signOut(): Promise<void> {
   await oidc().signoutRedirect();
 }
 
-/** Người dùng giả cho chế độ mock và test (dữ liệu giả theo docs/00-synthetic-data.md). */
+/** Mock users for mock mode and tests (synthetic data per docs/00-synthetic-data.md). */
 export const MOCK_USERS: Record<Role, SessionUser> = {
   patient: { sub: 'mock-patient', name: 'Nguyễn Thị Lan', roles: ['patient'], fhirUser: 'Patient/p-001' },
   doctor: { sub: 'mock-doctor', name: 'BS. Lê Minh Quân', roles: ['doctor'], fhirUser: 'Practitioner/pr-001' },

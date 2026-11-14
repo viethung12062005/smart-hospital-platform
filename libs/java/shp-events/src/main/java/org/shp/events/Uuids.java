@@ -5,8 +5,8 @@ import java.time.Clock;
 import java.util.UUID;
 
 /**
- * UUIDv7 (RFC 9562): 48 bit thời gian ms + ngẫu nhiên — tăng theo thời gian, thân thiện với B-tree
- * (quy ước ID của thiết kế).
+ * UUIDv7 (RFC 9562): 48-bit ms timestamp + random — time-ordered, B-tree friendly (the design's ID
+ * convention).
  */
 public final class Uuids {
   private static final SecureRandom RANDOM = new SecureRandom();

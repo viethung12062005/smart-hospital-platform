@@ -4,20 +4,20 @@ import { activeHref, menusFor } from './menus';
 
 const hrefs = (roles: Parameters<typeof menusFor>[0]) => menusFor(roles).flatMap((g) => g.links.map((l) => l.href));
 
-describe('menu theo vai trò', () => {
-  it('bệnh nhân chỉ thấy đặt lịch, không thấy màn hình lâm sàng', () => {
+describe('menu by role', () => {
+  it('a patient only sees booking, not the clinical screens', () => {
     expect(hrefs(['patient'])).toEqual(['/', '/doctors', '/book', '/appointments']);
   });
 
-  it('bác sĩ thấy hàng đợi, lịch, bệnh nhân, lần khám', () => {
+  it('a doctor sees the queue, schedule, patients and encounters', () => {
     expect(hrefs(['doctor'])).toEqual(['/', '/queue', '/schedule', '/patients', '/encounters']);
   });
 
-  it('DPO không có menu nghiệp vụ nào ngoài trang chủ', () => {
+  it('the DPO has no business menu besides the home page', () => {
     expect(hrefs(['dpo'])).toEqual(['/']);
   });
 
-  it('chọn link khớp dài nhất', () => {
+  it('picks the longest matching link', () => {
     const menus = menusFor(['doctor']);
     expect(activeHref('/patients/p-001', menus)).toBe('/patients');
     expect(activeHref('/', menus)).toBe('/');
@@ -25,8 +25,8 @@ describe('menu theo vai trò', () => {
   });
 });
 
-describe('đọc vai trò từ access token', () => {
-  it('lấy claim roles, bỏ vai trò lạ', () => {
+describe('reading roles from the access token', () => {
+  it('takes the roles claim and drops unknown roles', () => {
     const payload = btoa(JSON.stringify({ sub: 'u1', roles: ['doctor', 'offline_access'] }))
       .replace(/\+/g, '-')
       .replace(/\//g, '_')

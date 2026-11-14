@@ -19,8 +19,8 @@ import org.testcontainers.mongodb.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Test khung: service khởi động với DB thật, endpoint nền tảng đúng, KHÔNG có endpoint nào thiếu
- * khai báo quyền.
+ * Framework test: the service starts with a real DB, platform endpoints are correct, and NO
+ * endpoint is missing its authorization declaration.
  */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -34,7 +34,7 @@ class AuditApplicationTest {
                   .asCompatibleSubstituteFor("mongo"))
           .withEnv(
               "GLIBC_TUNABLES",
-              "glibc.pthread.rseq=1") // kernel 6.19-7.0.13: SERVER-121912, xem MongoTestBase
+              "glibc.pthread.rseq=1") // kernel 6.19-7.0.13: SERVER-121912, see MongoTestBase
           .withReplicaSet();
 
   @Autowired Environment env;

@@ -22,9 +22,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 
 /**
- * Thực thi {@link RequireShpAuthz}. Từ chối → audit {@code denied} + lý do → 403 {@code
- * forbidden}/{@code no-care-relationship} (hoặc 404). Cho phép → chạy handler; sau đó audit {@code
- * success} (kể cả lỗi nghiệp vụ 4xx) hoặc {@code error} (5xx).
+ * Enforce {@link RequireShpAuthz}. Deny → audit {@code denied} + reason → 403 {@code
+ * forbidden}/{@code no-care-relationship} (or 404). Allow → run the handler; then audit {@code
+ * success} (including predictable 4xx business errors) or {@code error} (5xx).
  */
 public final class AuthzInterceptor implements HandlerInterceptor {
   static final String ATTR_DECISION = "shp.authz.decision";
@@ -73,7 +73,7 @@ public final class AuthzInterceptor implements HandlerInterceptor {
     var pending =
         new Pending(principal, meta, decision, ctx, auditResourceName(meta.resource(), vars, req));
     if (!decision.allowed()) {
-      emit(req, pending, null); // từ chối cũng phải có dấu vết (phát hiện dò quyền)
+      emit(req, pending, null); // denials must leave a trace too (permission probing detection)
       throw new ShpException(
           meta.denyAsNotFound()
               ? "not-found"
@@ -90,7 +90,7 @@ public final class AuthzInterceptor implements HandlerInterceptor {
   public void afterCompletion(
       HttpServletRequest req, HttpServletResponse res, Object handler, Exception ex) {
     if (req.getAttribute(ATTR_PENDING) instanceof Pending pending) {
-      // 4xx sau khi đã cho phép là lỗi nghiệp vụ lường trước: truy cập đã diễn ra → success. 5xx →
+      // A 4xx after an allow is a predictable business error: access happened → success. 5xx →
       // error.
       emit(req, pending, ex != null || res.getStatus() >= 500 ? AuditActions.ERROR : null);
     }
@@ -115,17 +115,17 @@ public final class AuthzInterceptor implements HandlerInterceptor {
             errorOutcome));
   }
 
-  /** Quyết định của request hiện tại (để handler áp {@code fields}/{@code hide}). */
+  /** Decision for the current request (so the handler can apply {@code fields}/{@code hide}). */
   public static AuthzDecision decision(HttpServletRequest req) {
     if (req.getAttribute(ATTR_DECISION) instanceof AuthzDecision d) {
       return d;
     }
-    throw new IllegalStateException("Endpoint chưa dùng @RequireShpAuthz");
+    throw new IllegalStateException("Endpoint does not use @RequireShpAuthz");
   }
 
   /**
-   * {@code Loại/id} khi route có {@code {id}}; thêm TÊN tham số query (không bao giờ giá trị) cho
-   * tìm kiếm.
+   * {@code Type/id} when the route has {@code {id}}; plus the NAME of query parameters (never
+   * values) for searches.
    */
   static String auditResourceName(
       String resource, Map<String, String> vars, HttpServletRequest req) {

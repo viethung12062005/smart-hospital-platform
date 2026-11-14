@@ -1,1 +1,1 @@
-"""Trợ lý RAG, tóm tắt hồ sơ, trích xuất tài liệu, chatbot đặt lịch; LLM router có fallback."""
+"""RAG assistant, record summaries, document extraction, booking chatbot; LLM router with fallback."""

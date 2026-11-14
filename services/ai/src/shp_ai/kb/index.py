@@ -1,11 +1,11 @@
-"""Index chunk tri thức (AI-01, AI-04, AI-06; 06 §1.2). Một giao diện, ba cài đặt:
+"""Knowledge chunk index (AI-01, AI-04, AI-06; 06 §1.2). One interface, three implementations:
 
-- `OpenSearchIndex` (local, LOC-08): BM25 + k-NN (HNSW, cosine, engine lucene có lọc trong truy vấn).
-- `AzureSearchIndex` (cloud): index `kb-chunks-v1` đúng 06 §1.2, xác thực managed identity.
-- `MemoryIndex` (test, dev không có hạ tầng).
+- `OpenSearchIndex` (local, LOC-08): BM25 + k-NN (HNSW, cosine, lucene engine with in-query filtering).
+- `AzureSearchIndex` (cloud): index `kb-chunks-v1` per 06 §1.2, managed identity auth.
+- `MemoryIndex` (tests, dev without infrastructure).
 
-Security trimming nằm TRONG truy vấn (06 §1.2): `allowedRoles` chứa role người gọi VÀ `department` thuộc khoa của họ
-hoặc `hospital-wide`. Không bao giờ lấy rộng rồi lọc sau.
+Security trimming happens INSIDE the query (06 §1.2): `allowedRoles` contains the caller's roles AND `department`
+belongs to their department or is `hospital-wide`. Never fetch broadly then filter afterwards.
 """
 
 import math
@@ -45,7 +45,7 @@ class Hit:
 
 @dataclass(frozen=True)
 class Scope:
-    """Phạm vi được phép của người gọi."""
+    """The caller's allowed scope."""
 
     role: str
     departments: tuple[str, ...]
@@ -216,7 +216,7 @@ class OpenSearchIndex:
             headers={"Content-Type": "application/x-ndjson"},
         )
         if res.status_code != 200 or res.json().get("errors"):
-            raise RuntimeError("opensearch bulk lỗi")
+            raise RuntimeError("opensearch bulk failed")
 
     def delete_document(self, document_id: str, except_version: int | None = None) -> None:
         must_not = [{"term": {"documentVersion": except_version}}] if except_version is not None else []
@@ -266,7 +266,7 @@ class OpenSearchIndex:
         )
 
 
-class AzureSearchIndex:  # pragma: no cover - cần Azure AI Search; thử ở UAT
+class AzureSearchIndex:  # pragma: no cover - needs Azure AI Search; exercised in UAT
     API = "2024-07-01"
 
     def __init__(self, endpoint: str, name: str = "kb-chunks-v1", dimensions: int = 1024) -> None:
@@ -381,7 +381,7 @@ class AzureSearchIndex:  # pragma: no cover - cần Azure AI Search; thử ở U
 
 
 def _odata(value: str) -> str:
-    """Thoát dấu nháy trong filter OData (chống chèn filter)."""
+    """Escape quotes in an OData filter (prevents filter injection)."""
     return value.replace("'", "''")
 
 

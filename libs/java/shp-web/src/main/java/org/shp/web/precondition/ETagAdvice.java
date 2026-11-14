@@ -12,9 +12,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Đặt {@code ETag: W/"<versionId>"} trên mọi response trả một resource (07 §3): resource FHIR theo
- * {@code meta.versionId} (Map hoặc JsonNode), DTO theo {@link Versioned}. Không ghi đè ETag handler
- * đã đặt; danh sách, Bundle và body không có version thì bỏ qua.
+ * Set {@code ETag: W/"<versionId>"} on every response returning a resource (07 §3): FHIR resources
+ * from {@code meta.versionId} (Map or JsonNode), DTOs from {@link Versioned}. Does not overwrite an
+ * ETag the handler already set; lists, Bundles and bodies without a version are skipped.
  */
 @RestControllerAdvice
 public class ETagAdvice implements ResponseBodyAdvice<Object> {
@@ -42,7 +42,7 @@ public class ETagAdvice implements ResponseBodyAdvice<Object> {
 
   static Long versionOf(Object body) {
     if (body instanceof Versioned v) {
-      // Bỏ ETag nếu version không đọc lại được bằng If-Match (âm hoặc quá dài).
+      // Drop the ETag if the version cannot be read back with If-Match (negative or too long).
       return ETags.tryParseVersion(v.version());
     }
     if (body instanceof Map<?, ?> m) {
@@ -54,7 +54,9 @@ public class ETagAdvice implements ResponseBodyAdvice<Object> {
     return null;
   }
 
-  /** {@code meta} có thể là Map (dựng tay) hoặc JsonNode (đọc từ Jackson); phải nhận cả hai. */
+  /**
+   * {@code meta} may be a Map (built by hand) or JsonNode (read by Jackson); both must be accepted.
+   */
   private static Long versionFromMeta(Object meta) {
     if (meta instanceof Map<?, ?> m) {
       return ETags.tryParseVersion(m.get("versionId"));

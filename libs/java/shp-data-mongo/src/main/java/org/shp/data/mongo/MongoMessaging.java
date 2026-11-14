@@ -13,8 +13,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Tên collection, index nền tảng và cơ chế thử lại transaction dùng chung cho
- * outbox/inbox/idempotency trên MongoDB.
+ * Collection names, platform indexes and the transaction retry mechanism shared by
+ * outbox/inbox/idempotency on MongoDB.
  */
 public final class MongoMessaging {
   public static final String OUTBOX = "outbox";
@@ -25,8 +25,8 @@ public final class MongoMessaging {
   private MongoMessaging() {}
 
   /**
-   * Tạo index cần thiết (idempotent). Service gọi lúc khởi động hoặc trong script khởi tạo (03 §2,
-   * 04 §1–2).
+   * Create the required indexes (idempotent). A service calls this at startup or in its init script
+   * (03 §2, 04 §1–2).
    */
   public static void ensureIndexes(MongoTemplate mongo) {
     mongo
@@ -53,9 +53,9 @@ public final class MongoMessaging {
   }
 
   /**
-   * Chạy {@code work} trong transaction, THỬ LẠI khi MongoDB báo xung đột (nhãn {@code
-   * TransientTransactionError}, WriteConflict) hoặc khi một transaction song song vừa ghi cùng khóa
-   * (DuplicateKey) — đúng khuyến nghị của MongoDB cho transaction đa document.
+   * Run {@code work} in a transaction, RETRYING when MongoDB reports a conflict (label {@code
+   * TransientTransactionError}, WriteConflict) or when a concurrent transaction just wrote the same
+   * key (DuplicateKey) — exactly MongoDB's recommendation for multi-document transactions.
    */
   public static <T> T inTransaction(TransactionTemplate tx, Supplier<T> work) {
     RuntimeException last = null;

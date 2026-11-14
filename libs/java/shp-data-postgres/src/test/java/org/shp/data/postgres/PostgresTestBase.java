@@ -15,8 +15,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * PostgreSQL 16 thật (Testcontainers), dùng chung cho mọi lớp test. Đổi image bằng biến
- * SHP_TEST_POSTGRES_IMAGE (ví dụ mirror khi Docker Hub giới hạn lượt kéo).
+ * Real PostgreSQL 16 (Testcontainers), shared by every test class. Override the image with
+ * SHP_TEST_POSTGRES_IMAGE (for example a mirror when Docker Hub rate-limits pulls).
  */
 abstract class PostgresTestBase {
   static final PostgreSQLContainer PG =

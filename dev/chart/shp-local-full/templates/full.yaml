@@ -1,4 +1,4 @@
-# ---------- ClamAV (quét mã độc cho document service) ----------
+# ---------- ClamAV (malware scanning for the document service) ----------
 {{ include "shp.svc" (dict "name" "clamav" "port" 3310 "portName" "clamd") }}
 ---
 {{ include "shp.svc.host" (dict "name" "clamav" "port" 3310 "portName" "clamd" "nodePort" 30310) }}
@@ -18,12 +18,12 @@ spec:
           ports: [{ containerPort: 3310 }]
           readinessProbe:
             exec: { command: ["clamdcheck.sh"] }
-            initialDelaySeconds: 60     # lần đầu tải CSDL virus
+            initialDelaySeconds: 60     # first virus database download
             periodSeconds: 10
             failureThreshold: 30
           resources: {{- toYaml .Values.resources.clamav | nindent 12 }}
 ---
-# ---------- OpenSearch (tìm kiếm, 1 node, tắt security vì chỉ chạy local) ----------
+# ---------- OpenSearch (search, 1 node, security off because it is local only) ----------
 {{ include "shp.svc" (dict "name" "opensearch" "port" 9200 "portName" "http") }}
 ---
 {{ include "shp.svc.host" (dict "name" "opensearch" "port" 9200 "portName" "http" "nodePort" 30920) }}
@@ -64,7 +64,7 @@ spec:
         accessModes: [ReadWriteOnce]
         resources: { requests: { storage: {{ .Values.storage.opensearch }} } }
 ---
-# ---------- Ollama (LLM + embedding local). Kéo model: make -C dev pull-models ----------
+# ---------- Ollama (local LLM + embeddings). Pull models: make -C dev pull-models ----------
 {{ include "shp.svc" (dict "name" "ollama" "port" 11434 "portName" "http") }}
 ---
 {{ include "shp.svc.host" (dict "name" "ollama" "port" 11434 "portName" "http" "nodePort" 31434) }}
@@ -94,7 +94,7 @@ spec:
         accessModes: [ReadWriteOnce]
         resources: { requests: { storage: {{ .Values.storage.ollama }} } }
 ---
-# ---------- MLflow (tracking + registry; SQLite + artifact trên PVC, chỉ cho local) ----------
+# ---------- MLflow (tracking + registry; SQLite + artifacts on a PVC, local only) ----------
 {{ include "shp.svc" (dict "name" "mlflow" "port" 5000 "portName" "http") }}
 ---
 {{ include "shp.svc.host" (dict "name" "mlflow" "port" 5000 "portName" "http" "nodePort" 30500) }}
@@ -116,7 +116,7 @@ spec:
           command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000",
                     "--backend-store-uri", "sqlite:////mlflow/mlflow.db",
                     "--default-artifact-root", "/mlflow/artifacts",
-                    "--workers", "1"]   # 1 worker: 4 worker mặc định vượt giới hạn bộ nhớ local
+                    "--workers", "1"]   # 1 worker: the default 4 workers exceed the local memory limit
           ports: [{ containerPort: 5000 }]
           readinessProbe:
             httpGet: { path: /health, port: 5000 }
@@ -154,7 +154,7 @@ spec:
             periodSeconds: 5
           resources: {{- toYaml .Values.resources.loki | nindent 12 }}
 ---
-# ---------- OpenTelemetry Collector: nhận OTLP từ service, đẩy log sang Loki ----------
+# ---------- OpenTelemetry Collector: receives OTLP from services, ships logs to Loki ----------
 apiVersion: v1
 kind: ConfigMap
 metadata: { name: otel-collector }
@@ -200,7 +200,7 @@ spec:
       volumes:
         - { name: config, configMap: { name: otel-collector } }
 ---
-# ---------- Grafana (datasource Loki có sẵn) ----------
+# ---------- Grafana (Loki datasource preconfigured) ----------
 apiVersion: v1
 kind: ConfigMap
 metadata: { name: grafana-datasources }

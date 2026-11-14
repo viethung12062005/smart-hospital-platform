@@ -8,14 +8,11 @@ import org.shp.authz.AuthzDecision;
 import org.shp.authz.Principal;
 
 /**
- * Chuyển một {@link AuthzDecision} thành bản ghi audit: cả cho phép và từ chối đều được ghi, từ
- * chối kèm mã lý do.
+ * Turn an {@link AuthzDecision} into an audit record: both allows and denials are recorded, denials
+ * with a reason code.
  */
 public final class AuthzAudit {
-  /**
-   * Hành động trong ma trận → hành động audit. Test bảo đảm mọi hành động trong ma trận đều có ánh
-   * xạ.
-   */
+  /** Matrix action → audit action. A test ensures every matrix action has a mapping. */
   public static final Map<String, String> ACTION_MAP =
       Map.ofEntries(
           Map.entry("read", AuditActions.READ),
@@ -38,15 +35,15 @@ public final class AuthzAudit {
           Map.entry("export", AuditActions.EXPORT),
           Map.entry("start", AuditActions.BREAK_GLASS_START));
 
-  /** Role đại diện khi người gọi có nhiều role: ưu tiên role có quyền nhiều hơn. */
+  /** Representative role when the caller has several: prefer the more privileged one. */
   private static final List<String> ROLE_PRIORITY =
       List.of("dpo", "admin", "doctor", "nurse", "patient");
 
   private AuthzAudit() {}
 
   /**
-   * {@code errorOutcome} khác null (thường là {@code error}) khi xử lý sau phân quyền thất bại
-   * ngoài dự kiến.
+   * {@code errorOutcome} is non-null (usually {@code error}) when post-authorization processing
+   * fails unexpectedly.
    */
   public static AuditRecord fromDecision(
       Clock clock,
@@ -63,7 +60,7 @@ public final class AuthzAudit {
       String errorOutcome) {
     String mapped = ACTION_MAP.get(action);
     if (mapped == null) {
-      throw new IllegalArgumentException("Hành động chưa ánh xạ audit: " + action);
+      throw new IllegalArgumentException("Action has no audit mapping: " + action);
     }
     String role =
         ROLE_PRIORITY.stream().filter(principal.roles()::contains).findFirst().orElse("system");

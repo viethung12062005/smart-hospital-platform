@@ -5,8 +5,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 
 /**
- * Gọi {@code GET /internal/v1/identity/{subject}} của clinical (09-api-clinical §4). Token workload
- * identity được gắn bởi interceptor của {@link RestClient} do service cấu hình.
+ * Call clinical's {@code GET /internal/v1/identity/{subject}} (09-api-clinical §4). The workload
+ * identity token is attached by the {@link RestClient} interceptor configured by the service.
  */
 public final class HttpIdentityLinkClient implements IdentityLinkClient {
   private final RestClient http;
@@ -29,7 +29,7 @@ public final class HttpIdentityLinkClient implements IdentityLinkClient {
                   }
                   if (!res.getStatusCode().is2xxSuccessful()) {
                     throw new IllegalStateException(
-                        "identity service trả " + res.getStatusCode().value());
+                        "identity service returned " + res.getStatusCode().value());
                   }
                   return res.bodyTo(Dto.class);
                 });
@@ -41,7 +41,7 @@ public final class HttpIdentityLinkClient implements IdentityLinkClient {
         || !(parts[0].equals("Patient") || parts[0].equals("Practitioner"))
         || parts[1].isEmpty()) {
       throw new IllegalStateException(
-          "fhirUser không đúng dạng Patient/{id} hoặc Practitioner/{id}");
+          "fhirUser is not in the form Patient/{id} or Practitioner/{id}");
     }
     return Optional.of(new IdentityLink(parts[0], parts[1], dto.disabled()));
   }

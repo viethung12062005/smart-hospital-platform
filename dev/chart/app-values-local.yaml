@@ -1,17 +1,17 @@
-# Values chung cho MỌI service khi deploy lên cụm kind (dev/scripts/deploy.sh). File riêng của service
-# (services/<svc>/deploy/values-local.yaml) nạp sau và ghi đè được.
+# Common values for EVERY service when deployed to the kind cluster (dev/scripts/deploy.sh). The service-specific file
+# (services/<svc>/deploy/values-local.yaml) is loaded afterwards and can override these.
 replicaCount: 1
 image:
-  pullPolicy: Never          # image nạp bằng `kind load`, không kéo từ registry
+  pullPolicy: Never          # images are loaded with `kind load`, not pulled from a registry
 resources:
   requests: { cpu: 50m, memory: 128Mi }
   limits: { memory: 512Mi }
 pdb:
-  enabled: false             # 1 replica thì PDB chặn việc drain node
+  enabled: false             # with 1 replica a PDB blocks node drains
 networkPolicy:
-  enabled: false             # local cho phép mọi luồng; NetworkPolicy được kiểm trên uat/prod
-# Mật khẩu/chuỗi kết nối tới phụ thuộc trong namespace shp-deps (Secret do deploy.sh tạo, mật khẩu sinh ngẫu nhiên trên máy).
-# Tên biến theo quy ước Spring Boot (relaxed binding) cho service Java; MONGODB_URI/RABBITMQ_URL cho service Python.
+  enabled: false             # local allows all traffic; NetworkPolicy is verified on uat/prod
+# Passwords/connection strings for dependencies in the shp-deps namespace (Secret created by deploy.sh, passwords randomly generated on this machine).
+# Variable names follow the Spring Boot convention (relaxed binding) for Java services; MONGODB_URI/RABBITMQ_URL for Python services.
 secretEnv:
   - { name: SPRING_DATASOURCE_PASSWORD, secretName: shp-local-conn, key: postgres-password }
   - { name: SPRING_RABBITMQ_PASSWORD, secretName: shp-local-conn, key: rabbitmq-password }
@@ -20,12 +20,12 @@ secretEnv:
   - { name: MONGODB_URI, secretName: shp-local-conn, key: mongodb }
   - { name: RABBITMQ_URL, secretName: shp-local-conn, key: rabbitmq }
 env:
-  # Token lấy từ máy dev qua http://localhost:18080 nên issuer là localhost; pod không gọi được localhost của máy
-  # → khóa ký (JWKS) lấy qua DNS trong cụm, còn issuer vẫn kiểm đúng giá trị localhost.
+  # Tokens are obtained from the dev machine via http://localhost:18080, so the issuer is localhost; a pod cannot reach the machine localhost
+  # → the signing keys (JWKS) are fetched via in-cluster DNS, while the issuer still validates against the localhost value.
   OIDC_AUTHORITY: http://localhost:18080/realms/shp
   OIDC_JWK_SET_URI: http://keycloak.shp-deps.svc.cluster.local:8080/realms/shp/protocol/openid-connect/certs
   OIDC_AUDIENCE: shp-api
-  SHP_REQUIRE_MFA_FOR_STAFF: "false"   # người dùng thử trong Keycloak local không có MFA
+  SHP_REQUIRE_MFA_FOR_STAFF: "false"   # test users in the local Keycloak do not have MFA
   SHP_CLINICAL_URL: http://clinical
   SPRING_RABBITMQ_HOST: rabbitmq.shp-deps.svc.cluster.local
   SPRING_RABBITMQ_PORT: "5672"

@@ -9,8 +9,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * Inbox chống xử lý trùng trên MongoDB: {@code _id = "<consumer>|<messageId>"}, TTL 14 ngày (03
- * §2).
+ * Duplicate-processing guard inbox on MongoDB: {@code _id = "<consumer>|<messageId>"}, TTL 14 days
+ * (03 §2).
  */
 public final class MongoInbox {
   private final MongoTemplate mongo;
@@ -24,9 +24,10 @@ public final class MongoInbox {
   }
 
   /**
-   * Xử lý event đúng một lần: transaction gồm dấu inbox + {@code handler} (dữ liệu và outbox của
-   * handler dùng cùng transaction). Handler lỗi → rollback TOÀN BỘ (cả dấu inbox). Xung đột với lần
-   * giao song song → thử lại, lần sau thấy dấu inbox → bỏ qua. Trả false nếu đã xử lý.
+   * Process an event exactly once: the transaction covers the inbox marker + {@code handler} (the
+   * handler's data and outbox use the same transaction). Handler failure → roll back EVERYTHING
+   * (including the inbox marker). A conflict with a concurrent run → retry; the next attempt sees
+   * the inbox marker → skip. Returns false if already processed.
    */
   public boolean handleOnce(String consumer, CloudEvent evt, Runnable handler) {
     String key = consumer + "|" + evt.id();
@@ -47,7 +48,8 @@ public final class MongoInbox {
             return true;
           });
     } catch (DuplicateKeyException e) {
-      // Hết lượt thử mà vẫn trùng khóa: nếu dấu inbox đã có thì event đã được xử lý ở nơi khác.
+      // Retries exhausted and still a duplicate key: if the inbox marker exists, the event was
+      // processed elsewhere.
       if (mongo.findById(key, Document.class, MongoMessaging.INBOX) != null) {
         return false;
       }
