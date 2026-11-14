@@ -1,0 +1,15 @@
+{
+  "concepts": {
+    "29463-7": "Body weight (kg)",
+    "39156-5": "Body mass index (kg/m2)",
+    "59408-5": "Oxygen saturation by pulse oximetry (%)",
+    "8302-2": "Body height (cm)",
+    "8310-5": "Body temperature (Cel)",
+    "8462-4": "Diastolic blood pressure (mm[Hg])",
+    "8480-6": "Systolic blood pressure (mm[Hg])",
+    "85354-9": "Blood pressure panel (mm[Hg])",
+    "8867-4": "Heart rate (/min)",
+    "9279-1": "Respiratory rate (/min)"
+  },
+  "url": "http://loinc.org"
+}

@@ -48,6 +48,28 @@ def main() -> int:
         errs.append(f"extension[{key}] is in 01-domain-model but missing from contracts/terminology")
     for key in sorted(set(ext) - documented):
         errs.append(f"extension {key} is in contracts/terminology but unused in 01-domain-model")
+    # ICD-10: ARC-20 asks for a ~300-code subset; keep it from shrinking silently
+    icd = cs["icd10-subset"]["concepts"]
+    if len(icd) < 300:
+        errs.append(f"icd10-subset has {len(icd)} codes, needs >= 300 (ARC-20)")
+    # YAML silently overwrites duplicate keys: scan the raw lines of each block
+    raw_lines = (ROOT / "contracts/terminology/code-systems.yaml").read_text(encoding="utf-8").splitlines()
+    for block in ("specialty", "cancel-reason", "booking-channel", "practitioner-role", "icd10-subset"):
+        seen: set[str] = set()
+        inside = False
+        for line in raw_lines:
+            if line.strip() == f"{block}:":
+                inside = True
+                continue
+            if not inside:
+                continue
+            if line and not line.startswith("    "):
+                break  # a new code-system header (two spaces) or a top-level key ends this block
+            if ":" in line:
+                key = line.strip().split(":", 1)[0]
+                if key in seen:
+                    errs.append(f"{block}: duplicate code {key}")
+                seen.add(key)
     ev = json.loads((ROOT / "contracts/events/document/document-uploaded.v1.example.json").read_text(encoding="utf-8"))
     if ev["type"] not in {str(c) for c in cs["loinc-document-types"]["concepts"]}:
         errs.append("E8 example uses a document type outside the catalog")
