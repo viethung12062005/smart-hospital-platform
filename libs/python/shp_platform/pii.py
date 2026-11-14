@@ -61,3 +61,18 @@ def redact(text: str, known: Mapping[str, Iterable[str]] | None = None) -> Redac
 def contains_pii(text: str) -> bool:
     """Kiểm tra nhanh (test, guardrail đầu ra): còn mẫu PII nào không."""
     return any(p.search(text) for _, p in _PATTERNS)
+
+
+_REDACTED = "[REDACTED]"
+
+
+def mask_pii(text: str) -> str:
+    """Mask PII in a log message with the common token ``[REDACTED]`` (no restore, no data kind).
+
+    Mirrors Java ``PiiMaskingConverter`` (shp-service-defaults): same patterns, same token.
+    Names and addresses cannot be caught by patterns, so they must still be kept out of logs at the source.
+    """
+    out = text
+    for _, pattern in _PATTERNS:
+        out = pattern.sub(_REDACTED, out)
+    return out
