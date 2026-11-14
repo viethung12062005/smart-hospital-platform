@@ -1,5 +1,5 @@
 import type { Bundle, OperationOutcome, Resource } from '@medplum/fhirtypes';
-import { accessToken } from '@/auth/session';
+import { accessToken, onSessionExpired, renewAccessToken } from '@/auth/session';
 import { getConfig } from '@/config';
 import { currentLang } from '@/i18n';
 
@@ -63,11 +63,22 @@ export function etagOf(resource: Resource | undefined): string | undefined {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+  const first = await send(path, options, await accessToken());
+  // WEB-02: an expired session is renewed once and the request replayed (same Idempotency-Key, so a replayed
+  // $book cannot create a second appointment). If the session cannot be renewed, the user signs in again.
+  if (first.status === 401 && !options.signal?.aborted) {
+    const renewed = await renewAccessToken();
+    if (renewed) return finish<T>(await send(path, options, renewed));
+    await onSessionExpired();
+  }
+  return finish<T>(first);
+}
+
+async function send(path: string, options: RequestOptions, token: string | undefined): Promise<Response> {
   const headers: Record<string, string> = {
     Accept: path.startsWith('/fhir') ? 'application/fhir+json' : 'application/json',
     'Accept-Language': currentLang(),
   };
-  const token = await accessToken();
   if (token) headers['Authorization'] = `Bearer ${token}`;
   let body: string | undefined;
   if (options.form) {
@@ -79,10 +90,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   }
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
   if (options.ifMatch) headers['If-Match'] = options.ifMatch;
-
-  let res: Response;
   try {
-    res = await fetch(`${getConfig().apiBase}${path}`, {
+    return await fetch(`${getConfig().apiBase}${path}`, {
       method: options.method ?? 'GET',
       headers,
       body,
@@ -92,7 +101,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     if ((e as Error).name === 'AbortError') throw e;
     throw new NetworkError();
   }
+}
 
+async function finish<T>(res: Response): Promise<ApiResponse<T>> {
   const text = await res.text();
   const json: unknown = text ? safeJson(text) : undefined;
   if (!res.ok) {
