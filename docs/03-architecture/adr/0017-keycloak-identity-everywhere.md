@@ -1,58 +1,58 @@
-# ADR-0017: Keycloak là nhà cung cấp danh tính duy nhất cho người dùng ứng dụng, ở mọi môi trường
+# ADR-0017: Keycloak is the single identity provider for application users, in every environment
 
-## Trạng thái
-**Accepted (2026-10-31)**: SA quyết định sau khi rà luồng đăng ký và đăng nhập của bệnh nhân. Thay phần "Entra ID ở cloud" trong [ADR-0004](0004-azure-first-portable.md), [ADR-0015](0015-java-for-all-services.md) và [ADR-0016](0016-frontend-web-app.md). Không đổi cách dùng Entra ID để quản trị Azure (xem "Phạm vi").
+## Status
+**Accepted (2026-10-31)**: SA decision after reviewing the patient registration and login flow. Replaces the "Entra ID in the cloud" part of [ADR-0004](0004-azure-first-portable.md), [ADR-0015](0015-java-for-all-services.md), and [ADR-0016](0016-frontend-web-app.md). Does not change how Entra ID is used to administer Azure (see "Scope").
 
-## Bối cảnh
-Thiết kế trước dùng hai nhà cung cấp danh tính (IdP): Keycloak ở local và Microsoft Entra ID ở cloud. Khi mô tả luồng "bệnh nhân mới đăng ký" từ đầu đến cuối, có ba vấn đề:
+## Context
+The previous design used two identity providers (IdPs): Keycloak locally and Microsoft Entra ID in the cloud. When describing the "new patient registers" flow end to end, there were three problems:
 
-1. **Trải nghiệm không hợp bệnh nhân Việt Nam.** Bệnh nhân bị chuyển sang trang đăng nhập của Microsoft để tạo tài khoản và đặt mật khẩu, rồi mới quay về web làm hồ sơ. Hai lần "đăng ký" ở hai nơi, giao diện không do bệnh viện kiểm soát. Người dùng Việt Nam quen định danh bằng **số điện thoại** (nhận mã OTP), không quen tài khoản Microsoft.
-2. **Entra ID thông thường dành cho người trong tổ chức.** Bệnh nhân bên ngoài cần dịch vụ riêng (Entra External ID) phải cấu hình thêm; thiết kế chưa chốt phần này.
-3. **Hai IdP, hai bộ lỗi.** Lỗi liên quan Entra chỉ lộ ở UAT (ADR-0011 đã ghi rủi ro), mỗi thay đổi đăng nhập phải kiểm hai lần.
+1. **Experience does not fit Vietnamese patients.** Patients were redirected to the Microsoft login page to create an account and set a password, then returned to the web app to fill in their profile. Two "registrations" in two places, with a UI not controlled by the hospital. Vietnamese users are used to identifying with a **phone number** (receiving an OTP), not a Microsoft account.
+2. **Regular Entra ID is for people inside an organization.** External patients need a separate service (Entra External ID) requiring extra configuration; the design had not settled this part.
+3. **Two IdPs, two sets of errors.** Entra-related errors only surface in UAT (ADR-0011 already noted the risk), and every login change must be tested twice.
 
-## Quyết định
-**Dùng Keycloak cho toàn bộ người dùng ứng dụng (bệnh nhân và nhân viên) ở local, UAT và prod.** Code backend không đổi vì vẫn là OIDC chuẩn; chỉ đổi nơi đặt IdP và cấu hình.
+## Decision
+**Use Keycloak for all application users (patients and staff) in local, UAT, and prod.** Backend code does not change because it is still standard OIDC; only the IdP location and configuration change.
 
-| Hạng mục | Quyết định |
+| Item | Decision |
 |---|---|
-| Vận hành | Keycloak chạy trong cụm, namespace riêng `shp-iam`, 2 replica ở prod, triển khai bằng GitOps. Realm `shp` quản lý bằng code (`realm-shp.json` đã có cho local). Đặt cùng tên miền với web ở đường dẫn `/idp` (qua Gateway), chỉ HTTPS: không cần CORS và CSP chỉ cho `'self'` |
-| Đăng ký bệnh nhân | Tự đăng ký ngay trên trang của Keycloak, giao diện tiếng Việt và tiếng Anh do bệnh viện thiết kế. Đăng nhập và đăng ký bằng **số điện thoại hoặc email** (chọn một khi tạo tài khoản): số điện thoại xác minh bằng **mã OTP gửi qua Zalo trước, SMS sau** (cùng mã, tự chuyển SMS khi Zalo lỗi hoặc quá 30 giây), email xác minh bằng mã gửi qua email. Việc gửi và kiểm mã do dịch vụ `notification` đảm nhận (API N8, N9) để Keycloak và luồng nhận hồ sơ dùng chung một nơi (ADR-0018). Hồ sơ bệnh nhân vẫn bắt buộc có **số điện thoại đã xác minh OTP** (nhắc lịch, chống trùng): tài khoản tạo bằng email thì xác minh số điện thoại ở bước điền hồ sơ. **Không thu CCCD khi đăng ký**: số CCCD được điều dưỡng bổ sung khi bệnh nhân đến khám (SRS UC `supplement-national-id`) |
-| Mật khẩu bệnh nhân | Tối thiểu 12 ký tự, không bắt buộc ký tự đặc biệt, từ chối mật khẩu nằm trong danh sách bị lộ, không bắt đổi định kỳ (theo NIST SP 800-63B-4). Chống dò: khóa tạm sau 5 lần sai liên tiếp, chặn theo IP |
-| Nhân viên | Admin mời qua email; mật khẩu tối thiểu 14 ký tự; **bắt buộc yếu tố thứ hai không phải SMS** (ứng dụng xác thực TOTP hoặc khóa WebAuthn) ở lần đăng nhập đầu. Không có đường bỏ qua MFA |
-| Token | Giữ nguyên: Authorization Code + PKCE, access token ≤ 15 phút, claim `roles`, `amr` để kiểm MFA. `fhirUser` vẫn không nằm trong token mà tra qua `identity_links` (ADR C7) |
-| Gọi giữa service (`/internal`) và AI thay mặt người dùng | Tài khoản dịch vụ (service account) trong Keycloak với client credentials; AI dùng token exchange RFC 8693. Cách xác thực client: ưu tiên chữ ký bằng token ServiceAccount của Kubernetes nếu phiên bản Keycloak hỗ trợ, nếu không thì client secret trong Key Vault xoay vòng 90 ngày (chốt ở IAM-02) |
-| Lưu mật khẩu | **Chỉ Keycloak lưu**, dưới dạng băm chậm có salt (Argon2id, mặc định của Keycloak mới). Ứng dụng nghiệp vụ và các service khác không bao giờ thấy mật khẩu |
-| Cơ sở dữ liệu của Keycloak | PostgreSQL riêng cho IAM, không dùng chung với scheduling (cô lập và khôi phục độc lập). Cách xác thực DB chốt ở IAM-01 |
+| Operation | Keycloak runs in the cluster, separate namespace `shp-iam`, 2 replicas in prod, deployed via GitOps. Realm `shp` managed as code (`realm-shp.json` already exists for local). Served on the same domain as the web app at path `/idp` (through the Gateway), HTTPS only: no CORS needed and CSP allows only `'self'` |
+| Patient registration | Self-registration directly on Keycloak's page, with Vietnamese and English UI designed by the hospital. Login and registration with **phone number or email** (choose one when creating the account): phone verified by an **OTP code sent via Zalo first, SMS after** (same code, automatically switches to SMS when Zalo fails or takes over 30 seconds), email verified by a code sent via email. Sending and checking codes is handled by the `notification` service (APIs N8, N9) so Keycloak and the record claim flow share one place (ADR-0018). Patient profiles still require a **phone number verified by OTP** (reminders, deduplication): accounts created with email verify the phone number in the profile step. **Do not collect national ID at registration**: the national ID number is added by a nurse when the patient arrives (SRS UC `supplement-national-id`) |
+| Patient passwords | Minimum 12 characters, no special-character requirement, reject passwords on breached lists, no forced periodic change (per NIST SP 800-63B-4). Brute-force protection: temporary lock after 5 consecutive failures, IP-based blocking |
+| Staff | Admin invites by email; password minimum 14 characters; **second factor other than SMS required** (TOTP authenticator app or WebAuthn key) at first login. No MFA bypass path |
+| Tokens | Unchanged: Authorization Code + PKCE, access token ≤ 15 minutes, `roles`, `amr` claims to check MFA. `fhirUser` still not in the token but looked up via `identity_links` (ADR C7) |
+| Service-to-service (`/internal`) and AI on behalf of a user | Service accounts in Keycloak with client credentials; AI uses RFC 8693 token exchange. Client authentication: prefer a signature using the Kubernetes ServiceAccount token if the Keycloak version supports it, otherwise a client secret in Key Vault rotated every 90 days (settled in IAM-02) |
+| Password storage | **Only Keycloak stores them**, as salted slow hashes (Argon2id, the default in recent Keycloak). Business applications and other services never see passwords |
+| Keycloak database | Dedicated PostgreSQL for IAM, not shared with scheduling (isolation and independent recovery). DB authentication settled in IAM-01 |
 
-### Phạm vi: Entra ID vẫn dùng ở đâu
-Entra ID **không** biến mất khỏi dự án, chỉ không còn là nơi bệnh nhân và nhân viên bệnh viện đăng nhập vào ứng dụng:
-- Quản trị Azure: đăng nhập AKS, đăng nhập Argo CD của người vận hành, quyền Azure RBAC.
-- Danh tính workload (managed identity) để pod truy cập PostgreSQL, MongoDB, Redis, Service Bus, Storage, AI Search, Key Vault.
-- Đăng nhập Grafana quản trị.
+### Scope: where Entra ID is still used
+Entra ID **does not** disappear from the project; it is simply no longer where patients and hospital staff log in to the application:
+- Azure administration: AKS login, operator Argo CD login, Azure RBAC permissions.
+- Workload identity (managed identity) for pods to access PostgreSQL, MongoDB, Redis, Service Bus, Storage, AI Search, Key Vault.
+- Grafana admin login.
 
-## Phương án đã cân nhắc
-| Phương án | Kết luận |
+## Alternatives considered
+| Option | Conclusion |
 |---|---|
-| Entra External ID cho bệnh nhân, Keycloak cho local (thiết kế cũ) | Bỏ: trải nghiệm bị giới hạn bởi mức tùy biến của dịch vụ, hai IdP, cấu hình chưa chốt |
-| Lai: Entra cho nhân viên, Keycloak cho bệnh nhân | Bỏ: vẫn hai IdP và hai luồng MFA; nhân viên bệnh viện không có sẵn tenant Entra |
-| Tự viết đăng nhập và lưu mật khẩu | Bỏ: rủi ro bảo mật quá lớn với dữ liệu y tế, không đủ thời gian |
-| Dịch vụ danh tính khác (Auth0, Cognito...) | Bỏ: thêm nhà cung cấp, chi phí theo người dùng, không có lợi thế rõ so với Keycloak |
+| Entra External ID for patients, Keycloak for local (old design) | Rejected: experience limited by the service's customization, two IdPs, configuration not settled |
+| Hybrid: Entra for staff, Keycloak for patients | Rejected: still two IdPs and two MFA flows; hospital staff do not have an Entra tenant available |
+| Build our own login and password storage | Rejected: security risk too high for medical data, not enough time |
+| Another identity service (Auth0, Cognito...) | Rejected: extra provider, per-user cost, no clear advantage over Keycloak |
 
-## Hệ quả
-**Tích cực**
-- Một IdP, một bộ test, cùng hành vi ở local, UAT và prod. Lỗi đăng nhập lộ ngay trên máy dev.
-- Luồng đăng ký liền mạch, tiếng Việt, theo số điện thoại; bệnh viện kiểm soát giao diện và nội dung.
-- Không cần tenant Entra riêng cho người dùng ứng dụng, giảm phụ thuộc vào subscription Azure khi phát triển.
+## Consequences
+**Positive**
+- One IdP, one test suite, same behavior in local, UAT, and prod. Login bugs surface immediately on the dev machine.
+- Seamless registration flow, in Vietnamese, by phone number; the hospital controls the UI and content.
+- No separate Entra tenant for application users, reducing dependence on the Azure subscription during development.
 
-**Chi phí và rủi ro (nhóm tự chịu trách nhiệm)**
-| Rủi ro | Xử lý |
+**Costs and risks (the team is responsible)**
+| Risk | Mitigation |
 |---|---|
-| Keycloak là hệ thống nhạy cảm nhất, nay do ta vận hành: vá lỗi, sao lưu, HA | Image ghim digest và quét như service khác; PostgreSQL riêng có sao lưu; cập nhật Keycloak vào chu kỳ vá hằng tháng; kiểm thử khôi phục |
-| Mật khẩu nay nằm trong phạm vi hệ thống: vi phạm kích hoạt thông báo 72 giờ (Luật BVDLCN) và đánh giá tác động | Cập nhật đánh giá tác động; mã hóa đĩa; băm Argon2id; không ghi mật khẩu vào log; khóa tài khoản và cảnh báo đăng nhập bất thường |
-| Giao diện quản trị Keycloak bị tấn công | Không mở ra Internet: chỉ truy cập qua dải IP quản trị hoặc port-forward; tài khoản quản trị riêng có MFA |
-| Keycloak không có sẵn OTP qua Zalo và SMS | Viết một authenticator mở rộng (SPI) gọi `notification` (N8, N9); `notification` có adapter Zalo và SMS sau giao diện `OtpChannel`, môi trường dev dùng bản giả hiển thị mã trong log. Zalo cần tài khoản doanh nghiệp, mẫu tin xác thực và cách đăng ký nhãn gửi tin SMS (chi phí tham khảo: Zalo thấp hơn SMS, nhà cung cấp quyết định); quy định hiện hành về nhãn gửi tin cần kiểm tra trước khi triển khai thật |
-| OTP có chi phí theo tin; SMS có thể bị chuyển hướng SIM | Ưu tiên Zalo (rẻ hơn, gắn với tài khoản Zalo); giới hạn số lần gửi theo SĐT và IP, ngân sách và cảnh báo; OTP chỉ để xác minh sở hữu số điện thoại, không dùng làm yếu tố thứ hai của nhân viên |
-| Một Keycloak lỗi làm cả hệ thống không đăng nhập được | 2 replica, kiểm tra sức khỏe, KEDA/HPA; chấp nhận không có đường đăng nhập dự phòng bỏ qua MFA (đã ghi ở SRS mục tích hợp) |
+| Keycloak is the most sensitive system, now operated by us: patching, backup, HA | Digest-pinned image scanned like other services; dedicated PostgreSQL with backups; Keycloak updates in the monthly patch cycle; restore testing |
+| Passwords are now in system scope: a breach triggers 72-hour notification (Personal Data Protection Law) and impact assessment | Update the impact assessment; disk encryption; Argon2id hashing; do not log passwords; account lockout and anomalous-login alerts |
+| Keycloak admin UI attacked | Not exposed to the Internet: access only via admin IP range or port-forward; separate admin account with MFA |
+| Keycloak has no built-in OTP via Zalo and SMS | Write an extension authenticator (SPI) that calls `notification` (N8, N9); `notification` has Zalo and SMS adapters behind the `OtpChannel` interface, dev environment uses a fake that prints the code in logs. Zalo requires a business account, verification message template, and SMS sender brand registration (reference cost: Zalo lower than SMS, provider decides); current regulations on sender brands must be checked before real deployment |
+| OTP has per-message cost; SMS can be SIM-swapped | Prefer Zalo (cheaper, tied to a Zalo account); limit sends per phone number and IP, budget and alerts; OTP only verifies phone ownership, not used as a staff second factor |
+| One Keycloak failure makes the whole system unable to log in | 2 replicas, health checks, KEDA/HPA; accept that there is no fallback login path bypassing MFA (noted in the SRS integration section) |
 
-## Việc phải làm
-Thêm vào kế hoạch (SA): **IAM-01** Keycloak trên cụm (chart, DB, realm as code, ingress, hardening, sao lưu), **IAM-02** tài khoản dịch vụ và token exchange cho `/internal` và AI, **IAM-03** giao diện đăng nhập, đăng ký, quên mật khẩu tiếng Việt, **IAM-04** authenticator SMS OTP và giao diện nhà cung cấp SMS (có bản giả), **IAM-05** đẩy sự kiện đăng nhập, đăng ký, khóa, đổi mật khẩu về audit. Sửa **IAC-16** từ "Entra app registration" thành hạ tầng cho Keycloak. Cập nhật SRS lên v0.96 (UC-01, UC-08, NFR-SEC1, tích hợp), thiết kế chi tiết 07 và 15, ADR-0016.
+## Work to do
+Add to the plan (SA): **IAM-01** Keycloak on the cluster (chart, DB, realm as code, ingress, hardening, backup), **IAM-02** service accounts and token exchange for `/internal` and AI, **IAM-03** Vietnamese login, registration, and forgot-password UI, **IAM-04** SMS OTP authenticator and SMS provider interface (with fake), **IAM-05** push login, registration, lockout, and password-change events to audit. Change **IAC-16** from "Entra app registration" to Keycloak infrastructure. Update SRS to v0.96 (UC-01, UC-08, NFR-SEC1, integration), detailed design 07 and 15, ADR-0016.

@@ -23,9 +23,9 @@ AUTOMATION = ["automated", "partial", "planned", "manual"]
 
 # Requirements that touch patient data, identity, consent or patient safety are P0 (a failure blocks release).
 P0_RE = re.compile(
-    r"quyền|từ chối|audit|PII|họ tên|SĐT|định danh|đồng ý|rút đồng ý|khẩn cấp|break|mã độc|cách ly|nhiễm|token|MFA|khóa|"
-    r"bất biến|lộ |404|người khác|bệnh nhân khác|prompt|injection|consent|idempotency|trùng|xác nhận rõ|không bao giờ|"
-    r"không có quyền|mã hóa|secret|an toàn",
+    r"permission|deny|denied|denial|refus|audit|PII|full name|phone|identit|consent|withdraw|emergency|break-glass|malicious|"
+    r"quarantin|isolat|infect|token|MFA|lock|immutab|leak|expos|404|another patient|other patient|prompt|injection|"
+    r"idempot|duplicate|explicit confirm|never|not permitted|encrypt|secret|safe",
     re.I,
 )
 

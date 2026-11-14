@@ -91,7 +91,7 @@ class Model:
         for portal in self["screens"]:
             for s in portal["items"]:
                 i += 1
-                self._assign("SCR", s["key"], f"Màn hình {i}", s["name"])
+                self._assign("SCR", s["key"], f"Screen {i}", s["name"])
         for group in self["messages"]:
             for j, m in enumerate(group["items"], 1):
                 self._assign("MSG", m["key"], f"{group['prefix']} {j}", m["text"])
@@ -205,7 +205,7 @@ def build_diagrams(m: Model, png: bool, only: list[str] | None = None) -> dict[s
     roles = {r["key"]: r["name"] for r in m["actors"]}
     ord_ = hl["ord"]
     families.setdefault("01-object-relationship", []).append(
-        ("ord", "Sơ đồ quan hệ đối tượng", drawio.objects(ord_["nodes"], ord_["links"])))
+        ("ord", "Object relationship diagram", drawio.objects(ord_["nodes"], ord_["links"])))
     for wf in hl["workflows"]:
         families.setdefault("02-workflows", []).append(
             (f"wf-{wf['key']}", wf["name"], drawio.activity(wf["lanes"], wf["steps"])))

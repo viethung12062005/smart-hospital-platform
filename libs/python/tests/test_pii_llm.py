@@ -80,7 +80,7 @@ def test_router_falls_back_in_order_then_reports_final_fallback() -> None:
     ol = FakeProvider("ollama", external=False, reply=echo)
     res = _router(ds, gm, ol).complete("rag-answer", [ChatMessage("user", "0912345678")])
     assert res.provider == "ollama" and res.fallback_level == 2
-    assert ol.received[0][0].content == "0912345678"  # trong cụm, redact_pii=False
+    assert ol.received[0][0].content == "0912345678"  # in the cluster, redact_pii=False
     assert res.errors == ["deepseek:timeout", "gemini:rate-limited"]
     all_fail = _router(
         FakeProvider("deepseek", failures=["server"]),
@@ -109,7 +109,7 @@ def test_circuit_opens_after_5_failures_and_half_opens() -> None:
     assert len(ds.received) == 5
     now[0] = 31
     r.complete("rag-answer", [ChatMessage("user", "x")])
-    assert len(ds.received) == 6  # nửa mở: thử lại một lần
+    assert len(ds.received) == 6  # half-open: retry once
 
 
 def test_budget_exhausted_stops_calls() -> None:

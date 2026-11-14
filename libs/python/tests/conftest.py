@@ -3,7 +3,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 
-# Test chạy trên nguồn libs/python: chép lược đồ event vào package (thư mục bị .gitignore) như sync.py làm cho service.
+# Tests run against the libs/python source: copy the event schemas into the package (.gitignore'd directory) as
+# sync.py does for services.
 _dest = Path(__file__).resolve().parents[1] / "shp_platform" / "schemas"
 if _dest.exists():
     shutil.rmtree(_dest)

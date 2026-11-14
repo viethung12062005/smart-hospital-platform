@@ -1,7 +1,8 @@
-"""Đổi token thay mặt người dùng (RFC 8693, Keycloak) cho ai gọi clinical/scheduling (PY-02, 15 §7).
+"""Token exchange on behalf of the user (RFC 8693, Keycloak) for ai calling clinical/scheduling (PY-02, 15 §7).
 
-Token kết quả giữ `sub` của người dùng nên ma trận phân quyền áp dụng nguyên vẹn; `audience` là service đích.
-Kết quả được cache theo (token gốc, audience) tới trước khi hết hạn 30 giây. Không log token.
+The resulting token keeps the user's `sub`, so the authorization matrix applies unchanged; `audience` is the target
+service.
+Results are cached by (original token, audience) until 30 seconds before expiry. Never log tokens.
 """
 
 import hashlib
@@ -14,14 +15,14 @@ import httpx
 from shp_platform.errors import ShpError
 
 GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
-ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token"  # noqa: S105 - tên loại token, không phải bí mật
+ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token"  # noqa: S105 - token type name, not a secret
 
 
 @dataclass(frozen=True)
 class ExchangeSettings:
     token_endpoint: str  # <issuer>/protocol/openid-connect/token
     client_id: str
-    client_secret: str  # từ Key Vault/secret Kubernetes, không bao giờ trong repo
+    client_secret: str  # from Key Vault/Kubernetes secrets, never in the repo
 
 
 class TokenExchanger:
@@ -57,7 +58,7 @@ class TokenExchanger:
         except httpx.HTTPError as exc:
             raise ShpError("dependency-unavailable") from exc
         if res.status_code in (400, 401, 403):
-            # Token người dùng hết hạn/bị thu hồi hoặc client không được phép đổi sang audience này.
+            # The user token expired/was revoked, or the client may not exchange to this audience.
             raise ShpError("forbidden")
         if res.status_code != 200:
             raise ShpError("dependency-unavailable")

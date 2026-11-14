@@ -29,7 +29,7 @@ SPECIALTIES = {
 
 SPECIALTY_SYSTEM = "https://shp.example.org/fhir/CodeSystem/specialty"
 
-# CodeSystem practitioner-role trong contracts/terminology (01-domain-model §3, §4.2).
+# The practitioner-role CodeSystem lives in contracts/terminology (01-domain-model §3, §4.2).
 ROLE_SYSTEM = "https://shp.example.org/fhir/CodeSystem/practitioner-role"
 
 
@@ -49,19 +49,18 @@ def generate_practitioners(
     """Return Practitioner and PractitionerRole FHIR resources."""
     if scale not in PRACTITIONER_COUNTS:
         raise ValueError(
-            f"Scale không hợp lệ: {scale}. "
-            f"Chọn một trong: {', '.join(PRACTITIONER_COUNTS)}"
+            f"Invalid scale: {scale}. Choose one of: {', '.join(PRACTITIONER_COUNTS)}"
         )
 
     count = PRACTITIONER_COUNTS[scale]
 
-    # Dùng hai luồng ID độc lập để tránh trùng ID giữa hai resource.
+    # Use two independent ID streams to avoid duplicate IDs between the two resources.
     practitioner_ids = UUID7Generator(seed=seed + 10_000)
     role_ids = UUID7Generator(seed=seed + 20_000)
 
     rng = random.Random(seed + 30_000)
 
-    # Quy ước dữ liệu giả: khoảng 2/3 bác sĩ, 1/3 điều dưỡng.
+    # Fake data convention: about 2/3 doctors, 1/3 nurses.
     doctor_count = (count * 2) // 3
 
     practitioners: list[dict[str, Any]] = []

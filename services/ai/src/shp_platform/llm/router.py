@@ -1,11 +1,13 @@
-"""Router chuỗi model theo tác vụ, circuit breaker, hạn mức token/ngày (PY-08, PY-09, 06-data-ai §4).
+"""Per-task model chain router, circuit breaker, daily token budget (PY-08, PY-09, 06-data-ai §4).
 
-- Thử lần lượt các bước trong chuỗi; lỗi, mạch mở hoặc hết hạn mức thì chuyển bước kế. `fallback_level` = chỉ số bước
-  đã trả lời (0 = model chính). Hết chuỗi thì trả `answered=False` cùng `final_fallback` để service tự xử lý
-  (retrieval-only, structured-timeline, human-review, booking-form).
-- Provider ngoài Azure (`external`) luôn nhận văn bản đã che PII, dù cấu hình ghi `redact_pii: false`.
-- Mạch mở sau `failure_threshold` lỗi trong `window_seconds`, đóng thử lại sau `open_seconds`.
-- Hết hạn mức token trong ngày: không gọi model nào nữa, service trả ai-budget-exceeded.
+- Try each step in the chain in order; on error, open circuit or exhausted budget, move to the next step.
+  `fallback_level` = index of the step that answered (0 = primary model). When the chain is exhausted, return
+  `answered=False` with `final_fallback` so the service can handle it (retrieval-only, structured-timeline,
+  human-review, booking-form).
+- Providers outside Azure (`external`) always receive PII-redacted text, even if the config says `redact_pii: false`.
+- The circuit opens after `failure_threshold` failures within `window_seconds`, and closes for a retry after
+  `open_seconds`.
+- Daily token budget exhausted: call no model, and the service returns ai-budget-exceeded.
 """
 
 import time
@@ -46,8 +48,8 @@ class RouterResult:
     latency_ms: int = 0
     final_fallback: str = ""
     budget_exceeded: bool = False
-    tool_calls: tuple[Any, ...] = ()  # ToolCall; rỗng trừ khi task gọi complete(..., tools=...)
-    errors: list[str] = field(default_factory=list)  # "deepseek:timeout"; không chứa nội dung
+    tool_calls: tuple[Any, ...] = ()  # ToolCall; empty unless the task calls complete(..., tools=...)
+    errors: list[str] = field(default_factory=list)  # "deepseek:timeout"; contains no content
 
 
 class CircuitBreaker:
@@ -70,7 +72,7 @@ class CircuitBreaker:
         if opened is None:
             return True
         if self._clock() - opened >= self._open:
-            del self._opened_at[key]  # nửa mở: cho một lần thử, lỗi tiếp thì mở lại ngay
+            del self._opened_at[key]  # half-open: allow one attempt; another failure reopens immediately
             self._failures[key].clear()
             self._failures[key].extend([self._clock()] * (self._threshold - 1))
             return True
@@ -90,7 +92,8 @@ class CircuitBreaker:
 
 
 class TokenBudget:
-    """Hạn mức token/ngày (UTC) cho cả service. Bản nhiều replica cần bộ đếm chung (Redis) - truyền `store` khác."""
+    """Daily token budget (UTC) for the whole service. Multi-replica setups need a shared counter (Redis) - pass a
+    different `store`."""
 
     def __init__(self, daily_limit: int, today: Callable[[], str] | None = None) -> None:
         self.daily_limit = daily_limit
@@ -117,7 +120,7 @@ class Router:
         budget: TokenBudget | None = None,
         on_call: Callable[[str, str, str, int, int], None] | None = None,
     ) -> None:
-        """`on_call(provider, model, outcome, tokens_in, tokens_out)` để xuất metric theo model (Prometheus)."""
+        """`on_call(provider, model, outcome, tokens_in, tokens_out)` to export per-model metrics (Prometheus)."""
         self._providers = {p.name: p for p in providers}
         self._tasks = dict(tasks)
         self._breaker = breaker or CircuitBreaker()
@@ -126,7 +129,7 @@ class Router:
         for name, cfg in self._tasks.items():
             for step in cfg.chain:
                 if step.provider not in self._providers:
-                    raise ValueError(f"tác vụ {name}: provider chưa khai báo {step.provider}")
+                    raise ValueError(f"task {name}: provider not declared: {step.provider}")
 
     def complete(
         self,
@@ -136,9 +139,10 @@ class Router:
         start_level: int = 0,
         tools: Sequence[dict[str, object]] | None = None,
     ) -> RouterResult:
-        """`start_level`: bỏ qua các bước đầu (ví dụ thử lại với model kế khi đầu ra không đạt kiểm tra).
-        `tools`: định nghĩa tool kiểu OpenAI function-calling (booking-agent, PY-07); model có thể trả `tool_calls`
-        thay vì `text` — người gọi tự thực thi tool và gọi lại với kết quả nối vào `messages` (role="tool")."""
+        """`start_level`: skip the first steps (for example retry with the next model when the output fails a check).
+        `tools`: OpenAI function-calling tool definitions (booking-agent, PY-07); the model may return `tool_calls`
+        instead of `text` — the caller executes the tool and calls again with the result appended to `messages`
+        (role="tool")."""
         cfg = self._tasks[task]
         result = RouterResult(answered=False, final_fallback=cfg.final_fallback)
         if self._budget is not None and self._budget.exhausted():
@@ -154,8 +158,9 @@ class Router:
                 result.errors.append(f"{step.provider}:circuit-open")
                 continue
             must_redact = step.redact_pii or provider.external
-            # role="tool": JSON kết quả tool do backend tạo (id slot/lịch hẹn...), không phải văn bản tự nhiên của
-            # người dùng; che PII ở đây sẽ hỏng id mà model cần đọc lại nguyên vẹn ở lượt sau (booking-agent).
+            # role="tool": tool-result JSON produced by the backend (slot/appointment ids...), not natural text from
+            # the user; redacting PII here would corrupt ids the model must read back intact in the next turn
+            # (booking-agent).
             redactions = (
                 [redact(m.content, known) if m.role != "tool" else Redaction(m.content, {}) for m in messages]
                 if must_redact

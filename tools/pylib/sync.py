@@ -1,10 +1,10 @@
-"""Chép thư viện Python dùng chung vào từng service Python.
+"""Copy the shared Python library into each Python service.
 
-Build context của mỗi service chỉ là services/<svc>, nên thư viện libs/python/shp_platform và lược đồ event
-(contracts/events) được chép vào services/<svc>/src/shp_platform. Bản chép không được sửa tay.
+Each service's build context is only services/<svc>, so the libs/python/shp_platform library and the event schemas
+(contracts/events) are copied into services/<svc>/src/shp_platform. Do not edit the copies by hand.
 
-  python tools/pylib/sync.py           # chép
-  python tools/pylib/sync.py --check   # CI: báo lỗi nếu bản chép lệch nguồn
+  python tools/pylib/sync.py           # copy
+  python tools/pylib/sync.py --check   # CI: fail if a copy drifts from the source
 """
 
 import filecmp
@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LIB = ROOT / "libs" / "python" / "shp_platform"
 SCHEMAS = ROOT / "contracts" / "events"
 SERVICES = ["ai", "ml"]
-HEADER = "BẢN CHÉP: sửa ở libs/python/shp_platform rồi chạy python tools/pylib/sync.py\n"
+HEADER = "COPIED FILE: edit libs/python/shp_platform then run python tools/pylib/sync.py\n"
 
 
 def build(dest: Path) -> None:
@@ -28,7 +28,7 @@ def build(dest: Path) -> None:
         out = dest / "schemas" / src.relative_to(SCHEMAS)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(src.read_bytes())
-    (dest / "COPIED_FROM_LIBS.txt").write_bytes(HEADER.encode("utf-8"))  # LF trên mọi hệ điều hành
+    (dest / "COPIED_FROM_LIBS.txt").write_bytes(HEADER.encode("utf-8"))  # LF on every OS
 
 
 def same(a: Path, b: Path) -> bool:
@@ -55,7 +55,7 @@ def main() -> int:
             shutil.copytree(fresh, target)
             print(f"synced {target.relative_to(ROOT)}")
         if bad:
-            print("Lệch nguồn, chạy python tools/pylib/sync.py: " + ", ".join(bad))
+            print("Out of sync with the source, run python tools/pylib/sync.py: " + ", ".join(bad))
             return 1
     return 0
 

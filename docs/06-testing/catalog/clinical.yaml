@@ -1,7 +1,7 @@
-# Test case của module 'clinical'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+# Test cases for module 'clinical'. Source: acceptance criteria / NFRs in docs/02-requirements/srs. Automation: see automation.yaml
 testcases:
 - id: TC-AC-01.2
-  title: 'Đăng ký tài khoản bệnh nhân: AC-01.2'
+  title: 'Register patient account: AC-01.2'
   covers:
   - AC-01.2
   srs_uc: register
@@ -9,10 +9,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given đã có hồ sơ cùng SĐT + ngày sinh, When đăng ký, Then không tạo hồ sơ mới và thông báo cần xác minh, không lộ
-    thông tin hồ sơ cũ.
+  spec: Given a medical record with the same phone number + date of birth exists, When registering, Then no new medical
+    record is created and a verification-required message is shown, without exposing the old medical record information.
 - id: TC-AC-RG.1
-  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.1'
+  title: 'Register patient account: AC-RG.1'
   covers:
   - AC-RG.1
   srs_uc: register
@@ -20,9 +20,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given không tích ô đồng ý điều khoản, When đăng ký, Then không gửi được.
+  spec: Given the terms consent checkbox is not ticked, When registering, Then submission fails.
 - id: TC-AC-01.1
-  title: 'Cập nhật thông tin hành chính: AC-01.1'
+  title: 'Update administrative information: AC-01.1'
   covers:
   - AC-01.1
   srs_uc: update-profile
@@ -30,9 +30,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bệnh nhân đã đăng nhập, When xem hồ sơ, Then chỉ thấy hồ sơ của mình.
+  spec: Given the patient is logged in, When viewing the medical record, Then they only see their own medical record.
 - id: TC-AC-01.3
-  title: 'Cập nhật thông tin hành chính: AC-01.3'
+  title: 'Update administrative information: AC-01.3'
   covers:
   - AC-01.3
   srs_uc: update-profile
@@ -40,9 +40,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given hồ sơ được sửa 2 lần, Then xem được 3 phiên bản.
+  spec: Given the medical record was edited twice, Then 3 versions are viewable.
 - id: TC-AC-UP.1
-  title: 'Cập nhật thông tin hành chính: AC-UP.1'
+  title: 'Update administrative information: AC-UP.1'
   covers:
   - AC-UP.1
   srs_uc: update-profile
@@ -50,9 +50,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bệnh nhân gửi yêu cầu sửa ngày sinh, Then bị từ chối, dữ liệu không đổi.
+  spec: Given the patient submits a request to change the date of birth, Then it is rejected and the data is unchanged.
 - id: TC-AC-CP.1
-  title: 'Tạo và sửa hồ sơ bệnh nhân tại quầy: AC-CP.1'
+  title: 'Create and edit patient medical record at the counter: AC-CP.1'
   covers:
   - AC-CP.1
   srs_uc: create-patient
@@ -60,9 +60,10 @@ testcases:
   module: clinical
   level: e2e
   priority: P0
-  spec: Given hồ sơ nghi trùng, When điều dưỡng lưu, Then hệ thống hiển thị hồ sơ trùng thay vì tạo mới.
+  spec: Given a medical record suspected of being a duplicate, When the nurse saves, Then the system shows the duplicate
+    record instead of creating a new one.
 - id: TC-AC-MG.1
-  title: 'Gộp hồ sơ trùng: AC-MG.1'
+  title: 'Merge duplicate medical records: AC-MG.1'
   covers:
   - AC-MG.1
   srs_uc: merge-patient
@@ -70,9 +71,10 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: Given gộp A vào B, Then lịch hẹn và tài liệu của A hiện dưới B, và mở hồ sơ A chuyển hướng tới B.
+  spec: Given merging A into B, Then A's appointments and documents appear under B, and opening A's medical record
+    redirects to B.
 - id: TC-AC-CI.1
-  title: 'Check-in bệnh nhân: AC-CI.1'
+  title: 'Patient check-in: AC-CI.1'
   covers:
   - AC-CI.1
   srs_uc: check-in
@@ -80,9 +82,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given lịch hẹn ngày mai, When check-in hôm nay, Then bị từ chối.
+  spec: Given an appointment tomorrow, When checking in today, Then it is rejected.
 - id: TC-AC-VT.1
-  title: 'Ghi sinh hiệu: AC-VT.1'
+  title: 'Record vital signs: AC-VT.1'
   covers:
   - AC-VT.1
   srs_uc: record-vitals
@@ -90,9 +92,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given SpO2 = 120, When lưu, Then báo lỗi tại trường, không lưu.
+  spec: Given SpO2 = 120, When saving, Then an error is shown at the field and nothing is saved.
 - id: TC-AC-VT.2
-  title: 'Ghi sinh hiệu: AC-VT.2'
+  title: 'Record vital signs: AC-VT.2'
   covers:
   - AC-VT.2
   srs_uc: record-vitals
@@ -100,9 +102,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bác sĩ không có quan hệ điều trị, When ghi sinh hiệu, Then bị từ chối và ghi audit “deny”.
+  spec: Given a doctor with no treatment relationship, When recording vital signs, Then it is rejected and a "deny" audit
+    record is written.
 - id: TC-AC-04.1
-  title: 'Mở lần khám: AC-04.1'
+  title: 'Start encounter: AC-04.1'
   covers:
   - AC-04.1
   srs_uc: start-encounter
@@ -110,9 +113,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bác sĩ không có quan hệ điều trị, When ghi chẩn đoán, Then bị từ chối.
+  spec: Given a doctor with no treatment relationship, When recording a diagnosis, Then it is rejected.
 - id: TC-AC-DX.1
-  title: 'Ghi bệnh sử và chẩn đoán: AC-DX.1'
+  title: 'Record medical history and diagnosis: AC-DX.1'
   covers:
   - AC-DX.1
   srs_uc: record-diagnosis
@@ -120,9 +123,9 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: Given mã “X99.99” không có trong danh mục, When lưu, Then báo lỗi tại trường.
+  spec: Given the code "X99.99" is not in the catalog, When saving, Then an error is shown at the field.
 - id: TC-AC-04.2
-  title: 'Kết thúc lần khám: AC-04.2'
+  title: 'Finish encounter: AC-04.2'
   covers:
   - AC-04.2
   srs_uc: finish-encounter
@@ -130,9 +133,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given lần khám “finished”, When sửa bệnh sử, Then bị từ chối; dữ liệu cũ giữ nguyên.
+  spec: Given the encounter is "finished", When editing the medical history, Then it is rejected; the old data is
+    preserved.
 - id: TC-AC-AD.1
-  title: 'Bổ sung lần khám đã kết thúc: AC-AD.1'
+  title: 'Add addendum to a finished encounter: AC-AD.1'
   covers:
   - AC-AD.1
   srs_uc: addendum
@@ -140,10 +144,10 @@ testcases:
   module: clinical
   level: e2e
   priority: P1
-  spec: Given lần khám “finished”, When thêm bổ sung, Then bản gốc không đổi và bản bổ sung hiển thị với người viết và thời
-    điểm.
+  spec: Given the encounter is "finished", When adding an addendum, Then the original is unchanged and the addendum is
+    shown with its author and time.
 - id: TC-AC-06.1
-  title: 'Tìm kiếm bệnh nhân: AC-06.1'
+  title: 'Search patients: AC-06.1'
   covers:
   - AC-06.1
   srs_uc: search-patient
@@ -151,9 +155,9 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: Given bệnh nhân “Nguyễn Văn An”, When tìm “nguyen van”, Then có trong kết quả.
+  spec: Given the patient "Nguyen Van An", When searching "nguyen van", Then they appear in the results.
 - id: TC-AC-SP.1
-  title: 'Tìm kiếm bệnh nhân: AC-SP.1'
+  title: 'Search patients: AC-SP.1'
   covers:
   - AC-SP.1
   srs_uc: search-patient
@@ -161,9 +165,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given điều kiện “ng” (2 ký tự), When tìm, Then bị từ chối, không trả danh sách.
+  spec: Given the condition "ng" (2 characters), When searching, Then it is rejected and no list is returned.
 - id: TC-AC-06.2
-  title: 'Xem hồ sơ và timeline bệnh nhân: AC-06.2'
+  title: 'View patient medical record and timeline: AC-06.2'
   covers:
   - AC-06.2
   srs_uc: view-timeline
@@ -171,9 +175,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bác sĩ không có quan hệ điều trị, When mở timeline, Then bị từ chối (trừ break-glass) và có audit “deny”.
+  spec: Given a doctor with no treatment relationship, When opening the timeline, Then it is rejected (except
+    break-glass) and a "deny" audit record exists.
 - id: TC-AC-TL.1
-  title: 'Xem hồ sơ và timeline bệnh nhân: AC-TL.1'
+  title: 'View patient medical record and timeline: AC-TL.1'
   covers:
   - AC-TL.1
   srs_uc: view-timeline
@@ -181,9 +186,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bệnh nhân có lần khám “in-progress”, When bệnh nhân xem timeline, Then không thấy lần khám đó.
+  spec: Given the patient has an "in-progress" encounter, When the patient views the timeline, Then that encounter is not
+    visible.
 - id: TC-AC-TL.2
-  title: 'Xem hồ sơ và timeline bệnh nhân: AC-TL.2'
+  title: 'View patient medical record and timeline: AC-TL.2'
   covers:
   - AC-TL.2
   srs_uc: view-timeline
@@ -191,9 +197,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given quản trị viên, When gọi API timeline, Then bị từ chối.
+  spec: Given an administrator, When calling the timeline API, Then it is rejected.
 - id: TC-AC-10.1
-  title: 'Truy cập khẩn cấp (break-glass): AC-10.1'
+  title: 'Emergency access (break-glass): AC-10.1'
   covers:
   - AC-10.1
   srs_uc: break-glass
@@ -201,9 +207,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bác sĩ dùng truy cập khẩn cấp, Then DPO nhận cảnh báo trong ≤ 5 phút.
+  spec: Given a doctor uses emergency access, Then the DPO receives an alert within <= 5 minutes.
 - id: TC-AC-BG.1
-  title: 'Truy cập khẩn cấp (break-glass): AC-BG.1'
+  title: 'Emergency access (break-glass): AC-BG.1'
   covers:
   - AC-BG.1
   srs_uc: break-glass
@@ -211,9 +217,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given đã qua 60 phút, When mở lại timeline, Then bị từ chối.
+  spec: Given 60 minutes have passed, When reopening the timeline, Then it is rejected.
 - id: TC-AC-BG.2
-  title: 'Truy cập khẩn cấp (break-glass): AC-BG.2'
+  title: 'Emergency access (break-glass): AC-BG.2'
   covers:
   - AC-BG.2
   srs_uc: break-glass
@@ -221,9 +227,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given lý do 5 ký tự, When xác nhận, Then báo lỗi và không cấp quyền.
+  spec: Given a reason of 5 characters, When confirming, Then an error is shown and no access is granted.
 - id: TC-AC-BG.3
-  title: 'Truy cập khẩn cấp (break-glass): AC-BG.3'
+  title: 'Emergency access (break-glass): AC-BG.3'
   covers:
   - AC-BG.3
   srs_uc: break-glass
@@ -231,10 +237,11 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given bác sĩ đã dùng truy cập khẩn cấp 2 lần trong 24 giờ, When dùng lần thứ 3 với lý do hợp lệ, Then vẫn được cấp
-    quyền, và lần đó được đánh dấu “bất thường”, báo thêm trưởng khoa, DPO phải rà soát trong 24 giờ.
+  spec: Given the doctor has used emergency access twice in 24 hours, When using it a third time with a valid reason,
+    Then access is still granted, and that use is flagged "unusual", the department head is additionally notified, and
+    the DPO must review within 24 hours.
 - id: TC-AC-RG.2
-  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.2'
+  title: 'Register patient account: AC-RG.2'
   covers:
   - AC-RG.2
   srs_uc: register
@@ -242,9 +249,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given số điện thoại chưa xác minh bằng mã OTP, When tạo hồ sơ, Then bị từ chối và không tạo hồ sơ.
+  spec: Given the phone number has not been verified with an OTP code, When creating a medical record, Then it is
+    rejected and no medical record is created.
 - id: TC-AC-ID.1
-  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.1'
+  title: 'Add national ID number at the visit: AC-ID.1'
   covers:
   - AC-ID.1
   srs_uc: supplement-national-id
@@ -252,9 +260,10 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given số CCCD hợp lệ và đã tích đồng ý, When lưu, Then số được lưu mã hóa và hiển thị che, chỉ 4 số cuối.
+  spec: Given a valid national ID number and consent ticked, When saving, Then the number is stored encrypted and
+    displayed masked, with only the last 4 digits.
 - id: TC-AC-ID.2
-  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.2'
+  title: 'Add national ID number at the visit: AC-ID.2'
   covers:
   - AC-ID.2
   srs_uc: supplement-national-id
@@ -262,9 +271,11 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: Given số CCCD đã thuộc hồ sơ “active” khác, When lưu, Then không lưu và báo nghi trùng, không tiết lộ thông tin hồ sơ kia cho người không có quyền.
+  spec: Given the national ID number already belongs to another active medical record, When saving, Then it is not saved
+    and a duplicate suspicion is reported, without disclosing that other medical record's information to anyone without
+    permission.
 - id: TC-AC-ID.3
-  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.3'
+  title: 'Add national ID number at the visit: AC-ID.3'
   covers:
   - AC-ID.3
   srs_uc: supplement-national-id
@@ -272,9 +283,9 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: Given sai định dạng hoặc chưa tích đồng ý, When lưu, Then bị từ chối.
+  spec: Given an invalid format or consent not ticked, When saving, Then it is rejected.
 - id: TC-AC-ID.4
-  title: 'Bổ sung số căn cước công dân khi đến khám: AC-ID.4'
+  title: 'Add national ID number at the visit: AC-ID.4'
   covers:
   - AC-ID.4
   srs_uc: supplement-national-id
@@ -282,9 +293,10 @@ testcases:
   module: clinical
   level: security
   priority: P0
-  spec: Given số CCCD đã lưu, When tìm kiếm, phát sự kiện hoặc ghi log, Then số không xuất hiện ở các nơi đó.
+  spec: Given a stored national ID number, When searching, emitting events or writing logs, Then the number does not
+    appear in those places.
 - id: TC-AC-RG.3
-  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.3'
+  title: 'Register patient account: AC-RG.3'
   covers:
   - AC-RG.3
   srs_uc: register
@@ -292,9 +304,9 @@ testcases:
   module: clinical
   level: integration
   priority: P1
-  spec: "Given số điện thoại dùng Zalo nhưng gửi qua Zalo thất bại, When yêu cầu mã, Then mã cùng giá trị được gửi bằng SMS trong tối đa 30 giây."
+  spec: "Given a phone number that uses Zalo but sending via Zalo fails, When requesting a code, Then the same code value is sent by SMS within at most 30 seconds."
 - id: TC-AC-RG.4
-  title: 'Đăng ký tài khoản bệnh nhân: AC-RG.4'
+  title: 'Register patient account: AC-RG.4'
   covers:
   - AC-RG.4
   srs_uc: register
@@ -302,9 +314,9 @@ testcases:
   module: clinical
   level: integration
   priority: P0
-  spec: "Given mã OTP đã dùng, đã hết hạn 5 phút hoặc bị nhập sai 5 lần, When nhập mã, Then bị từ chối; Given quá 5 mã trong một giờ cho một số, When yêu cầu thêm, Then bị từ chối."
+  spec: "Given an OTP code already used, expired after 5 minutes or entered incorrectly 5 times, When entering the code, Then it is rejected; Given more than 5 codes in one hour for one number, When requesting more, Then it is rejected."
 - id: TC-AC-CL.1
-  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.1'
+  title: 'Claim an existing hospital medical record: AC-CL.1'
   covers:
   - AC-CL.1
   srs_uc: claim-record
@@ -312,9 +324,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given thông tin khớp đúng một hồ sơ, When nhập đúng mã OTP gửi tới số trong hồ sơ, Then tài khoản được liên kết với hồ sơ đó và không tạo hồ sơ mới."
+  spec: "Given the information matches exactly one medical record, When the correct OTP code sent to the number in that medical record is entered, Then the account is linked to that medical record and no new medical record is created."
 - id: TC-AC-CL.2
-  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.2'
+  title: 'Claim an existing hospital medical record: AC-CL.2'
   covers:
   - AC-CL.2
   srs_uc: claim-record
@@ -322,9 +334,9 @@ testcases:
   module: clinical
   level: security
   priority: P0
-  spec: "Given thông tin không khớp hoặc khớp nhiều hồ sơ, When gửi yêu cầu, Then phản hồi giống hệt trường hợp khớp, không gửi mã và không lộ dữ liệu hồ sơ nào."
+  spec: "Given the information does not match or matches multiple medical records, When submitting the request, Then the response is identical to the matching case, no code is sent and no medical record data is exposed."
 - id: TC-AC-CL.3
-  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.3'
+  title: 'Claim an existing hospital medical record: AC-CL.3'
   covers:
   - AC-CL.3
   srs_uc: claim-record
@@ -332,9 +344,9 @@ testcases:
   module: clinical
   level: security
   priority: P0
-  spec: "Given đã nhập sai mã OTP 5 lần hoặc đã nhận hồ sơ quá 5 lần trong 24 giờ, When thử tiếp, Then bị khóa tạm và có bản ghi audit."
+  spec: "Given the OTP code was entered incorrectly 5 times or medical records were claimed more than 5 times in 24 hours, When trying again, Then the account is temporarily locked and an audit record exists."
 - id: TC-AC-CL.4
-  title: 'Tự nhận hồ sơ đã có tại bệnh viện: AC-CL.4'
+  title: 'Claim an existing hospital medical record: AC-CL.4'
   covers:
   - AC-CL.4
   srs_uc: claim-record
@@ -342,9 +354,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given hồ sơ đã liên kết với tài khoản khác ở quan hệ “bản thân”, When nhận hồ sơ, Then không liên kết và hướng dẫn đến quầy."
+  spec: "Given the medical record is already linked to another account in a self relationship, When claiming the medical record, Then no link is made and the user is directed to the counter."
 - id: TC-AC-DP.1
-  title: 'Tạo hồ sơ cho con dưới 16 tuổi: AC-DP.1'
+  title: 'Create a medical record for a child under 16: AC-DP.1'
   covers:
   - AC-DP.1
   srs_uc: add-dependent
@@ -352,9 +364,9 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: "Given người được quản lý từ 16 tuổi trở lên, When tạo hồ sơ như người dưới 16 tuổi, Then bị từ chối."
+  spec: "Given the managed person is 16 years old or older, When creating a medical record as a person under 16, Then it is rejected."
 - id: TC-AC-DP.2
-  title: 'Tạo hồ sơ cho con dưới 16 tuổi: AC-DP.2'
+  title: 'Create a medical record for a child under 16: AC-DP.2'
   covers:
   - AC-DP.2
   srs_uc: add-dependent
@@ -362,9 +374,9 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: "Given thông tin hợp lệ của người dưới 16 tuổi và đã cam đoan, When tạo, Then hồ sơ được tạo và liên kết người giám hộ."
+  spec: "Given valid information for a person under 16 and the declaration has been made, When creating, Then the medical record is created and linked to the guardian."
 - id: TC-AC-DP.3
-  title: 'Tạo hồ sơ cho con dưới 16 tuổi: AC-DP.3'
+  title: 'Create a medical record for a child under 16: AC-DP.3'
   covers:
   - AC-DP.3
   srs_uc: add-dependent
@@ -372,9 +384,9 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: "Given tài khoản đã quản lý 10 hồ sơ, When thêm hồ sơ thứ 11, Then bị từ chối."
+  spec: "Given the account already manages 10 medical records, When adding an 11th, Then it is rejected."
 - id: TC-AC-LK.1
-  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.1'
+  title: 'Link an adult relative medical record: AC-LK.1'
   covers:
   - AC-LK.1
   srs_uc: link-relative
@@ -382,9 +394,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given thông tin khớp một hồ sơ trưởng thành, When người yêu cầu nhập đúng mã OTP đã gửi tới số của người thân, Then liên kết có hiệu lực với phạm vi đã chọn."
+  spec: "Given the information matches an adult medical record, When the requester enters the correct OTP code sent to the relative number, Then the link takes effect with the selected scope."
 - id: TC-AC-LK.2
-  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.2'
+  title: 'Link an adult relative medical record: AC-LK.2'
   covers:
   - AC-LK.2
   srs_uc: link-relative
@@ -392,9 +404,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given liên kết phạm vi “Đặt lịch”, When người được ủy quyền đặt, hủy, đổi hoặc xem lịch hẹn của người thân, Then thành công và audit ghi tài khoản thực hiện và hồ sơ được truy cập."
+  spec: "Given a link with scope Booking, When the authorized person books, cancels, reschedules or views the relative appointments, Then it succeeds and the audit log records the acting account and the medical record accessed."
 - id: TC-AC-LK.3
-  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.3'
+  title: 'Link an adult relative medical record: AC-LK.3'
   covers:
   - AC-LK.3
   srs_uc: link-relative
@@ -402,9 +414,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given người thân đến quầy và Điều dưỡng ghi ủy quyền sau khi đối chiếu giấy tờ, When lưu, Then liên kết có hiệu lực và có bản ghi audit."
+  spec: "Given the relative comes to the counter and the Nurse records the authorization after checking the documents, When saving, Then the link takes effect and an audit record exists."
 - id: TC-AC-LK.4
-  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-LK.4'
+  title: 'Link an adult relative medical record: AC-LK.4'
   covers:
   - AC-LK.4
   srs_uc: link-relative
@@ -412,9 +424,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given liên kết đã quá 12 tháng, When người được ủy quyền truy cập, Then bị từ chối cho đến khi gia hạn."
+  spec: "Given the link is more than 12 months old, When the authorized person accesses, Then it is rejected until renewed."
 - id: TC-AC-PX.1
-  title: 'Liên kết hồ sơ của người thân trưởng thành: AC-PX.1'
+  title: 'Link an adult relative medical record: AC-PX.1'
   covers:
   - AC-PX.1
   srs_uc: link-relative
@@ -422,9 +434,9 @@ testcases:
   module: clinical
   level: security
   priority: P0
-  spec: "Given liên kết phạm vi “Đặt lịch”, When người được ủy quyền xem kết quả khám hoặc tài liệu của người thân, Then bị từ chối và có bản ghi audit “deny”."
+  spec: "Given a link with scope Booking, When the authorized person views the relative visit results or documents, Then it is rejected and a deny audit record exists."
 - id: TC-AC-RV.1
-  title: 'Thu hồi liên kết hồ sơ người thân: AC-RV.1'
+  title: 'Revoke a relative medical record link: AC-RV.1'
   covers:
   - AC-RV.1
   srs_uc: revoke-link
@@ -432,9 +444,9 @@ testcases:
   module: clinical
   level: api
   priority: P0
-  spec: "Given liên kết đang hiệu lực, When chủ hồ sơ hoặc người quản lý thu hồi, Then người được ủy quyền không còn truy cập sau tối đa 60 giây và có bản ghi audit."
+  spec: "Given the link is active, When the record owner or manager revokes it, Then the authorized person loses access after at most 60 seconds and an audit record exists."
 - id: TC-AC-RV.2
-  title: 'Thu hồi liên kết hồ sơ người thân: AC-RV.2'
+  title: 'Revoke a relative medical record link: AC-RV.2'
   covers:
   - AC-RV.2
   srs_uc: revoke-link
@@ -442,4 +454,4 @@ testcases:
   module: clinical
   level: api
   priority: P1
-  spec: "Given hồ sơ có tài khoản riêng, When có liên kết mới hoặc bị thu hồi, Then chủ hồ sơ nhận thông báo."
+  spec: "Given the medical record has its own account, When a new link is created or revoked, Then the record owner receives a notification."

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Sinh JSON Schema + ví dụ cho 11 event (docs/03-architecture/detailed-design/13-events.md) vào contracts/events/.
-Dùng: python3 -I tools/contracts/gen_events.py   (ghi đè file sinh ra; sửa schema ở ĐÂY rồi chạy lại, không sửa tay)
+"""Generate JSON Schema + examples for the 11 events (docs/03-architecture/detailed-design/13-events.md) into contracts/events/.
+Usage: python3 -I tools/contracts/gen_events.py   (overwrites generated files; edit the schema HERE and re-run, do not edit by hand)
 """
 from __future__ import annotations
 
@@ -27,22 +27,22 @@ _T = "2026-12-03T01:15:00Z"
 _T2 = "2026-12-03T01:30:00Z"
 _N = "2026-11-20T02:15:00Z"
 
-# (context, event, mô tả, {trường: (schema, bắt buộc)}, ví dụ)
+# (context, event, description, {field: (schema, required)}, example)
 EVENTS = [
-    ("scheduling", "appointment-booked", "E1: đặt lịch thành công", {
+    ("scheduling", "appointment-booked", "E1: appointment booked successfully", {
         "appointmentId": (UUID, True), "version": (INT, True), "patientId": (UUID, True), "practitionerId": (UUID, True),
         "slotId": (UUID, True), "specialty": (NS, True), "start": (DT, True), "end": (DT, True),
         "channel": (enum("web", "chatbot", "staff"), True), "bookedAt": (DT, True),
         "ageBand": (S, False),
     }, {"appointmentId": _U[0], "version": 1, "patientId": _U[1], "practitionerId": _U[2], "slotId": _U[3], "specialty": "cardiology",
         "start": _T, "end": _T2, "channel": "web", "bookedAt": _N, "ageBand": "40-49"}),
-    ("scheduling", "appointment-cancelled", "E2: hủy lịch", {
+    ("scheduling", "appointment-cancelled", "E2: appointment cancelled", {
         "appointmentId": (UUID, True), "version": (INT, True), "patientId": (UUID, True), "practitionerId": (UUID, True),
         "start": (DT, True), "cancelReason": (NS, True), "cancelledBy": (enum("patient", "staff"), True),
         "cancelledAt": (DT, True), "hoursBeforeStart": ({"type": "number"}, True),
     }, {"appointmentId": _U[0], "version": 2, "patientId": _U[1], "practitionerId": _U[2], "start": _T, "cancelReason": "patient-request",
         "cancelledBy": "patient", "cancelledAt": _N, "hoursBeforeStart": 310.0}),
-    ("scheduling", "appointment-rescheduled", "E3: đổi lịch (một event cho cặp hủy + đặt mới)", {
+    ("scheduling", "appointment-rescheduled", "E3: reschedule (one event for the cancel + new booking pair)", {
         "oldAppointmentId": (UUID, True), "newAppointmentId": (UUID, True), "version": (INT, True), "patientId": (UUID, True),
         "practitionerId": (UUID, True), "oldStart": (DT, True), "newStart": (DT, True), "newEnd": (DT, True), "specialty": (NS, True),
     }, {"oldAppointmentId": _U[0], "newAppointmentId": _U[4], "version": 1, "patientId": _U[1], "practitionerId": _U[2],
@@ -51,33 +51,33 @@ EVENTS = [
         "appointmentId": (UUID, True), "version": (INT, True), "patientId": (UUID, True), "practitionerId": (UUID, True),
         "specialty": (NS, True), "checkedInAt": (DT, True),
     }, {"appointmentId": _U[0], "version": 3, "patientId": _U[1], "practitionerId": _U[2], "specialty": "cardiology", "checkedInAt": _T}),
-    ("scheduling", "appointment-status-changed", "E5: no-show (job) hoặc fulfilled (sau E6)", {
+    ("scheduling", "appointment-status-changed", "E5: no-show (job) or fulfilled (after E6)", {
         "appointmentId": (UUID, True), "version": (INT, True), "patientId": (UUID, True),
         "previousStatus": (NS, True), "newStatus": (enum("noshow", "fulfilled"), True), "changedAt": (DT, True),
     }, {"appointmentId": _U[0], "version": 4, "patientId": _U[1], "previousStatus": "arrived", "newStatus": "fulfilled", "changedAt": _T2}),
-    ("clinical", "encounter-finished", "E6: kết thúc encounter", {
+    ("clinical", "encounter-finished", "E6: encounter finished", {
         "encounterId": (UUID, True), "appointmentId": (UUID, True), "patientId": (UUID, True), "practitionerId": (UUID, True),
         "finishedAt": (DT, True), "version": (INT, True),
     }, {"encounterId": _U[5], "appointmentId": _U[0], "patientId": _U[1], "practitionerId": _U[2], "finishedAt": _T2, "version": 3}),
-    ("clinical", "patient-merged", "E7: gộp hồ sơ bệnh nhân", {
+    ("clinical", "patient-merged", "E7: patient records merged", {
         "sourcePatientId": (UUID, True), "targetPatientId": (UUID, True), "mergedAt": (DT, True),
     }, {"sourcePatientId": _U[1], "targetPatientId": _U[6], "mergedAt": _N}),
-    ("document", "document-uploaded", "E8: tài liệu quét sạch, sẵn sàng", {
+    ("document", "document-uploaded", "E8: document scanned clean, ready", {
         "documentId": (UUID, True), "version": (INT, True), "patientId": (UUID, True), "encounterId": (UUID, False),
         "type": (NS, True), "contentType": (NS, True), "size": ({"type": "integer", "minimum": 0}, True),
         "uploadedBy": (NS, True), "availableAt": (DT, True),
     }, {"documentId": _U[7], "version": 1, "patientId": _U[1], "encounterId": _U[5], "type": "11502-2", "contentType": "application/pdf",
         "size": 182044, "uploadedBy": "Practitioner/" + _U[2], "availableAt": _T2}),
-    ("document", "document-released", "E9: phát hành tài liệu cho bệnh nhân", {
+    ("document", "document-released", "E9: document released to the patient", {
         "documentId": (UUID, True), "patientId": (UUID, True), "releasedAt": (DT, True), "type": (NS, True),
     }, {"documentId": _U[7], "patientId": _U[1], "releasedAt": _T2, "type": "11502-2"}),
-    ("ml", "no-show-scored", "E10: điểm nguy cơ no-show", {
+    ("ml", "no-show-scored", "E10: no-show risk score", {
         "appointmentId": (UUID, True), "patientId": (UUID, True), "start": (DT, True),
         "score": ({"type": "number", "minimum": 0, "maximum": 1}, True), "threshold": ({"type": "number", "minimum": 0, "maximum": 1}, True),
         "highRisk": ({"type": "boolean"}, True), "modelName": (NS, True), "modelVersion": (NS, True), "scoredAt": (DT, True),
     }, {"appointmentId": _U[0], "patientId": _U[1], "start": _T, "score": 0.42, "threshold": 0.35, "highRisk": True,
         "modelName": "no-show", "modelVersion": "3", "scoredAt": _N}),
-    ("audit", "recorded", "E11: bản ghi audit (không chứa nội dung lâm sàng)", {
+    ("audit", "recorded", "E11: audit record (contains no clinical content)", {
         "eventId": (UUID, True), "occurredAt": (DT, True), "service": (NS, True),
         "action": (enum("read", "search", "create", "update", "delete", "download-url", "ai-query", "ai-summary",
                         "break-glass-start", "export", "login"), True),
@@ -102,7 +102,7 @@ EVENTS = [
 ENVELOPE = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": f"{BASE}/envelope.json",
-    "title": "CloudEvents 1.0 envelope của SHP",
+    "title": "SHP CloudEvents 1.0 envelope",
     "type": "object",
     "additionalProperties": False,
     "required": ["specversion", "id", "source", "type", "subject", "time", "datacontenttype", "data"],
@@ -131,7 +131,7 @@ def main() -> None:
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "$id": f"{BASE}/{ctx}/{name}/v1.json",
             "title": f"shp.{ctx}.{name}.v1",
-            "description": desc + ". Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+            "description": desc + ". IDs/codes/timestamps/status only, no PII. Only optional fields may be added within the same version.",
             "type": "object",
             "required": [k for k, (_, req) in fields.items() if req],
             "properties": {k: v for k, (v, _) in fields.items()},

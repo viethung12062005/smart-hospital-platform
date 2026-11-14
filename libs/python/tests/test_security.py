@@ -38,7 +38,7 @@ def token(key: Any = KEY, **overrides: Any) -> str:
 def test_valid_token_maps_roles_case_insensitive_and_drops_unknown() -> None:
     p = verify_token(token(roles=["Patient", "superuser"]), SETTINGS, resolver)
     assert p.subject == "u1" and p.roles == frozenset({"patient"})
-    assert "eyJ" not in repr(p)  # token không lọt vào repr/log
+    assert "eyJ" not in repr(p)  # token does not leak into repr/log
 
 
 @pytest.mark.parametrize(

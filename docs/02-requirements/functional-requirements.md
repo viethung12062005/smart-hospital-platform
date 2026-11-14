@@ -1,145 +1,145 @@
-# Pha 2 — Yêu cầu chức năng
+# Phase 2 - Functional requirements
 
-> Trạng thái: **Approved — G2 qua ngày 2026-10-26**. Ưu tiên theo MoSCoW (M = Must, S = Should, C = Could).
-> Tiêu chí nghiệm thu (AC) viết theo Given/When/Then để chuyển thẳng thành test tự động.
+> Status: **Approved - G2 passed on 2026-10-26**. Priorities follow MoSCoW (M = Must, S = Should, C = Could).
+> Acceptance criteria (AC) are written in Given/When/Then form so they can be turned directly into automated tests.
 
-## Actor
-`Patient`, `Doctor`, `Nurse` (điều dưỡng/nhân viên lâm sàng), `Admin`, `System` (job/worker), `DPO` (đọc audit).
+## Actors
+`Patient`, `Doctor`, `Nurse` (nurse/clinical staff), `Admin`, `System` (job/worker), `DPO` (audit reader).
 
-## Tổng quan use case
+## Use case overview
 
-| ID | Use case | Actor chính | Ưu tiên | Nguồn (BA) |
+| ID | Use case | Primary actor | Priority | Source (BA) |
 |---|---|---|---|---|
-| UC-01 | Quản lý hồ sơ bệnh nhân | Patient, Nurse | M | BP-3 |
-| UC-02 | Quản lý lịch làm việc bác sĩ | Nurse, Admin, Doctor | M | BP-1 |
-| UC-03 | Đặt / hủy / đổi lịch khám | Patient, Nurse | M | BP-1, BR-01..04 |
-| UC-04 | Ghi nhận lần khám (encounter) | Doctor, Nurse | M | BP-3 |
-| UC-05 | Upload và truy cập tài liệu lâm sàng | Nurse, Doctor, Patient | M | BP-3, BR-08 |
-| UC-06 | Tìm kiếm lịch sử bệnh nhân | Doctor, Nurse | M | BP-3 |
-| UC-07 | Nhắc lịch và thông báo | System | M | BP-2 |
-| UC-08 | Quản lý người dùng và phân quyền | Admin | M | BP-5 |
-| UC-09 | Xem audit truy cập dữ liệu nhạy cảm | DPO, Admin | M | BP-5, BR-07 |
-| UC-10 | Truy cập khẩn cấp (break-glass) | Doctor | S | BR-06, BR-07 |
-| UC-11 | Trợ lý tri thức y tế (RAG) | Doctor, Nurse | M | BP-4, BR-09 |
-| UC-12 | Tóm tắt hồ sơ bệnh nhân bằng AI | Doctor | S | BP-3 |
-| UC-13 | Trích xuất dữ liệu từ tài liệu upload | System, Nurse | S | BP-6, BR-10 |
-| UC-14 | Chatbot đặt lịch | Patient | C | BP-1 |
-| UC-15 | Dự đoán nguy cơ no-show (ML) | System | S | BP-2 |
-| UC-16 | Sao lưu và khôi phục dữ liệu | Admin (vận hành) | M | Đề bài: backup/recovery |
+| UC-01 | Manage patient records | Patient, Nurse | M | BP-3 |
+| UC-02 | Manage doctor schedules | Nurse, Admin, Doctor | M | BP-1 |
+| UC-03 | Book / cancel / reschedule an appointment | Patient, Nurse | M | BP-1, BR-01..04 |
+| UC-04 | Record a visit (encounter) | Doctor, Nurse | M | BP-3 |
+| UC-05 | Upload and access clinical documents | Nurse, Doctor, Patient | M | BP-3, BR-08 |
+| UC-06 | Search patient history | Doctor, Nurse | M | BP-3 |
+| UC-07 | Reminders and notifications | System | M | BP-2 |
+| UC-08 | Manage users and authorization | Admin | M | BP-5 |
+| UC-09 | View audit of sensitive data access | DPO, Admin | M | BP-5, BR-07 |
+| UC-10 | Emergency access (break-glass) | Doctor | S | BR-06, BR-07 |
+| UC-11 | Medical knowledge assistant (RAG) | Doctor, Nurse | M | BP-4, BR-09 |
+| UC-12 | Summarize a patient record with AI | Doctor | S | BP-3 |
+| UC-13 | Extract data from uploaded documents | System, Nurse | S | BP-6, BR-10 |
+| UC-14 | Booking chatbot | Patient | C | BP-1 |
+| UC-15 | Predict no-show risk (ML) | System | S | BP-2 |
+| UC-16 | Back up and restore data | Admin (operations) | M | Assignment: backup/recovery |
 
 ---
 
-## UC-01 Quản lý hồ sơ bệnh nhân
-- **Mô tả:** Bệnh nhân tự đăng ký và cập nhật thông tin hành chính; điều dưỡng tạo/sửa hồ sơ tại quầy.
-- **Dữ liệu (FHIR):** `Patient`.
-- **Luồng chính:** (1) Bệnh nhân đăng ký tài khoản → (2) điền họ tên, ngày sinh, giới tính, SĐT, email,
-  địa chỉ → (3) hệ thống kiểm tra trùng (SĐT + ngày sinh) → (4) tạo hồ sơ, gắn với tài khoản.
-- **Luồng phụ:** trùng hồ sơ → yêu cầu điều dưỡng xác minh và gộp.
+## UC-01 Manage patient records
+- **Description:** Patients register themselves and update their administrative information; nurses create/edit records at the counter.
+- **Data (FHIR):** `Patient`.
+- **Main flow:** (1) Patient registers an account -> (2) enters full name, date of birth, sex, phone number, email,
+  address -> (3) the system checks for duplicates (phone number + date of birth) -> (4) creates a record linked to the account.
+- **Alternative flow:** duplicate record -> request nurse verification and merge.
 - **AC:**
-  - AC-01.1 Given bệnh nhân đã đăng nhập, When xem hồ sơ, Then chỉ thấy hồ sơ của mình.
-  - AC-01.2 Given hồ sơ đã có cùng SĐT + ngày sinh, When đăng ký, Then hệ thống không tạo hồ sơ mới mà báo cần xác minh.
-  - AC-01.3 Mọi lần sửa hồ sơ tạo phiên bản mới, xem được lịch sử phiên bản.
+  - AC-01.1 Given a patient is logged in, When viewing records, Then they see only their own record.
+  - AC-01.2 Given a record already exists with the same phone number + date of birth, When registering, Then the system does not create a new record but reports that verification is required.
+  - AC-01.3 Every edit to a record creates a new version; version history is viewable.
 
-## UC-02 Quản lý lịch làm việc bác sĩ
-- **Dữ liệu:** `Schedule` (lịch của một bác sĩ), `Slot` (khung giờ, mặc định 15 phút).
-- **Luồng chính:** Nurse/Admin tạo lịch theo mẫu tuần (ví dụ T2–T6, 8:00–11:30) → hệ thống sinh slot cho
-  30 ngày tới (BR-04) → có thể chặn slot (nghỉ phép) → slot đã có lịch hẹn thì không xóa được.
+## UC-02 Manage doctor schedules
+- **Data:** `Schedule` (a doctor's schedule), `Slot` (time slot, default 15 minutes).
+- **Main flow:** Nurse/Admin create a schedule from a weekly template (for example Mon-Fri, 8:00-11:30) -> the system generates slots for
+  the next 30 days (BR-04) -> slots can be blocked (leave) -> a slot that already has an appointment cannot be deleted.
 - **AC:**
-  - AC-02.1 Given mẫu lịch 8:00–11:30 slot 15 phút, When sinh slot cho một ngày, Then có đúng 14 slot `free`.
-  - AC-02.2 Given slot đã được đặt, When chặn slot, Then trả lỗi và yêu cầu hủy/đổi lịch hẹn trước.
-  - AC-02.3 Doctor chỉ xem được lịch của mình; không sửa được lịch.
+  - AC-02.1 Given a schedule template 8:00-11:30 with 15-minute slots, When generating slots for one day, Then there are exactly 14 `free` slots.
+  - AC-02.2 Given a slot has been booked, When blocking the slot, Then an error is returned and the appointment must be cancelled/rescheduled first.
+  - AC-02.3 A Doctor can view only their own schedule; they cannot edit the schedule.
 
-## UC-03 Đặt / hủy / đổi lịch khám
-- **Dữ liệu:** `Slot`, `Appointment`.
-- **Luồng chính (đặt):** (1) Bệnh nhân lọc slot theo chuyên khoa, bác sĩ, ngày → (2) chọn slot → (3) gửi
-  yêu cầu đặt kèm khóa idempotency → (4) hệ thống kiểm tra BR-01, BR-03, BR-04 → (5) tạo `Appointment`
-  trạng thái `booked`, slot chuyển `busy` → (6) phát sự kiện "đã đặt lịch" để nhắc lịch và audit.
-- **Luồng phụ:**
-  - Slot vừa bị người khác đặt → báo "slot không còn trống", gợi ý 3 slot gần nhất.
-  - Client gửi lại cùng yêu cầu (timeout, mất mạng) → trả về đúng lịch hẹn đã tạo, không tạo lịch trùng.
-  - Hủy: trước giờ khám ≥ 2h (BR-02) → `cancelled`, slot trở về `free`.
-  - Đổi lịch = đặt slot mới + hủy slot cũ trong cùng một thao tác; thất bại thì giữ nguyên lịch cũ.
+## UC-03 Book / cancel / reschedule an appointment
+- **Data:** `Slot`, `Appointment`.
+- **Main flow (booking):** (1) Patient filters slots by specialty, doctor, date -> (2) selects a slot -> (3) sends a
+  booking request with an idempotency key -> (4) the system checks BR-01, BR-03, BR-04 -> (5) creates an `Appointment`
+  in status `booked` and the slot becomes `busy` -> (6) emits a "booked" event for reminders and audit.
+- **Alternative flows:**
+  - The slot was just booked by someone else -> report "slot no longer available" and suggest the 3 nearest slots.
+  - The client resends the same request (timeout, network loss) -> return the same appointment already created, do not create a duplicate.
+  - Cancellation: at least 2h before the visit (BR-02) -> `cancelled`, the slot returns to `free`.
+  - Rescheduling = book a new slot + cancel the old slot in the same operation; on failure the old appointment is kept.
 - **AC:**
-  - AC-03.1 Given 1 slot trống và 50 yêu cầu đặt đồng thời từ 50 bệnh nhân, Then đúng 1 yêu cầu thành công, 49 nhận lỗi xung đột.
-  - AC-03.2 Given cùng khóa idempotency gửi 2 lần, Then cả hai nhận cùng một lịch hẹn, chỉ 1 lịch hẹn được tạo.
-  - AC-03.3 Given cùng khóa idempotency nhưng nội dung khác, Then bị từ chối.
-  - AC-03.4 Given bệnh nhân đã có 3 lịch hẹn tương lai, When đặt thêm, Then bị từ chối (BR-03).
-  - AC-03.5 Given còn 1 giờ đến giờ khám, When bệnh nhân hủy, Then bị từ chối; Nurse hủy được.
-  - AC-03.6 Bệnh nhân không đặt được lịch cho bệnh nhân khác.
+  - AC-03.1 Given 1 free slot and 50 concurrent booking requests from 50 patients, Then exactly 1 request succeeds and 49 receive a conflict error.
+  - AC-03.2 Given the same idempotency key sent twice, Then both receive the same appointment and only 1 appointment is created.
+  - AC-03.3 Given the same idempotency key but different content, Then the request is rejected.
+  - AC-03.4 Given a patient already has 3 future appointments, When booking another, Then it is rejected (BR-03).
+  - AC-03.5 Given 1 hour remains until the visit, When the patient cancels, Then it is rejected; a Nurse can cancel.
+  - AC-03.6 A patient cannot book an appointment for another patient.
 
-## UC-04 Ghi nhận lần khám
-- **Dữ liệu:** `Encounter`, `Observation` (sinh hiệu), `Condition` (chẩn đoán, mã ICD-10).
-- **Luồng chính:** Nurse check-in (Appointment → `arrived`, tạo `Encounter` `in-progress`) → đo sinh hiệu →
-  Doctor ghi bệnh sử, chẩn đoán → kết thúc (`finished`, Appointment → `fulfilled`).
+## UC-04 Record a visit
+- **Data:** `Encounter`, `Observation` (vital signs), `Condition` (diagnosis, ICD-10 code).
+- **Main flow:** Nurse check-in (Appointment -> `arrived`, create `Encounter` `in-progress`) -> measure vital signs ->
+  Doctor records history and diagnosis -> finish (`finished`, Appointment -> `fulfilled`).
 - **AC:**
-  - AC-04.1 Chỉ Doctor có quan hệ điều trị mới ghi chẩn đoán được.
-  - AC-04.2 Encounter đã `finished` thì không sửa; muốn bổ sung phải tạo bản ghi bổ sung (giữ nguyên bản cũ).
+  - AC-04.1 Only a Doctor with a treatment relationship can record a diagnosis.
+  - AC-04.2 A `finished` Encounter cannot be edited; additions must be recorded as an addendum (the original is preserved).
 
-## UC-05 Upload và truy cập tài liệu lâm sàng
-- **Dữ liệu:** `DocumentReference` (metadata), file trên object storage.
-- **Luồng chính:** Nurse/Doctor xin link upload → client upload trực tiếp lên storage → hệ thống xác nhận,
-  kiểm tra loại file (PDF, JPEG, PNG; ≤ 20 MB) và quét mã độc → tạo `DocumentReference` → phát sự kiện "đã upload tài liệu".
-- **Truy cập:** người có quyền xin link tải, hiệu lực ≤ 5 phút (BR-08); mỗi lần xin link đều được ghi audit.
+## UC-05 Upload and access clinical documents
+- **Data:** `DocumentReference` (metadata), file in object storage.
+- **Main flow:** Nurse/Doctor request an upload link -> the client uploads directly to storage -> the system confirms,
+  checks the file type (PDF, JPEG, PNG; <= 20 MB) and scans for malware -> creates a `DocumentReference` -> emits a "document uploaded" event.
+- **Access:** an authorized person requests a download link, valid for <= 5 minutes (BR-08); every link request is written to the audit log.
 - **AC:**
-  - AC-05.1 File sai định dạng hoặc > 20 MB bị từ chối.
-  - AC-05.2 Link tải hết hạn sau 5 phút thì trả 403.
-  - AC-05.3 Bệnh nhân chỉ tải được tài liệu của mình và chỉ những tài liệu đã được bác sĩ "phát hành cho bệnh nhân".
+  - AC-05.1 A file in the wrong format or larger than 20 MB is rejected.
+  - AC-05.2 A download link that has expired after 5 minutes returns 403.
+  - AC-05.3 A patient can download only their own documents, and only those the doctor has "released to the patient".
 
-## UC-06 Tìm kiếm lịch sử bệnh nhân
-- **Luồng chính:** Doctor/Nurse tìm bệnh nhân theo tên, SĐT, mã bệnh nhân, ngày sinh → mở timeline: lần khám,
-  chẩn đoán, sinh hiệu, tài liệu, theo thời gian; lọc theo khoảng thời gian, loại dữ liệu.
+## UC-06 Search patient history
+- **Main flow:** Doctor/Nurse search for a patient by name, phone number, patient ID, date of birth -> open the timeline: visits,
+  diagnoses, vital signs, documents, in chronological order; filter by time range and data type.
 - **AC:**
-  - AC-06.1 Tìm theo một phần tên không dấu ("nguyen van") vẫn ra kết quả có dấu.
-  - AC-06.2 Doctor không có quan hệ điều trị thì thấy kết quả tìm (tên, năm sinh) nhưng không mở được timeline (trừ break-glass).
+  - AC-06.1 A search by a partial unaccented name ("nguyen van") still returns accented results.
+  - AC-06.2 A Doctor without a treatment relationship sees search results (name, year of birth) but cannot open the timeline (except break-glass).
 
-## UC-07 Nhắc lịch và thông báo
-- **Luồng chính:** Khi có sự kiện "đã đặt lịch", hệ thống lên lịch nhắc T-24h và T-2h qua email/SMS/push; nếu
-  lịch hẹn bị hủy thì hủy luôn các lần nhắc; thông báo khi có kết quả mới.
-- **Luồng phụ:** nhà cung cấp gửi tin lỗi → thử lại theo backoff (tối đa 5 lần) → đưa vào hàng lỗi (dead-letter)
-  và cảnh báo vận hành; kênh chính lỗi thì chuyển kênh dự phòng (push → email).
+## UC-07 Reminders and notifications
+- **Main flow:** When a "booked" event occurs, the system schedules T-24h and T-2h reminders via email/SMS/push; if the
+  appointment is cancelled, the reminders are cancelled too; notify when new results are available.
+- **Alternative flow:** the provider reports a delivery error -> retry with backoff (at most 5 times) -> move to the dead-letter queue
+  and alert operations; if the primary channel fails, switch to the fallback channel (push -> email).
 - **AC:**
-  - AC-07.1 Lịch hẹn bị hủy trước giờ nhắc thì không gửi nhắc.
-  - AC-07.2 Nhà cung cấp lỗi tạm thời không làm mất thông báo; không gửi trùng quá 1 lần cho cùng một lần nhắc.
+  - AC-07.1 An appointment cancelled before the reminder time does not receive a reminder.
+  - AC-07.2 A temporary provider error does not lose the notification; no more than 1 duplicate is sent for the same reminder.
 
-## UC-08 Quản lý người dùng và phân quyền
-- Admin mời nhân viên, gán role (Doctor/Nurse/Admin), khóa tài khoản; liên kết tài khoản Doctor với `Practitioner`.
-- **AC:** AC-08.1 Tài khoản bị khóa thì token hiện tại bị từ chối trong ≤ 5 phút. AC-08.2 Nhân viên bắt buộc MFA.
+## UC-08 Manage users and authorization
+- Admin invites staff, assigns roles (Doctor/Nurse/Admin), locks accounts; links a Doctor account to a `Practitioner`.
+- **AC:** AC-08.1 A locked account has its current token rejected within <= 5 minutes. AC-08.2 Staff must use MFA.
 
-## UC-09 Xem audit
-- DPO/Admin lọc audit theo bệnh nhân, người truy cập, thời gian, loại hành động; xuất báo cáo.
-- **AC:** AC-09.1 Mọi thao tác đọc/ghi dữ liệu bệnh nhân ở UC-01, 04, 05, 06, 10, 11–13 đều có bản ghi audit (ai, khi nào, cái gì, kết quả, từ đâu).
-  AC-09.2 Không ai (kể cả Admin) sửa hay xóa được bản ghi audit.
+## UC-09 View audit
+- DPO/Admin filter audit by patient, accessor, time, action type; export reports.
+- **AC:** AC-09.1 Every read/write of patient data in UC-01, 04, 05, 06, 10, 11-13 has an audit entry (who, when, what, result, from where).
+  AC-09.2 No one (including Admin) can modify or delete audit entries.
 
-## UC-10 Truy cập khẩn cấp (break-glass)
-- Doctor không có quan hệ điều trị vẫn mở được hồ sơ khi cấp cứu: bắt buộc nhập lý do, quyền có hiệu lực 60 phút.
-- **AC:** AC-10.1 Mỗi lần break-glass gửi cảnh báo cho DPO trong ≤ 5 phút.
+## UC-10 Emergency access (break-glass)
+- A Doctor without a treatment relationship can still open a record in an emergency: a reason is mandatory, access is valid for 60 minutes.
+- **AC:** AC-10.1 Every break-glass event sends an alert to the DPO within <= 5 minutes.
 
-## UC-11 Trợ lý tri thức y tế (RAG)
-- **Nguồn:** phác đồ, quy trình nội bộ đã được duyệt (tài liệu giả định/công khai), do Admin/trưởng khoa quản lý.
-- **Luồng chính:** người dùng hỏi → hệ thống chỉ tìm trong tài liệu người đó được phép xem → sinh câu trả lời
-  kèm trích dẫn (tài liệu, mục) → người dùng đánh giá hữu ích/không.
+## UC-11 Medical knowledge assistant (RAG)
+- **Source:** approved care protocols and internal procedures (synthetic/public documents), managed by Admin/head of department.
+- **Main flow:** the user asks a question -> the system searches only the documents that user is allowed to view -> generates an answer
+  with citations (document, section) -> the user rates it helpful/not helpful.
 - **AC:**
-  - AC-11.1 Mọi câu trả lời có ≥ 1 trích dẫn trỏ đúng đoạn nguồn; không tìm thấy nguồn thì trả "không có thông tin trong tài liệu".
-  - AC-11.2 Tài liệu chèn chỉ thị ("bỏ qua hướng dẫn trước…") không làm thay đổi hành vi (kiểm bằng bộ test prompt injection).
-  - AC-11.3 Model chính lỗi thì hệ thống tự chuyển model dự phòng; tất cả model lỗi thì trả danh sách tài liệu liên quan.
+  - AC-11.1 Every answer has >= 1 citation pointing to the correct source passage; if no source is found, return "no information in the documents".
+  - AC-11.2 A document containing an injected instruction ("ignore the previous instructions...") does not change behavior (checked by the prompt injection test suite).
+  - AC-11.3 If the primary model fails, the system switches to a fallback model automatically; if all models fail, return the list of related documents.
 
-## UC-12 Tóm tắt hồ sơ bệnh nhân
-- Doctor mở hồ sơ → bấm "tóm tắt" → nhận tóm tắt (bệnh nền, dị ứng, lần khám gần nhất, thuốc, kết quả bất thường),
-  mỗi ý trỏ về bản ghi gốc.
-- **AC:** AC-12.1 Chỉ dùng dữ liệu người dùng được phép xem. AC-12.2 Mỗi ý trong tóm tắt có liên kết bản ghi gốc. AC-12.3 Có nhãn "do AI tạo, cần kiểm tra".
+## UC-12 Summarize a patient record
+- Doctor opens a record -> clicks "summarize" -> receives a summary (comorbidities, allergies, most recent visit, medications, abnormal results),
+  with every point linked to the source record.
+- **AC:** AC-12.1 Only data the user is allowed to view is used. AC-12.2 Every point in the summary links to the source record. AC-12.3 Labeled "generated by AI, needs review".
 
-## UC-13 Trích xuất dữ liệu từ tài liệu upload
-- Khi có sự kiện "đã upload tài liệu" → OCR → phân loại (kết quả xét nghiệm, đơn thuốc, giấy chuyển viện…) →
-  trích trường → kiểm tra hợp lệ → độ tin cậy ≥ ngưỡng thì đề xuất lưu, thấp hơn thì đưa vào hàng chờ duyệt (BR-10).
-- **AC:** AC-13.1 Không trường nào được ghi vào hồ sơ khi chưa có người xác nhận (MVP luôn cần xác nhận). AC-13.2 Lỗi xử lý thì retry, quá số lần thì vào dead-letter, không chặn upload.
+## UC-13 Extract data from uploaded documents
+- When a "document uploaded" event occurs -> OCR -> classify (lab results, prescription, referral letter...) ->
+  extract fields -> validate -> if confidence >= threshold, propose saving; if lower, place in the review queue (BR-10).
+- **AC:** AC-13.1 No field is written to the record until a person confirms (the MVP always requires confirmation). AC-13.2 Processing errors are retried; after too many attempts they go to dead-letter and do not block the upload.
 
-## UC-14 Chatbot đặt lịch
-- Bệnh nhân chat ("tôi muốn khám tim mạch sáng thứ 5") → bot tìm slot → đề xuất → **bệnh nhân xác nhận** → bot gọi UC-03 bằng quyền của chính bệnh nhân.
-- **AC:** AC-14.1 Bot không bao giờ đặt/hủy mà không có xác nhận rõ ràng. AC-14.2 Bot không truy cập dữ liệu của bệnh nhân khác. AC-14.3 Bot lỗi thì chuyển sang form đặt lịch.
+## UC-14 Booking chatbot
+- The patient chats ("I want a cardiology appointment on Thursday morning") -> the bot finds slots -> proposes -> **the patient confirms** -> the bot calls UC-03 with the patient's own permissions.
+- **AC:** AC-14.1 The bot never books/cancels without explicit confirmation. AC-14.2 The bot does not access another patient's data. AC-14.3 If the bot fails, it switches to the booking form.
 
-## UC-15 Dự đoán nguy cơ no-show
-- Khi lịch hẹn được tạo → tính xác suất no-show → nếu ≥ ngưỡng thì UC-07 thêm một lần nhắc (T-6h) và đánh dấu cho điều dưỡng.
-- **AC:** AC-15.1 Dịch vụ ML lỗi thì nhắc lịch vẫn chạy bình thường (không phụ thuộc cứng). AC-15.2 Mỗi dự đoán lưu phiên bản model để truy vết.
+## UC-15 Predict no-show risk
+- When an appointment is created -> compute the no-show probability -> if >= threshold, UC-07 adds a reminder (T-6h) and flags it for the nurse.
+- **AC:** AC-15.1 If the ML service fails, reminders still run normally (no hard dependency). AC-15.2 Every prediction stores the model version for traceability.
 
-## UC-16 Sao lưu và khôi phục
-- **AC:** AC-16.1 Khôi phục được dữ liệu lịch hẹn và hồ sơ về thời điểm bất kỳ trong 7 ngày qua. AC-16.2 Diễn tập khôi phục có ghi lại thời gian thực tế (so với RTO).
+## UC-16 Back up and restore
+- **AC:** AC-16.1 Appointment and record data can be restored to any point in the last 7 days. AC-16.2 Restore drills record the actual time (against the RTO).

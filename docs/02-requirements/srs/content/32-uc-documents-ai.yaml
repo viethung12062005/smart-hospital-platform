@@ -1,350 +1,350 @@
-# Chương 3 – Module Tài liệu lâm sàng (service document) và Trợ lý AI (service ai).
+# Chapter 3 - Clinical documents module (document service) and AI Assistant (ai service).
 modules:
   - key: documents
-    name: Tài liệu lâm sàng
+    name: Clinical documents
     intro: >-
-      Kết quả xét nghiệm, đơn thuốc, giấy chuyển viện, ảnh chụp giấy tờ. Tệp nằm trên kho lưu trữ đối tượng, không bao giờ
-      đi qua API; người dùng chỉ upload/tải qua link ngắn hạn cấp cho đúng một tệp.
+      Lab results, prescriptions, referral letters, photos of paperwork. Files live in object storage and never
+      pass through the API; users upload/download only through short-lived links issued for exactly one file.
     sections:
-      - name: Cổng nội bộ và cổng bệnh nhân – Tài liệu
+      - name: Internal portal and patient portal - Documents
         use_cases:
           - key: upload-document
-            name: Upload tài liệu lâm sàng
+            name: Upload a clinical document
             actors: [nurse, doctor]
-            trace: [UC-05, AC-05.1, NFR-P4, NFR-SEC3, "API D1, D2", "Sự kiện E8"]
-            objective: Đưa tệp lâm sàng vào hồ sơ bệnh nhân an toàn.
-            trigger: Người dùng bấm “Tải lên tài liệu” trên [[SCR:timeline]] hoặc [[SCR:encounter]].
-            pre: ["Điều dưỡng; hoặc Bác sĩ có quan hệ điều trị với bệnh nhân."]
-            post: ["Tài liệu “pending-scan”; sau khi quét sạch thì “available” và sự kiện “đã upload tài liệu” được phát."]
-            lanes: [Người dùng, Hệ thống]
+            trace: [UC-05, AC-05.1, NFR-P4, NFR-SEC3, "API D1, D2", "Event E8"]
+            objective: Add a clinical file to the patient record safely.
+            trigger: The user clicks "Upload document" on [[SCR:timeline]] or [[SCR:encounter]].
+            pre: ["Nurse; or Doctor with a treatment relationship with the patient."]
+            post: ["The document is \"pending-scan\"; once the scan is clean it becomes \"available\" and the \"document uploaded\" event is emitted."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn loại tài liệu và tệp,\nbấm “Tải lên”"}
-              - {n: 2, lane: 1, kind: decision, text: "Có quyền, đúng loại,\n≤ 20 MB?", branches: [{to: 3, label: Có}, {to: 7, label: Không}]}
-              - {n: 3, lane: 1, text: "Cấp link upload 10 phút\ncho đúng một tệp"}
-              - {n: 4, lane: 0, text: "Trình duyệt upload tệp\ntrực tiếp lên kho"}
-              - {n: 5, lane: 1, kind: decision, text: "Kiểm tra lại tệp,\nquét mã độc sạch?", branches: [{to: 6, label: Sạch}, {to: 8, label: Không}]}
-              - {n: 6, lane: 1, text: "Tài liệu “available”,\nphát sự kiện, ghi audit", end: true}
-              - {n: 7, lane: 1, text: "Từ chối, báo lỗi", end: true}
-              - {n: 8, lane: 1, text: "Cách ly tệp, “quarantined”,\nbáo người upload", end: true}
+              - {n: 1, lane: 0, text: "Select the document type and file,\nclick \"Upload\""}
+              - {n: 2, lane: 1, kind: decision, text: "Authorized, correct type,\n<= 20 MB?", branches: [{to: 3, label: "Yes"}, {to: 7, label: "No"}]}
+              - {n: 3, lane: 1, text: "Issue a 10-minute upload link\nfor exactly one file"}
+              - {n: 4, lane: 0, text: "The browser uploads the file\ndirectly to storage"}
+              - {n: 5, lane: 1, kind: decision, text: "Recheck the file,\nis the malware scan clean?", branches: [{to: 6, label: Clean}, {to: 8, label: "No"}]}
+              - {n: 6, lane: 1, text: "Document \"available\",\nemit event, write audit", end: true}
+              - {n: 7, lane: 1, text: "Reject, report the error", end: true}
+              - {n: 8, lane: 1, text: "Quarantine the file, \"quarantined\",\nnotify the uploader", end: true}
             rules:
               - step: "(2)"
                 key: upload-validate
-                title: Quy tắc kiểm tra trước khi upload
+                title: Pre-upload validation rules
                 lines:
-                  - "Loại tệp: PDF, JPEG, PNG (khai báo của client) → nếu không [[MSG:invalid-file-type]]; kích thước ≤ 20 MB → nếu không [[MSG:file-too-large]] (AC-05.1)."
-                  - "[Loại tài liệu] bắt buộc, chọn từ bộ mã loại tài liệu."
+                  - "File type: PDF, JPEG, PNG (as declared by the client) -> otherwise [[MSG:invalid-file-type]]; size <= 20 MB -> otherwise [[MSG:file-too-large]] (AC-05.1)."
+                  - "[Document type] is required, selected from the document type code set."
               - step: "(3)"
-                title: Quy tắc link upload
+                title: Upload link rules
                 lines:
-                  - "Link chỉ cho phép ghi đúng một đối tượng, đúng Content-Type đã khai báo, hiệu lực 10 phút; tên tệp trên kho do hệ thống sinh, không chứa tên bệnh nhân."
+                  - "The link allows writing exactly one object with the declared Content-Type, valid for 10 minutes; the file name in storage is generated by the system and contains no patient name."
               - step: "(5)"
                 key: upload-verify
-                title: Quy tắc xác minh sau upload
+                title: Post-upload verification rules
                 lines:
-                  - "Hệ thống kiểm tra lại kích thước thật và chữ ký nội dung (magic bytes) – không tin khai báo của client; sai → xóa tệp, [[MSG:invalid-file-type]]."
-                  - "Tệp được quét mã độc; nhiễm → chuyển vùng cách ly, [Trạng thái] = “quarantined”, hiển thị [[MSG:file-infected]], cảnh báo vận hành. Tệp cách ly không dùng cho trích xuất, không ai ngoài quản trị bảo mật tải được."
+                  - "The system rechecks the actual size and content signature (magic bytes) - it does not trust the client declaration; mismatch -> delete the file, [[MSG:invalid-file-type]]."
+                  - "The file is malware scanned; if infected -> move to quarantine, [Status] = \"quarantined\", display [[MSG:file-infected]], alert operations. A quarantined file is not used for extraction and can be downloaded only by security administrators."
               - step: "(6)"
-                title: Quy tắc hoàn tất
+                title: Completion rules
                 lines:
-                  - "Tạo DocumentReference “available”, chưa phát hành cho bệnh nhân; phát “shp.document.document-uploaded.v1” (chỉ chứa mã tài liệu, mã bệnh nhân, loại) để kích hoạt [[UC:extract-document]]; hiển thị [[MSG:uploaded]]."
+                  - "Create an \"available\" DocumentReference, not yet released to the patient; emit \"shp.document.document-uploaded.v1\" (containing only the document ID, patient ID and type) to trigger [[UC:extract-document]]; display [[MSG:uploaded]]."
             acceptance:
-              - ["AC-05.1", "Given tệp .exe đổi tên thành .pdf, When upload, Then bị từ chối sau bước kiểm tra chữ ký nội dung."]
-              - ["AC-UD.1", "Given tệp 21 MB, When xin link upload, Then bị từ chối “file-too-large”."]
-              - ["AC-UD.2", "Given tệp chứa mẫu EICAR, When upload, Then tài liệu “quarantined” và không phát sự kiện."]
+              - ["AC-05.1", "Given a .exe file renamed to .pdf, When uploading, Then it is rejected after the content signature check step."]
+              - ["AC-UD.1", "Given a 21 MB file, When requesting an upload link, Then it is rejected with \"file-too-large\"."]
+              - ["AC-UD.2", "Given a file containing the EICAR pattern, When uploading, Then the document is \"quarantined\" and no event is emitted."]
 
           - key: release-document
-            name: Phát hành tài liệu cho bệnh nhân
+            name: Release a document to the patient
             actors: [doctor]
-            trace: [UC-05, AC-05.3, "API D6", "Sự kiện E9"]
-            objective: Cho phép bệnh nhân xem một tài liệu sau khi bác sĩ đã xem xét.
-            trigger: Bác sĩ bấm “Phát hành cho bệnh nhân” trên tài liệu.
-            pre: ["Tài liệu “available”; bác sĩ có quan hệ điều trị."]
-            post: ["Tài liệu được đánh dấu đã phát hành; bệnh nhân nhận thông báo."]
-            lanes: [Bác sĩ, Hệ thống]
+            trace: [UC-05, AC-05.3, "API D6", "Event E9"]
+            objective: Allow the patient to view a document after the doctor has reviewed it.
+            trigger: The doctor clicks "Release to patient" on the document.
+            pre: ["The document is \"available\"; the doctor has a treatment relationship."]
+            post: ["The document is marked as released; the patient receives a notification."]
+            lanes: [Doctor, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Phát hành”"}
-              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận"}
-              - {n: 3, lane: 0, text: "Xác nhận"}
-              - {n: 4, lane: 1, text: "Đánh dấu đã phát hành,\nphát sự kiện, gửi thông báo", end: true}
+              - {n: 1, lane: 0, text: "Click \"Release\""}
+              - {n: 2, lane: 1, text: "Display the confirmation dialog"}
+              - {n: 3, lane: 0, text: "Confirm"}
+              - {n: 4, lane: 1, text: "Mark as released,\nemit event, send notification", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc xác nhận
-                lines: ["Hiển thị [[MSG:confirm-release]]. Phát hành là thao tác một chiều; muốn thu hồi phải đánh dấu nhập nhầm ([[UC:void-document]])."]
+                title: Confirmation rules
+                lines: ["Display [[MSG:confirm-release]]. Release is a one-way operation; to withdraw it, mark it as entered in error ([[UC:void-document]])."]
               - step: "(4)"
-                title: Quy tắc phát hành
+                title: Release rules
                 lines:
-                  - "Lưu người phát hành và thời điểm; phát “shp.document.document-released.v1”; gửi [[ET:document-released]] – nội dung chỉ báo có tài liệu mới, không ghi loại hay kết quả."
+                  - "Store the releaser and timestamp; emit \"shp.document.document-released.v1\"; send [[ET:document-released]] - the content only states that a new document is available, without the type or result."
             acceptance:
-              - ["AC-05.3", "Given tài liệu chưa phát hành, When bệnh nhân tải, Then không thấy tài liệu (404)."]
+              - ["AC-05.3", "Given an unreleased document, When the patient downloads it, Then the document is not visible (404)."]
 
           - key: download-document
-            name: Tải tài liệu
+            name: Download a document
             actors: [patient, doctor, nurse]
             trace: [UC-05, AC-05.2, AC-05.3, BR-08, NFR-P4, "API D5"]
-            objective: Xem/tải tài liệu qua link có hiệu lực ngắn.
-            trigger: Người dùng bấm “Xem” trên [[SCR:my-documents]] hoặc [[SCR:timeline]].
-            pre: ["Người dùng có quyền với tài liệu theo ma trận phân quyền."]
-            post: ["Link tải 5 phút được cấp; lần cấp được ghi audit."]
-            lanes: [Người dùng, Hệ thống]
+            objective: View/download a document through a short-lived link.
+            trigger: The user clicks "View" on [[SCR:my-documents]] or [[SCR:timeline]].
+            pre: ["The user has permission on the document according to the access control matrix."]
+            post: ["A 5-minute download link is issued; the issuance is audited."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Xem”"}
-              - {n: 2, lane: 1, kind: decision, text: "Được phép?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
-              - {n: 3, lane: 1, text: "Cấp link đọc 5 phút,\nghi audit “download-url”"}
-              - {n: 4, lane: 0, text: "Trình duyệt mở tệp", end: true}
-              - {n: 5, lane: 1, text: "Trả “không tìm thấy”,\nghi audit “deny”", end: true}
+              - {n: 1, lane: 0, text: "Click \"View\""}
+              - {n: 2, lane: 1, kind: decision, text: "Allowed?", branches: [{to: 3, label: "Yes"}, {to: 5, label: "No"}]}
+              - {n: 3, lane: 1, text: "Issue a 5-minute read link,\nwrite \"download-url\" audit"}
+              - {n: 4, lane: 0, text: "The browser opens the file", end: true}
+              - {n: 5, lane: 1, text: "Return \"not found\",\nwrite \"deny\" audit", end: true}
             rules:
               - step: "(2)"
                 key: download-authz
-                title: Quy tắc quyền tải
+                title: Download permission rules
                 lines:
-                  - "Bệnh nhân: chỉ tài liệu của mình và đã phát hành; Bác sĩ: quan hệ điều trị hoặc truy cập khẩn cấp; Điều dưỡng: mọi tài liệu “available”."
-                  - "Không có quyền → trả “không tìm thấy” ([[MSG:not-found]]) để không lộ sự tồn tại của tài liệu; ghi audit “deny”."
-                  - "Tài liệu “quarantined” hoặc “entered-in-error” không cấp link (trừ quản trị bảo mật với tệp cách ly)."
+                  - "Patient: only their own released documents; Doctor: treatment relationship or emergency access; Nurse: all \"available\" documents."
+                  - "No permission -> return \"not found\" ([[MSG:not-found]]) so the existence of the document is not disclosed; write a \"deny\" audit."
+                  - "Documents that are \"quarantined\" or \"entered-in-error\" do not get a link (except security administrators for quarantined files)."
               - step: "(3)"
-                title: Quy tắc link tải
+                title: Download link rules
                 lines:
-                  - "Link chỉ đọc đúng một tệp, hiệu lực 5 phút (BR-08), kèm Content-Disposition attachment; hết hạn thì trả lỗi và giao diện hiển thị [[MSG:link-expired]] (AC-05.2)."
-                  - "Link không được ghi vào log ứng dụng; mỗi lần cấp đều ghi audit (người, tài liệu, thời điểm, IP đã che)."
+                  - "The link is read-only for exactly one file, valid for 5 minutes (BR-08), with Content-Disposition attachment; after expiry it returns an error and the interface displays [[MSG:link-expired]] (AC-05.2)."
+                  - "The link must not be written to application logs; every issuance is audited (actor, document, timestamp, masked IP)."
             acceptance:
-              - ["AC-05.2", "Given link đã cấp 6 phút trước, When mở, Then bị từ chối (403)."]
-              - ["AC-05.3", "Given bệnh nhân A, When xin link tài liệu của bệnh nhân B, Then nhận 404 và có audit “deny”."]
+              - ["AC-05.2", "Given a link issued 6 minutes ago, When opening it, Then it is rejected (403)."]
+              - ["AC-05.3", "Given patient A, When requesting a link to patient B's document, Then 404 is returned and a \"deny\" audit is recorded."]
 
           - key: void-document
-            name: Đánh dấu tài liệu nhập nhầm
+            name: Mark a document as entered in error
             actors: [doctor]
             trace: [UC-05, "API D7", BR-11]
-            objective: Thu hồi tài liệu upload nhầm bệnh nhân hoặc sai nội dung mà không xóa dữ liệu.
-            trigger: Bác sĩ (người đã upload hoặc có quan hệ điều trị) bấm “Đánh dấu nhập nhầm”.
-            pre: ["Tài liệu “available”."]
-            post: ["Tài liệu “entered-in-error”; ẩn khỏi danh sách mặc định; tệp gốc vẫn được lưu theo quy định lưu trữ."]
-            lanes: [Bác sĩ, Hệ thống]
+            objective: Withdraw a document uploaded for the wrong patient or with the wrong content without deleting data.
+            trigger: The doctor (the uploader or a doctor with a treatment relationship) clicks "Mark as entered in error".
+            pre: ["The document is \"available\"."]
+            post: ["The document is \"entered-in-error\"; hidden from default lists; the original file is still retained per archival regulations."]
+            lanes: [Doctor, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Đánh dấu nhập nhầm”,\nnhập lý do"}
-              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận"}
-              - {n: 3, lane: 0, text: "Xác nhận"}
-              - {n: 4, lane: 1, text: "Chuyển “entered-in-error”,\nghi audit", end: true}
+              - {n: 1, lane: 0, text: "Click \"Mark as entered in error\",\nenter a reason"}
+              - {n: 2, lane: 1, text: "Display the confirmation dialog"}
+              - {n: 3, lane: 0, text: "Confirm"}
+              - {n: 4, lane: 1, text: "Change to \"entered-in-error\",\nwrite audit", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc thu hồi
+                title: Withdrawal rules
                 lines:
-                  - "Hiển thị [[MSG:confirm-void]]; [Lý do] bắt buộc. Không có chức năng xóa tài liệu lâm sàng (BR-11: lưu trữ dài hạn)."
-                  - "Nếu tài liệu đã phát hành, bệnh nhân không còn thấy tài liệu và nhận thông báo “một tài liệu đã được bác sĩ thu hồi”."
+                  - "Display [[MSG:confirm-void]]; [Reason] is required. There is no function to delete clinical documents (BR-11: long-term retention)."
+                  - "If the document was already released, the patient can no longer see it and receives the notification \"a document has been withdrawn by the doctor\"."
             acceptance:
-              - ["AC-VD.1", "Given tài liệu bị đánh dấu nhập nhầm, Then không xuất hiện trong danh sách mặc định nhưng vẫn truy vết được trong audit."]
+              - ["AC-VD.1", "Given a document marked as entered in error, Then it does not appear in default lists but remains traceable in the audit."]
 
   - key: ai
-    name: Trợ lý AI
+    name: AI assistant
     intro: >-
-      Trợ lý tri thức (RAG), tóm tắt hồ sơ, duyệt trích xuất, chatbot đặt lịch. Nguyên tắc chung cho mọi tính năng AI:
-      AI không chẩn đoán hay chỉ định thay bác sĩ (BR-09); dữ liệu định danh cá nhân được che trước khi gửi tới nhà cung cấp
-      mô hình bên ngoài ([[CBR:ai-safety]]); AI chỉ truy cập dữ liệu bằng quyền của chính người dùng; mọi kết quả AI có nhãn
-      “do AI tạo, cần kiểm tra”.
+      Knowledge assistant (RAG), record summary, extraction review, booking chatbot. General principles for every AI feature:
+      AI does not diagnose or prescribe in place of a doctor (BR-09); personally identifying data is masked before being sent to the external
+      model provider ([[CBR:ai-safety]]); AI accesses data only with the user's own permissions; every AI result is labeled
+      "generated by AI, needs review".
     sections:
-      - name: Cổng nội bộ – Trợ lý AI
+      - name: Internal portal - AI assistant
         use_cases:
           - key: ask-assistant
-            name: Hỏi trợ lý tri thức y tế
+            name: Ask the medical knowledge assistant
             actors: [doctor, nurse]
             trace: [UC-11, AC-11.1, AC-11.2, AC-11.3, BR-09, NFR-P5, "API AI1"]
-            objective: Trả lời câu hỏi về phác đồ, quy trình nội bộ dựa trên tài liệu đã duyệt, luôn kèm trích dẫn.
-            trigger: Người dùng nhập câu hỏi trên [[SCR:assistant]] và bấm “Gửi”.
-            pre: ["Người dùng là Bác sĩ hoặc Điều dưỡng; kho tri thức có tài liệu đã duyệt."]
-            post: ["Câu trả lời có trích dẫn, hoặc thông báo không có thông tin trong tài liệu; hội thoại được lưu 30 ngày."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Answer questions about protocols and internal procedures based on approved documents, always with citations.
+            trigger: The user enters a question on [[SCR:assistant]] and clicks "Send".
+            pre: ["The user is a Doctor or Nurse; the knowledge base contains approved documents."]
+            post: ["An answer with citations, or a notice that there is no information in the documents; the conversation is retained for 30 days."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhập câu hỏi, bấm “Gửi”"}
-              - {n: 2, lane: 1, kind: decision, text: "Qua kiểm tra\nđầu vào?", branches: [{to: 3, label: Có}, {to: 8, label: Không}]}
-              - {n: 3, lane: 1, text: "Tìm đoạn tài liệu người dùng\nđược phép xem (hybrid)"}
-              - {n: 4, lane: 1, kind: decision, text: "Có đoạn\nliên quan?", branches: [{to: 5, label: Có}, {to: 7, label: Không}]}
-              - {n: 5, lane: 1, text: "Sinh câu trả lời qua chuỗi model,\nkiểm tra trích dẫn và đầu ra"}
-              - {n: 6, lane: 1, text: "Hiển thị (stream) câu trả lời\nkèm trích dẫn và nhãn AI", end: true}
-              - {n: 7, lane: 1, text: "Trả “không có thông tin\ntrong tài liệu”", end: true}
-              - {n: 8, lane: 1, text: "Từ chối, ghi audit", end: true}
+              - {n: 1, lane: 0, text: "Enter a question, click \"Send\""}
+              - {n: 2, lane: 1, kind: decision, text: "Passes input\nvalidation?", branches: [{to: 3, label: "Yes"}, {to: 8, label: "No"}]}
+              - {n: 3, lane: 1, text: "Find document passages the user\nis allowed to view (hybrid)"}
+              - {n: 4, lane: 1, kind: decision, text: "Any relevant\npassages?", branches: [{to: 5, label: "Yes"}, {to: 7, label: "No"}]}
+              - {n: 5, lane: 1, text: "Generate an answer through the model chain,\ncheck citations and output"}
+              - {n: 6, lane: 1, text: "Stream the answer\nwith citations and the AI label", end: true}
+              - {n: 7, lane: 1, text: "Return \"no information\nin the documents\"", end: true}
+              - {n: 8, lane: 1, text: "Reject, write audit", end: true}
             alternatives:
-              - "Model chính lỗi hoặc quá thời gian: chuyển sang model kế tiếp trong chuỗi; hết chuỗi thì trả danh sách tài liệu liên quan kèm [[MSG:ai-unavailable]] (AC-11.3)."
-              - "Hết hạn mức chi phí AI trong ngày: trả [[MSG:ai-budget]] và danh sách tài liệu liên quan."
+              - "The primary model fails or times out: switch to the next model in the chain; when the chain is exhausted, return the list of related documents with [[MSG:ai-unavailable]] (AC-11.3)."
+              - "The daily AI cost budget is exhausted: return [[MSG:ai-budget]] and the list of related documents."
             rules:
               - step: "(2)"
                 key: ai-input-guard
-                title: Quy tắc kiểm tra đầu vào
+                title: Input validation rules
                 lines:
-                  - "Câu hỏi 3–2.000 ký tự; vượt → [[MSG:max-length]]."
-                  - "Phát hiện mẫu prompt injection đã biết (“bỏ qua hướng dẫn…”, yêu cầu tiết lộ prompt hệ thống) → từ chối, ghi audit “ai-guardrail”."
-                  - "Câu hỏi chứa thông tin định danh bệnh nhân (tên + ngày sinh, SĐT, mã bệnh nhân) → được che trước khi xử lý theo [[CBR:ai-safety]]; trợ lý tri thức không dùng dữ liệu hồ sơ bệnh nhân."
+                  - "The question is 3-2,000 characters; exceeded -> [[MSG:max-length]]."
+                  - "Known prompt injection patterns are detected (\"ignore the instructions...\", requests to reveal the system prompt) -> reject, write an \"ai-guardrail\" audit."
+                  - "Questions containing patient identifying information (name + date of birth, phone number, patient ID) are masked before processing per [[CBR:ai-safety]]; the knowledge assistant does not use patient record data."
               - step: "(3)"
                 key: rag-authz
-                title: Quy tắc truy xuất có phân quyền
+                title: Authorized retrieval rules
                 lines:
-                  - "Chỉ tìm trong tài liệu kho tri thức “approved” mà vai trò/khoa của người dùng được phép xem; lọc quyền nằm trong câu truy vấn tìm kiếm, không lọc sau."
-                  - "Tối đa 50 đoạn ứng viên, xếp hạng lại, giữ 5 đoạn tốt nhất."
+                  - "Search only in \"approved\" knowledge base documents that the user's role/department is allowed to view; the permission filter is part of the search query, not applied afterwards."
+                  - "At most 50 candidate passages, reranked, keeping the 5 best passages."
               - step: "(5)"
                 key: rag-output-guard
-                title: Quy tắc sinh và kiểm tra câu trả lời
+                title: Answer generation and validation rules
                 lines:
-                  - "Câu trả lời chỉ dựa trên các đoạn đã truy xuất; nội dung trong tài liệu được coi là dữ liệu, không phải chỉ thị (AC-11.2)."
-                  - "Mỗi ý phải có ít nhất một trích dẫn trỏ đúng đoạn nguồn (tài liệu, mục); trích dẫn không khớp đoạn nguồn → loại ý đó; không còn ý nào → bước (7) (AC-11.1)."
-                  - "Không đưa ra chẩn đoán cho bệnh nhân cụ thể hay chỉ định điều trị (BR-09); câu hỏi kiểu này nhận câu trả lời từ chối có hướng dẫn tham khảo phác đồ."
+                  - "The answer is based only on the retrieved passages; content in documents is treated as data, not instructions (AC-11.2)."
+                  - "Every point must have at least one citation pointing to the correct source passage (document, section); a citation that does not match the source passage -> drop that point; if no points remain -> step (7) (AC-11.1)."
+                  - "Do not give diagnoses for a specific patient or prescribe treatment (BR-09); such questions receive a refusal answer with guidance to consult the protocol."
               - step: "(6)"
-                title: Quy tắc hiển thị
+                title: Display rules
                 lines:
-                  - "Token đầu tiên ≤ 3 giây, câu trả lời đủ ≤ 10 giây (p95) (NFR-P5); hiển thị nhãn “Do AI tạo, cần kiểm tra”; nút đánh giá hữu ích/không ([[UC:answer-feedback]])."
-                  - "Hội thoại lưu 30 ngày rồi tự xóa ([[UC:purge-expired]]); chỉ chủ hội thoại xem được."
+                  - "First token <= 3 seconds, full answer <= 10 seconds (p95) (NFR-P5); display the label \"Generated by AI, needs review\"; helpful/not helpful rating buttons ([[UC:answer-feedback]])."
+                  - "The conversation is retained for 30 days and then automatically deleted ([[UC:purge-expired]]); only the conversation owner can view it."
             acceptance:
-              - ["AC-11.1", "Given câu hỏi có đáp án trong tài liệu, Then câu trả lời có ≥ 1 trích dẫn trỏ đúng đoạn nguồn; Given không có, Then trả “không có thông tin trong tài liệu”."]
-              - ["AC-11.2", "Given tài liệu chứa câu “bỏ qua hướng dẫn trước”, When hỏi, Then hành vi không đổi (bộ 50 mẫu prompt injection đạt 100%)."]
-              - ["AC-11.3", "Given model chính lỗi, Then trả lời bằng model dự phòng; Given mọi model lỗi, Then trả danh sách tài liệu liên quan."]
-              - ["AC-AS.1", "Given điều dưỡng khoa Nội, When hỏi về tài liệu chỉ dành cho khoa Tim mạch, Then không có trích dẫn từ tài liệu đó."]
+              - ["AC-11.1", "Given a question with an answer in the documents, Then the answer has >= 1 citation pointing to the correct source passage; Given none exists, Then it returns \"no information in the documents\"."]
+              - ["AC-11.2", "Given a document containing the sentence \"ignore the previous instructions\", When asking, Then behavior is unchanged (the 50-sample prompt injection set scores 100%)."]
+              - ["AC-11.3", "Given the primary model fails, Then the answer comes from the fallback model; Given all models fail, Then the list of related documents is returned."]
+              - ["AC-AS.1", "Given a nurse in the Internal Medicine department, When asking about a document restricted to Cardiology, Then there are no citations from that document."]
 
           - key: answer-feedback
-            name: Đánh giá câu trả lời
+            name: Rate an answer
             type: Basic
             actors: [doctor, nurse]
             trace: [UC-11, "API AI2"]
-            objective: Ghi nhận câu trả lời hữu ích hay không để cải thiện trợ lý.
-            trigger: Người dùng bấm “Hữu ích” / “Không hữu ích” dưới câu trả lời.
-            pre: ["Người dùng là chủ hội thoại."]
-            post: ["Đánh giá được lưu (một đánh giá/câu trả lời, sửa được)."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Record whether an answer was helpful in order to improve the assistant.
+            trigger: The user clicks "Helpful" / "Not helpful" below the answer.
+            pre: ["The user is the conversation owner."]
+            post: ["The rating is saved (one rating per answer, editable)."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm đánh giá, nhập\nnhận xét (tùy chọn)"}
-              - {n: 2, lane: 1, text: "Lưu đánh giá", end: true}
+              - {n: 1, lane: 0, text: "Click a rating, enter an\noptional comment"}
+              - {n: 2, lane: 1, text: "Save the rating", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc lưu
-                lines: ["Nhận xét tối đa 1.000 ký tự, được che thông tin định danh trước khi lưu; chỉ chủ hội thoại đánh giá được."]
+                title: Save rules
+                lines: ["Comments are at most 1,000 characters and are masked for identifying information before saving; only the conversation owner can rate."]
             acceptance:
-              - ["AC-FB.1", "Given người dùng khác chủ hội thoại, When gửi đánh giá, Then bị từ chối (404)."]
+              - ["AC-FB.1", "Given a user other than the conversation owner, When submitting a rating, Then it is rejected (404)."]
 
           - key: summarize
-            name: Tóm tắt hồ sơ bệnh nhân bằng AI
+            name: Summarize a patient record with AI
             actors: [doctor]
             trace: [UC-12, AC-12.1, AC-12.2, AC-12.3, NFR-P6, "API AI4"]
-            objective: Tóm tắt bệnh nền, dị ứng, lần khám gần nhất, thuốc, kết quả bất thường – mỗi ý trỏ về bản ghi gốc.
-            trigger: Bác sĩ bấm “Tóm tắt” trên [[SCR:timeline]].
-            pre: ["Bác sĩ có quan hệ điều trị hoặc truy cập khẩn cấp; bệnh nhân đã đồng ý xử lý dữ liệu bằng AI."]
-            post: ["Bản tóm tắt có liên kết nguồn và nhãn AI được hiển thị (không lưu vào hồ sơ)."]
-            lanes: [Bác sĩ, Hệ thống]
+            objective: Summarize comorbidities, allergies, the most recent visit, medications and abnormal results - each point linking to the source record.
+            trigger: The doctor clicks "Summarize" on [[SCR:timeline]].
+            pre: ["The doctor has a treatment relationship or emergency access; the patient has consented to AI data processing."]
+            post: ["A summary with source links and the AI label is displayed (not saved to the record)."]
+            lanes: [Doctor, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Tóm tắt”"}
-              - {n: 2, lane: 1, kind: decision, text: "Có quyền và\nbệnh nhân đồng ý?", branches: [{to: 3, label: Có}, {to: 6, label: Không}]}
-              - {n: 3, lane: 1, text: "Lấy dữ liệu bằng token\ncủa bác sĩ, che định danh"}
-              - {n: 4, lane: 1, text: "Sinh tóm tắt, loại ý\nkhông có nguồn hợp lệ"}
-              - {n: 5, lane: 1, text: "Hiển thị tóm tắt, liên kết\nnguồn, nhãn AI", end: true}
-              - {n: 6, lane: 1, text: "Từ chối, hiển thị lý do;\nđề nghị timeline có cấu trúc", end: true}
+              - {n: 1, lane: 0, text: "Click \"Summarize\""}
+              - {n: 2, lane: 1, kind: decision, text: "Authorized and\npatient consent given?", branches: [{to: 3, label: "Yes"}, {to: 6, label: "No"}]}
+              - {n: 3, lane: 1, text: "Fetch data using the doctor's\ntoken, mask identifiers"}
+              - {n: 4, lane: 1, text: "Generate the summary, drop points\nwithout a valid source"}
+              - {n: 5, lane: 1, text: "Display the summary, source\nlinks, AI label", end: true}
+              - {n: 6, lane: 1, text: "Reject, display the reason;\noffer the structured timeline", end: true}
             rules:
               - step: "(2)"
                 key: ai-consent
-                title: Quy tắc quyền và đồng ý
+                title: Permission and consent rules
                 lines:
-                  - "Áp dụng [[BR:timeline-authz]] cho bác sĩ."
-                  - "Bệnh nhân chưa đồng ý hoặc đã rút đồng ý xử lý dữ liệu bằng AI ([[UC:manage-consent]]) → [[MSG:consent-required]]; giao diện vẫn có timeline có cấu trúc."
+                  - "Apply [[BR:timeline-authz]] for the doctor."
+                  - "The patient has not consented or has withdrawn consent to AI data processing ([[UC:manage-consent]]) -> [[MSG:consent-required]]; the interface still offers the structured timeline."
               - step: "(3)"
-                title: Quy tắc thu thập dữ liệu
+                title: Data collection rules
                 lines:
-                  - "Service AI gọi service lâm sàng bằng token của bác sĩ (on-behalf-of) – không có quyền rộng hơn bác sĩ (AC-12.1)."
-                  - "Trước khi gửi tới nhà cung cấp mô hình bên ngoài: thay họ tên, SĐT, email, địa chỉ, mã định danh bằng mã giả; bản đồ ngược chỉ nằm trong bộ nhớ của yêu cầu ([[CBR:ai-safety]])."
+                  - "The AI service calls the clinical service using the doctor's token (on-behalf-of) - it has no broader permissions than the doctor (AC-12.1)."
+                  - "Before sending to the external model provider: replace full name, phone number, email, address and identifiers with pseudonyms; the reverse map exists only in the request memory ([[CBR:ai-safety]])."
               - step: "(4)"
-                title: Quy tắc kiểm tra kết quả
+                title: Result validation rules
                 lines:
-                  - "Mỗi ý phải trích dẫn mã bản ghi nguồn có trong dữ liệu đã thu thập; ý không có nguồn hợp lệ bị loại (AC-12.2)."
-                  - "Kết quả ≤ 15 giây (p95) (NFR-P6); cache 10 phút cho cùng bác sĩ và cùng phiên bản dữ liệu."
+                  - "Every point must cite a source record ID present in the collected data; a point without a valid source is dropped (AC-12.2)."
+                  - "Result <= 15 seconds (p95) (NFR-P6); cache for 10 minutes for the same doctor and the same data version."
               - step: "(5)"
-                title: Quy tắc hiển thị
-                lines: ["Nhãn “Do AI tạo, cần kiểm tra” luôn hiển thị (AC-12.3); tóm tắt không được lưu vào hồ sơ bệnh nhân; mỗi lần tóm tắt ghi audit."]
+                title: Display rules
+                lines: ["The label \"Generated by AI, needs review\" is always displayed (AC-12.3); the summary is not saved to the patient record; every summary is audited."]
             acceptance:
-              - ["AC-12.1", "Given bác sĩ không có quyền xem một lần khám, Then tóm tắt không chứa thông tin từ lần khám đó."]
-              - ["AC-12.2", "Given tóm tắt, Then mỗi ý có liên kết tới bản ghi gốc mở được."]
-              - ["AC-SM.1", "Given bệnh nhân đã rút đồng ý AI, When bác sĩ bấm “Tóm tắt”, Then bị từ chối “consent-required”."]
-              - ["AC-SM.2", "Given yêu cầu gửi tới nhà cung cấp mô hình, Then không chứa họ tên, SĐT, email, địa chỉ của bệnh nhân (kiểm bằng test chặn mạng giả lập)."]
+              - ["AC-12.1", "Given the doctor lacks permission to view an encounter, Then the summary contains no information from that encounter."]
+              - ["AC-12.2", "Given a summary, Then every point has a link to an openable source record."]
+              - ["AC-SM.1", "Given the patient has withdrawn AI consent, When the doctor clicks \"Summarize\", Then it is rejected with \"consent-required\"."]
+              - ["AC-SM.2", "Given a request sent to the model provider, Then it contains no patient full name, phone number, email or address (verified by a simulated network interception test)."]
 
           - key: review-extraction
-            name: Duyệt kết quả trích xuất tài liệu
+            name: Review document extraction results
             actors: [nurse, doctor]
             trace: [UC-13, AC-13.1, BR-10, "API AI5, AI6"]
-            objective: Xác nhận, sửa hoặc từ chối từng trường AI đã trích từ tài liệu trước khi ghi vào hồ sơ.
-            trigger: Người dùng mở một mục trên [[SCR:extraction-review]].
-            pre: ["Kết quả trích xuất “needs-review”; bác sĩ phải có quan hệ điều trị."]
-            post: ["Các trường đã xác nhận được ghi vào hồ sơ (Observation…) bằng quyền của người duyệt; kết quả “accepted” hoặc “rejected”."]
-            lanes: [Người duyệt, Hệ thống]
+            objective: Confirm, edit or reject each field extracted by AI from a document before it is written to the record.
+            trigger: The user opens an item on [[SCR:extraction-review]].
+            pre: ["The extraction result is \"needs-review\"; doctors must have a treatment relationship."]
+            post: ["Confirmed fields are written to the record (Observation...) with the reviewer's permissions; the result is \"accepted\" or \"rejected\"."]
+            lanes: [Reviewer, System]
             steps:
-              - {n: 1, lane: 0, text: "Mở mục cần duyệt"}
-              - {n: 2, lane: 1, text: "Hiển thị tài liệu, vùng tô và\ngiá trị trích xuất, độ tin cậy"}
-              - {n: 3, lane: 0, text: "Xác nhận / sửa / bỏ từng\ntrường, bấm “Lưu kết quả”"}
-              - {n: 4, lane: 1, kind: decision, text: "Giá trị hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
-              - {n: 5, lane: 1, text: "Ghi trường đã xác nhận vào hồ sơ,\nlưu trường đã sửa, ghi audit", end: true}
+              - {n: 1, lane: 0, text: "Open the item to review"}
+              - {n: 2, lane: 1, text: "Display the document, highlighted regions and\nextracted values, confidence"}
+              - {n: 3, lane: 0, text: "Confirm / edit / discard each\nfield, click \"Save result\""}
+              - {n: 4, lane: 1, kind: decision, text: "Values valid?", branches: [{to: 5, label: "Yes"}, {to: 2, label: "No"}]}
+              - {n: 5, lane: 1, text: "Write confirmed fields to the record,\nstore edited fields, write audit", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc hiển thị
-                lines: ["Trường có độ tin cậy dưới ngưỡng (mặc định 0,85) được tô màu cảnh báo; mọi trường đều mặc định “chưa xác nhận” – không có nút “chấp nhận tất cả” (AC-13.1)."]
+                title: Display rules
+                lines: ["Fields with confidence below the threshold (0.85 by default) are highlighted with a warning color; every field defaults to \"not confirmed\" - there is no \"accept all\" button (AC-13.1)."]
               - step: "(4)"
-                title: Quy tắc kiểm tra
-                lines: ["Giá trị sau khi sửa phải qua kiểm tra như nhập tay (đơn vị, khoảng hợp lý – [[BR:vital-ranges]])."]
+                title: Validation rules
+                lines: ["Edited values must pass the same validation as manual entry (units, plausible range - [[BR:vital-ranges]])."]
               - step: "(5)"
-                title: Quy tắc ghi vào hồ sơ
+                title: Record writing rules
                 lines:
-                  - "Chỉ trường được xác nhận mới được ghi; ghi bằng token của người duyệt (on-behalf-of), nguồn ghi = “AI extraction, người xác nhận <Tên>”; lưu danh sách trường đã sửa."
-                  - "Từ chối toàn bộ → “rejected”, không ghi gì vào hồ sơ."
+                  - "Only confirmed fields are written; writing uses the reviewer's token (on-behalf-of), with the source recorded as \"AI extraction, confirmed by <Name>\"; the list of edited fields is retained."
+                  - "Reject all -> \"rejected\", nothing is written to the record."
             acceptance:
-              - ["AC-13.1", "Given kết quả trích xuất chưa được xác nhận, Then không trường nào xuất hiện trong hồ sơ bệnh nhân."]
-              - ["AC-RE.1", "Given bác sĩ không có quan hệ điều trị, When mở mục duyệt, Then bị từ chối."]
+              - ["AC-13.1", "Given an unconfirmed extraction result, Then no field appears in the patient record."]
+              - ["AC-RE.1", "Given a doctor without a treatment relationship, When opening a review item, Then it is rejected."]
 
           - key: manage-kb
-            name: Quản lý kho tri thức
+            name: Manage the knowledge base
             type: Basic
             actors: [admin]
             trace: [UC-11, "API AI9"]
-            objective: Thêm, duyệt, thay phiên bản, gỡ tài liệu nguồn của trợ lý; đặt phạm vi xem theo vai trò/khoa.
-            trigger: Quản trị viên mở [[SCR:kb]].
-            pre: ["Quản trị viên đã đăng nhập (MFA)."]
-            post: ["Tài liệu được lập chỉ mục (sau khi duyệt) hoặc bị gỡ khỏi chỉ mục."]
+            objective: Add, approve, version and remove the assistant's source documents; set the viewing scope by role/department.
+            trigger: The administrator opens [[SCR:kb]].
+            pre: ["The administrator is logged in (MFA)."]
+            post: ["The document is indexed (after approval) or removed from the index."]
             alternatives:
-              - "Áp dụng [[CMUC:view-list]], [[CMUC:view-item]], [[CMUC:create-item]], [[CMUC:update-item]], [[CMUC:disable-item]] cho đối tượng Tài liệu kho tri thức."
+              - "Applies [[CMUC:view-list]], [[CMUC:view-item]], [[CMUC:create-item]], [[CMUC:update-item]], [[CMUC:disable-item]] to the Knowledge base document object."
             rules:
               - step: "(N/A)"
-                title: Quy tắc riêng
+                title: Specific rules
                 lines:
-                  - "Chỉ tài liệu “approved” được lập chỉ mục; thay phiên bản không có khoảng thời gian thiếu chỉ mục (lập chỉ mục bản mới xong mới gỡ bản cũ)."
-                  - "Tài liệu kho tri thức không được chứa dữ liệu bệnh nhân; khi tải lên hệ thống quét mẫu thông tin định danh và từ chối nếu phát hiện."
-                  - "[Phạm vi xem] bắt buộc (vai trò và/hoặc khoa)."
+                  - "Only \"approved\" documents are indexed; version replacement leaves no index gap (the new version is indexed before the old one is removed)."
+                  - "Knowledge base documents must not contain patient data; on upload the system scans for identifying information patterns and rejects the file if found."
+                  - "[Viewing scope] is required (role and/or department)."
             acceptance:
-              - ["AC-KB.1", "Given tài liệu ở “draft”, When hỏi trợ lý, Then không có trích dẫn từ tài liệu đó."]
+              - ["AC-KB.1", "Given a \"draft\" document, When asking the assistant, Then there are no citations from that document."]
 
-      - name: Cổng bệnh nhân – Chatbot
+      - name: Patient portal - Chatbot
         use_cases:
           - key: chatbot-booking
-            name: Chatbot đặt lịch
+            name: Booking chatbot
             actors: [patient]
             trace: [UC-14, AC-14.1, AC-14.2, AC-14.3, "API AI7, AI8"]
-            objective: Đặt hoặc hủy lịch bằng hội thoại; mọi hành động phải được bệnh nhân xác nhận rõ ràng.
-            trigger: Bệnh nhân mở [[SCR:chatbot]] và nhập yêu cầu.
-            pre: ["Bệnh nhân đã đăng nhập."]
-            post: ["Lịch hẹn được đặt/hủy sau xác nhận, hoặc không có thay đổi."]
-            lanes: [Bệnh nhân, Hệ thống]
+            objective: Book or cancel by conversation; every action must be explicitly confirmed by the patient.
+            trigger: The patient opens [[SCR:chatbot]] and enters a request.
+            pre: ["The patient is logged in."]
+            post: ["The appointment is booked/cancelled after confirmation, or nothing changes."]
+            lanes: [Patient, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhập yêu cầu (ví dụ “khám tim\nmạch sáng thứ 5”)"}
-              - {n: 2, lane: 1, text: "Hiểu ý định, tìm slot bằng\nquyền của bệnh nhân"}
-              - {n: 3, lane: 1, text: "Đề xuất hành động,\nyêu cầu xác nhận"}
-              - {n: 4, lane: 0, kind: decision, text: "Xác nhận?", branches: [{to: 5, label: Có}, {to: 7, label: Không}]}
-              - {n: 5, lane: 1, text: "Thực hiện đặt / hủy theo\nquy tắc của UC đặt / hủy lịch"}
-              - {n: 6, lane: 1, text: "Báo kết quả", end: true}
-              - {n: 7, lane: 1, text: "Hủy đề xuất, không thay đổi", end: true}
-            alternatives: ["Mọi model lỗi hoặc bot không hiểu sau 3 lượt: chuyển bệnh nhân sang [[SCR:find-doctor]] với bộ lọc đã hiểu được (AC-14.3)."]
+              - {n: 1, lane: 0, text: "Enter a request (for example \"cardiology\non Thursday morning\")"}
+              - {n: 2, lane: 1, text: "Understand the intent, find slots using\nthe patient's permissions"}
+              - {n: 3, lane: 1, text: "Propose an action,\nrequest confirmation"}
+              - {n: 4, lane: 0, kind: decision, text: "Confirm?", branches: [{to: 5, label: "Yes"}, {to: 7, label: "No"}]}
+              - {n: 5, lane: 1, text: "Perform the booking / cancellation per\nthe rules of the book / cancel use cases"}
+              - {n: 6, lane: 1, text: "Report the result", end: true}
+              - {n: 7, lane: 1, text: "Discard the proposal, no changes", end: true}
+            alternatives: ["If every model fails or the bot does not understand after 3 turns: switch the patient to [[SCR:find-doctor]] with the filters it understood (AC-14.3)."]
             rules:
               - step: "(2)"
-                title: Quy tắc giới hạn bot
+                title: Bot limitation rules
                 lines:
-                  - "Bot chỉ có 4 công cụ: tìm slot, xem lịch hẹn của tôi, đề xuất đặt, đề xuất hủy; tối đa 6 vòng gọi công cụ, 10 giây mỗi lượt."
-                  - "Bot gọi API bằng token của chính bệnh nhân nên không truy cập được dữ liệu của bệnh nhân khác (AC-14.2); không trả lời câu hỏi chuyên môn y tế."
+                  - "The bot has only 4 tools: find slots, view my appointments, propose booking, propose cancellation; at most 6 tool-call rounds, 10 seconds per turn."
+                  - "The bot calls APIs using the patient's own token, so it cannot access another patient's data (AC-14.2); it does not answer medical specialty questions."
               - step: "(3)"
                 key: bot-confirm
-                title: Quy tắc xác nhận hành động
+                title: Action confirmation rules
                 lines:
-                  - "Bot không bao giờ đặt/hủy trực tiếp: tạo một hành động chờ xác nhận, hiển thị [[MSG:confirm-bot-action]] với nút “Xác nhận” do giao diện vẽ (không phải văn bản do model sinh)."
-                  - "Hành động chờ hết hạn sau 5 phút → [[MSG:confirmation-expired]] (AC-14.1)."
+                  - "The bot never books/cancels directly: it creates an action awaiting confirmation and displays [[MSG:confirm-bot-action]] with a \"Confirm\" button rendered by the interface (not text generated by the model)."
+                  - "The pending action expires after 5 minutes -> [[MSG:confirmation-expired]] (AC-14.1)."
               - step: "(5)"
-                title: Quy tắc thực hiện
-                lines: ["Áp dụng nguyên vẹn [[UC:book]] / [[UC:cancel]] (kể cả BR-02, BR-03, idempotency) với [Kênh đặt] = “chatbot”."]
+                title: Execution rules
+                lines: ["Apply [[UC:book]] / [[UC:cancel]] unchanged (including BR-02, BR-03 and idempotency) with [Booking channel] = \"chatbot\"."]
             acceptance:
-              - ["AC-14.1", "Given bot đề xuất đặt lịch, When bệnh nhân không bấm xác nhận, Then không có lịch hẹn nào được tạo."]
-              - ["AC-14.2", "Given bệnh nhân hỏi về lịch hẹn của người khác, Then bot không trả về dữ liệu của người đó."]
-              - ["AC-14.3", "Given mọi model lỗi, Then giao diện chuyển sang form đặt lịch."]
+              - ["AC-14.1", "Given the bot proposes a booking, When the patient does not click confirm, Then no appointment is created."]
+              - ["AC-14.2", "Given the patient asks about another person's appointments, Then the bot returns no data for that person."]
+              - ["AC-14.3", "Given every model fails, Then the interface switches to the booking form."]

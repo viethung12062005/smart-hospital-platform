@@ -69,17 +69,17 @@ def test_handle_once_is_atomic_and_idempotent(mongo_uri: str) -> None:
 
     def boom(session: ClientSession) -> None:
         db.facts.insert_one({"_id": other["id"]}, session=session)
-        raise RuntimeError("handler lỗi")
+        raise RuntimeError("handler failed")
 
     with pytest.raises(RuntimeError):
         mongo.handle_once(client, db, "ml", other, boom)
-    # rollback toàn bộ: không có dữ liệu, không có dấu inbox → lần giao sau xử lý lại được
+    # full rollback: no data, no inbox marker -> the next delivery can process it again
     assert db.facts.count_documents({"_id": other["id"]}) == 0
     assert db.inbox.count_documents({"_id": f"ml|{other['id']}"}) == 0
 
 
 def test_ensure_messaging_indexes_reuses_contract_indexes(mongo_uri: str) -> None:
-    """quickstart chạy contracts/db/mongo-notification-ml.js trước service: cùng tên + khóa nên không xung đột."""
+    """The quickstart runs contracts/db/mongo-notification-ml.js before the service: same name + key, so no conflict."""
     client, db = fresh_db(mongo_uri, "t_indexes")
     db.inbox.create_index([("processedAt", 1)], name="ttl_inbox_14d", expireAfterSeconds=14 * 24 * 3600)
     db.outbox.create_index(
@@ -87,14 +87,14 @@ def test_ensure_messaging_indexes_reuses_contract_indexes(mongo_uri: str) -> Non
     )
 
     mongo.ensure_messaging_indexes(db)
-    mongo.ensure_messaging_indexes(db)  # chạy lại vẫn idempotent
+    mongo.ensure_messaging_indexes(db)  # running again is still idempotent
 
     assert {i["name"] for i in db.inbox.list_indexes()} == {"_id_", "ttl_inbox_14d"}
     assert {i["name"] for i in db.outbox.list_indexes()} == {"_id_", "ix_outbox_unpublished"}
 
 
 def test_ensure_messaging_indexes_keeps_indexes_created_before_naming(mongo_uri: str) -> None:
-    """DB dev cũ (vd. `ai`, script khởi tạo không đụng tới) đã có index pymongo tự đặt tên."""
+    """An old dev DB (e.g. `ai`, untouched by the init script) already has a pymongo-named index."""
     client, db = fresh_db(mongo_uri, "t_legacy_indexes")
     db.inbox.create_index([("processedAt", 1)], expireAfterSeconds=14 * 24 * 3600)
     db.outbox.create_index([("publishedAt", 1), ("occurredAt", 1), ("_id", 1)])
@@ -103,9 +103,9 @@ def test_ensure_messaging_indexes_keeps_indexes_created_before_naming(mongo_uri:
     mongo.ensure_messaging_indexes(db)
 
     inbox = {i["name"]: i for i in db.inbox.list_indexes()}
-    assert set(inbox) == {"_id_", "processedAt_1"}  # không tạo thêm index trùng khóa
+    assert set(inbox) == {"_id_", "processedAt_1"}  # no duplicate-key index is created
     assert inbox["processedAt_1"]["expireAfterSeconds"] == 14 * 24 * 3600
-    # outbox cũ có khóa khác → thêm index chuẩn, không xung đột
+    # the old outbox has a different key -> add the standard index, no conflict
     assert "ix_outbox_unpublished" in {i["name"] for i in db.outbox.list_indexes()}
 
 
@@ -124,8 +124,8 @@ def test_relay_publishes_in_order_and_stops_on_bus_error(mongo_uri: str) -> None
             mongo.add_to_outbox(db, s, e)
 
         mongo.in_transaction(client, add)
-    # Thứ tự chỉ được bảo đảm theo subject (13-events §1); 3 event khác subject tạo trong cùng 1 ms có thể có
-    # thứ tự UUIDv7 bất kỳ, nên lấy thứ tự mong đợi theo đúng khóa sắp của relay (occurredAt, _id).
+    # Order is guaranteed only per subject (13-events §1); 3 events with different subjects created in the same ms
+    # may have arbitrary UUIDv7 order, so derive the expected order from the relay's actual sort key (occurredAt, _id).
     order = [d["_id"] for d in db.outbox.find({}, {"_id": 1}).sort([("occurredAt", 1), ("_id", 1)])]
     assert sorted(order) == sorted(e["id"] for e in evts)
     flaky = FakePublisher(fail_on=1)
@@ -148,7 +148,7 @@ def test_relay_reclaims_expired_lease(mongo_uri: str) -> None:
     db.outbox.update_one(
         {"_id": e["id"]}, {"$set": {"lockedBy": "dead", "lockedUntil": mongo.now() + timedelta(hours=1)}}
     )
-    assert mongo.relay_once(db, FakePublisher()) == 0  # replica khác đang giữ
+    assert mongo.relay_once(db, FakePublisher()) == 0  # another replica holds it
     db.outbox.update_one({"_id": e["id"]}, {"$set": {"lockedUntil": mongo.now() - timedelta(seconds=1)}})
     assert mongo.relay_once(db, FakePublisher()) == 1
 
@@ -167,7 +167,7 @@ def test_rabbit_roundtrip_retry_and_dead_letter(rabbit_url: str) -> None:
 
     t = threading.Thread(target=bus.consume, args=(consumer, ["shp.scheduling.appointment-booked.v1"], handler, stop))
     t.start()
-    time.sleep(2)  # queue + binding đã khai báo
+    time.sleep(2)  # queue + binding declared
     good = booked()
     bus.publish(good)
     bus.publish(poison)

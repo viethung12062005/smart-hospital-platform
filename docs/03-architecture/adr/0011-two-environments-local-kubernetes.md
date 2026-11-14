@@ -1,43 +1,43 @@
-# ADR-0011: Hai môi trường cloud (UAT, prod) và phát triển trên Kubernetes cục bộ
+# ADR-0011: Two cloud environments (UAT, prod) and local Kubernetes development
 
-## Trạng thái
-Accepted (2026-10-27) — thay thế phần "3 môi trường" của [ADR-0009](0009-cicd-ephemeral-environments.md) §1 và các bảng phê duyệt liên quan.
+## Status
+Accepted (2026-10-27) — replaces the "3 environments" part of [ADR-0009](0009-cicd-ephemeral-environments.md) §1 and the related approval tables.
 
-## Bối cảnh
-Nhóm chỉ có 4 người và ngân sách cloud hạn chế. Ba cluster cloud (dev, staging, prod) là quá nhiều cho quy mô này: dev đã có thể chạy hoàn toàn
-trên máy cá nhân nếu cung cấp đủ công cụ, và staging chỉ khác UAT ở tên gọi.
+## Context
+The team has only 4 people and a limited cloud budget. Three cloud clusters (dev, staging, prod) is too many for this scale: dev can run entirely
+on a personal machine if enough tooling is provided, and staging differs from UAT only in name.
 
-## Quyết định
+## Decision
 
-| Môi trường | Chạy ở đâu | Mục đích | Vòng đời |
+| Environment | Where it runs | Purpose | Lifecycle |
 |---|---|---|---|
-| **local** | Máy cá nhân của dev, cụm Kubernetes nhỏ (kind) | Viết code, chạy và test từng service cùng toàn bộ phụ thuộc, bằng **cùng Helm chart** với cloud | Dev tự bật/tắt bất cứ lúc nào |
-| **uat** | AKS ephemeral trên Azure | Kiểm thử tích hợp thật trên cloud, nghiệm thu, **load test và failure test**, diễn tập deploy/rollback/backup | Dựng khi cần thử, **hủy ngay khi xong** |
-| **prod** | AKS ephemeral trên Azure | **Chỉ khởi động khi demo/bảo vệ** (và buổi diễn tập trước đó) | Dựng trước demo ~1 giờ, hủy ngay sau demo |
+| **local** | Dev's personal machine, small Kubernetes cluster (kind) | Write code, run and test each service with all dependencies, using the **same Helm chart** as cloud | Dev starts/stops anytime |
+| **uat** | Ephemeral AKS on Azure | Real cloud integration testing, acceptance, **load test and failure test**, deploy/rollback/backup drills | Provisioned when needed, **destroyed immediately afterwards** |
+| **prod** | Ephemeral AKS on Azure | **Started only for demo/defense** (and the rehearsal before it) | Provisioned ~1 hour before the demo, destroyed immediately after the demo |
 
-Hệ quả cho thiết kế:
+Design implications:
 
-1. **Chỉ còn 2 stack Terraform** (`envs/uat`, `envs/prod`). Cả hai đều ephemeral (dựng bằng `env-provision`, hủy bằng `env-destroy`). Tài nguyên thường trực
-   chỉ gồm state, ACR và identity (stack `bootstrap`).
-2. **Dev không cần cluster cloud.** Bộ công cụ `dev/` trong repo ứng dụng (kind + Helm + Makefile) dựng một cụm nhỏ gồm PostgreSQL, MongoDB (replica set),
-   Redis, RabbitMQ, Azurite (giả lập Azure Blob, cùng SDK với cloud), Keycloak, OpenSearch (tuỳ chọn), ClamAV, Ollama (tuỳ chọn), MLflow, và chạy service bằng chart `microservice` chung.
-   Dev test trên cụm này trước khi tạo PR; CI dùng Testcontainers như đã thiết kế.
-3. **UAT là nơi đo NFR.** Load test (NFR-P/S) và failure test (NFR-A) chạy trên UAT. Khi đo hiệu năng, UAT dùng **cùng kích cỡ với prod** (biến `sizing = "prod"`);
-   khi chỉ thử tích hợp dùng cỡ nhỏ.
-4. **Prod ephemeral có kế hoạch:** vì chỉ dựng cho demo nên mọi trạng thái cần có sẵn trong GitOps và script seed: dựng xong là chạy được, không phụ thuộc dữ liệu cũ.
-   Phải **diễn tập dựng prod ít nhất một lần** (W10 hoặc W11) để biết thời gian thực tế, và có sẵn bản dự phòng (ảnh chụp màn hình, video, hoặc UAT) nếu dựng prod trễ.
-5. **Luồng phát hành:** merge vào `main` → CI build, quét, ký image → (sau phê duyệt `deploy-uat`) cập nhật `envs/uat` trong GitOps → UAT đạt → (sau phê duyệt `deploy-prod`) cập nhật `envs/prod`.
-   Argo CD chỉ đồng bộ cụm nào đang tồn tại.
-6. **GitHub Environments** thu gọn: `deploy-uat`, `deploy-prod`, `infra-uat`, `infra-prod`, `infra-uat-destroy`, `infra-prod-destroy`.
-7. **Cô lập (NFR-D4):** prod và UAT dùng resource group/subscription riêng và identity riêng.
-8. **MLOps:** canary/huấn luyện lại tự động được kiểm chứng ở UAT; ở prod chỉ cần bản đã qua UAT.
+1. **Only 2 Terraform stacks remain** (`envs/uat`, `envs/prod`). Both are ephemeral (provisioned by `env-provision`, destroyed by `env-destroy`). Permanent resources
+   include only state, ACR, and identity (`bootstrap` stack).
+2. **Devs do not need a cloud cluster.** The `dev/` toolkit in the application repo (kind + Helm + Makefile) provisions a small cluster with PostgreSQL, MongoDB (replica set),
+   Redis, RabbitMQ, Azurite (Azure Blob emulator, same SDK as cloud), Keycloak, OpenSearch (optional), ClamAV, Ollama (optional), MLflow, and runs services using the shared `microservice` chart.
+   Devs test on this cluster before creating a PR; CI uses Testcontainers as designed.
+3. **UAT is where NFRs are measured.** Load tests (NFR-P/S) and failure tests (NFR-A) run on UAT. When measuring performance, UAT uses **the same size as prod** (`sizing = "prod"`);
+   for integration-only testing use a small size.
+4. **Prod is ephemerally planned:** because it is only provisioned for the demo, all needed state must be in GitOps and seed scripts: once provisioned it runs, with no dependency on old data.
+   Must **rehearse prod provisioning at least once** (W10 or W11) to know the actual timing, and have a backup (screenshots, video, or UAT) if prod provisioning is late.
+5. **Release flow:** merge into `main` → CI build, scan, sign image → (after `deploy-uat` approval) update `envs/uat` in GitOps → UAT passes → (after `deploy-prod` approval) update `envs/prod`.
+   Argo CD only syncs clusters that exist.
+6. **GitHub Environments** simplified: `deploy-uat`, `deploy-prod`, `infra-uat`, `infra-prod`, `infra-uat-destroy`, `infra-prod-destroy`.
+7. **Isolation (NFR-D4):** prod and UAT use separate resource groups/subscriptions and separate identities.
+8. **MLOps:** canary/automatic retraining is validated in UAT; in prod only the version that passed UAT is needed.
 
-## Phương án đã cân nhắc
-- **Giữ dev cloud:** tiện cho dev yếu máy, nhưng tốn tiền cố định và vẫn cần local để lặp nhanh.
-- **Docker Compose thay vì K8s cục bộ:** nhẹ hơn nhưng khác môi trường thật (không kiểm được chart, probe, NetworkPolicy, KEDA); K8s nhỏ giữ nguyên hình dạng triển khai.
-- **minikube / k3d:** tương đương; chọn kind vì phổ biến, khởi động nhanh, dễ dùng trong CI.
+## Alternatives considered
+- **Keep dev in cloud:** convenient for devs with weak machines, but costs fixed money and still needs local for fast iteration.
+- **Docker Compose instead of local K8s:** lighter but differs from the real environment (cannot test charts, probes, NetworkPolicy, KEDA); small K8s preserves the deployment shape.
+- **minikube / k3d:** equivalent; chose kind because it is popular, starts fast, and is easy to use in CI.
 
-## Hệ quả
-- Máy dev cần tối thiểu 4 CPU, 16 GB RAM, Docker; có hai profile: `core` (~6 GB, đủ cho phần lớn task) và `full` (thêm OpenSearch, Ollama, ClamAV, MLflow, observability).
-- Mỗi dev chạy local nên các bug phụ thuộc cloud (Azure Blob, AI Search thật, Service Bus; đăng nhập đã dùng Keycloak giống local, ADR-0017) chỉ lộ ra ở UAT: SA lên lịch dựng UAT thường xuyên (đề xuất mỗi thứ Năm).
-- Chi phí cloud giảm: chỉ trả tiền theo giờ UAT/prod tồn tại.
+## Consequences
+- Dev machine needs at least 4 CPU, 16 GB RAM, Docker; two profiles: `core` (~6 GB, enough for most tasks) and `full` (adds OpenSearch, Ollama, ClamAV, MLflow, observability).
+- Each dev runs locally, so cloud-dependent bugs (Azure Blob, real AI Search, Service Bus; login already uses Keycloak like local, ADR-0017) only surface in UAT: SA schedules UAT provisioning regularly (proposed every Thursday).
+- Cloud cost reduced: pay only for the hours UAT/prod exist.

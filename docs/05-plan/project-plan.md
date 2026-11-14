@@ -1,102 +1,103 @@
-# Kế hoạch dự án
+# Project plan
 
-> Trạng thái: **Approved (2026-10-26)**. Thứ tự làm việc: BA → Requirements → **User story** → Thiết kế chi tiết → Backlog → Code.
-> Chưa có dòng code nào; mọi con số dưới đây sinh từ dữ liệu trong `tools/plan/` bằng `python3 -I tools/plan/build.py`
-> (script tự kiểm tra: mọi AC của FR thuộc một story, mọi API và mọi event có task, task dev ≤ 4 giờ, không task nào xếp trước phụ thuộc, dev ≤ 30 giờ/tuần).
+> Status: **Approved (2026-10-26)**. Order of work: BA -> Requirements -> **User stories** -> Detailed design -> Backlog -> Code.
+> No code written yet; every number below is generated from the data in `tools/plan/` by `python3 -I tools/plan/build.py`
+> (the script self-checks: every AC of an FR belongs to a story, every API and every event has a task, dev tasks <= 4 hours, no task scheduled before its dependency, dev <= 30 hours/week).
 
-## 1. Tài liệu đầu vào cho từng người
+## 1. Input documents per person
 
-| Cần gì | Đọc ở đâu |
+| What you need | Where to read it |
 |---|---|
-| Bối cảnh, quy tắc nghiệp vụ | [Business analysis](../01-business-analysis/business-analysis.md) |
-| Yêu cầu, NFR, ma trận phân quyền | [02-requirements](../02-requirements/functional-requirements.md) |
-| **74 user story + tiêu chí nghiệm thu + task của từng story** | [user-stories.md](../02-requirements/user-stories.md) |
-| Data model, DB, API, event, sequence, phân quyền | [detailed-design](../03-architecture/detailed-design/README.md) |
-| **Việc từng người theo từng tuần (checklist)** | [SA](by-person/SA.md) · [D1](by-person/D1.md) · [D2](by-person/D2.md) · [D3](by-person/D3.md) |
-| Toàn bộ backlog / import GitHub Projects | [backlog.md](backlog.md) · [backlog.csv](backlog.csv) |
+| Context, business rules | [Business analysis](../01-business-analysis/business-analysis.md) |
+| Requirements, NFRs, authorization matrix | [02-requirements](../02-requirements/functional-requirements.md) |
+| **74 user stories + acceptance criteria + each story's tasks** | [user-stories.md](../02-requirements/user-stories.md) |
+| Data model, DB, API, events, sequences, authorization | [detailed-design](../03-architecture/detailed-design/README.md) |
+| **Each person's work by week (checklist)** | [SA](by-person/SA.md) · [D1](by-person/D1.md) · [D2](by-person/D2.md) · [D3](by-person/D3.md) |
+| The whole backlog / GitHub Projects import | [backlog.md](backlog.md) · [backlog.csv](backlog.csv) |
 
-## 2. Phân công
+## 2. Assignment
 
-| Mã | Vai trò | Phụ trách |
+| Code | Role | Owns |
 |---|---|---|
-| **SA** | Solution Architect + PM + DevOps | **Mọi thứ ngoài logic nghiệp vụ**: kiến trúc, hợp đồng API/event, hạ tầng, CI/CD, Helm/GitOps, môi trường, scaffold service, gateway, observability, load/failure test, backup, phê duyệt, tiến độ |
-| **D1** | Dev Java (chỉ logic) | Thư viện auth/phân quyền/idempotency · **scheduling** · **notification** · UI đặt lịch và quản lý lịch |
-| **D2** | Dev Java (chỉ logic) | Lõi FHIR/Mongo/outbox/audit emitter · **clinical** · **document** · **audit** · UI lâm sàng |
-| **D3** | Dev Python/AI (chỉ logic) | Thư viện Python · dữ liệu giả · **ML no-show** · **AI service** (RAG, tóm tắt, trích xuất, chatbot, eval) · UI AI |
+| **SA** | Solution Architect + PM + DevOps | **Everything outside business logic**: architecture, API/event contracts, infrastructure, CI/CD, Helm/GitOps, environments, service scaffold, gateway, observability, load/failure tests, backup, approvals, schedule |
+| **D1** | Java developer (logic only) | auth/authorization/idempotency libraries · **scheduling** · **notification** · booking and schedule-management UI |
+| **D2** | Java developer (logic only) | FHIR/Mongo/outbox/audit-emitter core · **clinical** · **document** · **audit** · clinical UI |
+| **D3** | Python/AI developer (logic only) | Python libraries · synthetic data · **ML no-show** · **AI service** (RAG, summarization, extraction, chatbot, eval) · AI UI |
 
-**Quy tắc:** dev nhận service đã được SA scaffold (khung code, Dockerfile, pipeline, Helm values, kết nối DB/bus/OTel) và chỉ viết logic và test.
-Migration DB và thao tác truy cập dữ liệu của chính service là logic của dev (viết theo DDL đã được kiểm chứng trong thiết kế). Dev không sửa
-pipeline, Dockerfile, Helm hay hạ tầng; cần thay đổi thì mở issue cho SA. Quy ước tên nhánh: `<ID>-mo-ta-ngan`, một PR một task.
+**Rule:** a developer receives a service already scaffolded by the SA (code skeleton, Dockerfile, pipeline, Helm values, DB/bus/OTel wiring) and writes only logic and tests.
+DB migrations and the service's own data-access code are the developer's logic (written against the DDL validated in the design). Developers do not modify
+pipelines, Dockerfiles, Helm or infrastructure; if a change is needed, open an issue for the SA. Branch naming: `<ID>-short-description`, one PR per task.
 
-### Cấu trúc repo ứng dụng (`smart-hospital-platform`, tạo ở GOV-01 và ARC-09)
-
-```
-services/<scheduling|notification|clinical|document|audit|ai|ml|gateway>/   # mỗi service: src, tests, Dockerfile, deploy/values-<env>.yaml
-libs/java/     libs/python/                    # thư viện dùng chung (SHR-*, PY-*); libs/java là module Maven của pom.xml gốc
-web/                                           # PWA React
-contracts/{openapi,events,authz,terminology}/  # hợp đồng API, schema event, matrix.yaml, ICD-10/LOINC
-prompts/<task>/v<N>.md   templates/            # prompt AI có version, mẫu thông báo vi/en
-docs/   tools/plan/                            # tài liệu và nguồn sinh backlog
-.github/workflows/svc-<name>.yml               # mỗi service một pipeline riêng, gọi template chung ở repo shp-platform-templates
-```
-
-## 3. Lộ trình và các cổng
+### Application repo layout (`smart-hospital-platform`, created in GOV-01 and ARC-09)
 
 ```
-W1   Gate G1/G2/G3: duyệt BA, requirements, kiến trúc + thiết kế chi tiết; tạo repo
-W2   SA: bootstrap Azure, CI templates, Helm chart | Dev: thư viện dùng chung (FHIR, authz, JWT, router LLM), dữ liệu giả, ML dữ liệu
-W3   SA: network/AKS/monitoring, GitOps | Dev: tiếp tục thư viện, shell web
-W4   SA: scaffold 7 service (scheduling, notification, clinical, document, audit, ai, ml) + platform add-on | Dev bắt đầu service (clinical, audit, notification, AI)
-W5   SA: module dữ liệu, env-provision/destroy | Dev: scheduling, clinical, notification, ML
-W6   ── Gate G4 ── (service mẫu đi commit → local → uat → prod (dựng tạm), rollback ≤ 5 phút, image chưa ký bị chặn)
-W7–W9 Phát triển tính năng; dev test trên K8s local; từ sau G4 SA dựng UAT theo lịch (đề xuất thứ Năm) để kiểm thử tích hợp
-W10  Hardening: load test, failure test, backup/restore | Dev: sửa theo kết quả
-W11  Eval AI/ML, FinOps, rà soát bảo mật
-W12  Kịch bản demo, slide, diễn tập trên prod ephemeral
+services/<scheduling|notification|clinical|document|audit|ai|ml|gateway>/   # per service: src, tests, Dockerfile, deploy/values-<env>.yaml
+libs/java/     libs/python/                    # shared libraries (SHR-*, PY-*); libs/java is a Maven module of the root pom.xml
+web/                                           # React PWA
+contracts/{openapi,events,authz,terminology}/  # API contracts, event schemas, matrix.yaml, ICD-10/LOINC
+prompts/<task>/v<N>.md   templates/            # versioned AI prompts, vi/en notification templates
+docs/   tools/plan/                            # documentation and the backlog generator source
+.github/workflows/svc-<name>.yml               # one pipeline per service, calling the shared template in the shp-platform-templates repo
 ```
 
-| Cổng | Tuần | Điều kiện | Ai duyệt |
+## 3. Roadmap and gates
+
+```
+W1   Gate G1/G2/G3: approve BA, requirements, architecture + detailed design; create repos
+W2   SA: Azure bootstrap, CI templates, Helm chart | Dev: shared libraries (FHIR, authz, JWT, LLM router), synthetic data, ML data
+W3   SA: network/AKS/monitoring, GitOps | Dev: continue libraries, web shell
+W4   SA: scaffold 7 services (scheduling, notification, clinical, document, audit, ai, ml) + platform add-ons | Dev starts services (clinical, audit, notification, AI)
+W5   SA: data modules, env-provision/destroy | Dev: scheduling, clinical, notification, ML
+W6   -- Gate G4 -- (sample service goes commit -> local -> uat -> prod (ephemeral), rollback <= 5 minutes, unsigned images blocked)
+W7-W9 Feature development; dev tests on local K8s; after G4 the SA provisions UAT on a schedule (proposed Thursdays) for integration testing
+W10  Hardening: load test, failure test, backup/restore | Dev: fix based on results
+W11  AI/ML eval, FinOps, security review
+W12  Demo script, slides, rehearsal on ephemeral prod
+```
+
+| Gate | Week | Condition | Who approves |
 |---|---|---|---|
-| G1 | W1 | Phạm vi + KPI chốt | SA (PM) |
-| G2 | W1 | FR có AC, NFR có số, user story được duyệt | SA |
-| G3 | W1 | ADR Accepted + thiết kế chi tiết được duyệt | SA (Architect) |
-| **G4** | **W6** (đã duyệt; trước đó là W5) | Pipeline đầy đủ + service mẫu qua UAT và prod (dựng tạm) + rollback + chặn image chưa ký | SA (DevOps) |
-| Feature freeze | cuối W9 | Mọi story Must xong và deploy được | SA |
+| G1 | W1 | Scope + KPIs finalized | SA (PM) |
+| G2 | W1 | FRs have ACs, NFRs are measurable, user stories approved | SA |
+| G3 | W1 | ADRs Accepted + detailed design approved | SA (Architect) |
+| **G4** | **W6** (approved; previously W5) | Full pipeline + sample service through UAT and prod (ephemeral) + rollback + unsigned-image blocking | SA (DevOps) |
+| Feature freeze | end of W9 | Every Must story done and deployable | SA |
 
-**Vì sao G4 dời từ W5 sang W6:** khối lượng SA W2–W5 là ~45 giờ/tuần dù đã dời mọi việc không chặn G4 sang sau. Dev vẫn làm việc bình
-thường trước G4 (code, test local và test tích hợp bằng Testcontainers); chỉ việc deploy lên cloud bắt đầu từ W7. Đã được SA xác nhận khi duyệt plan.
+**Why G4 moved from W5 to W6:** SA workload for W2-W5 is ~45 hours/week even after moving all non-G4-blocking work later. Devs still work
+normally before G4 (code, local tests, integration tests with Testcontainers); only cloud deploys start from W7. This was confirmed by the SA when the plan was approved.
 
-## 4. Tải công việc (giờ/tuần, chi tiết trong [backlog.md](backlog.md))
+## 4. Workload (hours/week, details in [backlog.md](backlog.md))
 
-| Người | Tổng | Đỉnh | Nhận xét |
+| Person | Total | Peak | Notes |
 |---|---|---|---|
-| SA | 358 | 47 (W3), 45 (W4) | Nặng nhất W2–W5; sau W6 nhẹ. Đây là điểm nghẽn lớn nhất của kế hoạch |
-| D1 | 212 | 30 | W3 chỉ 7 giờ vì chờ nền tảng từ D2 |
-| D2 | 235 | 30 | Nhiều nhất, **căng nhất**: clinical + document + audit + lõi FHIR chạy gần như song song |
-| D3 | 258 | 30 | Nặng lên sau khi thêm MLOps đầy đủ (+42 giờ); W10 vẫn còn việc Should/Could của AI |
+| SA | 490 | 80 (W4), 65 (W8) | Heaviest in W2-W5, lighter after W8. This is the biggest bottleneck in the plan |
+| D1 | 128 | 30 | Scheduling + notification, fully loaded in W4-W7 |
+| D2 | 171 | 30 | Most work: clinical + document + audit + FHIR core run almost in parallel |
+| D3 | 131 | 30 | ML and AI; the heaviest part is the MLOps and eval work in W5-W7 |
 
-Tổng 316 task. 1.063 giờ. Dev xếp tối đa 30 giờ/tuần (mặc định coi 25–30 giờ/tuần là năng lực thực). Nếu thực tế thấp hơn, cắt theo thứ tự dưới đây.
+345 tasks. 1,183 hours. Devs are scheduled for at most 30 hours/week (25-30 hours/week is treated as realistic capacity). If actual capacity is lower, cut in the order below.
+Numbers were regenerated from the backlog on 2026-11-11 after GOV-08 was split into GOV-08..GOV-10.
 
-### Phạm vi có thể cắt khi trễ (theo thứ tự)
-1. **Could** (~20 giờ dev): US-040 (đánh dấu tài liệu nhập nhầm), US-056 (chấm điểm/lịch sử hội thoại), US-062 (chatbot đặt lịch).
-   **MLOps nâng cao** (US-065, US-071..074, ~42 giờ dev + 17 giờ SA) là Should theo yêu cầu bản đầy đủ; nếu buộc phải cắt thì giữ US-071/072 (dữ liệu, cổng chất lượng), bỏ trước canary tự động (US-073) rồi huấn luyện lại tự động (US-074).
-2. **Should** (~126 giờ dev): chọn bỏ trích xuất tài liệu (US-059..061), tóm tắt hồ sơ (US-058), đổi lịch (US-017), gộp hồ sơ (US-004), break-glass (US-034, US-051) nếu thật sự thiếu người. Cần nhắc lại: đề bài chỉ gợi ý **một** tính năng AI nâng cao nhưng bắt buộc có đánh giá chất lượng.
-3. Không cắt: Must (đặt lịch, lâm sàng cơ bản, tài liệu, phân quyền, audit, thông báo, RAG), vì đó là phần bắt buộc của đề.
+### Scope that can be cut when late (in order)
+1. **Could** (~20 dev hours): US-040 (flag a document entered by mistake), US-056 (rate/chat history), US-062 (booking chatbot).
+   **Advanced MLOps** (US-065, US-071..074, ~42 dev hours + 17 SA hours) is Should per the full requirement set; if forced to cut, keep US-071/072 (data, quality gate), drop automated canary (US-073) first, then automated retraining (US-074).
+2. **Should** (~126 dev hours): choose to drop document extraction (US-059..061), record summarization (US-058), rescheduling (US-017), record merging (US-004), break-glass (US-034, US-051) if there really are too few people. Worth repeating: the brief only suggests **one** advanced AI feature but requires quality evaluation.
+3. Do not cut: Must (booking, basic clinical, documents, authorization, audit, notifications, RAG), because those are mandatory parts of the brief.
 
-## 5. Cách theo dõi
+## 5. How to track
 
-- **GitHub Projects**: import [backlog.csv](backlog.csv) (cột `Owner`, `Week`, `Stories`, `Depends on`); mỗi dòng là một issue ở repo tương ứng. Cột: `Todo → In progress → In review → Done`.
-- Label: `epic:<mã>`, `priority:must|should|could`, `story:US-xxx`.
-- Mỗi cuối tuần: sprint review (ARC-13..18), cập nhật trạng thái; thay đổi plan thì sửa `tools/plan/*.py` và chạy lại build (script sẽ báo nếu phá ràng buộc).
-- Task chỉ được bắt đầu khi phụ thuộc đã xong; task xong khi đạt cột "Xong khi" và Definition of Done.
+- **GitHub Projects**: import [backlog.csv](backlog.csv) (columns `Owner`, `Week`, `Stories`, `Depends on`); each row is an issue in the matching repo. Columns: `Todo -> In progress -> In review -> Done`.
+- Labels: `epic:<code>`, `priority:must|should|could`, `story:US-xxx`.
+- Every end of week: sprint review (ARC-13..18), status update; to change the plan, edit `tools/plan/*.py` and re-run the build (the script reports broken constraints).
+- A task starts only when its dependencies are done; a task is done when it meets its "Done when" column and the Definition of Done.
 
-## 6. Rủi ro chính
+## 6. Main risks
 
-| Rủi ro | Ảnh hưởng | Giảm thiểu |
+| Risk | Impact | Mitigation |
 |---|---|---|
-| SA quá tải W2–W5 (~45 giờ/tuần, kiêm 3 vai trò) | G4 trễ, dev bị chặn deploy | G4 dời W6; ưu tiên task chặn dev (local env, scaffold, hợp đồng API/event); nhờ trợ lý AI viết Terraform/Helm/workflow theo backlog và SA chỉ review |
-| D2 quá tải (235 giờ, nhiều service song song) | Trễ clinical/document/audit | D3 hỗ trợ W8; cắt Should theo mục 4; không nhận thêm phạm vi |
-| Phụ thuộc chéo giữa dev (D3 chờ D2, D1 chờ D2) | Dev rảnh nhưng bị chặn | Hợp đồng API/event chốt từ W1–W3 (OpenAPI, schema event) để dev dựng bản giả (fake) và tích hợp sau |
-| Thiếu kinh nghiệm FHIR/MongoDB/Argo CD | Chậm W2–W5 | Thiết kế chi tiết và DDL đã chạy thử; thư viện lõi làm sớm (W2–W3) |
-| Dịch vụ AI/Azure thay đổi model hoặc quota | AI không chạy | Chuỗi fallback có Ollama local; eval chạy được offline với provider giả |
-| Tết dương lịch rơi vào W10 | Hardening ít người | W10 được lên kế hoạch tải thấp cho dev |
+| SA overloaded in W2-W5 (peaks at 80 hours in W4, three roles) | G4 late, devs blocked from deploying | Move G4 to W6; prioritize tasks that block devs (local env, scaffold, API/event contracts); use AI assistance for Terraform/Helm/workflows per the backlog and have the SA review |
+| D2 overloaded (171 hours, many services in parallel) | clinical/document/audit late | D3 helps in W8; cut Should scope per section 4; accept no extra scope |
+| Cross-dev dependencies (D3 waits on D2, D1 waits on D2) | Devs idle but blocked | API/event contracts finalized in W1-W3 (OpenAPI, event schemas) so devs can build fakes and integrate later |
+| Little experience with FHIR/MongoDB/Argo CD | Slow in W2-W5 | Detailed design and DDL already trialled; core libraries built early (W2-W3) |
+| AI/Azure services change models or quotas | AI stops working | Fallback chain includes local Ollama; eval runs offline with fake providers |
+| New Year's Day falls in W10 | Fewer people for hardening | W10 is planned with a light load for devs |

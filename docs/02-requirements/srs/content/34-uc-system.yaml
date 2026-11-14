@@ -1,222 +1,222 @@
-# Chương 3 – Module Tác vụ tự động (worker xử lý sự kiện và job định kỳ).
+# Chapter 3 - Automated task module (event-processing worker and scheduled jobs).
 modules:
   - key: system
-    name: Tác vụ tự động của hệ thống
+    name: Automated system tasks
     intro: >-
-      Các use case do hệ thống tự kích hoạt bởi sự kiện hoặc lịch. Sự kiện được giao ít nhất một lần nên mọi xử lý đều
-      phải chạy lại an toàn (idempotent) – xem [[CBR:event-processing]].
+      Use cases triggered by the system itself through events or schedules. Events are delivered at least once, so every
+      processing step must be safe to re-run (idempotent) - see [[CBR:event-processing]].
     sections:
-      - name: Nhắc lịch
+      - name: Reminders
         use_cases:
           - key: schedule-reminders
-            name: Lên lịch nhắc khi lịch hẹn được tạo
+            name: Schedule reminders when an appointment is created
             type: Other
             actors: [system]
-            trace: [UC-07, NFR-P8, "Sự kiện E1, E3, E10"]
-            objective: Tạo các lần nhắc T-24h, T-2h (và T-6h nếu nguy cơ không đến khám cao) cho mỗi lịch hẹn.
-            trigger: Sự kiện “đã đặt lịch”, “đã đổi lịch” hoặc “đã chấm điểm nguy cơ”.
-            pre: ["Lịch hẹn “booked”."]
-            post: ["Các lần nhắc “scheduled” tồn tại, không trùng."]
-            lanes: [Hàng đợi sự kiện, Hệ thống]
+            trace: [UC-07, NFR-P8, "Event E1, E3, E10"]
+            objective: Create T-24h, T-2h (and T-6h if the no-show risk is high) reminders for each appointment.
+            trigger: The "booked", "rescheduled" or "risk scored" event.
+            pre: ["The appointment is \"booked\"."]
+            post: ["The \"scheduled\" reminders exist and are not duplicated."]
+            lanes: [Event queue, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhận sự kiện"}
-              - {n: 2, lane: 1, kind: decision, text: "Đã xử lý\nsự kiện này?", branches: [{to: 3, label: Chưa}, {to: 5, label: Rồi}]}
-              - {n: 3, lane: 1, text: "Tạo lần nhắc theo\nmốc thời gian còn lại"}
-              - {n: 4, lane: 1, text: "Lưu, đánh dấu đã xử lý", end: true}
-              - {n: 5, lane: 1, text: "Bỏ qua", end: true}
+              - {n: 1, lane: 0, text: "Receive the event"}
+              - {n: 2, lane: 1, kind: decision, text: "Has this event\nalready been processed?", branches: [{to: 3, label: "No"}, {to: 5, label: "Yes"}]}
+              - {n: 3, lane: 1, text: "Create reminders for the\nremaining time points"}
+              - {n: 4, lane: 1, text: "Save, mark as processed", end: true}
+              - {n: 5, lane: 1, text: "Skip", end: true}
             rules:
               - step: "(3)"
-                title: Quy tắc mốc nhắc
+                title: Reminder time-point rules
                 lines:
-                  - "Tạo nhắc T-24h và T-2h; mốc đã qua thì bỏ qua (đặt lịch sát giờ chỉ còn T-2h hoặc không nhắc)."
-                  - "Nguy cơ không đến khám ≥ ngưỡng thì thêm nhắc T-6h. Ngưỡng mặc định 0,30, cấu hình được, được hiệu chỉnh trên dữ liệu thật sau 4 tuần (mục “Cơ sở đặt ngưỡng”); thiếu điểm nguy cơ (ML lỗi) thì vẫn tạo T-24h, T-2h (AC-15.1)."
-                  - "Đổi lịch: hủy các nhắc của lịch cũ, tạo nhắc cho lịch mới."
-                  - "Mỗi lần nhắc duy nhất theo (mã lịch hẹn, loại nhắc)."
+                  - "Create T-24h and T-2h reminders; skip a point that has already passed (a booking made close to the visit time only gets T-2h, or no reminder)."
+                  - "If the no-show risk is >= the threshold, add a T-6h reminder. The default threshold is 0.30, configurable, and calibrated on real data after 4 weeks (see \"Threshold rationale\"); if the risk score is missing (ML failure), still create T-24h and T-2h (AC-15.1)."
+                  - "Reschedule: cancel the reminders of the old appointment and create reminders for the new appointment."
+                  - "Each reminder is unique per (appointment ID, reminder type)."
             acceptance:
-              - ["AC-SR.1", "Given cùng sự kiện “đã đặt lịch” được giao 2 lần, Then chỉ có một bộ lần nhắc."]
+              - ["AC-SR.1", "Given the same \"booked\" event is delivered twice, Then there is only one set of reminders."]
 
           - key: send-reminder
-            name: Gửi nhắc lịch
+            name: Send the appointment reminder
             type: Other
             actors: [system]
             trace: [UC-07, AC-07.2, NFR-P8, NFR-A6]
-            objective: Gửi lần nhắc đến hạn qua kênh ưu tiên, có thử lại và kênh dự phòng.
-            trigger: Job mỗi phút lấy các lần nhắc đến hạn.
-            pre: ["Lần nhắc “scheduled”, đến giờ gửi."]
-            post: ["Lần nhắc “sent” hoặc “failed” (vào hàng lỗi và cảnh báo vận hành)."]
-            lanes: [Hệ thống, Nhà cung cấp gửi tin]
+            objective: Send a due reminder through the preferred channel, with retries and a fallback channel.
+            trigger: A job every minute picks up due reminders.
+            pre: ["The reminder is \"scheduled\" and its send time has arrived."]
+            post: ["The reminder is \"sent\" or \"failed\" (into the dead-letter queue with an operations alert)."]
+            lanes: [System, Messaging provider]
             steps:
-              - {n: 1, lane: 0, text: "Lấy lần nhắc đến hạn\n(khóa nguyên tử)"}
-              - {n: 2, lane: 0, kind: decision, text: "Lịch hẹn còn\n“booked”?", branches: [{to: 3, label: Có}, {to: 7, label: Không}]}
-              - {n: 3, lane: 1, text: "Gửi qua kênh ưu tiên"}
-              - {n: 4, lane: 0, kind: decision, text: "Thành công?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
-              - {n: 5, lane: 0, text: "Đánh dấu “sent”", end: true}
-              - {n: 6, lane: 0, text: "Thử lại / chuyển kênh dự phòng;\nhết lượt thì “failed”", end: true}
-              - {n: 7, lane: 0, text: "Hủy lần nhắc", end: true}
+              - {n: 1, lane: 0, text: "Fetch due reminders\n(atomic lock)"}
+              - {n: 2, lane: 0, kind: decision, text: "Is the appointment still\n\"booked\"?", branches: [{to: 3, label: "Yes"}, {to: 7, label: "No"}]}
+              - {n: 3, lane: 1, text: "Send through the preferred channel"}
+              - {n: 4, lane: 0, kind: decision, text: "Success?", branches: [{to: 5, label: "Yes"}, {to: 6, label: "No"}]}
+              - {n: 5, lane: 0, text: "Mark as \"sent\"", end: true}
+              - {n: 6, lane: 0, text: "Retry / switch to the fallback channel;\nwhen attempts run out, \"failed\"", end: true}
+              - {n: 7, lane: 0, text: "Cancel the reminder", end: true}
             rules:
               - step: "(1)"
-                title: Quy tắc nhận việc
-                lines: ["Nhiều bản sao worker chạy song song; mỗi lần nhắc chỉ được một worker nhận (khóa có thời hạn) để không gửi trùng."]
+                title: Claiming rules
+                lines: ["Multiple worker replicas run in parallel; each reminder is claimed by only one worker (lease lock) so it is not sent twice."]
               - step: "(3)"
                 key: reminder-content
-                title: Quy tắc nội dung tin
+                title: Message content rules
                 lines:
-                  - "Dùng [[ET:reminder]]; nội dung chỉ gồm giờ khám, tên bác sĩ, chuyên khoa, địa điểm, link quản lý lịch hẹn – không có chẩn đoán, lý do khám hay kết quả."
-                  - "Tôn trọng khung giờ yên tĩnh (trừ nhắc T-2h); ngôn ngữ theo tùy chọn của bệnh nhân."
+                  - "Use [[ET:reminder]]; the content contains only the visit time, doctor name, specialty, location and a link to manage the appointment - no diagnosis, visit reason or results."
+                  - "Respect quiet hours (except the T-2h reminder); the language follows the patient's preference."
               - step: "(6)"
-                title: Quy tắc thử lại
+                title: Retry rules
                 lines:
-                  - "Tối đa 5 lần với backoff 10 giây, 1, 5, 15 phút; lỗi vĩnh viễn (số không hợp lệ) không thử lại."
-                  - "Kênh chính lỗi hẳn thì chuyển kênh dự phòng (push → email → SMS); hết kênh → “failed”, vào hàng lỗi, cảnh báo vận hành ([[UC:manage-dead-letters]])."
-                  - "≥ 99% lần nhắc được gửi trong 5 phút sau giờ hẹn gửi (NFR-P8)."
+                  - "At most 5 attempts with a backoff of 10 seconds, 1, 5 and 15 minutes; permanent errors (invalid number) are not retried."
+                  - "If the primary channel fails completely, switch to the fallback channel (push -> email -> SMS); when channels run out -> \"failed\", into the dead-letter queue, operations alert ([[UC:manage-dead-letters]])."
+                  - ">= 99% of reminders are sent within 5 minutes of the scheduled send time (NFR-P8)."
             acceptance:
-              - ["AC-07.2", "Given nhà cung cấp lỗi tạm thời 2 lần rồi thành công, Then bệnh nhân nhận đúng 1 tin."]
-              - ["AC-SN.1", "Given tin nhắc gửi đi, Then không chứa lý do khám hay chẩn đoán."]
+              - ["AC-07.2", "Given the provider fails temporarily twice and then succeeds, Then the patient receives exactly 1 message."]
+              - ["AC-SN.1", "Given a reminder has been sent, Then it contains no visit reason or diagnosis."]
 
           - key: cancel-reminders
-            name: Hủy nhắc khi lịch hẹn bị hủy
+            name: Cancel reminders when an appointment is cancelled
             type: Other
             actors: [system]
-            trace: [UC-07, AC-07.1, "Sự kiện E2"]
-            objective: Bảo đảm không gửi nhắc cho lịch hẹn đã hủy.
-            trigger: Sự kiện “đã hủy lịch hẹn”.
+            trace: [UC-07, AC-07.1, "Event E2"]
+            objective: Ensure that no reminder is sent for a cancelled appointment.
+            trigger: The "appointment cancelled" event.
             pre: ["N/A"]
-            post: ["Mọi lần nhắc “scheduled” của lịch hẹn chuyển “cancelled”."]
-            lanes: [Hàng đợi sự kiện, Hệ thống]
+            post: ["Every \"scheduled\" reminder of the appointment becomes \"cancelled\"."]
+            lanes: [Event queue, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhận sự kiện “đã hủy”"}
-              - {n: 2, lane: 1, text: "Hủy các lần nhắc\n“scheduled”", end: true}
+              - {n: 1, lane: 0, text: "Receive the \"cancelled\" event"}
+              - {n: 2, lane: 1, text: "Cancel the \"scheduled\"\nreminders", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc hủy
-                lines: ["Chạy lại an toàn; nếu sự kiện hủy đến trước sự kiện đặt (sai thứ tự), lịch hẹn được đánh dấu đã hủy để bước lên lịch nhắc bỏ qua."]
+                title: Cancellation rules
+                lines: ["Safe to re-run; if the cancellation event arrives before the booking event (out of order), the appointment is marked cancelled so the reminder-scheduling step skips it."]
             acceptance:
-              - ["AC-07.1", "Given lịch hẹn bị hủy trước giờ nhắc, Then không gửi nhắc."]
+              - ["AC-07.1", "Given an appointment is cancelled before the reminder time, Then no reminder is sent."]
 
-      - name: Dự đoán và đánh dấu không đến khám
+      - name: No-show prediction and marking
         use_cases:
           - key: predict-noshow
-            name: Dự đoán nguy cơ không đến khám
+            name: Predict the no-show risk
             type: Other
             actors: [system]
-            trace: [UC-15, AC-15.1, AC-15.2, "Sự kiện E1, E10"]
-            objective: Tính xác suất không đến khám cho mỗi lịch hẹn mới.
-            trigger: Sự kiện “đã đặt lịch”.
-            pre: ["Bệnh nhân đã đồng ý xử lý dữ liệu bằng AI."]
-            post: ["Dự đoán được lưu kèm phiên bản mô hình; sự kiện “đã chấm điểm” được phát."]
-            lanes: [Hàng đợi sự kiện, Hệ thống]
+            trace: [UC-15, AC-15.1, AC-15.2, "Event E1, E10"]
+            objective: Calculate the no-show probability for each new appointment.
+            trigger: The "booked" event.
+            pre: ["The patient has consented to AI processing of their data."]
+            post: ["The prediction is stored with the model version; the \"scored\" event is emitted."]
+            lanes: [Event queue, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhận sự kiện “đã đặt lịch”"}
-              - {n: 2, lane: 1, kind: decision, text: "Bệnh nhân\nđồng ý AI?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
-              - {n: 3, lane: 1, text: "Tính đặc trưng, chạy mô hình,\nlưu kết quả + phiên bản"}
-              - {n: 4, lane: 1, text: "Phát sự kiện “đã chấm điểm”", end: true}
-              - {n: 5, lane: 1, text: "Bỏ qua, không lưu dự đoán", end: true}
+              - {n: 1, lane: 0, text: "Receive the \"booked\" event"}
+              - {n: 2, lane: 1, kind: decision, text: "Does the patient\nconsent to AI?", branches: [{to: 3, label: "Yes"}, {to: 5, label: "No"}]}
+              - {n: 3, lane: 1, text: "Compute features, run the model,\nstore the result + version"}
+              - {n: 4, lane: 1, text: "Emit the \"scored\" event", end: true}
+              - {n: 5, lane: 1, text: "Skip, do not store a prediction", end: true}
             rules:
               - step: "(3)"
-                title: Quy tắc dự đoán
+                title: Prediction rules
                 lines:
-                  - "Đặc trưng chỉ gồm dữ liệu không định danh: nhóm tuổi, chuyên khoa, khoảng cách ngày đặt–ngày khám, giờ khám, số lần không đến/đặt trước đó; không dùng họ tên, địa chỉ, chẩn đoán."
-                  - "Lưu [Phiên bản mô hình] với mỗi dự đoán để truy vết (AC-15.2); lỗi hoặc quá 2 giây thì bỏ qua, không chặn nhắc lịch (AC-15.1)."
-                  - "Tập huấn luyện dùng dữ liệu đã ẩn danh và chỉ của bệnh nhân còn đồng ý."
+                  - "Features contain only non-identifying data: age band, specialty, booking-to-visit interval in days, visit hour, number of previous no-shows/bookings; no full name, address or diagnosis."
+                  - "Store [Model version] with each prediction for traceability (AC-15.2); on failure or more than 2 seconds, skip without blocking reminders (AC-15.1)."
+                  - "The training set uses anonymized data and only from patients who still consent."
             acceptance:
-              - ["AC-15.1", "Given service ML lỗi, Then lịch nhắc T-24h và T-2h vẫn được tạo."]
-              - ["AC-15.2", "Given một dự đoán, Then có phiên bản mô hình đi kèm."]
+              - ["AC-15.1", "Given the ML service fails, Then the T-24h and T-2h reminders are still created."]
+              - ["AC-15.2", "Given a prediction, Then it is accompanied by a model version."]
 
           - key: mark-noshow
-            name: Đánh dấu không đến khám
+            name: Mark a no-show
             type: Other
             actors: [system]
-            trace: [UC-15, BP-2, "Sự kiện E5"]
-            objective: Chuyển lịch hẹn quá giờ chưa check-in sang “noshow”.
-            trigger: Job chạy mỗi 10 phút.
-            pre: ["Lịch hẹn “booked”, quá giờ khám 30 phút."]
-            post: ["Lịch hẹn “noshow”; sự kiện đổi trạng thái được phát (dùng cho ML và báo cáo)."]
-            lanes: [Job định kỳ, Hệ thống]
+            trace: [UC-15, BP-2, "Event E5"]
+            objective: Move appointments that are past their time without check-in to \"noshow\".
+            trigger: A job every 10 minutes.
+            pre: ["The appointment is \"booked\" and the visit time is more than 30 minutes past."]
+            post: ["The appointment is \"noshow\"; the status-change event is emitted (used for ML and reporting)."]
+            lanes: [Scheduled job, System]
             steps:
-              - {n: 1, lane: 0, text: "Chạy theo lịch"}
-              - {n: 2, lane: 1, text: "Chuyển lịch hẹn quá hạn\nsang “noshow”, phát sự kiện", end: true}
+              - {n: 1, lane: 0, text: "Run on schedule"}
+              - {n: 2, lane: 1, text: "Move overdue appointments\nto \"noshow\", emit the event", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc đánh dấu
-                lines: ["Chỉ lịch hẹn “booked” có [Bắt đầu] + 30 phút < <Bây giờ>; chạy lại an toàn; Điều dưỡng sửa được thành “arrived” trong ngày nếu bệnh nhân đến muộn (có audit)."]
+                title: Marking rules
+                lines: ["Only \"booked\" appointments with [Start] + 30 minutes < <Now>; safe to re-run; a Nurse can change the status to \"arrived\" on the same day if the patient arrives late (audited)."]
             acceptance:
-              - ["AC-NS.1", "Given lịch hẹn 08:00 chưa check-in, When job chạy lúc 08:40, Then lịch hẹn “noshow”."]
+              - ["AC-NS.1", "Given an 08:00 appointment has not checked in, When the job runs at 08:40, Then the appointment is \"noshow\"."]
 
-      - name: Xử lý tài liệu, cảnh báo và lưu trữ
+      - name: Document processing, alerts and retention
         use_cases:
           - key: extract-document
-            name: Trích xuất dữ liệu từ tài liệu
+            name: Extract data from a document
             type: Other
             actors: [system]
-            trace: [UC-13, AC-13.1, AC-13.2, BR-10, NFR-P7, "Sự kiện E8"]
-            objective: OCR, phân loại tài liệu và trích trường để người dùng duyệt.
-            trigger: Sự kiện “đã upload tài liệu”.
-            pre: ["Tài liệu “available”; bệnh nhân đã đồng ý xử lý dữ liệu bằng AI."]
-            post: ["Kết quả trích xuất “needs-review”, hoặc “failed” sau 5 lần thử (không ảnh hưởng tài liệu)."]
-            lanes: [Hàng đợi sự kiện, Hệ thống, Mô hình ngôn ngữ]
+            trace: [UC-13, AC-13.1, AC-13.2, BR-10, NFR-P7, "Event E8"]
+            objective: OCR the document, classify it and extract fields for user review.
+            trigger: The "document uploaded" event.
+            pre: ["The document is \"available\"; the patient has consented to AI processing of their data."]
+            post: ["The extraction result is \"needs-review\", or \"failed\" after 5 attempts (without affecting the document)."]
+            lanes: [Event queue, System, Language model]
             steps:
-              - {n: 1, lane: 0, text: "Nhận sự kiện"}
-              - {n: 2, lane: 1, text: "Lấy link đọc 60 giây,\nOCR trong cụm"}
-              - {n: 3, lane: 1, text: "Che định danh trong\nvăn bản OCR"}
-              - {n: 4, lane: 2, text: "Phân loại, trích trường\ntheo schema"}
-              - {n: 5, lane: 1, text: "Kiểm tra giá trị/đơn vị,\ngắn độ tin cậy, “needs-review”", end: true}
+              - {n: 1, lane: 0, text: "Receive the event"}
+              - {n: 2, lane: 1, text: "Obtain a 60-second read link,\nrun OCR in the cluster"}
+              - {n: 3, lane: 1, text: "Mask identifiers in\nthe OCR text"}
+              - {n: 4, lane: 2, text: "Classify and extract fields\naccording to the schema"}
+              - {n: 5, lane: 1, text: "Check values/units,\nconfidence score, \"needs-review\"", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc truy cập tệp
-                lines: ["Service AI xin link đọc 60 giây qua endpoint nội bộ, bằng danh tính workload; OCR chạy trong cụm, văn bản OCR lưu vào kho nội bộ."]
+                title: File access rules
+                lines: ["The AI service requests a 60-second read link through an internal endpoint, using its workload identity; OCR runs in the cluster and the OCR text is stored in the internal store."]
               - step: "(3)"
-                title: Quy tắc che định danh
-                lines: ["Áp dụng [[CBR:ai-safety]] trước khi gửi văn bản ra mô hình bên ngoài."]
+                title: Identifier masking rules
+                lines: ["Apply [[CBR:ai-safety]] before sending text to an external model."]
               - step: "(5)"
-                title: Quy tắc kết quả
+                title: Result rules
                 lines:
-                  - "Không ghi gì vào hồ sơ; chỉ tạo mục chờ duyệt cho [[UC:review-extraction]] (AC-13.1). Hoàn tất ≤ 2 phút sau upload (p95) (NFR-P7)."
-                  - "Lỗi: thử lại 5 lần; hết lượt → “failed”, vào hàng lỗi, không chặn upload hay xem tài liệu (AC-13.2)."
+                  - "Nothing is written to the record; only a review item is created for [[UC:review-extraction]] (AC-13.1). Complete <= 2 minutes after upload (p95) (NFR-P7)."
+                  - "On failure: retry 5 times; when attempts run out -> \"failed\", into the dead-letter queue, without blocking upload or document viewing (AC-13.2)."
             acceptance:
-              - ["AC-13.2", "Given OCR lỗi liên tục, Then tài liệu vẫn “available” và tải được; mục trích xuất “failed”."]
+              - ["AC-13.2", "Given OCR keeps failing, Then the document remains \"available\" and downloadable; the extraction item is \"failed\"."]
 
           - key: break-glass-alert
-            name: Cảnh báo truy cập khẩn cấp cho DPO
+            name: Emergency access alert to the DPO
             type: Other
             actors: [system]
             trace: [UC-10, AC-10.1, BR-07]
-            objective: Báo DPO mỗi lần có truy cập khẩn cấp để rà soát.
-            trigger: Bản ghi audit có [Mục đích] = “break-glass”.
+            objective: Notify the DPO of every emergency access for review.
+            trigger: An audit entry whose [Purpose] = \"break-glass\".
             pre: ["N/A"]
-            post: ["DPO nhận cảnh báo ≤ 5 phút; mục cần rà soát xuất hiện trên [[SCR:audit]]."]
-            lanes: [Hệ thống, Cán bộ bảo vệ dữ liệu]
+            post: ["The DPO receives the alert within <= 5 minutes; the review item appears on [[SCR:audit]]."]
+            lanes: [System, Data Protection Officer]
             steps:
-              - {n: 1, lane: 0, text: "Phát hiện bản ghi\n“break-glass”"}
-              - {n: 2, lane: 0, text: "Tạo mục rà soát,\ngửi cảnh báo"}
-              - {n: 3, lane: 1, text: "Nhận cảnh báo", end: true}
+              - {n: 1, lane: 0, text: "Detect the \"break-glass\"\naudit entry"}
+              - {n: 2, lane: 0, text: "Create the review item,\nsend the alert"}
+              - {n: 3, lane: 1, text: "Receive the alert", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc cảnh báo
+                title: Alert rules
                 lines:
-                  - "Dùng [[ET:break-glass-alert]]: tên bác sĩ, khoa, thời điểm, mã bệnh nhân (không tên bệnh nhân), lý do; ≤ 5 phút (AC-10.1)."
-                  - "Mục rà soát chưa xử lý sau 72 giờ được nhắc lại cho DPO."
+                  - "Use [[ET:break-glass-alert]]: doctor name, department, time, patient ID (not the patient's name), reason; <= 5 minutes (AC-10.1)."
+                  - "A review item still unprocessed after 72 hours is re-notified to the DPO."
             acceptance:
-              - ["AC-10.1", "Given truy cập khẩn cấp lúc T, Then DPO nhận cảnh báo trước T + 5 phút."]
+              - ["AC-10.1", "Given emergency access at time T, Then the DPO receives the alert before T + 5 minutes."]
 
           - key: purge-expired
-            name: Xóa dữ liệu hết thời hạn lưu trữ
+            name: Purge data past its retention period
             type: Other
             actors: [system]
-            trace: [BR-11, NFR-SEC, "Luật BVDLCN 91/2025/QH15 – lưu trữ có thời hạn"]
-            objective: Xóa tự động dữ liệu tạm có thời hạn lưu ngắn theo chính sách lưu trữ.
-            trigger: Job hằng ngày lúc 02:00.
+            trace: [BR-11, NFR-SEC, "Personal Data Protection Law 91/2025/QH15 - time-limited retention"]
+            objective: Automatically delete temporary data with a short retention period according to the retention policy.
+            trigger: A daily job at 02:00.
             pre: ["N/A"]
-            post: ["Dữ liệu quá hạn bị xóa; số lượng xóa được ghi nhật ký vận hành."]
-            lanes: [Job định kỳ, Hệ thống]
+            post: ["Expired data is deleted; the number of deletions is recorded in the operations log."]
+            lanes: [Scheduled job, System]
             steps:
-              - {n: 1, lane: 0, text: "Chạy theo lịch"}
-              - {n: 2, lane: 1, text: "Xóa dữ liệu quá hạn theo\nbảng lưu trữ, ghi số lượng", end: true}
+              - {n: 1, lane: 0, text: "Run on schedule"}
+              - {n: 2, lane: 1, text: "Delete expired data per the\nretention table, record the count", end: true}
             rules:
               - step: "(2)"
                 key: retention
-                title: Quy tắc thời hạn lưu trữ
+                title: Retention rules
                 lines:
-                  - "Hội thoại trợ lý: 30 ngày. Hội thoại chatbot và hành động chờ: 7 ngày. Tệp xuất audit và gói dữ liệu bệnh nhân: 24 giờ. Lần nhắc đã gửi: 90 ngày. Bản ghi chống trùng (inbox, idempotency): 7 ngày."
-                  - "Hồ sơ bệnh án, lần khám, tài liệu lâm sàng: job này không bao giờ xóa. Thời hạn lưu theo từng loại hồ sơ cấu hình được; mặc định tối thiểu 10 năm, loại hồ sơ có thời hạn dài hơn theo pháp luật về lưu trữ (xem mục “Cơ sở đặt ngưỡng”, cần xác minh với văn bản chính thức trước khi dùng dữ liệu thật). Audit: 90 ngày tra cứu nhanh + lưu trữ bất biến tối thiểu 10 năm cùng thời hạn hồ sơ mà nó chứng minh truy cập (thay cho 2 năm của bản v0.9); bản gốc WORM theo chính sách khóa."
+                  - "Assistant conversations: 30 days. Chatbot conversations and pending actions: 7 days. Audit exports and patient data packages: 24 hours. Sent reminders: 90 days. Deduplication records (inbox, idempotency): 7 days."
+                  - "Medical records, encounters and clinical documents: this job never deletes them. Retention is configurable per record type; the default minimum is 10 years, and record types with a longer statutory retention follow records-management law (see \"Threshold rationale\"; verify against official texts before using real data). Audit: 90 days for fast search + immutable archive for at least 10 years, matching the retention of the records whose access it proves (replacing the 2-year period in v0.9); the WORM original follows the lock policy."
             acceptance:
-              - ["AC-PG.1", "Given hội thoại tạo 31 ngày trước, When job chạy, Then hội thoại bị xóa; Given lần khám 31 ngày trước, Then không bị xóa."]
+              - ["AC-PG.1", "Given a conversation created 31 days ago, When the job runs, Then the conversation is deleted; Given an encounter from 31 days ago, Then it is not deleted."]

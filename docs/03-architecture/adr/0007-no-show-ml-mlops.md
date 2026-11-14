@@ -1,27 +1,27 @@
-# ADR-0007: Mô hình dự đoán no-show (MLOps)
+# ADR-0007: No-show prediction model (MLOps)
 
-## Trạng thái
-Accepted (2026-10-26) — đã được Solution Architect/PM duyệt cùng cổng G3.
+## Status
+Accepted (2026-10-26) — approved by the Solution Architect/PM together with gate G3.
 
-## Bối cảnh
-Muốn có một mô hình ML tự huấn luyện để thể hiện vòng đời MLOps, gắn với nghiệp vụ thật.
+## Context
+We want a self-trained ML model to demonstrate the MLOps lifecycle, tied to real business.
 
-## Quyết định
-Dự đoán **xác suất bệnh nhân không đến khám** cho mỗi Appointment. `ml-service` nghe event
-`appointment-booked`, chấm điểm và **phát event `no-show-scored`**; `notification-service` nghe event này để gửi thêm nhắc
-nhở cho lịch hẹn rủi ro cao. Không có lời gọi đồng bộ giữa hai service nên ML lỗi không ảnh hưởng nhắc lịch (AC-15.1).
+## Decision
+Predict the **probability that a patient will not attend** for each Appointment. `ml-service` listens to the
+`appointment-booked` event, scores it, and **emits the `no-show-scored` event**; `notification-service` listens to this event to send additional
+reminders for high-risk appointments. There is no synchronous call between the two services, so an ML failure does not affect reminders (AC-15.1).
 
-- Dữ liệu: **sinh tổng hợp** (synthetic) có quy luật cài sẵn (lead time, lịch sử vắng, giờ khám...).
-- Mô hình: Logistic Regression làm baseline → LightGBM (Python, giữ theo ADR-0015).
-- Vòng đời: pipeline huấn luyện (CI), theo dõi thí nghiệm + model registry bằng **MLflow**,
-  gate chất lượng (AUC, nhóm con, calibration, độ trễ), model card, shadow + canary tự động bằng Argo Rollouts,
-  theo dõi drift (PSI) và AUC thực tế, huấn luyện lại tự động khi drift. Chi tiết: `detailed-design/16-mlops.md`.
+- Data: **synthetic** with built-in patterns (lead time, past no-shows, appointment hour...).
+- Model: Logistic Regression baseline → LightGBM (Python, retained per ADR-0015).
+- Lifecycle: training pipeline (CI), experiment tracking + model registry with **MLflow**,
+  quality gate (AUC, subgroup, calibration, latency), model card, shadow + canary automated with Argo Rollouts,
+  drift monitoring (PSI) and actual AUC, automatic retraining on drift. Details: `detailed-design/16-mlops.md`.
 
-## Phương án đã cân nhắc
-- Phân loại mức độ khẩn cấp triệu chứng (triage): rủi ro y khoa cao, khó tạo dữ liệu giả hợp lý.
-- Dự báo tải phòng khám (time-series): hay nhưng ít gắn với luồng end-to-end.
+## Alternatives considered
+- Symptom urgency classification (triage): high medical risk, difficult to generate realistic synthetic data.
+- Clinic load forecasting (time series): nice but less tied to the end-to-end flow.
 
-## Hệ quả
-Kết quả mô hình chỉ có ý nghĩa trên dữ liệu giả; báo cáo phải nêu rõ giới hạn này.
-- Thêm ~60 giờ công (dev + SA) so với bản chỉ train/đăng ký. Đổi lại có vòng đời MLOps khép kín: dữ liệu có phiên bản → train → cổng → canary → giám sát → huấn luyện lại.
-- Huấn luyện lại tự động có rào chắn: cooldown 7 ngày, tối đa 2 lần/14 ngày, mô hình không đạt cổng thì production giữ nguyên.
+## Consequences
+Model results are only meaningful on synthetic data; the report must state this limitation.
+- Adds ~60 person-hours (dev + SA) compared with a train/register-only version. In return, a closed MLOps lifecycle: versioned data → train → gate → canary → monitor → retrain.
+- Automatic retraining has guardrails: 7-day cooldown, at most 2 times/14 days, if the model fails the gate production stays unchanged.

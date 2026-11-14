@@ -89,8 +89,8 @@ def test_audit_records_on_behalf_of_when_acting_for_a_linked_profile() -> None:
         relationship="guardian",
         purpose_of_use="PATRQT",
     )
-    assert rec["actor"]["subject"] == "kc-parent"  # tài khoản thực hiện
-    assert rec["onBehalfOf"] == "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02"  # hồ sơ được truy cập
+    assert rec["actor"]["subject"] == "kc-parent"  # the account that acted
+    assert rec["onBehalfOf"] == "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02"  # the record accessed
     assert rec["relationship"] == "guardian"
 
 
@@ -105,7 +105,7 @@ def test_audit_without_delegation_has_no_on_behalf_of() -> None:
 @pytest.mark.parametrize(
     ("on_behalf_of", "relationship"),
     [
-        ("Patient/ok", "parent"),  # quan hệ lạ
+        ("Patient/ok", "parent"),  # unknown relationship
         ("not-a-reference", "guardian"),
         ("Patient/has space", "guardian"),
     ],

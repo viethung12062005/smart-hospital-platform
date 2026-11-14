@@ -1,4 +1,4 @@
-"""PY-07/PY-08: function-calling (tool use) qua Router/Provider — cần cho booking-agent (US-062)."""
+"""PY-07/PY-08: function calling (tool use) via Router/Provider — needed for booking-agent (US-062)."""
 
 import json
 
@@ -17,7 +17,7 @@ def test_fake_provider_tool_call_round_trip() -> None:
     router = Router([ds], TASKS)
     res = router.complete("booking-agent", [ChatMessage("user", "khám tim mạch")])
     assert res.answered and res.text == "" and res.tool_calls == (call,)
-    assert ds.received_tools[0] is None  # chưa truyền tools -> vẫn hoạt động (tham số tùy chọn)
+    assert ds.received_tools[0] is None  # no tools passed -> still works (optional parameter)
 
 
 def test_tools_definition_is_forwarded_to_provider() -> None:
@@ -29,7 +29,7 @@ def test_tools_definition_is_forwarded_to_provider() -> None:
 
 
 def test_redaction_preserves_tool_call_id_and_tool_calls_fields() -> None:
-    """Khi phải che PII (provider ngoài Azure), ghép lại ChatMessage không được làm rớt tool_call_id/tool_calls."""
+    """When PII must be redacted (non-Azure provider), rebuilding ChatMessage must not drop tool_call_id/tool_calls."""
     seen: list[ChatMessage] = []
 
     from collections.abc import Sequence
@@ -47,9 +47,9 @@ def test_redaction_preserves_tool_call_id_and_tool_calls_fields() -> None:
         ChatMessage("tool", json.dumps({"slots": []}), tool_call_id="call_1"),
     ]
     router.complete("booking-agent", history)
-    assert "0912345678" not in seen[0].content  # vẫn che PII trong nội dung tự nhiên
-    assert seen[1].tool_calls == (call,)  # không rớt tool_calls khi ghép lại sau redact
-    assert seen[2].tool_call_id == "call_1"  # không rớt tool_call_id
+    assert "0912345678" not in seen[0].content  # PII is still redacted in natural-language content
+    assert seen[1].tool_calls == (call,)  # tool_calls are not dropped when rebuilding after redaction
+    assert seen[2].tool_call_id == "call_1"  # tool_call_id is not dropped
 
 
 def test_openai_adapter_parses_tool_calls_and_allows_null_content() -> None:
@@ -100,7 +100,7 @@ def test_openai_adapter_rejects_both_content_and_tool_calls_missing() -> None:
 
 
 def test_redaction_does_not_touch_tool_result_content() -> None:
-    """Nội dung role='tool' là JSON của backend (id slot/lịch hẹn...), không phải văn bản người dùng: không che."""
+    """role='tool' content is backend JSON (slot/appointment ids...), not user text: do not redact."""
     from collections.abc import Sequence
 
     seen: list[ChatMessage] = []
@@ -118,4 +118,4 @@ def test_redaction_does_not_touch_tool_result_content() -> None:
         ChatMessage("tool", json.dumps({"appointments": [{"appointmentId": appointment_id}]}), tool_call_id="c1"),
     ]
     router.complete("booking-agent", history)
-    assert appointment_id in seen[2].content  # id không bị thay bằng [ID_1]
+    assert appointment_id in seen[2].content  # the id is not replaced by [ID_1]

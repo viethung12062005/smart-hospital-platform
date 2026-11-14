@@ -1,11 +1,11 @@
-"""Inbox, outbox và relay trên MongoDB cho service Python (PY-03; giống org.shp.data.mongo).
+"""Inbox, outbox and relay on MongoDB for Python services (PY-03; same as org.shp.data.mongo).
 
-- `handle_once`: một transaction gồm dấu inbox + handler (dữ liệu và outbox của handler dùng cùng session).
-  Handler lỗi → rollback toàn bộ, kể cả dấu inbox. Event đã xử lý → bỏ qua.
-- `add_to_outbox`: ghi event trong CÙNG transaction với thay đổi dữ liệu.
-- `relay_once`: giành từng event bằng find_one_and_update (lease 30 giây) nên nhiều replica không phát trùng; bus lỗi
-  thì ghi `attempts`/`lastError`, nhả khóa và dừng lượt (giữ thứ tự).
-Cần MongoDB replica set (local: `make -C dev up` đã bật; cloud: Cosmos DB vCore).
+- `handle_once`: one transaction covers the inbox marker + handler (the handler's data and outbox use the same session).
+  Handler failure → roll back everything, including the inbox marker. Already-processed event → skip.
+- `add_to_outbox`: write the event in the SAME transaction as the data change.
+- `relay_once`: claim each event with find_one_and_update (30-second lease) so multiple replicas do not publish
+  duplicates; on bus failure record `attempts`/`lastError`, release the lock and stop the round (preserving order).
+Requires a MongoDB replica set (local: already enabled by `make -C dev up`; cloud: Cosmos DB vCore).
 """
 
 import uuid
@@ -36,12 +36,13 @@ def now() -> datetime:
 
 
 def _ensure_index(collection: Collection[Doc], keys: list[tuple[str, int]], name: str, **options: Any) -> None:
-    """Tạo index dưới tên cố định, kể cả khi cùng khóa đã tồn tại dưới tên khác.
+    """Create indexes under fixed names, even when the same key already exists under another name.
 
-    MongoDB báo lỗi 85 `IndexOptionsConflict` khi cùng một khóa index đã có dưới tên khác, mà cùng khóa này do ba
-    nơi khai báo: `MongoMessaging` (Java), `contracts/db/mongo-notification-ml.js` (quickstart chạy trước service) và
-    ở đây. DB dev cũ còn index do pymongo tự đặt tên (`processedAt_1`) từ bản trước khi đặt tên — gặp cả hai chiều
-    đều phải khởi động được, nên tôn trọng index sẵn có khi khóa và tùy chọn trùng khớp.
+    MongoDB reports error 85 `IndexOptionsConflict` when the same index key already exists under another name, and
+    this key is declared in three places: `MongoMessaging` (Java), `contracts/db/mongo-notification-ml.js` (the
+    quickstart runs before the service) and here. Old dev DBs still have indexes named by pymongo itself
+    (`processedAt_1`) from before explicit naming — both directions must start, so respect an existing index when
+    the key and options match.
     """
     for existing, info in collection.index_information().items():
         if list(info["key"]) == keys and existing != name and all(info.get(k) == v for k, v in options.items()):
@@ -50,7 +51,7 @@ def _ensure_index(collection: Collection[Doc], keys: list[tuple[str, int]], name
 
 
 def ensure_messaging_indexes(db: Database[Doc]) -> None:
-    """Idempotent: TTL inbox 14 ngày, outbox chờ phát theo thứ tự (tên/khóa trùng Java và contracts/db)."""
+    """Idempotent: 14-day inbox TTL, outbox waiting to publish in order (names/keys match Java and contracts/db)."""
     _ensure_index(
         db[INBOX], [("processedAt", ASCENDING)], "ttl_inbox_14d", expireAfterSeconds=int(INBOX_TTL.total_seconds())
     )
@@ -71,7 +72,7 @@ def handle_once(
     event: dict[str, Any],
     handler: Callable[[ClientSession], None],
 ) -> bool:
-    """Trả False nếu event đã được xử lý trước đó."""
+    """Return False if the event was already processed."""
     key = f"{consumer}|{event['id']}"
 
     def work(session: ClientSession) -> bool:
@@ -91,7 +92,7 @@ def handle_once(
 
 def add_to_outbox(db: Database[Doc], session: ClientSession, event: dict[str, Any]) -> None:
     if not session.in_transaction:
-        raise RuntimeError("add_to_outbox phải chạy trong transaction cùng thay đổi dữ liệu")
+        raise RuntimeError("add_to_outbox must run in a transaction with the data change")
     db[OUTBOX].insert_one(
         {
             "_id": event["id"],
@@ -109,7 +110,7 @@ def add_to_outbox(db: Database[Doc], session: ClientSession, event: dict[str, An
 class OutboxPublishError(RuntimeError):
     def __init__(self, sent: int) -> None:
         self.sent = sent
-        super().__init__(f"bus lỗi sau {sent} event")
+        super().__init__(f"bus failed after {sent} events")
 
 
 def relay_once(db: Database[Doc], publisher: Publisher, batch_size: int = 100, instance: str | None = None) -> int:

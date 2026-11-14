@@ -1,9 +1,9 @@
-"""Xác thực JWT từ Keycloak cho FastAPI (PY-01). Quy tắc giống org.shp.security.ShpJwt.
+"""Keycloak JWT authentication for FastAPI (PY-01). Rules match org.shp.security.ShpJwt.
 
-- Kiểm chữ ký (JWKS), hạn token (lệch đồng hồ cho phép), issuer, audience.
-- Claim `roles`: chỉ giữ role hợp lệ, không phân biệt hoa thường.
-- Nhân viên (doctor, nurse, admin, dpo) phải có `amr` chứa "mfa" (NFR-SEC1); tắt được ở local.
-Token không bao giờ được ghi log.
+- Verify the signature (JWKS), token expiry (allowed clock skew), issuer, audience.
+- `roles` claim: keep only valid roles, case-insensitive.
+- Staff (doctor, nurse, admin, dpo) must have `amr` containing "mfa" (NFR-SEC1); can be disabled locally.
+Tokens are never logged.
 """
 
 import os
@@ -23,7 +23,7 @@ ALGORITHMS = ["RS256", "PS256", "ES256"]
 
 @dataclass(frozen=True)
 class AuthSettings:
-    """authority = issuer của Keycloak (cloud: https://<tên miền>/idp/realms/shp); đọc env như bản Java."""
+    """authority = Keycloak issuer (cloud: https://<domain>/idp/realms/shp); reads env like the Java version."""
 
     authority: str
     audience: str
@@ -50,7 +50,7 @@ class AuthSettings:
 class Principal:
     subject: str
     roles: frozenset[str]
-    token: str = field(repr=False)  # cần cho token exchange; repr=False để không lọt vào log
+    token: str = field(repr=False)  # needed for token exchange; repr=False so it never leaks into logs
     claims: dict[str, Any] = field(repr=False, default_factory=dict)
 
     @property
@@ -61,7 +61,7 @@ class Principal:
         return bool(self.roles & frozenset(roles))
 
 
-KeyResolver = Callable[[str], Any]  # token → khóa công khai để kiểm chữ ký
+KeyResolver = Callable[[str], Any]  # token -> public key for signature verification
 
 
 def jwks_key_resolver(settings: AuthSettings) -> KeyResolver:
@@ -81,7 +81,8 @@ def roles_of(claims: dict[str, Any]) -> frozenset[str]:
 
 
 def verify_token(token: str, settings: AuthSettings, key_resolver: KeyResolver) -> Principal:
-    """Trả Principal hoặc ném ShpError("unauthenticated"). Không phân biệt lý do với client (chỉ một mã lỗi)."""
+    """Return a Principal or raise ShpError("unauthenticated"). Do not distinguish the reason to the client (one
+    error code only)."""
     if not settings.authority or not settings.audience:
         raise ShpError("unauthenticated")
     try:
@@ -126,7 +127,7 @@ class Authenticator:
     def require_roles(self, *roles: str) -> Callable[..., Principal]:
         unknown = set(roles) - ALL_ROLES
         if unknown:
-            raise ValueError(f"role không hợp lệ: {sorted(unknown)}")
+            raise ValueError(f"invalid role: {sorted(unknown)}")
 
         def dependency(principal: Annotated[Principal, Depends(self.principal)]) -> Principal:
             if not principal.has_any(roles):
@@ -136,8 +137,8 @@ class Authenticator:
         return dependency
 
     def require_service(self, service: str, *callers: str) -> Callable[..., Principal]:
-        """Endpoint `/internal/*` (15 §7): token dịch vụ (client credentials) có role `internal.<service>` và `azp`
-        nằm trong danh sách service được gọi. Gateway luôn chặn `/internal/**` từ bên ngoài."""
+        """`/internal/*` endpoint (15 §7): a service token (client credentials) with role `internal.<service>` and `azp`
+        in the list of allowed callers. The gateway always blocks `/internal/**` from outside."""
         allowed = frozenset(callers)
 
         def dependency(principal: Annotated[Principal, Depends(self.principal)]) -> Principal:

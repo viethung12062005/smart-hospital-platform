@@ -1,10 +1,10 @@
-"""Hạ tầng thật cho test tích hợp (MongoDB replica set, RabbitMQ) bằng testcontainers. Chỉ dùng trong test.
+"""Real infrastructure for integration tests (MongoDB replica set, RabbitMQ) via testcontainers. Test use only.
 
-Có biến SHP_TEST_MONGO_URI / SHP_TEST_RABBITMQ_URL thì dùng luôn (ví dụ cụm local `make -C dev up`);
-không có Docker thì test bị bỏ qua (pytest.skip), không đỏ.
+If SHP_TEST_MONGO_URI / SHP_TEST_RABBITMQ_URL is set, use it directly (for example the local cluster from
+`make -C dev up`); without Docker the tests are skipped (pytest.skip), not failed.
 
-SHP_TEST_MONGO_IMAGE ghi đè image MongoDB dùng cho container test (mặc định `mongo:8`, giống
-quy ước bên Java — xem libs/java/shp-data-mongo/.../MongoTestBase.java).
+SHP_TEST_MONGO_IMAGE overrides the MongoDB image used for the test container (default `mongo:8`, matching
+the Java convention — see libs/java/shp-data-mongo/.../MongoTestBase.java).
 """
 
 import os
@@ -25,12 +25,12 @@ def docker_available() -> bool:
 
 
 def _require_running(c: Any) -> None:
-    """Container đã thoát thì báo lỗi kèm log của nó (thay vì lỗi exec khó hiểu)."""
+    """If the container has exited, report an error with its logs (instead of a cryptic exec error)."""
     w = c.get_wrapped_container()
     w.reload()
     if w.status != "running":
         logs = w.logs(tail=40).decode(errors="replace")
-        raise RuntimeError(f"container {w.image.tags} dừng ({w.status}):\n{logs}")
+        raise RuntimeError(f"container {w.image.tags} stopped ({w.status}):\n{logs}")
 
 
 def _skip(reason: str) -> None:
@@ -45,15 +45,15 @@ def mongo_replica_set() -> Iterator[str]:
         yield os.environ["SHP_TEST_MONGO_URI"]
         return
     if not docker_available():
-        _skip("cần Docker hoặc SHP_TEST_MONGO_URI")
+        _skip("Docker or SHP_TEST_MONGO_URI is required")
     from pymongo import MongoClient
     from testcontainers.core.container import DockerContainer
 
     mongo_image = os.environ.get("SHP_TEST_MONGO_IMAGE", "mirror.gcr.io/library/mongo:8")
     c = (
         DockerContainer(mongo_image)
-        # Kernel 6.19-7.0.13: tcmalloc vi phạm ABI rseq, mongod 8 tự chặn khởi động (SERVER-121912);
-        # cách né cộng đồng xác nhận: https://github.com/kiwiproject/kiwi/issues/1480. Giống MongoTestBase.java.
+        # Kernel 6.19-7.0.13: tcmalloc violates the rseq ABI and mongod 8 blocks its own startup (SERVER-121912);
+        # community-confirmed workaround: https://github.com/kiwiproject/kiwi/issues/1480. Same as MongoTestBase.java.
         .with_env("GLIBC_TUNABLES", "glibc.pthread.rseq=1")
         .with_command(["mongod", "--replSet", "rs0", "--bind_ip_all"])
         .with_exposed_ports(27017)
@@ -72,7 +72,7 @@ def mongo_replica_set() -> Iterator[str]:
                 hello: dict[str, Any] = MongoClient(uri, serverSelectionTimeoutMS=1000).admin.command("hello")
                 if hello.get("isWritablePrimary"):
                     break
-            except Exception:  # noqa: BLE001, S110 - đang chờ replica set sẵn sàng
+            except Exception:  # noqa: BLE001, S110 - waiting for the replica set to be ready
                 pass
             time.sleep(1)
         yield uri
@@ -86,7 +86,7 @@ def rabbitmq() -> Iterator[str]:
         yield os.environ["SHP_TEST_RABBITMQ_URL"]
         return
     if not docker_available():
-        _skip("cần Docker hoặc SHP_TEST_RABBITMQ_URL")
+        _skip("Docker or SHP_TEST_RABBITMQ_URL is required")
     import pika
     from testcontainers.core.container import DockerContainer
 
