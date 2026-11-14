@@ -1,0 +1,17 @@
+{
+  "concepts": {
+    "cardiology": "Tim mạch",
+    "dermatology": "Da liễu",
+    "endocrinology": "Nội tiết",
+    "ent": "Tai mũi họng",
+    "gastroenterology": "Tiêu hóa",
+    "general-surgery": "Ngoại tổng quát",
+    "internal-medicine": "Nội tổng quát",
+    "neurology": "Thần kinh",
+    "obstetrics-gynecology": "Sản phụ khoa",
+    "ophthalmology": "Mắt",
+    "orthopedics": "Chấn thương chỉnh hình",
+    "pediatrics": "Nhi"
+  },
+  "url": "https://shp.example.org/fhir/CodeSystem/specialty"
+}

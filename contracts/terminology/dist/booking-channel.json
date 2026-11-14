@@ -1,0 +1,8 @@
+{
+  "concepts": {
+    "chatbot": "Chatbot",
+    "staff": "Nhân viên đặt",
+    "web": "Web"
+  },
+  "url": "https://shp.example.org/fhir/CodeSystem/booking-channel"
+}
