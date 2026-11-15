@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -24,11 +25,21 @@ public final class AuthzMatrix {
 
   private final List<AuthzRule> rules;
   private final Map<String, Boolean> clinicalByResource;
+  private final Map<String, List<String>> actionsByResource;
+  private final List<String> roles;
   private final Map<String, List<AuthzRule>> index;
 
-  private AuthzMatrix(List<AuthzRule> rules, Map<String, Boolean> clinicalByResource) {
+  private AuthzMatrix(
+      List<AuthzRule> rules,
+      Map<String, Boolean> clinicalByResource,
+      Map<String, List<String>> actionsByResource,
+      List<String> roles) {
     this.rules = List.copyOf(rules);
     this.clinicalByResource = Map.copyOf(clinicalByResource);
+    Map<String, List<String>> actions = new LinkedHashMap<>();
+    actionsByResource.forEach((resource, declared) -> actions.put(resource, List.copyOf(declared)));
+    this.actionsByResource = Collections.unmodifiableMap(actions);
+    this.roles = List.copyOf(roles);
     Map<String, List<AuthzRule>> idx = new LinkedHashMap<>();
     for (AuthzRule r : rules) {
       idx.computeIfAbsent(key(r.resource(), r.action()), k -> new ArrayList<>()).add(r);
@@ -46,6 +57,16 @@ public final class AuthzMatrix {
   /** Resource → whether it is clinical data. */
   public Map<String, Boolean> clinicalByResource() {
     return clinicalByResource;
+  }
+
+  /** Declared actions per resource, in matrix.yaml order. */
+  public Map<String, List<String>> actionsByResource() {
+    return actionsByResource;
+  }
+
+  /** Declared roles, in matrix.yaml order. */
+  public List<String> roles() {
+    return roles;
   }
 
   /** Rules for (resource, action) in file order; empty if none (deny by default). */
@@ -76,7 +97,8 @@ public final class AuthzMatrix {
     if (!(loaded instanceof Map<?, ?> doc)) {
       throw new AuthzMatrixException(List.of("File is empty or not a mapping"));
     }
-    Set<String> roles = Set.copyOf(strings(doc.get("roles")));
+    List<String> declaredRoles = strings(doc.get("roles"));
+    Set<String> roles = Set.copyOf(declaredRoles);
     Set<String> purposes = Set.copyOf(strings(doc.get("purposes")));
     Set<String> predicates =
         Set.copyOf(map(doc.get("predicates")).keySet().stream().map(String::valueOf).toList());
@@ -124,7 +146,7 @@ public final class AuthzMatrix {
     if (!errors.isEmpty()) {
       throw new AuthzMatrixException(errors);
     }
-    return new AuthzMatrix(rules, clinical);
+    return new AuthzMatrix(rules, clinical, actions, declaredRoles);
   }
 
   private static void validateRule(
