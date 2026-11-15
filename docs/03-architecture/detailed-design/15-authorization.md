@@ -72,9 +72,17 @@ rules:
 ```
 Beyond the rows above: **admin has no row for clinical data**, `dpo` only has rows for `Audit`.
 
-**Test generation (SHR-09):** for each `(resource, action)` in the matrix, the test suite calls the corresponding endpoint with **all 5 roles × combinations of
-conditions**; Allow is expected only in the matching row, every other cell must be 403 or 404 and have a `denied` audit record. Adding a new endpoint without
-a row in `matrix.yaml` → the test "every endpoint must have a rule" fails (blocks forgetting authorization).
+**Test generation (SHR-26):** `AuthzTestGenerator` in `libs/java/shp-authz` derives the test grid from the matrix itself: every
+declared `(resource, action)` × each of the 5 roles × every combination of conditions that pair's rules use (honouring the
+`care`/`not-care` and encounter-status complements). Each `AuthzTestCase` states the expected outcome — Allow with the matching
+rule id, or Deny (including roles with no rule and the `denyAll` actions). `AuthzTestGenerator.principal(...)` and
+`.context(...)` build the engine inputs, so a service test can run the grid through `AuthorizationEngine.decide` and narrow it
+to the endpoints it owns with `generateFor("<Resource>")`. Changing `matrix.yaml` changes the cases; no test source is rewritten.
+`AuthzTestGeneratorTest` runs the real matrix and asserts that every rule has Allow and Deny cells and that every cell matches
+the engine. For the endpoint level, the owning service calls the corresponding endpoint with **all 5 roles × combinations of
+conditions**; Allow is expected only in the matching row, every other cell must be 403 or 404 and have a `denied` audit record.
+Adding a new endpoint without a row in `matrix.yaml` → the test "every endpoint must have a rule" fails (blocks forgetting
+authorization).
 
 ## 4. Care relationship (`care`)
 
