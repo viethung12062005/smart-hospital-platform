@@ -61,6 +61,42 @@ spot-check described inline; nothing here was taken on trust.
 | GOV-05 | GitHub App still to be created in the UI (Contents: write on `shp-gitops`) |
 | LOC-08 | No synthetic-data seed into the cluster (follow-up of #537) |
 
+### Second pass — 2026-11-15
+
+Every item below was fixed, tested and opened as its own PR; the "Evidence" column is the check that was run, not the
+PR title. Items 1–9 of the first update are not repeated here.
+
+| Task | What changed | Evidence (re-run) |
+|---|---|---|
+| ARC-02 | Measurement method added to every NFR in §2–§9 (all 49 now have one); §7 cost assumption stated with its owner | `tools/srs/build.py --check` green |
+| ARC-03 | Seven ADRs (0001, 0003, 0005–0008, 0010) name the FR/NFR they serve | ids confirmed against the requirements docs |
+| AI-06 | Retrieval degrading to keyword-only on `EmbeddingError` is tested | new test on the real corpus index |
+| AI-29 | Bad tool arguments (9 shapes) and the 10-second deadline are tested; tool errors translated | `services/ai` 64 tests |
+| AI-33 | Cost report judges the RAG average against NFR-C2 (pass/fail/no-data); UTC in the test | 3 new NFR-C2 cases |
+| ML-03/04/13/18 | MLflow path proven against a real server; two defects fixed (no served artifacts; 3.x client vs 2.17 server) | 2 live MLflow tests pass; run visible in the registry |
+| ML-11/NTF-01 | `ml.predictions` gains a score validator; Mongo shape duplicated into a CI job branch | 15/15 Mongo checks pass on `mongo:8` |
+| ML-14 | pandera schema actually used; value sets and types declared once | `services/ml` 46 tests |
+| PY-02 | Token-exchange test asserts subject_token, audience, no secret in body, cache keying | `libs/python` 66 tests |
+| PY-05 | Idempotency store tested (13 cases); hard-coded Vietnamese detail removed | `libs/python` 79 tests, 98% on the module |
+| PY-06 | PII scrubber tested against the synthetic-data shapes — and a real gap fixed: `TEST\d{11}` was not redacted | 15 new cases; coverage 100% |
+| SCF-06 | ai values pin the pod to the ai node pool (`shp/pool=ai`, toleration, 8Gi) | `helm template` shows the fields |
+| LOC-02 | Realm TOTP policy added; scope documented (MFA enforced off-local by chart switch, `fhir_user` resolved server-side by design) | realm imported into Keycloak 26; token checked |
+| GOV-12 | Catalog linkage: 58 automated/partial (was 38), P0 33/122 (was 25); TC-AC-12.3 and its AC added | `trace.py --check` |
+| GOV-06 | Dependabot enabled in `shp-infra`, `shp-gitops`, `shp-platform-templates` | PRs #10/#8/#12 in those repos |
+| CIT-07 | CodeQL workflow for java/python/javascript-typescript (build-mode none) | `actionlint` clean; push needs the `workflow` scope (owner) |
+
+### Still open after the second pass
+
+| Task | Blocker | Owner |
+|---|---|---|
+| ARC-20 | The catalogue half is done (#574); CLN-16/CLN-18 must consume it before the issue closes | D2 |
+| ML-12 | Reopened: AC-15.1 needs a test in notification, which is still a scaffold | D1/D3 |
+| SHR-08, AI-01, CIT-03, CIT-06, GOP-03 | Cloud-only paths (Service Bus, AI Search, ACR push/sign, promotion, Argo CD bootstrap) — no UAT yet | SA |
+| GOP-08 | Egress default-deny needs a chart capability (networkPolicy egress rules) not yet in `shp-platform-templates` | SA |
+| SCF-04, SCF-05 | Blob/Log Analytics wiring belongs to DOC-02/AUD-02; the scaffold itself is done | D2 |
+| IAC-01..IAC-03 | Code + plan ready; `apply` awaits the Owner-run role assignments and state container | SA |
+| GOV-05 | The GitHub App must be created in the UI (Contents: write on `shp-gitops`) | SA |
+
 ### Source-of-truth note
 
 The 2026-11-11 snapshot scoped the audit to Project #1 statuses (125 tasks). `tools/plan/status.py` now marks 103 tasks
