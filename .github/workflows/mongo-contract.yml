@@ -1,0 +1,35 @@
+# Runs the MongoDB contract scripts (docs/03-architecture/detailed-design/04-db-notification-ml.md §2) against a
+# real MongoDB 8 replica set, so the collection validators and indexes cannot drift from the design (NTF-01, ML-11).
+# The scripts are idempotent, so the job runs the init script twice and then the 15 checks.
+name: mongo-contract
+on:
+  pull_request:
+    paths: ["contracts/db/**", ".github/workflows/mongo-contract.yml"]
+  push:
+    branches: [main]
+    paths: ["contracts/db/**", ".github/workflows/mongo-contract.yml"]
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Start MongoDB 8 as a single-node replica set
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:8 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 60); do
+            docker exec mongo mongosh --quiet --eval 'db.runCommand({ping:1}).ok' >/dev/null 2>&1 && break
+            sleep 2
+          done
+          docker exec mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]}).ok'
+          docker cp contracts/db/mongo-notification-ml.js mongo:/i.js
+          docker cp contracts/db/mongo-notification-ml.test.js mongo:/t.js
+      - name: Initialise twice (the script must be idempotent)
+        run: |
+          docker exec mongo mongosh "mongodb://localhost:27017/?directConnection=true" --quiet --file /i.js
+          docker exec mongo mongosh "mongodb://localhost:27017/?directConnection=true" --quiet --file /i.js
+      - name: Run the checks
+        run: docker exec mongo mongosh "mongodb://localhost:27017/?directConnection=true" --quiet --file /t.js
