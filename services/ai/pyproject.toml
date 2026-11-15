@@ -23,7 +23,7 @@ dependencies = [
   "azure-storage-blob>=12.24,<13",
   "python-multipart>=0.0.18,<1",
   "pyyaml>=6.0.2,<7",
-  "pypdf>=5.1,<7",
+  "pypdf>=5.1,<8",
   "python-docx>=1.1,<2",
 ]
 
@@ -48,6 +48,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 shp_platform = ["schemas/**/*.json", "COPIED_FROM_LIBS.txt"]
+# Prompt templates are read at runtime (shp_ai.prompts); without this line the image ships without them.
+shp_ai = ["prompts/*/*.md"]
 
 [tool.ruff]
 line-length = 120

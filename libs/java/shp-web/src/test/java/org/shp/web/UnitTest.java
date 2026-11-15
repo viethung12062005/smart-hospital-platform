@@ -78,6 +78,81 @@ class UnitTest {
   }
 
   /**
+   * Identity service that answers from a map, or fails like a clinical outage when {@code down}.
+   */
+  static final class FlakyLinks implements org.shp.web.auth.IdentityLinkClient {
+    final Map<String, IdentityLink> links = new java.util.HashMap<>();
+    int calls;
+    boolean down;
+
+    @Override
+    public java.util.Optional<IdentityLink> find(String subject) {
+      calls++;
+      if (down) {
+        throw new IllegalStateException("identity service returned 503");
+      }
+      return java.util.Optional.ofNullable(links.get(subject));
+    }
+  }
+
+  @Test
+  void clinicalOutageServesTheCachedLinkUntilStaleMax() {
+    var links = new FlakyLinks();
+    links.links.put("s", new IdentityLink("Patient", "p1", false));
+    var clock = new MutableClock();
+    var resolver = new IdentityResolver(links, clock);
+    resolver.resolve("s");
+    links.down = true;
+    clock.now = clock.now.plusSeconds(61); // entry expired, clinical down
+    assertThat(resolver.resolve("s")).hasValue(new IdentityLink("Patient", "p1", false));
+    assertThat(links.calls).isEqualTo(2); // it did try clinical first
+    clock.now = clock.now.plus(IdentityResolver.STALE_MAX); // too old to trust any more
+    assertThatThrownBy(() -> resolver.resolve("s"))
+        .isInstanceOfSatisfying(
+            ShpException.class,
+            e -> {
+              assertThat(e.info().code()).isEqualTo("dependency-unavailable");
+              assertThat(e.info().status()).isEqualTo(503);
+            });
+  }
+
+  @Test
+  void clinicalOutageWithoutCachedLinkIs503NotInternalError() {
+    var links = new FlakyLinks();
+    links.down = true;
+    var resolver = new IdentityResolver(links, new MutableClock());
+    assertThatThrownBy(() -> resolver.resolve("never-seen"))
+        .isInstanceOfSatisfying(
+            ShpException.class, e -> assertThat(e.info().status()).isEqualTo(503));
+  }
+
+  @Test
+  void cachedNotLinkedIsNeverServedDuringAnOutage() {
+    var links = new FlakyLinks();
+    var clock = new MutableClock();
+    var resolver = new IdentityResolver(links, clock);
+    assertThat(resolver.resolve("s")).isEmpty(); // "not linked" cached for 5 seconds
+    links.down = true;
+    clock.now = clock.now.plusSeconds(6);
+    assertThatThrownBy(() -> resolver.resolve("s")).isInstanceOf(ShpException.class);
+  }
+
+  @Test
+  void recoveredClinicalRefreshesTheLinkAgain() {
+    var links = new FlakyLinks();
+    links.links.put("s", new IdentityLink("Patient", "p1", false));
+    var clock = new MutableClock();
+    var resolver = new IdentityResolver(links, clock);
+    resolver.resolve("s");
+    links.down = true;
+    clock.now = clock.now.plusSeconds(61);
+    resolver.resolve("s"); // stale answer during the outage
+    links.down = false;
+    links.links.put("s", new IdentityLink("Patient", "p1", true)); // locked meanwhile
+    assertThat(resolver.resolve("s")).hasValueSatisfying(l -> assertThat(l.disabled()).isTrue());
+  }
+
+  /**
    * One fake server per scenario (MockRestServiceServer does not allow adding expectations after a
    * call).
    */

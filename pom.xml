@@ -41,7 +41,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- Versions checked on Maven Central on 2026-10-28 (docs/04-devops/progress-log.md, Part J) -->
     <hapi-fhir.version>8.12.1</hapi-fhir.version>
-    <json-schema-validator.version>3.0.8</json-schema-validator.version>
+    <json-schema-validator.version>3.0.9</json-schema-validator.version>
     <cloudevents.version>5.1.0</cloudevents.version>
     <!-- Messaging (13-events §1.1), checked on Maven Central on 2026-11-03: same Spring Cloud as the gateway (works with Boot 4.1);
          Spring Cloud Azure 7.4.0 released 07/2026 -->
@@ -49,7 +49,7 @@
     <spring-cloud-azure.version>7.4.0</spring-cloud-azure.version>
     <!-- The Spring Cloud BOM pulls amqp-client 5.30.0 (4 HIGH CVEs with available patches: 63337/69219/69220/75516); the image scan blocks
          HIGH CVEs that have patches, so pin the latest patched version -->
-    <amqp-client.version>5.37.0</amqp-client.version>
+    <amqp-client.version>5.37.1</amqp-client.version>
     <!-- azure-core-amqp pulls proton-j 0.34.1 (CVE-2026-66274, patch 0.35.0); same reason, the image scan blocks it -->
     <proton-j.version>0.35.0</proton-j.version>
     <archunit.version>1.5.1</archunit.version>

@@ -16,19 +16,19 @@ Notation: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin, **DPO**. **Care
 | C6 | `POST /fhir/Patient/_search` | Find patients | D, N | UC-06 |
 | C7 | `GET /fhir/Patient/{id}/_history` | Version history | N | UC-01 |
 | C8 | `POST /fhir/Patient/{id}/$merge` | Merge duplicate records | N | UC-01 |
-| C9 | `GET /fhir/Practitioner`, `/{id}`, `GET /fhir/PractitionerRole` | Doctor directory | any authenticated user | UC-03 |
-| C10 | `POST /fhir/Practitioner`, `POST /fhir/PractitionerRole`, `PUT` | Staff management | A | UC-08 |
+| C9 | `GET /fhir/Practitioner`, `GET /fhir/Practitioner/{id}`, `GET /fhir/PractitionerRole` | Doctor directory | any authenticated user | UC-03 |
+| C10 | `POST /fhir/Practitioner`, `POST /fhir/PractitionerRole`, `PUT /fhir/Practitioner/{id}`, `PUT /fhir/PractitionerRole/{id}` | Staff management | A | UC-08 |
 | C11 | `POST /fhir/Encounter/{id}/$start` | Doctor opens the visit | D (Care) | UC-04 |
 | C12 | `GET /fhir/Encounter/{id}`, `GET /fhir/Encounter` | Read/find visits | P (own, `finished`), D (Care/BG), N | UC-04 |
 | C13 | `PUT /fhir/Encounter/{id}` | Record history/reason for visit | D (Care, before `finished`) | UC-04 |
 | C14 | `POST /fhir/Encounter/{id}/$finish` | End the visit | D (Care) | UC-04 |
 | C15 | `POST /fhir/Encounter/{id}/$addendum` | Addendum after the visit ends | D (Care) | UC-04 |
-| C16 | `POST /fhir/Observation`, `GET`, `GET /{id}` | Vital signs / results | write: D (Care), N; read: P (own), D (Care/BG), N | UC-04 |
-| C17 | `POST /fhir/Condition`, `GET`, `PUT` | Diagnosis / underlying conditions | write: D (Care); read: P (own), D (Care/BG), N | UC-04 |
-| C18 | `POST /fhir/AllergyIntolerance`, `GET`, `PUT` | Allergy | write: D (Care), N; read as above | UC-04 |
+| C16 | `POST /fhir/Observation`, `GET /fhir/Observation`, `GET /fhir/Observation/{id}` | Vital signs / results | write: D (Care), N; read: P (own), D (Care/BG), N | UC-04 |
+| C17 | `POST /fhir/Condition`, `GET /fhir/Condition`, `PUT /fhir/Condition/{id}` | Diagnosis / underlying conditions | write: D (Care); read: P (own), D (Care/BG), N | UC-04 |
+| C18 | `POST /fhir/AllergyIntolerance`, `GET /fhir/AllergyIntolerance`, `PUT /fhir/AllergyIntolerance/{id}` | Allergy | write: D (Care), N; read as above | UC-04 |
 | C19 | `GET /api/v1/clinical/patients/{id}/timeline` | Patient timeline | D (Care/BG), N | UC-06 |
 | C20 | `POST /api/v1/clinical/break-glass` | Emergency access | D | UC-10 |
-| C21 | `GET/POST /api/v1/admin/users`, `PUT /api/v1/admin/users/{subject}` | Link/lock accounts | A | UC-08 |
+| C21 | `GET /api/v1/admin/users`, `POST /api/v1/admin/users`, `PUT /api/v1/admin/users/{subject}` | Link/lock accounts | A | UC-08 |
 | C22 | `GET /api/v1/me/profiles` | Profiles managed by the account (self, children, relatives) | P | UC-01 |
 | C23 | `POST /api/v1/me/profiles/dependents` | Create a profile for a person under 16 | P | UC-01 |
 | C24 | `POST /api/v1/me/profile-links` | Request a link to an adult relative's profile (send OTP to the relative) | P | UC-01 |
