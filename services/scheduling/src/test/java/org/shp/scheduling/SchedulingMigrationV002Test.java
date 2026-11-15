@@ -142,16 +142,14 @@ class SchedulingMigrationV002Test {
     @DisplayName("Foreign key constraint: invalid slot_id fails")
     void foreignKeySlotId() {
       UUID nonExistentSlot = UUID.randomUUID();
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
-                          VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', now(), now() + interval '15 minutes', 'web', 'user123', '{}'::jsonb)
-                          """)
-                      .params(
-                          UUID.randomUUID(), nonExistentSlot, UUID.randomUUID(), UUID.randomUUID())
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
+                      VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', now(), now() + interval '15 minutes', 'web', 'user123', '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), nonExistentSlot, UUID.randomUUID(), UUID.randomUUID())
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -163,39 +161,27 @@ class SchedulingMigrationV002Test {
       OffsetDateTime end = OffsetDateTime.parse("2026-11-20T08:15:00Z");
 
       // Invalid status 'pending'
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
-                          VALUES (?, 1, now(), 'pending', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user123', '{}'::jsonb)
-                          """)
-                      .params(
-                          UUID.randomUUID(),
-                          slotId,
-                          UUID.randomUUID(),
-                          UUID.randomUUID(),
-                          start,
-                          end)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
+                      VALUES (?, 1, now(), 'pending', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user123', '{}'::jsonb)
+                      """)
+                  .params(
+                      UUID.randomUUID(), slotId, UUID.randomUUID(), UUID.randomUUID(), start, end)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
       // Invalid channel 'mobile' (only 'web', 'chatbot', 'staff' allowed)
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
-                          VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'mobile', 'user123', '{}'::jsonb)
-                          """)
-                      .params(
-                          UUID.randomUUID(),
-                          slotId,
-                          UUID.randomUUID(),
-                          UUID.randomUUID(),
-                          start,
-                          end)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
+                      VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'mobile', 'user123', '{}'::jsonb)
+                      """)
+                  .params(
+                      UUID.randomUUID(), slotId, UUID.randomUUID(), UUID.randomUUID(), start, end)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -208,40 +194,28 @@ class SchedulingMigrationV002Test {
       OffsetDateTime end = OffsetDateTime.parse("2026-11-20T08:15:00Z");
 
       // status = 'cancelled' without cancel_reason -> FAILS
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, cancel_reason, content)
-                          VALUES (?, 1, now(), 'cancelled', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user123', NULL, '{}'::jsonb)
-                          """)
-                      .params(
-                          UUID.randomUUID(),
-                          slotId,
-                          UUID.randomUUID(),
-                          UUID.randomUUID(),
-                          start,
-                          end)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, cancel_reason, content)
+                      VALUES (?, 1, now(), 'cancelled', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user123', NULL, '{}'::jsonb)
+                      """)
+                  .params(
+                      UUID.randomUUID(), slotId, UUID.randomUUID(), UUID.randomUUID(), start, end)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_appointment_cancel_reason");
 
       // status = 'booked' with non-null cancel_reason -> FAILS
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, cancel_reason, content)
-                          VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user123', 'mistake', '{}'::jsonb)
-                          """)
-                      .params(
-                          UUID.randomUUID(),
-                          slotId,
-                          UUID.randomUUID(),
-                          UUID.randomUUID(),
-                          start,
-                          end)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, cancel_reason, content)
+                      VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user123', 'mistake', '{}'::jsonb)
+                      """)
+                  .params(
+                      UUID.randomUUID(), slotId, UUID.randomUUID(), UUID.randomUUID(), start, end)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_appointment_cancel_reason");
 
@@ -285,28 +259,26 @@ class SchedulingMigrationV002Test {
 
       // Second active appointment ('booked') on SAME slotId -> FAILS
       // ux_appointment_one_active_per_slot
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
-                          VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user2', '{}'::jsonb)
-                          """)
-                      .params(UUID.randomUUID(), slotId, patient2, practitionerId, start, end)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
+                      VALUES (?, 1, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user2', '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), slotId, patient2, practitionerId, start, end)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ux_appointment_one_active_per_slot");
 
       // Second active appointment with status 'arrived' or 'fulfilled' on same slotId also fails
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
-                          VALUES (?, 1, now(), 'arrived', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user2', '{}'::jsonb)
-                          """)
-                      .params(UUID.randomUUID(), slotId, patient2, practitionerId, start, end)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.appointment (id, version_id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content)
+                      VALUES (?, 1, now(), 'arrived', ?, ?, ?, 'cardiology', ?, ?, 'web', 'user2', '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), slotId, patient2, practitionerId, start, end)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ux_appointment_one_active_per_slot");
 
@@ -424,27 +396,25 @@ class SchedulingMigrationV002Test {
     @DisplayName("Invalid resource_type or operation fails check constraint")
     void invalidResourceTypeOrOperation() {
       // Invalid resource_type 'Slot'
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.resource_history (resource_type, id, version_id, last_updated, operation, changed_by, content)
-                          VALUES ('Slot', ?, 1, now(), 'create', 'user1', '{}'::jsonb)
-                          """)
-                      .param(UUID.randomUUID())
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.resource_history (resource_type, id, version_id, last_updated, operation, changed_by, content)
+                      VALUES ('Slot', ?, 1, now(), 'create', 'user1', '{}'::jsonb)
+                      """)
+                  .param(UUID.randomUUID())
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
       // Invalid operation 'delete'
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.resource_history (resource_type, id, version_id, last_updated, operation, changed_by, content)
-                          VALUES ('Appointment', ?, 1, now(), 'delete', 'user1', '{}'::jsonb)
-                          """)
-                      .param(UUID.randomUUID())
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.resource_history (resource_type, id, version_id, last_updated, operation, changed_by, content)
+                      VALUES ('Appointment', ?, 1, now(), 'delete', 'user1', '{}'::jsonb)
+                      """)
+                  .param(UUID.randomUUID())
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -460,15 +430,14 @@ class SchedulingMigrationV002Test {
           .param(id)
           .update();
 
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.resource_history (resource_type, id, version_id, last_updated, operation, changed_by, content)
-                          VALUES ('Schedule', ?, 1, now(), 'update', 'user2', '{}'::jsonb)
-                          """)
-                      .param(id)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.resource_history (resource_type, id, version_id, last_updated, operation, changed_by, content)
+                      VALUES ('Schedule', ?, 1, now(), 'update', 'user2', '{}'::jsonb)
+                      """)
+                  .param(id)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
     }
   }

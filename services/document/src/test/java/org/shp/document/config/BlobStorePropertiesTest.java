@@ -13,14 +13,13 @@ class BlobStorePropertiesTest {
 
   @Test
   void bindsTheDesignedContainerDefaultsAndAnEmptyConnectionString() {
-    runner.run(
-        ctx -> {
-          var props = ctx.getBean(BlobStoreProperties.class);
-          assertThat(props.connectionString()).isEmpty();
-          assertThat(props.documentsContainer()).isEqualTo("documents");
-          assertThat(props.quarantineContainer()).isEqualTo("quarantine");
-          assertThat(props.kbContainer()).isEqualTo("kb");
-        });
+    runner.run(ctx -> {
+      var props = ctx.getBean(BlobStoreProperties.class);
+      assertThat(props.connectionString()).isEmpty();
+      assertThat(props.documentsContainer()).isEqualTo("documents");
+      assertThat(props.quarantineContainer()).isEqualTo("quarantine");
+      assertThat(props.kbContainer()).isEqualTo("kb");
+    });
   }
 
   @Test
@@ -31,13 +30,12 @@ class BlobStorePropertiesTest {
             "shp.blob.documents-container=docs",
             "shp.blob.quarantine-container=quar",
             "shp.blob.kb-container=knowledge")
-        .run(
-            ctx -> {
-              var props = ctx.getBean(BlobStoreProperties.class);
-              assertThat(props.connectionString()).isEqualTo("UseDevelopmentStorage=true");
-              assertThat(props.documentsContainer()).isEqualTo("docs");
-              assertThat(props.quarantineContainer()).isEqualTo("quar");
-              assertThat(props.kbContainer()).isEqualTo("knowledge");
-            });
+        .run(ctx -> {
+          var props = ctx.getBean(BlobStoreProperties.class);
+          assertThat(props.connectionString()).isEqualTo("UseDevelopmentStorage=true");
+          assertThat(props.documentsContainer()).isEqualTo("docs");
+          assertThat(props.quarantineContainer()).isEqualTo("quar");
+          assertThat(props.kbContainer()).isEqualTo("knowledge");
+        });
   }
 }

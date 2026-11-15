@@ -16,13 +16,12 @@ class AuditSinkPropertiesTest {
 
   @Test
   void defaultsToDisabledWhenNothingIsSet() {
-    runner.run(
-        ctx -> {
-          var props = ctx.getBean(AuditSinkProperties.class);
-          assertThat(props.workspaceId()).isEmpty();
-          assertThat(props.endpoint()).isEmpty();
-          assertThat(props.configured()).isFalse();
-        });
+    runner.run(ctx -> {
+      var props = ctx.getBean(AuditSinkProperties.class);
+      assertThat(props.workspaceId()).isEmpty();
+      assertThat(props.endpoint()).isEmpty();
+      assertThat(props.configured()).isFalse();
+    });
   }
 
   @Test
@@ -31,13 +30,12 @@ class AuditSinkPropertiesTest {
         .withPropertyValues(
             "shp.audit-sink.workspace-id=workspace-1",
             "shp.audit-sink.endpoint=https://logs.example")
-        .run(
-            ctx -> {
-              var props = ctx.getBean(AuditSinkProperties.class);
-              assertThat(props.workspaceId()).isEqualTo("workspace-1");
-              assertThat(props.endpoint()).isEqualTo("https://logs.example");
-              assertThat(props.configured()).isTrue();
-            });
+        .run(ctx -> {
+          var props = ctx.getBean(AuditSinkProperties.class);
+          assertThat(props.workspaceId()).isEqualTo("workspace-1");
+          assertThat(props.endpoint()).isEqualTo("https://logs.example");
+          assertThat(props.configured()).isTrue();
+        });
   }
 
   @Test
