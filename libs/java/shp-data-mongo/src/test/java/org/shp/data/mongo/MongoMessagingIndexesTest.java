@@ -57,4 +57,32 @@ class MongoMessagingIndexesTest extends MongoTestBase {
 
     template.getDb().drop();
   }
+
+  @Test
+  void resourceHistoryIndexIsCreatedOnlyWhenAsked() {
+    var fresh = "shp_with_resource_history";
+    var template =
+        new org.springframework.data.mongodb.core.MongoTemplate(
+            new org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory(
+                com.mongodb.client.MongoClients.create(MONGO.getReplicaSetUrl(fresh)), fresh));
+
+    MongoMessaging.ensureIndexes(template, MongoMessaging.Store.RESOURCE_HISTORY);
+
+    Set<String> created = new HashSet<>(template.getCollectionNames());
+    assertThat(created)
+        .contains(MongoMessaging.RESOURCE_HISTORY)
+        .doesNotContain(MongoMessaging.OUTBOX);
+
+    // The compound lookup index of the design (03 §2.2) is in place.
+    var index =
+        template.indexOps(MongoMessaging.RESOURCE_HISTORY).getIndexInfo().stream()
+            .filter(i -> "ix_resource_history".equals(i.getName()))
+            .findFirst();
+    assertThat(index).isPresent();
+    assertThat(index.orElseThrow().getIndexFields())
+        .extracting(f -> f.getKey() + ":" + f.getDirection())
+        .containsExactly("resourceType:ASC", "id:ASC", "versionId:DESC");
+
+    template.getDb().drop();
+  }
 }
