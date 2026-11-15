@@ -1,7 +1,7 @@
 # Git and GitHub conventions (ARC-10)
 
 Applies to all 4 repos: `smart-hospital-platform`, `shp-platform-templates`, `shp-infra`, `shp-gitops`, for every person and every tool
-(including AI assistants) that creates commits or PRs. Task process and Definition of Ready/Done: [00-workflow.md](00-workflow.md). Code standards: [00-conventions.md](00-conventions.md).
+(including AI assistants) that creates commits or PRs. AI agents start from [`AGENTS.md`](../AGENTS.md) at the root of each repo, which routes to this document. Task process and Definition of Ready/Done: [00-workflow.md](00-workflow.md). Code standards: [00-conventions.md](00-conventions.md).
 
 Summary: **one US per parent issue, one sub-issue per task -> one branch per task from `main` -> small commits in the correct format -> one PR per the template -> review -> squash merge.**
 
@@ -64,7 +64,7 @@ Wrong (all have appeared on `main`):
 
 ### 2.2 Body
 
-- Separate from the subject with one blank line; each line <= 100 characters; English or Vietnamese.
+- Separate from the subject with one blank line; each line <= 100 characters; English (the language rule in [00-conventions.md §8](00-conventions.md#8-code-style) applies to everything written into the repos and on GitHub).
 - Write **why**: the problem, the cause, the options considered. "What" is already in the diff.
 - Touching patient data, authorization, audit, secrets or egress: state the security impact clearly.
 - Small, self-contained commits; no meaningless content (`wip`, `fix`, `update`).
