@@ -52,6 +52,19 @@
 
   <build>
     <finalName>app</finalName>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <!-- Embed the terminology catalogue: the loader reads the exact version in contracts/ at startup -->
+        <directory>${project.basedir}/../../contracts/terminology/dist</directory>
+        <targetPath>terminology</targetPath>
+        <includes>
+          <include>*.json</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
