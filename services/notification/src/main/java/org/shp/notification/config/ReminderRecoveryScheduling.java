@@ -8,20 +8,19 @@ import org.springframework.stereotype.Component;
 
 @Configuration
 @EnableScheduling
-class ReminderRecoveryScheduling {
-}
+class ReminderRecoveryScheduling {}
 
 @Component
 class ReminderRecoveryJob {
 
-    private final ReminderWorkLoop workLoop;
+  private final ReminderWorkLoop workLoop;
 
-    ReminderRecoveryJob(ReminderWorkLoop workLoop) {
-        this.workLoop = workLoop;
-    }
+  ReminderRecoveryJob(ReminderWorkLoop workLoop) {
+    this.workLoop = workLoop;
+  }
 
-    @Scheduled(fixedDelayString = "${shp.notification.reminders.recovery-interval-ms:60000}")
-    public void recoverStuckReminders() {
-        workLoop.recoverStuckReminders();
-    }
+  @Scheduled(fixedDelayString = "${shp.notification.reminders.recovery-interval-ms:60000}")
+  public void recoverStuckReminders() {
+    workLoop.recoverStuckReminders();
+  }
 }
