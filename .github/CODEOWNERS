@@ -5,14 +5,14 @@
 # Default: SA (platform, contracts, pipelines, architecture docs)
 *                           @viethung12062005
 
-# /services/scheduling/     @D1 @viethung12062005
-# /services/notification/   @D3 @viethung12062005
-# /services/clinical/       @D2 @viethung12062005
-# /services/document/       @D3 @viethung12062005
-# /services/audit/          @D3 @viethung12062005
+/services/scheduling/     @qnt124 @viethung12062005
+/services/notification/   @24021501-hunglk @viethung12062005
+/services/clinical/       @Her55chers @viethung12062005
+/services/document/       @24021501-hunglk @viethung12062005
+/services/audit/          @24021501-hunglk @viethung12062005
 /services/ai/               @viethung12062005
 /services/ml/               @viethung12062005
-# /web/src/pages/           @D1 @D2 @D3 @viethung12062005
+/web/src/pages/           @qnt124 @Her55chers @24021501-hunglk @viethung12062005
 
 # Always need SA, even when the lines above are enabled
 /libs/                      @viethung12062005
