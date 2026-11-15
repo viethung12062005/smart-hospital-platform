@@ -49,7 +49,7 @@
     <spring-cloud-azure.version>7.4.0</spring-cloud-azure.version>
     <!-- The Spring Cloud BOM pulls amqp-client 5.30.0 (4 HIGH CVEs with available patches: 63337/69219/69220/75516); the image scan blocks
          HIGH CVEs that have patches, so pin the latest patched version -->
-    <amqp-client.version>5.37.0</amqp-client.version>
+    <amqp-client.version>5.37.1</amqp-client.version>
     <!-- azure-core-amqp pulls proton-j 0.34.1 (CVE-2026-66274, patch 0.35.0); same reason, the image scan blocks it -->
     <proton-j.version>0.35.0</proton-j.version>
     <archunit.version>1.5.1</archunit.version>
