@@ -30,11 +30,10 @@ class BlobStorageConfigTest {
   void missingConnectionStringFailsFastWithAClearMessage() {
     new ApplicationContextRunner()
         .withUserConfiguration(BlobStorageConfig.class)
-        .run(
-            ctx ->
-                assertThatThrownBy(() -> ctx.getBean(BlobServiceClient.class))
-                    .rootCause()
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("AZURE_STORAGE_CONNECTION_STRING"));
+        .run(ctx ->
+            assertThatThrownBy(() -> ctx.getBean(BlobServiceClient.class))
+                .rootCause()
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("AZURE_STORAGE_CONNECTION_STRING"));
   }
 }
