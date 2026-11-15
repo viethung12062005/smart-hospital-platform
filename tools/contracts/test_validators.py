@@ -47,3 +47,20 @@ class AuthzMatrix(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OpenApiPaths(unittest.TestCase):
+    """ARC-06: a shorthand row in a design table must not turn into a fake endpoint such as `/{id}`."""
+
+    def test_real_paths_pass(self):
+        import validate_openapi
+
+        ok = ["/fhir/Observation/{id}", "/api/v1/me/profiles", "/internal/v1/patients/{id}/contact"]
+        self.assertEqual(validate_openapi.bad_paths(ok), [])
+
+    def test_shorthand_path_is_reported(self):
+        import validate_openapi
+
+        errs = validate_openapi.bad_paths(["/fhir/Observation", "/{id}", "/Observation"])
+        self.assertEqual(len(errs), 2)
+        self.assertIn("/{id}", errs[0])
