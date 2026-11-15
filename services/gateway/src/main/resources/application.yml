@@ -11,7 +11,7 @@ spring:
             - id: clinical
               uri: ${SHP_UPSTREAM_CLINICAL:http://clinical}
               predicates:
-                - Path=/fhir/Patient/**,/fhir/Patient,/fhir/Practitioner/**,/fhir/Practitioner,/fhir/PractitionerRole/**,/fhir/PractitionerRole,/fhir/Encounter/**,/fhir/Encounter,/fhir/Observation/**,/fhir/Observation,/fhir/Condition/**,/fhir/Condition,/fhir/AllergyIntolerance/**,/fhir/AllergyIntolerance,/api/v1/registration,/api/v1/me,/api/v1/clinical/**,/api/v1/admin/**
+                - Path=/fhir/Patient/**,/fhir/Patient,/fhir/Practitioner/**,/fhir/Practitioner,/fhir/PractitionerRole/**,/fhir/PractitionerRole,/fhir/Encounter/**,/fhir/Encounter,/fhir/Observation/**,/fhir/Observation,/fhir/Condition/**,/fhir/Condition,/fhir/AllergyIntolerance/**,/fhir/AllergyIntolerance,/api/v1/registration,/api/v1/me,/api/v1/me/**,/api/v1/clinical/**,/api/v1/admin/**
             - id: scheduling
               uri: ${SHP_UPSTREAM_SCHEDULING:http://scheduling}
               predicates:

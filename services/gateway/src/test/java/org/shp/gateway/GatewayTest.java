@@ -27,6 +27,7 @@ import org.shp.security.ShpJwt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
@@ -95,6 +96,7 @@ class GatewayTest {
   }
 
   @Autowired Environment env;
+  @Autowired RouteLocator routes;
 
   static String token(List<String> roles, List<String> amr, String audience) throws Exception {
     var c =
