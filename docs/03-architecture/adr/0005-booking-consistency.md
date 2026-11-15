@@ -7,6 +7,8 @@ Accepted (2026-10-26) — approved by the Solution Architect/PM together with ga
 A common approach is creating an Appointment without locking the Slot → two patients can book the same slot. Mobile
 clients often retry on timeout → create a duplicate appointment.
 
+Related requirements: UC-03, NFR-P1, NFR-P2, NFR-S1, NFR-S2, NFR-S3.
+
 ## Decision
 `POST /fhir/Appointment/$book` in **one Postgres transaction**:
 1. Acquire the idempotency key (`INSERT ... ON CONFLICT DO NOTHING`).

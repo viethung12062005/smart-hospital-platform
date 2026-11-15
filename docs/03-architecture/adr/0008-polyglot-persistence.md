@@ -11,6 +11,10 @@ documents read by patient, audit is append-only and immutable, RAG needs vector 
 Selection principle: **each new engine must answer "what does it do substantially better that an existing engine
 cannot do"**, because every added engine adds operational cost, backup, monitoring, and Azure spend.
 
+Related requirements: UC-03, NFR-P1, NFR-P2, NFR-S1, NFR-S2, NFR-S3; UC-01, UC-04, UC-05, UC-06, UC-12, NFR-P3, NFR-P4;
+UC-11, NFR-P5, NFR-AI1, NFR-AI2, NFR-AI3, NFR-AI7; UC-09, UC-10, NFR-SEC2, NFR-SEC5; UC-16, NFR-A4, NFR-A5;
+NFR-C1, NFR-C2, NFR-C3.
+
 ## Decision
 
 | Service / data | Load type | Data store (Azure → local) | Main reason |

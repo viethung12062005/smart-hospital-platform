@@ -7,6 +7,8 @@ Accepted (2026-10-26) — approved by the Solution Architect/PM together with ga
 The team wants a FHIR-native model like Medplum (the healthcare interoperability standard). Azure has a managed FHIR service
 (Azure Health Data Services). The services use different data stores (ADR-0008).
 
+Related requirements: UC-01, UC-04, UC-05, UC-06, UC-12, NFR-P3, NFR-P4.
+
 ## Decision
 The `SmartHospital.Fhir` building block contains the **DB-independent** part:
 - Serialize/parse FHIR R4 (HAPI FHIR structures, ADR-0015).
