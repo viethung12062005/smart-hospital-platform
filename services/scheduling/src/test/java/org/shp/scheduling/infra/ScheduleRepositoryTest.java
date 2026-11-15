@@ -325,12 +325,11 @@ class ScheduleRepositoryTest {
 
     assertThatThrownBy(() -> repository.update(staleUpdateRecord, 99, "nurse-bob"))
         .isInstanceOf(ShpException.class)
-        .satisfies(
-            ex -> {
-              var shpEx = (ShpException) ex;
-              assertThat(shpEx.info().code()).isEqualTo("version-conflict");
-              assertThat(shpEx.info().status()).isEqualTo(412);
-            });
+        .satisfies(ex -> {
+          var shpEx = (ShpException) ex;
+          assertThat(shpEx.info().code()).isEqualTo("version-conflict");
+          assertThat(shpEx.info().status()).isEqualTo(412);
+        });
 
     // Verify schedule table still has version 1 and active = true
     var current = repository.findById(id).orElseThrow();
@@ -361,12 +360,11 @@ class ScheduleRepositoryTest {
 
     assertThatThrownBy(() -> repository.update(record, 1, "nurse-alice"))
         .isInstanceOf(ShpException.class)
-        .satisfies(
-            ex -> {
-              var shpEx = (ShpException) ex;
-              assertThat(shpEx.info().code()).isEqualTo("not-found");
-              assertThat(shpEx.info().status()).isEqualTo(404);
-            });
+        .satisfies(ex -> {
+          var shpEx = (ShpException) ex;
+          assertThat(shpEx.info().code()).isEqualTo("not-found");
+          assertThat(shpEx.info().status()).isEqualTo(404);
+        });
   }
 
   @Test
@@ -439,20 +437,19 @@ class ScheduleRepositoryTest {
 
     // Second active schedule for SAME doctor and specialty -> violates
     // ux_schedule_active_practitioner_specialty
-    assertThatThrownBy(
-            () ->
-                repository.create(
-                    new ScheduleRecord(
-                        UUID.randomUUID(),
-                        1,
-                        FIXED_NOW,
-                        true,
-                        doc,
-                        "cardiology",
-                        LocalDate.of(2026, 12, 1),
-                        LocalDate.of(2026, 12, 31),
-                        "{}"),
-                    "nurse-bob"))
+    assertThatThrownBy(() ->
+            repository.create(
+                new ScheduleRecord(
+                    UUID.randomUUID(),
+                    1,
+                    FIXED_NOW,
+                    true,
+                    doc,
+                    "cardiology",
+                    LocalDate.of(2026, 12, 1),
+                    LocalDate.of(2026, 12, 31),
+                    "{}"),
+                "nurse-bob"))
         .isInstanceOf(DataIntegrityViolationException.class);
 
     // But an INACTIVE schedule for the same doctor and specialty is allowed
