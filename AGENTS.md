@@ -58,6 +58,7 @@ earlier session: the documents change.
 | Write or change service code | `docs/00-conventions.md`; `CONTRIBUTING.md` ("Java code conventions"); `docs/03-architecture/overview.md` §4 |
 | Implement or change an endpoint | `docs/03-architecture/detailed-design/07-api-conventions.md` and the API document of the service (`08`–`12`); `contracts/openapi/<service>.yaml` |
 | Touch authorization, identity or audit | `detailed-design/15-authorization.md`, `05-storage-audit-blob.md`; `contracts/authz/matrix.yaml` |
+| Threat-model a change or prepare the security review | `docs/03-architecture/threat-model.md`; NFR-SEC in `docs/02-requirements/non-functional-requirements.md` §4 and the SRS source |
 | Publish or consume an event | `detailed-design/13-events.md`; `contracts/events/` |
 | Change a database, collection or index | `detailed-design/01-domain-model.md` and the database document (`02`–`06`); `contracts/db/` |
 | Work on AI or ML | `detailed-design/06-data-ai.md`, `12-api-ai.md`, `16-mlops.md`; ADR-0006, ADR-0007, ADR-0013 |

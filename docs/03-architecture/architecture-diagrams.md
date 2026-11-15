@@ -250,6 +250,7 @@ flowchart LR
 ## 4. Trust zones and network flow
 
 Every arrow that crosses a zone boundary has a control point. The default is **deny**; only the flows that are needed are opened.
+The STRIDE analysis for each of these flows is in [threat-model.md](threat-model.md).
 
 ```mermaid
 flowchart LR
