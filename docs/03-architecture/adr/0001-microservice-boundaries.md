@@ -7,6 +7,8 @@ Accepted (2026-10-26) — approved by the Solution Architect/PM together with ga
 The brief requires a production-oriented MVP, but the lecturer explicitly said they do *not* want "dozens of microservices".
 The team wants to use microservices to demonstrate cloud operations capability.
 
+Related requirements: UC-03, NFR-P1, NFR-P2, NFR-S1, NFR-S2, NFR-S3.
+
 ## Decision
 Split by **load characteristics and non-functional requirements**, not by individual FHIR resource:
 

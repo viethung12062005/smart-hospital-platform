@@ -6,6 +6,8 @@ Accepted (2026-10-26) — approved by the Solution Architect/PM together with ga
 ## Context
 We want a self-trained ML model to demonstrate the MLOps lifecycle, tied to real business.
 
+Related requirements: UC-07, UC-15, NFR-P8, NFR-AI6, NFR-A6.
+
 ## Decision
 Predict the **probability that a patient will not attend** for each Appointment. `ml-service` listens to the
 `appointment-booked` event, scores it, and **emits the `no-show-scored` event**; `notification-service` listens to this event to send additional
