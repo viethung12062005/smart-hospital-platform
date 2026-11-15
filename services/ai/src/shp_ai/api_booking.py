@@ -17,6 +17,8 @@ from shp_platform.errors import ShpError
 from shp_platform.llm import ChatMessage
 from shp_platform.security import Authenticator, Principal
 
+BOOKING_FORM_FALLBACK = {"type": "booking-form", "url": "/booking"}
+
 KIND = "booking-bot"
 UNAVAILABLE_FALLBACK = {"type": "booking-form", "url": "/booking"}
 
@@ -57,7 +59,8 @@ def register(app: FastAPI, deps: Callable[[], Deps], auth: Authenticator) -> Non
                 outcome="error",
                 reason="all models unavailable",
             )
-            raise ShpError("ai-unavailable", None) from None
+            # AC-14.3: the web app opens the normal booking form when the bot cannot answer (12-api-ai, AI7).
+            raise ShpError("ai-unavailable", extensions={"fallback": BOOKING_FORM_FALLBACK}) from None
         cfg = d.extras["llm_config"]
         for attempt in turn.attempts:
             usage.record(
