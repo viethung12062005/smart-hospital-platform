@@ -31,14 +31,13 @@ class IdempotencyTest extends PostgresTestBase {
   }
 
   IdempotencyClaim claim(String subject, String key, String op, String body, boolean commit) {
-    return TX.execute(
-        s -> {
-          var c = idem.claim(subject, key, op, hash(body));
-          if (!commit) {
-            s.setRollbackOnly();
-          }
-          return c;
-        });
+    return TX.execute(s -> {
+      var c = idem.claim(subject, key, op, hash(body));
+      if (!commit) {
+        s.setRollbackOnly();
+      }
+      return c;
+    });
   }
 
   IdempotencyClaim claim() {

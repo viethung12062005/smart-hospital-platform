@@ -59,31 +59,30 @@ public final class OutboxRelay implements SmartLifecycle {
   public int relayOnce() {
     int[] sent = {0};
     RuntimeException[] failure = {null};
-    tx.executeWithoutResult(
-        status -> {
-          List<Row> batch =
-              jdbc.sql(
-                      "SELECT id, payload::text FROM outbox WHERE published_at IS NULL ORDER BY occurred_at, id LIMIT ? FOR UPDATE SKIP LOCKED")
-                  .param(batchSize)
-                  .query((rs, i) -> new Row(rs.getObject(1, UUID.class), rs.getString(2)))
-                  .list();
-          for (Row row : batch) {
-            try {
-              publisher.publish(CloudEvents.parse(row.payload()));
-            } catch (RuntimeException e) {
-              failure[0] = e;
-              String err = (e.getClass().getSimpleName() + ": " + e.getMessage());
-              jdbc.sql("UPDATE outbox SET attempts = attempts + 1, last_error = ? WHERE id = ?")
-                  .params(err.length() > 500 ? err.substring(0, 500) : err, row.id())
-                  .update();
-              break;
-            }
-            jdbc.sql("UPDATE outbox SET published_at = ? WHERE id = ?")
-                .params(Timestamp.from(clock.instant()), row.id())
-                .update();
-            sent[0]++;
-          }
-        }); // commit: keep the published rows and the failure counter
+    tx.executeWithoutResult(status -> {
+      List<Row> batch =
+          jdbc.sql(
+                  "SELECT id, payload::text FROM outbox WHERE published_at IS NULL ORDER BY occurred_at, id LIMIT ? FOR UPDATE SKIP LOCKED")
+              .param(batchSize)
+              .query((rs, i) -> new Row(rs.getObject(1, UUID.class), rs.getString(2)))
+              .list();
+      for (Row row : batch) {
+        try {
+          publisher.publish(CloudEvents.parse(row.payload()));
+        } catch (RuntimeException e) {
+          failure[0] = e;
+          String err = (e.getClass().getSimpleName() + ": " + e.getMessage());
+          jdbc.sql("UPDATE outbox SET attempts = attempts + 1, last_error = ? WHERE id = ?")
+              .params(err.length() > 500 ? err.substring(0, 500) : err, row.id())
+              .update();
+          break;
+        }
+        jdbc.sql("UPDATE outbox SET published_at = ? WHERE id = ?")
+            .params(Timestamp.from(clock.instant()), row.id())
+            .update();
+        sent[0]++;
+      }
+    }); // commit: keep the published rows and the failure counter
     if (failure[0] != null) {
       throw new OutboxPublishException(sent[0], failure[0]);
     }

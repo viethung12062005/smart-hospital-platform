@@ -30,19 +30,18 @@ public final class PostgresInbox {
    */
   public boolean handleOnce(String consumer, CloudEvent evt, Runnable handler) {
     Boolean done =
-        tx.execute(
-            status -> {
-              int inserted =
-                  jdbc.sql(
-                          "INSERT INTO inbox (consumer, message_id, processed_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING")
-                      .params(consumer, UUID.fromString(evt.id()), Timestamp.from(clock.instant()))
-                      .update();
-              if (inserted == 0) {
-                return false;
-              }
-              handler.run();
-              return true;
-            });
+        tx.execute(status -> {
+          int inserted =
+              jdbc.sql(
+                      "INSERT INTO inbox (consumer, message_id, processed_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING")
+                  .params(consumer, UUID.fromString(evt.id()), Timestamp.from(clock.instant()))
+                  .update();
+          if (inserted == 0) {
+            return false;
+          }
+          handler.run();
+          return true;
+        });
     return Boolean.TRUE.equals(done);
   }
 }

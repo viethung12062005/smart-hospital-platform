@@ -178,11 +178,9 @@ class UnitTest {
                 .find("kc|user"))
         .hasValue(new IdentityLink("Practitioner", "abc", false));
     assertThat(clientReturning("x", HttpStatus.NOT_FOUND, null).find("x")).isEmpty();
-    assertThatThrownBy(
-            () ->
-                clientReturning(
-                        "x", HttpStatus.OK, "{\"fhirUser\":\"Device/1\",\"disabled\":false}")
-                    .find("x"))
+    assertThatThrownBy(() ->
+            clientReturning("x", HttpStatus.OK, "{\"fhirUser\":\"Device/1\",\"disabled\":false}")
+                .find("x"))
         .isInstanceOf(IllegalStateException.class);
     assertThatThrownBy(() -> clientReturning("x", HttpStatus.SERVICE_UNAVAILABLE, null).find("x"))
         .isInstanceOf(IllegalStateException.class);
@@ -239,11 +237,8 @@ class UnitTest {
       }
     }
     assertThat(documented).isNotEmpty();
-    documented.forEach(
-        d ->
-            assertThat(ErrorCatalog.get(d.getKey()).status())
-                .as(d.getKey())
-                .isEqualTo(d.getValue()));
+    documented.forEach(d ->
+        assertThat(ErrorCatalog.get(d.getKey()).status()).as(d.getKey()).isEqualTo(d.getValue()));
     assertThat(
             ErrorCatalog.all().stream()
                 .map(ErrorInfo::code)

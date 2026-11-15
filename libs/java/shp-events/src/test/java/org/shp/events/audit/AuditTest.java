@@ -120,17 +120,14 @@ class AuditTest {
 
   @Test
   void unknownActionOrOutcomeIsRejected() {
-    assertThatThrownBy(
-            () ->
-                AuditRecordBuilder.build(
-                    CLOCK, "s", "peek", "success", DOCTOR, "Patient", null, null, null, null, null,
-                    null))
+    assertThatThrownBy(() ->
+            AuditRecordBuilder.build(
+                CLOCK, "s", "peek", "success", DOCTOR, "Patient", null, null, null, null, null,
+                null))
         .isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(
-            () ->
-                AuditRecordBuilder.build(
-                    CLOCK, "s", "read", "maybe", DOCTOR, "Patient", null, null, null, null, null,
-                    null))
+    assertThatThrownBy(() ->
+            AuditRecordBuilder.build(
+                CLOCK, "s", "read", "maybe", DOCTOR, "Patient", null, null, null, null, null, null))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -139,13 +136,10 @@ class AuditTest {
     AuthzMatrix.loadEmbedded().rules().stream()
         .map(AuthzRule::action)
         .distinct()
-        .forEach(
-            a -> {
-              assertThat(AuthzAudit.ACTION_MAP)
-                  .as("missing audit mapping for '%s'", a)
-                  .containsKey(a);
-              assertThat(AuditActions.ALL).contains(AuthzAudit.ACTION_MAP.get(a));
-            });
+        .forEach(a -> {
+          assertThat(AuthzAudit.ACTION_MAP).as("missing audit mapping for '%s'", a).containsKey(a);
+          assertThat(AuditActions.ALL).contains(AuthzAudit.ACTION_MAP.get(a));
+        });
   }
 
   @Test

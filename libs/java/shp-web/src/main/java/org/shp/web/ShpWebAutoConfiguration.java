@@ -73,18 +73,17 @@ public class ShpWebAutoConfiguration {
       throw new IllegalStateException(
           "Missing shp.auth.authority/audience (or OIDC_AUTHORITY, OIDC_AUDIENCE)");
     }
-    return new SupplierJwtDecoder(
-        () -> {
-          // jwk-set-uri: load keys from the in-cluster address when the issuer (localhost) is
-          // unreachable from
-          // pod.
-          var decoder =
-              props.jwkSetUri().isBlank()
-                  ? (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(props.authority())
-                  : NimbusJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
-          decoder.setJwtValidator(ShpJwt.validator(props, clock));
-          return decoder;
-        });
+    return new SupplierJwtDecoder(() -> {
+      // jwk-set-uri: load keys from the in-cluster address when the issuer (localhost) is
+      // unreachable from
+      // pod.
+      var decoder =
+          props.jwkSetUri().isBlank()
+              ? (NimbusJwtDecoder) JwtDecoders.fromIssuerLocation(props.authority())
+              : NimbusJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
+      decoder.setJwtValidator(ShpJwt.validator(props, clock));
+      return decoder;
+    });
   }
 
   @Bean
@@ -92,28 +91,20 @@ public class ShpWebAutoConfiguration {
   SecurityFilterChain shpSecurityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(c -> c.disable())
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(
-            a ->
-                a.requestMatchers("/health", "/health/**", "/info", "/prometheus", "/error")
-                    .permitAll()
-                    .anyRequest()
-                    .authenticated())
-        .oauth2ResourceServer(
-            o ->
-                o.jwt(j -> j.jwtAuthenticationConverter(ShpJwt.authenticationConverter()))
-                    .authenticationEntryPoint(
-                        (req, res, ex) ->
-                            ErrorWriter.write(
-                                req, res, ErrorCatalog.get("unauthenticated"), null, null))
-                    .accessDeniedHandler(
-                        (req, res, ex) ->
-                            ErrorWriter.write(req, res, ErrorCatalog.get("forbidden"), null, null)))
-        .exceptionHandling(
-            e ->
-                e.authenticationEntryPoint(
-                    (req, res, ex) ->
-                        ErrorWriter.write(
-                            req, res, ErrorCatalog.get("unauthenticated"), null, null)))
+        .authorizeHttpRequests(a ->
+            a.requestMatchers("/health", "/health/**", "/info", "/prometheus", "/error")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
+        .oauth2ResourceServer(o ->
+            o.jwt(j -> j.jwtAuthenticationConverter(ShpJwt.authenticationConverter()))
+                .authenticationEntryPoint((req, res, ex) ->
+                    ErrorWriter.write(req, res, ErrorCatalog.get("unauthenticated"), null, null))
+                .accessDeniedHandler((req, res, ex) ->
+                    ErrorWriter.write(req, res, ErrorCatalog.get("forbidden"), null, null)))
+        .exceptionHandling(e ->
+            e.authenticationEntryPoint((req, res, ex) ->
+                ErrorWriter.write(req, res, ErrorCatalog.get("unauthenticated"), null, null)))
         .httpBasic(b -> b.disable())
         .formLogin(f -> f.disable());
     return http.build();
