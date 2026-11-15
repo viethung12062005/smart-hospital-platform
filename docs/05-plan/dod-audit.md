@@ -16,6 +16,57 @@ Verdicts: **PASS** (met, evidence given) · **PARTIAL** (met in substance, a nam
 is not met) · **UNVERIFIED** (cannot be checked without a cloud environment; says what is needed).
 
 ## Summary
+## Update — 2026-11-15
+
+The fixes below landed on `main` after the 2026-11-11 snapshot. Each is verified by its own PR's checks plus a
+spot-check described inline; nothing here was taken on trust.
+
+### Fail items closed
+
+| Task | What was missing | Fixed by |
+|---|---|---|
+| SHR-21 | No stale-cache fallback, no 503 | #557 — serve cached identity link on clinical failure, 503 when there is none |
+| AI-07 | Prompt templates missing from the ai image | #559 — ship the prompt templates in the ai image |
+| AI-31 | 503 without the designed booking-form fallback | #560 — add the booking-form fallback to ai-unavailable |
+
+### Partial items closed
+
+| Task | What was missing | Fixed by |
+|---|---|---|
+| ARC-06 | `clinical.yaml` dropped ~10 operations | #556 — write out every clinical operation and reject malformed contract paths |
+| ARC-10, GOV-03 | PR template checklist did not match DoD §4 | #553 — make the PR template checklist match the Definition of Done |
+| SHR-20 | `shp-security` coverage gate overridden to 0.00 | #551 — enforce the coverage gate on shp-security |
+| GW-01 | `/api/v1/me/**` (7 contract paths) not routed | #552 — route `/api/v1/me/**` to clinical |
+| WEB-02 | No re-login/retry on session expiry | #558 — renew an expired session and replay the request once |
+| OBS-04 | Was `In Progress` | #541 — structured log with trace-id and PII masking |
+
+### Newly closed tasks (after the 2026-11-11 snapshot)
+
+| Task | Verdict | Evidence |
+|---|---|---|
+| IAC-05 Module network | PASS | `terraform validate` Success; `tflint --recursive` (terraform recommended + azurerm 0.28.0) exit 0 (re-run 2026-11-15) |
+| IAC-06 Module monitoring | PASS | same as above |
+| IAC-07 Module aks | PASS | same as above |
+| ML-05 Quality gate and model registry | PASS | `MIN_AUC = 0.75` + baseline/subgroup/ECE/latency checks in `services/ml/src/shp_ml/evaluate.py`; 12 tests in `tests/test_training_pipeline.py` pass (2026-11-15) |
+
+### Still open (not fixable without code, a cloud environment, or another service)
+
+| Task | Blocker |
+|---|---|
+| ARC-02 | 40/49 NFRs need a measurement method; cost table pending team agreement |
+| LOC-02 | Realm needs a `fhir_user` claim and staff MFA |
+| ML-12 | Blocked on the notification reminder tasks (service is a scaffold) |
+| CIT-07 | No CodeQL workflow |
+| GOV-06 | `dependabot.yml` missing in `shp-infra`, `shp-gitops`, `shp-platform-templates` |
+| GOV-05 | GitHub App still to be created in the UI (Contents: write on `shp-gitops`) |
+| LOC-08 | No synthetic-data seed into the cluster (follow-up of #537) |
+
+### Source-of-truth note
+
+The 2026-11-11 snapshot scoped the audit to Project #1 statuses (125 tasks). `tools/plan/status.py` now marks 103 tasks
+done/partial; the two trackers do not line up one-to-one. The remaining repair work should be tracked against GitHub
+issues, and the two boards reconciled when the cloud tasks are unblocked.
+
 
 125 tasks audited: **82 pass, 32 partial, 8 fail** (AI-07 and AI-31 were downgraded from pass after the PR checklist review), 3 are still `In Progress` (OBS-04, GOV-05, GOV-08) and were not judged.
 
