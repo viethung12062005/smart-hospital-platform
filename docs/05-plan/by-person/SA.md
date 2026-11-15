@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **135**, partially done: **15** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **221 tasks, 767 hours**. Done: **137**, partially done: **13** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -124,8 +124,8 @@ Total: **221 tasks, 767 hours**. Done: **135**, partially done: **15** (☑ done
 | ☑ | PY-04 | Audit emitter Python (E11) for AI/ML **[done, commit 932b0e4: audit.build: redacts IPs, blocks search values in resource, matches the E11 schema]** | Does not log question content or PII; test | 2 | PY-03 | US-047 |
 | ☑ | PY-09 | Circuit breaker + token/day quota + per-model metrics **[done, commit cf3ed23: Circuit breaker, shared daily token quota (MongoDB), per-model metrics]** | Circuit opens after 5 failures/60s; over budget → ai-budget-exceeded | 3 | PY-08 | US-055 |
 | ☑ | SCF-01 | Scaffold scheduling service (code skeleton, Dockerfile, svc-scheduling pipeline, Helm values, DB/bus/OTel wiring) **[done, commit c909d5b: scheduling: Spring Boot skeleton + Flyway + PostgreSQL outbox/inbox/idempotency, Dockerfile, svc-scheduling.yml, local/uat/prod values; uat/prod log in to PostgreSQL with Workload Identity (azure-identity-extensions, shp-gitops + shp-infra SCF-01); bus wiring done in SHR-08]** | Service from template; svc-scheduling.yml; local/uat/prod values | 2 | LOC-03, CIT-08 | ENABLER |
-| ◐ | SCF-02 | Scaffold notification worker (code skeleton, pipeline, values, DB/bus wiring) **[partially done, commit c909d5b: notification: skeleton + Mongo outbox/inbox, collections created by make up; NOT YET bus wiring, uat/prod values]** | Service from template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
-| ◐ | SCF-03 | Scaffold clinical service (code skeleton, pipeline, values, MongoDB/bus wiring) **[partially done, commit c909d5b: clinical: skeleton + Mongo + MongoIdentityLinkClient; NOT YET bus wiring, uat/prod values]** | Service from template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
+| ☑ | SCF-02 | Scaffold notification worker (code skeleton, pipeline, values, DB/bus wiring) **[done, commit c909d5b: notification: skeleton + Mongo outbox/inbox + reminder consumer (#612); local/uat/prod values]** | Service from template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
+| ☑ | SCF-03 | Scaffold clinical service (code skeleton, pipeline, values, MongoDB/bus wiring) **[done, commit c909d5b: clinical: skeleton + Mongo + MongoIdentityLinkClient + outbox/inbox/relay; local/uat/prod values]** | Service from template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☑ | SCF-04 | Scaffold document service (code skeleton, pipeline, values, Blob/MongoDB) **[done, commit 8a9aada: document Blob client + bus wiring + uat/prod values (#599)]** | Service from template; svc-document.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☑ | SCF-05 | Scaffold audit worker (code skeleton, pipeline, values, Blob WORM/Log Analytics) **[done, commit 8a9aada: audit Blob WORM + Log Analytics wiring (#599)]** | Service from template; svc-audit.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☑ | SCF-06 | Scaffold ai-service FastAPI (code skeleton, pipeline, values, ai node pool) **[done, commit gitops: ai service scaffold + ai node pool (#10)]** | FastAPI from template; svc-ai.yml; ai node pool | 2 | LOC-04, CIT-08 | ENABLER |
