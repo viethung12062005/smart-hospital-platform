@@ -1,0 +1,88 @@
+# Publish the shared Java libraries (libs/java) to GitHub Packages (Maven). One immutable version per vX.Y.Z tag
+# created on a main commit; the tag is the source of truth for the published version (the repository keeps
+# 0.1.0-SNAPSHOT for local development, the versions plugin stamps the tag version in the runner).
+# Details and the local credential setup: docs/04-devops/github-setup.md section 10.
+name: publish-maven
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version X.Y.Z to publish manually (escape hatch; normally a vX.Y.Z tag triggers this)"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  verify:
+    # Same gate as every other Java change: format, compile -Werror, tests, coverage.
+    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@v0.1.7
+    with:
+      modules: libs/java/shp-service-defaults,libs/java/shp-authz,libs/java/shp-events,libs/java/shp-security,libs/java/shp-web,libs/java/shp-data-postgres,libs/java/shp-data-mongo,libs/java/shp-messaging,libs/java/shp-fhir
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      # Environment variable named by setup-java's server-password input; never printed.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      LIB_MODULES: libs/java/shp-service-defaults,libs/java/shp-authz,libs/java/shp-events,libs/java/shp-security,libs/java/shp-web,libs/java/shp-data-postgres,libs/java/shp-data-mongo,libs/java/shp-messaging,libs/java/shp-fhir
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history so "the release commit is on main" can be checked below.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          # Writes ~/.m2/settings.xml with server id "github", the id used by distributionManagement in pom.xml.
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+      - name: Resolve and validate the release version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
+          else
+            version="${REF_NAME#v}"
+          fi
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$version' is not a valid release version (expected X.Y.Z or X.Y.Z-qualifier)"
+            exit 1
+          fi
+          case "$version" in
+            *-SNAPSHOT)
+              echo "::error::A tagged release must not be a SNAPSHOT version"
+              exit 1
+              ;;
+          esac
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Require the release commit on main
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::The commit being published is not on main"
+            exit 1
+          fi
+      - name: Stamp the release version into the reactor
+        run: mvn -B --no-transfer-progress versions:set -DnewVersion="$VERSION" -DprocessAllModules=true -DgenerateBackupPoms=false
+      - name: Publish the parent POM and the shared libraries
+        run: |
+          set -euo pipefail
+          # The libraries' POMs reference org.shp:shp-parent, so publish the parent first.
+          mvn -B --no-transfer-progress -N deploy
+          mvn -B --no-transfer-progress -pl "$LIB_MODULES" deploy \
+            -DskipTests -Djacoco.skip=true -Dspotless.check.skip=true
