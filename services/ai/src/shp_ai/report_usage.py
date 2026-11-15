@@ -10,6 +10,10 @@ from typing import Any
 
 from shp_ai.usage import default_range, summary
 
+# NFR-C2: a RAG request may cost at most 0.005 USD on average (DeepSeek; Gemini only within the free tier).
+NFR_C2_USD_PER_RAG_REQUEST = 0.005
+RAG_TASK = "rag-answer"
+
 
 def render(db: Any, start: date, end: date, daily_limit: int) -> str:
     out = [
@@ -34,8 +38,25 @@ def render(db: Any, start: date, end: date, daily_limit: int) -> str:
         if group == "day":
             over = [r["key"] for r in rows if (r["inputTokens"] + r["outputTokens"]) >= 0.8 * daily_limit]
             out += ["", f"Days hitting the 80% budget: {', '.join(over) if over else 'none'}."]
+        if group == "task":
+            out += ["", *nfr_c2_lines(rows)]
         out.append("")
     return "\n".join(out)
+
+
+def nfr_c2_lines(rows: list[dict[str, Any]]) -> list[str]:
+    """Compare the average cost of a RAG request with NFR-C2 (0.005 USD); other tasks are reported, not judged."""
+    rag = next((r for r in rows if r["key"] == RAG_TASK), None)
+    if rag is None or not rag["requests"]:
+        return [f"NFR-C2: no {RAG_TASK} call in the period — cannot judge the cost target."]
+    average = rag["costUsd"] / rag["requests"]
+    verdict = "PASS" if average <= NFR_C2_USD_PER_RAG_REQUEST else "FAIL"
+    above = [r["key"] for r in rows if r["requests"] and r["costUsd"] / r["requests"] > NFR_C2_USD_PER_RAG_REQUEST]
+    detail = f"; over the limit: {', '.join(above)}" if above else ""
+    return [
+        f"NFR-C2: {RAG_TASK} average {average:.4f} USD/request "
+        f"(limit {NFR_C2_USD_PER_RAG_REQUEST}) — {verdict}{detail}."
+    ]
 
 
 def main() -> None:  # pragma: no cover - needs MongoDB

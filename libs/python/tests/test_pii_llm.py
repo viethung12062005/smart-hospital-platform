@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from urllib.parse import parse_qs
 
 import httpx
 import pytest
@@ -180,9 +181,21 @@ def test_token_exchange_caches_and_maps_errors() -> None:
     assert tx.exchange("user-token", "clinical") == "exchanged"
     assert tx.exchange("user-token", "clinical") == "exchanged"
     assert len(calls) == 1 and b"grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange" in calls[0]
+    # PY-02: the request must carry the user's token as subject_token and name the target audience.
+    body = parse_qs(calls[0].decode())
+    assert body["subject_token"] == ["user-token"]
+    assert body["subject_token_type"] == ["urn:ietf:params:oauth:token-type:access_token"]
+    assert body["requested_token_type"] == ["urn:ietf:params:oauth:token-type:access_token"]
+    assert body["audience"] == ["clinical"]
+    # The exchange never sends the client secret as the subject; it goes in the basic auth header.
+    assert "client_secret" not in body
     now[0] = 271
     tx.exchange("user-token", "clinical")
     assert len(calls) == 2
+    # A different audience is a different cache key.
+    tx.exchange("user-token", "document")
+    assert len(calls) == 3
+    assert parse_qs(calls[2].decode())["audience"] == ["document"]
     with pytest.raises(ShpError) as e:
         tx.exchange("user-token", "bad")
     assert e.value.info.code == "forbidden"

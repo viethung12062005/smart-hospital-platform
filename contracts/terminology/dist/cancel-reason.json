@@ -1,0 +1,11 @@
+{
+  "concepts": {
+    "duplicate": "Trùng lịch",
+    "other": "Khác",
+    "patient-request": "Bệnh nhân yêu cầu",
+    "practitioner-unavailable": "Bác sĩ không có mặt",
+    "rescheduled": "Đã đổi lịch",
+    "system-noshow-cleanup": "Hệ thống dọn dẹp"
+  },
+  "url": "https://shp.example.org/fhir/CodeSystem/cancel-reason"
+}

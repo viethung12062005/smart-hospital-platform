@@ -251,3 +251,31 @@ def test_output_guard_rejects_directives_and_unsupported_doses() -> None:
         with pytest.raises(OutputRejectedError) as e:
             check_output(Answer(True, answer, ok.citations), chunks)
         assert str(e.value) == reason
+
+
+def test_embedding_failure_degrades_to_keyword_only() -> None:
+    """AI-06: an embedding outage must not take the assistant down; retrieval falls back to BM25."""
+    from shp_ai.assistant.retrieval import retrieve
+    from shp_ai.eval import rag
+    from shp_ai.kb.embedding import EmbeddingError, HashingEmbedder
+    from shp_ai.kb.index import MemoryIndex, Scope
+
+    class BrokenEmbedder:
+        model = "broken"
+        dimensions = 16
+
+        def embed(self, texts: Sequence[str]) -> list[list[float]]:
+            raise EmbeddingError("provider down")
+
+    index = MemoryIndex()
+    rag.build_index(index, HashingEmbedder())
+    scope = Scope("doctor", rag.ALL_DEPARTMENTS)
+    question = next(q for q in rag.questions() if q.answerable).question
+
+    healthy = retrieve(index, HashingEmbedder(), question, scope)
+    degraded = retrieve(index, BrokenEmbedder(), question, scope)
+
+    assert healthy.mode == "hybrid"
+    assert degraded.mode == "keyword-only", degraded.mode
+    assert degraded.chunks, "BM25 still returns candidates when embeddings fail"
+    assert set(c.id for c in degraded.chunks) <= set(index.chunks), "no invented chunks"

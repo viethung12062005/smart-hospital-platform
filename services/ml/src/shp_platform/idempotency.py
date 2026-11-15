@@ -52,7 +52,7 @@ class Idempotency:
         if doc["hash"] != body_hash:
             raise ShpError("idempotency-key-reused")
         if doc["state"] != "done":
-            raise ShpError("invalid-state-transition", "Yêu cầu cùng Idempotency-Key đang được xử lý.")
+            raise ShpError("invalid-state-transition")
         stored: dict[str, Any] = doc["response"]
         return stored
 

@@ -15,7 +15,9 @@ from dataclasses import dataclass, field
 _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")),
     ("ID", re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b")),
-    ("INSURANCE", re.compile(r"\b[A-Z]{2}\d{13}\b")),  # health-insurance card: 2 letters + 13 digits
+    # Health-insurance card: a real card is 2 letters + 13 digits; the synthetic spec uses TEST + 11 digits
+    # (docs/00-synthetic-data.md §3), so both shapes are matched.
+    ("INSURANCE", re.compile(r"\b(?:[A-Z]{2}\d{13}|TEST\d{11})\b")),
     ("NATIONAL_ID", re.compile(r"(?<!\d)(?:\d{12}|\d{9})(?!\d)")),  # CCCD 12 digits, CMND 9 digits
     ("PHONE", re.compile(r"(?<![\w+])(?:\+?84|0)(?:[\s.-]?\d){9}(?!\d)")),
     ("DATE", re.compile(r"\b(?:\d{1,2}[/-]\d{1,2}[/-]\d{4}|\d{4}-\d{2}-\d{2})\b")),
