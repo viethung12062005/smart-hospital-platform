@@ -1,10 +1,10 @@
-# Kiểm thử tự động theo kế hoạch kiểm thử (docs/06-testing). Mọi job chạy không cần Azure.
-#   trace      truy vết yêu cầu ↔ test case: mọi AC/NFR có test case, tham chiếu test tồn tại, tỉ lệ tự động hóa không giảm
-#   e2e        E2E giao diện web ở chế độ dữ liệu giả (Playwright) + trợ năng WCAG AA (axe) + màn hình điện thoại
-#   dast-web   dựng image web, kiểm tiêu đề bảo mật và quét OWASP ZAP baseline (NFR-SEC15)
-#   k6-check   kiểm cú pháp script hiệu năng; chạy thật trên UAT khi có (workflow_dispatch với BASE_URL)
-#   synthetic  bộ sinh dữ liệu giả (DAT-01): ruff, mypy strict và test theo 00-synthetic-data §7
-# Kết quả được tổng hợp vào pr-gate (workflow_run), nên các job này chặn merge khi đỏ.
+# Automated tests from the test plan (docs/06-testing). Every job runs without Azure.
+#   trace      requirement <-> test-case traceability: every AC/NFR has a test case, references exist, automation ratio never drops
+#   e2e        web UI E2E in fake-data mode (Playwright) + WCAG AA accessibility (axe) + mobile viewport
+#   dast-web   build the web image, check security headers and scan with OWASP ZAP baseline (NFR-SEC15)
+#   k6-check   validate the performance-script syntax; run for real on UAT when provided (workflow_dispatch with BASE_URL)
+#   synthetic  fake-data generator (DAT-01): ruff, mypy strict and tests per 00-synthetic-data §7
+# Results are aggregated into pr-gate (workflow_run), so these jobs block a merge when red.
 name: qa
 on:
   pull_request:
@@ -13,10 +13,10 @@ on:
     branches: [main]
     paths: ["web/**", "docs/02-requirements/**", "docs/06-testing/**", "tools/qa/**", "tools/srs/**", "tools/synthetic/**", "tests/**", "libs/**", "services/**", ".github/workflows/qa.yml"]
   schedule:
-    - cron: "0 20 * * *"   # hằng đêm: quét lại ZAP với bản quy tắc mới nhất
+    - cron: "0 20 * * *"   # nightly: rescan ZAP with the latest rules
   workflow_dispatch:
     inputs:
-      perf-base-url: { description: "UAT URL để chạy k6 (để trống: chỉ kiểm cú pháp)", required: false, default: "" }
+      perf-base-url: { description: "UAT URL to run k6 (empty: syntax check only)", required: false, default: "" }
       perf-scenario: { description: "smoke | load | x5 | x10", required: false, default: "smoke" }
 permissions:
   contents: read
@@ -108,7 +108,7 @@ jobs:
           npx playwright test e2e/headers.spec.ts --project=desktop
       - name: OWASP ZAP baseline (TC-SEC-10)
         run: |
-          # ZAP chạy bằng user riêng: thư mục làm việc (gồm file luật) phải ghi được
+          # ZAP runs as its own user: the working directory (including the rules file) must be writable
           mkdir -p zap && cp zap-rules.conf zap/ && chmod 777 zap
           set +e
           docker run --rm --network host -v "$PWD/zap:/zap/wrk:rw" "$ZAP_IMAGE" \
