@@ -1,9 +1,12 @@
 """Data checks before training (ML-14, 16-mlops §2). Any failed condition stops the pipeline; no training.
 
-Error messages mention only column names and rates, never per-row values.
+The column schema, dtypes and the categorical value sets are declared once with pandera (`SCHEMA`); the rules pandera
+cannot express (temporal leakage, the no-show rate window, the missing-rate ceiling) are checked below. Error messages
+mention only column names and rates, never per-row values.
 """
 
 import pandas as pd
+import pandera.pandas as pa
 
 REQUIRED = {
     "appointment_id": "object",
@@ -21,10 +24,40 @@ MAX_MISSING = 0.02
 RATE_RANGE = (0.10, 0.30)
 
 
+# The pandera schema mirrors REQUIRED plus the value sets; pandera reports every failing row, so `check` turns its
+# errors into the same short, PII-free messages the custom checks use.
+SCHEMA = pa.DataFrameSchema(
+    {
+        # Nulls are governed by MAX_MISSING below, so the schema only checks types and value sets here. The datetime
+        # columns stay out of pandera: pandas may hold them at microsecond or nanosecond resolution, and the
+        # timezone-aware check below is stricter and resolution-independent.
+        "appointment_id": pa.Column(str, nullable=True),
+        "patient_id": pa.Column(str, nullable=True),
+        "specialty": pa.Column(str, nullable=True, checks=pa.Check.str_length(min_value=1)),
+        "channel": pa.Column(str, nullable=True, checks=pa.Check.isin(sorted(CHANNELS))),
+        "age_band": pa.Column(str, nullable=True, checks=pa.Check.str_matches(r"\d{1,3}-\d{1,3}|unknown")),
+        "outcome": pa.Column(str, nullable=True, checks=pa.Check.isin(sorted(OUTCOMES))),
+    },
+    strict=False,
+    coerce=False,
+)
+
+
 class DataCheckError(ValueError):
     def __init__(self, problems: list[str]) -> None:
         self.problems = problems
         super().__init__("; ".join(problems))
+
+
+def _pandera_problems(df: pd.DataFrame) -> list[str]:
+    """Column/dtype/value-set failures, summarised per column (no row values, so no PII)."""
+    try:
+        SCHEMA.validate(df, lazy=True)
+    except pa.errors.SchemaErrors as exc:
+        failures = exc.failure_cases
+        counts = failures.groupby("column").size().to_dict()
+        return [f"{col}: {n} row(s) fail the schema" for col, n in sorted(counts.items())]
+    return []
 
 
 def check(df: pd.DataFrame) -> None:
@@ -40,6 +73,7 @@ def check(df: pd.DataFrame) -> None:
             problems.append(f"{col} missing {missing:.1%} (> {MAX_MISSING:.0%})")
     if problems:
         raise DataCheckError(problems)
+    problems.extend(_pandera_problems(df))
     if df["appointment_id"].duplicated().any():
         problems.append("appointment_id is duplicated")
     if not set(df["channel"].dropna()) <= CHANNELS:
