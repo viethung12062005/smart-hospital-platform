@@ -1,30 +1,30 @@
-# Pha 4 — Platform & DevOps (kế hoạch)
+# Phase 4 - Platform & DevOps (plan)
 
-> Trạng thái: **Chưa bắt đầu**, chỉ khởi động sau G3 (kiến trúc được duyệt). Task chi tiết: epic GOV, IAC, CIT, GOP, ENV, OBS trong
-> [backlog](../05-plan/backlog.md). Quyết định nền: [ADR-0009](../03-architecture/adr/0009-cicd-ephemeral-environments.md), [ADR-0010](../03-architecture/adr/0010-repository-strategy.md).
-> Mọi môi trường cloud là **ephemeral**: dựng → kiểm thử → hủy.
-> Cài đặt GitHub từng bước (repo, ruleset, environment, OIDC, bot): [github-setup.md](github-setup.md).
-> Mục tiêu: dựng xong **toàn bộ pipeline và môi trường trước** khi đội dev bắt đầu viết service.
+> Status: **Not started**, only kicks off after G3 (architecture approved). Detailed tasks: epics GOV, IAC, CIT, GOP, ENV, OBS in
+> [backlog](../05-plan/backlog.md). Foundational decisions: [ADR-0009](../03-architecture/adr/0009-cicd-ephemeral-environments.md), [ADR-0010](../03-architecture/adr/0010-repository-strategy.md).
+> Every cloud environment is **ephemeral**: create -> test -> destroy.
+> Step-by-step GitHub setup (repo, ruleset, environment, OIDC, bot): [github-setup.md](github-setup.md).
+> Goal: complete **the entire pipeline and environment before** the dev team starts writing services.
 
-## Đầu ra của pha này
+## Outputs of this phase
 
-| # | Hạng mục | Nội dung | NFR |
+| # | Item | Content | NFR |
 |---|---|---|---|
-| 1 | Chiến lược repo & nhánh | Monorepo; trunk-based (`main` + nhánh ngắn), PR bắt buộc review + CI xanh; CODEOWNERS theo thư mục | NFR-D1 |
-| 2 | Landing zone Azure (Terraform) | Subscription/resource group theo môi trường, VNet hub-spoke, Private Endpoint cho mọi kho dữ liệu, Key Vault, ACR, Log Analytics; remote state trong Storage Account có khóa | NFR-D3, D4, SEC7 |
-| 3 | Cluster (Terraform) | Mỗi môi trường một AKS ephemeral: 3 zone, node pool system/apps/ai, Workload Identity, Azure CNI overlay + Cilium | ADR-0004 |
-| 4 | Platform add-on (GitOps) | Argo CD, Argo Rollouts, KEDA, cert-manager, ingress, Kyverno, Key Vault CSI, OpenTelemetry Collector, managed Prometheus/Grafana | NFR-A7, SEC6, O1 |
-| 5 | CI (GitHub Actions) | Workflow tái sử dụng: build → unit test → SAST → build image → quét lỗ hổng → SBOM → ký cosign → push ACR; chỉ build service có thay đổi | NFR-SEC6, D1 |
-| 6 | CD (GitOps) | Repo/thư mục `deploy/` chứa Helm values theo môi trường; CI cập nhật tag image; Argo CD đồng bộ; `uat` và `prod` qua PR có duyệt; canary + rollback tự động theo metric | NFR-A7, D2 |
-| 7 | Bảo mật pipeline | Đăng nhập Azure bằng OIDC federated credential (không lưu secret trong GitHub); quyền tối thiểu theo môi trường; GitHub Environments có người duyệt | NFR-SEC4 |
-| 8 | Observability nền | Dashboard chuẩn cho mọi service (RED metrics), cảnh báo burn-rate SLO, log không PII | NFR-O1–O4 |
-| 9 | Service template ("walking skeleton") | Một service Java và một service Python mẫu đi trọn pipeline: commit → local K8s → uat → prod (dựng tạm) → rollback → hủy | Gate G4 |
-| 10 | **Môi trường dev local** | Bộ công cụ `dev/` (kind + Helm + Makefile): toàn bộ phụ thuộc và service chạy trên cụm K8s nhỏ của máy dev + dữ liệu giả seed tự động. Xem [ADR-0011](../03-architecture/adr/0011-two-environments-local-kubernetes.md) | NFR-SEC9 |
-| 11 | FinOps | Tag chi phí + TTL, budget alert, cost-guard báo môi trường sống quá hạn | NFR-C1, C3 |
+| 1 | Repository & branch strategy | Monorepo; trunk-based (`main` + short-lived branches), PRs require review + green CI; CODEOWNERS by directory | NFR-D1 |
+| 2 | Azure landing zone (Terraform) | Subscription/resource group per environment, hub-spoke VNet, Private Endpoint for every data store, Key Vault, ACR, Log Analytics; remote state in a locked Storage Account | NFR-D3, D4, SEC7 |
+| 3 | Cluster (Terraform) | One ephemeral AKS per environment: 3 zones, system/apps/ai node pools, Workload Identity, Azure CNI overlay + Cilium | ADR-0004 |
+| 4 | Platform add-ons (GitOps) | Argo CD, Argo Rollouts, KEDA, cert-manager, ingress, Kyverno, Key Vault CSI, OpenTelemetry Collector, managed Prometheus/Grafana | NFR-A7, SEC6, O1 |
+| 5 | CI (GitHub Actions) | Reusable workflow: build -> unit test -> SAST -> build image -> vulnerability scan -> SBOM -> cosign signing -> push to ACR; only build services that changed | NFR-SEC6, D1 |
+| 6 | CD (GitOps) | `deploy/` repo/directory holds Helm values per environment; CI updates the image tag; Argo CD syncs; `uat` and `prod` via PR with approval; canary + automatic rollback based on metrics | NFR-A7, D2 |
+| 7 | Pipeline security | Azure login via OIDC federated credential (no secrets stored in GitHub); least privilege per environment; GitHub Environments with reviewers | NFR-SEC4 |
+| 8 | Baseline observability | Standard dashboards for every service (RED metrics), SLO burn-rate alerts, logs without PII | NFR-O1-O4 |
+| 9 | Service template ("walking skeleton") | One sample Java service and one sample Python service going through the whole pipeline: commit -> local K8s -> uat -> prod (temporary) -> rollback -> destroy | Gate G4 |
+| 10 | **Local dev environment** | `dev/` toolkit (kind + Helm + Makefile): all dependencies and services run on a small K8s cluster on the dev machine + automatically seeded synthetic data. See [ADR-0011](../03-architecture/adr/0011-two-environments-local-kubernetes.md) | NFR-SEC9 |
+| 11 | FinOps | Cost tags + TTL, budget alerts, cost-guard reporting environments alive past their deadline | NFR-C1, C3 |
 
 ## Gate G4
-Service mẫu đi được từ commit đến `prod` chỉ qua pipeline; rollback trong ≤ 5 phút; image chưa ký bị
-cluster từ chối; dashboard hiển thị trace xuyên service. Đạt G4 thì đội dev mới bắt đầu Pha 5.
+The sample services can go from commit to `prod` only through the pipeline; rollback within <= 5 minutes; unsigned images are
+rejected by the cluster; the dashboard shows traces across services. Once G4 is met, the dev team starts Phase 5.
 
-> Lưu ý vận hành: Terraform chỉ chạy `fmt`/`validate`/`plan` trong CI; `apply` lên Azure thật do
-> DevOps chạy có kiểm soát (environment có người duyệt).
+> Operational note: Terraform only runs `fmt`/`validate`/`plan` in CI; `apply` to the real Azure is run by
+> DevOps in a controlled manner (environment with reviewers).

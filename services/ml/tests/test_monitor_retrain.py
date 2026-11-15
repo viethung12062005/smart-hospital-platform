@@ -1,4 +1,4 @@
-"""US-065, US-074: giám sát hằng ngày → yêu cầu huấn luyện lại → job huấn luyện lại (ML-10, ML-20, ML-23)."""
+"""US-065, US-074: daily monitoring → retraining request → retrain job (ML-10, ML-20, ML-23)."""
 
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -32,7 +32,8 @@ def prod_registry(tmp_path_factory: pytest.TempPathFactory) -> FileRegistry:
 
 
 def _seed_recent(db: Any, holder: ModelHolder, facts: pd.DataFrame, n: int) -> None:
-    """Giả lập vận hành: n lịch hẹn gần đây đã được chấm điểm và đã có kết quả (đặc trưng lấy từ dữ liệu facts)."""
+    """Simulate operation: n recent appointments already scored and with a known outcome (features taken from the
+    facts data)."""
     model = holder.production()[0]  # type: ignore[index]
     frame = training_frame(facts).tail(n).reset_index(drop=True)
     scores = model.predict_frame(frame)
@@ -102,9 +103,10 @@ def test_drift_creates_request_and_retrain_registers_candidate_only(
     assert r.drift is not None and r.drift.alert
     assert r.decision.run and r.request_id is not None
     again = run_daily(db, holder, NOW)
-    assert again.decision.reason == "already-running" and again.request_id is None  # không tạo yêu cầu trùng
+    # does not create a duplicate request
+    assert again.decision.reason == "already-running" and again.request_id is None
 
-    # lịch sử đã có kết quả (24 tháng) cho job huấn luyện lại
+    # history with known outcomes (24 months) for the retrain job
     hist = shifted[shifted["start_at"] < pd.Timestamp(NOW - timedelta(days=3))]
     docs = []
     for r_ in hist.to_dict("records"):
@@ -128,7 +130,7 @@ def test_drift_creates_request_and_retrain_registers_candidate_only(
     prod_before = prod_registry.alias_version("production")
     done = run_pending(client, db, prod_registry, tmp_path, NOW)
     assert done is not None and done["status"] in ("registered", "rejected"), done
-    assert prod_registry.alias_version("production") == prod_before  # không bao giờ tự đổi production
+    assert prod_registry.alias_version("production") == prod_before  # never changes production on its own
     if done["status"] == "registered":
         assert prod_registry.alias_version("candidate") == done["candidateVersion"]
     assert Path(done["datasetPath"]).exists() and done["datasetSha256"] in done["datasetPath"]
@@ -137,6 +139,6 @@ def test_drift_creates_request_and_retrain_registers_candidate_only(
     assert audit_evt["payload"]["data"]["actor"]["role"] == "system"
     state = db.retrain_state.find_one({"_id": "no-show"})
     assert state["running"] is False and len(state["autoRuns"]) == 1
-    assert run_pending(client, db, prod_registry, tmp_path, NOW) is None  # không còn yêu cầu
+    assert run_pending(client, db, prod_registry, tmp_path, NOW) is None  # no requests left
     after = run_daily(db, holder, NOW + timedelta(days=1))
-    assert after.decision.reason in ("cooldown", "no-trigger")  # cooldown 7 ngày
+    assert after.decision.reason in ("cooldown", "no-trigger")  # 7-day cooldown

@@ -10,9 +10,9 @@ import org.shp.events.EventSchemas;
 import org.springframework.messaging.Message;
 
 /**
- * Dựng consumer cho Spring Cloud Stream theo 13-events §1.1: parse + kiểm schema, bỏ qua type không
- * đăng ký, xử lý đúng một lần qua inbox. Handler ném exception → binder không ack → giao lại, quá 5
- * lần thì vào DLQ.
+ * Build consumers for Spring Cloud Stream per 13-events §1.1: parse + validate the schema, skip
+ * unregistered types, process exactly once through the inbox. Handler throws exception → binder
+ * does not ack → redelivery, more than 5 times → DLQ.
  *
  * <pre>{@code
  * @Bean
@@ -34,7 +34,7 @@ public final class EventConsumers {
         throw new PoisonEventException(event.id(), event.type(), List.of("envelope"));
       }
       if (!accepted.contains(event.type())) {
-        return; // không phải việc của consumer này
+        return; // not this consumer's job
       }
       List<String> errors = EventSchemas.validate(event);
       if (!errors.isEmpty()) {
@@ -52,7 +52,7 @@ public final class EventConsumers {
     }
   }
 
-  /** "data /patientId: ..." → "data /patientId": bỏ phần thông điệp có thể chứa giá trị. */
+  /** "data /patientId: ..." → "data /patientId": drop the message part that may contain values. */
   private static List<String> locations(List<String> errors) {
     return errors.stream()
         .map(e -> e.contains(":") ? e.substring(0, e.indexOf(':')) : e)

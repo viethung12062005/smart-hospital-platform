@@ -1,4 +1,5 @@
-"""`pending_actions` (06 §2): đề xuất đặt/hủy lịch chờ người dùng xác nhận trên giao diện (AC-14.1). TTL 5 phút."""
+"""`pending_actions` (06 §2): proposed booking/cancel waiting for the user to confirm in the UI (AC-14.1). TTL 5
+minutes."""
 
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -18,7 +19,7 @@ Doc = dict[str, Any]
 def ensure_indexes(db: Database[Doc]) -> None:
     db.pending_actions.create_index(
         [("expiresAt", ASCENDING)], expireAfterSeconds=0
-    )  # expiresAt là thời điểm tuyệt đối
+    )  # expiresAt is an absolute timestamp
 
 
 def create(
@@ -39,7 +40,7 @@ def create(
 
 
 def get_for_confirm(db: Database[Doc], action_id: str, conversation_id: str, now: datetime | None = None) -> Doc:
-    """403 nếu không phải chủ hội thoại; 422 confirmation-expired nếu quá 5 phút hoặc đã xác nhận rồi."""
+    """403 if not the conversation owner; 422 confirmation-expired if older than 5 minutes or already confirmed."""
     doc = db.pending_actions.find_one({"_id": action_id})
     if doc is None:
         raise ShpError("not-found")

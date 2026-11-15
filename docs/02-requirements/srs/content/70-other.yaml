@@ -1,58 +1,58 @@
-# Chương 6 (Yêu cầu khác), 7 (Tích hợp), 8 (Chuyển đổi dữ liệu).
+# Chapter 6 (Other requirements), 7 (Integration), 8 (Data migration).
 other:
-  - name: Quy ước trường nhập liệu chung
-    intro: Giao diện dùng thư viện thành phần Mantine; bảng dưới đây là quy ước chung, màn hình cụ thể chỉ ghi phần khác.
+  - name: Common input field conventions
+    intro: The interface uses the Mantine component library; the table below gives the common conventions, and individual screens state only what differs.
     table:
-      header: ["Loại trường", "Quy ước"]
+      header: ["Field type", "Convention"]
       widths: [4.0, 12.5]
       rows:
-        - ["Văn bản một dòng", "Cắt khoảng trắng đầu/cuối; độ dài tối đa hiển thị bộ đếm khi còn ≤ 20 ký tự."]
-        - ["Văn bản nhiều dòng", "Giữ xuống dòng; không cho phép HTML; hiển thị được mã hóa."]
-        - ["Ngày", "Định dạng DD/MM/YYYY; lưu theo ISO 8601; không cho chọn ngày ngoài khoảng hợp lệ."]
-        - ["Ngày giờ", "Hiển thị HH:mm DD/MM/YYYY theo múi giờ Asia/Ho_Chi_Minh; lưu UTC."]
-        - ["Số điện thoại", "Chuẩn hóa về dạng +84; hiển thị che 4 số giữa ở danh sách nhân viên xem."]
-        - ["Danh sách chọn", "Giá trị lấy từ bộ mã của hệ thống (contracts/terminology); hiển thị theo ngôn ngữ người dùng."]
-        - ["Nút gửi", "Vô hiệu trong lúc chờ phản hồi; thao tác tạo bản ghi luôn kèm Idempotency-Key."]
-  - name: Cấu hình thông điệp
+        - ["Single-line text", "Trim leading/trailing whitespace; show a character counter when 20 characters or fewer remain."]
+        - ["Multi-line text", "Preserve line breaks; HTML is not allowed; output is encoded."]
+        - ["Date", "Shown as DD/MM/YYYY; stored as ISO 8601; dates outside the valid range cannot be selected."]
+        - ["Date and time", "Shown as HH:mm DD/MM/YYYY in the Asia/Ho_Chi_Minh time zone; stored in UTC."]
+        - ["Phone number", "Normalized to the +84 form; shown with the 4 middle digits masked in staff-facing lists."]
+        - ["Select lists", "Values come from the system code sets (contracts/terminology); labels are shown in the user's language."]
+        - ["Submit buttons", "Disabled while awaiting the response; create operations always carry an Idempotency-Key."]
+  - name: Message configuration
     table:
-      header: ["Loại thông điệp", "Cách hiển thị"]
+      header: ["Message type", "Display"]
       widths: [4.0, 12.5]
       rows:
-        - ["Lỗi tại trường (IEM)", "Chữ đỏ ngay dưới trường lỗi, viền trường màu đỏ; đọc được bởi trình đọc màn hình (aria-describedby)."]
-        - ["Thông điệp lỗi (EMSG)", "Hộp thông báo có nút “Đóng”; không tự đóng; không chứa chi tiết kỹ thuật; có mã tham chiếu (trace-id rút gọn) để báo hỗ trợ."]
-        - ["Hộp thoại xác nhận (CFD)", "Tiêu đề “Xác nhận”, nút chính và nút “Hủy”; bấm ra ngoài không đóng; hành động không hoàn tác được dùng nút màu cảnh báo."]
-        - ["Thông báo thành công (SMSG)", "Thông báo góc màn hình, tự đóng sau 5 giây."]
-  - name: Danh sách và phân trang
+        - ["Field-level error (IEM)", "Red text directly below the failing field, with a red field border; readable by screen readers (aria-describedby)."]
+        - ["Error message (EMSG)", "An alert box with a \"Close\" button; it does not close automatically; it contains no technical details; it includes a reference code (shortened trace-id) for support."]
+        - ["Confirmation dialog (CFD)", "Title \"Confirm\", a primary button and a \"Cancel\" button; clicking outside does not close it; destructive actions use a warning-colored button."]
+        - ["Success message (SMSG)", "A corner toast that closes automatically after 5 seconds."]
+  - name: Lists and pagination
     bullets:
-      - "Theo [[CBR:pagination]]; hiển thị tổng số bản ghi khi tính được rẻ, nếu không hiển thị “Trang sau”."
-      - "Cột dài cắt bằng “…” kèm tooltip; tiêu đề cột sắp xếp được hiển thị biểu tượng mũi tên."
-      - "Tìm kiếm trong danh sách theo logic “chứa”, không phân biệt dấu và hoa thường; ô tìm trống thì quay về mặc định."
-      - "Không có thao tác hàng loạt trên dữ liệu lâm sàng (không xóa/xuất hàng loạt hồ sơ)."
-  - name: Ngôn ngữ, định dạng và trợ năng
+      - "Per [[CBR:pagination]]; show the total number of records when it can be computed cheaply, otherwise show \"Next page\"."
+      - "Long columns are truncated with \"...\" and a tooltip; sortable column headers show an arrow icon."
+      - "In-list search uses \"contains\" logic, ignoring diacritics and letter case; an empty search box restores the defaults."
+      - "No bulk actions on clinical data (no bulk deletion or export of records)."
+  - name: Language, formatting and accessibility
     bullets:
-      - "Tiếng Việt mặc định, tiếng Anh tùy chọn; mọi chuỗi giao diện và thông điệp lỗi API có bản dịch."
-      - "Đáp ứng WCAG 2.1 AA ở cổng bệnh nhân (độ tương phản, điều hướng bàn phím, nhãn trường) – NFR-U1."
-      - "Giao diện responsive từ 360 px; các thao tác chính của bệnh nhân dùng được trên điện thoại."
+      - "Vietnamese by default, English optional; every interface string and API error message has a translation."
+      - "Meets WCAG 2.1 AA on the patient portal (contrast, keyboard navigation, field labels) - NFR-U1."
+      - "The interface is responsive from 360 px; the main patient actions work on a phone."
 
 integration:
   intro: >-
-    Hệ thống tích hợp các hệ thống bên ngoài sau. Mọi tích hợp dùng kết nối mã hóa, xác thực bằng danh tính được quản lý
-    (không lưu mật khẩu trong code), và không gửi dữ liệu nhiều hơn mức cần thiết.
+    The system integrates with the following external systems. Every integration uses an encrypted connection, authentication
+    with a managed identity (no passwords stored in code), and sends no more data than necessary.
   rows:
-    - ["Nhà cung cấp định danh (Keycloak)", "Vào", "OIDC, Authorization Code + PKCE; token JWT có roles, fhirUser, amr", "Không đăng nhập được: hiển thị thông báo; không có chế độ đăng nhập dự phòng bỏ qua MFA."]
-    - ["Nhà cung cấp gửi tin", "Ra", "API HTTPS gửi email/SMS/push; nội dung theo mẫu thông báo, không có dữ liệu lâm sàng", "Thử lại 5 lần, kênh dự phòng, hàng lỗi + cảnh báo."]
-    - ["Nhà cung cấp mô hình ngôn ngữ (DeepSeek, Gemini)", "Ra", "API HTTPS tương thích OpenAI; văn bản đã che định danh", "Chuỗi model dự phòng, mô hình nội bộ (Ollama), cuối cùng trả kết quả không dùng AI."]
-    - ["Quét mã độc (Defender for Storage / ClamAV)", "Ra/Vào", "Sự kiện kết quả quét qua hàng đợi", "Chưa có kết quả quét thì tài liệu ở “pending-scan”, không dùng được."]
-    - ["Azure Service Bus / RabbitMQ", "Nội bộ", "Sự kiện CloudEvents giữa các service (topic shp-events)", "Outbox/inbox, retry, dead-letter."]
-    - ["Azure Monitor / Application Insights", "Ra", "OpenTelemetry (trace, metric, log không PII)", "Mất kết nối không ảnh hưởng nghiệp vụ."]
+    - ["Identity provider (Keycloak)", "Inbound", "OIDC, Authorization Code + PKCE; JWT tokens with roles, fhirUser, amr", "Cannot log in: show a message; there is no fallback login mode that bypasses MFA."]
+    - ["Messaging provider", "Outbound", "HTTPS API for email/SMS/push; content follows message templates and contains no clinical data", "Retry 5 times, fallback channel, dead-letter queue + alert."]
+    - ["Language model providers (DeepSeek, Gemini)", "Outbound", "OpenAI-compatible HTTPS API; text with identifiers masked", "Fallback model chain, local model (Ollama), and finally a response that does not use AI."]
+    - ["Malware scanning (Defender for Storage / ClamAV)", "Outbound/Inbound", "Scan-result events through a queue", "Until a scan result exists, the document is \"pending-scan\" and cannot be used."]
+    - ["Azure Service Bus / RabbitMQ", "Internal", "CloudEvents between services (topic shp-events)", "Outbox/inbox, retry, dead-letter."]
+    - ["Azure Monitor / Application Insights", "Outbound", "OpenTelemetry (traces, metrics, logs without PII)", "A connection loss does not affect business operations."]
 
 migration:
   intro: >-
-    Không áp dụng chuyển đổi dữ liệu từ hệ thống cũ trong phạm vi dự án. Hệ thống khởi đầu bằng dữ liệu giả sinh theo
-    docs/00-synthetic-data.md; công cụ nạp dữ liệu (DAT-03) gọi API công khai nên mọi quy tắc nghiệp vụ, phân quyền và
-    audit đều được áp dụng.
+    Data migration from a legacy system is not applicable within the project scope. The system starts with synthetic data generated
+    according to docs/00-synthetic-data.md; the data loader (DAT-03) calls public APIs, so every business rule, authorization check and
+    audit applies.
   scope:
-    - "Dữ liệu giả: bệnh nhân, bác sĩ, lịch làm việc, lịch hẹn, lần khám, sinh hiệu, chẩn đoán, tài liệu mẫu – tiếng Việt, theo quy mô năm đầu."
-    - "Danh mục: chuyên khoa, lý do hủy, ICD-10, LOINC sinh hiệu, loại tài liệu (contracts/terminology)."
-    - "Khi đưa vào sử dụng thật: cần SRS chuyển đổi dữ liệu riêng và hồ sơ đánh giá tác động xử lý dữ liệu (NFR-SEC21)."
-  mapping: "N/A trong phạm vi hiện tại."
+    - "Synthetic data: patients, doctors, schedules, appointments, encounters, vital signs, diagnoses, sample documents - in Vietnamese, at first-year scale."
+    - "Code sets: specialties, cancellation reasons, ICD-10, LOINC vital signs, document types (contracts/terminology)."
+    - "Before going live: a separate data migration SRS and a data processing impact assessment (NFR-SEC21) are required."
+  mapping: "N/A within the current scope."

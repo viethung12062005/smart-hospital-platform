@@ -3,10 +3,11 @@ package org.shp.web.auth;
 import java.util.Optional;
 
 /**
- * Nguồn liên kết: clinical đọc DB; service khác gọi HTTP nội bộ ({@link HttpIdentityLinkClient}).
+ * Source of links: clinical reads the DB; other services call the internal HTTP API ({@link
+ * HttpIdentityLinkClient}).
  */
 @FunctionalInterface
 public interface IdentityLinkClient {
-  /** Rỗng nếu chưa liên kết. */
+  /** Empty if not linked yet. */
   Optional<IdentityLink> find(String subject);
 }

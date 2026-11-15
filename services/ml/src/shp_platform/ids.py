@@ -1,4 +1,4 @@
-"""UUIDv7 (RFC 9562): id event và bản ghi sắp theo thời gian, giống org.shp.events.Uuids."""
+"""UUIDv7 (RFC 9562): event and record ids sort by time, like org.shp.events.Uuids."""
 
 import secrets
 import time

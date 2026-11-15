@@ -1,4 +1,4 @@
-# Values cho chart microservice khi chạy trên kind (make deploy SVC=ai).
+# Values for the microservice chart when running on kind (make deploy SVC=ai).
 image:
   repository: localhost/shp-ai
   tag: dev

@@ -52,7 +52,7 @@ def test_live_performance_needs_500_labels() -> None:
     y = pd.Series(rng.integers(0, 2, 400))
     assert live_performance(y, pd.Series(rng.random(400)), 0.8).alert is False
     y = pd.Series(rng.integers(0, 2, 800))
-    rep = live_performance(y, pd.Series(rng.random(800)), 0.8)  # điểm ngẫu nhiên: AUC ≈ 0,5
+    rep = live_performance(y, pd.Series(rng.random(800)), 0.8)  # random scores: AUC ≈ 0.5
     assert rep.alert and rep.auc is not None and rep.auc < 0.6
 
 

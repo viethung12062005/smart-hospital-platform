@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-fhir</artifactId>
-  <name>shp-fhir — lõi FHIR R4: parse/serialize JSON (HAPI FHIR)</name>
+  <name>shp-fhir — FHIR R4 core: JSON parse/serialize (HAPI FHIR)</name>
 
   <dependencies>
     <dependency>
@@ -21,7 +21,7 @@
       <artifactId>hapi-fhir-structures-r4</artifactId>
     </dependency>
     <dependency>
-      <!-- Kiểm cú pháp nghiêm ngặt trước HAPI (khóa trùng, null) -->
+      <!-- Strict syntax pre-check before HAPI (duplicate keys, nulls) -->
       <groupId>tools.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>

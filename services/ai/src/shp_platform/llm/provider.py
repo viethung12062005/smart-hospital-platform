@@ -1,7 +1,9 @@
-"""Giao diện provider và adapter OpenAI-compatible (PY-07, ADR-0013).
+"""Provider interface and OpenAI-compatible adapter (PY-07, ADR-0013).
 
-DeepSeek, Gemini (endpoint OpenAI-compatible) và Ollama đều nói chung một API /chat/completions, nên một adapter đủ.
-Lỗi được chuẩn hóa: timeout, rate-limited (429), server (5xx), bad-request (4xx khác) để router quyết định chuyển model.
+DeepSeek, Gemini (OpenAI-compatible endpoint) and Ollama all speak the same /chat/completions API, so one adapter
+suffices.
+Errors are normalized: timeout, rate-limited (429), server (5xx), bad-request (other 4xx) so the router can decide
+to switch models.
 """
 
 import time
@@ -19,9 +21,9 @@ ErrorKind = Literal["timeout", "rate-limited", "server", "bad-request", "invalid
 class ChatMessage:
     role: Role
     content: str
-    # chỉ dùng với role="tool": id của ToolCall đang trả lời (OpenAI-compatible yêu cầu)
+    # only with role="tool": id of the ToolCall being answered (required by OpenAI-compatible APIs)
     tool_call_id: str | None = None
-    # chỉ dùng với role="assistant" khi chính lượt này đã gọi tool (để ghép lại lịch sử hội thoại)
+    # only with role="assistant" when this turn called tools (to rebuild conversation history)
     tool_calls: "tuple[ToolCall, ...] | None" = None
 
 
@@ -29,7 +31,7 @@ class ChatMessage:
 class ToolCall:
     id: str
     name: str
-    arguments: str  # JSON thô do model trả; người gọi tự json.loads và validate (không tin cậy mù)
+    arguments: str  # raw JSON returned by the model; the caller does json.loads and validates (never trust blindly)
 
 
 @dataclass(frozen=True)
@@ -51,7 +53,7 @@ class LlmError(Exception):
 
 class Provider(Protocol):
     name: str
-    external: bool  # True: nằm ngoài Azure → bắt buộc che PII
+    external: bool  # True: outside Azure -> PII redaction is mandatory
 
     def complete(
         self,
@@ -144,7 +146,7 @@ class OpenAICompatibleProvider:
 
 
 class FakeProvider:
-    """Provider giả cho dev và test: trả lời theo hàm hoặc ném lỗi theo kịch bản; ghi lại prompt đã nhận."""
+    """Fake provider for dev and tests: answer via a function or raise scripted errors; records the prompts received."""
 
     def __init__(
         self,

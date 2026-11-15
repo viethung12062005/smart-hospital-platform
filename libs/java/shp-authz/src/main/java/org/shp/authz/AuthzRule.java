@@ -3,12 +3,11 @@ package org.shp.authz;
 import java.util.List;
 
 /**
- * Một dòng của ma trận: (resource, action, role) được phép khi mọi predicate trong {@code when}
- * thỏa.
+ * One matrix row: (resource, action, role) is allowed when every predicate in {@code when} holds.
  *
- * @param purpose purposeOfUse gắn với quyết định (có thể null)
- * @param fields các trường được phép sửa (rỗng = không giới hạn)
- * @param hide các trường phải ẩn khỏi kết quả
+ * @param purpose purposeOfUse attached to the decision (may be null)
+ * @param fields fields that may be modified (empty = unrestricted)
+ * @param hide fields that must be hidden from the result
  */
 public record AuthzRule(
     String id,

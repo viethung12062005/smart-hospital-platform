@@ -1,226 +1,226 @@
-# Chương 4 – Màn hình. components: [Thành phần, Loại, Sửa được, Bắt buộc, Mặc định, Mô tả]
+# Chapter 4 - Screens. components: [Component, Type, Editable, Required, Default, Description]
 screens_intro: >-
-  Chương này mô tả các màn hình và thuộc tính của chúng, gắn với use case ở Chương 3 và site map ở Chương 2. Ảnh mockup
-  lấy từ giao diện web đang phát triển (chế độ dữ liệu giả) hoặc bản phác thảo; màu sắc và phông chữ theo hệ thiết kế
-  của giao diện web. Mọi màn hình hiển thị dữ liệu bệnh nhân tuân theo [[CBR:no-pii]] và [[CMUC:session]].
+  This chapter describes the screens and their components, linked to the use cases in Chapter 3 and the site map in Chapter 2.
+  Mockup images come from the web interface under development (synthetic-data mode) or from sketches; colors and fonts follow
+  the web interface design system. Every screen that displays patient data follows [[CBR:no-pii]] and [[CMUC:session]].
 
 screens:
-  - portal: Cổng bệnh nhân
+  - portal: Patient portal
     items:
       - key: register
-        name: Đăng ký tài khoản
-        purpose: Bệnh nhân mới nhập thông tin hành chính và đồng ý điều khoản xử lý dữ liệu.
-        access: "Sau khi tạo tài khoản bằng số điện thoại hoặc email và xác minh, đăng nhập lần đầu khi chưa có hồ sơ."
+        name: Create an account
+        purpose: A new patient enters administrative information and accepts the data processing terms.
+        access: "After creating an account with a phone number or email and verifying it, first login while no record exists."
         uc: [register, manage-consent]
         components:
-          - ["Họ và tên", "Textbox", "Có", "Có", "N/A", "2–100 ký tự."]
-          - ["Ngày sinh", "Date picker", "Có", "Có", "N/A", "Không ở tương lai."]
-          - ["Giới tính", "Dropdown", "Có", "Có", "N/A", "Nam, Nữ, Khác, Không rõ."]
-          - ["Số điện thoại", "Textbox", "Có", "Có", "Từ tài khoản nếu đăng ký bằng SĐT", "Lấy từ tài khoản thì không sửa; nhập mới (tài khoản email) phải xác minh mã OTP."]
-          - ["Mã OTP", "Textbox", "Có*", "Có*", "Trống", "*Chỉ hiện khi số điện thoại cần xác minh; 6 chữ số, hết hạn sau 5 phút."]
-          - ["Email", "Label", "Không", "N/A", "Từ tài khoản (nếu có)", "Không sửa."]
-          - ["Đồng ý điều khoản xử lý dữ liệu", "Checkbox", "Có", "Có", "Không tích", "Bắt buộc tích mới gửi được; liên kết xem toàn văn điều khoản."]
-          - ["Cho phép xử lý dữ liệu bằng AI", "Checkbox", "Có", "Không", "Không tích", "Tùy chọn riêng, có giải thích."]
-          - ["Đăng ký", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:register]]."]
+          - ["Full name", "Textbox", "Yes", "Yes", "N/A", "2-100 characters."]
+          - ["Date of birth", "Date picker", "Yes", "Yes", "N/A", "Not in the future."]
+          - ["Gender", "Dropdown", "Yes", "Yes", "N/A", "Male, Female, Other, Unknown."]
+          - ["Phone number", "Textbox", "Yes", "Yes", "From the account if registered by phone", "Not editable when taken from the account; a newly entered number (email account) must be verified with an OTP code."]
+          - ["OTP code", "Textbox", "Yes*", "Yes*", "Empty", "*Shown only when the phone number needs verification; 6 digits, expires after 5 minutes."]
+          - ["Email", "Label", "No", "N/A", "From the account (if any)", "Not editable."]
+          - ["Accept the data processing terms", "Checkbox", "Yes", "Yes", "Unchecked", "Must be checked to submit; link to view the full terms."]
+          - ["Allow processing data with AI", "Checkbox", "Yes", "No", "Unchecked", "Separate option, with an explanation."]
+          - ["Create account", "Button", "N/A", "N/A", "N/A", "Triggers [[UC:register]]."]
       - key: claim-record
-        name: Nhận hồ sơ đã có
-        purpose: Người từng khám tại bệnh viện liên kết tài khoản với hồ sơ cũ bằng mã OTP.
-        access: "Sau khi đăng nhập lần đầu → “Tôi đã từng khám tại bệnh viện”; hoặc từ gợi ý khi đăng ký bị trùng hồ sơ."
+        name: Claim an existing record
+        purpose: A person who has visited the hospital links their account to the old record using an OTP code.
+        access: "After first login -> \"I have visited the hospital before\"; or from the suggestion when registration finds a duplicate record."
         uc: [claim-record]
         components:
-          - ["Họ và tên", "Textbox", "Có", "Có", "Trống", "Như trên hồ sơ tại bệnh viện."]
-          - ["Ngày sinh", "Date picker", "Có", "Có", "Trống", "Không ở tương lai."]
-          - ["Số điện thoại đã đăng ký tại bệnh viện", "Textbox", "Có", "Có", "Trống", "Định dạng Việt Nam; mã OTP chỉ gửi tới số lưu trong hồ sơ."]
-          - ["Mã OTP", "Textbox", "Có*", "Có*", "Trống", "*Hiện sau khi gửi yêu cầu; 6 chữ số, hết hạn sau 5 phút."]
-          - ["Gửi bằng SMS", "Link", "Có*", "N/A", "N/A", "*Hiện sau 30 giây nếu chưa nhận được mã qua Zalo."]
-          - ["Gửi yêu cầu", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:claim-record]]."]
+          - ["Full name", "Textbox", "Yes", "Yes", "Empty", "As on the hospital record."]
+          - ["Date of birth", "Date picker", "Yes", "Yes", "Empty", "Not in the future."]
+          - ["Phone number registered at the hospital", "Textbox", "Yes", "Yes", "Empty", "Vietnamese format; the OTP code is sent only to the number stored in the record."]
+          - ["OTP code", "Textbox", "Yes*", "Yes*", "Empty", "*Shown after submitting the request; 6 digits, expires after 5 minutes."]
+          - ["Send by SMS", "Link", "Yes*", "N/A", "N/A", "*Shown after 30 seconds if the code has not arrived via Zalo."]
+          - ["Submit request", "Button", "N/A", "N/A", "N/A", "Triggers [[UC:claim-record]]."]
       - key: relatives
-        name: Hồ sơ người thân
-        purpose: Xem, thêm và thu hồi các hồ sơ mà tài khoản đang quản lý (con, người thân).
-        access: "Trang chủ → “Hồ sơ người thân”."
+        name: Relatives' records
+        purpose: View, add and revoke the records managed by the account (children, relatives).
+        access: "Home -> \"Relatives' records\"."
         uc: [add-dependent, link-relative, revoke-link]
-        data_source: "Liên kết đang “active” hoặc “pending” của tài khoản hiện tại."
-        sorting: "Bản thân trước, sau đó theo họ tên."
+        data_source: "Links of the current account that are \"active\" or \"pending\"."
+        sorting: "Self first, then by full name."
         components:
-          - ["Danh sách hồ sơ", "Grid", "Không", "N/A", "N/A", "Họ tên, quan hệ, phạm vi, ngày hết hạn; hồ sơ sắp hết hạn có nhãn nhắc gia hạn."]
-          - ["Thêm con", "Button", "N/A", "N/A", "N/A", "Mở form hồ sơ người dưới 16 tuổi ([[UC:add-dependent]])."]
-          - ["Thêm người thân", "Button", "N/A", "N/A", "N/A", "Mở form liên kết người lớn: họ tên, ngày sinh, SĐT, phạm vi ([[UC:link-relative]])."]
-          - ["Thu hồi", "Button", "N/A", "N/A", "N/A", "Có xác nhận; kích hoạt [[UC:revoke-link]]."]
+          - ["Record list", "Grid", "No", "N/A", "N/A", "Full name, relationship, scope, expiry date; records nearing expiry carry a renewal reminder label."]
+          - ["Add child", "Button", "N/A", "N/A", "N/A", "Opens the record form for a person under 16 ([[UC:add-dependent]])."]
+          - ["Add relative", "Button", "N/A", "N/A", "N/A", "Opens the adult-link form: full name, date of birth, phone number, scope ([[UC:link-relative]])."]
+          - ["Revoke", "Button", "N/A", "N/A", "N/A", "With confirmation; triggers [[UC:revoke-link]]."]
       - key: find-doctor
-        name: Tìm bác sĩ và khung giờ
-        purpose: Tìm khung giờ trống theo chuyên khoa, bác sĩ, ngày.
-        access: "Trang chủ → “Đặt lịch khám”."
+        name: Find a doctor and a time slot
+        purpose: Find free time slots by specialty, doctor and date.
+        access: "Home -> \"Book an appointment\"."
         uc: [find-slot, book]
-        data_source: "Slot “free” của lịch làm việc đang hoạt động, [Bắt đầu] trong khoảng ngày đã chọn và ≤ <Hôm nay> + 30 ngày."
-        sorting: "Theo bác sĩ, rồi [Bắt đầu] tăng dần."
+        data_source: "\"free\" slots of active schedules whose [Start] falls in the selected date range and is <= <Today> + 30 days."
+        sorting: "By doctor, then by [Start] ascending."
         components:
-          - ["Chuyên khoa", "Dropdown", "Có", "Có*", "Trống", "*Bắt buộc nếu không chọn bác sĩ."]
-          - ["Bác sĩ", "Searchable dropdown", "Có", "Không", "Tất cả", "Lọc theo chuyên khoa."]
-          - ["Từ ngày / Đến ngày", "Date picker", "Có", "Có", "Hôm nay / +7 ngày", "Tối đa 31 ngày, không quá 30 ngày tới."]
-          - ["Danh sách khung giờ", "Grid", "Không", "N/A", "N/A", "Nhóm theo bác sĩ và ngày; mỗi ô là một giờ bắt đầu."]
-          - ["Đặt lịch", "Button", "N/A", "N/A", "N/A", "Mở [[SCR:book]] với slot đã chọn."]
+          - ["Specialty", "Dropdown", "Yes", "Yes*", "Empty", "*Required if no doctor is selected."]
+          - ["Doctor", "Searchable dropdown", "Yes", "No", "All", "Filtered by specialty."]
+          - ["From date / To date", "Date picker", "Yes", "Yes", "Today / +7 days", "At most 31 days, and no more than 30 days ahead."]
+          - ["Time slot list", "Grid", "No", "N/A", "N/A", "Grouped by doctor and date; each cell is one start time."]
+          - ["Book", "Button", "N/A", "N/A", "N/A", "Opens [[SCR:book]] with the selected slot."]
       - key: book
-        name: Xác nhận đặt lịch
-        purpose: Xác nhận slot và lý do khám.
-        access: "Chọn một khung giờ trên [[SCR:find-doctor]]."
+        name: Confirm the booking
+        purpose: Confirm the slot and the visit reason.
+        access: "Select a time slot on [[SCR:find-doctor]]."
         uc: [book, reschedule]
         components:
-          - ["Bác sĩ, chuyên khoa, ngày giờ", "Label", "Không", "N/A", "Theo slot", "Chỉ đọc."]
-          - ["Người đi khám", "Dropdown / Search", "Có", "Có", "Bản thân", "Bệnh nhân chọn trong các hồ sơ đã liên kết (bản thân, con, người thân); Điều dưỡng tìm bệnh nhân."]
-          - ["Lý do khám", "Textarea", "Có", "Không", "Trống", "Tối đa 500 ký tự."]
-          - ["Xác nhận", "Button", "N/A", "N/A", "N/A", "Gửi kèm Idempotency-Key; vô hiệu trong lúc chờ phản hồi."]
+          - ["Doctor, specialty, date and time", "Label", "No", "N/A", "From the slot", "Read-only."]
+          - ["Patient attending", "Dropdown / Search", "Yes", "Yes", "Self", "The patient chooses among the linked records (self, child, relative); a Nurse searches for the patient."]
+          - ["Visit reason", "Textarea", "Yes", "No", "Empty", "At most 500 characters."]
+          - ["Confirm", "Button", "N/A", "N/A", "N/A", "Sent with an Idempotency-Key; disabled while awaiting the response."]
       - key: chatbot
-        name: Chatbot đặt lịch
-        purpose: Đặt/hủy lịch bằng hội thoại có xác nhận.
-        access: "Trang chủ → “Đặt lịch khám” → “Trò chuyện để đặt lịch”."
+        name: Booking chatbot
+        purpose: Book or cancel by conversation with confirmation.
+        access: "Home -> \"Book an appointment\" -> \"Chat to book\"."
         uc: [chatbot-booking]
         components:
-          - ["Khung hội thoại", "Chat", "Không", "N/A", "Lời chào", "Tin của bot có nhãn AI."]
-          - ["Thẻ hành động chờ xác nhận", "Card", "Không", "N/A", "N/A", "Nút “Xác nhận” / “Hủy” do giao diện vẽ; đếm ngược 5 phút."]
-          - ["Ô nhập", "Textbox", "Có", "N/A", "Trống", "Tối đa 500 ký tự."]
+          - ["Conversation pane", "Chat", "No", "N/A", "Greeting", "Bot messages carry an AI label."]
+          - ["Pending-action card", "Card", "No", "N/A", "N/A", "The \"Confirm\" / \"Cancel\" buttons are drawn by the interface; 5-minute countdown."]
+          - ["Input box", "Textbox", "Yes", "N/A", "Empty", "At most 500 characters."]
       - key: my-appointments
-        name: Lịch hẹn của tôi
-        purpose: Xem, hủy, đổi lịch hẹn của chính mình.
-        access: "Trang chủ → “Lịch hẹn của tôi”."
+        name: My appointments
+        purpose: View, cancel and reschedule the user's own appointments.
+        access: "Home -> \"My appointments\"."
         uc: [my-appointments, cancel, reschedule]
-        data_source: "Lịch hẹn có [Bệnh nhân] = <Người dùng hiện tại>; tab “Sắp tới” (booked) và “Đã qua”."
-        sorting: "Sắp tới: [Bắt đầu] tăng dần; Đã qua: giảm dần."
+        data_source: "Appointments whose [Patient] = <Current user>; tabs \"Upcoming\" (booked) and \"Past\"."
+        sorting: "Upcoming: [Start] ascending; Past: descending."
         components:
-          - ["Mã lịch hẹn, giờ, bác sĩ, chuyên khoa, trạng thái", "Grid", "Không", "N/A", "N/A", "Trạng thái hiển thị bằng nhãn màu."]
-          - ["Hủy lịch", "Button", "N/A", "N/A", "N/A", "Chỉ bật khi “booked” và còn ≥ 2 giờ; kích hoạt [[UC:cancel]]."]
-          - ["Đổi lịch", "Button", "N/A", "N/A", "N/A", "Điều kiện như Hủy lịch; kích hoạt [[UC:reschedule]]."]
+          - ["Appointment ID, time, doctor, specialty, status", "Grid", "No", "N/A", "N/A", "Status is shown as a colored label."]
+          - ["Cancel appointment", "Button", "N/A", "N/A", "N/A", "Enabled only when \"booked\" and at least 2 hours remain; triggers [[UC:cancel]]."]
+          - ["Reschedule", "Button", "N/A", "N/A", "N/A", "Same conditions as Cancel appointment; triggers [[UC:reschedule]]."]
       - key: my-documents
-        name: Tài liệu của tôi
-        purpose: Xem tài liệu đã được bác sĩ phát hành.
-        access: "Trang chủ → “Tài liệu của tôi”."
+        name: My documents
+        purpose: View documents released by the doctor.
+        access: "Home -> \"My documents\"."
         uc: [download-document]
-        data_source: "Tài liệu của <Người dùng hiện tại>, “available”, đã phát hành."
-        sorting: "Ngày phát hành giảm dần."
+        data_source: "Documents of <Current user>, \"available\" and released."
+        sorting: "Release date descending."
         components:
-          - ["Loại, ngày, bác sĩ phát hành", "Grid", "Không", "N/A", "N/A", ""]
-          - ["Xem", "Button", "N/A", "N/A", "N/A", "Xin link 5 phút rồi mở tệp."]
+          - ["Type, date, issuing doctor", "Grid", "No", "N/A", "N/A", ""]
+          - ["View", "Button", "N/A", "N/A", "N/A", "Requests a 5-minute link and then opens the file."]
       - key: my-profile
-        name: Thông tin cá nhân
-        purpose: Xem và sửa thông tin hành chính được phép.
-        access: "Tài khoản → “Thông tin cá nhân”."
+        name: Personal information
+        purpose: View and edit the administrative information that may be changed.
+        access: "Account -> \"Personal information\"."
         uc: [update-profile]
       - key: notification-preferences
-        name: Cài đặt thông báo
-        purpose: Chọn kênh, ngôn ngữ, khung giờ yên tĩnh.
-        access: "Tài khoản → “Thông báo”."
+        name: Notification settings
+        purpose: Choose channels, language and quiet hours.
+        access: "Account -> \"Notifications\"."
         uc: [notification-preferences]
       - key: privacy
-        name: Quyền riêng tư
-        purpose: Quản lý đồng ý xử lý dữ liệu bằng AI; yêu cầu bản sao dữ liệu cá nhân.
-        access: "Tài khoản → “Quyền riêng tư”."
+        name: Privacy
+        purpose: Manage consent to AI processing of data; request a copy of personal data.
+        access: "Account -> \"Privacy\"."
         uc: [manage-consent, export-my-data]
         components:
-          - ["Cho phép xử lý dữ liệu bằng AI", "Toggle", "Có", "N/A", "Theo lựa chọn khi đăng ký", "Kèm giải thích phạm vi; tắt cần xác nhận."]
-          - ["Lịch sử đồng ý", "Grid", "Không", "N/A", "N/A", "Thời điểm, phiên bản điều khoản, hành động."]
-          - ["Yêu cầu bản sao dữ liệu", "Button", "N/A", "N/A", "N/A", "Yêu cầu xác thực lại; kích hoạt [[UC:export-my-data]]."]
+          - ["Allow processing data with AI", "Toggle", "Yes", "N/A", "As chosen at registration", "With an explanation of the scope; turning it off requires confirmation."]
+          - ["Consent history", "Grid", "No", "N/A", "N/A", "Time, terms version, action."]
+          - ["Request a copy of my data", "Button", "N/A", "N/A", "N/A", "Requires reauthentication; triggers [[UC:export-my-data]]."]
       - key: my-access-log
-        name: Lịch sử truy cập hồ sơ
-        purpose: Xem ai đã truy cập hồ sơ của mình.
-        access: "Tài khoản → “Lịch sử truy cập hồ sơ”."
+        name: Record access history
+        purpose: See who has accessed the user's own record.
+        access: "Account -> \"Record access history\"."
         uc: [view-my-access-log]
-        data_source: "Bản ghi audit có [Bệnh nhân] = <Người dùng hiện tại>, 12 tháng gần nhất."
-        sorting: "Thời điểm giảm dần."
-  - portal: Cổng nội bộ
+        data_source: "Audit entries whose [Patient] = <Current user>, in the last 12 months."
+        sorting: "Time descending."
+  - portal: Internal portal
     items:
       - key: queue
-        name: Hàng đợi hôm nay
-        purpose: Theo dõi lịch hẹn trong ngày, check-in, hủy/đổi thay bệnh nhân.
-        access: "Tiếp đón → “Hàng đợi hôm nay”."
+        name: Today's queue
+        purpose: Track appointments for the day, check in, cancel or reschedule on the patient's behalf.
+        access: "Reception -> \"Today's queue\"."
         uc: [check-in, supplement-national-id, book, cancel, reschedule]
-        data_source: "Lịch hẹn có ngày khám = <Hôm nay> của các bác sĩ thuộc khoa người dùng được phân công."
-        sorting: "[Bắt đầu] tăng dần."
+        data_source: "Appointments with visit date = <Today> for doctors in the departments the user is assigned to."
+        sorting: "[Start] ascending."
         components:
-          - ["Giờ, bệnh nhân, bác sĩ, trạng thái", "Grid", "Không", "N/A", "N/A", "Tên bệnh nhân + năm sinh; SĐT che 4 số giữa."]
-          - ["Nguy cơ không đến", "Badge", "Không", "N/A", "N/A", "Hiển thị khi nguy cơ ≥ ngưỡng; không hiển thị con số với bệnh nhân."]
-          - ["Check-in", "Button", "N/A", "N/A", "N/A", "Bật khi “booked” và ngày khám hôm nay."]
-          - ["Bổ sung CCCD", "Button", "N/A", "N/A", "N/A", "Hiện khi hồ sơ chưa có số CCCD; mở hộp nhập số CCCD và ô đồng ý ([[UC:supplement-national-id]])."]
-          - ["Đặt lịch thay", "Button", "N/A", "N/A", "N/A", "Mở [[SCR:find-doctor]] ở chế độ Điều dưỡng."]
+          - ["Time, patient, doctor, status", "Grid", "No", "N/A", "N/A", "Patient name + year of birth; phone number with the 4 middle digits masked."]
+          - ["No-show risk", "Badge", "No", "N/A", "N/A", "Shown when the risk is >= the threshold; the number is never shown to the patient."]
+          - ["Check-in", "Button", "N/A", "N/A", "N/A", "Enabled when \"booked\" and the visit date is today."]
+          - ["Add national ID", "Button", "N/A", "N/A", "N/A", "Shown when the record has no national ID number; opens the national ID input with a consent checkbox ([[UC:supplement-national-id]])."]
+          - ["Book on behalf", "Button", "N/A", "N/A", "N/A", "Opens [[SCR:find-doctor]] in Nurse mode."]
       - key: schedule
-        name: Lịch làm việc và slot
-        purpose: Tạo lịch, mẫu tuần, sinh và chặn slot; bác sĩ xem lịch của mình.
-        access: "Lịch làm việc."
+        name: Schedules and slots
+        purpose: Create schedules and weekly templates, generate and block slots; doctors view their own schedule.
+        access: "Schedules."
         uc: [schedule-template, generate-slots, block-slot, view-own-schedule]
       - key: patient-form
-        name: Hồ sơ bệnh nhân (tiếp đón)
-        purpose: Tạo, sửa, gộp hồ sơ bệnh nhân tại quầy.
-        access: "Tiếp đón → “Hồ sơ bệnh nhân”."
+        name: Patient record (reception)
+        purpose: Create, edit and merge patient records at the counter.
+        access: "Reception -> \"Patient records\"."
         uc: [create-patient, merge-patient]
       - key: patient-search
-        name: Tìm kiếm bệnh nhân
-        purpose: Tìm bệnh nhân và mở timeline theo quyền.
-        access: "Bệnh nhân → “Tìm kiếm”."
+        name: Patient search
+        purpose: Find patients and open their timeline according to permissions.
+        access: "Patients -> \"Search\"."
         uc: [search-patient, view-timeline]
         components:
-          - ["Từ khóa", "Textbox", "Có", "Có", "Trống", "Tên (≥ 3 ký tự, không dấu), SĐT, mã bệnh nhân."]
-          - ["Năm sinh", "Number", "Có", "Không", "Trống", "Thu hẹp kết quả."]
-          - ["Kết quả", "Grid", "Không", "N/A", "N/A", "Tối đa 50 dòng: họ tên, năm sinh, giới, mã, SĐT che."]
+          - ["Keyword", "Textbox", "Yes", "Yes", "Empty", "Name (>= 3 characters, without diacritics), phone number, patient ID."]
+          - ["Year of birth", "Number", "Yes", "No", "Empty", "Narrows the results."]
+          - ["Results", "Grid", "No", "N/A", "N/A", "At most 50 rows: full name, year of birth, sex, ID, masked phone number."]
       - key: timeline
-        name: Timeline bệnh nhân
-        purpose: Lịch sử khám, sinh hiệu, chẩn đoán, dị ứng, tài liệu.
-        access: "Chọn bệnh nhân trên [[SCR:patient-search]]."
+        name: Patient timeline
+        purpose: Visit history, vital signs, diagnoses, allergies, documents.
+        access: "Select a patient on [[SCR:patient-search]]."
         uc: [view-timeline, break-glass, summarize, upload-document, download-document, release-document, void-document]
         components:
-          - ["Thẻ bệnh nhân", "Panel", "Không", "N/A", "N/A", "Họ tên, tuổi, giới, dị ứng, bệnh nền."]
-          - ["Biểu ngữ truy cập khẩn cấp", "Banner", "Không", "N/A", "Ẩn", "Hiện khi dùng quyền khẩn cấp, kèm giờ hết hạn."]
-          - ["Dòng thời gian", "Timeline", "Không", "N/A", "12 tháng", "Lọc theo loại, thời gian; giá trị bất thường tô nổi."]
-          - ["Tóm tắt AI", "Button + Panel", "N/A", "N/A", "N/A", "Chỉ Bác sĩ; nhãn “Do AI tạo, cần kiểm tra”."]
-          - ["Tải lên tài liệu", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:upload-document]]."]
+          - ["Patient card", "Panel", "No", "N/A", "N/A", "Full name, age, sex, allergies, underlying conditions."]
+          - ["Emergency access banner", "Banner", "No", "N/A", "Hidden", "Shown when emergency access is in use, with the expiry time."]
+          - ["Timeline", "Timeline", "No", "N/A", "12 months", "Filter by type and time; abnormal values are highlighted."]
+          - ["AI summary", "Button + Panel", "N/A", "N/A", "N/A", "Doctor only; label \"AI-generated, needs review\"."]
+          - ["Upload a document", "Button", "N/A", "N/A", "N/A", "Triggers [[UC:upload-document]]."]
       - key: encounter
-        name: Lần khám
-        purpose: Ghi sinh hiệu, bệnh sử, chẩn đoán; kết thúc và bổ sung lần khám.
-        access: "Danh sách khám hôm nay → “Bắt đầu khám”."
+        name: Encounter
+        purpose: Record vital signs, history and diagnoses; finish and add an addendum to the encounter.
+        access: "Today's encounter list -> \"Start the encounter\"."
         uc: [record-vitals, start-encounter, record-diagnosis, finish-encounter, addendum]
         components:
-          - ["Sinh hiệu", "Number group", "Có", "Không", "Trống", "Đơn vị cố định; kiểm khoảng hợp lý."]
-          - ["Bệnh sử / khám", "Rich textarea", "Khi “in-progress”", "Không", "Trống", "Tối đa 10.000 ký tự."]
-          - ["Chẩn đoán ICD-10", "Searchable list", "Khi “in-progress”", "Có (≥ 1 chính)", "Trống", "Tìm theo mã hoặc tên."]
-          - ["Kết thúc khám", "Button", "N/A", "N/A", "N/A", "Có hộp thoại xác nhận."]
-          - ["Thêm bổ sung", "Button", "N/A", "N/A", "N/A", "Chỉ khi “finished”."]
+          - ["Vital signs", "Number group", "Yes", "No", "Empty", "Fixed units; range validation."]
+          - ["History / examination", "Rich textarea", "When \"in-progress\"", "No", "Empty", "At most 10,000 characters."]
+          - ["ICD-10 diagnosis", "Searchable list", "When \"in-progress\"", "Yes (>= 1 primary)", "Empty", "Search by code or name."]
+          - ["Finish the encounter", "Button", "N/A", "N/A", "N/A", "With a confirmation dialog."]
+          - ["Add an addendum", "Button", "N/A", "N/A", "N/A", "Only when \"finished\"."]
       - key: assistant
-        name: Hỏi trợ lý tri thức
-        purpose: Hỏi đáp có trích dẫn từ tài liệu nội bộ đã duyệt.
-        access: "Trợ lý AI → “Hỏi trợ lý”."
+        name: Ask the knowledge assistant
+        purpose: Question answering with citations from approved internal documents.
+        access: "AI assistant -> \"Ask the assistant\"."
         uc: [ask-assistant, answer-feedback]
         components:
-          - ["Ô câu hỏi", "Textarea", "Có", "Có", "Trống", "3–2.000 ký tự; cảnh báo không nhập thông tin định danh bệnh nhân."]
-          - ["Câu trả lời", "Stream text", "Không", "N/A", "N/A", "Có số trích dẫn [1], [2] mở được đoạn nguồn; nhãn AI."]
-          - ["Hữu ích / Không hữu ích", "Button", "N/A", "N/A", "N/A", "Kích hoạt [[UC:answer-feedback]]."]
+          - ["Question box", "Textarea", "Yes", "Yes", "Empty", "3-2000 characters; warning not to enter identifying patient information."]
+          - ["Answer", "Stream text", "No", "N/A", "N/A", "Citation numbers [1], [2] open the source passage; AI label."]
+          - ["Helpful / Not helpful", "Button", "N/A", "N/A", "N/A", "Triggers [[UC:answer-feedback]]."]
       - key: extraction-review
-        name: Duyệt trích xuất tài liệu
-        purpose: Hàng chờ và màn hình duyệt từng trường trích xuất.
-        access: "Trợ lý AI → “Duyệt trích xuất”."
+        name: Review document extraction
+        purpose: The queue and the screen for reviewing each extracted field.
+        access: "AI assistant -> \"Review extractions\"."
         uc: [review-extraction]
         components:
-          - ["Ảnh tài liệu", "Viewer", "Không", "N/A", "N/A", "Tô vùng của trường đang chọn."]
-          - ["Danh sách trường", "Editable grid", "Có", "N/A", "Chưa xác nhận", "Giá trị, đơn vị, độ tin cậy; trạng thái Xác nhận/Sửa/Bỏ từng dòng."]
-          - ["Lưu kết quả / Từ chối tất cả", "Button", "N/A", "N/A", "N/A", "Không có “Chấp nhận tất cả”."]
+          - ["Document image", "Viewer", "No", "N/A", "N/A", "Highlights the region of the selected field."]
+          - ["Field list", "Editable grid", "Yes", "N/A", "Not yet confirmed", "Value, unit, confidence; per-row Confirm/Edit/Discard status."]
+          - ["Save the result / Reject all", "Button", "N/A", "N/A", "N/A", "There is no \"Accept all\"."]
       - key: kb
-        name: Kho tri thức
-        purpose: Quản lý tài liệu nguồn của trợ lý.
-        access: "Trợ lý AI → “Kho tri thức”."
+        name: Knowledge base
+        purpose: Manage the assistant's source documents.
+        access: "AI assistant -> \"Knowledge base\"."
         uc: [manage-kb]
       - key: users
-        name: Người dùng
-        purpose: Mời nhân viên, gán vai trò, khóa/mở khóa, liên kết bác sĩ.
-        access: "Quản trị → “Người dùng”."
+        name: Users
+        purpose: Invite staff, assign roles, lock/unlock accounts, link doctors.
+        access: "Administration -> \"Users\"."
         uc: [invite-staff, lock-account, link-practitioner]
       - key: audit
-        name: Audit truy cập
-        purpose: Tra cứu, xuất báo cáo audit; rà soát truy cập khẩn cấp; xử lý yêu cầu của bệnh nhân.
-        access: "Quản trị → “Audit”."
+        name: Access audit
+        purpose: Search and export audit reports; review emergency access; process patient requests.
+        access: "Administration -> \"Audit\"."
         uc: [search-audit, export-audit, process-data-request, break-glass-alert]
         components:
-          - ["Bộ lọc", "Form", "Có", "Có (khoảng thời gian)", "24 giờ gần nhất", "Bệnh nhân, người truy cập, hành động, kết quả, mục đích; tối đa 92 ngày."]
-          - ["Kết quả", "Grid", "Không", "N/A", "N/A", "Không có cột nội dung lâm sàng; IP che octet cuối."]
-          - ["Xuất CSV", "Button", "N/A", "N/A", "N/A", "Yêu cầu nhập mục đích."]
-          - ["Tab “Cần rà soát”", "Tab", "N/A", "N/A", "N/A", "Truy cập khẩn cấp chưa rà soát; nút “Đánh dấu đã rà soát”."]
+          - ["Filters", "Form", "Yes", "Yes (time range)", "Last 24 hours", "Patient, accessor, action, result, purpose; at most 92 days."]
+          - ["Results", "Grid", "No", "N/A", "N/A", "No clinical content columns; IP with the last octet masked."]
+          - ["Export CSV", "Button", "N/A", "N/A", "N/A", "Requires entering a purpose."]
+          - ["\"Needs review\" tab", "Tab", "N/A", "N/A", "N/A", "Unreviewed emergency access; \"Mark as reviewed\" button."]
       - key: dead-letters
-        name: Thông báo gửi lỗi
-        purpose: Xem và gửi lại các lần nhắc lỗi hẳn.
-        access: "Quản trị → “Thông báo lỗi”."
+        name: Failed notifications
+        purpose: View and resend reminders that failed permanently.
+        access: "Administration -> \"Failed notifications\"."
         uc: [manage-dead-letters]

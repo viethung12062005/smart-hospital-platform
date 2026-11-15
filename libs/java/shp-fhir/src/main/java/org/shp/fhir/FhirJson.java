@@ -13,35 +13,38 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Parse/serialize FHIR R4 JSON (ADR-0003) bằng HAPI FHIR. Parse nghiêm ngặt: JSON hỏng, khóa trùng,
- * giá trị {@code null}, phần tử lạ, giá trị sai kiểu, {@code id} sai định dạng hoặc {@code
- * resourceType} không khớp → 400 {@code validation-failed}. Thông điệp của HAPI có thể chứa giá trị
- * gửi lên (PII) nên không trả cho client và không ghi log.
+ * Parse/serialize FHIR R4 JSON (ADR-0003) with HAPI FHIR. Strict parsing: broken JSON, duplicate
+ * keys, {@code null} values, unknown elements, wrongly typed values, malformed {@code id} or a
+ * {@code resourceType} mismatch → 400 {@code validation-failed}. HAPI messages may contain
+ * submitted values (PII), so they are not returned to the client or written to the log.
  */
 public final class FhirJson {
-  /** Content type của API FHIR (07 §1). */
+  /** Content type of the FHIR API (07 §1). */
   public static final String MEDIA_TYPE = "application/fhir+json";
 
-  /** Định dạng {@code Resource.id} theo đặc tả FHIR R4 (kiểu {@code id}). */
+  /** {@code Resource.id} format per the FHIR R4 spec ({@code id} type). */
   private static final Pattern RESOURCE_ID = Pattern.compile("[A-Za-z0-9\\-.]{1,64}");
 
   private static final FhirContext CTX = FhirContext.forR4Cached();
 
   /**
-   * Kiểm cú pháp trước HAPI: HAPI nhận khóa trùng (lấy giá trị sau) và {@code null} mà không báo,
-   * nên hai bản đọc cùng body có thể hiểu khác nhau.
+   * Pre-check the syntax before HAPI: HAPI accepts duplicate keys (keeping the later value) and
+   * {@code null} without complaint, so two readers of the same body could interpret it differently.
    */
   private static final JsonMapper STRICT_JSON =
       JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
 
   private FhirJson() {}
 
-  /** Context R4 dùng chung (thread-safe); parser thì tạo mới mỗi lần vì không thread-safe. */
+  /**
+   * Shared R4 context (thread-safe); a parser is created fresh each time because it is not
+   * thread-safe.
+   */
   public static FhirContext context() {
     return CTX;
   }
 
-  /** Parse một resource có kiểu biết trước, ví dụ body của {@code PUT /fhir/Patient/{id}}. */
+  /** Parse a resource of a known type, for example the body of {@code PUT /fhir/Patient/{id}}. */
   public static <T extends IBaseResource> T parse(String json, Class<T> type) {
     requireWellFormed(json);
     try {
@@ -51,7 +54,7 @@ public final class FhirJson {
     }
   }
 
-  /** Parse một resource bất kỳ, kiểu lấy theo {@code resourceType}. */
+  /** Parse any resource, taking the type from {@code resourceType}. */
   public static IBaseResource parse(String json) {
     requireWellFormed(json);
     try {
@@ -62,8 +65,8 @@ public final class FhirJson {
   }
 
   /**
-   * JSON gọn (không xuống dòng), thứ tự phần tử theo đặc tả FHIR. Giữ nguyên tham chiếu có version
-   * ({@code DocumentReference/x/_history/2}); mặc định HAPI cắt mất phần {@code _history}.
+   * Compact JSON (no line breaks), element order per the FHIR spec. Keeps versioned references
+   * ({@code DocumentReference/x/_history/2}); by default HAPI strips the {@code _history} part.
    */
   public static String serialize(IBaseResource resource) {
     return CTX.newJsonParser()
@@ -91,9 +94,10 @@ public final class FhirJson {
   }
 
   /**
-   * FHIR JSON không cho thuộc tính mang {@code null} (chỉ phần tử trong mảng được {@code null}, để
-   * căn hàng với mảng {@code _<tên>} chứa extension) và {@code id} của mọi resource, kể cả resource
-   * lồng (contained, entry của Bundle), phải đúng kiểu {@code id}. HAPI không kiểm hai điều này.
+   * FHIR JSON does not allow properties with a {@code null} value (only array elements may be
+   * {@code null}, to align with the {@code _<name>} array that holds extensions) and the {@code id}
+   * of every resource, including nested resources (contained, Bundle entries), must be a valid
+   * {@code id}. HAPI checks neither of these.
    */
   private static boolean isValid(JsonNode node) {
     if (node.isObject()) {

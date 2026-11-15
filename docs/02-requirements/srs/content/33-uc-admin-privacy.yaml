@@ -1,310 +1,310 @@
-# Chương 3 – Module Quyền riêng tư, audit và quản trị (services audit, notification, clinical/admin; vận hành).
+# Chapter 3 - Privacy, audit and administration module (audit, notification, clinical/admin services; operations).
 modules:
   - key: privacy-admin
-    name: Quyền riêng tư, audit và quản trị
+    name: Privacy, audit and administration
     intro: >-
-      Quyền của bệnh nhân với dữ liệu của mình (Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15), nhật ký truy cập bất biến, quản lý tài khoản
-      nhân viên, xử lý thông báo lỗi, sao lưu và khôi phục.
+      Patient rights over their own data (Personal Data Protection Law No. 91/2025/QH15), immutable access logs, staff account
+      management, failed notification handling, backup and restore.
     sections:
-      - name: Cổng bệnh nhân – Quyền riêng tư và thông báo
+      - name: Patient portal - Privacy and notifications
         use_cases:
           - key: view-my-access-log
-            name: Xem ai đã truy cập hồ sơ của tôi
+            name: View who accessed my record
             type: Basic
             actors: [patient]
-            trace: [UC-09, AC-09.1, NFR-SEC5, "Luật BVDLCN 91/2025/QH15 – quyền được biết"]
-            objective: Cho bệnh nhân biết ai (vai trò, khoa), khi nào, với mục đích gì đã truy cập hồ sơ của mình.
-            trigger: Bệnh nhân mở [[SCR:my-access-log]].
-            pre: ["Bệnh nhân đã đăng nhập."]
-            post: ["Danh sách truy cập 12 tháng gần nhất được hiển thị."]
-            lanes: [Bệnh nhân, Hệ thống]
+            trace: [UC-09, AC-09.1, NFR-SEC5, "Personal Data Protection Law 91/2025/QH15 - right to know"]
+            objective: Show the patient who (role, department), when, and for what purpose their record was accessed.
+            trigger: The patient opens [[SCR:my-access-log]].
+            pre: ["The patient is logged in."]
+            post: ["The list of accesses in the last 12 months is displayed."]
+            lanes: [Patient, System]
             steps:
-              - {n: 1, lane: 0, text: "Mở “Lịch sử truy cập hồ sơ”"}
-              - {n: 2, lane: 1, text: "Lấy bản ghi audit có\n[Bệnh nhân] = mình", end: true}
+              - {n: 1, lane: 0, text: "Open \"Record access history\""}
+              - {n: 2, lane: 1, text: "Fetch audit entries with\n[Patient] = self", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc hiển thị
+                title: Display rules
                 lines:
-                  - "Mỗi dòng: thời điểm, vai trò và khoa của người truy cập, tên nhân viên y tế, hành động (xem, sửa, tải tài liệu), mục đích (“điều trị”, “truy cập khẩn cấp”)."
-                  - "Không hiển thị IP, thiết bị, nội dung đã xem; truy cập khẩn cấp được làm nổi bật kèm trạng thái rà soát của DPO."
-                  - "Bộ lọc [Bệnh nhân] luôn bị ép bằng <Người dùng hiện tại>."
+                  - "Each row: timestamp, role and department of the accessor, name of the clinical staff member, action (view, edit, download document), purpose (\"treatment\", \"emergency access\")."
+                  - "Do not display IP, device or content viewed; emergency access is highlighted with the DPO review status."
+                  - "The [Patient] filter is always forced to <Current user>."
             acceptance:
-              - ["AC-AL.1", "Given bác sĩ đã mở hồ sơ của bệnh nhân lúc 09:02, Then bệnh nhân thấy dòng truy cập đó trong ≤ 1 phút."]
+              - ["AC-AL.1", "Given a doctor opened the patient's record at 09:02, Then the patient sees that access row within <= 1 minute."]
 
           - key: manage-consent
-            name: Quản lý đồng ý xử lý dữ liệu
+            name: Manage data processing consent
             actors: [patient]
-            trace: [NFR-SEC, "Luật BVDLCN 91/2025/QH15 – đồng ý và rút đồng ý", UC-12, UC-13, UC-15]
-            objective: Bệnh nhân đồng ý hoặc rút đồng ý cho việc xử lý dữ liệu sức khỏe bằng AI (tóm tắt, trích xuất, dự đoán).
-            trigger: Bệnh nhân bật/tắt tùy chọn trên [[SCR:privacy]].
-            pre: ["Bệnh nhân đã đăng nhập."]
-            post: ["Trạng thái đồng ý mới có hiệu lực ngay; lịch sử đồng ý được lưu."]
-            lanes: [Bệnh nhân, Hệ thống]
+            trace: [NFR-SEC, "Personal Data Protection Law 91/2025/QH15 - consent and withdrawal of consent", UC-12, UC-13, UC-15]
+            objective: The patient grants or withdraws consent for processing health data with AI (summary, extraction, prediction).
+            trigger: The patient toggles the option on [[SCR:privacy]].
+            pre: ["The patient is logged in."]
+            post: ["The new consent status takes effect immediately; consent history is retained."]
+            lanes: [Patient, System]
             steps:
-              - {n: 1, lane: 0, text: "Bật / tắt “Cho phép xử lý\ndữ liệu bằng AI”"}
-              - {n: 2, lane: 1, text: "Hiển thị giải thích phạm vi\nvà xác nhận (khi rút)"}
-              - {n: 3, lane: 0, text: "Xác nhận"}
-              - {n: 4, lane: 1, text: "Lưu đồng ý mới, phát sự kiện,\nghi audit", end: true}
+              - {n: 1, lane: 0, text: "Turn on / off \"Allow processing\ndata with AI\""}
+              - {n: 2, lane: 1, text: "Display an explanation of the scope\nand confirmation (when withdrawing)"}
+              - {n: 3, lane: 0, text: "Confirm"}
+              - {n: 4, lane: 1, text: "Save the new consent, emit event,\nwrite audit", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc giải thích
+                title: Explanation rules
                 lines:
-                  - "Hiển thị rõ: AI nào dùng dữ liệu gì, dữ liệu có được gửi ra nhà cung cấp bên ngoài không (có, sau khi che định danh), lưu bao lâu; rút đồng ý dùng [[MSG:confirm-withdraw-consent]]."
+                  - "Clearly display: which AI uses what data, whether data is sent to an external provider (yes, after masking identifiers), and for how long it is retained; withdrawal uses [[MSG:confirm-withdraw-consent]]."
               - step: "(4)"
-                title: Quy tắc hiệu lực
+                title: Effect rules
                 lines:
-                  - "Đồng ý được lưu kèm phiên bản điều khoản và thời điểm; rút đồng ý có hiệu lực cho mọi yêu cầu AI mới ngay lập tức."
-                  - "Khi rút: dữ liệu của bệnh nhân không được dùng cho tóm tắt, trích xuất mới và dự đoán; dữ liệu không bị đưa vào tập huấn luyện tiếp theo."
-                  - "Không ảnh hưởng tới các chức năng không dùng AI (đặt lịch, khám, nhắc lịch theo giờ cố định)."
+                  - "Consent is stored with the terms version and timestamp; withdrawal takes effect for every new AI request immediately."
+                  - "On withdrawal: the patient's data is not used for new summaries, extractions or predictions; the data is not added to the next training set."
+                  - "It does not affect features that do not use AI (booking, examination, reminders at fixed times)."
             acceptance:
-              - ["AC-CS.1", "Given bệnh nhân rút đồng ý lúc T, When bác sĩ yêu cầu tóm tắt sau T, Then bị từ chối “consent-required”."]
+              - ["AC-CS.1", "Given the patient withdraws consent at time T, When the doctor requests a summary after T, Then it is rejected with \"consent-required\"."]
 
           - key: export-my-data
-            name: Yêu cầu trích xuất dữ liệu cá nhân
+            name: Request a personal data export
             actors: [patient]
-            trace: ["Luật BVDLCN 91/2025/QH15 – quyền truy cập, quyền yêu cầu cung cấp dữ liệu"]
-            objective: Bệnh nhân yêu cầu nhận bản sao dữ liệu cá nhân và dữ liệu sức khỏe của mình.
-            trigger: Bệnh nhân bấm “Yêu cầu bản sao dữ liệu” trên [[SCR:privacy]].
-            pre: ["Bệnh nhân đã đăng nhập và xác thực lại trong 15 phút gần nhất."]
-            post: ["Yêu cầu được ghi nhận và chuyển tới Cán bộ bảo vệ dữ liệu ([[UC:process-data-request]])."]
-            lanes: [Bệnh nhân, Hệ thống]
+            trace: ["Personal Data Protection Law 91/2025/QH15 - right of access, right to request a copy of data"]
+            objective: The patient requests a copy of their personal and health data.
+            trigger: The patient clicks "Request a copy of my data" on [[SCR:privacy]].
+            pre: ["The patient is logged in and reauthenticated within the last 15 minutes."]
+            post: ["The request is recorded and forwarded to the Data Protection Officer ([[UC:process-data-request]])."]
+            lanes: [Patient, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Yêu cầu bản sao\ndữ liệu”"}
-              - {n: 2, lane: 1, kind: decision, text: "Đã có yêu cầu\nđang xử lý?", branches: [{to: 3, label: Không}, {to: 4, label: Có}]}
-              - {n: 3, lane: 1, text: "Ghi nhận yêu cầu,\nbáo DPO", end: true}
-              - {n: 4, lane: 1, text: "Hiển thị yêu cầu đang\nxử lý", end: true}
+              - {n: 1, lane: 0, text: "Click \"Request a copy\nof my data\""}
+              - {n: 2, lane: 1, kind: decision, text: "Is there already a\npending request?", branches: [{to: 3, label: "No"}, {to: 4, label: "Yes"}]}
+              - {n: 3, lane: 1, text: "Record the request,\nnotify the DPO", end: true}
+              - {n: 4, lane: 1, text: "Display the pending\nrequest", end: true}
             rules:
               - step: "(3)"
-                title: Quy tắc ghi nhận
-                lines: ["Tối đa một yêu cầu đang xử lý mỗi bệnh nhân; hiển thị [[MSG:request-received]]; ghi audit."]
+                title: Recording rules
+                lines: ["At most one pending request per patient; display [[MSG:request-received]]; write audit."]
             acceptance:
-              - ["AC-EX.1", "Given bệnh nhân đã có yêu cầu đang xử lý, When gửi thêm, Then không tạo yêu cầu mới."]
+              - ["AC-EX.1", "Given the patient already has a pending request, When submitting another, Then no new request is created."]
 
           - key: notification-preferences
-            name: Cài đặt nhận thông báo
+            name: Notification preferences
             type: Basic
             actors: [patient]
             trace: [UC-07, "API N3, N4"]
-            objective: Chọn kênh nhận nhắc lịch (push, email, SMS), ngôn ngữ và khung giờ yên tĩnh.
-            trigger: Bệnh nhân mở [[SCR:notification-preferences]].
-            pre: ["Bệnh nhân đã đăng nhập."]
-            post: ["Tùy chọn mới áp dụng cho các lần nhắc được lên lịch sau đó."]
-            lanes: [Bệnh nhân, Hệ thống]
+            objective: Choose reminder channels (push, email, SMS), language and quiet hours.
+            trigger: The patient opens [[SCR:notification-preferences]].
+            pre: ["The patient is logged in."]
+            post: ["The new preferences apply to reminders scheduled afterwards."]
+            lanes: [Patient, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn kênh, ngôn ngữ,\nkhung giờ yên tĩnh, bấm “Lưu”"}
-              - {n: 2, lane: 1, text: "Lưu tùy chọn", end: true}
+              - {n: 1, lane: 0, text: "Select channels, language,\nquiet hours, click \"Save\""}
+              - {n: 2, lane: 1, text: "Save the preferences", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc tùy chọn
+                title: Preference rules
                 lines:
-                  - "Phải giữ ít nhất một kênh; khung giờ yên tĩnh không áp dụng cho lần nhắc T-2h."
-                  - "Kênh SMS chỉ dùng số điện thoại trong hồ sơ; thay số điện thoại phải qua [[UC:update-profile]]."
+                  - "At least one channel must be kept; quiet hours do not apply to the T-2h reminder."
+                  - "The SMS channel uses only the phone number in the record; changing the phone number must go through [[UC:update-profile]]."
             acceptance:
-              - ["AC-NP.1", "Given bệnh nhân tắt mọi kênh, When lưu, Then báo lỗi."]
+              - ["AC-NP.1", "Given the patient turns off every channel, When saving, Then an error is reported."]
 
-      - name: Cổng nội bộ – Audit và bảo vệ dữ liệu
+      - name: Internal portal - Audit and data protection
         use_cases:
           - key: search-audit
-            name: Tra cứu audit truy cập
+            name: Search the access audit
             type: Basic
             actors: [dpo, admin]
             trace: [UC-09, AC-09.1, AC-09.2, BR-07, NFR-SEC5, "API audit"]
-            objective: Lọc bản ghi audit theo bệnh nhân, người truy cập, thời gian, hành động, kết quả, mục đích.
-            trigger: Người dùng mở [[SCR:audit]] và bấm “Tìm”.
-            pre: ["Người dùng là DPO hoặc Quản trị viên (MFA)."]
-            post: ["Danh sách bản ghi audit khớp điều kiện; chính truy vấn này cũng được ghi audit."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Filter audit entries by patient, accessor, time, action, result and purpose.
+            trigger: The user opens [[SCR:audit]] and clicks "Search".
+            pre: ["The user is a DPO or Administrator (MFA)."]
+            post: ["The list of audit entries matching the criteria; this query itself is also audited."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhập điều kiện lọc, bấm “Tìm”"}
-              - {n: 2, lane: 1, text: "Truy vấn kho audit,\nghi audit truy vấn"}
-              - {n: 3, lane: 1, text: "Hiển thị kết quả", end: true}
+              - {n: 1, lane: 0, text: "Enter filter criteria, click \"Search\""}
+              - {n: 2, lane: 1, text: "Query the audit store,\naudit the query"}
+              - {n: 3, lane: 1, text: "Display the results", end: true}
             rules:
               - step: "(2)"
                 key: audit-query
-                title: Quy tắc truy vấn
+                title: Query rules
                 lines:
-                  - "Khoảng thời gian tối đa 92 ngày mỗi truy vấn; bản ghi xuất hiện trong kho tra cứu ≤ 1 phút sau sự kiện (NFR-SEC5)."
-                  - "Kho audit chỉ cho thêm; không có API hay giao diện sửa/xóa, kể cả với Quản trị viên (AC-09.2)."
-                  - "Truy vấn của DPO/QT cũng được ghi audit (ai tra cứu bệnh nhân nào)."
+                  - "Time range at most 92 days per query; entries appear in the search store within <= 1 minute of the event (NFR-SEC5)."
+                  - "The audit store is append-only; there is no API or interface to edit/delete, even for Administrators (AC-09.2)."
+                  - "DPO/Admin queries are also audited (who searched which patient)."
               - step: "(3)"
-                title: Quy tắc hiển thị
+                title: Display rules
                 lines:
-                  - "Quản trị viên thấy siêu dữ liệu (ai, khi nào, hành động, tài nguyên, kết quả) nhưng không thấy nội dung lâm sàng; IP hiển thị đã che octet cuối."
-                  - "Truy cập khẩn cấp có cột trạng thái rà soát; DPO đánh dấu “đã rà soát” kèm ghi chú."
+                  - "Administrators see metadata (who, when, action, resource, result) but not clinical content; IPs are displayed with the last octet masked."
+                  - "Emergency access has a review status column; the DPO marks it \"reviewed\" with a note."
             acceptance:
-              - ["AC-09.1", "Given mọi thao tác đọc/ghi dữ liệu bệnh nhân trong UC-01, 04, 05, 06, 10, 11–13, Then mỗi thao tác có một bản ghi audit (ai, khi nào, cái gì, kết quả, từ đâu)."]
-              - ["AC-09.2", "Given quản trị viên, When cố sửa hoặc xóa bản ghi audit (API, giao diện, kho lưu trữ), Then không thực hiện được."]
+              - ["AC-09.1", "Given every read/write of patient data in UC-01, 04, 05, 06, 10, 11-13, Then each operation has an audit entry (who, when, what, result, from where)."]
+              - ["AC-09.2", "Given an administrator, When attempting to edit or delete an audit entry (API, interface, storage), Then it cannot be done."]
 
           - key: export-audit
-            name: Xuất báo cáo audit
+            name: Export an audit report
             actors: [dpo, admin]
             trace: [UC-09]
-            objective: Xuất kết quả tra cứu audit thành tệp CSV để báo cáo.
-            trigger: Người dùng bấm “Xuất CSV” trên [[SCR:audit]].
-            pre: ["Đã có kết quả tra cứu."]
-            post: ["Tệp CSV được tạo và tải qua link 5 phút; việc xuất được ghi audit."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Export audit search results to a CSV file for reporting.
+            trigger: The user clicks "Export CSV" on [[SCR:audit]].
+            pre: ["Search results are available."]
+            post: ["The CSV file is created and downloaded through a 5-minute link; the export is audited."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Xuất CSV”, nhập\nmục đích xuất"}
-              - {n: 2, lane: 1, text: "Tạo tệp, cấp link 5 phút,\nghi audit “export”", end: true}
+              - {n: 1, lane: 0, text: "Click \"Export CSV\", enter\nthe export purpose"}
+              - {n: 2, lane: 1, text: "Create the file, issue a 5-minute link,\nwrite \"export\" audit", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc xuất
+                title: Export rules
                 lines:
-                  - "[Mục đích xuất] bắt buộc; tối đa 100.000 dòng mỗi lần; tệp không chứa nội dung lâm sàng; tệp tự xóa sau 24 giờ."
+                  - "[Export purpose] is required; at most 100,000 rows per export; the file contains no clinical content; the file self-deletes after 24 hours."
             acceptance:
-              - ["AC-EA.1", "Given xuất báo cáo, Then có bản ghi audit “export” với mục đích đã nhập."]
+              - ["AC-EA.1", "Given an audit report export, Then there is an \"export\" audit entry with the entered purpose."]
 
           - key: process-data-request
-            name: Xử lý yêu cầu của chủ thể dữ liệu
+            name: Process a data subject request
             actors: [dpo]
-            trace: ["Luật BVDLCN 91/2025/QH15", UC-17]
-            objective: DPO xác minh và xử lý yêu cầu cung cấp bản sao dữ liệu của bệnh nhân.
-            trigger: DPO mở yêu cầu trên [[SCR:audit]] (tab “Yêu cầu của bệnh nhân”).
-            pre: ["Có yêu cầu đang chờ xử lý."]
-            post: ["Bệnh nhân nhận link tải bản sao dữ liệu, hoặc yêu cầu bị từ chối kèm lý do."]
-            lanes: [Cán bộ bảo vệ dữ liệu, Hệ thống]
+            trace: ["Personal Data Protection Law 91/2025/QH15", UC-17]
+            objective: The DPO verifies and processes the patient's request for a copy of their data.
+            trigger: The DPO opens a request on [[SCR:audit]] (the "Patient requests" tab).
+            pre: ["There is a pending request."]
+            post: ["The patient receives a download link for the data copy, or the request is rejected with a reason."]
+            lanes: [Data Protection Officer, System]
             steps:
-              - {n: 1, lane: 0, text: "Mở yêu cầu, xác minh"}
-              - {n: 2, lane: 0, kind: decision, text: "Chấp nhận?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
-              - {n: 3, lane: 1, text: "Tạo gói dữ liệu (FHIR JSON\n+ PDF tóm tắt), mã hóa"}
-              - {n: 4, lane: 1, text: "Gửi link tải 24 giờ\ncho bệnh nhân, ghi audit", end: true}
-              - {n: 5, lane: 1, text: "Ghi lý do từ chối,\nthông báo bệnh nhân", end: true}
+              - {n: 1, lane: 0, text: "Open the request, verify"}
+              - {n: 2, lane: 0, kind: decision, text: "Accept?", branches: [{to: 3, label: "Yes"}, {to: 5, label: "No"}]}
+              - {n: 3, lane: 1, text: "Create the data package (FHIR JSON\n+ summary PDF), encrypt it"}
+              - {n: 4, lane: 1, text: "Send a 24-hour download link\nto the patient, write audit", end: true}
+              - {n: 5, lane: 1, text: "Record the rejection reason,\nnotify the patient", end: true}
             rules:
               - step: "(3)"
-                title: Quy tắc gói dữ liệu
+                title: Data package rules
                 lines:
-                  - "Gồm hồ sơ hành chính, lịch hẹn, lần khám đã kết thúc, sinh hiệu, chẩn đoán, tài liệu đã phát hành, lịch sử đồng ý, lịch sử truy cập; không gồm ghi chú nội bộ chưa phát hành."
-                  - "Gói được mã hóa bằng mật khẩu một lần gửi qua kênh riêng (SMS); link chỉ dùng được bởi chính bệnh nhân sau khi đăng nhập."
+                  - "Includes administrative record, appointments, finished encounters, vital signs, diagnoses, released documents, consent history and access history; excludes unreleased internal notes."
+                  - "The package is encrypted with a one-time password sent via a separate channel (SMS); the link can be opened only by the patient after logging in."
               - step: "(4)"
-                title: Quy tắc thời hạn
-                lines: ["Thời hạn xử lý theo quy định hiện hành; hệ thống nhắc DPO khi yêu cầu chờ quá 48 giờ."]
+                title: Deadline rules
+                lines: ["Processing deadlines follow current regulations; the system reminds the DPO when a request has been pending for more than 48 hours."]
             acceptance:
-              - ["AC-DR.1", "Given gói dữ liệu đã tạo, Then link chỉ mở được bởi tài khoản của chính bệnh nhân và hết hạn sau 24 giờ."]
+              - ["AC-DR.1", "Given the data package has been created, Then the link can be opened only by the patient's own account and expires after 24 hours."]
 
-      - name: Cổng nội bộ – Quản trị
+      - name: Internal portal - Administration
         use_cases:
           - key: invite-staff
-            name: Mời nhân viên và gán vai trò
+            name: Invite staff and assign roles
             actors: [admin]
             trace: [UC-08, AC-08.2, NFR-SEC1, "API C21"]
-            objective: Tạo tài khoản nhân viên với vai trò Bác sĩ, Điều dưỡng, Quản trị viên hoặc Cán bộ bảo vệ dữ liệu.
-            trigger: Quản trị viên bấm “Mời nhân viên” trên [[SCR:users]].
-            pre: ["Quản trị viên đã đăng nhập (MFA)."]
-            post: ["Lời mời được gửi; tài khoản chỉ hoạt động sau khi nhân viên đăng ký MFA."]
-            lanes: [Quản trị viên, Hệ thống]
+            objective: Create staff accounts with the role Doctor, Nurse, Administrator or Data Protection Officer.
+            trigger: The administrator clicks "Invite staff" on [[SCR:users]].
+            pre: ["The administrator is logged in (MFA)."]
+            post: ["The invitation is sent; the account becomes active only after the staff member registers MFA."]
+            lanes: [Administrator, System]
             steps:
-              - {n: 1, lane: 0, text: "Nhập email, họ tên, vai trò,\nbấm “Mời”"}
-              - {n: 2, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 3, label: Có}, {to: 1, label: Không}]}
-              - {n: 3, lane: 1, text: "Tạo tài khoản chờ kích hoạt,\ngửi lời mời, ghi audit", end: true}
+              - {n: 1, lane: 0, text: "Enter email, full name, role,\nclick \"Invite\""}
+              - {n: 2, lane: 1, kind: decision, text: "Valid?", branches: [{to: 3, label: "Yes"}, {to: 1, label: "No"}]}
+              - {n: 3, lane: 1, text: "Create an account pending activation,\nsend the invitation, write audit", end: true}
             rules:
               - step: "(2)"
                 key: staff-validate
-                title: Quy tắc kiểm tra
+                title: Validation rules
                 lines:
-                  - "Email thuộc tên miền của bệnh viện; mỗi tài khoản một vai trò chính; không tự gán vai trò cho chính mình."
-                  - "Gán vai trò Quản trị viên hoặc DPO cần hai người: người thứ hai (Quản trị viên khác) phê duyệt."
+                  - "The email belongs to the hospital domain; each account has one primary role; users cannot assign roles to themselves."
+                  - "Assigning the Administrator or DPO role requires two people: a second person (another Administrator) approves."
               - step: "(3)"
-                title: Quy tắc kích hoạt
-                lines: ["Lời mời hết hạn sau 72 giờ; nhân viên phải đăng ký MFA (ứng dụng xác thực TOTP hoặc khóa WebAuthn, không dùng SMS) ở lần đăng nhập đầu tiên, nếu không tài khoản không truy cập được dữ liệu (AC-08.2)."]
+                title: Activation rules
+                lines: ["The invitation expires after 72 hours; the staff member must register MFA (TOTP authenticator app or WebAuthn key, not SMS) at first login, otherwise the account cannot access data (AC-08.2)."]
             acceptance:
-              - ["AC-08.2", "Given nhân viên chưa đăng ký MFA, When đăng nhập, Then không truy cập được dữ liệu bệnh nhân."]
-              - ["AC-IS.1", "Given quản trị viên tự gán vai trò DPO cho mình, Then bị từ chối."]
+              - ["AC-08.2", "Given a staff member has not registered MFA, When logging in, Then they cannot access patient data."]
+              - ["AC-IS.1", "Given an administrator assigns themselves the DPO role, Then it is rejected."]
 
           - key: lock-account
-            name: Khóa / mở khóa tài khoản
+            name: Lock / unlock an account
             actors: [admin]
             trace: [UC-08, AC-08.1, "API C21"]
-            objective: Khóa tài khoản nhân viên nghỉ việc hoặc nghi bị lộ; mở lại khi cần.
-            trigger: Quản trị viên bấm “Khóa” trên [[SCR:users]].
-            pre: ["Tài khoản đích không phải chính quản trị viên đang thao tác."]
-            post: ["Tài khoản bị khóa; token hiện tại bị từ chối trong ≤ 5 phút."]
-            lanes: [Quản trị viên, Hệ thống]
+            objective: Lock the account of a staff member who has left or is suspected of compromise; unlock it when needed.
+            trigger: The administrator clicks "Lock" on [[SCR:users]].
+            pre: ["The target account is not the acting administrator."]
+            post: ["The account is locked; the current token is rejected within <= 5 minutes."]
+            lanes: [Administrator, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Khóa”, nhập lý do"}
-              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận"}
-              - {n: 3, lane: 0, text: "Xác nhận"}
-              - {n: 4, lane: 1, text: "Khóa tại hệ thống và tại\nnhà cung cấp định danh, ghi audit", end: true}
+              - {n: 1, lane: 0, text: "Click \"Lock\", enter a reason"}
+              - {n: 2, lane: 1, text: "Display the confirmation dialog"}
+              - {n: 3, lane: 0, text: "Confirm"}
+              - {n: 4, lane: 1, text: "Lock in the system and at the\nidentity provider, write audit", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc xác nhận
-                lines: ["Hiển thị [[MSG:confirm-lock]]; [Lý do] bắt buộc."]
+                title: Confirmation rules
+                lines: ["Display [[MSG:confirm-lock]]; [Reason] is required."]
               - step: "(4)"
                 key: lock-effect
-                title: Quy tắc hiệu lực
+                title: Effect rules
                 lines:
-                  - "Đánh dấu tài khoản “disabled”; mọi service kiểm tra trạng thái này qua bộ nhớ đệm tối đa 60 giây, nên token còn hạn bị từ chối trong ≤ 5 phút (AC-08.1)."
-                  - "Vô hiệu phiên tại nhà cung cấp định danh; người dùng thấy [[MSG:account-locked]]."
-                  - "Không được khóa tài khoản Quản trị viên cuối cùng còn hoạt động."
+                  - "Mark the account \"disabled\"; every service checks this status through a cache of at most 60 seconds, so a valid token is rejected within <= 5 minutes (AC-08.1)."
+                  - "Invalidate sessions at the identity provider; the user sees [[MSG:account-locked]]."
+                  - "The last active Administrator account cannot be locked."
             acceptance:
-              - ["AC-08.1", "Given tài khoản bị khóa lúc T, When dùng token cũ lúc T + 5 phút, Then bị từ chối."]
+              - ["AC-08.1", "Given the account is locked at time T, When using the old token at T + 5 minutes, Then it is rejected."]
 
           - key: link-practitioner
-            name: Liên kết tài khoản bác sĩ với hồ sơ bác sĩ
+            name: Link a doctor account to a doctor record
             actors: [admin]
             trace: [UC-08, "API C10, C21"]
-            objective: Gắn tài khoản đăng nhập của bác sĩ với hồ sơ Practitioner và chuyên khoa để phân quyền theo quan hệ điều trị.
-            trigger: Quản trị viên bấm “Liên kết” trên [[SCR:users]].
-            pre: ["Tài khoản có vai trò Bác sĩ; hồ sơ Practitioner tồn tại."]
-            post: ["Tài khoản liên kết đúng một Practitioner."]
-            lanes: [Quản trị viên, Hệ thống]
+            objective: Attach a doctor's login account to a Practitioner record and specialty for authorization by treatment relationship.
+            trigger: The administrator clicks "Link" on [[SCR:users]].
+            pre: ["The account has the Doctor role; the Practitioner record exists."]
+            post: ["The account is linked to exactly one Practitioner."]
+            lanes: [Administrator, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn hồ sơ bác sĩ,\nbấm “Liên kết”"}
-              - {n: 2, lane: 1, text: "Lưu liên kết, xóa bộ nhớ\nđệm danh tính, ghi audit", end: true}
+              - {n: 1, lane: 0, text: "Select the doctor record,\nclick \"Link\""}
+              - {n: 2, lane: 1, text: "Save the link, clear the identity\ncache, write audit", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc liên kết
-                lines: ["Một Practitioner chỉ gắn với một tài khoản và ngược lại; đổi liên kết có hiệu lực trong ≤ 60 giây."]
+                title: Linking rules
+                lines: ["A Practitioner is linked to only one account and vice versa; changing the link takes effect within <= 60 seconds."]
             acceptance:
-              - ["AC-LP.1", "Given Practitioner đã gắn tài khoản A, When gắn cho tài khoản B, Then bị từ chối."]
+              - ["AC-LP.1", "Given the Practitioner is already linked to account A, When linking it to account B, Then it is rejected."]
 
           - key: manage-dead-letters
-            name: Xử lý thông báo gửi lỗi
+            name: Handle failed notifications
             type: Basic
             actors: [admin]
             trace: [UC-07, AC-07.2, OBS-03, "API N6, N7"]
-            objective: Xem các lần nhắc gửi lỗi hẳn và đưa lại hàng đợi sau khi khắc phục.
-            trigger: Quản trị viên mở [[SCR:dead-letters]] hoặc nhận cảnh báo hàng lỗi có tin.
-            pre: ["Quản trị viên đã đăng nhập (MFA)."]
-            post: ["Lần nhắc được đưa lại hàng đợi hoặc đóng."]
-            lanes: [Quản trị viên, Hệ thống]
+            objective: View permanently failed reminders and requeue them after remediation.
+            trigger: The administrator opens [[SCR:dead-letters]] or receives a dead-letter queue alert.
+            pre: ["The administrator is logged in (MFA)."]
+            post: ["The reminder is requeued or closed."]
+            lanes: [Administrator, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn mục lỗi, bấm “Gửi lại”"}
-              - {n: 2, lane: 1, kind: decision, text: "Lịch hẹn còn\nhiệu lực?", branches: [{to: 3, label: Có}, {to: 4, label: Không}]}
-              - {n: 3, lane: 1, text: "Đưa lại hàng đợi", end: true}
-              - {n: 4, lane: 1, text: "Đóng mục, không gửi", end: true}
+              - {n: 1, lane: 0, text: "Select the failed item, click \"Resend\""}
+              - {n: 2, lane: 1, kind: decision, text: "Is the appointment\nstill valid?", branches: [{to: 3, label: "Yes"}, {to: 4, label: "No"}]}
+              - {n: 3, lane: 1, text: "Requeue the item", end: true}
+              - {n: 4, lane: 1, text: "Close the item, do not send", end: true}
             rules:
               - step: "(1)"
-                title: Quy tắc hiển thị
-                lines: ["Danh sách chỉ hiển thị mã lịch hẹn, kênh, lỗi, số lần thử; không hiển thị nội dung tin, SĐT hay email đầy đủ."]
+                title: Display rules
+                lines: ["The list shows only the appointment ID, channel, error and attempt count; it does not show the message content, phone number or full email."]
               - step: "(2)"
-                title: Quy tắc gửi lại
-                lines: ["Không gửi lại nếu lịch hẹn đã hủy hoặc đã qua giờ khám; vẫn bảo đảm không gửi trùng cho cùng một lần nhắc (AC-07.2)."]
+                title: Resend rules
+                lines: ["Do not resend if the appointment has been cancelled or the visit time has passed; still ensure no duplicate is sent for the same reminder (AC-07.2)."]
             acceptance:
-              - ["AC-DL.1", "Given lịch hẹn đã hủy, When gửi lại mục lỗi, Then không có tin nào được gửi."]
+              - ["AC-DL.1", "Given the appointment has been cancelled, When resending the failed item, Then no message is sent."]
 
           - key: backup-restore
-            name: Sao lưu và khôi phục dữ liệu
+            name: Back up and restore data
             actors: [admin]
             trace: [UC-16, AC-16.1, AC-16.2, NFR-A4, NFR-A5]
-            objective: Bảo đảm khôi phục được dữ liệu lịch hẹn, hồ sơ, tài liệu về một thời điểm trong 7 ngày qua.
-            trigger: Sự cố mất/hỏng dữ liệu, hoặc lịch diễn tập định kỳ.
-            pre: ["Quy trình khôi phục được phê duyệt bởi người thứ hai; chạy qua pipeline vận hành, không thao tác tay trên CSDL."]
-            post: ["Dữ liệu được khôi phục; thời gian thực tế được ghi lại so với RTO."]
-            lanes: [Quản trị viên, Hệ thống]
+            objective: Ensure appointment, record and document data can be restored to a point in time within the last 7 days.
+            trigger: A data loss/corruption incident, or a scheduled drill.
+            pre: ["The restore process is approved by a second person; it runs through the operations pipeline, not by manual actions on the database."]
+            post: ["Data is restored; the actual time is recorded against the RTO."]
+            lanes: [Administrator, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn thời điểm khôi phục,\ngửi yêu cầu"}
-              - {n: 2, lane: 0, kind: decision, text: "Người thứ hai\nphê duyệt?", branches: [{to: 3, label: Có}, {to: 5, label: Không}]}
-              - {n: 3, lane: 1, text: "Khôi phục vào môi trường\nmới, kiểm tra toàn vẹn"}
-              - {n: 4, lane: 1, text: "Chuyển lưu lượng, ghi thời gian\nvà kết quả, ghi audit", end: true}
-              - {n: 5, lane: 1, text: "Hủy yêu cầu", end: true}
+              - {n: 1, lane: 0, text: "Select the restore point,\nsubmit the request"}
+              - {n: 2, lane: 0, kind: decision, text: "Second person\napproves?", branches: [{to: 3, label: "Yes"}, {to: 5, label: "No"}]}
+              - {n: 3, lane: 1, text: "Restore into a new environment,\ncheck integrity"}
+              - {n: 4, lane: 1, text: "Switch traffic, record the time\nand result, write audit", end: true}
+              - {n: 5, lane: 1, text: "Cancel the request", end: true}
             rules:
               - step: "(3)"
-                title: Quy tắc khôi phục
+                title: Restore rules
                 lines:
-                  - "PostgreSQL và MongoDB khôi phục theo thời điểm (PITR) trong 7 ngày; tệp tài liệu có versioning và xóa mềm 14 ngày; bản sao lưu được mã hóa và lưu dư thừa theo vùng."
-                  - "RPO ≤ 5 phút, RTO ≤ 1 giờ cho lịch hẹn và dữ liệu lâm sàng (NFR-A4); RPO = 0 cho tài liệu và audit đã xác nhận ghi (NFR-A5)."
-                  - "Audit (WORM) không bị ghi đè khi khôi phục."
+                  - "PostgreSQL and MongoDB restore to a point in time (PITR) within 7 days; document files have versioning and soft delete for 14 days; backups are encrypted and zone-redundant."
+                  - "RPO <= 5 minutes, RTO <= 1 hour for appointments and clinical data (NFR-A4); RPO = 0 for documents and audit whose write is confirmed (NFR-A5)."
+                  - "Audit (WORM) is not overwritten during a restore."
             acceptance:
-              - ["AC-16.1", "Given dữ liệu bị xóa nhầm lúc T, When khôi phục về T − 1 phút, Then dữ liệu lịch hẹn và hồ sơ khớp trạng thái tại thời điểm đó."]
-              - ["AC-16.2", "Given diễn tập khôi phục, Then biên bản ghi thời gian thực tế và so với RTO 1 giờ."]
+              - ["AC-16.1", "Given data was accidentally deleted at time T, When restoring to T - 1 minute, Then appointment and record data match the state at that time."]
+              - ["AC-16.2", "Given a restore drill, Then the report records the actual time and compares it with the 1-hour RTO."]

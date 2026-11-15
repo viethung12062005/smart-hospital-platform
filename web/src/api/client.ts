@@ -4,16 +4,16 @@ import { getConfig } from '@/config';
 import { currentLang } from '@/i18n';
 
 /**
- * Lỗi từ API theo quy ước 07-api-conventions §5:
- * - /fhir/*  → OperationOutcome, mã ở issue[0].details.coding[0].code, thông điệp ở diagnostics;
- * - còn lại  → Problem Details (RFC 9457) với `code` và `detail`.
- * Máy chủ đã dịch thông điệp theo Accept-Language, nên giao diện hiển thị `message` trực tiếp.
+ * API errors per convention 07-api-conventions §5:
+ * - /fhir/*  → OperationOutcome, code in issue[0].details.coding[0].code, message in diagnostics;
+ * - everything else → Problem Details (RFC 9457) with `code` and `detail`.
+ * The server has already translated the message per Accept-Language, so the UI displays `message` directly.
  */
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
   readonly traceId?: string;
-  /** 409 slot-unavailable: các slot trống gợi ý (extension suggested-slots). */
+  /** 409 slot-unavailable: the suggested free slots (extension suggested-slots). */
   readonly suggestedSlots: string[];
 
   constructor(status: number, code: string, message: string, traceId?: string, suggestedSlots: string[] = []) {
@@ -26,7 +26,7 @@ export class ApiError extends Error {
   }
 }
 
-/** Lỗi mạng (không có phản hồi HTTP). */
+/** Network error (no HTTP response). */
 export class NetworkError extends Error {
   constructor() {
     super('network');
@@ -37,11 +37,11 @@ export class NetworkError extends Error {
 export interface RequestOptions {
   readonly method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   readonly body?: unknown;
-  /** Body application/x-www-form-urlencoded (FHIR _search). Không dùng cùng `body`. */
+  /** application/x-www-form-urlencoded body (FHIR _search). Do not use together with `body`. */
   readonly form?: URLSearchParams;
-  /** Bắt buộc với $book, $cancel, $reschedule. Dùng newIdempotencyKey() một lần cho mỗi lần người dùng bấm. */
+  /** Required for $book, $cancel, $reschedule. Use newIdempotencyKey() once per user click. */
   readonly idempotencyKey?: string;
-  /** Bắt buộc với PUT và thao tác đổi trạng thái: giá trị ETag của bản đã đọc, ví dụ W/"3". */
+  /** Required for PUT and status-changing operations: the ETag of the version that was read, for example W/"3". */
   readonly ifMatch?: string;
   readonly signal?: AbortSignal;
 }
@@ -56,7 +56,7 @@ export function newIdempotencyKey(): string {
   return crypto.randomUUID();
 }
 
-/** ETag dạng FHIR từ meta.versionId khi máy chủ không trả header ETag. */
+/** FHIR-style ETag from meta.versionId when the server does not return an ETag header. */
 export function etagOf(resource: Resource | undefined): string | undefined {
   const v = resource?.meta?.versionId;
   return v ? `W/"${v}"` : undefined;
@@ -133,7 +133,7 @@ function isOperationOutcome(body: unknown): body is OperationOutcome {
   return !!body && typeof body === 'object' && (body as Resource).resourceType === 'OperationOutcome';
 }
 
-/** Lấy các resource trong Bundle searchset. */
+/** Get the resources from a searchset Bundle. */
 export function bundleEntries<T extends Resource>(bundle: Bundle | undefined): T[] {
   return (bundle?.entry ?? []).map((e) => e.resource as T).filter((r): r is T => !!r);
 }

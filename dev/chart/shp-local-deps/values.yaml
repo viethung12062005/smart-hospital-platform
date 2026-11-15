@@ -1,4 +1,4 @@
-# Mật khẩu KHÔNG nằm ở đây: chart đọc từ Secret `credentialsSecret` do dev/scripts/up.sh sinh ngẫu nhiên.
+# Passwords are NOT stored here: the chart reads them from the `credentialsSecret` Secret generated randomly by dev/scripts/up.sh.
 credentialsSecret: shp-local-credentials
 
 images:
@@ -9,7 +9,7 @@ images:
   azurite: mcr.microsoft.com/azure-storage/azurite:3.37.0
   keycloak: quay.io/keycloak/keycloak:26.0
 
-# Profile: core = đủ cho phần lớn task. (Profile full: LOC-08.)
+# Profile: core = enough for most tasks. (Full profile: LOC-08.)
 components:
   postgres: true
   mongo: true
@@ -24,22 +24,22 @@ storage:
 
 postgres:
   user: shp
-  databases: [scheduling]   # notification, ml dùng MongoDB (ADR-0014)
+  databases: [scheduling]   # notification and ml use MongoDB (ADR-0014)
 
 mongo:
   replicaSet: rs0
 
-resources:            # giới hạn nhỏ để chạy được trên máy 16 GB
+resources:            # small limits so it runs on a 16 GB machine
   postgres: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 512Mi } }
   mongo:    { requests: { cpu: 100m, memory: 384Mi }, limits: { memory: 768Mi } }
   redis:    { requests: { cpu: 50m,  memory: 32Mi  }, limits: { memory: 128Mi } }
   rabbitmq: { requests: { cpu: 100m, memory: 256Mi }, limits: { memory: 512Mi } }
   azurite:  { requests: { cpu: 50m,  memory: 64Mi  }, limits: { memory: 256Mi } }
-  # Keycloak start-dev build lại Quarkus lúc khởi động nên RAM vọt lên trong vài giây đầu; 1Gi bị OOMKilled trên máy nhiều lõi.
+  # The Keycloak start-dev mode rebuilds Quarkus at startup, so RAM spikes during the first seconds; 1Gi gets OOMKilled on many-core machines.
   keycloak: { requests: { cpu: 200m, memory: 768Mi }, limits: { memory: 1536Mi } }
 
-# JVM của Keycloak: mặc định heap = 70% giới hạn và số thread GC/JIT theo số lõi của MÁY (không theo cụm),
-# nên cùng chart mà máy nhiều lõi bị OOM. Heap 50% (768Mi) + cố định 2 CPU cho bộ nhớ ổn định trên mọi máy.
+# The Keycloak JVM defaults to a heap of 70% of the limit, and the GC/JIT thread count follows the MACHINE core count (not the cluster),
+# so the same chart runs out of memory on many-core machines. A 50% heap (768Mi) + a fixed 2 CPUs keeps memory stable on any machine.
 keycloakJvm:
   heap: "-XX:MaxRAMPercentage=50 -XX:InitialRAMPercentage=25"
   append: "-XX:ActiveProcessorCount=2"

@@ -1,313 +1,313 @@
-# Chương 3 – Module Lịch hẹn và lịch làm việc (service scheduling).
+# Chapter 3 - Appointment and schedule module (scheduling service).
 use_case_intro: >-
-  Chương này đặc tả yêu cầu chức năng: hệ thống phải làm gì về dữ liệu vào, hành vi và kết quả. Mỗi use case gồm bảng tóm
-  tắt, luồng hoạt động (các bước đánh số), luồng thay thế, quy tắc nghiệp vụ tham chiếu đúng số bước, và tiêu chí nghiệm
-  thu dạng Given/When/Then. Trừ khi ghi khác, mọi use case đều áp dụng [[CBR:authz]], [[CBR:audit]] và [[CBR:no-pii]].
+  This chapter specifies the functional requirements: what the system must do in terms of input data, behavior and results. Each use case consists of a summary
+  table, an activity flow (numbered steps), alternative flows, business rules referencing the correct step numbers, and acceptance criteria
+  in Given/When/Then form. Unless stated otherwise, every use case applies [[CBR:authz]], [[CBR:audit]] and [[CBR:no-pii]].
 
 modules:
   - key: scheduling
-    name: Lịch hẹn và lịch làm việc
-    intro: Đặt, hủy, đổi lịch khám; lịch làm việc và slot của bác sĩ. Dữ liệu thuộc service scheduling (PostgreSQL).
+    name: Appointments and schedules
+    intro: Book, cancel and reschedule visits; doctor schedules and slots. Data belongs to the scheduling service (PostgreSQL).
     sections:
-      - name: Cổng bệnh nhân – Lịch hẹn
+      - name: Patient portal - Appointments
         use_cases:
           - key: find-slot
-            name: Tìm bác sĩ và khung giờ trống
+            name: Find a doctor and a free time slot
             type: Basic
             actors: [patient, nurse, doctor, admin]
             trace: [UC-03, BR-04, NFR-P1, "API S8, C9"]
-            objective: Cho phép người dùng tìm khung giờ còn trống theo chuyên khoa, bác sĩ và khoảng ngày.
-            trigger: Người dùng chọn “Đặt lịch khám” trên trang chủ hoặc mở [[SCR:find-doctor]].
-            pre: ["Người dùng đã đăng nhập với một trong các vai trò trên."]
-            post: ["Danh sách khung giờ trống thỏa điều kiện lọc được hiển thị."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Allow a user to find free time slots by specialty, doctor and date range.
+            trigger: The user selects "Book an appointment" on the home page or opens [[SCR:find-doctor]].
+            pre: ["The user is logged in with one of the roles above."]
+            post: ["The list of free time slots matching the filters is displayed."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Mở màn hình tìm bác sĩ"}
-              - {n: 2, lane: 1, text: "Hiển thị bộ lọc và\ndanh sách chuyên khoa"}
-              - {n: 3, lane: 0, text: "Chọn chuyên khoa / bác sĩ /\nkhoảng ngày, bấm “Tìm”"}
-              - {n: 4, lane: 1, kind: decision, text: "Điều kiện\nhợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
-              - {n: 5, lane: 1, text: "Trả các slot “free”\ntrong cửa sổ 30 ngày", end: true}
+              - {n: 1, lane: 0, text: "Open the find a doctor screen"}
+              - {n: 2, lane: 1, text: "Display the filters and\nthe specialty list"}
+              - {n: 3, lane: 0, text: "Select a specialty / doctor /\ndate range, click \"Search\""}
+              - {n: 4, lane: 1, kind: decision, text: "Are the conditions\nvalid?", branches: [{to: 5, label: "Yes"}, {to: 2, label: "No"}]}
+              - {n: 5, lane: 1, text: "Return the \"free\" slots\nwithin the 30-day window", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc hiển thị màn hình
+                title: Screen display rules
                 lines:
-                  - "Hệ thống tải [[SCR:find-doctor]]; [Từ ngày] mặc định <Hôm nay>, [Đến ngày] mặc định <Hôm nay> + 7 ngày."
-                  - "Danh sách chuyên khoa lấy từ bộ mã chuyên khoa; danh sách bác sĩ lọc theo chuyên khoa đã chọn."
+                  - "The system loads [[SCR:find-doctor]]; [From date] defaults to <Today>, [To date] defaults to <Today> + 7 days."
+                  - "The specialty list comes from the specialty code set; the doctor list is filtered by the selected specialty."
               - step: "(4)"
                 key: slot-search-validate
-                title: Quy tắc kiểm tra điều kiện
+                title: Condition validation rules
                 lines:
-                  - "Bắt buộc có [Chuyên khoa] hoặc [Bác sĩ]; thiếu thì hiển thị [[MSG:required]] dưới trường [Chuyên khoa]."
-                  - "Khoảng ngày tối đa 31 ngày và không vượt quá <Hôm nay> + 30 ngày (BR-04); vượt thì tự cắt về giới hạn và hiển thị ghi chú."
+                  - "[Specialty] or [Doctor] is required; if missing, display [[MSG:required]] under the [Specialty] field."
+                  - "The date range is at most 31 days and must not exceed <Today> + 30 days (BR-04); if exceeded, clamp it to the limit and display a note."
               - step: "(5)"
-                title: Quy tắc trả kết quả
+                title: Result rules
                 lines:
-                  - "Chỉ trả slot có [Trạng thái] = “free”, [Bắt đầu] > <Bây giờ>, thuộc lịch làm việc đang hoạt động."
-                  - "Sắp xếp theo [Bắt đầu] tăng dần; phân trang 20 slot/trang theo [[CBR:pagination]]."
-                  - "Bệnh nhân chỉ thấy slot “free”; Điều dưỡng/Quản trị viên/Bác sĩ được lọc thêm “busy”, “busy-unavailable” nhưng không thấy tên bệnh nhân của slot bận trừ khi có quyền xem lịch hẹn đó."
-                  - "Kết quả được cache tối đa 5 giây và làm mới ngay khi có sự kiện đặt/hủy (đảm bảo NFR-P1: p95 ≤ 300 ms ở 500 RPS)."
+                  - "Return only slots with [Status] = \"free\", [Start] > <Now>, belonging to an active schedule."
+                  - "Sort by [Start] ascending; paginate 20 slots/page per [[CBR:pagination]]."
+                  - "Patients see only \"free\" slots; Nurses/Administrators/Doctors may also filter \"busy\", \"busy-unavailable\" but do not see the patient name of a busy slot unless they have permission to view that appointment."
+                  - "Results are cached for at most 5 seconds and refreshed immediately on a booking/cancellation event (ensuring NFR-P1: p95 <= 300 ms at 500 RPS)."
             acceptance:
-              - ["AC-FS.1", "Given lịch làm việc có 14 slot trống ngày mai, When bệnh nhân tìm theo chuyên khoa đó, Then thấy đúng 14 slot theo thứ tự giờ."]
-              - ["AC-FS.2", "Given khoảng ngày vượt 30 ngày, When tìm, Then chỉ trả slot đến <Hôm nay> + 30 ngày."]
-              - ["AC-FS.3", "Given bệnh nhân, When lọc trạng thái “busy”, Then yêu cầu bị từ chối hoặc bỏ qua tham số, không lộ lịch hẹn của người khác."]
+              - ["AC-FS.1", "Given the schedule has 14 free slots tomorrow, When a patient searches by that specialty, Then they see exactly 14 slots in time order."]
+              - ["AC-FS.2", "Given a date range exceeding 30 days, When searching, Then only slots up to <Today> + 30 days are returned."]
+              - ["AC-FS.3", "Given a patient, When filtering by status \"busy\", Then the request is rejected or the parameter is ignored, without exposing another person's appointment."]
 
           - key: book
-            name: Đặt lịch khám
+            name: Book an appointment
             actors: [patient, nurse]
             trace: [UC-03, AC-03.1, AC-03.2, AC-03.3, AC-03.4, AC-03.6, AC-03.7, BR-01, BR-03, BR-04, NFR-P2, "API S11"]
-            objective: Cho phép bệnh nhân tự đặt lịch, hoặc điều dưỡng đặt thay bệnh nhân, vào một khung giờ trống.
-            trigger: Người dùng chọn một slot trên [[SCR:find-doctor]] và bấm “Đặt lịch”.
+            objective: Allow a patient to book for themselves, or a nurse to book on a patient's behalf, into a free time slot.
+            trigger: The user selects a slot on [[SCR:find-doctor]] and clicks "Book".
             pre:
-              - "Người dùng đã đăng nhập; bệnh nhân đã có hồ sơ (đã đăng ký)."
-              - "Slot đang “free”, nằm trong 30 ngày tới."
-            post: ["Lịch hẹn ở trạng thái “booked”; slot chuyển “busy”; sự kiện “đã đặt lịch” được phát (kích hoạt nhắc lịch, dự đoán no-show, audit)."]
-            lanes: [Người dùng, Hệ thống]
+              - "The user is logged in; the patient already has a record (is registered)."
+              - "The slot is \"free\" and within the next 30 days."
+            post: ["The appointment is in status \"booked\"; the slot becomes \"busy\"; a \"booked\" event is emitted (triggering reminders, no-show prediction and audit)."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn slot, bấm “Đặt lịch”"}
-              - {n: 2, lane: 1, text: "Hiển thị màn hình\nxác nhận đặt lịch"}
-              - {n: 3, lane: 0, text: "Nhập lý do khám,\nbấm “Xác nhận”"}
-              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ và\nđủ điều kiện?", branches: [{to: 5, label: Có}, {to: 7, label: Không}]}
-              - {n: 5, lane: 1, text: "Tạo lịch hẹn “booked”,\nslot “busy”, phát sự kiện"}
-              - {n: 6, lane: 1, text: "Hiển thị thông báo\nthành công và mã lịch hẹn", end: true}
-              - {n: 7, lane: 1, text: "Hiển thị lỗi; nếu slot đã\nbị đặt thì gợi ý 3 slot gần nhất", next: 1}
+              - {n: 1, lane: 0, text: "Select a slot, click \"Book\""}
+              - {n: 2, lane: 1, text: "Display the booking\nconfirmation screen"}
+              - {n: 3, lane: 0, text: "Enter the reason for the visit,\nclick \"Confirm\""}
+              - {n: 4, lane: 1, kind: decision, text: "Valid and\neligible?", branches: [{to: 5, label: "Yes"}, {to: 7, label: "No"}]}
+              - {n: 5, lane: 1, text: "Create the \"booked\" appointment,\nslot \"busy\", emit the event"}
+              - {n: 6, lane: 1, text: "Display the success message\nand the appointment ID", end: true}
+              - {n: 7, lane: 1, text: "Display the error; if the slot was\nalready booked, suggest the 3 nearest slots", next: 1}
             alternatives:
-              - "Người dùng bấm “Xác nhận” nhiều lần hoặc mạng chập chờn khiến trình duyệt gửi lại: hệ thống trả đúng lịch hẹn đã tạo ở lần đầu, không tạo lịch trùng ([[BR:book-idempotency]])."
-              - "Hai người cùng đặt một slot: đúng một người thành công, người còn lại nhận [[MSG:slot-unavailable]] kèm 3 slot gợi ý ([[BR:book-concurrency]])."
+              - "The user clicks \"Confirm\" multiple times or an unstable network makes the browser resend: the system returns the appointment created on the first attempt and does not create a duplicate ([[BR:book-idempotency]])."
+              - "Two people book the same slot: exactly one succeeds, the other receives [[MSG:slot-unavailable]] with 3 suggested slots ([[BR:book-concurrency]])."
             rules:
               - step: "(2)"
-                title: Quy tắc hiển thị màn hình
+                title: Screen display rules
                 lines:
-                  - "Hệ thống tải [[SCR:book]] với thông tin slot (bác sĩ, chuyên khoa, ngày giờ) ở chế độ chỉ đọc."
-                  - "Nếu người dùng là Điều dưỡng: hiển thị trường [Bệnh nhân] bắt buộc, tìm theo [[UC:search-patient]]. Nếu là Bệnh nhân: [Bệnh nhân] = <Người dùng hiện tại>, không sửa được."
-                  - "Trình duyệt sinh một [Idempotency-Key] (UUID) khi màn hình mở và giữ nguyên cho mọi lần gửi lại của cùng thao tác."
+                  - "The system loads [[SCR:book]] with the slot information (doctor, specialty, date and time) in read-only mode."
+                  - "If the user is a Nurse: display the required [Patient] field, searching via [[UC:search-patient]]. If the user is a Patient: [Patient] = <Current user>, not editable."
+                  - "The browser generates an [Idempotency-Key] (UUID) when the screen opens and keeps it for every resend of the same operation."
               - step: "(4)"
                 key: book-validate
-                title: Quy tắc kiểm tra
+                title: Validation rules
                 lines:
-                  - "[Lý do khám] không bắt buộc, tối đa 500 ký tự; vượt thì hiển thị [[MSG:max-length]]."
-                  - "Bệnh nhân chỉ đặt được cho chính mình hoặc cho hồ sơ đã liên kết với tài khoản (con dưới 16 tuổi, người thân đã ủy quyền, [[UC:link-relative]]); [Bệnh nhân] khác → từ chối [[MSG:forbidden]] và ghi audit “deny” (AC-03.6). Đặt hộ được ghi audit kèm tài khoản thực hiện (AC-03.7)."
-                  - "Slot phải nằm trong <Hôm nay> + 30 ngày (BR-04), nếu không → [[MSG:outside-window]]."
-                  - "Bệnh nhân không được có quá 3 lịch hẹn tương lai “booked” (BR-03), nếu không → [[MSG:max-future]]. Quy tắc áp dụng cả khi Điều dưỡng đặt thay."
-                  - "Giới hạn 10 yêu cầu đặt lịch/phút/người dùng; vượt → [[MSG:rate-limited]]."
+                  - "[Reason for visit] is optional, at most 500 characters; if exceeded, display [[MSG:max-length]]."
+                  - "A patient can book only for themselves or for a record linked to their account (children under 16, authorized relatives, [[UC:link-relative]]); another [Patient] -> deny [[MSG:forbidden]] and write an audit \"deny\" (AC-03.6). Booking on behalf is audited together with the acting account (AC-03.7)."
+                  - "The slot must be within <Today> + 30 days (BR-04), otherwise -> [[MSG:outside-window]]."
+                  - "A patient may not have more than 3 future \"booked\" appointments (BR-03), otherwise -> [[MSG:max-future]]. The rule also applies when a Nurse books on their behalf."
+                  - "Limit of 10 booking requests/minute/user; exceeded -> [[MSG:rate-limited]]."
               - step: "(5)"
                 key: book-concurrency
-                title: Quy tắc tạo lịch hẹn và chống đặt trùng
+                title: Appointment creation and duplicate-booking rules
                 lines:
-                  - "Tạo [Lịch hẹn] với [Trạng thái] = “booked”, [Kênh đặt] = “web” (Bệnh nhân) hoặc “counter” (Điều dưỡng), [Mã lịch hẹn] = “LH-” + yyyyMMdd + “-” + số thứ tự 4 chữ số trong ngày."
-                  - "Cập nhật slot sang “busy” trong cùng giao dịch; ràng buộc duy nhất ở CSDL bảo đảm một slot chỉ có một lịch hẹn hiệu lực (BR-01). Nếu slot đã bị chiếm → [[MSG:slot-unavailable]] kèm tối đa 3 slot trống gần nhất cùng bác sĩ hoặc cùng chuyên khoa."
-                  - "Ghi sự kiện “shp.scheduling.appointment-booked.v1” vào outbox trong cùng giao dịch (không chứa tên, SĐT, lý do khám)."
-                  - "Ghi audit theo [[CBR:audit]]."
+                  - "Create the [Appointment] with [Status] = \"booked\", [Booking channel] = \"web\" (Patient) or \"counter\" (Nurse), [Appointment ID] = \"LH-\" + yyyyMMdd + \"-\" + a 4-digit sequence number for the day."
+                  - "Update the slot to \"busy\" in the same transaction; a unique database constraint ensures a slot has only one active appointment (BR-01). If the slot is already taken -> [[MSG:slot-unavailable]] with at most 3 nearest free slots for the same doctor or the same specialty."
+                  - "Write the event \"shp.scheduling.appointment-booked.v1\" to the outbox in the same transaction (containing no name, phone number or reason for visit)."
+                  - "Write audit per [[CBR:audit]]."
               - step: "(5)"
                 key: book-idempotency
-                title: Quy tắc gửi lại an toàn (idempotency)
+                title: Safe resend (idempotency) rules
                 lines:
-                  - "Thiếu [Idempotency-Key] → từ chối (lỗi kỹ thuật 428, client luôn gửi khóa)."
-                  - "Cùng khóa và cùng nội dung trong 24 giờ → trả lại đúng lịch hẹn đã tạo, không tạo bản ghi mới (AC-03.2)."
-                  - "Cùng khóa nhưng nội dung khác → từ chối, không thay đổi dữ liệu (AC-03.3)."
+                  - "Missing [Idempotency-Key] -> reject (technical error 428; clients always send the key)."
+                  - "Same key and same content within 24 hours -> return the appointment already created, do not create a new record (AC-03.2)."
+                  - "Same key but different content -> reject, without changing data (AC-03.3)."
               - step: "(6)"
-                title: Quy tắc thông báo kết quả
+                title: Result notification rules
                 lines:
-                  - "Hiển thị [[MSG:booked]]; chuyển tới [[SCR:my-appointments]] (Bệnh nhân) hoặc [[SCR:queue]] (Điều dưỡng)."
-                  - "Gửi [[ET:booking-confirmation]] theo tùy chọn thông báo của bệnh nhân."
+                  - "Display [[MSG:booked]]; navigate to [[SCR:my-appointments]] (Patient) or [[SCR:queue]] (Nurse)."
+                  - "Send [[ET:booking-confirmation]] according to the patient's notification preferences."
             acceptance:
-              - ["AC-03.1", "Given 1 slot trống và 50 yêu cầu đặt đồng thời từ 50 bệnh nhân, When xử lý xong, Then đúng 1 yêu cầu thành công và 49 nhận lỗi “slot-unavailable”."]
-              - ["AC-03.2", "Given cùng Idempotency-Key gửi 2 lần với cùng nội dung, Then cả hai nhận cùng một lịch hẹn và chỉ 1 lịch hẹn tồn tại."]
-              - ["AC-03.3", "Given cùng Idempotency-Key nhưng nội dung khác, When gửi, Then bị từ chối và không có thay đổi."]
-              - ["AC-03.4", "Given bệnh nhân đã có 3 lịch hẹn tương lai, When đặt thêm, Then bị từ chối với “max-future-appointments”."]
-              - ["AC-03.6", "Given bệnh nhân A, When đặt lịch cho hồ sơ chưa liên kết với tài khoản của A, Then bị từ chối và có bản ghi audit “deny”."]
-              - ["AC-03.7", "Given hồ sơ người thân đã liên kết, When tài khoản của A đặt lịch cho hồ sơ đó, Then đặt thành công và audit ghi tài khoản thực hiện và hồ sơ được đặt."]
-              - ["AC-BK.1", "Given đặt lịch thành công, Then sự kiện phát ra không chứa họ tên, SĐT, email hay lý do khám."]
+              - ["AC-03.1", "Given 1 free slot and 50 concurrent booking requests from 50 patients, When processing completes, Then exactly 1 request succeeds and 49 receive the \"slot-unavailable\" error."]
+              - ["AC-03.2", "Given the same Idempotency-Key sent twice with the same content, Then both receive the same appointment and only 1 appointment exists."]
+              - ["AC-03.3", "Given the same Idempotency-Key but different content, When sent, Then it is rejected and nothing changes."]
+              - ["AC-03.4", "Given a patient already has 3 future appointments, When booking another, Then it is rejected with \"max-future-appointments\"."]
+              - ["AC-03.6", "Given patient A, When booking for a record not linked to A's account, Then it is rejected and a \"deny\" audit entry is recorded."]
+              - ["AC-03.7", "Given a linked relative's record, When A's account books for that record, Then booking succeeds and the audit records the acting account and the record booked."]
+              - ["AC-BK.1", "Given a successful booking, Then the emitted event contains no full name, phone number, email or reason for visit."]
 
           - key: cancel
-            name: Hủy lịch khám
+            name: Cancel an appointment
             actors: [patient, nurse]
             trace: [UC-03, AC-03.5, AC-07.1, BR-02, "API S14"]
-            objective: Cho phép bệnh nhân hủy lịch hẹn của mình trước giờ khám ít nhất 2 giờ, hoặc điều dưỡng hủy bất kỳ lúc nào trước khi check-in.
-            trigger: Người dùng bấm “Hủy lịch” trên [[SCR:my-appointments]] hoặc [[SCR:queue]].
-            pre: ["Lịch hẹn đang ở trạng thái “booked”."]
-            post: ["Lịch hẹn “cancelled”; slot trở về “free”; các lần nhắc chưa gửi bị hủy."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Allow a patient to cancel their appointment at least 2 hours before the visit, or a nurse to cancel at any time before check-in.
+            trigger: The user clicks "Cancel appointment" on [[SCR:my-appointments]] or [[SCR:queue]].
+            pre: ["The appointment is in status \"booked\"."]
+            post: ["The appointment is \"cancelled\"; the slot returns to \"free\"; unsent reminders are cancelled."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Hủy lịch”"}
-              - {n: 2, lane: 1, text: "Hiển thị hộp thoại xác nhận\nvà chọn lý do hủy"}
-              - {n: 3, lane: 0, text: "Chọn lý do, bấm “Đồng ý”"}
-              - {n: 4, lane: 1, kind: decision, text: "Được phép hủy?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
-              - {n: 5, lane: 1, text: "Hủy lịch hẹn, giải phóng slot,\nphát sự kiện “đã hủy”", end: true}
-              - {n: 6, lane: 1, text: "Hiển thị lỗi, giữ nguyên\nlịch hẹn", end: true}
+              - {n: 1, lane: 0, text: "Click \"Cancel appointment\""}
+              - {n: 2, lane: 1, text: "Display the confirmation dialog\nand select a cancellation reason"}
+              - {n: 3, lane: 0, text: "Select a reason, click \"Agree\""}
+              - {n: 4, lane: 1, kind: decision, text: "Cancellation allowed?", branches: [{to: 5, label: "Yes"}, {to: 6, label: "No"}]}
+              - {n: 5, lane: 1, text: "Cancel the appointment, free the slot,\nemit the \"cancelled\" event", end: true}
+              - {n: 6, lane: 1, text: "Display the error, keep the\nappointment unchanged", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc xác nhận
+                title: Confirmation rules
                 lines:
-                  - "Hiển thị [[MSG:confirm-cancel]] với danh sách [Lý do hủy] (bộ mã 6 lý do). Bấm “Không” thì đóng hộp thoại, không thay đổi gì."
+                  - "Display [[MSG:confirm-cancel]] with the list of [Cancellation reasons] (a set of 6 reasons). Clicking \"No\" closes the dialog without changes."
               - step: "(4)"
                 key: cancel-window
-                title: Quy tắc thời hạn hủy
+                title: Cancellation deadline rules
                 lines:
-                  - "Bệnh nhân chỉ hủy được lịch hẹn của mình và khi [Bắt đầu] − <Bây giờ> ≥ 2 giờ (BR-02); nếu không → [[MSG:cancel-too-late]]."
-                  - "Điều dưỡng hủy được bất kỳ lịch hẹn “booked” nào. Lịch hẹn không ở “booked” → [[MSG:invalid-state]]."
+                  - "A patient can cancel only their own appointment and only when [Start] - <Now> >= 2 hours (BR-02); otherwise -> [[MSG:cancel-too-late]]."
+                  - "A nurse can cancel any \"booked\" appointment. An appointment not in \"booked\" -> [[MSG:invalid-state]]."
               - step: "(5)"
-                title: Quy tắc hủy
+                title: Cancellation rules
                 lines:
-                  - "Cập nhật [Trạng thái] = “cancelled”, lưu [Lý do hủy], người hủy, thời điểm; slot về “free” trong cùng giao dịch."
-                  - "Phát sự kiện “shp.scheduling.appointment-cancelled.v1”; service thông báo hủy mọi lần nhắc “scheduled” ([[UC:cancel-reminders]])."
-                  - "Hiển thị [[MSG:cancelled]]; gửi [[ET:cancellation]]."
+                  - "Update [Status] = \"cancelled\", store [Cancellation reason], the canceller and the time; the slot returns to \"free\" in the same transaction."
+                  - "Emit the event \"shp.scheduling.appointment-cancelled.v1\"; the notification service cancels every \"scheduled\" reminder ([[UC:cancel-reminders]])."
+                  - "Display [[MSG:cancelled]]; send [[ET:cancellation]]."
             acceptance:
-              - ["AC-03.5", "Given còn 1 giờ đến giờ khám, When bệnh nhân hủy, Then bị từ chối “cancellation-too-late”; When điều dưỡng hủy, Then thành công."]
-              - ["AC-07.1", "Given lịch hẹn bị hủy trước giờ nhắc, Then không có lần nhắc nào được gửi."]
-              - ["AC-CN.1", "Given hủy thành công, Then slot trở lại “free” và xuất hiện trong kết quả tìm kiếm trong ≤ 5 giây."]
+              - ["AC-03.5", "Given 1 hour remains until the visit, When the patient cancels, Then it is rejected with \"cancellation-too-late\"; When a nurse cancels, Then it succeeds."]
+              - ["AC-07.1", "Given the appointment is cancelled before the reminder time, Then no reminder is sent."]
+              - ["AC-CN.1", "Given a successful cancellation, Then the slot returns to \"free\" and appears in search results within <= 5 seconds."]
 
           - key: reschedule
-            name: Đổi lịch khám
+            name: Reschedule an appointment
             actors: [patient, nurse]
             trace: [UC-03, BR-01..04, "API S15"]
-            objective: Cho phép đổi lịch hẹn sang khung giờ khác như một thao tác duy nhất; thất bại thì giữ nguyên lịch cũ.
-            trigger: Người dùng bấm “Đổi lịch” trên [[SCR:my-appointments]] hoặc [[SCR:queue]].
-            pre: ["Lịch hẹn cũ đang “booked”; với bệnh nhân, còn ≥ 2 giờ đến giờ khám cũ."]
-            post: ["Lịch hẹn cũ “cancelled”, lịch hẹn mới “booked” – hoặc không có gì thay đổi."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Allow an appointment to be moved to another time slot as a single operation; on failure the old appointment is kept.
+            trigger: The user clicks "Reschedule" on [[SCR:my-appointments]] or [[SCR:queue]].
+            pre: ["The old appointment is \"booked\"; for patients, at least 2 hours remain until the old visit time."]
+            post: ["The old appointment is \"cancelled\" and the new appointment is \"booked\" - or nothing changes."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Đổi lịch”"}
-              - {n: 2, lane: 1, text: "Mở tìm slot, lọc sẵn\ncùng bác sĩ / chuyên khoa"}
-              - {n: 3, lane: 0, text: "Chọn slot mới, xác nhận"}
-              - {n: 4, lane: 1, kind: decision, text: "Đặt slot mới và\nhủy slot cũ được?", branches: [{to: 5, label: Có}, {to: 6, label: Không}]}
-              - {n: 5, lane: 1, text: "Hoàn tất đổi lịch,\nphát sự kiện “đã đổi lịch”", end: true}
-              - {n: 6, lane: 1, text: "Hủy toàn bộ thay đổi,\ngiữ lịch cũ, báo lỗi", end: true}
+              - {n: 1, lane: 0, text: "Click \"Reschedule\""}
+              - {n: 2, lane: 1, text: "Open slot search, pre-filtered for\nthe same doctor / specialty"}
+              - {n: 3, lane: 0, text: "Select a new slot, confirm"}
+              - {n: 4, lane: 1, kind: decision, text: "Can the new slot be booked and\nthe old one cancelled?", branches: [{to: 5, label: "Yes"}, {to: 6, label: "No"}]}
+              - {n: 5, lane: 1, text: "Complete the reschedule,\nemit the \"rescheduled\" event", end: true}
+              - {n: 6, lane: 1, text: "Roll back all changes,\nkeep the old appointment, report the error", end: true}
             rules:
               - step: "(3)"
-                title: Quy tắc xác nhận
-                lines: ["Hiển thị [[MSG:confirm-reschedule]]."]
+                title: Confirmation rules
+                lines: ["Display [[MSG:confirm-reschedule]]."]
               - step: "(4)"
-                title: Quy tắc đổi lịch nguyên tử
+                title: Atomic reschedule rules
                 lines:
-                  - "Áp dụng toàn bộ quy tắc của [[UC:book]] cho slot mới và của [[UC:cancel]] cho lịch cũ, trong một giao dịch duy nhất."
-                  - "Đổi lịch không làm tăng số lịch hẹn tương lai (lịch cũ được trừ khi kiểm tra BR-03)."
+                  - "Apply all rules of [[UC:book]] to the new slot and of [[UC:cancel]] to the old appointment, in a single transaction."
+                  - "Rescheduling does not increase the number of future appointments (the old appointment is subtracted when checking BR-03)."
               - step: "(5)"
-                title: Quy tắc kết quả
+                title: Result rules
                 lines:
-                  - "Phát một sự kiện “shp.scheduling.appointment-rescheduled.v1” (không phát riêng đặt và hủy) để service thông báo hủy nhắc cũ, tạo nhắc mới."
-                  - "Hiển thị [[MSG:rescheduled]]."
+                  - "Emit a single event \"shp.scheduling.appointment-rescheduled.v1\" (not separate book and cancel events) so the notification service cancels the old reminders and creates new ones."
+                  - "Display [[MSG:rescheduled]]."
             acceptance:
-              - ["AC-RS.1", "Given slot mới vừa bị người khác đặt, When đổi lịch, Then lịch cũ vẫn “booked” và không có lịch hẹn mới."]
-              - ["AC-RS.2", "Given bệnh nhân có 3 lịch hẹn tương lai, When đổi một lịch, Then thành công (không vướng BR-03)."]
+              - ["AC-RS.1", "Given the new slot was just booked by someone else, When rescheduling, Then the old appointment remains \"booked\" and there is no new appointment."]
+              - ["AC-RS.2", "Given a patient has 3 future appointments, When rescheduling one, Then it succeeds (BR-03 does not block it)."]
 
           - key: my-appointments
-            name: Xem lịch hẹn của tôi
+            name: View my appointments
             type: Basic
             actors: [patient]
             trace: [UC-03, BR-05, "API S13"]
-            objective: Cho phép bệnh nhân xem danh sách và chi tiết lịch hẹn của chính mình.
-            trigger: Bệnh nhân mở [[SCR:my-appointments]].
-            pre: ["Bệnh nhân đã đăng nhập."]
-            post: ["Danh sách lịch hẹn của bệnh nhân được hiển thị."]
+            objective: Allow a patient to view the list and details of their own appointments.
+            trigger: The patient opens [[SCR:my-appointments]].
+            pre: ["The patient is logged in."]
+            post: ["The patient's appointment list is displayed."]
             rules: []
-            lanes: [Bệnh nhân, Hệ thống]
+            lanes: [Patient, System]
             steps:
-              - {n: 1, lane: 0, text: "Mở “Lịch hẹn của tôi”"}
-              - {n: 2, lane: 1, text: "Lấy lịch hẹn của\n<Người dùng hiện tại>", end: true}
-            alternatives: ["Áp dụng [[CMUC:view-list]] và [[CMUC:view-item]]; quy tắc riêng: bộ lọc [Bệnh nhân] luôn bị ép bằng <Người dùng hiện tại> ở phía server, tham số khác bị bỏ qua (BR-05)."]
+              - {n: 1, lane: 0, text: "Open \"My appointments\""}
+              - {n: 2, lane: 1, text: "Fetch the appointments of\n<Current user>", end: true}
+            alternatives: ["Applies [[CMUC:view-list]] and [[CMUC:view-item]]; specific rule: the [Patient] filter is always forced to <Current user> on the server side and other parameters are ignored (BR-05)."]
             acceptance:
-              - ["AC-MA.1", "Given bệnh nhân A gửi yêu cầu lọc lịch hẹn của bệnh nhân B, Then chỉ nhận lịch hẹn của A."]
+              - ["AC-MA.1", "Given patient A sends a request to filter patient B's appointments, Then only A's appointments are returned."]
 
-      - name: Cổng nội bộ – Lịch làm việc
+      - name: Internal portal - Schedules
         use_cases:
           - key: schedule-template
-            name: Tạo lịch làm việc và mẫu lịch tuần
+            name: Create a schedule and weekly template
             actors: [nurse, admin]
             trace: [UC-02, "API S1, S5"]
-            objective: Cho phép tạo lịch làm việc cho một bác sĩ theo chuyên khoa và đặt mẫu lịch tuần.
-            trigger: Người dùng bấm “Tạo lịch” trên [[SCR:schedule]].
-            pre: ["Bác sĩ đã có hồ sơ Practitioner với chuyên khoa tương ứng."]
-            post: ["Lịch làm việc hoạt động và mẫu tuần được lưu; slot chưa được sinh."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Allow a schedule to be created for a doctor by specialty and a weekly template to be set.
+            trigger: The user clicks "Create schedule" on [[SCR:schedule]].
+            pre: ["The doctor already has a Practitioner record with the corresponding specialty."]
+            post: ["The active schedule and weekly template are saved; slots have not yet been generated."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Bấm “Tạo lịch”"}
-              - {n: 2, lane: 1, text: "Hiển thị form lịch\nvà mẫu tuần"}
-              - {n: 3, lane: 0, text: "Chọn bác sĩ, chuyên khoa,\nnhập mẫu tuần, bấm “Lưu”"}
-              - {n: 4, lane: 1, kind: decision, text: "Hợp lệ?", branches: [{to: 5, label: Có}, {to: 2, label: Không}]}
-              - {n: 5, lane: 1, text: "Lưu lịch và mẫu tuần,\nghi audit", end: true}
+              - {n: 1, lane: 0, text: "Click \"Create schedule\""}
+              - {n: 2, lane: 1, text: "Display the schedule form\nand weekly template"}
+              - {n: 3, lane: 0, text: "Select a doctor and specialty,\nenter the weekly template, click \"Save\""}
+              - {n: 4, lane: 1, kind: decision, text: "Valid?", branches: [{to: 5, label: "Yes"}, {to: 2, label: "No"}]}
+              - {n: 5, lane: 1, text: "Save the schedule and weekly template,\nwrite audit", end: true}
             rules:
               - step: "(4)"
                 key: template-validate
-                title: Quy tắc kiểm tra mẫu tuần
+                title: Weekly template validation rules
                 lines:
-                  - "Mỗi dòng mẫu gồm [Thứ], [Giờ bắt đầu], [Giờ kết thúc], [Độ dài slot] ∈ {10, 15, 20, 30} phút; bắt buộc đủ."
-                  - "[Giờ bắt đầu] < [Giờ kết thúc], nếu không → [[MSG:time-range]]; khoảng thời gian phải chia hết cho [Độ dài slot] → nếu không [[MSG:slot-length]]."
-                  - "Hai dòng cùng thứ không được chồng giờ."
-                  - "Mỗi bác sĩ chỉ có một lịch hoạt động cho mỗi chuyên khoa; trùng → [[MSG:duplicate-schedule]]."
+                  - "Each template row consists of [Day], [Start time], [End time], [Slot length] in {10, 15, 20, 30} minutes; all are required."
+                  - "[Start time] < [End time], otherwise -> [[MSG:time-range]]; the interval must be divisible by [Slot length] -> otherwise [[MSG:slot-length]]."
+                  - "Two rows for the same day must not overlap in time."
+                  - "Each doctor has only one active schedule per specialty; duplicate -> [[MSG:duplicate-schedule]]."
               - step: "(5)"
-                title: Quy tắc lưu
-                lines: ["Lưu theo [[CMUC:create-item]]; [Khoảng lập lịch] = <Hôm nay> → <Hôm nay> + 30 ngày. Sửa mẫu không tự xóa slot đã sinh."]
+                title: Save rules
+                lines: ["Save per [[CMUC:create-item]]; [Scheduling window] = <Today> -> <Today> + 30 days. Editing the template does not automatically delete slots already generated."]
             acceptance:
-              - ["AC-ST.1", "Given mẫu 08:00–11:30 slot 15 phút, When lưu, Then hợp lệ; Given 08:00–11:20 slot 15 phút, Then báo lỗi chia không hết."]
+              - ["AC-ST.1", "Given a template 08:00-11:30 with 15-minute slots, When saving, Then it is valid; Given 08:00-11:20 with 15-minute slots, Then a non-divisible error is reported."]
 
           - key: generate-slots
-            name: Sinh slot theo mẫu
+            name: Generate slots from a template
             actors: [nurse, admin]
             trace: [UC-02, AC-02.1, BR-04, "API S7"]
-            objective: Sinh các slot cho một khoảng ngày theo mẫu lịch tuần.
-            trigger: Người dùng bấm “Sinh slot” trên [[SCR:schedule]]; hoặc job hằng ngày tự sinh thêm ngày thứ 30.
-            pre: ["Lịch làm việc đang hoạt động và có mẫu tuần."]
-            post: ["Các slot “free” được tạo; slot đã tồn tại không bị nhân đôi."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Generate slots for a date range from the weekly schedule template.
+            trigger: The user clicks "Generate slots" on [[SCR:schedule]]; or a daily job generates the 30th day automatically.
+            pre: ["The schedule is active and has a weekly template."]
+            post: ["\"free\" slots are created; existing slots are not duplicated."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn khoảng ngày,\nbấm “Sinh slot”"}
-              - {n: 2, lane: 1, text: "Sinh slot theo mẫu,\nbỏ qua slot đã có"}
-              - {n: 3, lane: 1, text: "Hiển thị số slot\nđã tạo", end: true}
+              - {n: 1, lane: 0, text: "Select a date range,\nclick \"Generate slots\""}
+              - {n: 2, lane: 1, text: "Generate slots from the template,\nskip existing slots"}
+              - {n: 3, lane: 1, text: "Display the number of slots\ncreated", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc sinh slot
+                title: Slot generation rules
                 lines:
-                  - "Chỉ sinh trong cửa sổ <Hôm nay> → <Hôm nay> + 30 ngày (BR-04); ngày ngoài cửa sổ bị bỏ qua."
-                  - "Thao tác lặp lại an toàn: slot trùng bác sĩ và giờ bắt đầu không được tạo lần hai."
-                  - "Ngày lễ trong danh mục ngày nghỉ của bệnh viện không sinh slot."
+                  - "Generate only within the window <Today> -> <Today> + 30 days (BR-04); dates outside the window are skipped."
+                  - "The operation is safely repeatable: a slot with the same doctor and start time is not created twice."
+                  - "Holidays in the hospital's holiday calendar do not generate slots."
             acceptance:
-              - ["AC-02.1", "Given mẫu 08:00–11:30 slot 15 phút, When sinh slot cho một ngày, Then có đúng 14 slot “free”."]
-              - ["AC-GS.1", "Given đã sinh slot ngày D, When sinh lại ngày D, Then tổng số slot ngày D không đổi."]
+              - ["AC-02.1", "Given a template 08:00-11:30 with 15-minute slots, When generating slots for one day, Then there are exactly 14 \"free\" slots."]
+              - ["AC-GS.1", "Given slots have been generated for day D, When generating again for day D, Then the total number of slots for day D does not change."]
 
           - key: block-slot
-            name: Chặn / mở chặn slot
+            name: Block / unblock a slot
             actors: [nurse, admin]
             trace: [UC-02, AC-02.2, "API S9, S10"]
-            objective: Chặn khung giờ khi bác sĩ nghỉ hoặc bận; mở lại khi cần.
-            trigger: Người dùng chọn slot trên [[SCR:schedule]] và bấm “Chặn” hoặc “Mở chặn”.
-            pre: ["Slot thuộc lịch làm việc đang hoạt động."]
-            post: ["Slot “busy-unavailable” (chặn) hoặc “free” (mở chặn)."]
-            lanes: [Người dùng, Hệ thống]
+            objective: Block a time slot when the doctor is on leave or busy; unblock it when needed.
+            trigger: The user selects a slot on [[SCR:schedule]] and clicks "Block" or "Unblock".
+            pre: ["The slot belongs to an active schedule."]
+            post: ["The slot is \"busy-unavailable\" (blocked) or \"free\" (unblocked)."]
+            lanes: [User, System]
             steps:
-              - {n: 1, lane: 0, text: "Chọn slot, bấm “Chặn”,\nnhập lý do"}
-              - {n: 2, lane: 1, kind: decision, text: "Slot đang có\nlịch hẹn?", branches: [{to: 3, label: Không}, {to: 4, label: Có}]}
-              - {n: 3, lane: 1, text: "Chuyển “busy-unavailable”,\nlưu lý do", end: true}
-              - {n: 4, lane: 1, text: "Từ chối, yêu cầu hủy / đổi\nlịch hẹn trước", end: true}
+              - {n: 1, lane: 0, text: "Select a slot, click \"Block\",\nenter a reason"}
+              - {n: 2, lane: 1, kind: decision, text: "Does the slot have\nan appointment?", branches: [{to: 3, label: "No"}, {to: 4, label: "Yes"}]}
+              - {n: 3, lane: 1, text: "Change to \"busy-unavailable\",\nsave the reason", end: true}
+              - {n: 4, lane: 1, text: "Reject, require cancelling / rescheduling\nthe appointment first", end: true}
             rules:
               - step: "(1)"
-                title: Quy tắc xác nhận
-                lines: ["Hiển thị [[MSG:confirm-block]]; [Lý do] bắt buộc, tối đa 200 ký tự, không ghi thông tin bệnh nhân."]
+                title: Confirmation rules
+                lines: ["Display [[MSG:confirm-block]]; [Reason] is required, at most 200 characters, and must not contain patient information."]
               - step: "(2)"
-                title: Quy tắc chặn
+                title: Blocking rules
                 lines:
-                  - "Slot đang “busy” bởi lịch hẹn hiệu lực → [[MSG:slot-has-appointment]] (AC-02.2)."
-                  - "Mở chặn chỉ áp dụng cho slot “busy-unavailable”; slot quá khứ không thay đổi được."
+                  - "A slot that is \"busy\" due to an active appointment -> [[MSG:slot-has-appointment]] (AC-02.2)."
+                  - "Unblocking applies only to \"busy-unavailable\" slots; past slots cannot be changed."
             acceptance:
-              - ["AC-02.2", "Given slot đã được đặt, When chặn slot, Then trả lỗi “slot-has-appointment”."]
+              - ["AC-02.2", "Given the slot has been booked, When blocking the slot, Then the error \"slot-has-appointment\" is returned."]
 
           - key: view-own-schedule
-            name: Bác sĩ xem lịch làm việc và lịch khám của mình
+            name: Doctor views their own schedule and appointments
             type: Basic
             actors: [doctor]
             trace: [UC-02, AC-02.3, "API S3, S13"]
-            objective: Cho phép bác sĩ xem lịch làm việc, slot và lịch hẹn của chính mình (không sửa).
-            trigger: Bác sĩ mở [[SCR:schedule]].
-            pre: ["Tài khoản bác sĩ đã liên kết với Practitioner."]
-            post: ["Lịch của bác sĩ được hiển thị ở chế độ chỉ đọc."]
-            lanes: [Bác sĩ, Hệ thống]
+            objective: Allow a doctor to view their own schedule, slots and appointments (without editing).
+            trigger: The doctor opens [[SCR:schedule]].
+            pre: ["The doctor's account is linked to a Practitioner."]
+            post: ["The doctor's schedule is displayed in read-only mode."]
+            lanes: [Doctor, System]
             steps:
-              - {n: 1, lane: 0, text: "Mở “Lịch làm việc”"}
-              - {n: 2, lane: 1, text: "Lấy lịch của\n<Practitioner hiện tại>", end: true}
+              - {n: 1, lane: 0, text: "Open \"Schedule\""}
+              - {n: 2, lane: 1, text: "Fetch the schedule of\n<Current Practitioner>", end: true}
             rules:
               - step: "(2)"
-                title: Quy tắc phạm vi dữ liệu
+                title: Data scope rules
                 lines:
-                  - "Bộ lọc [Bác sĩ] luôn bị ép bằng Practitioner của <Người dùng hiện tại>; các nút sửa/chặn/sinh slot bị ẩn và mọi yêu cầu sửa bị từ chối (AC-02.3)."
-                  - "Lịch hẹn hiển thị họ tên bệnh nhân và lý do khám vì đây là bệnh nhân có quan hệ điều trị."
+                  - "The [Doctor] filter is always forced to the <Current user>'s Practitioner; edit/block/generate buttons are hidden and every edit request is rejected (AC-02.3)."
+                  - "Appointments show the patient's full name and reason for visit because these are patients with a treatment relationship."
             acceptance:
-              - ["AC-02.3", "Given bác sĩ A, When xem lịch của bác sĩ B hoặc sửa lịch của mình, Then bị từ chối và ghi audit."]
+              - ["AC-02.3", "Given doctor A, When viewing doctor B's schedule or editing their own schedule, Then it is rejected and audited."]

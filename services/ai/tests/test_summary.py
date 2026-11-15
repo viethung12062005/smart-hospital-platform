@@ -1,4 +1,4 @@
-"""US-058: tóm tắt hồ sơ (AI-19..AI-21)."""
+"""US-058: record summary (AI-19..AI-21)."""
 
 import json
 import re
@@ -110,11 +110,11 @@ def llm_summary(msgs: Sequence[ChatMessage]) -> str:
             "chronicConditions": [
                 {"text": "Tăng huyết áp (I10) đang theo dõi", "sources": [by_type["condition"]]},
                 {"text": "Đái tháo đường", "sources": []},
-            ],  # không nguồn → loại
+            ],  # no source -> dropped
             "allergies": [{"text": "Dị ứng penicillin mức độ cao", "sources": [by_type["allergy"]]}],
             "recentVisits": [{"text": "Khám tim mạch vì đau ngực khi gắng sức", "sources": [by_type["encounter"]]}],
             "abnormalResults": [
-                {"text": "Glucose 9,5 mmol/L", "sources": [by_type["observation"]]},  # số bịa → loại
+                {"text": "Glucose 9,5 mmol/L", "sources": [by_type["observation"]]},  # fabricated number -> dropped
                 {"text": "Glucose 7.8 mmol/L cao", "sources": [by_type["observation"]]},
             ],
         },
@@ -143,8 +143,8 @@ def test_summary_keeps_only_sourced_items_and_uses_obo(api: Any) -> None:
             {"text": "Tăng huyết áp (I10) đang theo dõi", "sources": ["Condition/c1"]}
         ]
         assert [i["sources"] for i in body["sections"]["abnormalResults"]] == [["Observation/o1"]]
-        assert set(seen) == {"Bearer obo-clinical"} and ex.calls[0][1] == "clinical"  # token của bác sĩ, aud clinical
-        assert "Lê Minh Quân" not in ds.received[0][-1].content  # tên bác sĩ đã che trước khi ra ngoài
+        assert set(seen) == {"Bearer obo-clinical"} and ex.calls[0][1] == "clinical"  # the doctor's token, aud clinical
+        assert "Lê Minh Quân" not in ds.received[0][-1].content  # doctor name redacted before leaving
         audit = deps.db.outbox.find_one({"eventType": "shp.audit.recorded.v1"})["payload"]["data"]
         assert audit["action"] == "ai-summary" and audit["purposeOfUse"] == "TREAT" and audit["patientId"] == PID
 
@@ -158,7 +158,7 @@ def test_idempotency_replay_and_cache(api: Any) -> None:
         b = tc.post(URL, json={}, headers=h).json()
         assert a == b and len(ds.received) == 1
         c = tc.post(URL, json={}, headers={**h, "Idempotency-Key": "k3"}).json()
-        assert c["generatedAt"] == a["generatedAt"] and len(ds.received) == 1  # cache 10 phút theo phiên bản dữ liệu
+        assert c["generatedAt"] == a["generatedAt"] and len(ds.received) == 1  # cached 10 minutes per data version
         r = tc.post(URL, json={"scope": {"from": "2026-01-01"}}, headers=h)
         assert r.status_code == 422 and r.json()["code"] == "idempotency-key-reused"
         assert tc.post(URL, json={}, headers=bearer(**DOCTOR)).status_code == 428
@@ -193,4 +193,4 @@ def test_clinical_denial_is_passed_through(api: Any) -> None:
         r = tc.post(URL, json={}, headers={**bearer(**DOCTOR), "Idempotency-Key": "k8"})
         assert r.status_code == 403 and r.json()["code"] == "no-care-relationship"
         again = tc.post(URL, json={}, headers={**bearer(**DOCTOR), "Idempotency-Key": "k8"})
-        assert again.status_code == 403  # khóa đã được nhả khi lỗi, không kẹt ở trạng thái đang xử lý
+        assert again.status_code == 403  # the key was released on error, not stuck in progress

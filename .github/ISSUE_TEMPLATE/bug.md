@@ -1,14 +1,14 @@
 ---
-name: Lỗi
-about: Báo lỗi (kèm cách tái hiện)
+name: Bug
+about: Report a bug (with reproduction steps)
 labels: bug
 ---
-**Hiện trạng:** <!-- đang xảy ra gì -->
-**Mong đợi:** <!-- đáng lẽ phải thế nào, theo tài liệu thiết kế/AC nào -->
-**Cách tái hiện:**
+**Current behavior:** <!-- what is happening -->
+**Expected behavior:** <!-- what it should be, per which design doc/AC -->
+**Reproduction steps:**
 1.
-**Môi trường:** <!-- local / uat / prod, phiên bản hoặc commit -->
-**Task/story liên quan:**
+**Environment:** <!-- local / uat / prod, version or commit -->
+**Related task/story:**
 
-> Chỉ dùng dữ liệu giả. Không dán dữ liệu bệnh nhân thật, token, mật khẩu hay log có PII vào issue.
-> Lỗi bảo mật: gắn label `security` và báo trực tiếp SA, không mô tả chi tiết khai thác công khai.
+> Fake data only. Do not paste real patient data, tokens, passwords or logs containing PII into an issue.
+> Security bug: add the `security` label and tell the SA directly; do not describe exploitation details publicly.

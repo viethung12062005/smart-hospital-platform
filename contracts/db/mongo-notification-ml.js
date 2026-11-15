@@ -1,5 +1,5 @@
-// Khởi tạo database notification và ml (docs/03-architecture/detailed-design/04-db-notification-ml.md, ADR-0014).
-// Idempotent: chạy lại không lỗi. Dùng: mongosh "<uri>" contracts/db/mongo-notification-ml.js
+// Initialize the notification and ml databases (docs/03-architecture/detailed-design/04-db-notification-ml.md, ADR-0014).
+// Idempotent: re-running is safe. Usage: mongosh "<uri>" contracts/db/mongo-notification-ml.js
 function ensureCollection(db, name, validator, options) {
   const exists = db.getCollectionNames().includes(name);
   if (!exists) {
@@ -55,16 +55,16 @@ ensureCollection(ml, "appointment_facts", { $jsonSchema: { bsonType: "object", r
   bookedAt: { bsonType: "date" }, startAt: { bsonType: "date" } } } });
 ml.appointment_facts.createIndex({ startAt: 1 });
 ml.appointment_facts.createIndex({ patientId: 1, startAt: -1 });
-// predictions: time-series nếu engine hỗ trợ (MongoDB 5+; Cosmos vCore: kiểm khi dựng UAT), nếu không thì collection thường.
+// predictions: time-series if the engine supports it (MongoDB 5+; Cosmos vCore: verify when building UAT), otherwise a regular collection.
 if (!ml.getCollectionNames().includes("predictions")) {
   try {
     ml.createCollection("predictions", { timeseries: { timeField: "predictedAt", metaField: "modelVersion", granularity: "minutes" }, expireAfterSeconds: 400 * 24 * 3600 });
     print("ml.predictions: time-series collection");
   } catch (e) {
     ml.createCollection("predictions");
-    // Tên phải trùng shp_ml/store.py (ensure_schema) — MongoDB báo lỗi 85 khi cùng khóa đã có dưới tên khác.
+    // The name must match shp_ml/store.py (ensure_schema) — MongoDB reports error 85 when the same key already exists under another name.
     ml.predictions.createIndex({ predictedAt: 1 }, { name: "ttl_predictedAt", expireAfterSeconds: 400 * 24 * 3600 });
-    print("ml.predictions: collection thường (" + e.codeName + ")");
+    print("ml.predictions: regular collection (" + e.codeName + ")");
   }
 }
 ml.predictions.createIndex({ modelVersion: 1, predictedAt: 1 });

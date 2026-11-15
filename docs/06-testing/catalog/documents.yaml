@@ -1,7 +1,7 @@
-# Test case của module 'documents'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+# Test cases for module 'documents'. Source: acceptance criteria / NFRs in docs/02-requirements/srs. Automation: see automation.yaml
 testcases:
 - id: TC-AC-05.1
-  title: 'Upload tài liệu lâm sàng: AC-05.1'
+  title: 'Upload clinical document: AC-05.1'
   covers:
   - AC-05.1
   srs_uc: upload-document
@@ -9,9 +9,9 @@ testcases:
   module: documents
   level: api
   priority: P0
-  spec: Given tệp .exe đổi tên thành .pdf, When upload, Then bị từ chối sau bước kiểm tra chữ ký nội dung.
+  spec: Given a .exe file renamed to .pdf, When uploading, Then it is rejected after the content signature check.
 - id: TC-AC-UD.1
-  title: 'Upload tài liệu lâm sàng: AC-UD.1'
+  title: 'Upload clinical document: AC-UD.1'
   covers:
   - AC-UD.1
   srs_uc: upload-document
@@ -19,9 +19,9 @@ testcases:
   module: documents
   level: api
   priority: P0
-  spec: Given tệp 21 MB, When xin link upload, Then bị từ chối “file-too-large”.
+  spec: Given a 21 MB file, When requesting an upload link, Then it is rejected with "file-too-large".
 - id: TC-AC-UD.2
-  title: 'Upload tài liệu lâm sàng: AC-UD.2'
+  title: 'Upload clinical document: AC-UD.2'
   covers:
   - AC-UD.2
   srs_uc: upload-document
@@ -29,9 +29,10 @@ testcases:
   module: documents
   level: integration
   priority: P0
-  spec: Given tệp chứa mẫu EICAR, When upload, Then tài liệu “quarantined” và không phát sự kiện.
+  spec: Given a file containing the EICAR pattern, When uploading, Then the document is "quarantined" and no event is
+    emitted.
 - id: TC-AC-05.3
-  title: 'Phát hành tài liệu cho bệnh nhân: AC-05.3'
+  title: 'Release document to the patient: AC-05.3'
   covers:
   - AC-05.3
   srs_uc: release-document
@@ -39,9 +40,9 @@ testcases:
   module: documents
   level: api
   priority: P0
-  spec: Given tài liệu chưa phát hành, When bệnh nhân tải, Then không thấy tài liệu (404).
+  spec: Given a document not yet released, When the patient downloads it, Then the document is not visible (404).
 - id: TC-AC-05.2
-  title: 'Tải tài liệu: AC-05.2'
+  title: 'Download document: AC-05.2'
   covers:
   - AC-05.2
   srs_uc: download-document
@@ -49,9 +50,9 @@ testcases:
   module: documents
   level: api
   priority: P0
-  spec: Given link đã cấp 6 phút trước, When mở, Then bị từ chối (403).
+  spec: Given a link issued 6 minutes ago, When opening it, Then it is rejected (403).
 - id: TC-AC-05.3-download-document
-  title: 'Tải tài liệu: AC-05.3'
+  title: 'Download document: AC-05.3'
   covers:
   - AC-05.3
   srs_uc: download-document
@@ -59,9 +60,10 @@ testcases:
   module: documents
   level: api
   priority: P0
-  spec: Given bệnh nhân A, When xin link tài liệu của bệnh nhân B, Then nhận 404 và có audit “deny”.
+  spec: Given patient A, When requesting a link to patient B's document, Then 404 is returned and a "deny" audit record
+    exists.
 - id: TC-AC-VD.1
-  title: 'Đánh dấu tài liệu nhập nhầm: AC-VD.1'
+  title: 'Mark document as entered by mistake: AC-VD.1'
   covers:
   - AC-VD.1
   srs_uc: void-document
@@ -69,5 +71,5 @@ testcases:
   module: documents
   level: api
   priority: P0
-  spec: Given tài liệu bị đánh dấu nhập nhầm, Then không xuất hiện trong danh sách mặc định nhưng vẫn truy vết được trong
-    audit.
+  spec: Given a document marked as entered by mistake, Then it does not appear in the default list but remains traceable
+    in the audit log.

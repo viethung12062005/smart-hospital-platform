@@ -138,7 +138,8 @@ class MongoOutboxTest extends MongoTestBase {
     assertThat(failed.getString("lastError"))
         .contains("broker refused")
         .doesNotContain("patientId");
-    assertThat(failed.get("lockedUntil")).isNull(); // nhả khóa để thử lại ngay
+    assertThat(failed.get("lockedUntil"))
+        .isNull(); // release the lock so the retry happens immediately
     pub.failOnVersion = null;
     assertThat(relay(pub, 100).relayOnce()).isEqualTo(2);
     assertThat(pub.versions()).containsExactly(1, 2, 3);
@@ -148,7 +149,7 @@ class MongoOutboxTest extends MongoTestBase {
   void eventLockedByADeadReplicaIsReclaimedAfterTheLeaseExpires() {
     var clock = new MutableClock(Instant.parse("2026-11-20T03:00:00Z"));
     add(evt(1));
-    // Một replica giành event rồi chết trước khi phát.
+    // One replica claims the event then dies before publishing.
     DB.updateFirst(
         Query.query(Criteria.where("publishedAt").is(null)),
         new org.springframework.data.mongodb.core.query.Update()
@@ -156,7 +157,7 @@ class MongoOutboxTest extends MongoTestBase {
             .set("lockedBy", "dead"),
         MongoMessaging.OUTBOX);
     var pub = new Recording();
-    assertThat(relay(pub, 100, clock).relayOnce()).isZero(); // khóa còn hạn: không ai được phát
+    assertThat(relay(pub, 100, clock).relayOnce()).isZero(); // lock still valid: nobody may publish
     clock.now = clock.now.plus(MongoOutboxRelay.LEASE).plusSeconds(1);
     assertThat(relay(pub, 100, clock).relayOnce()).isEqualTo(1);
   }

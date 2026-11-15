@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shp.example.org/schemas/audit/recorded/v1.json",
   "title": "shp.audit.recorded.v1",
-  "description": "E11: bản ghi audit (không chứa nội dung lâm sàng). Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "description": "E11: audit record (contains no clinical content). IDs/codes/timestamps/status only, no PII. Only optional fields may be added within the same version.",
   "type": "object",
   "required": [
     "eventId",

@@ -1,6 +1,6 @@
 /*
- * Chuyển thể từ Navbar của Medplum AppShell (Apache-2.0, xem web/NOTICE).
- * Giữ cách chọn link đang hoạt động theo độ khớp đường dẫn; bỏ bookmark và ô chọn resource type.
+ * Adapted from the Medplum AppShell Navbar (Apache-2.0, see web/NOTICE).
+ * Keeps path-match selection for the active link; removes bookmarks and the resource-type picker.
  */
 import { AppShell as MantineAppShell, ScrollArea, Text } from '@mantine/core';
 import { Fragment } from 'react';

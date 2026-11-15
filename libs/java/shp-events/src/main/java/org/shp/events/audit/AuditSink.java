@@ -1,8 +1,8 @@
 package org.shp.events.audit;
 
 /**
- * Nơi gửi bản ghi audit. Production: ghi vào outbox cùng transaction (không mất audit khi bus lỗi);
- * test: {@link InMemoryAuditSink}.
+ * Destination for audit records. Production: write to the outbox in the same transaction (no audit
+ * loss when the bus fails); test: {@link InMemoryAuditSink}.
  */
 public interface AuditSink {
   void emit(AuditRecord record);

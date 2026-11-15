@@ -21,9 +21,9 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import reactor.core.publisher.Mono;
 
 /**
- * Lớp 1 ở gateway: token phải hợp lệ (chữ ký, issuer, audience, hạn, MFA nhân viên) cho mọi đường
- * dẫn được định tuyến. {@code /internal/**} không bao giờ đi qua gateway. Service vẫn kiểm lại
- * token (phòng thủ nhiều lớp).
+ * Layer 1 at the gateway: the token must be valid (signature, issuer, audience, expiry, staff MFA)
+ * for every routed path. {@code /internal/**} never passes through the gateway. Services still
+ * validate the token again (defense in depth).
  */
 @Configuration
 class GatewaySecurity {
@@ -39,7 +39,7 @@ class GatewaySecurity {
   ReactiveJwtDecoder jwtDecoder(ShpAuthProperties props, Clock clock) {
     if (props.authority().isBlank() || props.audience().isBlank()) {
       throw new IllegalStateException(
-          "Thiếu shp.auth.authority/audience (hoặc OIDC_AUTHORITY, OIDC_AUDIENCE)");
+          "Missing shp.auth.authority/audience (or OIDC_AUTHORITY, OIDC_AUDIENCE)");
     }
     return new SupplierReactiveJwtDecoder(
         () -> {
@@ -86,7 +86,7 @@ class GatewaySecurity {
         .build();
   }
 
-  /** Lỗi theo Problem Details của 07 §5 (gateway không có trang lỗi riêng). */
+  /** Error per Problem Details of 07 §5 (the gateway has no separate error page). */
   static Mono<Void> problem(ServerHttpResponse res, HttpStatus status, String code) {
     res.setStatusCode(status);
     res.getHeaders().setContentType(MediaType.APPLICATION_PROBLEM_JSON);

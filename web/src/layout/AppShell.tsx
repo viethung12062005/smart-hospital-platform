@@ -1,8 +1,8 @@
 /*
- * Chuyển thể từ AppShell của Medplum (https://github.com/medplum/medplum, packages/react/src/AppShell),
- * Copyright Orangebot, Inc. và các tác giả Medplum, giấy phép Apache-2.0 (xem web/NOTICE và web/licenses/Apache-2.0.txt).
- * Đã sửa: bỏ phụ thuộc client Medplum, dùng AuthProvider của SHP, menu theo vai trò, i18n vi/en,
- * thanh trên theo hệ thiết kế SHP (src/styles/tokens.css).
+ * Adapted from Medplum's AppShell (https://github.com/medplum/medplum, packages/react/src/AppShell),
+ * Copyright Orangebot, Inc. and the Medplum authors, Apache-2.0 license (see web/NOTICE and web/licenses/Apache-2.0.txt).
+ * Changed: removed the Medplum client dependency, use SHP's AuthProvider, role-based menu, vi/en i18n,
+ * and the top bar following the SHP design system (src/styles/tokens.css).
  */
 import { AppShell as MantineAppShell } from '@mantine/core';
 import { useState, type ReactNode } from 'react';
@@ -33,7 +33,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
     try {
       localStorage.setItem(NAVBAR_KEY, String(open));
     } catch {
-      // bỏ qua
+      // ignore
     }
     setNavbarOpen(open);
   }

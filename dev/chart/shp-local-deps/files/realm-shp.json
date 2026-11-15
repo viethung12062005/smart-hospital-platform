@@ -9,23 +9,23 @@
     "realm": [
       {
         "name": "patient",
-        "description": "Bệnh nhân"
+        "description": "Patient"
       },
       {
         "name": "doctor",
-        "description": "Bác sĩ"
+        "description": "Doctor"
       },
       {
         "name": "nurse",
-        "description": "Điều dưỡng"
+        "description": "Nurse"
       },
       {
         "name": "admin",
-        "description": "Quản trị viên"
+        "description": "Administrator"
       },
       {
         "name": "dpo",
-        "description": "Cán bộ bảo vệ dữ liệu"
+        "description": "Data protection officer"
       }
     ]
   },
@@ -87,7 +87,7 @@
     },
     {
       "clientId": "shp-test",
-      "name": "Chỉ dùng cho test local: lấy token bằng username/password",
+      "name": "Local test only: obtain tokens with username/password",
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": false,

@@ -1,6 +1,6 @@
--- Bảng nền tảng nhắn tin (02-db-scheduling.md). Thêm vào Flyway của service:
+-- Messaging platform tables (02-db-scheduling.md). Add to the service's Flyway:
 --   spring.flyway.locations=classpath:db/migration,classpath:db/shp-messaging/postgres
--- Version 0.1 chạy trước mọi migration V1+ của service.
+-- Version 0.1 runs before every V1+ service migration.
 CREATE TABLE IF NOT EXISTS outbox (
     id            uuid        PRIMARY KEY,
     event_type    text        NOT NULL,

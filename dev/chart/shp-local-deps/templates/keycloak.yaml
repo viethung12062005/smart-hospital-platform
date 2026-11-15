@@ -1,5 +1,5 @@
 {{- if .Values.components.keycloak }}
-# Realm `shp` được nạp lúc khởi động (--import-realm). Người dùng thử nghiệm (dữ liệu giả) tạo bằng `make seed-users`.
+# The `shp` realm is imported at startup (--import-realm). Test users (fake data) are created by `make seed-users`.
 apiVersion: v1
 kind: ConfigMap
 metadata:

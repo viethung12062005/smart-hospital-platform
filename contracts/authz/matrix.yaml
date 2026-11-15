@@ -1,9 +1,9 @@
-# Ma trận phân quyền dạng máy đọc được. Nguồn sự thật cho:
-#   - thư viện chính sách (Shp.Authorization, task SHR-xx): nạp file này để quyết định Allow/Deny
-#   - bộ test sinh tự động (SHR-09): mỗi (resource, action) × 5 role × tổ hợp điều kiện
-# Tài liệu: docs/02-requirements/access-control-matrix.md, docs/03-architecture/detailed-design/15-authorization.md
-# Quy tắc: mặc định TỪ CHỐI. Hành động chỉ được phép khi có một rule khớp và mọi điều kiện `when` thỏa.
-# Đổi file này phải qua PR có SA duyệt (CODEOWNERS) và `python3 -I tools/contracts/validate.py` phải xanh.
+# Machine-readable authorization matrix. Source of truth for:
+#   - the policy library (Shp.Authorization, task SHR-xx): loads this file to decide Allow/Deny
+#   - the generated test suite (SHR-09): each (resource, action) × 5 roles × condition combinations
+# Docs: docs/02-requirements/access-control-matrix.md, docs/03-architecture/detailed-design/15-authorization.md
+# Rule: DENY by default. An action is allowed only when a rule matches and every `when` condition holds.
+# Changing this file requires a PR approved by the SA (CODEOWNERS) and `python3 -I tools/contracts/validate.py` must be green.
 version: 1
 
 roles: [patient, doctor, nurse, admin, dpo]
@@ -11,20 +11,20 @@ roles: [patient, doctor, nurse, admin, dpo]
 purposes: [TREAT, ETREAT, HOPERAT, PATRQT]
 
 predicates:
-  own: Resource thuộc chính người gọi (patientId == fhirUser)
-  linked: Hồ sơ nằm trong linkedProfiles của người gọi, liên kết active chưa hết hạn, phạm vi booking trở lên
-  linked-records: Như linked, phạm vi records hoặc full (thêm kết quả khám và tài liệu đã phát hành)
-  guardian: Liên kết có relationship=guardian (người giám hộ của người dưới 16 tuổi)
-  self-practitioner: practitionerId của resource == fhirUser
-  care: Có quan hệ điều trị còn hiệu lực giữa bác sĩ và bệnh nhân
-  breakglass: Có phiên break-glass chưa hết hạn cho cặp (bác sĩ, bệnh nhân)
-  released: Tài liệu đã phát hành cho bệnh nhân
-  encounter-finished: Encounter của resource ở trạng thái finished
-  unfinished-encounter: Encounter chưa finished
-  before-2h: Giờ khám còn cách hiện tại ít nhất 2 giờ
-  not-care: Bác sĩ không có quan hệ điều trị với bệnh nhân
+  own: Resource belongs to the caller (patientId == fhirUser)
+  linked: Record is in the caller's linkedProfiles, the link is active and not expired, scope is booking or higher
+  linked-records: Like linked, with records or full scope (adds encounter results and released documents)
+  guardian: Link has relationship=guardian (guardian of a person under 16)
+  self-practitioner: the resource's practitionerId == fhirUser
+  care: There is a valid treatment relationship between the doctor and the patient
+  breakglass: There is an unexpired break-glass session for the (doctor, patient) pair
+  released: The document has been released to the patient
+  encounter-finished: The resource's encounter is in the finished state
+  unfinished-encounter: The encounter is not finished yet
+  before-2h: The appointment time is at least 2 hours from now
+  not-care: The doctor has no treatment relationship with the patient
 
-# Mỗi resource khai báo tập hành động hợp lệ; `clinical: true` nghĩa là dữ liệu lâm sàng (admin/dpo không bao giờ được chạm).
+# Each resource declares its valid actions; `clinical: true` means clinical data (admin/dpo may never touch it).
 resources:
   Patient:         { clinical: true,  actions: [read, create, update, search] }
   Slot:            { clinical: false, actions: [read, create, update, block] }
@@ -43,7 +43,7 @@ resources:
   BreakGlass:      { clinical: false, actions: [start] }
   Backup:          { clinical: false, actions: [run, restore] }
 
-# Hành động cấm tuyệt đối với mọi role (không có rule nào được phép tồn tại).
+# Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
   - { resource: Audit, action: update }
   - { resource: Audit, action: delete }
@@ -101,9 +101,9 @@ rules:
   - { id: OBS-READ-NUR,    resource: Observation, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: OBS-CREATE-DOC,  resource: Observation, action: create, role: doctor,  when: [care] }
   - { id: OBS-CREATE-NUR,  resource: Observation, action: create, role: nurse,   when: [] }
-  # Condition (chẩn đoán): chỉ bác sĩ
+  # Condition (diagnosis): doctors only
   - { id: COND-WRITE-DOC,  resource: Condition, action: create, role: doctor, when: [care] }
-  # Tài liệu
+  # Documents
   - { id: DOC-UP-DOC,      resource: Document, action: upload,   role: doctor,  when: [care] }
   - { id: DOC-UP-NUR,      resource: Document, action: upload,   role: nurse,   when: [] }
   - { id: DOC-DL-PAT,      resource: Document, action: download, role: patient, when: [own, released], purpose: PATRQT }
@@ -121,12 +121,12 @@ rules:
   - { id: EXT-REVIEW-DOC,  resource: Extraction, action: review, role: doctor, when: [care] }
   - { id: EXT-REVIEW-NUR,  resource: Extraction, action: review, role: nurse,  when: [] }
   - { id: BOT-USE-PAT,     resource: Chatbot, action: use, role: patient, when: [own] }
-  # Quản trị, audit, break-glass, sao lưu
+  # Administration, audit, break-glass, backup
   - { id: USER-MANAGE-ADM, resource: User, action: manage, role: admin, when: [] }
   - { id: AUDIT-READ-DPO,  resource: Audit, action: read,   role: dpo,   when: [], purpose: HOPERAT }
   - { id: AUDIT-EXP-DPO,   resource: Audit, action: export, role: dpo,   when: [], purpose: HOPERAT }
   - { id: AUDIT-READ-ADM,  resource: Audit, action: read,   role: admin, when: [], hide: [reason] }
   - { id: AUDIT-EXP-ADM,   resource: Audit, action: export, role: admin, when: [], hide: [reason] }
   - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
-  - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "qua pipeline vận hành, có duyệt" }
-  - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "qua pipeline vận hành, có duyệt" }
+  - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "via the operations pipeline, with approval" }
+  - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "via the operations pipeline, with approval" }

@@ -1,6 +1,8 @@
-"""Hội thoại, tin nhắn, phản hồi (AI-12; 06 §2). TTL 30 ngày cho hội thoại và tin nhắn; feedback giữ lâu để làm eval.
+"""Conversations, messages, feedback (AI-12; 06 §2). 30-day TTL for conversations and messages; feedback is kept
+longer for eval.
 
-Nội dung câu hỏi lưu ở dạng đã che PII (đúng như văn bản rời cụm). Chỉ chủ hội thoại đọc được.
+Question text is stored PII-redacted (exactly as the text that left the cluster). Only the conversation owner can
+read it.
 """
 
 import uuid
@@ -30,7 +32,7 @@ def open_conversation(db: Database[Doc], subject: str, conversation_id: str | No
     if conversation_id:
         conv = db.conversations.find_one({"_id": conversation_id})
         if conv is None or conv["userSubject"] != subject or conv["kind"] != kind:
-            raise ShpError("not-found")  # không lộ hội thoại của người khác
+            raise ShpError("not-found")  # do not reveal someone else's conversation
         db.conversations.update_one({"_id": conversation_id}, {"$set": {"lastMessageAt": now}})
         return conversation_id
     cid = str(uuid.uuid4())

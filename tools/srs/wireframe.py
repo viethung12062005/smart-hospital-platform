@@ -136,7 +136,7 @@ def wireframe(user: str, nav: list, active: str, blocks: list[dict]) -> str:
     shell.vertex("", f"rounded=0;whiteSpace=wrap;html=1;fillColor={TEAL_SOFT};strokeColor=none;", 20, 20, LEFT + CW - 10, 52)
     shell.vertex("<b>SHP</b>", f"rounded=1;whiteSpace=wrap;html=1;fillColor={TEAL};fontColor=#FFFFFF;strokeColor=none;fontSize=11;",
                  40, 28, 40, 36)
-    shell.vertex("<b>Bệnh viện thông minh</b>", f"text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor={TEAL};",
+    shell.vertex("<b>Smart Hospital</b>", f"text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor={TEAL};",
                  92, 28, 260, 36)
     shell.vertex(html.escape(user) + "   ▾", f"text;html=1;align=right;verticalAlign=middle;fontSize=12;fontColor={INK};",
                  LEFT + CW - 330, 28, 330, 36)
@@ -153,7 +153,7 @@ def wireframe(user: str, nav: list, active: str, blocks: list[dict]) -> str:
                      f"fillColor={TEAL_SOFT if on else '#FFFFFF'};strokeColor=none;fontColor={TEAL if on else INK};"
                      f"{'fontStyle=1;' if on else ''}", 32, ny, SIDE_W - 24, 34)
         ny += 40
-    shell.vertex("Wireframe: bản phác thảo, chưa có trong giao diện web hiện tại",
+    shell.vertex("Wireframe: sketch, not yet present in the current web interface",
                  f"text;html=1;align=right;fontSize=10;fontColor={MUTED};", LEFT + CW - 430, height + 24, 440, 20)
     g.cells = shell.cells + g.cells
     return g.xml(width=LEFT + CW + 50, height=height + 60)

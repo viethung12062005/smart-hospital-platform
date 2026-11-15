@@ -11,19 +11,21 @@ import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 
 /**
- * Phát CloudEvent lên topic {@code shp-events} qua Spring Cloud Stream (13-events §1.1). Header
- * {@code type} dùng cho bộ lọc subscription (Service Bus) và routing key (RabbitMQ); Service Bus
- * dùng {@code id} làm MessageId (chống trùng) và {@code subject} làm SessionId (giữ thứ tự).
+ * Publish CloudEvents to the {@code shp-events} topic via Spring Cloud Stream (13-events §1.1). The
+ * {@code type} header is used for the subscription filter (Service Bus) and routing key (RabbitMQ);
+ * Service Bus uses {@code id} as MessageId (deduplication) and {@code subject} as SessionId
+ * (ordering).
  */
 public final class StreamEventPublisher implements EventPublisher {
-  /** Binding phát; destination đặt trong {@code META-INF/shp/messaging.properties}. */
+  /** Publishing binding; destination set in {@code META-INF/shp/messaging.properties}. */
   public static final String BINDING = "shp-events-out-0";
 
   public static final String TYPE_HEADER = "type";
 
   /**
-   * Thân vẫn là CloudEvent đầy đủ (structured) nhưng khai báo {@code application/json}: với {@code
-   * application/cloudevents+json}, Spring Cloud Function tự tách envelope ra header.
+   * The body is still a full (structured) CloudEvent but declares {@code application/json}: with
+   * {@code application/cloudevents+json}, Spring Cloud Function unwraps the envelope into headers
+   * automatically.
    */
   static final String CONTENT_TYPE = "application/json";
 
@@ -36,7 +38,7 @@ public final class StreamEventPublisher implements EventPublisher {
   @Override
   public void publish(CloudEvent event) {
     if (!bridge.send(BINDING, toMessage(event))) {
-      throw new IllegalStateException("Bus không nhận event " + event.id());
+      throw new IllegalStateException("Bus did not accept event " + event.id());
     }
   }
 

@@ -19,8 +19,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Test sinh từ chính matrix.yaml: sửa ma trận thì test tự đổi theo; thêm rule mà engine hành xử sai
- * là đỏ.
+ * Tests generated from matrix.yaml itself: change the matrix and the tests follow; add a rule the
+ * engine mishandles and they go red.
  */
 class MatrixDrivenTest {
   static final AuthzMatrix MATRIX = AuthzMatrix.loadEmbedded();
@@ -77,7 +77,7 @@ class MatrixDrivenTest {
     var d =
         ENGINE.decide(
             principal(r.role()), r.resource(), r.action(), ctx(Set.copyOf(r.when()), false));
-    assertThat(d.allowed()).as("%s phải cho phép: %s", id, d.denyReason()).isTrue();
+    assertThat(d.allowed()).as("%s must be allowed: %s", id, d.denyReason()).isTrue();
   }
 
   @ParameterizedTest
@@ -93,7 +93,7 @@ class MatrixDrivenTest {
               r.resource(),
               r.action(),
               ctx(holding, failing.equals(Predicates.NOT_CARE)));
-      assertThat(d.allowed()).as("%s không được cho phép khi thiếu %s", id, failing).isFalse();
+      assertThat(d.allowed()).as("%s must not be allowed without %s", id, failing).isFalse();
     }
   }
 
@@ -132,7 +132,7 @@ class MatrixDrivenTest {
                                           action,
                                           ctx(Set.copyOf(ALL_PREDICATES), false))
                                       .allowed())
-                              .as("%s chạm %s.%s", role, resource, action)
+                              .as("%s touches %s.%s", role, resource, action)
                               .isFalse();
                         }
                       });
@@ -281,8 +281,8 @@ class MatrixDrivenTest {
             AuthzMatrixException.class,
             e ->
                 assertThat(e.errors())
-                    .anyMatch(s -> s.contains("lâm sàng"))
-                    .anyMatch(s -> s.contains("predicate lạ")));
+                    .anyMatch(s -> s.contains("clinical"))
+                    .anyMatch(s -> s.contains("unknown predicate")));
   }
 
   @Test
@@ -303,7 +303,7 @@ class MatrixDrivenTest {
             AuthzMatrixException.class,
             e ->
                 assertThat(e.errors())
-                    .anyMatch(s -> s.contains("id trùng"))
+                    .anyMatch(s -> s.contains("duplicate id"))
                     .anyMatch(s -> s.contains("denyAll"))
                     .anyMatch(s -> s.contains("(Slot,block)")));
   }
@@ -325,9 +325,9 @@ class MatrixDrivenTest {
   }
 
   /**
-   * Ngữ cảnh sao cho ĐÚNG các predicate trong {@code holding} thỏa, mọi predicate khác không thỏa.
-   * {@code care} và {@code not-care} loại trừ nhau: {@code notCareFails=true} dựng ngữ cảnh bác sĩ
-   * CÓ quan hệ điều trị.
+   * Context such that EXACTLY the predicates in {@code holding} hold and every other predicate does
+   * not. {@code care} and {@code not-care} are mutually exclusive: {@code notCareFails=true} builds
+   * a doctor context WITH a care relationship.
    */
   static ResourceContext ctx(Set<String> holding, boolean notCareFails) {
     return ResourceContext.builder()

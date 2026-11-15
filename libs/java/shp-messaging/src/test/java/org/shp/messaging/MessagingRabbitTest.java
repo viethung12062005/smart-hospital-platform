@@ -33,8 +33,9 @@ import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Hợp đồng messaging với RabbitMQ thật (13-events §1.1, tiêu chí SHR-08): event trùng chỉ xử lý một
- * lần; handler lỗi được giao 5 lần rồi vào DLQ; event sai schema vào DLQ mà không tới handler.
+ * Messaging contract with real RabbitMQ (13-events §1.1, SHR-08 criterion): a duplicate event is
+ * processed only once; a failing handler is delivered 5 times then goes to the DLQ; a bad-schema
+ * event goes to the DLQ without reaching the handler.
  */
 @SpringBootTest(
     classes = MessagingRabbitTest.App.class,
@@ -44,7 +45,7 @@ import tools.jackson.databind.JsonNode;
       "spring.cloud.stream.bindings.testIn-in-0.group=test-svc",
       "spring.cloud.stream.rabbit.bindings.testIn-in-0.consumer.binding-routing-key="
           + MessagingRabbitTest.BOOKED,
-      // backoff ngắn cho test; 5 lần thử giữ nguyên mặc định
+      // short backoff for tests; the 5 attempts keep the default
       "spring.cloud.stream.default.consumer.back-off-initial-interval=10",
       "spring.cloud.stream.default.consumer.back-off-max-interval=50"
     })
@@ -85,7 +86,7 @@ class MessagingRabbitTest {
   void duplicateDeliveryIsHandledOnce() throws Exception {
     CloudEvent evt = booked();
     publisher.publish(evt);
-    publisher.publish(evt); // bus giao lại cùng event (cùng id)
+    publisher.publish(evt); // bus redelivers the same event (same id)
 
     await().atMost(Duration.ofSeconds(20)).until(() -> inbox.calls(evt.id()) == 2);
     assertThat(recorder.attempts(evt.id())).isEqualTo(1);
@@ -153,7 +154,10 @@ class MessagingRabbitTest {
     }
   }
 
-  /** Như PostgresInbox: ghi dấu rồi chạy handler; handler lỗi thì bỏ dấu (rollback). */
+  /**
+   * Like PostgresInbox: record the marker then run the handler; on handler failure remove the
+   * marker (rollback).
+   */
   static final class InMemoryInbox implements Inbox {
     private final Set<String> seen = ConcurrentHashMap.newKeySet();
     private final Map<String, AtomicInteger> calls = new ConcurrentHashMap<>();
@@ -187,7 +191,7 @@ class MessagingRabbitTest {
     void handle(CloudEvent evt) {
       attempts.computeIfAbsent(evt.id(), k -> new AtomicInteger()).incrementAndGet();
       if (failing.contains(evt.id())) {
-        throw new IllegalStateException("lỗi giả lập");
+        throw new IllegalStateException("simulated failure");
       }
     }
 

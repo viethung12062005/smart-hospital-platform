@@ -15,13 +15,14 @@ import org.testcontainers.mongodb.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * MongoDB 8 replica set thật (Testcontainers) — cần cho transaction. Đổi image bằng
+ * Real MongoDB 8 replica set (Testcontainers) — required for transactions. Override the image with
  * SHP_TEST_MONGO_IMAGE.
  *
- * <p>GLIBC_TUNABLES: một số kernel Linux 6.19–7.0.13 có lỗi tcmalloc vi phạm ABI rseq khiến mongod
- * tự chặn khởi động (MongoDB SERVER-121912, không có bản vá — closed "Gone away"); một số runner CI
- * dùng kernel này. `glibc.pthread.rseq=1` là cách né được cộng đồng xác nhận hoạt động
- * (https://github.com/kiwiproject/kiwi/issues/1480). Bỏ khi runner có kernel >= 7.0.14.
+ * <p>GLIBC_TUNABLES: some Linux 6.19–7.0.13 kernels have a tcmalloc bug that violates the rseq ABI
+ * and makes mongod block its own startup (MongoDB SERVER-121912, no fix — closed as "Gone away");
+ * some CI runners use this kernel. `glibc.pthread.rseq=1` is the workaround the community confirms
+ * works (https://github.com/kiwiproject/kiwi/issues/1480). Remove once runners have kernel >=
+ * 7.0.14.
  */
 abstract class MongoTestBase {
   static final MongoDBContainer MONGO =
@@ -29,7 +30,8 @@ abstract class MongoTestBase {
               DockerImageName.parse(System.getenv().getOrDefault("SHP_TEST_MONGO_IMAGE", "mongo:8"))
                   .asCompatibleSubstituteFor("mongo"))
           .withEnv("GLIBC_TUNABLES", "glibc.pthread.rseq=1")
-          .withReplicaSet(); // Testcontainers 2.x không tự bật replica set (transaction cần replica
+          .withReplicaSet(); // Testcontainers 2.x does not enable a replica set itself
+  // (transactions need a replica
   // set)
   static final MongoTemplate DB;
   static final TransactionTemplate TX;
@@ -46,7 +48,7 @@ abstract class MongoTestBase {
           MongoMessaging.OUTBOX, MongoMessaging.INBOX, MongoMessaging.IDEMPOTENCY, "thing"
         }) {
       if (!DB.collectionExists(c)) {
-        DB.createCollection(c); // transaction không tự tạo collection
+        DB.createCollection(c); // transactions do not create collections
       }
     }
     MongoMessaging.ensureIndexes(DB);

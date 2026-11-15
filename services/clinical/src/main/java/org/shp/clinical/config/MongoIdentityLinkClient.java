@@ -7,7 +7,7 @@ import org.shp.web.auth.IdentityLinkClient;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 /**
- * Đọc {@code identity_links} (03 §2): {@code _id} = OIDC subject, {@code fhirUser}, {@code
+ * Reads {@code identity_links} (03 §2): {@code _id} = OIDC subject, {@code fhirUser}, {@code
  * disabled}.
  */
 final class MongoIdentityLinkClient implements IdentityLinkClient {

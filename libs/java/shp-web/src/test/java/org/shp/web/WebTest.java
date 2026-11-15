@@ -86,7 +86,7 @@ class WebTest {
     return TestApp.token(List.of("nurse"), "nurse", List.of("mfa"));
   }
 
-  // ---------- xác thực + danh tính ----------
+  // ---------- authentication + identity ----------
   @Test
   void validLinkedPatientReachesEndpointWithPrincipal() throws Exception {
     var r = get("/api/v1/me", patient());
@@ -179,7 +179,7 @@ class WebTest {
     assertThat(get("/info", null).statusCode()).isEqualTo(200);
   }
 
-  // ---------- lỗi chuẩn ----------
+  // ---------- standard errors ----------
   @Test
   void apiErrorIsProblemJsonWithVietnameseMessage() throws Exception {
     var r = get("/api/v1/slot", patient());
@@ -225,7 +225,7 @@ class WebTest {
     assertThat(json(r).get("code").asString()).isEqualTo("not-found");
   }
 
-  // ---------- phân quyền + audit ----------
+  // ---------- authorization + audit ----------
   @Test
   void patientReadsOwnRecordAndTheAccessIsAudited() throws Exception {
     assertThat(get("/api/v1/patients/" + PATIENT, patient()).statusCode()).isEqualTo(200);

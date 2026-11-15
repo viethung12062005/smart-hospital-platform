@@ -6,10 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Bắt buộc {@code Idempotency-Key} (07 §3: {@code $book}, {@code $cancel}, {@code $reschedule}, D1,
- * AI4, AI6, AI8). Thiếu → 428 {@code idempotency-key-required}; sai định dạng → 400. Handler lấy
- * key bằng {@link PreconditionInterceptor#idempotencyKey} rồi truyền cho {@code
- * PostgresIdempotency} hoặc {@code MongoIdempotency}.
+ * Require {@code Idempotency-Key} (07 §3: {@code $book}, {@code $cancel}, {@code $reschedule}, D1,
+ * AI4, AI6, AI8). Missing → 428 {@code idempotency-key-required}; invalid format → 400. The handler
+ * gets the key via {@link PreconditionInterceptor#idempotencyKey} then passes it to {@code
+ * PostgresIdempotency} or {@code MongoIdempotency}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

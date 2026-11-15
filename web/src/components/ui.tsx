@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, NetworkError } from '@/api/client';
 
-/** Tiêu đề trang theo hệ thiết kế: tiêu đề, dòng phụ, nút thao tác bên phải. */
+/** Page header per the design system: title, subtitle, action buttons on the right. */
 export function PageHeader(props: { readonly title: string; readonly sub?: string; readonly actions?: ReactNode }) {
   return (
     <div className="shp-pagehead">
@@ -52,7 +52,7 @@ const CHIP: Record<string, string> = {
   'busy-unavailable': 'muted',
 };
 
-/** Chip trạng thái FHIR (Appointment, Encounter, Slot) với nhãn dịch vi/en. */
+/** FHIR status chip (Appointment, Encounter, Slot) with a translated vi/en label. */
 export function StatusChip({ status }: { readonly status: string | undefined }) {
   const { t } = useTranslation();
   if (!status) return null;
@@ -112,7 +112,7 @@ export function Loading() {
   );
 }
 
-/** Hiển thị lỗi API: thông điệp máy chủ (đã đúng ngôn ngữ) và mã truy vết để báo lỗi. */
+/** Show an API error: the server message (already in the right language) and the trace ID for reporting. */
 export function ProblemAlert({ error }: { readonly error: unknown }) {
   const { t } = useTranslation();
   if (!error) return null;

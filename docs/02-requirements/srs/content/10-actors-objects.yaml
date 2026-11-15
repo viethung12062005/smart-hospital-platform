@@ -1,235 +1,235 @@
-# Actor, hệ thống bên ngoài, đối tượng dữ liệu (Chương 2.1 và file System Analysis Result) và danh sách yêu cầu mức cao.
+# Actors, external systems, data objects (Chapter 2.1 and the System Analysis Result file) and the high-level requirements list.
 actors:
   - key: patient
-    name: Bệnh nhân
+    name: Patient
     short: BN
     description: >-
-      Người có tài khoản trên cổng bệnh nhân. Đặt/hủy/đổi lịch khám của chính mình và của người thân đã được liên kết (con dưới 16 tuổi, người lớn đã ủy quyền), xem lịch hẹn, xem tài liệu đã được
-      bác sĩ phát hành, cập nhật thông tin hành chính, xem ai đã truy cập hồ sơ của mình, quản lý đồng ý xử lý dữ liệu
-      bằng AI, dùng chatbot đặt lịch. Hệ thống nhận diện “Bệnh nhân” khi token OIDC có vai trò “patient” và [fhirUser] trỏ tới
-      một Patient. Chỉ thấy dữ liệu của chính mình và của hồ sơ đã được liên kết đúng phạm vi (BR-05).
+      A person with an account on the patient portal. Books/cancels/reschedules visits for themselves and for linked relatives (children under 16, authorized adults), views appointments, views documents
+      released by the doctor, updates administrative information, views who accessed their record, manages consent to data processing
+      by AI, and uses the booking chatbot. The system identifies a "Patient" when the OIDC token has the role "patient" and [fhirUser] points to
+      a Patient. They see only their own data and the data of linked records within the correct scope (BR-05).
   - key: doctor
-    name: Bác sĩ
+    name: Doctor
     short: BS
     description: >-
-      Nhân viên lâm sàng khám bệnh. Xem lịch làm việc của mình, mở và ghi nhận lần khám, ghi chẩn đoán, phát hành tài
-      liệu cho bệnh nhân, hỏi trợ lý tri thức, tóm tắt hồ sơ, duyệt kết quả trích xuất. Chỉ truy cập hồ sơ bệnh nhân có
-      quan hệ điều trị (BR-06), ngoại lệ duy nhất là truy cập khẩn cấp. Bắt buộc MFA. Vai trò “doctor”, [fhirUser] trỏ tới Practitioner.
+      A clinical staff member who examines patients. Views their own schedule, opens and records visits, records diagnoses, releases documents
+      to patients, asks the knowledge assistant, summarizes records and approves extraction results. Can access only the records of patients with a
+      treatment relationship (BR-06); the only exception is emergency access. MFA is mandatory. Role "doctor", [fhirUser] points to a Practitioner.
   - key: nurse
-    name: Điều dưỡng
-    short: ĐD
+    name: Nurse
+    short: DD
     description: >-
-      Điều dưỡng/nhân viên tiếp đón. Tạo và sửa hồ sơ bệnh nhân tại quầy, gộp hồ sơ trùng, đặt/hủy lịch thay bệnh nhân,
-      quản lý lịch làm việc và slot, check-in, đo sinh hiệu, upload tài liệu, duyệt kết quả trích xuất, hỏi trợ lý tri thức.
-      Bắt buộc MFA. Vai trò “nurse”.
+      Nurse/reception staff. Creates and edits patient records at the counter, merges duplicate records, books/cancels appointments on behalf of patients,
+      manages schedules and slots, performs check-in, measures vital signs, uploads documents, approves extraction results, and asks the knowledge assistant.
+      MFA is mandatory. Role "nurse".
   - key: admin
-    name: Quản trị viên
+    name: Administrator
     short: QT
     description: >-
-      Quản trị hệ thống. Quản lý tài khoản nhân viên và vai trò, liên kết tài khoản bác sĩ với hồ sơ Practitioner, quản lý
-      lịch làm việc, quản lý kho tri thức của trợ lý AI, xem audit (không xem nội dung lâm sàng), xử lý thông báo lỗi, vận
-      hành sao lưu/khôi phục qua quy trình có duyệt. Không có quyền đọc hồ sơ lâm sàng. Bắt buộc MFA. Vai trò “admin”.
+      System administrator. Manages staff accounts and roles, links doctor accounts to Practitioner records, manages
+      schedules, manages the AI assistant's knowledge base, views audit (without viewing clinical content), handles error notifications, and operates
+      backup/restore through an approved process. Has no permission to read clinical records. MFA is mandatory. Role "admin".
   - key: dpo
-    name: Cán bộ bảo vệ dữ liệu
+    name: Data Protection Officer
     short: DPO
     description: >-
-      Data Protection Officer. Tra cứu và xuất báo cáo audit truy cập dữ liệu bệnh nhân, nhận cảnh báo truy cập khẩn cấp,
-      xử lý yêu cầu của chủ thể dữ liệu. Không đọc được dữ liệu lâm sàng. Bắt buộc MFA. Vai trò “dpo”.
+      Data Protection Officer. Searches and exports audit reports on patient data access, receives emergency access alerts,
+      and handles data subject requests. Cannot read clinical data. MFA is mandatory. Role "dpo".
   - key: system
-    name: Hệ thống
+    name: System
     short: HT
     in_matrix: false
     description: >-
-      Các tác vụ tự động không có người dùng trực tiếp: job định kỳ (đánh dấu không đến khám, dọn dữ liệu hết hạn), worker
-      xử lý sự kiện (nhắc lịch, dự đoán no-show, trích xuất tài liệu). Gọi service khác bằng danh tính workload, chỉ được gọi
-      các endpoint nội bộ đã khai báo.
+      Automated tasks with no direct user: scheduled jobs (mark no-shows, purge expired data), event consumers
+      (reminders, no-show prediction, document extraction). Calls other services using workload identity and may call
+      only declared internal endpoints.
 
 external_systems:
   - key: idp
-    name: Nhà cung cấp định danh (Keycloak)
+    name: Identity provider (Keycloak)
     description: >-
-      Xác thực OIDC, MFA, cấp token có vai trò, chạy trong cụm của hệ thống ở mọi môi trường. Đăng ký bệnh nhân bằng số điện
-      thoại (mã OTP) hoặc email (mã xác minh). Chỉ nhà cung cấp định danh lưu mật khẩu (băm chậm có salt); các service nghiệp vụ không bao giờ nhận hay lưu mật khẩu.
+      OIDC authentication, MFA, issuing tokens with roles, running in the system cluster in every environment. Patient registration by phone
+      number (OTP code) or email (verification code). Only the identity provider stores passwords (salted slow hash); business services never receive or store passwords.
   - key: messaging
-    name: Nhà cung cấp gửi tin (email, SMS, push)
-    description: Gửi nhắc lịch và thông báo. Nội dung không chứa chẩn đoán hay kết quả khám.
+    name: Messaging provider (email, SMS, push)
+    description: Sends reminders and notifications. Content does not contain diagnoses or examination results.
   - key: llm
-    name: Nhà cung cấp mô hình ngôn ngữ (DeepSeek, Gemini) và mô hình chạy nội bộ (Ollama)
+    name: Language model provider (DeepSeek, Gemini) and locally hosted models (Ollama)
     description: >-
-      Sinh câu trả lời, tóm tắt, phân loại tài liệu. Mọi dữ liệu gửi ra nhà cung cấp bên ngoài đều đã được che thông tin định
-      danh cá nhân; embedding chạy nội bộ trong cụm.
+      Generates answers, summaries and document classifications. All data sent to external providers has personally identifiable
+      information redacted; embeddings run locally in the cluster.
   - key: malware
-    name: Dịch vụ quét mã độc (Microsoft Defender for Storage / ClamAV)
-    description: Quét mọi tệp upload trước khi tài liệu được dùng.
+    name: Malware scanning service (Microsoft Defender for Storage / ClamAV)
+    description: Scans every uploaded file before the document is used.
   - key: cloud
-    name: Nền tảng Azure
-    description: Lưu trữ tệp (Blob, WORM cho audit), hàng đợi sự kiện (Service Bus), khóa bí mật (Key Vault), giám sát (Azure Monitor).
+    name: Azure platform
+    description: File storage (Blob, WORM for audit), event queue (Service Bus), secret keys (Key Vault), monitoring (Azure Monitor).
 
 objects:
   - key: patient
-    name: Bệnh nhân (Patient)
+    name: Patient
     actors: [patient, nurse, doctor]
     description: >-
-      Hồ sơ hành chính của bệnh nhân theo FHIR Patient. Bệnh nhân tự đăng ký hoặc điều dưỡng tạo tại quầy. Mỗi lần sửa tạo
-      phiên bản mới. Có thể bị gộp vào hồ sơ khác khi trùng.
+      The patient's administrative record according to FHIR Patient. Patients register themselves or a nurse creates the record at the counter. Every edit creates a new
+      version. A record can be merged into another record when duplicated.
     properties:
-      - {name: Mã bệnh nhân, example: BN-2026-000123, input: System generated, note: Định danh nghiệp vụ hiển thị cho người dùng}
-      - {name: Họ và tên, example: Nguyễn Thị Lan, input: Free Input}
-      - {name: Ngày sinh, example: 12/05/1985, input: Free Input}
-      - {name: Giới tính, example: Nữ, input: Input in a list, note: "male, female, other, unknown"}
-      - {name: Số điện thoại, example: "0912 345 678", input: Free Input, note: Dùng kiểm tra trùng hồ sơ cùng ngày sinh}
+      - {name: Patient ID, example: BN-2026-000123, input: System generated, note: Business identifier displayed to users}
+      - {name: Full name, example: Nguyen Thi Lan, input: Free Input}
+      - {name: Date of birth, example: 12/05/1985, input: Free Input}
+      - {name: Sex, example: Female, input: Input in a list, note: "male, female, other, unknown"}
+      - {name: Phone number, example: "0912 345 678", input: Free Input, note: Used to detect duplicate records with the same date of birth}
       - {name: Email, example: lan.nguyen@example.org, input: Free Input}
-      - {name: Số căn cước công dân, example: "000123456789", input: Free Input, note: "Không bắt buộc; điều dưỡng bổ sung khi bệnh nhân đến khám; lưu mã hóa, hiển thị che"}
-      - {name: Địa chỉ, example: "12 Lê Lợi, Huế", input: Free Input}
-      - {name: Trạng thái, example: active, input: System generated, note: "active, merged (đã gộp vào hồ sơ khác)"}
+      - {name: National ID number, example: "000123456789", input: Free Input, note: "Optional; a nurse adds it when the patient arrives; stored encrypted, displayed masked"}
+      - {name: Address, example: "12 Le Loi, Hue", input: Free Input}
+      - {name: Status, example: active, input: System generated, note: "active, merged (merged into another record)"}
   - key: profile-link
-    name: Liên kết hồ sơ (ProfileLink)
+    name: Profile link (ProfileLink)
     actors: [patient, nurse]
     description: >-
-      Quan hệ giữa một tài khoản đăng nhập và một hồ sơ bệnh nhân: bản thân, người giám hộ của người dưới 16 tuổi, hoặc người
-      được ủy quyền. Có phạm vi, hiệu lực 12 tháng và có thể thu hồi.
+      The relationship between a login account and a patient record: self, guardian of a person under 16, or an authorized
+      representative. It has a scope, is valid for 12 months and can be revoked.
     properties:
-      - {name: Quan hệ, example: Người giám hộ, input: Input in a list, note: "bản thân, người giám hộ, người được ủy quyền"}
-      - {name: Phạm vi, example: Đặt lịch, input: Input in a list, note: "Đặt lịch; Đặt lịch và xem kết quả. Người giám hộ có toàn quyền"}
-      - {name: Trạng thái, example: active, input: System generated, note: "pending, active, revoked, expired"}
-      - {name: Hết hạn, example: 31/10/2027, input: System generated, note: 12 tháng kể từ lúc liên kết, gia hạn bằng OTP}
-      - {name: Cách xác lập, example: Mã OTP của người thân, input: System generated, note: "OTP của người thân, tại quầy có đối chiếu giấy tờ, cam đoan của người giám hộ"}
+      - {name: Relationship, example: Guardian, input: Input in a list, note: "self, guardian, authorized representative"}
+      - {name: Scope, example: Booking, input: Input in a list, note: "Booking; Booking and viewing results. A guardian has full rights"}
+      - {name: Status, example: active, input: System generated, note: "pending, active, revoked, expired"}
+      - {name: Expiry, example: 31/10/2027, input: System generated, note: "12 months from linking, renewed by OTP"}
+      - {name: Establishment method, example: Relative's OTP code, input: System generated, note: "Relative's OTP, at the counter with document verification, guardian's declaration"}
   - key: practitioner
-    name: Bác sĩ (Practitioner / PractitionerRole)
+    name: Doctor (Practitioner / PractitionerRole)
     actors: [admin]
-    description: Thông tin bác sĩ, chuyên khoa và liên kết với tài khoản đăng nhập. Do quản trị viên quản lý.
+    description: Doctor information, specialty and link to a login account. Managed by the administrator.
     properties:
-      - {name: Họ và tên, example: BS. Trần Văn Minh, input: Free Input}
-      - {name: Chuyên khoa, example: Tim mạch, input: Input in a list, note: Bộ mã chuyên khoa của bệnh viện}
-      - {name: Tài khoản liên kết, example: (subject OIDC), input: From external system, show: false}
+      - {name: Full name, example: Dr. Tran Van Minh, input: Free Input}
+      - {name: Specialty, example: Cardiology, input: Input in a list, note: The hospital's specialty code set}
+      - {name: Linked account, example: (subject OIDC), input: From external system, show: false}
   - key: schedule
-    name: Lịch làm việc (Schedule) và Mẫu lịch tuần
+    name: Doctor schedule (Schedule) and Weekly template
     actors: [nurse, admin, doctor]
-    description: Lịch làm việc của một bác sĩ theo một chuyên khoa, kèm mẫu lịch tuần dùng để sinh slot.
+    description: A doctor's schedule for a specialty, together with the weekly template used to generate slots.
     properties:
-      - {name: Bác sĩ, example: BS. Trần Văn Minh, input: Input in a list}
-      - {name: Chuyên khoa, example: Tim mạch, input: Input in a list}
-      - {name: Mẫu tuần, example: "T2–T6 08:00–11:30", input: Free Input}
-      - {name: Độ dài slot, example: "15 phút", input: Input in a list, note: "10, 15, 20, 30"}
-      - {name: Trạng thái, example: Hoạt động, input: Input in a list}
+      - {name: Doctor, example: Dr. Tran Van Minh, input: Input in a list}
+      - {name: Specialty, example: Cardiology, input: Input in a list}
+      - {name: Weekly template, example: "Mon-Fri 08:00-11:30", input: Free Input}
+      - {name: Slot length, example: "15 minutes", input: Input in a list, note: "10, 15, 20, 30"}
+      - {name: Status, example: Active, input: Input in a list}
   - key: slot
-    name: Khung giờ (Slot)
+    name: Time slot (Slot)
     actors: [patient, nurse, admin, doctor]
-    description: Một khung giờ khám của bác sĩ, được sinh từ mẫu lịch, mở đặt trước tối đa 30 ngày (BR-04).
+    description: An examination time slot for a doctor, generated from the schedule template, bookable up to 30 days in advance (BR-04).
     properties:
-      - {name: Thời gian bắt đầu / kết thúc, example: "03/12/2026 08:15–08:30", input: System generated}
-      - {name: Trạng thái, example: free, input: System generated, note: "free, busy, busy-unavailable"}
-      - {name: Lý do chặn, example: Nghỉ phép, input: Free Input, note: Chỉ khi bị chặn}
+      - {name: Start / end time, example: "03/12/2026 08:15-08:30", input: System generated}
+      - {name: Status, example: free, input: System generated, note: "free, busy, busy-unavailable"}
+      - {name: Blocking reason, example: Leave, input: Free Input, note: Only when blocked}
   - key: appointment
-    name: Lịch hẹn (Appointment)
+    name: Appointment
     actors: [patient, nurse, doctor]
-    description: Lịch hẹn của một bệnh nhân vào một slot. Có vòng đời trạng thái riêng (Chương 2.3).
+    description: A patient's appointment in a slot. It has its own status lifecycle (Chapter 2.3).
     properties:
-      - {name: Mã lịch hẹn, example: LH-20261203-0042, input: System generated}
-      - {name: Bệnh nhân, example: Nguyễn Thị Lan, input: System generated, note: Bệnh nhân tự đặt thì luôn là chính họ}
-      - {name: Slot, example: "03/12/2026 08:15, BS. Trần Văn Minh", input: Input in a list}
-      - {name: Lý do khám, example: Đau ngực khi gắng sức, input: Free Input}
-      - {name: Trạng thái, example: booked, input: System generated, note: "booked, arrived, fulfilled, cancelled, noshow"}
-      - {name: Kênh đặt, example: web, input: System generated, note: "web, counter, chatbot"}
-      - {name: Lý do hủy, example: Bận việc đột xuất, input: Input in a list}
+      - {name: Appointment ID, example: LH-20261203-0042, input: System generated}
+      - {name: Patient, example: Nguyen Thi Lan, input: System generated, note: When a patient books for themselves it is always themselves}
+      - {name: Slot, example: "03/12/2026 08:15, Dr. Tran Van Minh", input: Input in a list}
+      - {name: Reason for visit, example: Chest pain on exertion, input: Free Input}
+      - {name: Status, example: booked, input: System generated, note: "booked, arrived, fulfilled, cancelled, noshow"}
+      - {name: Booking channel, example: web, input: System generated, note: "web, counter, chatbot"}
+      - {name: Cancellation reason, example: Unexpected personal matter, input: Input in a list}
   - key: encounter
-    name: Lần khám (Encounter)
+    name: Encounter
     actors: [nurse, doctor]
-    description: Một lần khám ngoại trú, tạo khi check-in. Sau khi kết thúc thì không sửa, chỉ bổ sung.
+    description: An outpatient visit, created at check-in. Once finished it cannot be edited, only amended.
     properties:
-      - {name: Lý do khám / bệnh sử, example: "Đau ngực 2 tuần, tăng khi leo cầu thang", input: Free Input}
-      - {name: Trạng thái, example: in-progress, input: System generated, note: "arrived, in-progress, finished"}
-      - {name: Bác sĩ khám, example: BS. Trần Văn Minh, input: System generated}
+      - {name: Reason for visit / history, example: "Chest pain for 2 weeks, worse when climbing stairs", input: Free Input}
+      - {name: Status, example: in-progress, input: System generated, note: "arrived, in-progress, finished"}
+      - {name: Examining doctor, example: Dr. Tran Van Minh, input: System generated}
   - key: observation
-    name: Sinh hiệu / kết quả (Observation)
+    name: Vital signs / results (Observation)
     actors: [nurse, doctor]
-    description: Sinh hiệu (huyết áp, mạch, nhiệt độ, SpO2, cân nặng, chiều cao) và kết quả xét nghiệm, mã LOINC.
+    description: Vital signs (blood pressure, pulse, temperature, SpO2, weight, height) and lab results, LOINC coded.
     properties:
-      - {name: Loại, example: Huyết áp tâm thu, input: Input in a list, note: Mã LOINC}
-      - {name: Giá trị và đơn vị, example: "135 mmHg", input: Free Input, note: Kiểm tra khoảng hợp lý}
+      - {name: Type, example: Systolic blood pressure, input: Input in a list, note: LOINC code}
+      - {name: Value and unit, example: "135 mmHg", input: Free Input, note: Plausible range validation}
   - key: condition
-    name: Chẩn đoán / bệnh nền (Condition) và Dị ứng
+    name: Diagnosis / comorbidity (Condition) and Allergy
     actors: [doctor]
-    description: Chẩn đoán theo mã ICD-10, bệnh nền, dị ứng của bệnh nhân.
+    description: Diagnosis using ICD-10 codes, comorbidities and patient allergies.
     properties:
-      - {name: Mã ICD-10, example: "I20.9 Cơn đau thắt ngực", input: Input in a list}
-      - {name: Loại, example: Chẩn đoán lần khám, input: Input in a list}
+      - {name: ICD-10 code, example: "I20.9 Angina pectoris", input: Input in a list}
+      - {name: Type, example: Visit diagnosis, input: Input in a list}
   - key: document
-    name: Tài liệu lâm sàng (DocumentReference)
+    name: Clinical document (DocumentReference)
     actors: [nurse, doctor, patient]
-    description: Metadata của tệp lâm sàng (kết quả xét nghiệm, đơn thuốc, giấy chuyển viện…); tệp nằm trên kho lưu trữ, chỉ tải qua link ngắn hạn.
+    description: Metadata for a clinical file (lab results, prescription, referral letter...); the file is in storage and can be downloaded only through a short-lived link.
     properties:
-      - {name: Loại tài liệu, example: Kết quả xét nghiệm, input: Input in a list}
-      - {name: Tệp, example: "ket-qua-xn.pdf (1,2 MB)", input: Free Input, note: "PDF, JPEG, PNG; ≤ 20 MB"}
-      - {name: Trạng thái quét, example: available, input: System generated, note: "pending-scan, available, quarantined"}
-      - {name: Đã phát hành cho bệnh nhân, example: Có, input: System generated}
+      - {name: Document type, example: Lab result, input: Input in a list}
+      - {name: File, example: "lab-result.pdf (1.2 MB)", input: Free Input, note: "PDF, JPEG, PNG; <= 20 MB"}
+      - {name: Scan status, example: available, input: System generated, note: "pending-scan, available, quarantined"}
+      - {name: Released to patient, example: "Yes", input: System generated}
   - key: reminder
-    name: Lần nhắc lịch (Reminder) và Tùy chọn thông báo
+    name: Appointment reminder (Reminder) and Notification preferences
     actors: [system, patient]
-    description: Các lần nhắc T-24h, T-2h (và T-6h nếu nguy cơ không đến khám cao) cho một lịch hẹn; tùy chọn kênh của bệnh nhân.
+    description: Reminders at T-24h, T-2h (and T-6h if no-show risk is high) for an appointment; the patient's channel preferences.
     properties:
-      - {name: Thời điểm gửi, example: "02/12/2026 08:15", input: System generated}
-      - {name: Kênh, example: SMS, input: Input in a list, note: "push, email, SMS"}
-      - {name: Trạng thái, example: scheduled, input: System generated, note: "scheduled, sent, cancelled, failed"}
+      - {name: Send time, example: "02/12/2026 08:15", input: System generated}
+      - {name: Channel, example: SMS, input: Input in a list, note: "push, email, SMS"}
+      - {name: Status, example: scheduled, input: System generated, note: "scheduled, sent, cancelled, failed"}
   - key: audit
-    name: Bản ghi audit (AuditEvent)
+    name: Audit entry (AuditEvent)
     actors: [dpo, admin, patient]
-    description: Nhật ký bất biến mọi truy cập dữ liệu bệnh nhân và mọi quyết định phân quyền (cho phép và từ chối).
+    description: Immutable log of every access to patient data and every authorization decision (allow and deny).
     properties:
-      - {name: Thời điểm, example: "03/12/2026 09:02:11", input: System generated}
-      - {name: Người thực hiện và vai trò, example: "BS. Trần Văn Minh (doctor)", input: System generated}
-      - {name: Hành động / tài nguyên, example: "read Patient/…", input: System generated}
-      - {name: Kết quả, example: "allow / deny", input: System generated}
-      - {name: Mục đích, example: "treatment / break-glass", input: System generated}
-      - {name: Lý do (break-glass), example: Cấp cứu ngừng tim, input: Free Input}
+      - {name: Timestamp, example: "03/12/2026 09:02:11", input: System generated}
+      - {name: Actor and role, example: "Dr. Tran Van Minh (doctor)", input: System generated}
+      - {name: Action / resource, example: "read Patient/...", input: System generated}
+      - {name: Result, example: "allow / deny", input: System generated}
+      - {name: Purpose, example: "treatment / break-glass", input: System generated}
+      - {name: Reason (break-glass), example: Cardiac arrest emergency, input: Free Input}
   - key: consent
-    name: Đồng ý xử lý dữ liệu (Consent)
+    name: Data processing consent (Consent)
     actors: [patient]
-    description: Đồng ý của bệnh nhân về việc xử lý dữ liệu sức khỏe bằng AI (tóm tắt, trích xuất, dự đoán) và nhận thông báo.
+    description: The patient's consent to processing health data with AI (summary, extraction, prediction) and to receiving notifications.
     properties:
-      - {name: Phạm vi, example: "ai-processing", input: Input in a list}
-      - {name: Trạng thái, example: Đồng ý, input: Input in a list}
-      - {name: Thời điểm và phiên bản điều khoản, example: "30/10/2026, v1", input: System generated}
+      - {name: Scope, example: "ai-processing", input: Input in a list}
+      - {name: Status, example: Granted, input: Input in a list}
+      - {name: Timestamp and terms version, example: "30/10/2026, v1", input: System generated}
   - key: kb
-    name: Tài liệu kho tri thức (KB document)
+    name: Knowledge base document (KB document)
     actors: [admin, doctor, nurse]
-    description: Phác đồ, quy trình nội bộ đã duyệt, dùng làm nguồn cho trợ lý tri thức; có phạm vi xem theo vai trò/khoa.
+    description: Approved care protocols and internal procedures used as sources for the knowledge assistant; viewing scope is by role/department.
     properties:
-      - {name: Tiêu đề, example: Phác đồ xử trí tăng huyết áp, input: Free Input}
-      - {name: Phạm vi xem, example: Bác sĩ khoa Tim mạch, input: Input in a list}
-      - {name: Trạng thái, example: approved, input: System generated, note: "draft, approved, retired"}
+      - {name: Title, example: Hypertension management protocol, input: Free Input}
+      - {name: Viewing scope, example: Cardiology doctors, input: Input in a list}
+      - {name: Status, example: approved, input: System generated, note: "draft, approved, retired"}
   - key: conversation
-    name: Hội thoại trợ lý (Conversation / Message)
+    name: Assistant conversation (Conversation / Message)
     actors: [doctor, nurse, patient]
-    description: Câu hỏi, câu trả lời kèm trích dẫn, đánh giá; tự xóa sau 30 ngày.
+    description: Questions, answers with citations, and ratings; automatically deleted after 30 days.
   - key: extraction
-    name: Kết quả trích xuất (Extraction)
+    name: Extraction result (Extraction)
     actors: [nurse, doctor, system]
-    description: Trường dữ liệu AI trích từ tài liệu (OCR + phân loại) chờ người xác nhận trước khi ghi vào hồ sơ (BR-10).
+    description: Data fields extracted by AI from documents (OCR + classification) awaiting human confirmation before being written to the record (BR-10).
   - key: prediction
-    name: Dự đoán nguy cơ không đến khám (Prediction)
+    name: No-show risk prediction (Prediction)
     actors: [system, nurse]
-    description: Xác suất không đến khám của một lịch hẹn, kèm phiên bản mô hình để truy vết.
+    description: The no-show probability for an appointment, together with the model version for traceability.
   - key: account
-    name: Tài khoản người dùng (User account)
+    name: User account
     actors: [admin]
-    description: Liên kết subject OIDC với vai trò và hồ sơ (Patient/Practitioner); trạng thái khóa/mở.
+    description: Links an OIDC subject to a role and a profile (Patient/Practitioner); locked/unlocked status.
 
 requirements:
-  - {id: UC-01, title: Quản lý hồ sơ bệnh nhân, description: "Bệnh nhân tự đăng ký và cập nhật thông tin hành chính; điều dưỡng tạo/sửa/gộp hồ sơ tại quầy; mọi lần sửa có phiên bản.", priority: Must, source: BP-3}
-  - {id: UC-02, title: Quản lý lịch làm việc bác sĩ, description: "Tạo mẫu lịch tuần, sinh slot 30 ngày, chặn/mở slot, bác sĩ xem lịch của mình.", priority: Must, source: BP-1}
-  - {id: UC-03, title: "Đặt / hủy / đổi lịch khám", description: "Tìm slot, đặt lịch chống trùng và an toàn khi gửi lại, hủy theo hạn 2 giờ, đổi lịch nguyên tử.", priority: Must, source: "BP-1, BR-01..04"}
-  - {id: UC-04, title: Ghi nhận lần khám, description: "Check-in, sinh hiệu, bệnh sử, chẩn đoán ICD-10, kết thúc và bổ sung lần khám.", priority: Must, source: BP-3}
-  - {id: UC-05, title: Tài liệu lâm sàng, description: "Upload có kiểm tra loại/kích thước/mã độc, phát hành cho bệnh nhân, tải qua link 5 phút có audit.", priority: Must, source: "BP-3, BR-08"}
-  - {id: UC-06, title: Tìm kiếm lịch sử bệnh nhân, description: "Tìm bệnh nhân không dấu, xem timeline lần khám/chẩn đoán/sinh hiệu/tài liệu.", priority: Must, source: BP-3}
-  - {id: UC-07, title: Nhắc lịch và thông báo, description: "Nhắc T-24h/T-2h, hủy nhắc khi hủy lịch, thử lại và kênh dự phòng.", priority: Must, source: BP-2}
-  - {id: UC-08, title: Quản lý người dùng và phân quyền, description: "Mời nhân viên, gán vai trò, khóa tài khoản, liên kết bác sĩ, MFA bắt buộc với nhân viên.", priority: Must, source: BP-5}
-  - {id: UC-09, title: Audit truy cập dữ liệu, description: "Ghi bất biến mọi truy cập; DPO/QT tra cứu, xuất báo cáo; bệnh nhân xem ai đã truy cập hồ sơ của mình.", priority: Must, source: "BP-5, BR-07"}
-  - {id: UC-10, title: Truy cập khẩn cấp, description: "Bác sĩ mở hồ sơ ngoài quan hệ điều trị khi cấp cứu: bắt buộc lý do, 60 phút, báo DPO.", priority: Should, source: "BR-06, BR-07"}
-  - {id: UC-11, title: Trợ lý tri thức y tế (RAG), description: "Trả lời có trích dẫn từ tài liệu được phép xem, chống prompt injection, model dự phòng.", priority: Must, source: "BP-4, BR-09"}
-  - {id: UC-12, title: Tóm tắt hồ sơ bằng AI, description: "Tóm tắt có liên kết bản ghi gốc, nhãn AI, chỉ dữ liệu người dùng được phép xem.", priority: Should, source: BP-3}
-  - {id: UC-13, title: Trích xuất dữ liệu từ tài liệu, description: "OCR, phân loại, trích trường; luôn cần người xác nhận trước khi ghi vào hồ sơ.", priority: Should, source: "BP-6, BR-10"}
-  - {id: UC-14, title: Chatbot đặt lịch, description: "Bot đề xuất slot, chỉ đặt/hủy khi bệnh nhân xác nhận rõ ràng, lỗi thì chuyển về form.", priority: Could, source: BP-1}
-  - {id: UC-15, title: Dự đoán nguy cơ không đến khám, description: "Tính xác suất khi đặt lịch; nguy cơ cao thì thêm lần nhắc; lỗi ML không ảnh hưởng nhắc lịch.", priority: Should, source: BP-2}
-  - {id: UC-16, title: Sao lưu và khôi phục, description: "Khôi phục về thời điểm bất kỳ trong 7 ngày; diễn tập có đo thời gian so với RTO.", priority: Must, source: Đề bài}
-  - {id: UC-17, title: Quyền của chủ thể dữ liệu, description: "Bệnh nhân quản lý đồng ý xử lý dữ liệu bằng AI và yêu cầu trích xuất dữ liệu cá nhân của mình (Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15).", priority: Should, source: "NFR-SEC, Luật BVDLCN 91/2025/QH15"}
+  - {id: UC-01, title: Manage patient records, description: "Patients register themselves and update administrative information; nurses create/edit/merge records at the counter; every edit is versioned.", priority: Must, source: BP-3}
+  - {id: UC-02, title: Manage doctor schedules, description: "Create weekly schedule templates, generate 30 days of slots, block/open slots, doctors view their own schedule.", priority: Must, source: BP-1}
+  - {id: UC-03, title: "Book / cancel / reschedule an appointment", description: "Find slots, duplicate-safe and retry-safe booking, cancellation with a 2-hour deadline, atomic rescheduling.", priority: Must, source: "BP-1, BR-01..04"}
+  - {id: UC-04, title: Record a visit, description: "Check-in, vital signs, history, ICD-10 diagnosis, finish and amend the visit.", priority: Must, source: BP-3}
+  - {id: UC-05, title: Clinical documents, description: "Upload with type/size/malware checks, release to the patient, download through an audited 5-minute link.", priority: Must, source: "BP-3, BR-08"}
+  - {id: UC-06, title: Search patient history, description: "Search patients without accents, view a timeline of visits/diagnoses/vital signs/documents.", priority: Must, source: BP-3}
+  - {id: UC-07, title: Reminders and notifications, description: "T-24h/T-2h reminders, cancel reminders when the appointment is cancelled, retries and fallback channels.", priority: Must, source: BP-2}
+  - {id: UC-08, title: Manage users and authorization, description: "Invite staff, assign roles, lock accounts, link doctors, mandatory MFA for staff.", priority: Must, source: BP-5}
+  - {id: UC-09, title: Audit data access, description: "Immutable logging of every access; DPO/Admin search and export reports; patients view who accessed their record.", priority: Must, source: "BP-5, BR-07"}
+  - {id: UC-10, title: Emergency access, description: "A doctor opens a record outside a treatment relationship in an emergency: reason mandatory, 60 minutes, DPO notified.", priority: Should, source: "BR-06, BR-07"}
+  - {id: UC-11, title: Medical knowledge assistant (RAG), description: "Answers with citations from documents the user is allowed to view, prompt injection resistance, fallback models.", priority: Must, source: "BP-4, BR-09"}
+  - {id: UC-12, title: AI record summary, description: "Summary with links to source records, AI label, only data the user is allowed to view.", priority: Should, source: BP-3}
+  - {id: UC-13, title: Extract data from documents, description: "OCR, classification, field extraction; always requires human confirmation before writing to the record.", priority: Should, source: "BP-6, BR-10"}
+  - {id: UC-14, title: Booking chatbot, description: "The bot proposes slots and books/cancels only after explicit patient confirmation; on failure it falls back to the form.", priority: Could, source: BP-1}
+  - {id: UC-15, title: No-show risk prediction, description: "Compute probability at booking time; add a reminder for high risk; ML failure does not affect reminders.", priority: Should, source: BP-2}
+  - {id: UC-16, title: Backup and restore, description: "Restore to any point within the last 7 days; drills measure time against the RTO.", priority: Must, source: Assignment brief}
+  - {id: UC-17, title: Data subject rights, description: "Patients manage consent to AI data processing and request an export of their personal data (Personal Data Protection Law No. 91/2025/QH15).", priority: Should, source: "NFR-SEC, Personal Data Protection Law 91/2025/QH15"}

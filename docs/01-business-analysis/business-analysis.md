@@ -1,105 +1,105 @@
-# Pha 1 — Phân tích nghiệp vụ (Business Analysis)
+# Phase 1 - Business Analysis
 
-> Trạng thái: **Approved — G1 qua ngày 2026-10-26**. Bối cảnh bệnh viện dưới đây là **giả định** để có số liệu
-> thiết kế; mọi dữ liệu bệnh nhân dùng trong dự án là dữ liệu giả.
+> Status: **Approved - G1 passed on 2026-10-26**. The hospital context below is **assumed** in order to have
+> design figures; all patient data used in the project is synthetic data.
 
-## 1. Bối cảnh tổ chức (giả định)
+## 1. Organizational context (assumed)
 
-Một bệnh viện đa khoa tư nhân quy mô vừa:
+A medium-sized private general hospital:
 
-| Chỉ số | Giá trị giả định |
+| Metric | Assumed value |
 |---|---|
-| Số giường nội trú | 300 |
-| Số phòng khám ngoại trú (chuyên khoa) | 40 |
-| Bác sĩ khám ngoại trú | 120 |
-| Điều dưỡng / nhân viên lâm sàng | 250 |
-| Lượt khám ngoại trú / ngày | ~1.500 (cao điểm thứ Hai: ~2.200) |
-| Bệnh nhân đăng ký trên hệ thống năm đầu | ~50.000 |
-| Giờ làm việc ngoại trú | 7:00–17:00, thứ Hai–thứ Bảy |
+| Inpatient beds | 300 |
+| Outpatient clinics (specialty) | 40 |
+| Outpatient doctors | 120 |
+| Nurses / clinical staff | 250 |
+| Outpatient visits / day | ~1,500 (Monday peak: ~2,200) |
+| Patients registered on the system in the first year | ~50,000 |
+| Outpatient working hours | 7:00-17:00, Monday-Saturday |
 
-## 2. Vấn đề nghiệp vụ
+## 2. Business problems
 
-| # | Vấn đề hiện tại (as-is) | Hệ quả | Nguyên nhân gốc |
+| # | Current problem (as-is) | Consequence | Root cause |
 |---|---|---|---|
-| BP-1 | Đặt lịch qua điện thoại/quầy, tổng đài quá tải giờ cao điểm | Bệnh nhân chờ lâu, mất khách | Không có kênh tự phục vụ |
-| BP-2 | Tỉ lệ bệnh nhân không đến khám (no-show) ~18% | Lãng phí slot của bác sĩ | Nhắc lịch thủ công, không ưu tiên ca có rủi ro |
-| BP-3 | Kết quả xét nghiệm và giấy tờ là file rời, giấy | Bác sĩ mất 5–10 phút tìm lịch sử bệnh nhân | Không có hồ sơ tập trung |
-| BP-4 | Tra cứu phác đồ và quy trình nội bộ bằng tay | Chậm, thiếu nhất quán giữa các khoa | Tài liệu không được lập chỉ mục |
-| BP-5 | Không biết ai đã xem hồ sơ bệnh nhân | Rủi ro pháp lý về dữ liệu sức khỏe (dữ liệu cá nhân nhạy cảm) | Không có audit tập trung |
-| BP-6 | Nhập tay dữ liệu từ giấy tờ upload | Sai sót, tốn công điều dưỡng | Không có trích xuất tự động |
+| BP-1 | Booking by phone/counter, call center overloaded at peak hours | Patients wait long, lose customers | No self-service channel |
+| BP-2 | Patient no-show rate ~18% | Wasted doctor slots | Manual appointment reminders, no prioritization of at-risk cases |
+| BP-3 | Lab results and documents are loose files, paper | Doctors spend 5-10 minutes finding patient history | No centralized medical record |
+| BP-4 | Manual lookup of internal protocols and processes | Slow, inconsistent across departments | Documents are not indexed |
+| BP-5 | No knowledge of who viewed a patient's medical record | Legal risk regarding health data (sensitive personal data) | No centralized audit |
+| BP-6 | Manual entry of data from uploaded documents | Errors, wastes nurse effort | No automated extraction |
 
-## 3. Stakeholder
+## 3. Stakeholders
 
-| Stakeholder | Vai trò trong hệ thống | Mối quan tâm chính | Mức ảnh hưởng |
+| Stakeholder | Role in the system | Main concern | Influence level |
 |---|---|---|---|
-| Bệnh nhân | Patient | Đặt lịch nhanh, được nhắc lịch, xem kết quả của mình, quyền riêng tư | Cao |
-| Bác sĩ | Doctor | Thấy lịch sử bệnh nhân nhanh, ghi nhận lần khám ít thao tác, tra cứu phác đồ | Cao |
-| Điều dưỡng / nhân viên lâm sàng | Nurse | Tiếp đón, đo sinh hiệu, upload giấy tờ, quản lý lịch khám | Cao |
-| Quản trị hệ thống | Administrator | Quản lý người dùng/quyền, xem audit, sao lưu/khôi phục | Trung bình |
-| Ban giám đốc | (không dùng trực tiếp) | Giảm no-show, chi phí vận hành, tuân thủ pháp luật | Cao |
-| Cán bộ bảo vệ dữ liệu (DPO) | (đọc báo cáo audit) | Tuân thủ quy định bảo vệ dữ liệu cá nhân | Cao |
-| Nhà cung cấp AI/cloud | Bên ngoài | Phạm vi dữ liệu được gửi đi | — |
+| Patient | Patient | Fast booking, appointment reminders, view own results, privacy | High |
+| Doctor | Doctor | See patient history fast, record encounters with few actions, look up protocols | High |
+| Nurse / clinical staff | Nurse | Reception, measure vital signs, upload documents, manage appointment schedule | High |
+| System administrator | Administrator | Manage users/permissions, view audit, backup/restore | Medium |
+| Board of directors | (does not use directly) | Reduce no-shows, operating cost, legal compliance | High |
+| Data protection officer (DPO) | (reads audit reports) | Compliance with personal data protection regulations | High |
+| AI/cloud provider | External | Scope of data sent out | - |
 
-## 4. Quy trình nghiệp vụ
+## 4. Business process
 
-### 4.1 As-is: khám ngoại trú
+### 4.1 As-is: outpatient visit
 ```
-Bệnh nhân gọi tổng đài ─► nhân viên ghi sổ/Excel ─► (không nhắc lịch) ─► bệnh nhân đến quầy
-─► điều dưỡng tìm hồ sơ giấy ─► bác sĩ khám, ghi giấy ─► kết quả xét nghiệm in giấy, bệnh nhân tự giữ
-```
-
-### 4.2 To-be: khám ngoại trú trên nền tảng
-```
-1. Bệnh nhân tự tìm slot trống theo chuyên khoa/bác sĩ/ngày ─► đặt lịch (app/web hoặc chatbot)
-2. Hệ thống xác nhận ngay ─► nhắc lịch T-24h và T-2h; lịch rủi ro no-show cao được nhắc thêm
-3. Bệnh nhân đến, điều dưỡng check-in ─► đo sinh hiệu ─► upload giấy tờ mang theo
-   └► AI trích xuất trường dữ liệu ─► điều dưỡng xác nhận nếu độ tin cậy thấp
-4. Bác sĩ mở hồ sơ ─► xem tóm tắt AI + lịch sử ─► ghi nhận lần khám (encounter), chẩn đoán
-   └► hỏi trợ lý tri thức về phác đồ nội bộ (có trích dẫn nguồn)
-5. Kết quả xét nghiệm upload vào hồ sơ ─► bệnh nhân nhận thông báo, xem qua link bảo mật ngắn hạn
-6. Mọi lần xem/sửa dữ liệu nhạy cảm được ghi audit; DPO xem báo cáo truy cập
+Patient calls the call center -> staff records in a book/Excel -> (no appointment reminder) -> patient arrives at the counter
+-> nurse looks for paper record -> doctor examines, writes on paper -> lab results printed on paper, patient keeps them
 ```
 
-## 5. Quy tắc nghiệp vụ (business rules)
+### 4.2 To-be: outpatient visit on the platform
+```
+1. Patient searches free slots by specialty/doctor/date -> booking (app/web or chatbot)
+2. System confirms immediately -> reminders at T-24h and T-2h; appointments at high no-show risk get an extra reminder
+3. Patient arrives, nurse checks in -> measures vital signs -> uploads documents brought along
+   -> AI extracts data fields -> nurse confirms if confidence is low
+4. Doctor opens the medical record -> views AI summary + history -> records the encounter (encounter), diagnosis
+   -> asks the knowledge assistant about internal protocols (with source citations)
+5. Lab results uploaded to the medical record -> patient receives a notification, views via a short-lived secure link
+6. Every view/edit of sensitive data is recorded in the audit log; the DPO views access reports
+```
 
-| ID | Quy tắc |
+## 5. Business rules
+
+| ID | Rule |
 |---|---|
-| BR-01 | Một slot chỉ được đặt bởi một lịch hẹn đang hiệu lực. |
-| BR-02 | Bệnh nhân hủy lịch muộn nhất 2 giờ trước giờ khám; sau đó chỉ nhân viên hủy được. |
-| BR-03 | Bệnh nhân có tối đa 3 lịch hẹn tương lai đang hiệu lực (chống giữ chỗ). |
-| BR-04 | Slot được mở đặt trước tối đa 30 ngày. |
-| BR-05 | Bệnh nhân chỉ xem được dữ liệu của chính mình. |
-| BR-06 | Bác sĩ chỉ xem được hồ sơ của bệnh nhân đang/đã có lịch hẹn với mình (quan hệ điều trị), trừ khi dùng truy cập khẩn cấp (break-glass). |
-| BR-07 | Truy cập khẩn cấp bắt buộc nhập lý do, bị ghi audit và báo cho DPO. |
-| BR-08 | Tài liệu lâm sàng chỉ được tải qua link có hiệu lực tối đa 5 phút. |
-| BR-09 | Câu trả lời của trợ lý AI phải kèm trích dẫn nguồn; không có nguồn thì không trả lời. AI không đưa ra chẩn đoán thay bác sĩ. |
-| BR-10 | Dữ liệu AI trích xuất có độ tin cậy dưới ngưỡng phải được người xác nhận trước khi lưu vào hồ sơ. |
-| BR-11 | Hồ sơ bệnh án được lưu trữ dài hạn theo quy định pháp luật (giả định 10 năm, cần xác minh lại văn bản hiện hành). |
+| BR-01 | A slot may be booked by only one active appointment. |
+| BR-02 | Patients may cancel at the latest 2 hours before the appointment time; after that only staff can cancel. |
+| BR-03 | A patient has at most 3 active future appointments (anti-hoarding). |
+| BR-04 | Slots can be opened for booking at most 30 days in advance. |
+| BR-05 | Patients can only view their own data. |
+| BR-06 | Doctors can only view the medical records of patients who have/had an appointment with them (treatment relationship), unless using emergency access (break-glass). |
+| BR-07 | Emergency access requires entering a reason, is recorded in the audit log and reported to the DPO. |
+| BR-08 | Clinical documents may only be downloaded via a link valid for at most 5 minutes. |
+| BR-09 | AI assistant answers must include source citations; without a source it must not answer. AI does not make diagnoses in place of the doctor. |
+| BR-10 | AI-extracted data below the confidence threshold must be confirmed by a person before being saved to the medical record. |
+| BR-11 | Medical records are archived long-term per legal regulations (assumed 10 years, current legal texts need re-verification). |
 
-## 6. KPI nghiệp vụ (để đánh giá thành công)
+## 6. Business KPIs (to evaluate success)
 
-| KPI | Hiện tại (giả định) | Mục tiêu sau 6 tháng |
+| KPI | Current (assumed) | Target after 6 months |
 |---|---|---|
-| Tỉ lệ đặt lịch tự phục vụ | 0% | ≥ 60% |
-| Tỉ lệ no-show | 18% | ≤ 12% |
-| Thời gian bác sĩ tìm lịch sử bệnh nhân | 5–10 phút | ≤ 30 giây |
-| Thời gian nhập tay giấy tờ / bệnh nhân | ~4 phút | ≤ 1 phút |
-| Tỉ lệ truy cập hồ sơ được audit | không đo được | 100% |
+| Self-service booking rate | 0% | >= 60% |
+| No-show rate | 18% | <= 12% |
+| Doctor time finding patient history | 5-10 minutes | <= 30 seconds |
+| Manual document entry time / patient | ~4 minutes | <= 1 minute |
+| Rate of medical record access that is audited | not measurable | 100% |
 
-## 7. Phạm vi
+## 7. Scope
 
-**Trong phạm vi (MVP 12 tuần):** khám **ngoại trú**: hồ sơ bệnh nhân, lịch bác sĩ, đặt/hủy lịch,
-lần khám, upload tài liệu, tìm lịch sử, nhắc lịch, audit, và 4 tính năng AI + 1 mô hình ML.
+**In scope (12-week MVP):** **outpatient** visits: patient medical records, doctor schedules, booking/cancellation,
+encounters, document upload, history search, appointment reminders, audit, and 4 AI features + 1 ML model.
 
-**Ngoài phạm vi:** nội trú, thanh toán/bảo hiểm, kê đơn và kho dược, PACS/DICOM, tích hợp HIS bên
-ngoài, ứng dụng native mobile (dùng PWA thay thế).
+**Out of scope:** inpatient, payment/insurance, prescriptions and pharmacy inventory, PACS/DICOM, external HIS
+integration, native mobile apps (PWA is used instead).
 
-## 8. Giả định, ràng buộc, rủi ro
+## 8. Assumptions, constraints, risks
 
-| Loại | Nội dung |
+| Type | Content |
 |---|---|
-| Ràng buộc | 12 tuần, 5–7 người; hạ tầng Azure nhóm đã có; ngân sách cloud giới hạn (chốt ở NFR); chỉ dữ liệu giả |
-| Ràng buộc pháp lý | Dữ liệu sức khỏe là dữ liệu cá nhân nhạy cảm theo pháp luật Việt Nam về bảo vệ dữ liệu cá nhân → cần đồng ý, tối thiểu hóa dữ liệu, ghi nhận truy cập (cần xác minh văn bản hiện hành) |
-| Giả định | Bệnh viện có hệ thống định danh nhân viên chuẩn OIDC; bệnh nhân có email hoặc số điện thoại |
-| Rủi ro | Dữ liệu y tế bị gửi ra nhà cung cấp AI ngoài → giảm thiểu bằng redact PII và ưu tiên model trong Azure |
-| Rủi ro | Phạm vi quá rộng với 12 tuần → ưu tiên MoSCoW ở Pha 2, cắt "Could" nếu chậm |
+| Constraint | 12 weeks, 5-7 people; the team's Azure infrastructure already exists; limited cloud budget (settled in the NFRs); synthetic data only |
+| Legal constraint | Health data is sensitive personal data under Vietnamese law on personal data protection -> requires consent, data minimization, access logging (current legal texts need re-verification) |
+| Assumption | The hospital has an employee identity system that is OIDC-compliant; patients have an email or phone number |
+| Risk | Medical data sent to an external AI provider -> mitigated by redacting PII and preferring models within Azure |
+| Risk | Scope too broad for 12 weeks -> prioritize with MoSCoW in Phase 2, cut "Could" items if behind |

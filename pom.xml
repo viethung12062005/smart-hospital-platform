@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Maven gốc của Smart Hospital Platform (ADR-0015). Một reactor cho thư viện dùng chung (libs/java) và 8 service (services/).
-     Phiên bản thư viện tập trung ở đây; module con KHÔNG khai báo version. Build một service: mvn -pl services/scheduling -am verify -->
+<!-- Root Maven build of the Smart Hospital Platform (ADR-0015). One reactor for the shared library (libs/java) and 8 services (services/).
+     Library versions are centralized here; child modules do NOT declare versions. Build one service: mvn -pl services/scheduling -am verify -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
@@ -39,25 +39,25 @@
   <properties>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- Phiên bản tra trên Maven Central ngày 2026-10-28 (docs/04-devops/progress-log.md, Phần J) -->
+    <!-- Versions checked on Maven Central on 2026-10-28 (docs/04-devops/progress-log.md, Part J) -->
     <hapi-fhir.version>8.12.1</hapi-fhir.version>
     <json-schema-validator.version>3.0.8</json-schema-validator.version>
     <cloudevents.version>5.1.0</cloudevents.version>
-    <!-- Messaging (13-events §1.1), tra trên Maven Central ngày 2026-11-03: cùng Spring Cloud với gateway (chạy được với Boot 4.1);
-         Spring Cloud Azure 7.4.0 phát hành 07/2026 -->
+    <!-- Messaging (13-events §1.1), checked on Maven Central on 2026-11-03: same Spring Cloud as the gateway (works with Boot 4.1);
+         Spring Cloud Azure 7.4.0 released 07/2026 -->
     <spring-cloud.version>2025.1.4</spring-cloud.version>
     <spring-cloud-azure.version>7.4.0</spring-cloud-azure.version>
-    <!-- BOM Spring Cloud kéo amqp-client 5.30.0 (4 CVE HIGH đã có bản vá: 63337/69219/69220/75516); quét image chặn
-         HIGH có bản vá nên ghim bản mới nhất đã vá -->
+    <!-- The Spring Cloud BOM pulls amqp-client 5.30.0 (4 HIGH CVEs with available patches: 63337/69219/69220/75516); the image scan blocks
+         HIGH CVEs that have patches, so pin the latest patched version -->
     <amqp-client.version>5.37.0</amqp-client.version>
-    <!-- azure-core-amqp kéo proton-j 0.34.1 (CVE-2026-66274, bản vá 0.35.0); cùng lý do quét image chặn -->
+    <!-- azure-core-amqp pulls proton-j 0.34.1 (CVE-2026-66274, patch 0.35.0); same reason, the image scan blocks it -->
     <proton-j.version>0.35.0</proton-j.version>
     <archunit.version>1.5.1</archunit.version>
     <spotless.version>3.10.4</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
-    <!-- Tra trên Maven Central ngày 2026-11-03 (bản 06/10): plugin JDBC lấy token Entra cho PostgreSQL trên Azure (02-db-scheduling §5) -->
+    <!-- Checked on Maven Central on 2026-11-03 (06/10 build): JDBC plugin that obtains Entra tokens for PostgreSQL on Azure (02-db-scheduling §5) -->
     <azure-identity-extensions.version>1.2.10</azure-identity-extensions.version>
-    <!-- Ngưỡng line coverage tối thiểu cho mỗi module có code (CI chặn nếu thấp hơn) -->
+    <!-- Minimum line coverage threshold for each module that has code (CI blocks below it) -->
     <shp.coverage.minimum>0.70</shp.coverage.minimum>
   </properties>
 
@@ -147,7 +147,7 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-      <!-- Phải khai sau BOM để thắng phiên bản BOM quản lý (xem amqp-client.version) -->
+      <!-- Must be declared after the BOM to override the version managed by the BOM (see amqp-client.version) -->
       <dependency>
         <groupId>com.rabbitmq</groupId>
         <artifactId>amqp-client</artifactId>
@@ -184,14 +184,14 @@
           <release>${java.version}</release>
           <parameters>true</parameters>
           <compilerArgs>
-            <!-- Cảnh báo = lỗi -->
+            <!-- Warnings = errors -->
             <arg>-Xlint:all,-processing,-serial,-options</arg>
             <arg>-Werror</arg>
           </compilerArgs>
         </configuration>
       </plugin>
       <plugin>
-        <!-- Định dạng thống nhất; CI chạy spotless:check (mvn verify gọi check ở phase verify) -->
+        <!-- Consistent formatting; CI runs spotless:check (mvn verify calls check in the verify phase) -->
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <configuration>

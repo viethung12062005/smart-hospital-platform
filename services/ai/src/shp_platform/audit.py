@@ -1,8 +1,8 @@
-"""Dựng bản ghi audit.recorded (E11) cho ai/ml (PY-04). Quy tắc giống org.shp.events.audit.AuditRecordBuilder.
+"""Build audit.recorded records (E11) for ai/ml (PY-04). The rules match org.shp.events.audit.AuditRecordBuilder.
 
-- `resource` chỉ chứa loại, id hoặc TÊN tham số tìm kiếm, không bao giờ có giá trị (có thể là PII).
-- Không bao giờ chứa nội dung câu hỏi, câu trả lời hay prompt gửi LLM.
-- IP che octet cuối (IPv4) hoặc chỉ giữ 3 nhóm đầu (IPv6); user-agent cắt 120 ký tự.
+- `resource` contains only the type, id or search PARAMETER NAMES, never values (which may be PII).
+- Never contains question text, answer text or the prompt sent to the LLM.
+- IPs mask the last octet (IPv4) or keep only the first 3 groups (IPv6); user-agent truncated to 120 characters.
 """
 
 import ipaddress
@@ -75,21 +75,21 @@ def build(
     user_agent: str | None = None,
 ) -> dict[str, Any]:
     if action not in ACTIONS:
-        raise ValueError(f"action không hợp lệ: {action}")
+        raise ValueError(f"invalid action: {action}")
     if outcome not in OUTCOMES:
-        raise ValueError(f"outcome không hợp lệ: {outcome}")
+        raise ValueError(f"invalid outcome: {outcome}")
     if actor_role not in ACTOR_ROLES:
-        raise ValueError(f"actor role không hợp lệ: {actor_role}")
+        raise ValueError(f"invalid actor role: {actor_role}")
     if not _RESOURCE.match(resource):
-        raise ValueError("resource chỉ được chứa loại, id hoặc TÊN tham số tìm kiếm (không có giá trị)")
+        raise ValueError("resource may contain only the type, id or search PARAMETER NAMES (no values)")
     if on_behalf_of is not None and not _ON_BEHALF_OF.match(on_behalf_of):
-        raise ValueError("onBehalfOf phải là Patient/<id> hoặc Practitioner/<id>")
+        raise ValueError("onBehalfOf must be Patient/<id> or Practitioner/<id>")
     if relationship is not None and (on_behalf_of is None or relationship not in RELATIONSHIPS):
-        raise ValueError("relationship chỉ guardian/proxy và phải có onBehalfOf")
+        raise ValueError("relationship may only be guardian/proxy and requires onBehalfOf")
     if purpose_of_use is not None and purpose_of_use not in PURPOSES:
-        raise ValueError(f"purposeOfUse không hợp lệ: {purpose_of_use}")
+        raise ValueError(f"invalid purposeOfUse: {purpose_of_use}")
     if reason is not None and len(reason) > MAX_REASON_LENGTH:
-        raise ValueError(f"reason dài quá {MAX_REASON_LENGTH} ký tự")
+        raise ValueError(f"reason longer than {MAX_REASON_LENGTH} characters")
     actor: dict[str, Any] = {"subject": actor_subject, "role": actor_role}
     if actor_fhir_user:
         actor["fhirUser"] = actor_fhir_user
@@ -122,7 +122,7 @@ def build(
 
 
 def to_event(record: dict[str, Any], traceparent: str | None = None) -> dict[str, Any]:
-    """Đóng gói thành CloudEvent E11 (subject = Audit/<eventId>, giống AuditRecord.toEvent bên Java)."""
+    """Wrap as an E11 CloudEvent (subject = Audit/<eventId>, like Java's AuditRecord.toEvent)."""
     from shp_platform import events
 
     return events.create(record["service"], EVENT_TYPE, f"Audit/{record['eventId']}", record, traceparent)

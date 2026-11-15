@@ -5,8 +5,8 @@ import { ageFrom, conceptText, formatDate, formatDateTime, formatName } from '@/
 import { Card } from './ui';
 
 /**
- * Tóm tắt hồ sơ bệnh nhân: theo bố cục PatientSummary của portal PoC trước (khối dị ứng, chẩn đoán, sinh hiệu),
- * viết lại cho dữ liệu FHIR của SHP. Dị ứng mức cao hiển thị đỏ để bác sĩ thấy ngay.
+ * Patient record summary: follows the layout of the previous PoC portal's PatientSummary (allergy, diagnosis, vital-sign blocks),
+ * rewritten for SHP's FHIR data. High-severity allergies are shown in red so doctors see them immediately.
  */
 export function PatientBanner({ patient }: { readonly patient: Patient }) {
   const { t } = useTranslation();

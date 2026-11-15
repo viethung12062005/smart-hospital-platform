@@ -1,7 +1,7 @@
-"""Giám sát drift, hiệu năng thực tế và quyết định huấn luyện lại (ML-19, ML-20, ML-22; 16-mlops §4-5).
+"""Drift monitoring, live performance and retrain decisions (ML-19, ML-20, ML-22; 16-mlops §4-5).
 
-Hàm thuần, không gọi mạng: job hằng ngày (ML-10) đọc dữ liệu, gọi các hàm này, xuất metric và nếu `decide_retrain`
-cho phép thì kích hoạt job huấn luyện lại (ML-23). Job huấn luyện lại không bao giờ tự đổi alias production.
+Pure functions, no network calls: the daily job (ML-10) reads data, calls these functions, exports metrics and, if
+`decide_retrain` allows it, triggers the retrain job (ML-23). The retrain job never changes the production alias.
 """
 
 from collections.abc import Sequence
@@ -23,7 +23,8 @@ _EPS = 1e-4
 
 
 def psi(expected: pd.Series, actual: pd.Series, bins: int = 10) -> float:
-    """Population Stability Index. Số: chia theo phân vị của tập tham chiếu; phân loại: theo từng giá trị."""
+    """Population Stability Index. Numeric: buckets by quantiles of the reference set; categorical: one bucket per
+    value."""
     if not pd.api.types.is_numeric_dtype(expected.dtype):
         e = expected.astype(str).value_counts(normalize=True)
         a = actual.astype(str).value_counts(normalize=True)
@@ -56,7 +57,7 @@ def feature_drift(
     recent_scores: pd.Series | None = None,
     features: Sequence[str] = KEY_FEATURES,
 ) -> DriftReport:
-    """Cảnh báo khi PSI > 0,2 ở ≥ 2 đặc trưng chính, hoặc PSI điểm dự đoán > 0,2."""
+    """Alert when PSI > 0.2 for ≥ 2 key features, or prediction-score PSI > 0.2."""
     values = {f: round(psi(reference[f], recent[f]), 4) for f in features}
     drifted = [f for f, v in values.items() if v > PSI_ALERT]
     score = None
@@ -67,7 +68,7 @@ def feature_drift(
 
 
 def rank_auc(labels: np.ndarray, scores: np.ndarray) -> float:
-    """AUC theo Mann-Whitney (xử lý điểm bằng nhau bằng rank trung bình); không cần scikit-learn trong image phục vụ."""
+    """AUC via Mann-Whitney (ties handled with average ranks); no scikit-learn needed in the serving image."""
     ranks = pd.Series(scores).rank(method="average").to_numpy()
     pos = labels == 1
     n_pos, n_neg = int(pos.sum()), int((~pos).sum())
@@ -82,7 +83,7 @@ class PerformanceReport:
 
 
 def live_performance(labels: pd.Series, scores: pd.Series, registered_auc: float) -> PerformanceReport:
-    """AUC thực tế (cửa sổ 14 ngày do người gọi lọc). Chỉ cảnh báo khi đủ 500 nhãn và giảm > 0,05."""
+    """Live AUC (14-day window filtered by the caller). Only alerts with at least 500 labels and a drop > 0.05."""
     n = int(labels.notna().sum())
     if n < MIN_LABELED or labels.nunique() < 2:
         return PerformanceReport(None, n, False)
@@ -101,7 +102,7 @@ class RetrainState:
 @dataclass(frozen=True)
 class RetrainDecision:
     run: bool
-    reason: str  # ghi vào audit và cảnh báo
+    reason: str  # recorded in the audit and the alert
     needs_human: bool = False
 
 
@@ -124,6 +125,6 @@ def decide_retrain(
 
 
 def training_window(facts: pd.DataFrame, now: datetime, months: int = 24) -> pd.DataFrame:
-    """Cửa sổ trượt 24 tháng gần nhất, chỉ lịch hẹn đã có kết quả (bỏ pending)."""
+    """Rolling 24-month window, only appointments with a known outcome (pending dropped)."""
     start = pd.Timestamp(now) - pd.DateOffset(months=months)
     return facts[(facts["start_at"] >= start) & (facts["outcome"] != "pending")].copy()

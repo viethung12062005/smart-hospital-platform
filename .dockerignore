@@ -1,4 +1,4 @@
-# Build context của image Java là gốc repo: loại bỏ thứ không cần để build nhanh và không lọt bí mật local vào context.
+# The Java image build context is the repo root: drop what is not needed so the build is fast and local secrets stay out of the context.
 .git
 **/target
 dev/.local

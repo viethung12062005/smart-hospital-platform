@@ -3,7 +3,7 @@ package org.shp.events.audit;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-/** Sink trong bộ nhớ cho test và chạy local nhanh. */
+/** In-memory sink for tests and fast local runs. */
 public final class InMemoryAuditSink implements AuditSink {
   private final ConcurrentLinkedQueue<AuditRecord> records = new ConcurrentLinkedQueue<>();
 

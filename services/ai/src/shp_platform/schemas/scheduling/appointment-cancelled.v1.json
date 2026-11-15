@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://shp.example.org/schemas/scheduling/appointment-cancelled/v1.json",
   "title": "shp.scheduling.appointment-cancelled.v1",
-  "description": "E2: hủy lịch. Chỉ ID/mã/thời điểm/trạng thái, không PII. Chỉ được thêm trường tùy chọn trong cùng version.",
+  "description": "E2: appointment cancelled. IDs/codes/timestamps/status only, no PII. Only optional fields may be added within the same version.",
   "type": "object",
   "required": [
     "appointmentId",

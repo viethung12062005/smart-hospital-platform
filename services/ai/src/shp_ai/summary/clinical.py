@@ -1,7 +1,8 @@
-"""Thu thập dữ liệu cho tóm tắt hồ sơ bằng token của bác sĩ (AI-19; 12 §3, 15 §7).
+"""Collect data for a record summary using the doctor's token (AI-19; 12 §3, 15 §7).
 
-Token người dùng được đổi (RFC 8693) sang audience `clinical`, nên clinical áp nguyên ma trận quyền cho bác sĩ đó
-(Care/break-glass). AI không có quyền nào rộng hơn người gọi. Lỗi quyền của clinical được trả nguyên mã.
+The user token is exchanged (RFC 8693) to the `clinical` audience, so clinical applies the full permission matrix
+for that doctor (care/break-glass). The AI has no more permission than the caller. Clinical permission errors are
+returned with the original code.
 """
 
 from collections.abc import Callable
@@ -32,7 +33,7 @@ class ClinicalReader:
         self._base = base_url.rstrip("/")
         self._token = user_token
         self._http = http or httpx.Client(timeout=5.0)
-        self.practitioner_names: list[str] = []  # che trước khi gửi LLM ngoài Azure
+        self.practitioner_names: list[str] = []  # redact before sending to an LLM outside Azure
 
     def _get(self, path: str, params: dict[str, Any]) -> dict[str, Any]:
         try:

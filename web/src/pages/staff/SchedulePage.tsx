@@ -14,8 +14,8 @@ import { Card, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 const COLOR: Record<string, string> = { free: 'teal', busy: 'info', 'busy-unavailable': 'muted' };
 
 /**
- * Lịch bác sĩ theo tuần (theo bố cục DoctorSchedule của portal PoC trước): cột là ngày, hàng là giờ, ô là slot.
- * Bác sĩ chỉ xem lịch của mình; điều dưỡng và quản trị chọn bác sĩ.
+ * Weekly doctor schedule (following the previous PoC portal's DoctorSchedule layout): columns are days, rows are hours, cells are slots.
+ * Doctors only see their own schedule; nurses and administrators pick a doctor.
  */
 export function SchedulePage() {
   const { t } = useTranslation();

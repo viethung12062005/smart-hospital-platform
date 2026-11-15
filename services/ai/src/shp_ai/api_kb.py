@@ -1,6 +1,7 @@
-"""AI9: quản lý kho tri thức (12 §6).
+"""AI9: knowledge base management (12 §6).
 
-Admin tải lên, thay file, gỡ; bác sĩ duyệt tài liệu khoa mình; admin duyệt mọi khoa.
+Admins upload, replace and remove files; doctors approve documents for their own department; admins approve
+all departments.
 """
 
 import threading
@@ -70,7 +71,7 @@ def router(deps: Callable[[], Deps], auth: Authenticator) -> APIRouter:
         title: Annotated[str, Form(min_length=3, max_length=200)],
         source: Annotated[str, Form(min_length=3, max_length=300)],
         department: Annotated[str, Form(pattern=SPECIALTY_PATTERN)],
-        allowedRoles: Annotated[list[str], Form()],  # noqa: N803 - tên trường theo hợp đồng API
+        allowedRoles: Annotated[list[str], Form()],  # noqa: N803 - field name per the API contract
     ) -> dict[str, Any]:
         d = deps()
         data = await _read_limited(file)

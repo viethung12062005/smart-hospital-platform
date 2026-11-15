@@ -1,701 +1,701 @@
-# Nhật ký tiến trình Pha 4 — từng bước theo thứ tự, để kiểm tra và tự làm lại
+# Phase 4 progress log - step by step in order, for checking and redoing yourself
 
-> Cách dùng: đọc từ trên xuống. Mỗi bước có **mục đích → việc làm → lệnh → kiểm chứng → kết quả (commit)**.
-> Muốn làm lại một bước: chạy phần "Lệnh", rồi chạy phần "Kiểm chứng"; kết quả phải giống phần "Kết quả".
-> Tổng quan trạng thái và việc còn lại: [phase4-build-log.md](phase4-build-log.md). File này là bản chi tiết theo thời gian, **cập nhật cuối mỗi bước**.
-> Ký hiệu trạng thái: ✅ xong và đã kiểm chứng · 🟡 xong nhưng chưa chạy được ở môi trường thật · ⏳ chưa làm · 👤 cần bạn làm.
-> Chuẩn bị chung để chạy lệnh: Python 3.12+, .NET SDK 10, Docker, `pip install -r tools/contracts/requirements.txt`.
+> How to use: read from top to bottom. Each step has **goal -> work done -> commands -> verification -> result (commit)**.
+> To redo a step: run the "Commands" part, then run the "Verification" part; the result must match the "Result" part.
+> Status overview and remaining work: [phase4-build-log.md](phase4-build-log.md). This file is the detailed chronological version, **updated at the end of each step**.
+> Status symbols: DONE = finished and verified; PARTIAL = done but not yet runnable in a real environment; TODO = not started; YOU = requires your action.
+> Common preparation for running commands: Python 3.12+, .NET SDK 10, Docker, `pip install -r tools/contracts/requirements.txt`.
 
-## Mẫu ghi mỗi bước (bắt buộc cho mọi bước từ nay)
-Mỗi bước phải có đủ 7 mục, để truy vết và làm lại được:
-1. **Mục tiêu**: vì sao làm.
-2. **Việc đã làm**: các hành động theo thứ tự.
-3. **Thay đổi**: bảng `File | A/M/D | Nội dung thay đổi` (A thêm, M sửa, D xóa). Mô tả **giá trị cụ thể đổi từ gì sang gì** với file sửa.
-4. **Lệnh làm lại**.
-5. **Kiểm chứng** và kết quả mong đợi.
-6. **Lỗi gặp và cách sửa** (nếu có).
-7. **Commit** và lệnh xem đúng thay đổi: `git show --stat <commit>` (tổng quan), `git show <commit> -- <file>` (chi tiết một file).
+## Template for recording each step (mandatory for every step from now on)
+Each step must have all 7 sections, so it can be traced and redone:
+1. **Goal**: why do it.
+2. **Work done**: the actions in order.
+3. **Changes**: table `File | A/M/D | Change content` (A added, M modified, D deleted). Describe **the specific value changing from what to what** for modified files.
+4. **Redo commands**.
+5. **Verification** and expected result.
+6. **Errors encountered and fixes** (if any).
+7. **Commit** and the command to see exactly what changed: `git show --stat <commit>` (overview), `git show <commit> -- <file>` (details for one file).
 
-## Phần A — Nền tảng đã dựng trước đó (chi tiết xem build-log)
-| # | Bước | Trạng thái | Commit |
+## Part A - Foundation already built earlier (details in build-log)
+| # | Step | Status | Commit |
 |---|---|---|---|
-| A1 | Pha 1–3: BA, yêu cầu, 74 user story, thiết kế chi tiết, 317 task theo người (`docs/`, `tools/plan`) | ✅ | 3cace72, c378bfc, 4826847 |
-| A2 | ADR-0011: 2 môi trường cloud + dev trên kind | ✅ | 3a72b78 |
-| A3 | Bộ công cụ local `dev/` (kind + phụ thuộc + Keycloak) | 🟡 chưa chạy trên kind thật | 365405e |
-| A4 | Repo templates: chart `microservice` + workflow CI/CD | ✅ kiểm tĩnh | c352248, ab2a514 |
-| A5 | Repo infra: Terraform bootstrap/modules/uat/prod | ✅ validate, không apply | 3918ddc |
-| A6 | Khung 8 service, pipeline từng service, `make quickstart`, hướng dẫn dev | ✅ / 🟡 quickstart | 20599dd, 157f448 |
+| A1 | Phases 1-3: BA, requirements, 74 user stories, detailed design, 317 tasks by person (`docs/`, `tools/plan`) | DONE | 3cace72, c378bfc, 4826847 |
+| A2 | ADR-0011: 2 cloud environments + dev on kind | DONE | 3a72b78 |
+| A3 | Local `dev/` toolkit (kind + dependencies + Keycloak) | PARTIAL - not yet run on real kind | 365405e |
+| A4 | Templates repo: `microservice` chart + CI/CD workflows | DONE (static checks) | c352248, ab2a514 |
+| A5 | Infra repo: Terraform bootstrap/modules/uat/prod | DONE (validate, no apply) | 3918ddc |
+| A6 | 8-service skeleton, per-service pipeline, `make quickstart`, dev guide | DONE / PARTIAL (quickstart) | 20599dd, 157f448 |
 
-## Phần B — Quyết định ngày 2026-10-27
-| # | Quyết định | Nơi ghi | Commit |
+## Part B - Decisions on 2026-10-27
+| # | Decision | Where recorded | Commit |
 |---|---|---|---|
-| B1 | Blob local = Azurite (cùng Azure SDK với cloud); WORM kiểm trên UAT | ADR-0008/0011, task DOC-02, AUD-08, LOC-01 | 621de97 |
-| B2 | ADR-0012 Accepted: giữ .NET + Python | `adr/0012-language-per-service.md` | 621de97 |
-| B3 | ADR-0013: DeepSeek (API gốc) chính, Gemini free tier dự phòng, embedding bge-m3 local trong cluster, bỏ Claude và mọi model Azure | `adr/0013-*.md`, `06-data-ai.md`, `12-api-ai.md`, `14-sequences.md`, NFR-C2, task PY-07/AI-04/AI-06/AI-23/IAC-19 | eb38e94 |
+| B1 | Local blob = Azurite (same Azure SDK as cloud); WORM checked on UAT | ADR-0008/0011, tasks DOC-02, AUD-08, LOC-01 | 621de97 |
+| B2 | ADR-0012 Accepted: keep .NET + Python | `adr/0012-language-per-service.md` | 621de97 |
+| B3 | ADR-0013: DeepSeek (native API) primary, Gemini free tier fallback, bge-m3 embedding local in the cluster, drop Claude and all Azure models | `adr/0013-*.md`, `06-data-ai.md`, `12-api-ai.md`, `14-sequences.md`, NFR-C2, tasks PY-07/AI-04/AI-06/AI-23/IAC-19 | eb38e94 |
 
-**Thay đổi (commit 621de97 cho B1+B2; eb38e94 cho B3)** — xem bằng `git show --stat 621de97` và `git show --stat eb38e94`
+**Changes (commit 621de97 for B1+B2; eb38e94 for B3)** - view with `git show --stat 621de97` and `git show --stat eb38e94`
 
-| File | | Nội dung thay đổi |
+| File | | Change content |
 |---|---|---|
-| `tools/plan/tasks_sa.py` (LOC-01) | M | "RabbitMQ, MinIO, Keycloak" → "RabbitMQ, Azurite, Keycloak" |
-| `tools/plan/tasks_dev.py` (DOC-02) | M | "Azure Blob (user delegation SAS) + MinIO" → "Azure Blob SDK một code cho local Azurite và cloud; chọn cách ký SAS qua cấu hình"; test "với MinIO" → "với Azurite (Testcontainers)" |
-| `tools/plan/tasks_dev.py` (AUD-08) | M | "xanh trong CI (MinIO object lock)" → chuỗi hash kiểm trong CI với Azurite, WORM kiểm bằng smoke test trên UAT |
-| `docs/03-architecture/adr/0008-…`, `0011-…` | M | bỏ MinIO; blob lifecycle "→ MinIO" → "Cold sau 180 ngày"; local dùng Azurite |
-| `docs/03-architecture/adr/0012-…` | M | `Proposed` → `Accepted (2026-10-27)`; câu "SDK Azure OpenAI" → "client OpenAI-compatible/Gemini" |
-| `docs/03-architecture/adr/0013-llm-deepseek-gemini-local-embedding.md` | A | ADR mới: bảng chuỗi model, redact PII bắt buộc, embedding local |
-| `docs/03-architecture/adr/0006-…` | M | trạng thái ghi rõ bảng chuỗi model bị ADR-0013 thay |
-| `docs/03-architecture/detailed-design/06-data-ai.md` | M | embedding `text-embedding-3-small` 1536 chiều → `bge-m3` 1024 chiều (`dimensions: 1536` → `1024`); bỏ khối `semantic` của AI Search; cấu hình router: azure-openai/anthropic → deepseek/gemini/ollama + `embedding` |
-| `12-api-ai.md`, `14-sequences.md`, `overview.md` | M | tên provider/model trong ví dụ và sơ đồ |
-| `docs/02-requirements/non-functional-requirements.md` | M | NFR-C2: ≤ 0,02 → ≤ 0,005 USD/request RAG, Gemini chỉ trong free tier |
-| `tools/plan/tasks_dev.py`, `tasks_sa.py` | M | PY-07 (adapter DeepSeek/Gemini/Ollama), AI-04 (bge-m3), AI-06 (RRF, bỏ semantic ranker), AI-23 (Tesseract), IAC-19 (node pool `ai` + key LLM trong Key Vault, thay module Azure OpenAI) |
-| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** bằng `python3 -I tools/plan/build.py` (không sửa tay) |
+| `tools/plan/tasks_sa.py` (LOC-01) | M | "RabbitMQ, MinIO, Keycloak" -> "RabbitMQ, Azurite, Keycloak" |
+| `tools/plan/tasks_dev.py` (DOC-02) | M | "Azure Blob (user delegation SAS) + MinIO" -> "Azure Blob SDK single code for local Azurite and cloud; choose the SAS signing method via configuration"; test "with MinIO" -> "with Azurite (Testcontainers)" |
+| `tools/plan/tasks_dev.py` (AUD-08) | M | "green in CI (MinIO object lock)" -> hash chain checked in CI with Azurite, WORM checked by a smoke test on UAT |
+| `docs/03-architecture/adr/0008-...`, `0011-...` | M | drop MinIO; blob lifecycle "-> MinIO" -> "Cold after 180 days"; local uses Azurite |
+| `docs/03-architecture/adr/0012-...` | M | `Proposed` -> `Accepted (2026-10-27)`; sentence "Azure OpenAI SDK" -> "OpenAI-compatible/Gemini client" |
+| `docs/03-architecture/adr/0013-llm-deepseek-gemini-local-embedding.md` | A | new ADR: model chain table, mandatory PII redaction, local embedding |
+| `docs/03-architecture/adr/0006-...` | M | status explicitly notes the model chain table superseded by ADR-0013 |
+| `docs/03-architecture/detailed-design/06-data-ai.md` | M | embedding `text-embedding-3-small` 1536 dimensions -> `bge-m3` 1024 dimensions (`dimensions: 1536` -> `1024`); drop the `semantic` block of AI Search; router configuration: azure-openai/anthropic -> deepseek/gemini/ollama + `embedding` |
+| `12-api-ai.md`, `14-sequences.md`, `overview.md` | M | provider/model names in examples and diagrams |
+| `docs/02-requirements/non-functional-requirements.md` | M | NFR-C2: <= 0.02 -> <= 0.005 USD/request RAG, Gemini only within the free tier |
+| `tools/plan/tasks_dev.py`, `tasks_sa.py` | M | PY-07 (DeepSeek/Gemini/Ollama adapter), AI-04 (bge-m3), AI-06 (RRF, drop semantic ranker), AI-23 (Tesseract), IAC-19 (`ai` node pool + LLM key in Key Vault, replacing the Azure OpenAI module) |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **regenerated** with `python3 -I tools/plan/build.py` (not hand-edited) |
 
-Làm lại B1–B3: sửa các file trên theo ADR, rồi `python3 -I tools/plan/build.py` (phải in `OK: 74 stories, 317 tasks`).
+To redo B1-B3: edit the files above per the ADRs, then `python3 -I tools/plan/build.py` (it must print `OK: 74 stories, 317 tasks`).
 
-## Phần C — Hợp đồng chung (contracts) — dev và service dùng làm chuẩn
-Mục đích: biến thiết kế (văn bản) thành **file máy đọc được + bộ kiểm tra tự động**, để service viết sai là CI đỏ.
-Thứ tự làm và lý do: phân quyền → event → API → terminology (dev cần phân quyền và API trước nhất), cuối cùng gói tất cả vào một lệnh kiểm + CI.
+## Part C - Shared contracts - the standard used by devs and services
+Purpose: turn the design (text) into **machine-readable files + automated validators**, so that a service written incorrectly turns CI red.
+Order and rationale: authorization -> events -> API -> terminology (devs need authorization and APIs first), finally wrap everything in one check command + CI.
 
-### C1. Ma trận phân quyền `contracts/authz/matrix.yaml` ✅
-- **Việc làm:** chuyển `access-control-matrix.md` + `15-authorization.md` thành 64 rule (resource × action × role × điều kiện `when` × purposeOfUse), khai báo 16 resource (đánh dấu `clinical`), 9 predicate, `denyAll` (Audit sửa/xóa).
-- **Bất biến được kiểm tự động** (`tools/contracts/validate_authz.py`): id không trùng; role/predicate/purpose hợp lệ; mọi action khai báo đều có rule hoặc nằm trong `denyAll`; admin và dpo **không** có rule với dữ liệu lâm sàng; dpo chỉ có rule cho Audit; `breakglass` chỉ cho doctor; `own` chỉ cho patient.
-- **Kiểm chứng:** `python3 -I tools/contracts/validate_authz.py` → `OK: 64 rules, 16 resources, 2 denyAll`; `python3 -I -m unittest discover -s tools/contracts -p 'test_*.py'` → 7 test (cố tình đưa rule sai vào và kiểm bộ kiểm tra bắt được).
-- **Dev dùng:** task SHR-09 nạp file này để sinh test mọi ô ma trận; thư viện chính sách đọc cùng file.
+### C1. Authorization matrix `contracts/authz/matrix.yaml` DONE
+- **Work done:** convert `access-control-matrix.md` + `15-authorization.md` into 64 rules (resource x action x role x condition `when` x purposeOfUse), declare 16 resources (marked `clinical`), 9 predicates, `denyAll` (Audit edit/delete).
+- **Invariants checked automatically** (`tools/contracts/validate_authz.py`): no duplicate ids; valid role/predicate/purpose; every declared action has a rule or is in `denyAll`; admin and dpo **have no** rules on clinical data; dpo only has rules for Audit; `breakglass` only for doctor; `own` only for patient.
+- **Verification:** `python3 -I tools/contracts/validate_authz.py` -> `OK: 64 rules, 16 resources, 2 denyAll`; `python3 -I -m unittest discover -s tools/contracts -p 'test_*.py'` -> 7 tests (deliberately insert wrong rules and check that the validators catch them).
+- **Dev usage:** task SHR-09 loads this file to generate tests for every cell of the matrix; the policy library reads the same file.
 
-### C2. Schema event `contracts/events/` ✅
-- **Việc làm:** `tools/contracts/gen_events.py` chứa định nghĩa 11 event (E1–E11) và **sinh ra** `envelope.json`, `<context>/<event>.v1.json` (JSON Schema 2020-12) và `.example.json`. Sửa schema ở bộ sinh, chạy lại; không sửa tay file sinh.
-- **Kiểm chứng:** `python3 -I tools/contracts/validate_events.py` → mọi schema hợp lệ, ví dụ khớp schema, ví dụ bọc trong envelope CloudEvents hợp lệ, **không có tên trường nghi PII**, tập event khớp danh mục trong `13-events.md`.
-- **Lỗi gặp và cách sửa:** `modelName` bị cờ PII (khớp "name") → thêm vào danh sách ngoại lệ có chủ đích; enum kênh đặt lịch ban đầu có `mobile` trái thiết kế → sửa về `web|chatbot|staff` theo `01-domain-model.md`.
+### C2. Event schemas `contracts/events/` DONE
+- **Work done:** `tools/contracts/gen_events.py` holds the definitions of 11 events (E1-E11) and **generates** `envelope.json`, `<context>/<event>.v1.json` (JSON Schema 2020-12) and `.example.json`. Edit the schema in the generator, re-run; do not hand-edit generated files.
+- **Verification:** `python3 -I tools/contracts/validate_events.py` -> all schemas valid, examples match schemas, examples wrapped in a valid CloudEvents envelope, **no field name suspected of PII**, event set matches the catalog in `13-events.md`.
+- **Errors encountered and fixes:** `modelName` was flagged as PII (matched "name") -> added to the deliberate exception list; the booking channel enum initially had `mobile`, contrary to the design -> fixed to `web|chatbot|staff` per `01-domain-model.md`.
 
-### C3. Khung OpenAPI `contracts/openapi/<service>.yaml` ✅
-- **Việc làm:** `tools/contracts/gen_openapi.py` đọc các bảng endpoint trong `08..12-api-*.md` và sinh OpenAPI 3.1 cho 7 service: 83 operation (operationId = ID trong tài liệu như `S11`), quyền (`x-roles`, `x-permission`), tham số đường dẫn, lỗi chuẩn (FHIR `OperationOutcome` / `problem+json`), `/internal/*` gắn `x-internal`.
-- **Giới hạn đã biết:** chưa có schema thân request/response; dev thêm khi làm task endpoint, lấy từ mục tương ứng trong tài liệu.
-- **Sửa tài liệu thiết kế:** dòng AI9 trong `12-api-ai.md` viết gộp (`GET/POST/PUT ... , POST .../approve`) → tách thành 5 endpoint tường minh để máy đọc được (cùng nội dung).
-- **Kiểm chứng:** `python3 -I tools/contracts/validate_openapi.py` → `OK: 83 operation, 7 service khớp tài liệu` (kiểm OpenAPI hợp lệ bằng `openapi-spec-validator`, đủ và không thừa endpoint).
+### C3. OpenAPI skeleton `contracts/openapi/<service>.yaml` DONE
+- **Work done:** `tools/contracts/gen_openapi.py` reads the endpoint tables in `08..12-api-*.md` and generates OpenAPI 3.1 for 7 services: 83 operations (operationId = the ID in the document such as `S11`), permissions (`x-roles`, `x-permission`), path parameters, standard errors (FHIR `OperationOutcome` / `problem+json`), `/internal/*` tagged `x-internal`.
+- **Known limitation:** no request/response body schemas yet; devs add them when doing endpoint tasks, taken from the corresponding section in the documents.
+- **Design document fix:** the AI9 row in `12-api-ai.md` was written combined (`GET/POST/PUT ... , POST .../approve`) -> split into 5 explicit endpoints so machines can read it (same content).
+- **Verification:** `python3 -I tools/contracts/validate_openapi.py` -> `OK: 83 operations, 7 services match the documents` (check OpenAPI validity with `openapi-spec-validator`, complete and no extra endpoints).
 
-### C4. Terminology `contracts/terminology/code-systems.yaml` ✅ (kèm lưu ý)
-- 12 chuyên khoa, 6 lý do hủy, 3 kênh đặt lịch, 10 mã LOINC sinh hiệu, 6 loại tài liệu LOINC, 12 mã ICD-10 thường gặp.
-- **Lưu ý trung thực:** mã LOINC/ICD-10 là tập con do SA đối chiếu theo kiến thức chuẩn, **chưa đối chiếu với bản chính thức**; đủ cho dữ liệu giả của đồ án.
-- **Kiểm chứng:** `python3 -I tools/contracts/validate_terminology.py` → định dạng mã đúng, khớp `01-domain-model.md` §3 và ví dụ E8.
+### C4. Terminology `contracts/terminology/code-systems.yaml` DONE (with caveat)
+- 12 specialties, 6 cancellation reasons, 3 booking channels, 10 vital-sign LOINC codes, 6 LOINC document types, 12 common ICD-10 codes.
+- **Honest caveat:** the LOINC/ICD-10 codes are a subset cross-checked by the SA against standard knowledge, **not yet cross-checked against the official editions**; sufficient for the capstone project's synthetic data.
+- **Verification:** `python3 -I tools/contracts/validate_terminology.py` -> code formats correct, matching `01-domain-model.md` section 3 and example E8.
 
-### C5. Gói kiểm và CI ✅ (CI chưa chạy trên GitHub)
-- `tools/contracts/check_all.sh`: chạy test, 4 bộ kiểm, rồi sinh lại event/OpenAPI và `git diff --exit-code` (phát hiện file sinh bị sửa tay hoặc lệch bộ sinh).
-- `.github/workflows/contracts.yml`: chạy `check_all.sh` khi `contracts/**`, `tools/contracts/**` hoặc thiết kế chi tiết đổi (action ghim theo SHA).
-- **Kiểm chứng:** `tools/contracts/check_all.sh` → `ALL CONTRACT CHECKS PASSED`; `actionlint` sạch.
+### C5. Check package and CI DONE (CI not yet run on GitHub)
+- `tools/contracts/check_all.sh`: run tests, the 4 validators, then regenerate events/OpenAPI and `git diff --exit-code` (detect generated files that were hand-edited or out of sync with the generator).
+- `.github/workflows/contracts.yml`: run `check_all.sh` when `contracts/**`, `tools/contracts/**` or the detailed design change (actions pinned by SHA).
+- **Verification:** `tools/contracts/check_all.sh` -> `ALL CONTRACT CHECKS PASSED`; `actionlint` clean.
 
-**Thay đổi cho C1–C5 (commit cd8c789)** — xem bằng `git show --stat cd8c789`
+**Changes for C1-C5 (commit cd8c789)** - view with `git show --stat cd8c789`
 
-| File / thư mục | | Nội dung |
+| File / directory | | Content |
 |---|---|---|
-| `contracts/authz/matrix.yaml` | A | 64 rule, 16 resource, 9 predicate, 2 denyAll |
-| `contracts/events/envelope.json` + `contracts/events/<ctx>/<event>.v1{,.example}.json` (23 file) | A | **sinh bởi** `gen_events.py` |
-| `contracts/openapi/{scheduling,clinical,document,notification,audit,ml,ai}.yaml` | A | **sinh bởi** `gen_openapi.py` (83 operation) |
-| `contracts/terminology/code-systems.yaml` | A | 6 code system, 49 mã |
-| `tools/contracts/gen_events.py`, `gen_openapi.py` | A | bộ sinh (nguồn sự thật của file sinh) |
-| `tools/contracts/validate_{authz,events,openapi,terminology}.py`, `test_validators.py`, `check_all.sh`, `requirements.txt` | A | bộ kiểm + test của bộ kiểm |
-| `.github/workflows/contracts.yml` | A | CI cho hợp đồng, action ghim SHA |
-| `docs/03-architecture/detailed-design/12-api-ai.md` | M | dòng AI9: `GET/POST/PUT /api/v1/ai/kb/documents`, `POST .../{id}/approve`, `POST .../{id}/retire` → 5 endpoint đầy đủ đường dẫn |
-| `docs/04-devops/progress-log.md` | A | file này |
-| `docs/04-devops/phase4-build-log.md` | M | thêm liên kết tới file này |
+| `contracts/authz/matrix.yaml` | A | 64 rules, 16 resources, 9 predicates, 2 denyAll |
+| `contracts/events/envelope.json` + `contracts/events/<ctx>/<event>.v1{,.example}.json` (23 files) | A | **generated by** `gen_events.py` |
+| `contracts/openapi/{scheduling,clinical,document,notification,audit,ml,ai}.yaml` | A | **generated by** `gen_openapi.py` (83 operations) |
+| `contracts/terminology/code-systems.yaml` | A | 6 code systems, 49 codes |
+| `tools/contracts/gen_events.py`, `gen_openapi.py` | A | generators (source of truth for generated files) |
+| `tools/contracts/validate_{authz,events,openapi,terminology}.py`, `test_validators.py`, `check_all.sh`, `requirements.txt` | A | validators + tests of the validators |
+| `.github/workflows/contracts.yml` | A | CI for contracts, actions pinned by SHA |
+| `docs/03-architecture/detailed-design/12-api-ai.md` | M | AI9 row: `GET/POST/PUT /api/v1/ai/kb/documents`, `POST .../{id}/approve`, `POST .../{id}/retire` -> 5 endpoints with full paths |
+| `docs/04-devops/progress-log.md` | A | this file |
+| `docs/04-devops/phase4-build-log.md` | M | add a link to this file |
 
-## Phần D1 — Thư viện .NET dùng chung: phân quyền (SHR-22, SHR-23, SHR-24) ✅
-1. **Mục tiêu:** dev không phải tự viết logic phân quyền; mọi service dùng một engine đọc đúng `contracts/authz/matrix.yaml` (NFR-SEC2). Chọn làm phần này trước vì là logic thuần, kiểm thử được hoàn toàn và mọi endpoint lâm sàng đều cần.
-2. **Việc đã làm (theo thứ tự):**
-   1. Thêm `YamlDotNet 16.3.0` vào `Directory.Packages.props` (quản lý phiên bản tập trung).
-   2. Tạo `libs/dotnet/Shp.Authorization`: `AuthzMatrix` (nạp YAML + kiểm bất biến an toàn giống `validate_authz.py`), `Model.cs` (`Principal`, `ResourceContext`, `AuthzDecision`, tên predicate), `AuthorizationEngine` (hàm thuần `Decide`).
-   3. Nhúng `contracts/authz/matrix.yaml` vào assembly (`EmbeddedResource`), nên service luôn chạy đúng bản đã review.
-   4. Tạo `libs/dotnet/Shp.Authorization.Tests` với test **sinh từ chính ma trận** (mỗi rule: cho phép khi đủ điều kiện, từ chối khi thiếu từng điều kiện; mọi cặp role không có rule bị từ chối kể cả khi mọi predicate thỏa).
-   5. Tạo `libs/dotnet/Shp.Libs.slnx` gom các thư viện; thêm workflow `libs-dotnet.yml`.
-3. **Thay đổi (commit 4bf82ef; xem bằng `git show --stat 4bf82ef`):**
+## Part D1 - Shared .NET library: authorization (SHR-22, SHR-23, SHR-24) DONE
+1. **Goal:** devs should not have to write authorization logic themselves; every service uses one engine that reads the correct `contracts/authz/matrix.yaml` (NFR-SEC2). Chosen first because it is pure logic, fully testable, and every clinical endpoint needs it.
+2. **Work done (in order):**
+   1. Add `YamlDotNet 16.3.0` to `Directory.Packages.props` (centralized version management).
+   2. Create `libs/dotnet/Shp.Authorization`: `AuthzMatrix` (load YAML + check safety invariants like `validate_authz.py`), `Model.cs` (`Principal`, `ResourceContext`, `AuthzDecision`, predicate names), `AuthorizationEngine` (pure function `Decide`).
+   3. Embed `contracts/authz/matrix.yaml` into the assembly (`EmbeddedResource`), so the service always runs the reviewed version.
+   4. Create `libs/dotnet/Shp.Authorization.Tests` with tests **generated from the matrix itself** (each rule: allow when all conditions are met, deny when each condition is missing; every role pair without a rule is denied even if all predicates hold).
+   5. Create `libs/dotnet/Shp.Libs.slnx` grouping the libraries; add workflow `libs-dotnet.yml`.
+3. **Changes (commit 4bf82ef; view with `git show --stat 4bf82ef`):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `Directory.Packages.props` | M | thêm `<PackageVersion Include="YamlDotNet" Version="16.3.0" />` |
-| `libs/dotnet/Shp.Authorization/Shp.Authorization.csproj` | A | tham chiếu YamlDotNet; nhúng matrix.yaml với LogicalName `matrix.yaml` |
-| `libs/dotnet/Shp.Authorization/AuthzMatrix.cs` | A | nạp + kiểm: id trùng, role/predicate/purpose lạ, denyAll, admin/dpo không chạm lâm sàng, dpo chỉ Audit, breakglass chỉ doctor, own chỉ patient, action không có rule |
-| `libs/dotnet/Shp.Authorization/Model.cs` | A | `Principal(Subject, Roles, FhirUserId)`, `ResourceContext` (dữ kiện đã tra cứu), `AuthzDecision(Allowed, RuleId, Purpose, Fields, Hide, DenyReason)` |
-| `libs/dotnet/Shp.Authorization/AuthorizationEngine.cs` | A | quy tắc: mặc định từ chối; rule đầu tiên theo thứ tự file thỏa thì Allow (nên care → purpose TREAT, đứng trước break-glass → ETREAT); thiếu dữ kiện = predicate không thỏa; `before-2h` tính bằng `TimeProvider`; lý do từ chối: `no-rule`, `no-care-relationship`, `unmet-<predicate>`, `role-not-allowed` |
-| `libs/dotnet/Shp.Authorization.Tests/*` | A | 236 test |
+| `Directory.Packages.props` | M | add `<PackageVersion Include="YamlDotNet" Version="16.3.0" />` |
+| `libs/dotnet/Shp.Authorization/Shp.Authorization.csproj` | A | reference YamlDotNet; embed matrix.yaml with LogicalName `matrix.yaml` |
+| `libs/dotnet/Shp.Authorization/AuthzMatrix.cs` | A | load + check: duplicate ids, unknown role/predicate/purpose, denyAll, admin/dpo do not touch clinical, dpo only Audit, breakglass only doctor, own only patient, action without a rule |
+| `libs/dotnet/Shp.Authorization/Model.cs` | A | `Principal(Subject, Roles, FhirUserId)`, `ResourceContext` (pre-fetched facts), `AuthzDecision(Allowed, RuleId, Purpose, Fields, Hide, DenyReason)` |
+| `libs/dotnet/Shp.Authorization/AuthorizationEngine.cs` | A | rules: deny by default; first rule in file order that matches is Allow (so care -> purpose TREAT, before break-glass -> ETREAT); missing fact = predicate not met; `before-2h` computed with `TimeProvider`; deny reasons: `no-rule`, `no-care-relationship`, `unmet-<predicate>`, `role-not-allowed` |
+| `libs/dotnet/Shp.Authorization.Tests/*` | A | 236 tests |
 | `libs/dotnet/Shp.Libs.slnx` | A | ServiceDefaults + Authorization + Tests |
-| `.github/workflows/libs-dotnet.yml` | A | gọi `dotnet-ci` (format, build cảnh báo=lỗi, test, coverage ≥ 70%) |
+| `.github/workflows/libs-dotnet.yml` | A | call `dotnet-ci` (format, build warnings=errors, test, coverage >= 70%) |
 
-4. **Cách dùng cho dev (task SHR-25 còn lại cho dev):** service tra cứu dữ kiện (quan hệ điều trị, break-glass, trạng thái encounter...) → dựng `ResourceContext` → `engine.Decide(principal, "Appointment", "cancel", ctx)`. Nếu `Allowed=false`: trả 403 và phát audit với `DenyReason`.
-5. **Lệnh làm lại / kiểm chứng:**
+4. **How devs use it (task SHR-25 remains for devs):** the service looks up facts (treatment relationship, break-glass, encounter status...) -> builds a `ResourceContext` -> `engine.Decide(principal, "Appointment", "cancel", ctx)`. If `Allowed=false`: return 403 and emit audit with `DenyReason`.
+5. **Redo / verification commands:**
 ```bash
-dotnet test libs/dotnet/Shp.Libs.slnx -c Release        # mong đợi: Passed 236, Failed 0
-cd libs/dotnet && dotnet format --verify-no-changes       # mong đợi: không in gì
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release        # expected: Passed 236, Failed 0
+cd libs/dotnet && dotnet format --verify-no-changes       # expected: no output
 ```
-6. **Kiểm chứng bằng đột biến (đã làm):** tạm sửa engine rồi chạy test: `own` luôn đúng → 10 test đỏ; cửa sổ hủy 2h thành 1h → 2 test đỏ. Đột biến thứ ba (predicate lạ → cho phép) **không bị bắt**, vì bộ nạp đã từ chối predicate lạ trước khi tới engine: đây là nhánh phòng thủ, không thể chạm tới qua ma trận hợp lệ.
-7. **Lỗi gặp và cách sửa:** test `BG-START-DOC` (`not-care`) đỏ vì dựng ngữ cảnh sai (`care` và `not-care` loại trừ nhau) → thêm tham số `notCareFails` cho hàm dựng ngữ cảnh trong test; không sửa engine.
-8. **Ảnh hưởng tới kế hoạch:** SHR-22/23/24 (do dev) đã được SA làm sẵn; dev chỉ còn SHR-25 (endpoint filter), SHR-26 (sinh test cho từng endpoint), SHR-27 (audit mỗi quyết định). Chưa đổi chủ sở hữu trong `tools/plan` (xem mục D-next).
+6. **Mutation verification (done):** temporarily modify the engine then run tests: `own` always true -> 10 tests red; cancel window 2h changed to 1h -> 2 tests red. The third mutation (unknown predicate -> allow) **was not caught**, because the loader rejects unknown predicates before they reach the engine: this is a defensive branch, unreachable through a valid matrix.
+7. **Errors encountered and fixes:** test `BG-START-DOC` (`not-care`) was red because the context was built incorrectly (`care` and `not-care` are mutually exclusive) -> add a `notCareFails` parameter to the context-building function in the test; do not modify the engine.
+8. **Impact on the plan:** SHR-22/23/24 (assigned to devs) were done in advance by the SA; devs only have SHR-25 (endpoint filter), SHR-26 (generate tests for each endpoint), SHR-27 (audit every decision). Ownership in `tools/plan` has not been changed yet (see D-next).
 
-## Phần D1b — Cập nhật kế hoạch: chuyển SHR-22/23/24 sang SA và thêm theo dõi trạng thái task ✅
-1. **Mục tiêu:** kế hoạch phản ánh đúng ai làm gì sau D1; có chỗ ghi task nào đã xong (trước đây checkbox luôn `☐`).
-2. **Việc đã làm:** (1) cắt SHR-22/23/24 khỏi `tasks_dev.py`, thêm vào `tasks_sa.py` với owner `SA` (giữ ID, giờ 3/4/3, phụ thuộc); (2) thêm `tools/plan/status.py` (ID → `done|partial`, commit, ghi chú); (3) sửa `build.py` vẽ `☑/◐/☐` và tổng số xong trong `docs/05-plan/by-person/*.md`, báo lỗi nếu `status.py` nhắc task không tồn tại; (4) sinh lại tài liệu.
-3. **Thay đổi (commit 23bc32a):**
+## Part D1b - Plan update: move SHR-22/23/24 to SA and add task status tracking DONE
+1. **Goal:** the plan reflects who does what after D1; there is a place to record which tasks are done (previously checkboxes were always `[ ]`).
+2. **Work done:** (1) remove SHR-22/23/24 from `tasks_dev.py`, add them to `tasks_sa.py` with owner `SA` (keep ID, hours 3/4/3, dependencies); (2) add `tools/plan/status.py` (ID -> `done|partial`, commit, note); (3) modify `build.py` to draw `[x]/[~]/[ ]` and the done total in `docs/05-plan/by-person/*.md`, error if `status.py` mentions a nonexistent task; (4) regenerate the documents.
+3. **Changes (commit 23bc32a):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `tools/plan/tasks_dev.py` | M | xóa 3 tuple SHR-22/23/24 (owner `D1`) |
-| `tools/plan/tasks_sa.py` | M | thêm 3 tuple đó với owner `SA` ở cuối danh sách |
-| `tools/plan/status.py` | A | 7 mục: ARC-06 (một phần), ARC-07, ARC-19, ARC-20 (một phần), SHR-22/23/24 |
-| `tools/plan/build.py` | M | import `STATUS`; hàm `mark`, `status_note`; dòng tổng "Đã xong/làm một phần"; kiểm status hợp lệ |
-| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** |
+| `tools/plan/tasks_dev.py` | M | remove 3 tuples SHR-22/23/24 (owner `D1`) |
+| `tools/plan/tasks_sa.py` | M | add those 3 tuples with owner `SA` at the end of the list |
+| `tools/plan/status.py` | A | 7 entries: ARC-06 (partial), ARC-07, ARC-19, ARC-20 (partial), SHR-22/23/24 |
+| `tools/plan/build.py` | M | import `STATUS`; `mark`, `status_note` functions; summary line "Done/partially done"; validate status |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **regenerated** |
 
-   Tải sau khi đổi (giờ/tuần): SA 375h tổng (W2: 50, W3: 50), D1 202h (từ 212h). Các kiểm tra của `build.py` (thứ tự phụ thuộc, ≤ 4h/task dev, ≤ 8h/task SA, ≤ 30h/tuần dev) vẫn qua.
-4. **Lệnh làm lại / kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`; mở `docs/05-plan/by-person/SA.md` thấy `☑ SHR-22`.
-5. **Quy ước từ nay:** khi xong một task, thêm một dòng vào `tools/plan/status.py` (kèm commit) rồi chạy lại `build.py`, **cùng commit** với phần việc.
-6. **Lưu ý trung thực:** ARC-06 và ARC-20 chỉ `partial` (OpenAPI chưa có schema thân; ICD-10 mới 12/~300 mã). Các task SA khác đã có sản phẩm từ trước (IaC, workflow, `dev/`) **chưa được đối chiếu và ghi vào status.py**; việc đối chiếu là một bước riêng (D-recon) để không ghi sai.
+   Load after the change (hours/week): SA 375h total (W2: 50, W3: 50), D1 202h (from 212h). The checks in `build.py` (dependency order, <= 4h/dev task, <= 8h/SA task, <= 30h/dev week) still pass.
+4. **Redo / verification commands:** `python3 -I tools/plan/build.py` -> `OK: 74 stories, 317 tasks, 1070h`; open `docs/05-plan/by-person/SA.md` and see `[x] SHR-22`.
+5. **Convention from now on:** when a task is done, add a line to `tools/plan/status.py` (with the commit) and re-run `build.py`, **in the same commit** as the work.
+6. **Honest caveat:** ARC-06 and ARC-20 are only `partial` (OpenAPI has no body schemas; ICD-10 only 12/~300 codes). Other SA tasks already had deliverables earlier (IaC, workflows, `dev/`) **not yet cross-checked and recorded in status.py**; cross-checking is a separate step (D-recon) to avoid recording incorrectly.
 
-## Phần D2 — Thư viện .NET dùng chung: lỗi, xác thực JWT, tra danh tính (SHR-02, SHR-20, SHR-21) ✅ / SHR-20 một phần
-1. **Mục tiêu:** mọi service trả lỗi cùng một định dạng, xác thực token cùng một cách (Entra ID cloud, Keycloak local) và tra `fhirUser` theo `sub` có cache 60 giây (AC-08.1) mà dev không phải tự viết.
-2. **Việc đã làm (theo thứ tự):**
-   1. Thêm 2 gói vào `Directory.Packages.props`: `Microsoft.AspNetCore.Authentication.JwtBearer 10.0.14`, `Microsoft.AspNetCore.TestHost 10.0.14`.
-   2. Tạo `libs/dotnet/Shp.Web` (tham chiếu `Shp.Authorization`): `Errors/` (danh mục lỗi, ngoại lệ, bộ ghi lỗi, middleware) và `Auth/` (cấu hình, JWT, resolver, middleware danh tính).
-   3. Tạo `libs/dotnet/Shp.Web.Tests` (19 test) dùng TestServer + token ký cục bộ (không cần Keycloak/Entra).
-   4. Thêm 2 project vào `libs/dotnet/Shp.Libs.slnx`.
-   5. Chuyển SHR-02/20/21 sang SA, ghi trạng thái, đổi cách tính tải tuần (task đã xong không tính giờ).
-3. **Thay đổi (commit 55c56a5):**
+## Part D2 - Shared .NET library: errors, JWT authentication, identity lookup (SHR-02, SHR-20, SHR-21) DONE / SHR-20 partial
+1. **Goal:** every service returns errors in the same format, authenticates tokens the same way (Entra ID cloud, Keycloak local) and resolves `fhirUser` by `sub` with a 60-second cache (AC-08.1), without devs writing it themselves.
+2. **Work done (in order):**
+   1. Add 2 packages to `Directory.Packages.props`: `Microsoft.AspNetCore.Authentication.JwtBearer 10.0.14`, `Microsoft.AspNetCore.TestHost 10.0.14`.
+   2. Create `libs/dotnet/Shp.Web` (references `Shp.Authorization`): `Errors/` (error catalog, exceptions, error writer, middleware) and `Auth/` (configuration, JWT, resolver, identity middleware).
+   3. Create `libs/dotnet/Shp.Web.Tests` (19 tests) using TestServer + locally signed tokens (no Keycloak/Entra needed).
+   4. Add 2 projects to `libs/dotnet/Shp.Libs.slnx`.
+   5. Move SHR-02/20/21 to SA, record status, change the weekly load calculation (done tasks do not count hours).
+3. **Changes (commit 55c56a5):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
 | `Directory.Packages.props` | M | + JwtBearer, TestHost (10.0.14) |
-| `libs/dotnet/Shp.Web/Errors/ErrorCatalog.cs` | A | 27 mã lỗi: HTTP, loại issue FHIR, thông điệp vi/en; bảng đối chiếu với `07-api-conventions.md §5` |
-| `libs/dotnet/Shp.Web/Errors/ShpException.cs` | A | ném lỗi có mã; mã chưa khai báo → `ArgumentException` ngay khi tạo; `RetryAfter` tùy chọn |
-| `libs/dotnet/Shp.Web/Errors/ErrorWriter.cs` | A | `/fhir/*` → `OperationOutcome` (`application/fhir+json`); còn lại → Problem Details có `code`; `X-Request-Id` = trace id; `Retry-After` cho 429/503; ngôn ngữ theo `Accept-Language` |
-| `libs/dotnet/Shp.Web/Errors/ErrorHandlingMiddleware.cs` | A | `UseShpErrors()`; lỗi lạ → 500 `internal-error` **không lộ nội dung exception** |
-| `libs/dotnet/Shp.Web/Auth/ShpAuthOptions.cs` | A | `Auth:Authority`, `Auth:Audience` (hoặc env `OIDC_AUTHORITY`, `OIDC_AUDIENCE`), `RequireHttpsMetadata`, `RequireMfaForStaff`, `ClockSkew` |
-| `libs/dotnet/Shp.Web/Auth/AuthExtensions.cs` | A | `AddShpAuthentication`: kiểm chữ ký, issuer, audience, hạn; không đổi tên claim; MFA (`amr` chứa `mfa`) bắt buộc với doctor/nurse/admin/dpo (→ 401); challenge/forbidden trả đúng định dạng lỗi |
-| `libs/dotnet/Shp.Web/Auth/Roles.cs` | A | 5 role hợp lệ + nhóm nhân viên |
-| `libs/dotnet/Shp.Web/Auth/IdentityResolver.cs` | A | `IIdentityLinkClient`, `IdentityResolver` (link giữ 60s, "chưa liên kết" giữ 5s), `HttpIdentityLinkClient` gọi `GET /internal/v1/identity/{subject}` |
-| `libs/dotnet/Shp.Web/Auth/IdentityMiddleware.cs` | A | `UseShpIdentity()`: thiếu role hợp lệ → 403; chưa liên kết hoặc bị khóa → 403 (trừ endpoint `[AllowUnlinkedIdentity]` cho đăng ký, nhưng tài khoản bị khóa vẫn 403); tạo `Principal` cho `AuthorizationEngine`; `HttpContext.GetShpPrincipal()` |
-| `libs/dotnet/Shp.Web.Tests/*` | A | 19 test |
+| `libs/dotnet/Shp.Web/Errors/ErrorCatalog.cs` | A | 27 error codes: HTTP, FHIR issue type, vi/en messages; table cross-referenced with `07-api-conventions.md section 5` |
+| `libs/dotnet/Shp.Web/Errors/ShpException.cs` | A | throw an error with a code; undeclared code -> `ArgumentException` immediately when created; optional `RetryAfter` |
+| `libs/dotnet/Shp.Web/Errors/ErrorWriter.cs` | A | `/fhir/*` -> `OperationOutcome` (`application/fhir+json`); the rest -> Problem Details with `code`; `X-Request-Id` = trace id; `Retry-After` for 429/503; language per `Accept-Language` |
+| `libs/dotnet/Shp.Web/Errors/ErrorHandlingMiddleware.cs` | A | `UseShpErrors()`; unknown error -> 500 `internal-error` **without leaking exception content** |
+| `libs/dotnet/Shp.Web/Auth/ShpAuthOptions.cs` | A | `Auth:Authority`, `Auth:Audience` (or env `OIDC_AUTHORITY`, `OIDC_AUDIENCE`), `RequireHttpsMetadata`, `RequireMfaForStaff`, `ClockSkew` |
+| `libs/dotnet/Shp.Web/Auth/AuthExtensions.cs` | A | `AddShpAuthentication`: verify signature, issuer, audience, expiry; do not rename claims; MFA (`amr` contains `mfa`) required for doctor/nurse/admin/dpo (-> 401); challenge/forbidden return the correct error format |
+| `libs/dotnet/Shp.Web/Auth/Roles.cs` | A | 5 valid roles + staff group |
+| `libs/dotnet/Shp.Web/Auth/IdentityResolver.cs` | A | `IIdentityLinkClient`, `IdentityResolver` (link cached 60s, "not linked" cached 5s), `HttpIdentityLinkClient` calls `GET /internal/v1/identity/{subject}` |
+| `libs/dotnet/Shp.Web/Auth/IdentityMiddleware.cs` | A | `UseShpIdentity()`: missing valid role -> 403; not linked or locked -> 403 (except `[AllowUnlinkedIdentity]` endpoints for registration, but a locked account still gets 403); creates `Principal` for `AuthorizationEngine`; `HttpContext.GetShpPrincipal()` |
+| `libs/dotnet/Shp.Web.Tests/*` | A | 19 tests |
 | `libs/dotnet/Shp.Libs.slnx` | M | + Shp.Web, Shp.Web.Tests |
-| `tools/plan/tasks_dev.py`, `tasks_sa.py`, `status.py`, `build.py` | M | SHR-02/20/21 → SA; trạng thái; tải tuần chỉ tính task chưa xong |
-| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** |
+| `tools/plan/tasks_dev.py`, `tasks_sa.py`, `status.py`, `build.py` | M | SHR-02/20/21 -> SA; status; weekly load counts only unfinished tasks |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **regenerated** |
 
-4. **Cách dùng cho dev** (trong `Program.cs` của service, theo thứ tự):
+4. **How devs use it** (in the service's `Program.cs`, in order):
 ```csharp
 builder.Services.AddShpAuthentication(builder.Configuration);
-builder.Services.AddShpIdentity<TClient>();           // clinical: client đọc DB; service khác: HttpIdentityLinkClient
+builder.Services.AddShpIdentity<TClient>();           // clinical: DB-reading client; other services: HttpIdentityLinkClient
 ...
 app.UseShpErrors(); app.UseRouting(); app.UseAuthentication(); app.UseShpIdentity(); app.UseAuthorization();
-// trong endpoint: var principal = ctx.GetShpPrincipal(); engine.Decide(principal, "Appointment", "cancel", context);
-// lỗi nghiệp vụ: throw new ShpException("slot-unavailable");
+// in the endpoint: var principal = ctx.GetShpPrincipal(); engine.Decide(principal, "Appointment", "cancel", context);
+// business error: throw new ShpException("slot-unavailable");
 ```
-5. **Kiểm chứng:**
+5. **Verification:**
 ```bash
-dotnet test libs/dotnet/Shp.Libs.slnx -c Release         # mong đợi: Shp.Web.Tests 19 passed; Shp.Authorization.Tests 236 passed
-cd libs/dotnet && dotnet format --verify-no-changes       # không in gì
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release         # expected: Shp.Web.Tests 19 passed; Shp.Authorization.Tests 236 passed
+cd libs/dotnet && dotnet format --verify-no-changes       # no output
 ```
-   **Kiểm chứng bằng đột biến (đã làm, cả 5 đều bị test bắt):** bỏ kiểm MFA; bỏ kiểm audience; cho phép tài khoản chưa liên kết ở mọi endpoint; bỏ qua cờ `Disabled`; đổi TTL cache 60s → 600s.
-6. **Lỗi gặp và cách sửa:** `JsonSerializer.SerializeAsync` cần thêm `JsonSerializerOptions.Default` trước `CancellationToken`; analyzer CA1018 yêu cầu `[AttributeUsage]`; xunit 2.9.3 dùng `Task` (không phải `ValueTask`) cho `IAsyncLifetime`; lần đầu mutation "bỏ MFA" gây lỗi biên dịch (`if (false)`) nên không hợp lệ, làm lại bằng `hasMfa = true`.
-7. **Giới hạn đã biết (đừng bỏ qua):**
-   - **SHR-20 mới `partial`:** chưa chạy với Keycloak/Entra thật. Cần thử với `make -C dev up` + `make -C dev token` (việc kế tiếp D-int).
-   - Chưa nối thư viện vào 6 service .NET (khung hiện chỉ dùng `Shp.ServiceDefaults`); bước nối cần sửa Dockerfile để `COPY contracts/authz` và `libs/dotnet` đủ.
-   - Endpoint `GET /internal/v1/identity/{subject}` phía clinical là task của dev; token workload identity cho `HttpIdentityLinkClient` chưa có.
-   - Tải kế hoạch: sau khi chuyển các task đã xong, D1 chỉ còn 11h ở W2 và 10h ở W3; người lập lịch có thể kéo việc sớm hơn nếu phụ thuộc cho phép.
+   **Mutation verification (done, all 5 caught by tests):** remove MFA check; remove audience check; allow unlinked accounts on every endpoint; ignore the `Disabled` flag; change cache TTL 60s -> 600s.
+6. **Errors encountered and fixes:** `JsonSerializer.SerializeAsync` needs `JsonSerializerOptions.Default` added before `CancellationToken`; analyzer CA1018 requires `[AttributeUsage]`; xunit 2.9.3 uses `Task` (not `ValueTask`) for `IAsyncLifetime`; the first "remove MFA" mutation caused a compile error (`if (false)`) so it was invalid, redone with `hasMfa = true`.
+7. **Known limitations (do not skip):**
+   - **SHR-20 is only `partial`:** not yet run with real Keycloak/Entra. Needs testing with `make -C dev up` + `make -C dev token` (next task D-int).
+   - The library is not yet wired into the 6 .NET services (the skeleton currently only uses `Shp.ServiceDefaults`); the wiring step needs Dockerfile changes to `COPY contracts/authz` and `libs/dotnet` sufficiently.
+   - The `GET /internal/v1/identity/{subject}` endpoint on the clinical side is a dev task; the workload identity token for `HttpIdentityLinkClient` does not exist yet.
+   - Plan load: after moving the completed tasks, D1 has only 11h in W2 and 10h in W3; the scheduler can pull work earlier if dependencies allow.
 
-## Phần D3 — Thư viện .NET dùng chung: CloudEvents, audit, filter phân quyền gắn endpoint (SHR-06, SHR-09, SHR-25, SHR-27)
-1. **Mục tiêu:** (a) mọi event dùng cùng một envelope và được kiểm theo schema trong `contracts/events`; (b) mọi truy cập dữ liệu bệnh nhân, **kể cả bị từ chối**, sinh bản ghi audit đúng quy tắc (không PII, IP bị che); (c) dev gắn phân quyền vào endpoint bằng **một dòng**, và quên phân quyền làm test đỏ.
-2. **Việc đã làm (theo thứ tự):**
-   1. Thêm `JsonSchema.Net 7.3.4` vào `Directory.Packages.props` (đã thử khôi phục gói trước khi dùng).
-   2. Tạo `libs/dotnet/Shp.Events` (nhúng toàn bộ schema trong `contracts/events/**`, trừ file ví dụ): `CloudEvent`, `CloudEvents.Create`, `EventSchemas.Validate`, thư mục `Audit/`.
-   3. Tạo `libs/dotnet/Shp.Events.Tests` (42 test).
-   4. Mở rộng `Shp.Web` (tham chiếu thêm `Shp.Events`, `Shp.ServiceDefaults`): `Auth/AuthzEndpoint.cs`.
-   5. Mở rộng `Shp.Web.Tests` (29 test, thêm 10) và `Shp.Libs.slnx`.
-   6. Chuyển SHR-06/09/25/27 sang SA, ghi trạng thái.
-3. **Thay đổi (commit c81d3ec):**
+## Part D3 - Shared .NET library: CloudEvents, audit, endpoint-attached authorization filter (SHR-06, SHR-09, SHR-25, SHR-27)
+1. **Goal:** (a) every event uses the same envelope and is validated against schemas in `contracts/events`; (b) every access to patient data, **including denied access**, produces an audit record that follows the rules (no PII, IP masked); (c) devs attach authorization to an endpoint with **one line**, and forgetting authorization turns tests red.
+2. **Work done (in order):**
+   1. Add `JsonSchema.Net 7.3.4` to `Directory.Packages.props` (package restore tried before use).
+   2. Create `libs/dotnet/Shp.Events` (embeds all schemas in `contracts/events/**`, except example files): `CloudEvent`, `CloudEvents.Create`, `EventSchemas.Validate`, `Audit/` directory.
+   3. Create `libs/dotnet/Shp.Events.Tests` (42 tests).
+   4. Extend `Shp.Web` (additional references `Shp.Events`, `Shp.ServiceDefaults`): `Auth/AuthzEndpoint.cs`.
+   5. Extend `Shp.Web.Tests` (29 tests, 10 added) and `Shp.Libs.slnx`.
+   6. Move SHR-06/09/25/27 to SA, record status.
+3. **Changes (commit c81d3ec):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
 | `Directory.Packages.props` | M | + `JsonSchema.Net 7.3.4` |
-| `libs/dotnet/Shp.Events/Shp.Events.csproj` | A | nhúng `contracts/events/**/*.json` (LogicalName `events/<ctx>/<event>.v1.json`) |
-| `libs/dotnet/Shp.Events/CloudEvent.cs` | A | envelope; `CloudEvents.Create(service, type, subject, data)`: id UUIDv7, `source=/services/<service>`, `dataschema` suy từ type, `traceparent` từ Activity, giới hạn 64 KB, bỏ trường null |
-| `libs/dotnet/Shp.Events/EventSchemas.cs` | A | `Validate(evt)`: kiểm envelope + data (có kiểm `format`); type lạ là lỗi; `KnownTypes` |
-| `libs/dotnet/Shp.Events/Audit/AuditRecord.cs` | A | bản ghi E11, hằng số action/outcome; `ToCloudEvent()` |
-| `libs/dotnet/Shp.Events/Audit/AuditRecordBuilder.cs` | A | che IP (IPv4 `a.b.c.x`, IPv6 3 nhóm đầu), rút gọn user-agent (120), `reason` ≤ 200, **`resource` chỉ cho loại/id/TÊN tham số** (giá trị tìm kiếm bị từ chối) |
-| `libs/dotnet/Shp.Events/Audit/IAuditSink.cs` | A | interface + `InMemoryAuditSink` (production sẽ là sink ghi outbox, SHR-07) |
-| `libs/dotnet/Shp.Events/Audit/AuthzAudit.cs` | A | `FromDecision`: ánh xạ hành động ma trận → hành động audit (19 hành động); outcome success/denied/error; role đại diện ưu tiên dpo>admin>doctor>nurse>patient |
-| `libs/dotnet/Shp.Web/Auth/AuthzEndpoint.cs` | A | `AddShpAuthorization()`; `RequireShpAuthz(resource, action, contextFactory?, denyAsNotFound?)`; `GetShpDecision()` (để áp `Fields`/`Hide`); `FindUnprotectedEndpoints()`; `[ShpPublicEndpoint]` |
-| `libs/dotnet/Shp.Web/Shp.Web.csproj` | M | + tham chiếu Shp.Events, Shp.ServiceDefaults |
-| `libs/dotnet/Shp.Events.Tests/*`, `libs/dotnet/Shp.Web.Tests/*`, `libs/dotnet/Shp.Libs.slnx` | A/M | test mới |
-| `tools/plan/*`, `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | SHR-06/09/25/27 → SA; trạng thái; sinh lại |
+| `libs/dotnet/Shp.Events/Shp.Events.csproj` | A | embed `contracts/events/**/*.json` (LogicalName `events/<ctx>/<event>.v1.json`) |
+| `libs/dotnet/Shp.Events/CloudEvent.cs` | A | envelope; `CloudEvents.Create(service, type, subject, data)`: UUIDv7 id, `source=/services/<service>`, `dataschema` inferred from type, `traceparent` from Activity, 64 KB limit, drop null fields |
+| `libs/dotnet/Shp.Events/EventSchemas.cs` | A | `Validate(evt)`: validate envelope + data (including `format` checks); unknown type is an error; `KnownTypes` |
+| `libs/dotnet/Shp.Events/Audit/AuditRecord.cs` | A | E11 record, action/outcome constants; `ToCloudEvent()` |
+| `libs/dotnet/Shp.Events/Audit/AuditRecordBuilder.cs` | A | mask IP (IPv4 `a.b.c.x`, IPv6 first 3 groups), truncate user-agent (120), `reason` <= 200, **`resource` only type/id/PARAMETER NAME** (search values rejected) |
+| `libs/dotnet/Shp.Events/Audit/IAuditSink.cs` | A | interface + `InMemoryAuditSink` (production will be an outbox-writing sink, SHR-07) |
+| `libs/dotnet/Shp.Events/Audit/AuthzAudit.cs` | A | `FromDecision`: map matrix action -> audit action (19 actions); outcome success/denied/error; representative role priority dpo>admin>doctor>nurse>patient |
+| `libs/dotnet/Shp.Web/Auth/AuthzEndpoint.cs` | A | `AddShpAuthorization()`; `RequireShpAuthz(resource, action, contextFactory?, denyAsNotFound?)`; `GetShpDecision()` (to apply `Fields`/`Hide`); `FindUnprotectedEndpoints()`; `[ShpPublicEndpoint]` |
+| `libs/dotnet/Shp.Web/Shp.Web.csproj` | M | + references Shp.Events, Shp.ServiceDefaults |
+| `libs/dotnet/Shp.Events.Tests/*`, `libs/dotnet/Shp.Web.Tests/*`, `libs/dotnet/Shp.Libs.slnx` | A/M | new tests |
+| `tools/plan/*`, `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | SHR-06/09/25/27 -> SA; status; regenerate |
 
-4. **Hành vi của filter (để dev biết không phải tự làm):** từ chối → ghi audit `denied` + lý do → 403 `forbidden` / `no-care-relationship` (hoặc 404 nếu `denyAsNotFound`); cho phép → chạy handler rồi ghi audit `success` (kể cả khi handler ném lỗi nghiệp vụ 409/422); lỗi bất ngờ → audit `error` rồi 500 không lộ chi tiết; chưa đăng nhập → 401, không audit.
-5. **Dev dùng:**
+4. **Filter behavior (so devs know they do not have to build it):** deny -> write audit `denied` + reason -> 403 `forbidden` / `no-care-relationship` (or 404 if `denyAsNotFound`); allow -> run the handler then write audit `success` (including when the handler throws a business error 409/422); unexpected error -> audit `error` then 500 without leaking details; not logged in -> 401, no audit.
+5. **Dev usage:**
 ```csharp
-builder.Services.AddShpAuthorization();                       // + AddSingleton<IAuditSink, ...>() do service chọn
+builder.Services.AddShpAuthorization();                       // + AddSingleton<IAuditSink, ...>() chosen by the service
 app.MapPost("/fhir/Appointment/{id}/$cancel", Cancel).RequireShpAuthz("Appointment", "cancel", LoadAppointmentFacts);
-// test của service:  Assert.Empty(factory.Services.FindUnprotectedEndpoints());
-// test hợp đồng producer: Assert.Empty(EventSchemas.Validate(CloudEvents.Create("scheduling", "shp.scheduling.appointment-booked.v1", subject, payload)));
+// service test:  Assert.Empty(factory.Services.FindUnprotectedEndpoints());
+// producer contract test: Assert.Empty(EventSchemas.Validate(CloudEvents.Create("scheduling", "shp.scheduling.appointment-booked.v1", subject, payload)));
 ```
-6. **Kiểm chứng:**
+6. **Verification:**
 ```bash
-dotnet test libs/dotnet/Shp.Libs.slnx -c Release     # Shp.Authorization 236, Shp.Events 42, Shp.Web 29: tất cả passed
-cd libs/dotnet && dotnet format --verify-no-changes    # không in gì
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release     # Shp.Authorization 236, Shp.Events 42, Shp.Web 29: all passed
+cd libs/dotnet && dotnet format --verify-no-changes    # no output
 ```
-   **Đột biến (đã làm, cả 5 bị bắt):** bỏ audit khi từ chối; luôn trả `forbidden` (mất mã `no-care-relationship`); đưa giá trị query vào `resource` audit; tắt kiểm `format` của schema; tắt che IP. Một lần đột biến đầu bị lỗi biên dịch nên không hợp lệ, đã làm lại.
-7. **Lỗi gặp và cách sửa:** (a) **kế hoạch bị lỗi sau khi chuyển task** — `build.py` báo `MLO-04 (W8) scheduled before dependency ML-23 (W10)`: task SA bị cố định theo sprint nên không lùi theo task dev đã bị xếp muộn hơn; lúc đó mình đã lỡ commit (`c81d3ec`, `ff09115`) mà chưa kiểm kết quả nên các file sinh trong `docs/05-plan` của hai commit đó **chưa cập nhật**; đã sửa ở bước D3b ngay bên dưới. Bài học: chạy `python3 -I tools/plan/build.py` và dừng nếu in `validation error` **trước** khi commit. (b) `TheoryData` không liệt kê trực tiếp được → tách hàm trả mảng đường dẫn; LogicalName của resource nhúng dùng `%(RecursiveDir)` nên chuẩn hóa dấu `\` thành `/` cho Windows.
-8. **Giới hạn đã biết:**
-   - SHR-09 `partial`: chưa có sink ghi outbox (SHR-07, bước kế tiếp) nên audit chưa được lưu bền; chưa có middleware audit riêng cho đọc/tìm kiếm FHIR ngoài `RequireShpAuthz`.
-   - IP lấy từ `RemoteIpAddress`: sau gateway cần cấu hình `ForwardedHeaders` (việc nối vào service).
-   - Chưa nối thư viện vào 6 service .NET.
+   **Mutations (done, all 5 caught):** remove audit on deny; always return `forbidden` (losing the `no-care-relationship` code); put query values into the audit `resource`; disable schema `format` checks; disable IP masking. One first mutation had a compile error so it was invalid, redone.
+7. **Errors encountered and fixes:** (a) **plan broken after moving tasks** - `build.py` reported `MLO-04 (W8) scheduled before dependency ML-23 (W10)`: SA tasks were fixed by sprint so they did not shift with dev tasks that were scheduled later; at that point I had already committed (`c81d3ec`, `ff09115`) without checking the result, so the generated files in `docs/05-plan` of those two commits were **not updated**; fixed in step D3b right below. Lesson: run `python3 -I tools/plan/build.py` and stop if it prints `validation error` **before** committing. (b) `TheoryData` cannot list directly -> extract a function returning an array of paths; the embedded resource LogicalName uses `%(RecursiveDir)` so normalize `\` to `/` for Windows.
+8. **Known limitations:**
+   - SHR-09 `partial`: no outbox-writing sink yet (SHR-07, next step) so audit is not durably stored; no separate audit middleware for FHIR reads/searches outside `RequireShpAuthz`.
+   - IP is taken from `RemoteIpAddress`: behind the gateway requires configuring `ForwardedHeaders` (part of wiring into the services).
+   - The library is not yet wired into the 6 .NET services.
 
-## Phần D3b — Sửa bộ xếp lịch của kế hoạch: task SA cũng phải tôn trọng phụ thuộc ✅
-1. **Mục tiêu:** `build.py` chạy lại không lỗi sau khi nhiều task được chuyển giữa dev và SA.
-2. **Nguyên nhân:** `schedule()` cố định tuần của mọi task SA theo sprint, chỉ xếp lại task dev. Khi task dev bị lùi (vì D1/D2/D3 nhẹ/nặng đổi), task SA phụ thuộc vào chúng (MLO-04 phụ thuộc ML-23) rơi vào tuần trước phụ thuộc.
-3. **Thay đổi (commit 483f2b5):**
+## Part D3b - Fix the plan scheduler: SA tasks must also respect dependencies DONE
+1. **Goal:** `build.py` re-runs without errors after many tasks were moved between dev and SA.
+2. **Cause:** `schedule()` fixed the week of every SA task by sprint, and only re-scheduled dev tasks. When dev tasks slipped (because D1/D2/D3 got lighter/heavier), SA tasks depending on them (MLO-04 depends on ML-23) landed in the week before their dependency.
+3. **Changes (commit 483f2b5):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `tools/plan/build.py` | M | `schedule()`: mọi task đi vào cùng vòng xếp lịch; task SA bắt đầu ở tuần sprint hoặc khi phụ thuộc cho phép (lấy muộn hơn), **không giới hạn giờ**; SA được phép tới W12 (tuần bảo vệ), dev tới W11; thông báo lỗi nêu đúng giới hạn |
-| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** (gồm cả phần bị bỏ sót ở D3) |
+| `tools/plan/build.py` | M | `schedule()`: every task goes into the same scheduling loop; an SA task starts in its sprint week or when dependencies allow (whichever is later), **no hour cap**; SA may go to W12 (defense week), dev to W11; error messages state the correct limit |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **regenerated** (including the part missed in D3) |
 
-4. **Kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`. Tải còn lại: SA 364h (W4 = 52h, vượt ngưỡng cảnh báo 45h, được in đậm), D1 190h, D2 225h, D3 258h.
-5. **Hệ quả cần lưu ý:** D1 chỉ còn 11h ở W2 và 4h ở W3 (nhiều task nền của D1 đã được SA làm sẵn); lịch dev bắt đầu thực chất từ W4. Có thể cho D1 nhận thêm việc sớm hoặc giữ làm dự phòng (quyết định của PM).
+4. **Verification:** `python3 -I tools/plan/build.py` -> `OK: 74 stories, 317 tasks, 1070h`. Remaining load: SA 364h (W4 = 52h, above the 45h warning threshold, printed in bold), D1 190h, D2 225h, D3 258h.
+5. **Consequence to note:** D1 has only 11h in W2 and 4h in W3 (many D1 foundation tasks were already done by the SA); the dev schedule really starts at W4. D1 could take extra work earlier or be kept as backup (PM decision).
 
-## Phần D4 — Thư viện .NET dùng chung cho PostgreSQL: outbox, inbox, Idempotency-Key (SHR-07/08/28) — một phần
-1. **Mục tiêu:** event luôn được ghi **cùng transaction** với thay đổi dữ liệu và không bao giờ mất khi bus lỗi; consumer xử lý **đúng một lần** dù bus giao nhiều lần; gửi lại cùng `Idempotency-Key` không tạo trùng. Bản PostgreSQL dùng cho scheduling (theo ADR-0014 đề xuất là service duy nhất còn dùng PostgreSQL).
-2. **Việc đã làm (theo thứ tự):**
-   1. Thử khôi phục gói trước khi dùng: `Npgsql 10.0.3`, `Testcontainers.PostgreSql 4.16.0` (bản 4.6.0 kéo `SSH.NET` có cảnh báo lỗ hổng NU1903 và sẽ làm build đỏ vì cảnh báo = lỗi, nên chọn 4.16.0, đã xác nhận không cảnh báo).
-   2. Tạo `libs/dotnet/Shp.Data.Postgres`: DDL nhúng, `PostgresOutbox`, `OutboxRelay`, `PostgresInbox`, `PostgresIdempotency`, đăng ký DI.
-   3. Tạo `libs/dotnet/Shp.Data.Postgres.Tests` chạy trên **PostgreSQL 16 thật** bằng Testcontainers (25 test).
-   4. Thêm 2 project vào `Shp.Libs.slnx`; chuyển SHR-07/08/28 sang SA và ghi trạng thái.
-3. **Thay đổi (commit b74e54a):**
+## Part D4 - Shared .NET library for PostgreSQL: outbox, inbox, Idempotency-Key (SHR-07/08/28) - partial
+1. **Goal:** events are always written **in the same transaction** as the data change and are never lost when the bus fails; consumers process **exactly once** even if the bus delivers multiple times; resending the same `Idempotency-Key` does not create duplicates. The PostgreSQL version is used for scheduling (per proposed ADR-0014, the only service still using PostgreSQL).
+2. **Work done (in order):**
+   1. Try package restore before use: `Npgsql 10.0.3`, `Testcontainers.PostgreSql 4.16.0` (version 4.6.0 pulls `SSH.NET` with vulnerability warning NU1903 and would make the build red because warnings = errors, so 4.16.0 was chosen, confirmed warning-free).
+   2. Create `libs/dotnet/Shp.Data.Postgres`: embedded DDL, `PostgresOutbox`, `OutboxRelay`, `PostgresInbox`, `PostgresIdempotency`, DI registration.
+   3. Create `libs/dotnet/Shp.Data.Postgres.Tests` running on **real PostgreSQL 16** with Testcontainers (25 tests).
+   4. Add 2 projects to `Shp.Libs.slnx`; move SHR-07/08/28 to SA and record status.
+3. **Changes (commit b74e54a):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
 | `Directory.Packages.props` | M | + `Npgsql 10.0.3`, `Testcontainers.PostgreSql 4.16.0` |
-| `libs/dotnet/Shp.Data.Postgres/Sql/messaging.sql` | A | DDL `outbox`, `inbox`, `idempotency_key` (khớp `02-db-scheduling.md`, chạy lại được) |
-| `.../MessagingSchema.cs` | A | đọc DDL nhúng; `ApplyAsync` |
-| `.../PostgresOutbox.cs` | A | `AddAsync(tx, evt, validate)` ghi vào outbox trong transaction của người gọi; `validate:true` kiểm schema |
-| `.../OutboxRelay.cs` | A | `IEventPublisher`; `OutboxRelay` (BackgroundService): khóa ≤100 dòng `FOR UPDATE SKIP LOCKED`, phát theo thứ tự, đánh dấu `published_at`; bus lỗi → ghi `attempts`/`last_error` (không ghi payload), **dừng lượt để giữ thứ tự**, backoff tối đa 30 giây; metric `shp_outbox_published_total`, `shp_outbox_publish_failures_total` |
-| `.../PostgresInbox.cs` | A | `TryBeginAsync`, `HandleOnceAsync(consumer, evt, handler)`: ghi dấu inbox + chạy handler + commit trong một transaction; handler lỗi → rollback cả dấu |
-| `.../PostgresIdempotency.cs` | A | `RequireKey` (thiếu → 428, sai → 400), `HashBody` (JSON chuẩn hóa: sắp xếp thuộc tính, bỏ khoảng trắng), `ClaimAsync` (xem dưới) |
+| `libs/dotnet/Shp.Data.Postgres/Sql/messaging.sql` | A | DDL `outbox`, `inbox`, `idempotency_key` (matches `02-db-scheduling.md`, re-runnable) |
+| `.../MessagingSchema.cs` | A | read the embedded DDL; `ApplyAsync` |
+| `.../PostgresOutbox.cs` | A | `AddAsync(tx, evt, validate)` writes to the outbox in the caller's transaction; `validate:true` checks the schema |
+| `.../OutboxRelay.cs` | A | `IEventPublisher`; `OutboxRelay` (BackgroundService): lock up to 100 rows `FOR UPDATE SKIP LOCKED`, publish in order, mark `published_at`; bus failure -> record `attempts`/`last_error` (do not record payload), **stop the batch to preserve order**, backoff up to 30 seconds; metrics `shp_outbox_published_total`, `shp_outbox_publish_failures_total` |
+| `.../PostgresInbox.cs` | A | `TryBeginAsync`, `HandleOnceAsync(consumer, evt, handler)`: record the inbox marker + run the handler + commit in one transaction; handler failure -> roll back the marker too |
+| `.../PostgresIdempotency.cs` | A | `RequireKey` (missing -> 428, invalid -> 400), `HashBody` (canonical JSON: sort properties, remove whitespace), `ClaimAsync` (see below) |
 | `.../DependencyInjection.cs` | A | `AddShpOutboxRelay()` |
-| `libs/dotnet/Shp.Data.Postgres.Tests/*` | A | fixture Testcontainers + 25 test |
-| `libs/dotnet/Shp.Libs.slnx`, `tools/plan/*`, `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | project mới; SHR-07/08/28 → SA; sinh lại kế hoạch |
+| `libs/dotnet/Shp.Data.Postgres.Tests/*` | A | Testcontainers fixture + 25 tests |
+| `libs/dotnet/Shp.Libs.slnx`, `tools/plan/*`, `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | new projects; SHR-07/08/28 -> SA; regenerate the plan |
 
-4. **Hành vi `ClaimAsync` (để dev biết không phải tự làm):** lần đầu → ghi dòng, cấp sẵn `ResourceId` (UUIDv7); cùng key + cùng thao tác + cùng body → `IsReplay=true` cùng `ResourceId` (service đọc lại kết quả cũ, không xử lý lại); khác body/thao tác → 422 `idempotency-key-reused`; 20 request song song cùng key → đúng 1 request mới; claim rollback → claim lại được; quá 24 giờ → coi như mới; key tách theo người gọi.
-5. **Kiểm chứng:**
+4. **`ClaimAsync` behavior (so devs know they do not have to build it):** first time -> insert a row, allocate `ResourceId` (UUIDv7); same key + same operation + same body -> `IsReplay=true` with the same `ResourceId` (service reloads the previous result, does not process again); different body/operation -> 422 `idempotency-key-reused`; 20 concurrent requests with the same key -> exactly 1 new request; claim rollback -> claim can be retaken; past 24 hours -> treated as new; keys are partitioned by caller.
+5. **Verification:**
 ```bash
-# cần Docker. Nếu Docker Hub giới hạn lượt kéo: export SHP_TEST_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:16-alpine
-dotnet test libs/dotnet/Shp.Libs.slnx -c Release      # Shp.Data.Postgres.Tests: 25 passed (cùng 236 + 42 + 29 của các thư viện khác)
+# requires Docker. If Docker Hub rate-limits pulls: export SHP_TEST_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:16-alpine
+dotnet test libs/dotnet/Shp.Libs.slnx -c Release      # Shp.Data.Postgres.Tests: 25 passed (along with 236 + 42 + 29 of the other libraries)
 cd libs/dotnet && dotnet format --verify-no-changes
 ```
-   **Đột biến (đã làm, cả 3 bị bắt):** bỏ 422 khi khác body; bỏ `SKIP LOCKED` (4 replica phát trùng); inbox ghi đè thay vì bỏ qua.
-   Các kịch bản được kiểm trên DB thật: rollback giữ nguyên cả dữ liệu lẫn outbox; thứ tự theo thời gian; bus chết giữa chừng rồi sống lại vẫn phát đủ và đúng thứ tự (1 phát, 1 lỗi có `attempts=1`, 1 chưa bị chạm); 4 relay × 60 event → mỗi event đúng 1 lần; 20 giao trùng → handler chạy đúng 1 lần.
-6. **Lỗi gặp và cách sửa:** analyzer CA1711 cấm tên lớp kết thúc bằng `Collection` → đổi `PostgresTestGroup`; sau khi **phiên làm việc khởi động lại**, Docker daemon không còn chạy và để lại file pid cũ → xóa `/var/run/docker.pid` rồi bật lại `dockerd`, chạy lại toàn bộ test; Testcontainers cần `TESTCONTAINERS_RYUK_DISABLED=true` trong môi trường dựng này (không kéo được image Ryuk).
-7. **Giới hạn đã biết:** SHR-07 `partial` (chưa có bản MongoDB, chưa có `IEventPublisher` thật); SHR-08 `partial` (chưa có MassTransit RabbitMQ/Service Bus, retry/DLQ, bản MongoDB). Thứ tự giữa nhiều replica relay chỉ đảm bảo trong từng lượt; consumer phải bỏ qua event có `version` cũ hơn (đã nêu ở 13-events §1). **Nếu ADR-0014 được duyệt, bản MongoDB trở thành bản dùng nhiều nhất (5 service).**
+   **Mutations (done, all 3 caught):** remove 422 when the body differs; remove `SKIP LOCKED` (4 replicas publish duplicates); inbox overwrites instead of skipping.
+   Scenarios checked on a real DB: rollback preserves both the data and the outbox; time ordering; the bus dying mid-way and coming back still publishes everything in the right order (1 publish, 1 failure with `attempts=1`, 1 untouched); 4 relays x 60 events -> each event exactly once; 20 duplicate deliveries -> the handler runs exactly once.
+6. **Errors encountered and fixes:** analyzer CA1711 forbids class names ending in `Collection` -> rename `PostgresTestGroup`; after **the work session restarted**, the Docker daemon was no longer running and left a stale pid file -> delete `/var/run/docker.pid` then restart `dockerd`, re-run all tests; Testcontainers needs `TESTCONTAINERS_RYUK_DISABLED=true` in this build environment (cannot pull the Ryuk image).
+7. **Known limitations:** SHR-07 `partial` (no MongoDB version yet, no real `IEventPublisher`); SHR-08 `partial` (no MassTransit RabbitMQ/Service Bus, no retry/DLQ, no MongoDB version). Ordering across multiple relay replicas is only guaranteed within a batch; consumers must skip events with an older `version` (noted in 13-events section 1). **If ADR-0014 is approved, the MongoDB version becomes the most used one (5 services).**
 
-## Phần D4b — Đề xuất ADR-0014: rà soát CSDL từng service (CHƯA áp dụng, chờ duyệt)
-1. **Mục tiêu:** trả lời nhận xét của PM "lúc nào cũng PostgreSQL, phải tối ưu DB" bằng số liệu tải thật, không đổi engine theo cảm tính.
-2. **Việc đã làm:** đọc `workload-analysis.md` và ADR-0008; lập bảng khối lượng thực (notification ~2.000 nhắc/ngày, ml ~900 dự đoán/ngày và ~330k fact/năm); đánh giá từng service với các phương án thay thế; viết ADR; thống kê tệp bị ảnh hưởng.
-3. **Thay đổi (commit b74e54a):**
+## Part D4b - Proposed ADR-0014: database review per service (NOT applied yet, pending approval)
+1. **Goal:** answer the PM's comment "always PostgreSQL, optimize the DB" with real load figures, without changing engines based on feeling.
+2. **Work done:** read `workload-analysis.md` and ADR-0008; build a table of actual volumes (notification ~2,000 reminders/day, ml ~900 predictions/day and ~330k facts/year); evaluate each service against alternative options; write the ADR; count affected files.
+3. **Changes (commit b74e54a):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `docs/03-architecture/adr/0014-database-per-service-review.md` | A | **Proposed**: scheduling giữ PostgreSQL (ràng buộc DB chống đặt trùng, đã kiểm 50 lượt đồng thời); notification → MongoDB (document + lấy việc nguyên tử `findOneAndUpdate` + TTL); ml → MongoDB (trạng thái đặc trưng + nhật ký dự đoán) + Parquet trên Blob (tập huấn luyện bất biến); bảng tối ưu từng engine và cách đo; rủi ro (time-series collection trên Cosmos vCore chưa kiểm) |
-| `docs/03-architecture/adr/README.md` | M | thêm dòng 0014 (Proposed) |
+| `docs/03-architecture/adr/0014-database-per-service-review.md` | A | **Proposed**: scheduling keeps PostgreSQL (DB constraint against duplicate booking, tested with 50 concurrent bookings); notification -> MongoDB (document + atomic work pickup `findOneAndUpdate` + TTL); ml -> MongoDB (feature state + prediction log) + Parquet on Blob (immutable training set); optimization table per engine and how to measure; risks (time-series collection on Cosmos vCore not tested) |
+| `docs/03-architecture/adr/README.md` | M | add line 0014 (Proposed) |
 
-4. **Cố ý CHƯA làm:** chưa sửa `04-db-notification-ml.md`, DDL, chart local, task NTF/ML/IAC cho tới khi PM duyệt (tránh viết lại thiết kế dựa trên đề xuất chưa chốt).
-5. **Việc cần PM quyết:** duyệt/sửa ADR-0014, đặc biệt (a) notification → MongoDB hay Redis; (b) ml → MongoDB + Parquet; (c) chấp nhận kiểm khả dụng time-series collection trên Cosmos DB vCore trước khi chốt.
+4. **Deliberately NOT done:** do not modify `04-db-notification-ml.md`, DDL, local chart, NTF/ML/IAC tasks until the PM approves (avoid rewriting the design based on an unapproved proposal).
+5. **Decisions needed from the PM:** approve/modify ADR-0014, especially (a) notification -> MongoDB or Redis; (b) ml -> MongoDB + Parquet; (c) accept checking time-series collection availability on Cosmos DB vCore before finalizing.
 
-## Phần J — Chuyển toàn bộ code base sang Java (quyết định PM ngày 2026-10-28)
-> PM: "chuyển toàn bộ code base sang Java… tôi duyệt mọi thiết kế bạn đề ra". Thứ tự làm: J1 quyết định + tài liệu → J2 Maven + thư viện nền đầu tiên → J3 → J4 (chuyển các thư viện .NET đã viết sang Java, giữ nguyên hành vi và test) → J5 (8 service, CI, Docker, bộ công cụ local; xóa .NET/Python).
-> Phiên bản đã tra trực tiếp trên Maven Central ngày 2026-10-28 (không chọn theo trí nhớ): Spring Boot **4.1.2**, Spring AI **2.0.2**, HAPI FHIR **8.12.1**, Testcontainers **2.0.5**, networknt json-schema-validator **3.0.8**, CloudEvents SDK **5.1.0**, Flyway **13.11.1**, JaCoCo **0.8.16**, ArchUnit **1.5.1**, XGBoost4J **3.4.0**, DuckDB JDBC **1.5.6.0**, MLflow client **3.11.1**, Tess4J **5.20.0**, PostgreSQL JDBC **42.7.14**, MongoDB driver **5.14.0**. JDK trong môi trường dựng: **21.0.12**, Maven **3.9.11**.
+## Part J - Move the entire code base to Java (PM decision on 2026-10-28)
+> PM: "move the entire code base to Java... I approve every design you propose". Order of work: J1 decision + documents -> J2 Maven + first foundation library -> J3 -> J4 (port the .NET libraries already written to Java, keeping behavior and tests) -> J5 (8 services, CI, Docker, local toolkit; delete .NET/Python).
+> Versions checked directly on Maven Central on 2026-10-28 (not chosen from memory): Spring Boot **4.1.2**, Spring AI **2.0.2**, HAPI FHIR **8.12.1**, Testcontainers **2.0.5**, networknt json-schema-validator **3.0.8**, CloudEvents SDK **5.1.0**, Flyway **13.11.1**, JaCoCo **0.8.16**, ArchUnit **1.5.1**, XGBoost4J **3.4.0**, DuckDB JDBC **1.5.6.0**, MLflow client **3.11.1**, Tess4J **5.20.0**, PostgreSQL JDBC **42.7.14**, MongoDB driver **5.14.0**. JDK in the build environment: **21.0.12**, Maven **3.9.11**.
 
-### J1 — Quyết định Java, duyệt ADR-0014 và cập nhật tài liệu/kế hoạch ✅
-1. **Mục tiêu:** ghi quyết định thành ADR, áp dụng ADR-0014 (PM đã duyệt) vào thiết kế chi tiết, và đổi mọi task/tài liệu đang ghi .NET/Python sang Java trước khi viết code.
-2. **Việc đã làm (theo thứ tự):**
-   1. Viết ADR-0015 (bảng ánh xạ từng công nghệ .NET/Python → Java); đánh dấu ADR-0002, ADR-0012 **Superseded**; ADR-0014 → **Accepted**; gạch dòng notification/ml trong ADR-0008.
-   2. Sửa tài liệu kiến trúc còn nhắc .NET/Python/Firely/MassTransit/YARP/LightGBM/pandera (`overview.md`, ADR-0001/0003/0004/0007/0009, `13-events.md`, `16-mlops.md`, `04-devops/README.md`).
-   3. **Viết lại `04-db-notification-ml.md` sang MongoDB** (ADR-0014): collection, document mẫu, index (unique chống trùng, partial cho lấy việc, TTL), thao tác lấy việc bằng `findOneAndUpdate`; ml = `patient_stats` + `appointment_facts` + `predictions` (time-series) + Parquet/DuckDB cho huấn luyện.
-   4. Viết script khởi tạo `contracts/db/mongo-notification-ml.js` và bộ kiểm `contracts/db/mongo-notification-ml.test.js`; **chạy trên MongoDB 8 thật** (replica set): 12/12 kiểm tra qua, chạy script 2 lần không lỗi.
-   5. Sửa kế hoạch: task .NET/Python → Java; các task PY-01/03/04/05 thu nhỏ thành "nối thư viện chung Java" (vì thư viện Java dùng chung đã làm phần đó); NTF-01/05 và ML-11 sang MongoDB; nhãn người D1/D2/D3 thành Dev Java.
-3. **Thay đổi (commit 3b7390f):**
+### J1 - Java decision, approve ADR-0014 and update documents/plan DONE
+1. **Goal:** record the decision as an ADR, apply ADR-0014 (approved by the PM) to the detailed design, and change every task/document still naming .NET/Python to Java before writing code.
+2. **Work done (in order):**
+   1. Write ADR-0015 (technology-by-technology mapping from .NET/Python -> Java); mark ADR-0002, ADR-0012 **Superseded**; ADR-0014 -> **Accepted**; strike the notification/ml lines in ADR-0008.
+   2. Fix architecture documents still mentioning .NET/Python/Firely/MassTransit/YARP/LightGBM/pandera (`overview.md`, ADR-0001/0003/0004/0007/0009, `13-events.md`, `16-mlops.md`, `04-devops/README.md`).
+   3. **Rewrite `04-db-notification-ml.md` to MongoDB** (ADR-0014): collections, sample documents, indexes (unique anti-duplicate, partial for work pickup, TTL), work pickup operation with `findOneAndUpdate`; ml = `patient_stats` + `appointment_facts` + `predictions` (time-series) + Parquet/DuckDB for training.
+   4. Write initialization script `contracts/db/mongo-notification-ml.js` and test suite `contracts/db/mongo-notification-ml.test.js`; **run on real MongoDB 8** (replica set): 12/12 checks pass, running the script twice is error-free.
+   5. Fix the plan: .NET/Python tasks -> Java; tasks PY-01/03/04/05 reduced to "wire up the shared Java library" (since the shared Java library already does that part); NTF-01/05 and ML-11 -> MongoDB; person labels D1/D2/D3 become Java Dev.
+3. **Changes (commit 3b7390f):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `docs/03-architecture/adr/0015-java-for-all-services.md` | A | Java 21 LTS + Spring Boot 4.1; bảng ánh xạ 14 hạng mục; hệ quả (một pipeline CI, chuyển 1-1 thư viện, công cụ SA giữ Python/Bash) |
-| `docs/03-architecture/adr/0002-…`, `0012-…` | M | `Accepted` → `Superseded (2026-10-28) bởi ADR-0015` |
-| `docs/03-architecture/adr/0014-…` | M | `Proposed` → `Accepted (2026-10-28)` |
-| `docs/03-architecture/adr/0008-…` | M | dòng notification, ml bị gạch, trỏ sang ADR-0014 |
-| `docs/03-architecture/adr/README.md` | M | trạng thái 0002/0012/0014; thêm 0015 |
-| `docs/03-architecture/overview.md` | M | cột công nghệ 8 service → Java (gateway: Spring Cloud Gateway, ai: Spring AI, ml: XGBoost4J + DuckDB); DB notification/ml → MongoDB; bus: Spring Cloud Stream |
-| `docs/03-architecture/adr/0001,0003,0004,0007,0009`, `detailed-design/13-events.md`, `16-mlops.md`, `docs/04-devops/README.md` | M | Firely → HAPI FHIR; MassTransit → Spring Cloud Stream; LightGBM → XGBoost4J; pandera → quy tắc Java; ".NET CI, Python CI" → "Java CI (Maven)" |
-| `docs/03-architecture/detailed-design/04-db-notification-ml.md` | M | **viết lại toàn bộ**: PostgreSQL DDL → collection MongoDB (xem bước 2.3) |
-| `contracts/db/mongo-notification-ml.js`, `contracts/db/mongo-notification-ml.test.js` | A | script khởi tạo idempotent + 12 kiểm tra |
-| `tools/plan/tasks_dev.py` | M | SHR-01 (HAPI), PY-01 (3h→1h), PY-03 (4h→2h), PY-04, PY-05 (2h→1h), PY-07 (Spring AI), ML-04 (XGBoost4J), ML-14 (quy tắc Java), ML-11/NTF-01/NTF-05 (MongoDB) |
-| `tools/plan/tasks_sa.py` | M | GOV-06 (maven), CIT-01 (Java CI), CIT-02 (CI cho hợp đồng + công cụ SA), CIT-07 (CodeQL java), LOC-03/04, CIT-10 (Maven packages), GW-01 (Spring Cloud Gateway), SCF-06/07, SHR-25, SHR-08 (Spring Cloud Stream) |
-| `tools/plan/stories.py` | M | AC "LightGBM" → "XGBoost" |
-| `tools/plan/build.py` | M | nhãn epic SHR/PY và người D1–D3 |
-| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **sinh lại** — tổng 1.065 giờ (giảm 5 giờ vì PY-xx thu nhỏ) |
+| `docs/03-architecture/adr/0015-java-for-all-services.md` | A | Java 21 LTS + Spring Boot 4.1; 14-item mapping table; consequences (one CI pipeline, 1-1 library port, SA tools keep Python/Bash) |
+| `docs/03-architecture/adr/0002-...`, `0012-...` | M | `Accepted` -> `Superseded (2026-10-28) by ADR-0015` |
+| `docs/03-architecture/adr/0014-...` | M | `Proposed` -> `Accepted (2026-10-28)` |
+| `docs/03-architecture/adr/0008-...` | M | notification, ml lines struck, point to ADR-0014 |
+| `docs/03-architecture/adr/README.md` | M | status of 0002/0012/0014; add 0015 |
+| `docs/03-architecture/overview.md` | M | technology column for 8 services -> Java (gateway: Spring Cloud Gateway, ai: Spring AI, ml: XGBoost4J + DuckDB); notification/ml DB -> MongoDB; bus: Spring Cloud Stream |
+| `docs/03-architecture/adr/0001,0003,0004,0007,0009`, `detailed-design/13-events.md`, `16-mlops.md`, `docs/04-devops/README.md` | M | Firely -> HAPI FHIR; MassTransit -> Spring Cloud Stream; LightGBM -> XGBoost4J; pandera -> Java rules; ".NET CI, Python CI" -> "Java CI (Maven)" |
+| `docs/03-architecture/detailed-design/04-db-notification-ml.md` | M | **fully rewritten**: PostgreSQL DDL -> MongoDB collections (see step 2.3) |
+| `contracts/db/mongo-notification-ml.js`, `contracts/db/mongo-notification-ml.test.js` | A | idempotent initialization script + 12 checks |
+| `tools/plan/tasks_dev.py` | M | SHR-01 (HAPI), PY-01 (3h->1h), PY-03 (4h->2h), PY-04, PY-05 (2h->1h), PY-07 (Spring AI), ML-04 (XGBoost4J), ML-14 (Java rules), ML-11/NTF-01/NTF-05 (MongoDB) |
+| `tools/plan/tasks_sa.py` | M | GOV-06 (maven), CIT-01 (Java CI), CIT-02 (CI for contracts + SA tools), CIT-07 (CodeQL java), LOC-03/04, CIT-10 (Maven packages), GW-01 (Spring Cloud Gateway), SCF-06/07, SHR-25, SHR-08 (Spring Cloud Stream) |
+| `tools/plan/stories.py` | M | AC "LightGBM" -> "XGBoost" |
+| `tools/plan/build.py` | M | SHR/PY epic labels and D1-D3 person labels |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | **regenerated** - total 1,065 hours (5 hours less because PY-xx shrank) |
 
-4. **Lệnh làm lại / kiểm chứng:**
+4. **Redo / verification commands:**
 ```bash
 python3 -I tools/plan/build.py                       # OK: 74 stories, 317 tasks, 1065h
 docker run -d --name mtest mongo:8 --replSet rs0 && docker exec mtest mongosh --eval 'rs.initiate()'
 docker cp contracts/db/mongo-notification-ml.js mtest:/i.js && docker cp contracts/db/mongo-notification-ml.test.js mtest:/t.js
 docker exec mtest mongosh --quiet /i.js && docker exec mtest mongosh --quiet /t.js   # ALL PASSED
 ```
-5. **Lỗi gặp và cách sửa:** Docker daemon lại tắt (sau khi phiên khởi động lại) → xóa pid cũ, bật lại; image Mongo lấy từ `mirror.gcr.io` (Docker Hub giới hạn lượt kéo). Câu chữ ban đầu trong tài liệu nói "2 worker song song" trong khi kiểm chứng mongosh là **tuần tự** → đã sửa cho đúng; test song song thật sẽ nằm trong thư viện Java.
-6. **Giới hạn:** chưa kiểm time-series collection và transaction trên **Cosmos DB for MongoDB vCore** (chỉ kiểm được khi dựng UAT). Các trạng thái SHR-xx trong `status.py` vẫn trỏ tới bản .NET; sẽ cập nhật sang commit Java ở J2–J4. Code .NET/Python vẫn còn trong repo cho tới J5.
+5. **Errors encountered and fixes:** the Docker daemon was off again (after the session restarted) -> delete the stale pid, restart it; the Mongo image was pulled from `mirror.gcr.io` (Docker Hub rate limits pulls). The original wording in the document said "2 parallel workers" while the mongosh verification is **sequential** -> corrected; the real parallel test will be in the Java library.
+6. **Limitations:** time-series collections and transactions on **Cosmos DB for MongoDB vCore** not yet tested (can only be tested when UAT is provisioned). The SHR-xx statuses in `status.py` still point to the .NET version; they will be updated to the Java commits in J2-J4. .NET/Python code remains in the repo until J5.
 
-### J2 — Maven gốc + `shp-service-defaults` + `shp-authz` (thay `Shp.ServiceDefaults`, `Shp.Authorization`) ✅
-1. **Mục tiêu:** có khung build Java chung cho mọi module và chuyển hai thư viện nền đầu tiên, **giữ nguyên hành vi và bộ test** của bản .NET.
-2. **Việc đã làm (theo thứ tự):**
-   1. Thử Maven tải được qua proxy với `spring-boot-starter-parent 4.1.2`; đọc phiên bản Boot quản lý sẵn (Testcontainers 2.0.5, SnakeYAML 2.6, Jackson 3.1.7, OpenTelemetry 1.62.0, Flyway 12.4.0).
-   2. Viết `pom.xml` gốc: parent Spring Boot 4.1.2, Java 21, `-Xlint:all -Werror` (cảnh báo = lỗi), Spotless (google-java-format) chạy `check` ở phase `verify`, JaCoCo ngưỡng line coverage **70%** mỗi module; `.mvn/jvm.config` mở `--add-exports` cho google-java-format trên JDK 21.
-   3. `libs/java/shp-authz`: `AuthzMatrix` (SnakeYAML SafeConstructor + đủ bất biến như bản .NET/Python), `AuthorizationEngine` (dùng `java.time.Clock`), `Principal`, `ResourceContext` (có builder), `AuthzDecision`, `Predicates`; `matrix.yaml` được **copy vào jar** lúc build (`shp/authz/matrix.yaml`).
-   4. Chuyển test sinh từ ma trận sang JUnit 5 (`@ParameterizedTest` + `@MethodSource`): **238 test** (bản .NET 236; thêm 2: lý do `role-not-allowed`, bộ nạp báo id trùng/denyAll/thiếu rule).
-   5. `libs/java/shp-service-defaults`: auto-configuration nạp `shp-defaults.properties` (độ ưu tiên thấp nhất): `/health/live`, `/health/ready`, `/health`, `/info` (name, version, gitSha), `/prometheus`; tracing 100%, chỉ xuất OTLP khi `SHP_OTLP_EXPORT=true`; virtual threads; tắt máy êm (graceful). 5 test chạy server thật cổng ngẫu nhiên.
-3. **Thay đổi (commit 95d2f74):**
+### J2 - Root Maven + `shp-service-defaults` + `shp-authz` (replace `Shp.ServiceDefaults`, `Shp.Authorization`) DONE
+1. **Goal:** have a common Java build skeleton for every module and port the first two foundation libraries, **keeping the behavior and test suite** of the .NET version.
+2. **Work done (in order):**
+   1. Test that Maven can download through the proxy with `spring-boot-starter-parent 4.1.2`; read the versions managed by Boot (Testcontainers 2.0.5, SnakeYAML 2.6, Jackson 3.1.7, OpenTelemetry 1.62.0, Flyway 12.4.0).
+   2. Write the root `pom.xml`: parent Spring Boot 4.1.2, Java 21, `-Xlint:all -Werror` (warnings = errors), Spotless (google-java-format) running `check` in the `verify` phase, JaCoCo line coverage threshold **70%** per module; `.mvn/jvm.config` opens `--add-exports` for google-java-format on JDK 21.
+   3. `libs/java/shp-authz`: `AuthzMatrix` (SnakeYAML SafeConstructor + all invariants like the .NET/Python version), `AuthorizationEngine` (uses `java.time.Clock`), `Principal`, `ResourceContext` (with builder), `AuthzDecision`, `Predicates`; `matrix.yaml` is **copied into the jar** at build time (`shp/authz/matrix.yaml`).
+   4. Move the matrix-generated tests to JUnit 5 (`@ParameterizedTest` + `@MethodSource`): **238 tests** (.NET version 236; 2 more: `role-not-allowed` reason, loader reporting duplicate id/denyAll/missing rule).
+   5. `libs/java/shp-service-defaults`: auto-configuration loading `shp-defaults.properties` (lowest precedence): `/health/live`, `/health/ready`, `/health`, `/info` (name, version, gitSha), `/prometheus`; tracing 100%, export OTLP only when `SHP_OTLP_EXPORT=true`; virtual threads; graceful shutdown. 5 tests run a real server on a random port.
+3. **Changes (commit 95d2f74):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `pom.xml` | A | parent + module + BOM (Spring AI 2.0.2, HAPI 8.12.1, networknt 3.0.8, CloudEvents 5.1.0, ArchUnit 1.5.1) + compiler/Spotless/JaCoCo |
-| `.mvn/jvm.config` | A | `--add-exports jdk.compiler/...` (6 dòng) cho Spotless |
+| `pom.xml` | A | parent + modules + BOM (Spring AI 2.0.2, HAPI 8.12.1, networknt 3.0.8, CloudEvents 5.1.0, ArchUnit 1.5.1) + compiler/Spotless/JaCoCo |
+| `.mvn/jvm.config` | A | `--add-exports jdk.compiler/...` (6 lines) for Spotless |
 | `.gitignore` | M | + `target/` |
-| `libs/java/shp-authz/pom.xml` | A | SnakeYAML; resource `../../../contracts/authz/matrix.yaml` → `shp/authz/` |
-| `libs/java/shp-authz/src/main/java/org/shp/authz/*.java` | A | 8 lớp (xem bước 2.3) |
-| `libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java` | A | 238 test |
+| `libs/java/shp-authz/pom.xml` | A | SnakeYAML; resource `../../../contracts/authz/matrix.yaml` -> `shp/authz/` |
+| `libs/java/shp-authz/src/main/java/org/shp/authz/*.java` | A | 8 classes (see step 2.3) |
+| `libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java` | A | 238 tests |
 | `libs/java/shp-service-defaults/pom.xml` | A | actuator, opentelemetry starter, micrometer prometheus, jackson-annotations |
-| `.../src/main/resources/shp-defaults.properties` | A | đường dẫn probe khớp Helm chart; `validate-group-membership=false` |
+| `.../src/main/resources/shp-defaults.properties` | A | probe paths match the Helm chart; `validate-group-membership=false` |
 | `.../ServiceDefaultsAutoConfiguration.java`, `ServiceInfo.java`, `META-INF/spring/...AutoConfiguration.imports` | A | auto-config + `InfoContributor` |
-| `.../src/test/java/.../ServiceDefaultsTest.java` | A | 5 test |
+| `.../src/test/java/.../ServiceDefaultsTest.java` | A | 5 tests |
 
-4. **Lệnh làm lại / kiểm chứng:**
+4. **Redo / verification commands:**
 ```bash
-mvn -B verify                                   # BUILD SUCCESS: shp-service-defaults 5 test, shp-authz 238 test, coverage ≥ 70%
-mvn -B spotless:apply                           # tự định dạng trước khi commit (CI chạy spotless:check)
+mvn -B verify                                   # BUILD SUCCESS: shp-service-defaults 5 tests, shp-authz 238 tests, coverage >= 70%
+mvn -B spotless:apply                           # auto-format before committing (CI runs spotless:check)
 ```
-   **Đột biến (đã làm, cả 3 bị bắt):** `own` luôn đúng → 10 test đỏ; cửa sổ hủy 2h → 1h → 2 test đỏ; `not-care` luôn đúng → 1 test đỏ. (Lần sed đầu của đột biến 2h không khớp vì Spotless đã xuống dòng; đã kiểm `grep -c` rồi làm lại.)
-5. **Lỗi gặp và cách sửa:**
-   - javac cảnh báo `unknown enum constant JsonInclude.Include.NON_EMPTY` (kiểu actuator tham chiếu annotation Jackson không có trên classpath) → thêm `jackson-annotations`.
-   - Context không khởi động: `Health contributor 'db' ... does not exist` → `management.endpoint.health.validate-group-membership=false` để nhóm `ready` tự gồm DB nào service có.
-6. **Khác biệt so với bản .NET:** đường dẫn metric là `/prometheus` (Micrometer) thay vì OTel metrics exporter; OTLP bật bằng `SHP_OTLP_EXPORT` (Helm sẽ đặt ở UAT/prod).
+   **Mutations (done, all 3 caught):** `own` always true -> 10 tests red; cancel window 2h -> 1h -> 2 tests red; `not-care` always true -> 1 test red. (The first sed for the 2h mutation did not match because Spotless had reflowed the line; checked with `grep -c` then redid it.)
+5. **Errors encountered and fixes:**
+   - javac warned `unknown enum constant JsonInclude.Include.NON_EMPTY` (actuator types reference a Jackson annotation not on the classpath) -> add `jackson-annotations`.
+   - Context failed to start: `Health contributor 'db' ... does not exist` -> `management.endpoint.health.validate-group-membership=false` so the `ready` group automatically includes whichever DB a service has.
+6. **Differences from the .NET version:** the metric path is `/prometheus` (Micrometer) instead of the OTel metrics exporter; OTLP is enabled with `SHP_OTLP_EXPORT` (Helm will set it in UAT/prod).
 
-### J3 — `shp-events` + `shp-web` (thay `Shp.Events`, `Shp.Web`) ✅
-1. **Mục tiêu:** chuyển envelope CloudEvents, kiểm schema, audit, lỗi chuẩn, xác thực JWT, tra danh tính và phân quyền gắn endpoint sang Java/Spring, giữ nguyên hành vi đã kiểm ở bản .NET.
-2. **Việc đã làm (theo thứ tự):**
-   1. Đọc POM `json-schema-validator` 3.0.8 → dùng **Jackson 3** (`tools.jackson`), khớp Boot 4; đọc API thật bằng `javap` (`SchemaRegistry`, `Schema.validate(node, ctx -> ctx.executionConfig(c -> c.formatAssertionsEnabled(true)))`).
-   2. **Điều chỉnh ADR-0015:** không dùng CloudEvents Java SDK (module JSON dùng Jackson 2) → envelope là record Java.
-   3. `libs/java/shp-events`: `CloudEvent`, `CloudEvents.create` (UUIDv7 tự viết `Uuids.v7`, `traceparent` từ OpenTelemetry `Span.current()`, ≤ 64 KB, bỏ trường null), `EventSchemas.validate` (schema nhúng vào jar từ `contracts/events`, trừ ví dụ), `audit/` (`AuditRecord`, `AuditRecordBuilder` — che IP **không tra DNS**, `AuditSink`, `InMemoryAuditSink`, `AuthzAudit`). 47 test.
+### J3 - `shp-events` + `shp-web` (replace `Shp.Events`, `Shp.Web`) DONE
+1. **Goal:** port the CloudEvents envelope, schema validation, audit, standard errors, JWT authentication, identity lookup and endpoint-attached authorization to Java/Spring, keeping the behavior verified in the .NET version.
+2. **Work done (in order):**
+   1. Read the POM of `json-schema-validator` 3.0.8 -> uses **Jackson 3** (`tools.jackson`), matching Boot 4; read the real API with `javap` (`SchemaRegistry`, `Schema.validate(node, ctx -> ctx.executionConfig(c -> c.formatAssertionsEnabled(true)))`).
+   2. **ADR-0015 adjustment:** do not use the CloudEvents Java SDK (its JSON module uses Jackson 2) -> the envelope is a Java record.
+   3. `libs/java/shp-events`: `CloudEvent`, `CloudEvents.create` (hand-written UUIDv7 `Uuids.v7`, `traceparent` from OpenTelemetry `Span.current()`, <= 64 KB, drop null fields), `EventSchemas.validate` (schemas embedded in the jar from `contracts/events`, excluding examples), `audit/` (`AuditRecord`, `AuditRecordBuilder` - masks IP **without DNS lookup**, `AuditSink`, `InMemoryAuditSink`, `AuthzAudit`). 47 tests.
    4. `libs/java/shp-web` (auto-configuration):
-      - `errors/`: `ErrorCatalog` (27 mã), `ShpException`, `ErrorWriter` (FHIR → OperationOutcome, còn lại → Problem Details), `ShpExceptionHandler` (`@RestControllerAdvice`: ShpException, 400 đầu vào sai, 404 route lạ, 500 không lộ chi tiết).
-      - `auth/`: `ShpAuthProperties` (`shp.auth.*`, mặc định từ `OIDC_AUTHORITY`/`OIDC_AUDIENCE`), `ShpJwt` (validator issuer + audience + hạn có độ lệch + MFA cho nhân viên; đổi `roles` thành quyền), `IdentityResolver` (cache 60s/5s), `HttpIdentityLinkClient` (`RestClient`), `IdentityInterceptor`, `@AllowUnlinkedIdentity`.
-      - `authz/`: `@RequireShpAuthz(resource, action, context, denyAsNotFound)`, `ResourceContextResolver` (bean), `AuthzInterceptor` (từ chối → audit `denied` → 403/404; cho phép → audit `success` sau khi xử lý, `error` nếu 5xx), `@ShpPublicEndpoint`, `UnprotectedEndpoints.find(ctx)`.
-      - `ShpWebAutoConfiguration`: `SecurityFilterChain` (stateless, công khai `/health/**`, `/info`, `/prometheus`), `JwtDecoder` **lười** (`SupplierJwtDecoder`: service khởi động được khi IdP chưa sẵn), engine phân quyền, hai interceptor theo thứ tự danh tính → phân quyền.
-      31 test (25 test tích hợp chạy server thật + token HMAC ký cục bộ; 6 test đơn vị).
-3. **Thay đổi (commit 5e423ab):**
+      - `errors/`: `ErrorCatalog` (27 codes), `ShpException`, `ErrorWriter` (FHIR -> OperationOutcome, the rest -> Problem Details), `ShpExceptionHandler` (`@RestControllerAdvice`: ShpException, 400 bad input, 404 unknown route, 500 without leaking details).
+      - `auth/`: `ShpAuthProperties` (`shp.auth.*`, defaults from `OIDC_AUTHORITY`/`OIDC_AUDIENCE`), `ShpJwt` (validator issuer + audience + expiry with clock skew + MFA for staff; map `roles` to authorities), `IdentityResolver` (60s/5s cache), `HttpIdentityLinkClient` (`RestClient`), `IdentityInterceptor`, `@AllowUnlinkedIdentity`.
+      - `authz/`: `@RequireShpAuthz(resource, action, context, denyAsNotFound)`, `ResourceContextResolver` (bean), `AuthzInterceptor` (deny -> audit `denied` -> 403/404; allow -> audit `success` after processing, `error` if 5xx), `@ShpPublicEndpoint`, `UnprotectedEndpoints.find(ctx)`.
+      - `ShpWebAutoConfiguration`: `SecurityFilterChain` (stateless, public `/health/**`, `/info`, `/prometheus`), **lazy** `JwtDecoder` (`SupplierJwtDecoder`: the service can start when the IdP is not ready), authorization engine, two interceptors in the order identity -> authorization.
+      31 tests (25 integration tests running a real server + locally signed HMAC tokens; 6 unit tests).
+3. **Changes (commit 5e423ab):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `pom.xml` | M | + module `shp-events`, `shp-web`; + `shp-events` trong dependencyManagement |
-| `libs/java/shp-events/**` | A | 7 lớp chính + `EventTest` (22) + `AuditTest` (25) |
-| `libs/java/shp-web/**` | A | 16 lớp chính, `shp-web-defaults.properties`, `AutoConfiguration.imports`; `TestApp`, `WebTest` (25), `UnitTest` (6) |
-| `docs/03-architecture/adr/0015-java-for-all-services.md` | M | dòng "Event": record Java thay CloudEvents SDK (lý do Jackson 2/3) |
+| `pom.xml` | M | + modules `shp-events`, `shp-web`; + `shp-events` in dependencyManagement |
+| `libs/java/shp-events/**` | A | 7 main classes + `EventTest` (22) + `AuditTest` (25) |
+| `libs/java/shp-web/**` | A | 16 main classes, `shp-web-defaults.properties`, `AutoConfiguration.imports`; `TestApp`, `WebTest` (25), `UnitTest` (6) |
+| `docs/03-architecture/adr/0015-java-for-all-services.md` | M | "Event" row: Java record instead of the CloudEvents SDK (Jackson 2/3 reason) |
 
-4. **Cách dev dùng (thay hướng dẫn .NET ở D2/D3):**
+4. **How devs use it (replaces the .NET guide in D2/D3):**
 ```java
 @GetMapping("/fhir/Appointment/{id}")
 @RequireShpAuthz(resource = "Appointment", action = "read", context = "appointmentFacts")
-Appointment read(@PathVariable String id, HttpServletRequest req) { ... }      // throw new ShpException("not-found") khi không có
+Appointment read(@PathVariable String id, HttpServletRequest req) { ... }      // throw new ShpException("not-found") when absent
 @Bean ResourceContextResolver appointmentFacts(...) { return (req, vars, principal) -> ResourceContext.builder().patientId(...).build(); }
-// test của service: assertThat(UnprotectedEndpoints.find(applicationContext)).isEmpty();
-// test hợp đồng: assertThat(EventSchemas.validate(CloudEvents.create("scheduling", "shp.scheduling.appointment-booked.v1", subject, payload))).isEmpty();
+// service test: assertThat(UnprotectedEndpoints.find(applicationContext)).isEmpty();
+// contract test: assertThat(EventSchemas.validate(CloudEvents.create("scheduling", "shp.scheduling.appointment-booked.v1", subject, payload))).isEmpty();
 ```
-   Service chỉ phải cung cấp bean `IdentityLinkClient` (clinical: đọc DB; khác: `HttpIdentityLinkClient`) và `AuditSink`.
-5. **Kiểm chứng:**
+   A service only has to provide the `IdentityLinkClient` bean (clinical: reads the DB; others: `HttpIdentityLinkClient`) and `AuditSink`.
+5. **Verification:**
 ```bash
-mvn -B verify      # shp-service-defaults 5, shp-authz 238, shp-events 47, shp-web 31 — BUILD SUCCESS, coverage ≥ 70%
+mvn -B verify      # shp-service-defaults 5, shp-authz 238, shp-events 47, shp-web 31 - BUILD SUCCESS, coverage >= 70%
 ```
-   **Đột biến (đã làm, tất cả bị bắt):** shp-events — tắt kiểm `format` (1 đỏ), tắt che IP (3), bỏ chặn giá trị trong `resource` (5). shp-web — bỏ MFA (2), bỏ audience (1), cho tài khoản chưa liên kết (1), bỏ cờ khóa (1), không audit khi từ chối (3), luôn `forbidden` (1), TTL 600s (1), không ghi `error` khi 5xx (1).
-6. **Lỗi gặp và cách sửa:**
-   - **Lần đầu chạy đột biến shp-events cho kết quả trống — không hợp lệ:** chạy `mvn -pl libs/java/shp-events` thiếu `-am` nên Maven không tìm thấy `shp-authz` (chưa cài vào `~/.m2`) và dừng trước khi test. Làm lại với `-am`. **Bài học:** luôn có dòng "baseline" xanh trước khi tin kết quả đột biến; dùng `-am` (hoặc `mvn install`) cho module có phụ thuộc nội bộ.
-   - Đột biến bằng `sed` không khớp khi Spotless đã xuống dòng → dùng script Python có `assert` để báo "NO MATCH" thay vì im lặng.
-   - javac `-Werror`: try-with-resources không dùng biến → đổi thành `try/finally`.
-   - `MockRestServiceServer` không cho thêm kỳ vọng sau khi đã gọi → mỗi kịch bản một server.
-7. **Khác biệt so với bản .NET:** endpoint "công khai có chủ đích" vẫn **phải đăng nhập** (chuỗi bảo mật mặc định chặn mọi đường dẫn trừ health/info/prometheus); `@ShpPublicEndpoint` chỉ nghĩa là "không cần quy tắc ma trận". 405 trả `validation-failed` (400) vì bảng lỗi §5 không có mã riêng.
+   **Mutations (done, all caught):** shp-events - disable `format` checks (1 red), disable IP masking (3), remove blocking of values in `resource` (5). shp-web - remove MFA (2), remove audience (1), allow unlinked accounts (1), ignore the locked flag (1), no audit on deny (3), always `forbidden` (1), TTL 600s (1), do not record `error` on 5xx (1).
+6. **Errors encountered and fixes:**
+   - **The first shp-events mutation run gave an empty result - invalid:** running `mvn -pl libs/java/shp-events` without `-am` meant Maven could not find `shp-authz` (not installed in `~/.m2`) and stopped before testing. Redone with `-am`. **Lesson:** always have a green "baseline" line before trusting mutation results; use `-am` (or `mvn install`) for modules with internal dependencies.
+   - Mutation by `sed` did not match when Spotless had reflowed the line -> use a Python script with `assert` to report "NO MATCH" instead of staying silent.
+   - javac `-Werror`: try-with-resources with an unused variable -> change to `try/finally`.
+   - `MockRestServiceServer` does not allow adding expectations after a call -> one server per scenario.
+7. **Differences from the .NET version:** a "deliberately public" endpoint still **requires login** (the default security chain blocks every path except health/info/prometheus); `@ShpPublicEndpoint` only means "no matrix rule needed". 405 returns `validation-failed` (400) because the error table in section 5 has no dedicated code.
 
-### J4 — Thư viện dữ liệu: `shp-data-postgres` (chuyển từ .NET) + `shp-data-mongo` (mới, theo ADR-0014) ✅ / một phần
-1. **Mục tiêu:** event luôn ghi cùng transaction với dữ liệu và không mất khi bus lỗi; consumer xử lý đúng một lần; Idempotency-Key không tạo trùng — cho **cả PostgreSQL (scheduling) và MongoDB (clinical, document, ai, notification, ml)**.
-2. **Việc đã làm (theo thứ tự):**
-   1. Thêm `EventPublisher` (interface chung) vào `shp-events`; thêm `IdempotencyKeys` (kiểm header + băm body chuẩn hóa, không phụ thuộc DB) vào `shp-web`.
-   2. Kiểm tên module Testcontainers 2.x trong BOM: `testcontainers-postgresql`, `testcontainers-mongodb` (gói Java mới `org.testcontainers.postgresql` / `org.testcontainers.mongodb`).
-   3. `libs/java/shp-data-postgres`: `PostgresOutbox` (JdbcClient, bắt buộc trong transaction), `OutboxRelay` (`SmartLifecycle`, thread ảo, `FOR UPDATE SKIP LOCKED`, backoff ≤ 30s), `PostgresInbox`, `PostgresIdempotency`, `IdempotencyClaim`; DDL thành **migration Flyway** `db/shp-messaging/postgres/V0_1__shp_messaging.sql` (service thêm vào `spring.flyway.locations`). 28 test trên PostgreSQL 16 thật.
-   4. `libs/java/shp-data-mongo`: `MongoOutbox`, `MongoOutboxRelay` (MongoDB không có `SKIP LOCKED` → **giành từng event bằng `findAndModify`** đặt `lockedUntil`/`lockedBy`, khóa 30s; replica chết thì khóa hết hạn và event được giành lại), `MongoInbox` (`_id = consumer|messageId`), `MongoIdempotency` (`_id = subject|key`), `MongoMessaging.inTransaction` (**thử lại tối đa 8 lần** khi MongoDB báo `TransientTransactionError`/WriteConflict/DuplicateKey — yêu cầu bắt buộc của transaction đa document), `ensureIndexes` (partial index outbox, TTL inbox 14 ngày, TTL idempotency 24 giờ). 21 test trên MongoDB 8 replica set thật.
-3. **Thay đổi (commit 3764d57):**
+### J4 - Data libraries: `shp-data-postgres` (ported from .NET) + `shp-data-mongo` (new, per ADR-0014) DONE / partial
+1. **Goal:** events are always written in the same transaction as the data and are not lost when the bus fails; consumers process exactly once; Idempotency-Key does not create duplicates - for **both PostgreSQL (scheduling) and MongoDB (clinical, document, ai, notification, ml)**.
+2. **Work done (in order):**
+   1. Add `EventPublisher` (common interface) to `shp-events`; add `IdempotencyKeys` (header validation + canonical body hashing, DB-independent) to `shp-web`.
+   2. Check the Testcontainers 2.x module names in the BOM: `testcontainers-postgresql`, `testcontainers-mongodb` (new Java packages `org.testcontainers.postgresql` / `org.testcontainers.mongodb`).
+   3. `libs/java/shp-data-postgres`: `PostgresOutbox` (JdbcClient, mandatory inside a transaction), `OutboxRelay` (`SmartLifecycle`, virtual thread, `FOR UPDATE SKIP LOCKED`, backoff <= 30s), `PostgresInbox`, `PostgresIdempotency`, `IdempotencyClaim`; DDL becomes a **Flyway migration** `db/shp-messaging/postgres/V0_1__shp_messaging.sql` (services add it to `spring.flyway.locations`). 28 tests on real PostgreSQL 16.
+   4. `libs/java/shp-data-mongo`: `MongoOutbox`, `MongoOutboxRelay` (MongoDB has no `SKIP LOCKED` -> **claim each event with `findAndModify`** setting `lockedUntil`/`lockedBy`, 30s lock; if a replica dies the lock expires and the event is reclaimed), `MongoInbox` (`_id = consumer|messageId`), `MongoIdempotency` (`_id = subject|key`), `MongoMessaging.inTransaction` (**retry up to 8 times** when MongoDB reports `TransientTransactionError`/WriteConflict/DuplicateKey - a mandatory requirement of multi-document transactions), `ensureIndexes` (partial outbox index, inbox TTL 14 days, idempotency TTL 24 hours). 21 tests on a real MongoDB 8 replica set.
+3. **Changes (commit 3764d57):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `pom.xml` | M | + module/dependencyManagement `shp-web`, `shp-data-postgres`, `shp-data-mongo` |
+| `pom.xml` | M | + modules/dependencyManagement `shp-web`, `shp-data-postgres`, `shp-data-mongo` |
 | `libs/java/shp-events/.../EventPublisher.java` | A | `void publish(CloudEvent)` |
 | `libs/java/shp-web/.../idempotency/IdempotencyKeys.java` | A | `require(header)` (428/400), `hashBody(bytes)` |
-| `libs/java/shp-data-postgres/**` | A | 5 lớp + migration Flyway + 3 lớp test (28 test) |
-| `libs/java/shp-data-mongo/**` | A | 5 lớp + 3 lớp test (21 test) |
+| `libs/java/shp-data-postgres/**` | A | 5 classes + Flyway migration + 3 test classes (28 tests) |
+| `libs/java/shp-data-mongo/**` | A | 5 classes + 3 test classes (21 tests) |
 
-4. **Cách dev dùng:**
+4. **How devs use it:**
 ```java
-// PostgreSQL (scheduling) — trong @Transactional:
+// PostgreSQL (scheduling) - inside @Transactional:
 var claim = idempotency.claim(principal.subject(), IdempotencyKeys.require(req.getHeader("Idempotency-Key")), "Appointment/$book", IdempotencyKeys.hashBody(body));
 if (claim.replay()) return loadAppointment(claim.resourceId());
-... ghi appointment ...; outbox.add(CloudEvents.create("scheduling", "shp.scheduling.appointment-booked.v1", "Appointment/" + id, payload));
-// MongoDB: bọc toàn bộ bằng MongoMessaging.inTransaction(tx, () -> { ... idempotency.claim(...); ... outbox.add(...); })
+... write appointment ...; outbox.add(CloudEvents.create("scheduling", "shp.scheduling.appointment-booked.v1", "Appointment/" + id, payload));
+// MongoDB: wrap everything in MongoMessaging.inTransaction(tx, () -> { ... idempotency.claim(...); ... outbox.add(...); })
 // Consumer: inbox.handleOnce("notification", event, () -> { ... });
 ```
-5. **Kiểm chứng:**
+5. **Verification:**
 ```bash
-# cần Docker; Docker Hub giới hạn lượt kéo thì dùng mirror:
+# requires Docker; if Docker Hub rate-limits pulls use the mirror:
 export SHP_TEST_POSTGRES_IMAGE=mirror.gcr.io/library/postgres:16-alpine SHP_TEST_MONGO_IMAGE=mirror.gcr.io/library/mongo:8
-mvn -B verify      # 7 module, 370 test: 5 + 238 + 47 + 31 + 28 + 21 — BUILD SUCCESS
+mvn -B verify      # 7 modules, 370 tests: 5 + 238 + 47 + 31 + 28 + 21 - BUILD SUCCESS
 ```
-   **Đột biến (tất cả bị bắt):** PostgreSQL — bỏ 422 (1 đỏ), bỏ `SKIP LOCKED` (1), inbox ghi đè (2). MongoDB — bỏ điều kiện khóa của relay (2), khóa inbox không duy nhất (2), bỏ 422 (1), bỏ hết hạn 24h (1).
-   Kịch bản đã kiểm trên DB thật (cả hai engine): rollback giữ nguyên dữ liệu lẫn outbox; thứ tự; bus chết giữa chừng rồi sống lại vẫn phát đủ và đúng thứ tự; 4 relay × 60 event → mỗi event đúng 1 lần; 20 lần giao trùng → commit đúng 1 lần; 20 request song song cùng key → đúng 1 claim mới; rollback claim → claim lại được; key hết hạn sau 24h. Riêng MongoDB: khóa của replica chết hết hạn thì event được phát.
-6. **Lỗi gặp và cách sửa:** Testcontainers yêu cầu khai báo image mirror là bản thay thế (`asCompatibleSubstituteFor("postgres"|"mongo")`); **Testcontainers 2.x không tự bật replica set** cho MongoDB như 1.x → `.withReplicaSet()` (thiếu thì lỗi "Transaction numbers are only allowed on a replica set member"); `ExecutorService.submit(this::claim)` mơ hồ → lambda; một đột biến không khớp chuỗi vì Spotless xuống dòng → dùng regex.
-7. **Giới hạn đã biết:** SHR-07/08 vẫn `partial`: **chưa có `EventPublisher` thật** (Spring Cloud Stream + RabbitMQ/Service Bus) và retry/DLQ phía consumer — bước J5b. SHR-10 (resource store FHIR trên MongoDB: version CAS + history) chưa làm. Với MongoDB, handler trong `inbox.handleOnce` **có thể chạy lại** khi transaction xung đột (chỉ một lần được commit) → handler không được gọi dịch vụ ngoài có tác dụng phụ (gửi SMS...) trực tiếp; phải ghi việc vào DB rồi worker làm sau (đúng thiết kế notification).
+   **Mutations (all caught):** PostgreSQL - remove 422 (1 red), remove `SKIP LOCKED` (1), inbox overwrite (2). MongoDB - remove the relay lock condition (2), non-unique inbox lock (2), remove 422 (1), remove the 24h expiry (1).
+   Scenarios checked on real DBs (both engines): rollback preserves both data and outbox; ordering; the bus dying mid-way and coming back still publishes everything in the right order; 4 relays x 60 events -> each event exactly once; 20 duplicate deliveries -> exactly 1 commit; 20 concurrent requests with the same key -> exactly 1 new claim; claim rollback -> claim can be retaken; key expires after 24h. For MongoDB specifically: when a dead replica's lock expires, the event is published.
+6. **Errors encountered and fixes:** Testcontainers requires declaring the mirror image as a substitute (`asCompatibleSubstituteFor("postgres"|"mongo")`); **Testcontainers 2.x does not enable the replica set automatically** for MongoDB like 1.x -> `.withReplicaSet()` (without it: "Transaction numbers are only allowed on a replica set member"); `ExecutorService.submit(this::claim)` was ambiguous -> lambda; one mutation did not match the string because Spotless reflowed it -> use regex.
+7. **Known limitations:** SHR-07/08 still `partial`: **no real `EventPublisher` yet** (Spring Cloud Stream + RabbitMQ/Service Bus) and no consumer-side retry/DLQ - step J5b. SHR-10 (FHIR resource store on MongoDB: version CAS + history) not done. With MongoDB, the handler inside `inbox.handleOnce` **may run again** when a transaction conflicts (only one commit succeeds) -> the handler must not call external services with side effects (sending SMS...) directly; it must write work to the DB and let a worker do it later (this is the notification design).
 
-### J4b — Bổ sung của PM: **ai và ml giữ Python**; tách `shp-security`; audit ghi bền qua outbox ✅
-1. **Mục tiêu:** PM bổ sung (2026-10-28): *"phần nào bắt buộc dùng Python như AI thì vẫn giữ"* → sửa phạm vi ADR-0015 và mọi thứ J1 đã đổi cho ai/ml; đồng thời chuẩn bị cho gateway (WebFlux) và cho audit lưu bền.
-2. **Việc đã làm (theo thứ tự):**
-   1. **ADR-0015** đổi tên và phạm vi: Java cho `gateway, scheduling, notification, clinical, document, audit`; **Python giữ cho `ai`, `ml`** (lý do: LightGBM, pandas, pandera, MLflow, công cụ eval không có bản Java tương đương). Bảng ánh xạ ghi "Giữ Python" cho AI, ML, OCR; hệ quả: hai pipeline CI (`java-ci`, `python-ci`), ai/ml dùng **cùng hợp đồng** trong `contracts/`.
-   2. **Hoàn nguyên** những gì J1 đã đổi sang Java cho ai/ml (lấy nguyên văn từ commit trước J1 bằng `git show 3b7390f^:...`, không gõ lại): task PY-01, PY-03, PY-04, PY-05 (giờ lại cần thư viện Python riêng), ML-04 (LightGBM), ML-14 (pandera), CIT-02 (Python CI), LOC-04 (skeleton Python), SCF-06 (FastAPI); SCF-07 → "khung code Python… kết nối **MongoDB**" (giữ ADR-0014); PY-07 bỏ "Spring AI"; AC của story "LightGBM"; nhãn D3 "Dev Python/AI". Tổng kế hoạch về lại **1.070 giờ**.
-   3. Tài liệu: `overview.md` (ai: Python FastAPI, ml: Python LightGBM/MLflow), ADR-0007 (LightGBM), `16-mlops.md` (pandera, LightGBM), ADR-0009 (Java CI + Python CI), `04-devops/README.md`, `04-db-notification-ml.md` (notification Java, ml Python/pymongo, drift bằng pandas/DuckDB Python).
-   4. Gỡ BOM Spring AI khỏi `pom.xml` gốc (không còn module Java nào dùng).
-   5. **Tách `libs/java/shp-security`** (`ShpJwt`, `ShpAuthProperties`, `Roles`; gói `org.shp.security`) khỏi `shp-web`: gateway là WebFlux, không được kéo Spring MVC của `shp-web` vào; cả hai dùng chung một quy tắc JWT. Dùng `git mv` để giữ lịch sử file.
-   6. Thêm `PostgresOutboxAuditSink`, `MongoOutboxAuditSink`: ghi audit thành event E11 vào outbox trong **transaction riêng (REQUIRES_NEW)** → audit vẫn được lưu khi giao dịch nghiệp vụ rollback, không mất khi bus lỗi. Mỗi bản 1 test.
-3. **Thay đổi (commit 638b780):**
+### J4b - PM addition: **ai and ml keep Python**; split out `shp-security`; audit durably stored via outbox DONE
+1. **Goal:** PM addition (2026-10-28): *"whatever is required to use Python such as AI still keeps it"* -> fix the scope of ADR-0015 and everything J1 changed for ai/ml; also prepare for the gateway (WebFlux) and for durable audit storage.
+2. **Work done (in order):**
+   1. **ADR-0015** renamed and scoped: Java for `gateway, scheduling, notification, clinical, document, audit`; **Python kept for `ai`, `ml`** (reason: LightGBM, pandas, pandera, MLflow, eval tools have no equivalent Java version). The mapping table says "Keep Python" for AI, ML, OCR; consequences: two CI pipelines (`java-ci`, `python-ci`), ai/ml use **the same contracts** in `contracts/`.
+   2. **Revert** what J1 changed to Java for ai/ml (take the exact text from the commit before J1 with `git show 3b7390f^:...`, without retyping): tasks PY-01, PY-03, PY-04, PY-05 (hours need their own Python library again), ML-04 (LightGBM), ML-14 (pandera), CIT-02 (Python CI), LOC-04 (Python skeleton), SCF-06 (FastAPI); SCF-07 -> "Python code skeleton... connecting to **MongoDB**" (keep ADR-0014); PY-07 drop "Spring AI"; the story AC "LightGBM"; D3 label "Dev Python/AI". The plan total returns to **1,070 hours**.
+   3. Documents: `overview.md` (ai: Python FastAPI, ml: Python LightGBM/MLflow), ADR-0007 (LightGBM), `16-mlops.md` (pandera, LightGBM), ADR-0009 (Java CI + Python CI), `04-devops/README.md`, `04-db-notification-ml.md` (notification Java, ml Python/pymongo, drift with pandas/DuckDB Python).
+   4. Remove the Spring AI BOM from the root `pom.xml` (no Java module uses it anymore).
+   5. **Split out `libs/java/shp-security`** (`ShpJwt`, `ShpAuthProperties`, `Roles`; package `org.shp.security`) from `shp-web`: the gateway is WebFlux and must not pull Spring MVC from `shp-web`; both share the same JWT rules. Use `git mv` to preserve file history.
+   6. Add `PostgresOutboxAuditSink`, `MongoOutboxAuditSink`: write audit as event E11 into the outbox in a **separate transaction (REQUIRES_NEW)** -> audit is still stored when the business transaction rolls back, and is not lost when the bus fails. One test each.
+3. **Changes (commit 638b780):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `docs/03-architecture/adr/0015-java-for-all-services.md` | M | tiêu đề, phạm vi, 9 dòng bảng, phương án đã cân nhắc, hệ quả (xem bước 2.1) |
-| `docs/03-architecture/adr/README.md`, `overview.md`, `adr/0007`, `adr/0009`, `detailed-design/16-mlops.md`, `detailed-design/04-db-notification-ml.md`, `docs/04-devops/README.md` | M | ai/ml về Python |
-| `tools/plan/tasks_dev.py`, `tasks_sa.py`, `stories.py`, `build.py` | M | hoàn nguyên task ai/ml (bước 2.2) |
-| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | sinh lại (1.070 giờ) |
-| `pom.xml` | M | − Spring AI BOM; + module `shp-security` |
-| `libs/java/shp-security/**` | A (git mv) | 3 lớp chuyển từ `shp-web/auth`, gói `org.shp.security` |
-| `libs/java/shp-web/pom.xml`, `IdentityInterceptor.java`, `ShpWebAutoConfiguration.java`, test | M | import `org.shp.security.*` |
+| `docs/03-architecture/adr/0015-java-for-all-services.md` | M | title, scope, 9 table rows, considered options, consequences (see step 2.1) |
+| `docs/03-architecture/adr/README.md`, `overview.md`, `adr/0007`, `adr/0009`, `detailed-design/16-mlops.md`, `detailed-design/04-db-notification-ml.md`, `docs/04-devops/README.md` | M | ai/ml back to Python |
+| `tools/plan/tasks_dev.py`, `tasks_sa.py`, `stories.py`, `build.py` | M | revert ai/ml tasks (step 2.2) |
+| `docs/05-plan/*`, `docs/02-requirements/user-stories.md` | M | regenerated (1,070 hours) |
+| `pom.xml` | M | - Spring AI BOM; + module `shp-security` |
+| `libs/java/shp-security/**` | A (git mv) | 3 classes moved from `shp-web/auth`, package `org.shp.security` |
+| `libs/java/shp-web/pom.xml`, `IdentityInterceptor.java`, `ShpWebAutoConfiguration.java`, tests | M | import `org.shp.security.*` |
 | `libs/java/shp-data-postgres/.../PostgresOutboxAuditSink.java` + `AuditSinkTest.java` | A | |
 | `libs/java/shp-data-mongo/.../MongoOutboxAuditSink.java` + `AuditSinkTest.java` | A | |
 
-4. **Kiểm chứng:** `python3 -I tools/plan/build.py` → `OK: 74 stories, 317 tasks, 1070h`; `mvn -B verify` → 8 module, **372 test** (5 + 238 + 47 + 31 + 29 + 22), BUILD SUCCESS.
-5. **Ảnh hưởng:** service `ai`, `ml` Python hiện có (FastAPI) được **giữ**, không xóa ở J5; template `python-ci` giữ. Thư viện nền Python cho ai/ml (PY-01..05) vẫn là việc của D3 như kế hoạch gốc.
+4. **Verification:** `python3 -I tools/plan/build.py` -> `OK: 74 stories, 317 tasks, 1070h`; `mvn -B verify` -> 8 modules, **372 tests** (5 + 238 + 47 + 31 + 29 + 22), BUILD SUCCESS.
+5. **Impact:** the existing Python `ai`, `ml` services (FastAPI) are **kept**, not deleted in J5; the `python-ci` template is kept. The Python foundation library for ai/ml (PY-01..05) remains D3's work as in the original plan.
 
-### J5a — Gateway Java (Spring Cloud Gateway) + sửa cách nạp cấu hình mặc định ✅
-1. **Mục tiêu:** thay gateway .NET (YARP) bằng Spring Cloud Gateway, giữ đúng bảng định tuyến 07 §1 và lớp 1 của 15-authorization (kiểm token ở biên).
-2. **Việc đã làm (theo thứ tự):**
-   1. Kiểm tương thích: `spring-cloud-dependencies` **2025.1.2** (gateway 5.0.2) giải quyết được với Boot 4.1.2 (bản 2026.0 mới ở RC). `git rm -r services/gateway` (bản .NET).
-   2. `services/gateway`: `GatewayApplication`, `GatewaySecurity` (WebFlux: `/internal/**` → từ chối, health/info/prometheus công khai, mọi route khác cần JWT hợp lệ theo **cùng** `ShpJwt.validator` với service; decoder lười `SupplierReactiveJwtDecoder`; lỗi dạng Problem Details), `application.yml` sinh từ bảng route cũ (7 upstream, 32 đường dẫn; địa chỉ đổi bằng `SHP_UPSTREAM_<SERVICE>`).
-   3. Test 7 kịch bản với upstream giả (HTTP server thật trong test): route đúng service và **chuyển nguyên token** (service kiểm lại); 401 khi thiếu/sai audience; nhân viên thiếu MFA bị chặn ở biên; `/internal/**` → 404; đường dẫn lạ → 404; upstream chết → 5xx; health công khai.
-   4. **Phát hiện lỗi tiềm ẩn ở `shp-service-defaults`:** `/info`, `/prometheus` trả 404 ở gateway. Bật báo cáo điều kiện (`-Ddebug=true`): `InfoEndpointAutoConfiguration ... not exposed` — `@PropertySource` trên auto-configuration được nạp **sau** khi Boot đánh giá điều kiện; bản MVC qua test chỉ nhờ thứ tự may mắn. Sửa: `ShpDefaultsEnvironmentPostProcessor` (đăng ký ở `META-INF/spring.factories`, khóa `org.springframework.boot.EnvironmentPostProcessor` của Boot 4) nạp mọi `classpath*:META-INF/shp/*.properties` với độ ưu tiên thấp nhất **trước** auto-configuration; bỏ `@PropertySource` ở cả `shp-service-defaults` và `shp-web`.
-3. **Thay đổi (commit e2558f0):**
+### J5a - Java gateway (Spring Cloud Gateway) + fix how default configuration is loaded DONE
+1. **Goal:** replace the .NET gateway (YARP) with Spring Cloud Gateway, keeping the exact routing table in 07 section 1 and layer 1 of 15-authorization (token validation at the edge).
+2. **Work done (in order):**
+   1. Check compatibility: `spring-cloud-dependencies` **2025.1.2** (gateway 5.0.2) resolves with Boot 4.1.2 (the 2026.0 release is only at RC). `git rm -r services/gateway` (the .NET version).
+   2. `services/gateway`: `GatewayApplication`, `GatewaySecurity` (WebFlux: `/internal/**` -> deny, health/info/prometheus public, every other route requires a valid JWT using the **same** `ShpJwt.validator` as the services; lazy decoder `SupplierReactiveJwtDecoder`; errors as Problem Details), `application.yml` generated from the old route table (7 upstreams, 32 paths; addresses changed with `SHP_UPSTREAM_<SERVICE>`).
+   3. Test 7 scenarios with fake upstreams (real HTTP server in the test): routes to the correct service and **forwards the token unchanged** (services re-validate); 401 when missing/wrong audience; staff without MFA blocked at the edge; `/internal/**` -> 404; unknown path -> 404; upstream dead -> 5xx; health public.
+   4. **Found a latent bug in `shp-service-defaults`:** `/info`, `/prometheus` returned 404 at the gateway. Enabled condition reporting (`-Ddebug=true`): `InfoEndpointAutoConfiguration ... not exposed` - `@PropertySource` on auto-configuration is loaded **after** Boot evaluates conditions; the MVC version passed in tests only thanks to lucky ordering. Fix: `ShpDefaultsEnvironmentPostProcessor` (registered in `META-INF/spring.factories`, keyed by Boot 4's `org.springframework.boot.EnvironmentPostProcessor`) loads every `classpath*:META-INF/shp/*.properties` with the lowest precedence **before** auto-configuration; remove `@PropertySource` from both `shp-service-defaults` and `shp-web`.
+3. **Changes (commit e2558f0):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `services/gateway/**` (.NET) | D | YARP, Dockerfile, test .NET |
-| `services/gateway/pom.xml`, `src/main/**`, `src/test/**` | A | gateway Java + 7 test |
+| `services/gateway/**` (.NET) | D | YARP, Dockerfile, .NET tests |
+| `services/gateway/pom.xml`, `src/main/**`, `src/test/**` | A | Java gateway + 7 tests |
 | `pom.xml` | M | + module `services/gateway` |
-| `libs/java/shp-service-defaults/.../ShpDefaultsEnvironmentPostProcessor.java`, `META-INF/spring.factories` | A | nạp mặc định đúng thời điểm |
-| `.../shp-defaults.properties` → `META-INF/shp/00-service-defaults.properties`; `shp-web-defaults.properties` → `META-INF/shp/10-web-defaults.properties` | R | đổi chỗ (git mv) |
-| `ServiceDefaultsAutoConfiguration.java`, `ShpWebAutoConfiguration.java` | M | bỏ `@PropertySource` |
+| `libs/java/shp-service-defaults/.../ShpDefaultsEnvironmentPostProcessor.java`, `META-INF/spring.factories` | A | load defaults at the right time |
+| `.../shp-defaults.properties` -> `META-INF/shp/00-service-defaults.properties`; `shp-web-defaults.properties` -> `META-INF/shp/10-web-defaults.properties` | R | moved (git mv) |
+| `ServiceDefaultsAutoConfiguration.java`, `ShpWebAutoConfiguration.java` | M | remove `@PropertySource` |
 
-4. **Kiểm chứng:** `mvn -B verify` → 9 module, **379 test** (thêm 7 của gateway), BUILD SUCCESS.
-5. **Lỗi gặp:** hai `ReactiveJwtDecoder` trong test (`@ConditionalOnMissingBean` không đáng tin trong `@Configuration` thường) → bean test `@Primary`.
-6. **Giới hạn:** chưa có rate limit theo `sub` (cần Redis, task GW) và CORS cho web.
+4. **Verification:** `mvn -B verify` -> 9 modules, **379 tests** (7 more for the gateway), BUILD SUCCESS.
+5. **Error encountered:** two `ReactiveJwtDecoder`s in the tests (`@ConditionalOnMissingBean` is unreliable in a plain `@Configuration`) -> test bean marked `@Primary`.
+6. **Limitations:** no per-`sub` rate limit yet (needs Redis, GW task) and no CORS for the web.
 
-### J5b — Gỡ mọi nhắc đến tên PoC cũ khỏi các repo dự án (yêu cầu PM) ✅
-1. **Việc đã làm:** `git grep -i <tên PoC cũ>` trên 4 repo → 13 chỗ, đều ở repo app. Xóa `docs/03-architecture/<tên PoC cũ>-migration.md` và mục 5 của `overview.md` trỏ tới nó; viết lại trung tính: README, `overview.md`, ADR-0002/0005/0008 (nêu "cách làm phổ biến", "ví dụ Medplum" thay vì tên PoC), `phase4-build-log.md`, nhật ký này ("repo PoC cũ").
-2. **Kiểm chứng:** `git grep -i -c <tên PoC cũ>` trên cả 4 repo → 0.
-3. **Lưu ý:** **lịch sử git** của repo app vẫn còn các commit cũ có chữ này; xóa khỏi lịch sử cần viết lại lịch sử và force-push — chưa làm, chờ PM quyết (khi chuyển sang repo thật bằng cách copy nội dung, lịch sử mới sẽ sạch).
-4. **Commit:** e2558f0 (cùng commit với J5a).
+### J5b - Remove every mention of the old PoC name from the project repos (PM request) DONE
+1. **Work done:** `git grep -i <old PoC name>` across the 4 repos -> 13 occurrences, all in the app repo. Deleted `docs/03-architecture/<old PoC name>-migration.md` and section 5 of `overview.md` pointing to it; rewrote neutrally: README, `overview.md`, ADR-0002/0005/0008 (say "a common approach", "for example Medplum" instead of the PoC name), `phase4-build-log.md`, this log ("old PoC repo").
+2. **Verification:** `git grep -i -c <old PoC name>` across all 4 repos -> 0.
+3. **Caveat:** the app repo's **git history** still contains old commits with this word; removing it from history requires rewriting history and force-pushing - not done, pending PM decision (when moving to the real repo by copying content, the new history will be clean).
+4. **Commit:** e2558f0 (same commit as J5a).
 
-### J5c — 5 service Java còn lại, đóng gói gateway, bộ công cụ dev local chuyển sang Java ✅ / một phần
-1. **Mục tiêu:** mỗi service Java có khung chạy được (build, test, image, deploy local, pipeline) để dev chỉ viết nghiệp vụ; xóa hết phần .NET còn lại.
-2. **Việc đã làm (theo thứ tự):**
-   1. Viết `tools/scaffold/java_service.py` (thay `dotnet_service.py`) và sinh 5 service: `scheduling` (PostgreSQL) và `notification`, `clinical`, `document`, `audit` (MongoDB).
-      Mỗi service có:
-      - `pom.xml` (`finalName app`, `shp-data-*`, Testcontainers) và `*Application`.
-      - `config/PlatformConfig`: bean outbox, inbox, idempotency, audit sink. Với Mongo còn có `MongoTransactionManager` và tạo collection + index lúc khởi động.
-      - `IdentityLinkClient`: clinical đọc thẳng Mongo của mình; service khác gọi `SHP_CLINICAL_URL`.
-      - `application.yml` lấy mọi giá trị nhạy cảm từ biến môi trường.
-      - Test: health công khai, `UnprotectedEndpoints` rỗng, 401 khi không có token; clinical có thêm test liên kết danh tính.
-      - Dockerfile (Maven builder → `distroless/java21:nonroot`), `deploy/values-local.yaml`, README "dev viết gì, ở đâu".
-      - `.github/workflows/svc-<tên>.yml` dùng `java-ci` của repo templates.
-   2. Gateway: thêm `Dockerfile`, `deploy/values-local.yaml`, README, `<finalName>app</finalName>` (bị xóa cùng bản .NET ở J5a).
-   3. **Sửa lệch issuer trên kind:**
-      - Token lấy từ máy dev qua `http://localhost:18080`, nên issuer là `localhost`. Pod không gọi được `localhost` của máy.
-      - Thêm `shp.auth.jwk-set-uri` (`OIDC_JWK_SET_URI`) vào `ShpAuthProperties`. Khi có giá trị, decoder lấy khóa từ URL này (DNS trong cụm), còn issuer vẫn kiểm theo `OIDC_AUTHORITY`. Áp dụng cho cả servlet (`ShpWebAutoConfiguration`) và reactive (`GatewaySecurity`).
-   4. Bộ công cụ dev:
-      - `deploy.sh`: danh sách `JAVA`, context là gốc repo. Secret `shp-local-conn` giờ chứa `postgres-password`, `redis-password`, `rabbitmq-password`, `mongodb`, `rabbitmq`, `blob`.
-      - `app-values-local.yaml`: `SPRING_*` theo quy ước Spring Boot; `MONGODB_URI`/`RABBITMQ_URL` cho Python; OIDC như bước 3; MFA tắt cho user thử.
-      - `env.sh`: biến `SPRING_*` cho chạy ngoài cụm.
-      - Postgres local chỉ còn database `scheduling`.
-      - `up.sh` chạy `contracts/db/mongo-notification-ml.js` sau khi replica set sẵn sàng.
-      - Cập nhật `dev/README.md` (JDK 21 + Maven; bảng biến môi trường).
-   5. Thêm `.dockerignore` gốc: context build Java là cả repo, phải loại `target/` và **`dev/.local` (chứa mật khẩu sinh ngẫu nhiên)**.
-   6. `.editorconfig`: bỏ mục C#, thêm Java/pom thụt 2 (Spotless là nguồn sự thật). Xóa toàn bộ `libs/dotnet`, 5 service .NET, `Directory.*.props`, `global.json`, `libs-dotnet.yml`.
-   7. `tools/plan/status.py`: LOC-03, LOC-05, GW-01, SCF-01..05 = một phần (ghi rõ còn thiếu gì).
-3. **Thay đổi (commit c909d5b, 159 file):**
+### J5c - The remaining 5 Java services, gateway packaging, local dev toolkit moved to Java DONE / partial
+1. **Goal:** each Java service has a runnable skeleton (build, test, image, local deploy, pipeline) so devs only write business logic; delete all remaining .NET code.
+2. **Work done (in order):**
+   1. Write `tools/scaffold/java_service.py` (replacing `dotnet_service.py`) and generate 5 services: `scheduling` (PostgreSQL) and `notification`, `clinical`, `document`, `audit` (MongoDB).
+      Each service has:
+      - `pom.xml` (`finalName app`, `shp-data-*`, Testcontainers) and `*Application`.
+      - `config/PlatformConfig`: beans for outbox, inbox, idempotency, audit sink. With Mongo there is also a `MongoTransactionManager` and collection + index creation at startup.
+      - `IdentityLinkClient`: clinical reads its own Mongo directly; other services call `SHP_CLINICAL_URL`.
+      - `application.yml` takes every sensitive value from environment variables.
+      - Tests: public health, empty `UnprotectedEndpoints`, 401 without a token; clinical has an additional identity-link test.
+      - Dockerfile (Maven builder -> `distroless/java21:nonroot`), `deploy/values-local.yaml`, README "what devs write, where".
+      - `.github/workflows/svc-<name>.yml` using `java-ci` from the templates repo.
+   2. Gateway: add `Dockerfile`, `deploy/values-local.yaml`, README, `<finalName>app</finalName>` (deleted along with the .NET version in J5a).
+   3. **Fix the issuer mismatch on kind:**
+      - Tokens are obtained from the dev machine via `http://localhost:18080`, so the issuer is `localhost`. Pods cannot reach the machine's `localhost`.
+      - Add `shp.auth.jwk-set-uri` (`OIDC_JWK_SET_URI`) to `ShpAuthProperties`. When set, the decoder fetches keys from this URL (in-cluster DNS), while the issuer is still validated against `OIDC_AUTHORITY`. Applied to both servlet (`ShpWebAutoConfiguration`) and reactive (`GatewaySecurity`).
+   4. Dev toolkit:
+      - `deploy.sh`: `JAVA` list, context is the repo root. The `shp-local-conn` Secret now contains `postgres-password`, `redis-password`, `rabbitmq-password`, `mongodb`, `rabbitmq`, `blob`.
+      - `app-values-local.yaml`: `SPRING_*` per Spring Boot convention; `MONGODB_URI`/`RABBITMQ_URL` for Python; OIDC as in step 3; MFA disabled for test users.
+      - `env.sh`: `SPRING_*` variables for running outside the cluster.
+      - Local Postgres now only has the `scheduling` database.
+      - `up.sh` runs `contracts/db/mongo-notification-ml.js` after the replica set is ready.
+      - Update `dev/README.md` (JDK 21 + Maven; environment variable table).
+   5. Add a root `.dockerignore`: the Java build context is the whole repo, so `target/` and **`dev/.local` (contains randomly generated passwords)** must be excluded.
+   6. `.editorconfig`: remove the C# section, add Java/pom with 2-space indent (Spotless is the source of truth). Delete all of `libs/dotnet`, the 5 .NET services, `Directory.*.props`, `global.json`, `libs-dotnet.yml`.
+   7. `tools/plan/status.py`: LOC-03, LOC-05, GW-01, SCF-01..05 = partial (state explicitly what is missing).
+3. **Changes (commit c909d5b, 159 files):**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `tools/scaffold/dotnet_service.py` → `java_service.py` | D / A | bộ sinh service Java |
-| `services/{scheduling,notification,clinical,document,audit}/**` | D (.NET) / A (Java) | khung Java như bước 2.1 |
-| `services/gateway/{Dockerfile,README.md,deploy/values-local.yaml}`, `pom.xml` | A / M | đóng gói gateway |
-| `libs/java/shp-security/.../ShpAuthProperties.java` | M | 4 → 5 tham số (`jwkSetUri`, mặc định rỗng) |
-| `ShpWebAutoConfiguration.java`, `GatewaySecurity.java` | M | `fromIssuerLocation` → chọn `withJwkSetUri` khi có cấu hình |
+| `tools/scaffold/dotnet_service.py` -> `java_service.py` | D / A | Java service generator |
+| `services/{scheduling,notification,clinical,document,audit}/**` | D (.NET) / A (Java) | Java skeleton as in step 2.1 |
+| `services/gateway/{Dockerfile,README.md,deploy/values-local.yaml}`, `pom.xml` | A / M | package the gateway |
+| `libs/java/shp-security/.../ShpAuthProperties.java` | M | 4 -> 5 parameters (`jwkSetUri`, default empty) |
+| `ShpWebAutoConfiguration.java`, `GatewaySecurity.java` | M | `fromIssuerLocation` -> choose `withJwkSetUri` when configured |
 | `10-web-defaults.properties`, `services/gateway/.../application.yml` | M | + `shp.auth.jwk-set-uri=${OIDC_JWK_SET_URI:}` |
-| `dev/scripts/{deploy,env,up}.sh`, `dev/chart/app-values-local.yaml`, `dev/chart/shp-local-deps/values.yaml`, `dev/kind/cluster.yaml`, `dev/README.md` | M | như bước 2.4 |
-| `.dockerignore` | A | loại `target/`, `dev/.local`, cache Python |
-| `.editorconfig` | M | − C#; + Java |
-| `libs/dotnet/**`, `Directory.*.props`, `global.json`, `.github/workflows/libs-dotnet.yml` | D | hết .NET |
-| `.github/workflows/svc-*.yml` | A/M | sinh lại cho Java; `libs-java.yml` mới |
+| `dev/scripts/{deploy,env,up}.sh`, `dev/chart/app-values-local.yaml`, `dev/chart/shp-local-deps/values.yaml`, `dev/kind/cluster.yaml`, `dev/README.md` | M | as in step 2.4 |
+| `.dockerignore` | A | exclude `target/`, `dev/.local`, Python cache |
+| `.editorconfig` | M | - C#; + Java |
+| `libs/dotnet/**`, `Directory.*.props`, `global.json`, `.github/workflows/libs-dotnet.yml` | D | all .NET gone |
+| `.github/workflows/svc-*.yml` | A/M | regenerated for Java; new `libs-java.yml` |
 
-4. **Lệnh làm lại:**
+4. **Redo commands:**
 ```bash
 for s in scheduling notification clinical document audit; do python3 -I tools/scaffold/java_service.py $s; done
-mvn -B spotless:apply && mvn -B verify                    # cần Docker cho Testcontainers
+mvn -B spotless:apply && mvn -B verify                    # Docker needed for Testcontainers
 docker build -f services/gateway/Dockerfile -t localhost/shp-gateway:dev .
 ```
-5. **Kiểm chứng:**
-   - `mvn -B verify` toàn reactor: 14 module, **395 test**, BUILD SUCCESS. `tools/contracts/check_all.sh`: ALL CONTRACT CHECKS PASSED. `tools/plan/build.py`: 317 task, 1070 giờ.
-   - Image gateway, chạy thật: `/health/readiness` → UP; `/info` → `{"name":"gateway",...}`; `/fhir/Patient` → 401; user `nonroot`.
-   - Image scheduling, chạy thật với Postgres 16: readiness UP; Flyway tạo `outbox`, `inbox`, `idempotency_key`; `/fhir/Appointment` → 401.
-   - Lệnh Mongo trong `up.sh` chạy 2 lần liên tiếp trên Mongo 8 replica set: không lỗi, tạo đủ collection notification/ml.
-   - Field mà `MongoOutbox` ghi khớp validator `outbox` của script (`eventType`, `subject`, `payload`, `occurredAt`); tên index trùng nhau.
-   - `helm template` chart `microservice` với values local cho gateway, scheduling, clinical, ai: render đúng `OIDC_JWK_SET_URI` và secret `postgres-password`.
-6. **Lỗi & cách sửa:**
-   - `docker build` trong sandbox: Maven trong container không tin CA của proxy (`PKIX path building failed`). Đây là lỗi môi trường, không phải lỗi Dockerfile; máy dev và GitHub Actions không gặp.
-     Kiểm chứng thay thế: chạy đúng lệnh `mvn ... package` của stage build trên máy, rồi build stage runtime với jar đó.
-   - Gateway thiếu `deploy/values-local.yaml` (bị xóa cùng bản .NET) → `helm template` báo lỗi → đã thêm.
-   - Endpoint quản trị ở `/health`, `/info`, không có `/actuator` (base-path `/` theo `shp-service-defaults`).
-7. **Giới hạn còn lại:**
-   - Chưa có `EventPublisher` thật (Spring Cloud Stream → RabbitMQ/Service Bus), nên relay chưa đẩy event lên bus.
-   - Chưa chạy `make quickstart` trên kind thật.
-   - Chưa chạy pipeline GitHub Actions thật.
+5. **Verification:**
+   - `mvn -B verify` for the whole reactor: 14 modules, **395 tests**, BUILD SUCCESS. `tools/contracts/check_all.sh`: ALL CONTRACT CHECKS PASSED. `tools/plan/build.py`: 317 tasks, 1,070 hours.
+   - Gateway image, actually run: `/health/readiness` -> UP; `/info` -> `{"name":"gateway",...}`; `/fhir/Patient` -> 401; user `nonroot`.
+   - Scheduling image, actually run with Postgres 16: readiness UP; Flyway creates `outbox`, `inbox`, `idempotency_key`; `/fhir/Appointment` -> 401.
+   - The Mongo command in `up.sh` runs twice in a row on Mongo 8 replica set: no errors, creates all notification/ml collections.
+   - Fields written by `MongoOutbox` match the script's `outbox` validator (`eventType`, `subject`, `payload`, `occurredAt`); index names match.
+   - `helm template` of the `microservice` chart with local values for gateway, scheduling, clinical, ai: renders the correct `OIDC_JWK_SET_URI` and `postgres-password` secret.
+6. **Errors and fixes:**
+   - `docker build` in the sandbox: Maven in the container does not trust the proxy CA (`PKIX path building failed`). This is an environment error, not a Dockerfile error; dev machines and GitHub Actions do not hit it.
+     Alternative verification: run the exact `mvn ... package` command of the build stage on the machine, then build the runtime stage with that jar.
+   - Gateway was missing `deploy/values-local.yaml` (deleted along with the .NET version) -> `helm template` failed -> added.
+   - Admin endpoints are at `/health`, `/info`, with no `/actuator` (base-path `/` per `shp-service-defaults`).
+7. **Remaining limitations:**
+   - No real `EventPublisher` yet (Spring Cloud Stream -> RabbitMQ/Service Bus), so the relay does not push events to the bus yet.
+   - `make quickstart` has not been run on a real kind cluster.
+   - The real GitHub Actions pipeline has not been run.
    - Commit: `git show --stat c909d5b`.
 
-### J7 — Sơ đồ kiến trúc tổng thể + module; dọn tàn dư .NET ✅
-1. **Mục tiêu:** PM cần sơ đồ tổng thể kiến trúc phần mềm và danh sách module; xóa mọi dấu vết .NET còn sót trong code.
-2. **Việc đã làm (theo thứ tự):**
-   1. `docs/03-architecture/overview.md` thêm 4 mục mới (đánh số lại các mục cũ thành 5–8). Có 5 sơ đồ mermaid:
-      - §1 tổng thể: client → WAF/Ingress → gateway → 6 service Java + 2 Python, bus, kho dữ liệu, LLM, nhà cung cấp tin.
-      - §2.1 event E1–E11 (producer → nhóm event → consumer).
-      - §2.2 REST nội bộ `/internal/v1/**`.
-      - §3 module Maven (phụ thuộc lấy từ `pom.xml` thật), bảng vai trò module và người phụ trách.
-      - §4 bố cục gói bên trong một service Java: `api` → `app` → `domain`; `infra`; `messaging`; `config`.
-   2. §7 (hạ tầng): thay tên .NET/MinIO cũ:
-      - `IFhirStore` → Spring JDBC/Data MongoDB
-      - `StackExchange.Redis` → Spring Data Redis
-      - MinIO → Azurite
-      - `IConfiguration` → biến môi trường/Spring
-   3. Scaffold sinh thêm `package-info` cho `app`, `domain`, `infra`, `messaging` ở 5 service; README service có dòng "Bố cục gói".
-   4. Dọn .NET:
-      - Comment trong `pom.xml`, `ShpJwt`, `ServiceDefaultsAutoConfiguration`, `.gitignore`.
-      - `docs/05-plan/project-plan.md`: "Dev .NET" → "Dev Java", `libs/dotnet` → `libs/java`.
-      - Repo templates: chart `microservice` đặt `SERVER_PORT` thay `ASPNETCORE_URLS` (commit fe5e2f9).
-3. **Thay đổi:**
+### J7 - Overall architecture and module diagrams; clean up .NET leftovers DONE
+1. **Goal:** the PM needs an overall software architecture diagram and a list of modules; remove every trace of .NET left in the code.
+2. **Work done (in order):**
+   1. `docs/03-architecture/overview.md` adds 4 new sections (renumbering the old sections to 5-8). There are 5 mermaid diagrams:
+      - Section 1 overall: client -> WAF/Ingress -> gateway -> 6 Java services + 2 Python, bus, data stores, LLM, news providers.
+      - Section 2.1 events E1-E11 (producer -> event group -> consumer).
+      - Section 2.2 internal REST `/internal/v1/**`.
+      - Section 3 Maven modules (dependencies taken from the real `pom.xml`), module role table and owner.
+      - Section 4 package layout inside a Java service: `api` -> `app` -> `domain`; `infra`; `messaging`; `config`.
+   2. Section 7 (infrastructure): replace old .NET/MinIO names:
+      - `IFhirStore` -> Spring JDBC/Data MongoDB
+      - `StackExchange.Redis` -> Spring Data Redis
+      - MinIO -> Azurite
+      - `IConfiguration` -> environment variables/Spring
+   3. The scaffold now also generates `package-info` for `app`, `domain`, `infra`, `messaging` in the 5 services; service READMEs have a "Package layout" line.
+   4. .NET cleanup:
+      - Comments in `pom.xml`, `ShpJwt`, `ServiceDefaultsAutoConfiguration`, `.gitignore`.
+      - `docs/05-plan/project-plan.md`: "Dev .NET" -> "Dev Java", `libs/dotnet` -> `libs/java`.
+      - Templates repo: the `microservice` chart sets `SERVER_PORT` instead of `ASPNETCORE_URLS` (commit fe5e2f9).
+3. **Changes:**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `docs/03-architecture/overview.md` | M | + §1–§4 (5 sơ đồ); §7 tên công nghệ Java; catalog + cột Dev |
-| `tools/scaffold/java_service.py`, `services/*/README.md` | M | + `LAYERS`, dòng bố cục gói |
-| `services/{5}/src/main/java/org/shp/*/{app,domain,infra,messaging}/package-info.java` | A | 20 file |
-| `pom.xml`, `.gitignore`, 2 lớp Java, `project-plan.md`, `status.py` | M | bỏ chữ .NET |
-| templates: `charts/microservice/templates/_helpers.tpl` | M | `ASPNETCORE_URLS` → `SERVER_PORT` |
+| `docs/03-architecture/overview.md` | M | + sections 1-4 (5 diagrams); section 7 Java technology names; catalog + Dev column |
+| `tools/scaffold/java_service.py`, `services/*/README.md` | M | + `LAYERS`, package layout line |
+| `services/{5}/src/main/java/org/shp/*/{app,domain,infra,messaging}/package-info.java` | A | 20 files |
+| `pom.xml`, `.gitignore`, 2 Java classes, `project-plan.md`, `status.py` | M | remove .NET wording |
+| templates: `charts/microservice/templates/_helpers.tpl` | M | `ASPNETCORE_URLS` -> `SERVER_PORT` |
 
-4. **Lệnh làm lại:** `python3 -I tools/scaffold/java_service.py` (chỉ tạo file chưa có). Render sơ đồ:
-   `npx -p @mermaid-js/mermaid-cli@11.12.0 mmdc -i d.mmd -o d.png` (puppeteer trỏ `executablePath` tới Chromium có sẵn).
-5. **Kiểm chứng:**
-   - Cả 5 sơ đồ render được bằng mermaid-cli 11.12.0; đã xem ảnh, và vẽ lại §2 vì bản đầu chồng nhãn.
-   - `mvn -B verify` toàn reactor: BUILD SUCCESS.
-   - `helm lint` chart với 3 bộ values CI: 0 lỗi.
-   - Code và cấu hình (trừ ADR và nhật ký lịch sử) không còn `dotnet`, `.NET` hay `ASPNETCORE`. Kết quả `grep` còn lại chỉ là `java.net` (thư viện chuẩn Java), `com.networknt` và tên miền `*.windows.net`.
-6. **Lỗi & cách sửa:**
-   - Sơ đồ module và sơ đồ event bản đầu rối do nhãn cạnh lặp lại cho mỗi đích. Sửa: event thành nút trung gian; quan hệ với `contracts/` gom thành một cạnh.
-   - Hai khẳng định chưa có trong code được viết lại thành quy tắc cho values uat/prod: egress chỉ mở cho ai/notification; bố cục gói Python.
-7. **Giữ nguyên có chủ đích:** ADR-0002/0012 (đã Superseded) và nhật ký cũ vẫn nhắc .NET, vì đó là lịch sử quyết định.
+4. **Redo command:** `python3 -I tools/scaffold/java_service.py` (only creates missing files). Render diagrams:
+   `npx -p @mermaid-js/mermaid-cli@11.12.0 mmdc -i d.mmd -o d.png` (puppeteer points `executablePath` to an available Chromium).
+5. **Verification:**
+   - All 5 diagrams render with mermaid-cli 11.12.0; inspected the images, and redrew section 2 because the first version overlapped labels.
+   - `mvn -B verify` for the whole reactor: BUILD SUCCESS.
+   - `helm lint` of the chart with the 3 CI values sets: 0 errors.
+   - Code and configuration (except ADRs and the historical log) no longer contain `dotnet`, `.NET` or `ASPNETCORE`. The remaining `grep` results are only `java.net` (Java standard library), `com.networknt` and the `*.windows.net` domain.
+6. **Errors and fixes:**
+   - The module diagram and event diagram were cluttered at first because edge labels were repeated for every target. Fix: make events intermediate nodes; group relationships with `contracts/` into a single edge.
+   - Two claims not present in the code were rewritten as rules for the uat/prod values: egress only opened for ai/notification; Python package layout.
+7. **Deliberately kept:** ADR-0002/0012 (already Superseded) and the old log still mention .NET, because that is decision history.
 
-### J6 — Onboarding dev: README, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue ✅
-1. **Mục tiêu:** dev clone repo, đọc, nhận task và code được ngay, không cần hỏi SA cách bắt đầu.
-2. **Việc đã làm (theo thứ tự):**
-   1. Merge PR #26 (Java) vào `main`; nhánh làm việc đặt lại từ `main` mới (`1bd0456`).
-   2. `docs/onboarding.md`: 5 bước (cài máy → `make -C dev quickstart` → đọc gì → phần của D1/D2/D3 → PR đầu tiên).
-      Mỗi dev có: service phụ trách, tài liệu thiết kế cần đọc (đã kiểm mọi link tồn tại), task đầu tiên, thư viện dùng sẵn.
-   3. `CONTRIBUTING.md`: 4 nguyên tắc (dữ liệu giả, không secret, hợp đồng trước, dev chỉ viết logic); quy trình task → nhánh `<ID>-...` → PR squash;
-      lệnh kiểm tra như CI; điều kiện CI chặn (đối chiếu `java-ci`/`python-ci`: coverage 70%); quy ước code Java.
-   4. `.github/pull_request_template.md`: task/story, ảnh hưởng hợp đồng, checklist Definition of Done.
-   5. `.github/CODEOWNERS`: mặc định chủ repo; dòng cho D1/D2/D3 để sẵn dạng comment (chưa có tài khoản GitHub; tên không tồn tại làm GitHub bỏ dòng);
-      `libs/`, `contracts/`, `.github/`, `dev/`, Dockerfile, `deploy/`, `config/` luôn cần SA.
-   6. `.github/dependabot.yml`: maven, pip (ai, ml, tools/contracts), docker, github-actions; `github-setup.md` nuget → maven.
-   7. README gốc: mục "Bắt đầu nhanh" + bảng thư mục; cập nhật trạng thái pha 4–5.
-   8. GitHub issue:
-      - Đóng (completed) 8 issue đã xong, nay thuộc SA: #2 SHR-21, #3 SHR-22, #4 SHR-23, #5 SHR-24, #6 SHR-25, #8 SHR-28, #10 SHR-02, #16 SHR-12. Body mỗi issue ghi commit.
-      - #1 SHR-20 chuyển `owner:SA`, giữ mở (một phần).
-      - Sửa tiêu đề #6 (ASP.NET → Spring), #9 (Firely → HAPI FHIR), #23 (Azure OpenAI/Anthropic → DeepSeek/Gemini/Ollama).
+### J6 - Dev onboarding: README, CONTRIBUTING, per-dev guide, PR template, CODEOWNERS, issues DONE
+1. **Goal:** devs can clone the repo, read, receive tasks and code immediately, without asking the SA how to start.
+2. **Work done (in order):**
+   1. Merge PR #26 (Java) into `main`; reset the working branch from the new `main` (`1bd0456`).
+   2. `docs/onboarding.md`: 5 steps (set up machine -> `make -C dev quickstart` -> what to read -> D1/D2/D3's part -> first PR).
+      Each dev has: services owned, design documents to read (every link checked to exist), first task, libraries already available.
+   3. `CONTRIBUTING.md`: 4 principles (synthetic data, no secrets, contracts first, devs only write logic); task process -> branch `<ID>-...` -> squash PR;
+      check commands like CI; CI blocking conditions (cross-referenced with `java-ci`/`python-ci`: coverage 70%); Java code conventions.
+   4. `.github/pull_request_template.md`: task/story, contract impact, Definition of Done checklist.
+   5. `.github/CODEOWNERS`: default repo owner; lines for D1/D2/D3 left as comments (no GitHub accounts yet; nonexistent names make GitHub drop the line);
+      `libs/`, `contracts/`, `.github/`, `dev/`, Dockerfile, `deploy/`, `config/` always require SA.
+   6. `.github/dependabot.yml`: maven, pip (ai, ml, tools/contracts), docker, github-actions; `github-setup.md` nuget -> maven.
+   7. Root README: "Quick start" section + directory table; update phase 4-5 status.
+   8. GitHub issues:
+      - Closed (completed) 8 finished issues, now owned by SA: #2 SHR-21, #3 SHR-22, #4 SHR-23, #5 SHR-24, #6 SHR-25, #8 SHR-28, #10 SHR-02, #16 SHR-12. Each issue body records the commit.
+      - #1 SHR-20 changed to `owner:SA`, kept open (partial).
+      - Fixed titles #6 (ASP.NET -> Spring), #9 (Firely -> HAPI FHIR), #23 (Azure OpenAI/Anthropic -> DeepSeek/Gemini/Ollama).
    9. `status.py`:
-      - NTF-01 = xong: script `contracts/db/mongo-notification-ml.js` đạt đủ tiêu chí.
-      - ML-11 = một phần: thiếu ràng buộc `score`, vì collection time-series không nhận validator.
-3. **Thay đổi:**
+      - NTF-01 = done: the `contracts/db/mongo-notification-ml.js` script meets all criteria.
+      - ML-11 = partial: missing the `score` constraint, because time-series collections do not accept validators.
+3. **Changes:**
 
-| File | | Nội dung |
+| File | | Content |
 |---|---|---|
-| `docs/onboarding.md`, `CONTRIBUTING.md` | A | hướng dẫn dev |
-| `.github/{CODEOWNERS,pull_request_template.md,dependabot.yml}` | A | quản trị PR |
-| `README.md` | M | + Bắt đầu nhanh, bảng thư mục, trạng thái |
-| `docs/04-devops/github-setup.md` | M | Dependabot nuget → maven |
-| `tools/plan/status.py`, `docs/05-plan/by-person/*` | M | NTF-01 ☑, ML-11 ◐ |
-| GitHub issue #1–#10, #16, #23 | — | như bước 2.8 |
+| `docs/onboarding.md`, `CONTRIBUTING.md` | A | dev guide |
+| `.github/{CODEOWNERS,pull_request_template.md,dependabot.yml}` | A | PR governance |
+| `README.md` | M | + Quick start, directory table, status |
+| `docs/04-devops/github-setup.md` | M | Dependabot nuget -> maven |
+| `tools/plan/status.py`, `docs/05-plan/by-person/*` | M | NTF-01 [x], ML-11 [~] |
+| GitHub issues #1-#10, #16, #23 | - | as in step 2.8 |
 
-4. **Kiểm chứng:**
-   - Mọi link tương đối trong `onboarding.md` đều trỏ tới file có thật.
+4. **Verification:**
+   - Every relative link in `onboarding.md` points to an existing file.
    - `tools/plan/build.py`: OK.
-   - Lệnh trong CONTRIBUTING đối chiếu với workflow template (`pytest --cov-fail-under=70`, `mvn verify` có Spotless/JaCoCo).
-5. **Việc của bạn (PM):** khi có tài khoản GitHub của D1/D2/D3, bỏ comment các dòng trong `.github/CODEOWNERS` và mời họ làm collaborator; bật ruleset theo `github-setup.md`.
+   - Commands in CONTRIBUTING cross-checked with the template workflows (`pytest --cov-fail-under=70`, `mvn verify` with Spotless/JaCoCo).
+5. **Your work (PM):** once D1/D2/D3 GitHub accounts exist, uncomment the lines in `.github/CODEOWNERS` and invite them as collaborators; enable the rulesets per `github-setup.md`.
 
-### G1 — Repo GitOps (`shp-gitops-scratch`) ✅ / một phần
-1. **Mục tiêu:** Argo CD biết phải chạy gì trên cụm `uat`/`prod`. Khớp với pipeline `gitops-promote` (ghi `envs/<env>/<svc>/values.yaml`).
-2. **Việc đã làm (theo thứ tự):**
-   1. `bootstrap/`: values cài Argo CD (chart 10.11.5; tắt admin cục bộ, UI không mở ra ngoài) và root Application cho mỗi môi trường.
+### G1 - GitOps repo (`shp-gitops-scratch`) DONE / partial
+1. **Goal:** Argo CD knows what to run on the `uat`/`prod` clusters. Matches the `gitops-promote` pipeline (writes `envs/<env>/<svc>/values.yaml`).
+2. **Work done (in order):**
+   1. `bootstrap/`: Argo CD install values (chart 10.11.5; local admin disabled, UI not exposed externally) and a root Application per environment.
    2. `clusters/<env>/`:
-      - AppProject `platform` và `shp-apps` (service chỉ vào namespace `shp-apps`, không tạo tài nguyên cấp cụm).
-      - ApplicationSet add-on, ghim version: cert-manager v1.21.2, kyverno 3.9.1, argo-rollouts 2.43.7, keda 2.20.2, envoy-gateway 1.9.3, otel-collector 0.177.0.
-        Version lấy từ `helm search repo`, chọn bản liền trước bản mới nhất.
-      - ApplicationSet service, có post-selector bỏ qua service chưa có digest (chart từ chối render khi thiếu digest).
+      - AppProjects `platform` and `shp-apps` (services only go into the `shp-apps` namespace, do not create cluster-scoped resources).
+      - Add-on ApplicationSet, pinned versions: cert-manager v1.21.2, kyverno 3.9.1, argo-rollouts 2.43.7, keda 2.20.2, envoy-gateway 1.9.3, otel-collector 0.177.0.
+        Versions taken from `helm search repo`, choosing the release immediately before the latest.
+      - Service ApplicationSet, with a post-selector that skips services without a digest (the chart refuses to render when the digest is missing).
    3. `platform/charts/shp-baseline`:
-      - Namespace PSA restricted + NetworkPolicy default-deny.
-      - 4 ClusterPolicy Kyverno: chỉ ACR, chữ ký cosign keyless của `container.yml`, cấm `:latest`, bắt buộc resources/probe.
+      - PSA restricted namespace + default-deny NetworkPolicy.
+      - 4 Kyverno ClusterPolicies: ACR only, keyless cosign signature from `container.yml`, ban `:latest`, require resources/probes.
       - GatewayClass/Gateway + ClusterIssuer.
-   4. `envs/`: values chung + theo môi trường + 8 service × 2 môi trường. Gateway chỉ nhận từ `envoy-gateway-system`; service khác nhận trong namespace.
-   5. `tools/validate.sh` + workflow `validate`:
-      - YAML hợp lệ; `clusters/uat` ≡ `prod` (bỏ comment); render; kubeconform kèm schema CRD.
-      - Liệt kê ô bắt buộc còn trống (`--strict` thì báo lỗi).
-   6. Tạo nhánh `main` của repo GitOps từ nhánh làm việc (Argo CD và bot promote dùng `main`).
-3. **Kiểm chứng:** `tools/validate.sh` → OK. kubeconform: 106 tài nguyên, 0 lỗi, 0 bỏ qua. Sơ đồ README render được.
-4. **Lỗi & cách sửa:**
-   - Bước so sánh uat/prod báo lệch do comment chứa chữ "uat" → bỏ comment trước khi so.
-   - Push lỗi mạng một lần → thử lại thành công.
-5. **Chưa làm:**
-   - ENV-01 (cài Argo CD bằng workflow, tạo Secret từ Key Vault).
-   - Kết nối DB/bus của service trên cloud (chờ IaC dữ liệu).
-   - Ghim chart theo tag (CIT-09).
-   - Các ô cấu hình để trống (ACR, tên miền, OIDC) phải điền trước khi dựng môi trường.
-   - Chưa chạy trên AKS thật.
+   4. `envs/`: common values + per-environment values + 8 services x 2 environments. The gateway only accepts traffic from `envoy-gateway-system`; other services accept traffic within the namespace.
+   5. `tools/validate.sh` + `validate` workflow:
+      - Valid YAML; `clusters/uat` == `prod` (ignoring comments); render; kubeconform with CRD schemas.
+      - List required fields still empty (`--strict` makes it an error).
+   6. Create the GitOps repo's `main` branch from the working branch (Argo CD and the promote bot use `main`).
+3. **Verification:** `tools/validate.sh` -> OK. kubeconform: 106 resources, 0 errors, 0 skipped. The README diagram renders.
+4. **Errors and fixes:**
+   - The uat/prod comparison step reported a mismatch because a comment contained the word "uat" -> strip comments before comparing.
+   - One network push error -> retried successfully.
+5. **Not done:**
+   - ENV-01 (install Argo CD via workflow, create Secrets from Key Vault).
+   - Service DB/bus connectivity in the cloud (waiting for data IaC).
+   - Pin the chart by tag (CIT-09).
+   - Config fields left empty (ACR, domain, OIDC) must be filled before provisioning environments.
+   - Not yet run on a real AKS.
 
-## Phần D — Kế tiếp (theo thứ tự)
-| # | Bước | Ai | Trạng thái |
+## Part D - Next steps (in order)
+| # | Step | Who | Status |
 |---|---|---|---|
-| D1 | Thư viện Java `libs/java` ✅ (J2–J4) + 6 service Java ✅ (J5); còn: `EventPublisher` Spring Cloud Stream + consumer/DLQ, FHIR resource store Mongo (SHR-10) | SA | đang làm |
-| D1b | Onboarding dev (J6): README gốc, CONTRIBUTING, hướng dẫn từng dev, PR template, CODEOWNERS, issue | SA | ✅ |
-| D1c | Sơ đồ kiến trúc tổng thể + module (J7) | SA | ✅ |
-| D2 | Thư viện Python (`libs/python`): LLM router (DeepSeek → Gemini → Ollama, redact PII), shared feature package cho ML | SA | ⏳ |
-| D3 | Repo GitOps: Argo CD bootstrap, AppProject, ApplicationSet, add-on, Kyverno, `envs/{uat,prod}` | SA | ✅ (G1) |
-| D4 | ENV-01: cài Argo CD trong workflow `env-provision` | SA | ⏳ |
-| D5 | Module IaC dữ liệu (IAC-09..16), node pool `ai` cho Ollama + secret key LLM | SA | ⏳ |
-| D6 | Profile local `full` (OpenSearch, Ollama, ClamAV, MLflow, observability), realm MFA | SA | ⏳ |
-| D7 | Cài GitHub (ruleset, CODEOWNERS, Environments, GitHub App, Variables) theo `github-setup.md` | 👤 bạn | ⏳ |
-| D8 | Bootstrap Azure một lần, điền GitHub Variables | 👤 bạn | ⏳ |
-| D9 | Xoay key bị lộ ở repo PoC cũ + xóa lịch sử | 👤 bạn | ⏳ |
-| D10 | Chuyển repo templates/infra sang private | 👤 bạn | đang làm |
+| D1 | Java libraries `libs/java` DONE (J2-J4) + 6 Java services DONE (J5); remaining: `EventPublisher` Spring Cloud Stream + consumer/DLQ, FHIR resource store Mongo (SHR-10) | SA | in progress |
+| D1b | Dev onboarding (J6): root README, CONTRIBUTING, per-dev guide, PR template, CODEOWNERS, issues | SA | DONE |
+| D1c | Overall architecture + module diagrams (J7) | SA | DONE |
+| D2 | Python libraries (`libs/python`): LLM router (DeepSeek -> Gemini -> Ollama, PII redaction), shared feature package for ML | SA | TODO |
+| D3 | GitOps repo: Argo CD bootstrap, AppProject, ApplicationSet, add-ons, Kyverno, `envs/{uat,prod}` | SA | DONE (G1) |
+| D4 | ENV-01: install Argo CD in the `env-provision` workflow | SA | TODO |
+| D5 | Data IaC modules (IAC-09..16), `ai` node pool for Ollama + LLM key secret | SA | TODO |
+| D6 | Local `full` profile (OpenSearch, Ollama, ClamAV, MLflow, observability), MFA realm | SA | TODO |
+| D7 | GitHub setup (rulesets, CODEOWNERS, Environments, GitHub App, Variables) per `github-setup.md` | YOU | TODO |
+| D8 | Bootstrap Azure once, fill in GitHub Variables | YOU | TODO |
+| D9 | Rotate keys exposed in the old PoC repo + purge history | YOU | TODO |
+| D10 | Move the templates/infra repos to private | YOU | in progress |

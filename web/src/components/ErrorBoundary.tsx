@@ -6,7 +6,7 @@ interface State {
   readonly error?: Error;
 }
 
-/** Bắt lỗi render của một màn hình để cả ứng dụng không trắng trang. Không hiển thị stack trace cho người dùng. */
+/** Catch render errors in one screen so the whole app does not go blank. Does not show the stack trace to the user. */
 export class ErrorBoundary extends Component<{ readonly children: ReactNode }, State> {
   state: State = {};
 
@@ -15,7 +15,7 @@ export class ErrorBoundary extends Component<{ readonly children: ReactNode }, S
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('Lỗi render màn hình', error, info.componentStack);
+    console.error('Screen render error', error, info.componentStack);
   }
 
   render() {

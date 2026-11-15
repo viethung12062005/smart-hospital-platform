@@ -1,11 +1,12 @@
-"""Bus sự kiện cho service Python (PY-03; 13-events §1).
+"""Event bus for Python services (PY-03; 13-events §1).
 
-- Local: RabbitMQ topic exchange `shp-events`, routing key = `type`. Mỗi consumer một quorum queue
-  `<consumer>`, `x-delivery-limit` = 4 (tổng 5 lần giao); vượt giới hạn hoặc lỗi vĩnh viễn → dead-letter exchange
-  `shp-events.dlx` → queue `<consumer>.dlq`.
-- Cloud: Azure Service Bus, topic `shp-events`, subscription = tên consumer (filter theo `type` do Terraform tạo);
-  retry bằng abandon, quá 5 lần → dead-letter của subscription. Xác thực bằng workload identity (không có secret).
-Quyết định xử lý (xong, trùng, thử lại, DLQ) nằm ở `shp_platform.events.consume`; module này chỉ chuyển giao.
+- Local: RabbitMQ topic exchange `shp-events`, routing key = `type`. Each consumer has one quorum queue
+  `<consumer>`, `x-delivery-limit` = 4 (5 deliveries total); exceeding the limit or a permanent error →
+  dead-letter exchange `shp-events.dlx` → queue `<consumer>.dlq`.
+- Cloud: Azure Service Bus, topic `shp-events`, subscription = consumer name (filter on `type` created by Terraform);
+  retry via abandon; more than 5 times → the subscription's dead-letter queue.
+  Authenticate with workload identity (no secrets).
+Outcome decisions (done, duplicate, retry, DLQ) live in `shp_platform.events.consume`; this module only transports.
 """
 
 import json
@@ -22,7 +23,7 @@ TOPIC = "shp-events"
 CONTENT_TYPE = "application/cloudevents+json"
 LOG = logging.getLogger("shp.bus")
 
-Handler = Callable[[bytes, int], Outcome]  # (thân message, lần giao thứ mấy từ 1) → quyết định
+Handler = Callable[[bytes, int], Outcome]  # (message body, delivery attempt starting at 1) -> decision
 
 
 class Bus(Protocol):
@@ -77,7 +78,7 @@ class RabbitBus:
             durable=True,
             arguments={
                 "x-queue-type": "quorum",
-                "x-delivery-limit": MAX_ATTEMPTS - 1,  # số lần giao lại, tổng = MAX_ATTEMPTS
+                "x-delivery-limit": MAX_ATTEMPTS - 1,  # redelivery count; total = MAX_ATTEMPTS
                 "x-dead-letter-exchange": DLX,
                 "x-dead-letter-routing-key": consumer,
             },
@@ -109,7 +110,7 @@ class RabbitBus:
                 self._conn.close()
 
 
-class ServiceBus:  # pragma: no cover - cần Azure Service Bus; thử ở UAT (IAC dữ liệu/hàng đợi)
+class ServiceBus:  # pragma: no cover - requires Azure Service Bus; exercised in UAT (data/queue IaC)
     def __init__(self, namespace: str) -> None:
         from azure.identity import DefaultAzureCredential
         from azure.servicebus import ServiceBusClient
@@ -126,7 +127,7 @@ class ServiceBus:  # pragma: no cover - cần Azure Service Bus; thử ở UAT (
             content_type=CONTENT_TYPE,
             message_id=event["id"],
             subject=event["type"],
-            application_properties={"type": event["type"]},  # filter của subscription theo `type`
+            application_properties={"type": event["type"]},  # subscription filter on `type`
         )
         with self._lock:
             self._sender.send_messages(msg)
@@ -147,14 +148,15 @@ class ServiceBus:  # pragma: no cover - cần Azure Service Bus; thử ở UAT (
 def start_consumer(
     bus: Bus, consumer: str, types: Sequence[str], handler: Handler, stop: threading.Event
 ) -> threading.Thread:
-    """Chạy consumer ở thread nền; lỗi kết nối thì ghi log (không có nội dung message) và thử lại sau 5 giây."""
+    """Run the consumer on a background thread; on connection failure log (without message content) and retry after
+    5 seconds."""
 
     def loop() -> None:
         while not stop.is_set():
             try:
                 bus.consume(consumer, types, handler, stop)
             except Exception as exc:  # noqa: BLE001
-                LOG.warning("consumer %s mất kết nối bus: %s", consumer, type(exc).__name__)
+                LOG.warning("consumer %s lost the bus connection: %s", consumer, type(exc).__name__)
                 stop.wait(5)
 
     thread = threading.Thread(target=loop, name=f"consumer-{consumer}", daemon=True)

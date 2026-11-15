@@ -14,14 +14,14 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Idempotency-Key cho MongoDB (task SHR-12). Gọi BÊN TRONG {@link MongoMessaging#inTransaction}
- * cùng thay đổi dữ liệu: request song song cùng key gây xung đột, lần thử lại thấy bản ghi đã
- * commit → replay.
+ * Idempotency-Key for MongoDB (task SHR-12). Call INSIDE {@link MongoMessaging#inTransaction} with
+ * the data change: concurrent requests with the same key conflict, and the retry sees the existing
+ * record commit → replay.
  */
 public final class MongoIdempotency {
   public static final Duration RETENTION = Duration.ofHours(24);
 
-  /** {@code replay=true}: đã xử lý với {@code resourceId} — trả lại kết quả cũ. */
+  /** {@code replay=true}: already processed with {@code resourceId} — return the old result. */
   public record Claim(UUID resourceId, boolean replay) {}
 
   private final MongoTemplate mongo;
@@ -34,7 +34,7 @@ public final class MongoIdempotency {
 
   public Claim claim(String subject, String key, String operation, byte[] requestHash) {
     if (!TransactionSynchronizationManager.isActualTransactionActive()) {
-      throw new IllegalStateException("claim phải chạy trong transaction cùng thay đổi dữ liệu");
+      throw new IllegalStateException("claim must run in a transaction with the data change");
     }
     String id = subject + "|" + key;
     Instant now = clock.instant();
@@ -51,7 +51,8 @@ public final class MongoIdempotency {
       return new Claim(UUID.fromString(existing.getString("resourceId")), true);
     }
     if (existing != null) {
-      mongo.remove(MongoMessaging.id(id), MongoMessaging.IDEMPOTENCY); // quá 24 giờ: coi như mới
+      mongo.remove(
+          MongoMessaging.id(id), MongoMessaging.IDEMPOTENCY); // older than 24 hours: treat as new
     }
     UUID resourceId = Uuids.v7(clock);
     mongo.insert(

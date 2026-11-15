@@ -32,9 +32,10 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 /**
- * SHR-20 với Keycloak thật: token do realm {@code shp} của cụm local (dev/chart/shp-local-deps)
- * phát ra phải qua đúng các quy tắc của {@link ShpJwt}. Dùng đúng file realm của cụm để sai lệch
- * cấu hình (mapper roles, audience) lộ ra ở đây chứ không phải lúc dev đăng nhập.
+ * SHR-20 with real Keycloak: tokens issued by the {@code shp} realm of the local cluster
+ * (dev/chart/shp-local-deps) must pass exactly the rules of {@link ShpJwt}. Using the cluster's
+ * real realm file exposes configuration drift (roles mapper, audience) here rather than when a dev
+ * logs in.
  */
 @Testcontainers
 class KeycloakTokenTest {
@@ -68,8 +69,7 @@ class KeycloakTokenTest {
       dir = dir.getParent();
     }
     if (dir == null) {
-      throw new IllegalStateException(
-          "Không tìm thấy dev/chart/shp-local-deps/files/realm-shp.json");
+      throw new IllegalStateException("dev/chart/shp-local-deps/files/realm-shp.json not found");
     }
     return dir.resolve("dev/chart/shp-local-deps/files/realm-shp.json");
   }
@@ -138,12 +138,12 @@ class KeycloakTokenTest {
   static String field(String json, String name) {
     var m = Pattern.compile("\"" + name + "\"\\s*:\\s*\"([^\"]+)\"").matcher(json);
     if (!m.find()) {
-      throw new IllegalStateException("Thiếu " + name);
+      throw new IllegalStateException("Missing " + name);
     }
     return m.group(1);
   }
 
-  /** Token thật qua password grant của client thử {@code shp-test} (giống `make token`). */
+  /** Real token via password grant of the test client {@code shp-test} (same as `make token`). */
   static String token(String username) throws Exception {
     return field(
         form(
@@ -169,16 +169,17 @@ class KeycloakTokenTest {
     assertThat(jwt.getIssuer().toString()).isEqualTo(issuer);
     assertThat(jwt.getAudience()).contains("shp-api");
     assertThat(jwt.getSubject()).isNotBlank();
-    // Keycloak thêm role mặc định (offline_access, default-roles-shp...): chỉ giữ role của SHP
+    // Keycloak adds default roles (offline_access, default-roles-shp...): keep only SHP roles
     assertThat(ShpJwt.roles(jwt)).containsExactly("patient");
     var auth = ShpJwt.authenticationConverter().convert(jwt);
     assertThat(auth.getName()).isEqualTo(jwt.getSubject());
-    // Spring Security 7 tự thêm quyền FACTOR_* (cách xác thực); role nghiệp vụ chỉ có patient
+    // Spring Security 7 adds FACTOR_* authorities automatically (authentication method); business
+    // roles include only patient
     assertThat(auth.getAuthorities())
         .extracting(GrantedAuthority::getAuthority)
         .filteredOn(a -> !a.startsWith("FACTOR_"))
         .containsExactly("patient");
-    // 07 §2: access token sống tối đa 15 phút
+    // 07 §2: access tokens live at most 15 minutes
     assertThat(Duration.between(jwt.getIssuedAt(), jwt.getExpiresAt()))
         .isLessThanOrEqualTo(Duration.ofMinutes(15));
   }
@@ -196,7 +197,7 @@ class KeycloakTokenTest {
   @Test
   void expiredTokenIsRejected() throws Exception {
     String t = token("patient.it");
-    // 16 phút sau: quá hạn 15 phút + độ lệch 30 giây
+    // 16 minutes later: past the 15-minute expiry + 30-second skew
     Clock later = Clock.fixed(Instant.now().plus(Duration.ofMinutes(16)), ZoneOffset.UTC);
     assertThatThrownBy(() -> decoder("shp-api", true, later).decode(t))
         .isInstanceOf(JwtValidationException.class);
@@ -219,14 +220,14 @@ class KeycloakTokenTest {
   @Test
   void staffWithoutMfaIsRejectedUnlessMfaIsSwitchedOff() throws Exception {
     String t = token("doctor.it");
-    // Realm local chưa cấu hình MFA nên token nhân viên không có amr=mfa (US-008)
+    // The local realm has no MFA configured, so staff tokens have no amr=mfa (US-008)
     assertThatThrownBy(() -> decoder("shp-api", true, Clock.systemUTC()).decode(t))
         .isInstanceOfSatisfying(
             JwtValidationException.class,
             e ->
                 assertThat(e.getErrors())
                     .anySatisfy(err -> assertThat(err.getDescription()).isEqualTo("mfa-required")));
-    // Cụm local đặt SHP_REQUIRE_MFA_FOR_STAFF=false để dev đăng nhập được
+    // The local cluster sets SHP_REQUIRE_MFA_FOR_STAFF=false so devs can log in
     Jwt jwt = decoder("shp-api", false, Clock.systemUTC()).decode(t);
     assertThat(ShpJwt.roles(jwt)).containsExactly("doctor");
   }

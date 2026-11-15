@@ -1,34 +1,34 @@
-<!-- Tiêu đề PR = commit trên main khi squash: `<story> (<task>): <mô tả>`, vd. `US-041 (NTF-02): create reminders on appointment-booked`
-     hoặc `ENABLER (ARC-04): add architecture diagrams`. Base luôn là main. Cách viết từng mục: docs/00-git-github.md §4.1 -->
+<!-- PR title = the commit on main when squashed: `<story> (<task>): <description>`, e.g. `US-041 (NTF-02): create reminders on appointment-booked`
+     or `ENABLER (ARC-04): add architecture diagrams`. Base is always main. How to write each section: docs/00-git-github.md §4.1 -->
 
 ## Task
-- ID: <!-- vd. NTF-02 (một PR = một task; tên nhánh `<ID>-mo-ta-ngan`, tách từ main) -->
-- Story: <!-- vd. US-041, hoặc ENABLER -->
-- Issue: Closes #<!-- issue của task -->, Part of #<!-- issue của US hoặc nhóm việc nền -->
-- Tài liệu thiết kế đã theo: <!-- vd. detailed-design/04-db-notification-ml.md §1.3 -->
+- ID: <!-- e.g. NTF-02 (one PR = one task; branch name `<ID>-short-description`, cut from main) -->
+- Story: <!-- e.g. US-041, or ENABLER -->
+- Issue: Closes #<!-- task issue -->, Part of #<!-- US issue or enabler issue -->
+- Design docs followed: <!-- e.g. detailed-design/04-db-notification-ml.md §1.3 -->
 
-## Thay đổi
-<!-- 2–5 gạch đầu dòng: vì sao cần, làm gì ở mức hành vi, điểm reviewer cần soi kỹ. Không liệt kê lại từng file. -->
+## Changes
+<!-- 2-5 bullets: why it is needed, what changes at the behavior level, what the reviewer should look at closely. Do not list every file. -->
 
-## Ảnh hưởng hợp đồng
-- [ ] Không đổi `contracts/` (API, event, matrix phân quyền, mã danh mục)
-- [ ] Có đổi — đã cập nhật `contracts/` và tài liệu thiết kế, `tools/contracts/check_all.sh` xanh, SA đã đồng ý trước
+## Contract impact
+- [ ] No change to `contracts/` (API, event, authorization matrix, catalog codes)
+- [ ] Changed - updated `contracts/` and design docs, `tools/contracts/check_all.sh` green, SA agreed beforehand
 
-## Bảo mật và dữ liệu
-<!-- Có chạm dữ liệu bệnh nhân, phân quyền, audit, PII, secret, egress ra ngoài cụm không? Nếu có: kiểm soát nào đã thêm.
-     Nếu không: ghi "Không ảnh hưởng" và lý do ngắn. Không để trống. -->
+## Security and data
+<!-- Does it touch patient data, authorization, audit, PII, secrets, or egress outside the cluster? If yes: which controls were added.
+     If not: write "No impact" and a short reason. Do not leave it empty. -->
 
-## Kiểm tra
-<!-- Lệnh đã chạy và kết quả thật (vd. `pytest`: 45 passed, có Docker). Việc chưa kiểm được và vì sao. -->
+## Verification
+<!-- Commands actually run and their real results (e.g. `pytest`: 45 passed, Docker available). What could not be verified and why. -->
 
-## Việc theo sau
-<!-- Việc cố ý để PR khác, kèm task/issue. Không có thì xóa mục này. -->
+## Follow-up work
+<!-- Work intentionally left for another PR, with task/issue. Delete this section if none. -->
 
 ## Definition of Done
-- [ ] Đã tự review diff trên GitHub: không còn debug, code chết, thay đổi lạc đề
-- [ ] Test viết kèm và chạy xanh: `mvn -B -pl services/<svc> -am verify` (Java) hoặc `ruff`/`mypy`/`pytest` có Docker (Python)
-- [ ] Endpoint mới có `@RequireShpAuthz`; lỗi nghiệp vụ dùng mã trong danh mục (07 §5)
-- [ ] Event phát qua `outbox.add(...)` trong cùng transaction; consumer bọc `inbox.handleOnce(...)`
-- [ ] Chỉ dữ liệu giả; không có secret/key/mật khẩu trong code, cấu hình hay log; log không chứa PII
-- [ ] Không sửa Dockerfile, pipeline, Helm, `config/PlatformConfig` (cần đổi → mở issue cho SA)
-- [ ] Đã chạy thử trên cụm local nếu đổi hành vi runtime: `make -C dev deploy SVC=<svc>`
+- [ ] Self-reviewed the diff on GitHub: no debug code, dead code, or unrelated changes
+- [ ] Tests written alongside and passing: `mvn -B -pl services/<svc> -am verify` (Java) or `ruff`/`mypy`/`pytest` with Docker (Python)
+- [ ] New endpoints carry `@RequireShpAuthz`; business errors use catalog codes (07 §5)
+- [ ] Events published via `outbox.add(...)` in the same transaction; consumers wrapped in `inbox.handleOnce(...)`
+- [ ] Fake data only; no secrets/keys/passwords in code, config or logs; logs contain no PII
+- [ ] No changes to Dockerfile, pipeline, Helm, `config/PlatformConfig` (changes -> open an issue for SA)
+- [ ] Ran on the local cluster if runtime behavior changed: `make -C dev deploy SVC=<svc>`

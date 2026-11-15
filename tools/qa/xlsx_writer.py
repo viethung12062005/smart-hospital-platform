@@ -25,7 +25,7 @@ def write_cases(path, rows, by_req):
     wb = Workbook()
     ws = wb.active
     ws.title = "Test cases"
-    cols = ["ID", "Tên test case", "Yêu cầu phủ", "Module", "Mức", "Ưu tiên", "Tự động hóa", "Test tự động", "Thiếu gì / chờ gì", "Người phụ trách", "Mô tả (Given/When/Then)"]
+    cols = ["ID", "Test case name", "Requirements covered", "Module", "Level", "Priority", "Automation", "Automated test", "Missing / waiting for", "Owner", "Description (Given/When/Then)"]
     _header(ws, cols, [20, 44, 18, 14, 12, 9, 13, 50, 44, 18, 80])
     for i, r in enumerate(sorted(rows, key=lambda x: x["id"]), 2):
         refs = [x.split("/")[-1] for x in r["refs"]] + [f"{t['file']}::{t['title'][:60]}" for t in r["e2e"]]
@@ -38,8 +38,8 @@ def write_cases(path, rows, by_req):
     for status, color in STATUS_FILL.items():
         ws.conditional_formatting.add(f"G2:G{ws.max_row}", CellIsRule(operator="equal", formula=[f'"{status}"'], fill=PatternFill("solid", fgColor=color)))
 
-    ws2 = wb.create_sheet("Truy vết")
-    _header(ws2, ["Yêu cầu (AC / NFR)", "Test case", "Mức", "Ưu tiên", "Tự động hóa"], [22, 28, 14, 9, 14])
+    ws2 = wb.create_sheet("Traceability")
+    _header(ws2, ["Requirement (AC / NFR)", "Test case", "Level", "Priority", "Automation"], [22, 28, 14, 9, 14])
     ws2.freeze_panes = "A2"
     row = 2
     for req in sorted(by_req):
@@ -50,10 +50,10 @@ def write_cases(path, rows, by_req):
             row += 1
     ws2.auto_filter.ref = f"A1:E{ws2.max_row}"
 
-    ws3 = wb.create_sheet("Tổng hợp")
-    ws3["A1"] = "Tổng hợp theo trạng thái tự động hóa (công thức đếm từ sheet 'Test cases')"
+    ws3 = wb.create_sheet("Summary")
+    ws3["A1"] = "Summary by automation status (formulas count from the 'Test cases' sheet)"
     ws3["A1"].font = Font(bold=True, name="Arial", size=11)
-    heads = ["Trạng thái", "Số test case", "Trong đó P0"]
+    heads = ["Status", "Number of test cases", "Of which P0"]
     for i, h in enumerate(heads, 1):
         c = ws3.cell(row=3, column=i, value=h)
         c.fill, c.font, c.border = HEAD, Font(bold=True, color="FFFFFF", name="Arial", size=10), BOX
@@ -61,7 +61,7 @@ def write_cases(path, rows, by_req):
         ws3.cell(row=i, column=1, value=st).border = BOX
         ws3.cell(row=i, column=2, value=f"=COUNTIF('Test cases'!$G:$G,A{i})").border = BOX
         ws3.cell(row=i, column=3, value=f"=COUNTIFS('Test cases'!$G:$G,A{i},'Test cases'!$F:$F,\"P0\")").border = BOX
-    ws3.cell(row=8, column=1, value="Tổng").font = Font(bold=True)
+    ws3.cell(row=8, column=1, value="Total").font = Font(bold=True)
     ws3.cell(row=8, column=2, value="=SUM(B4:B7)")
     ws3.cell(row=8, column=3, value="=SUM(C4:C7)")
     ws3.column_dimensions["A"].width = 18

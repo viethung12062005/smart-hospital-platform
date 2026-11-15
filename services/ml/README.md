@@ -1,64 +1,64 @@
 # ml
 
-Mô hình no-show: phục vụ dự đoán, drift, huấn luyện lại tự động. Chủ sở hữu: **SA** (từ 2026-11-01).
+No-show model: prediction serving, drift, automatic retraining. Owner: **SA** (since 2026-11-01).
 
-| Lệnh | Việc |
+| Command | Task |
 |---|---|
-| `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"` | cài môi trường |
-| `ruff check . && ruff format --check . && mypy . && pytest --cov` | đúng các bước CI chạy |
-| `uvicorn shp_ml.main:app --reload --port 8090` | chạy local |
-| `make -C ../../dev deploy SVC=ml` | build image và deploy lên cụm kind |
+| `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"` | set up the environment |
+| `ruff check . && ruff format --check . && mypy . && pytest --cov` | exactly the CI steps |
+| `uvicorn shp_ml.main:app --reload --port 8090` | run locally |
+| `make -C ../../dev deploy SVC=ml` | build the image and deploy to the kind cluster |
 
-## Dữ liệu huấn luyện giả và baseline (ML-01, ML-02, ML-14, ML-15, ML-21, ML-03)
+## Synthetic training data and baseline (ML-01, ML-02, ML-14, ML-15, ML-21, ML-03)
 
-Hệ thống mới chưa có lịch sử vận hành, nên mô hình đầu tiên học từ **dữ liệu giả** do `shp_ml.synth` sinh theo
-[16-mlops §1](../../docs/03-architecture/detailed-design/16-mlops.md). Khi chạy thật, consumer (ML-06) ghi
-`appointment_facts` từ event của scheduling; pipeline huấn luyện lại (ML-22) dùng chính dữ liệu đó, cùng gói đặc trưng.
+The new system has no operational history yet, so the first model learns from **synthetic data** produced by `shp_ml.synth` following
+[16-mlops §1](../../docs/03-architecture/detailed-design/16-mlops.md). In real operation, the consumer (ML-06) records
+`appointment_facts` from scheduling events; the retraining pipeline (ML-22) uses exactly that data with the same feature package.
 
-| Lệnh | Việc |
+| Command | Task |
 |---|---|
-| `python -m shp_ml.synth --out data/noshow.parquet` | 80.000 lịch hẹn, 24 tháng, ~50.000 bệnh nhân giả, seed 42; kèm `noshow.json` (hash, tỉ lệ nhãn) |
-| `python -m shp_ml.synth --out data/shifted.parquet --shifted` | bộ dịch chuyển cho test drift: lead time +40%, vắng +6 điểm, nhiều chatbot |
-| `python -m shp_ml.train --data data/noshow.parquet --out runs/baseline` | chỉ baseline Logistic Regression (so sánh nhanh) |
+| `python -m shp_ml.synth --out data/noshow.parquet` | 80,000 appointments, 24 months, ~50,000 synthetic patients, seed 42; plus `noshow.json` (hash, label rates) |
+| `python -m shp_ml.synth --out data/shifted.parquet --shifted` | shifted set for drift tests: lead time +40%, no-show +6 points, more chatbot |
+| `python -m shp_ml.train --data data/noshow.parquet --out runs/baseline` | Logistic Regression baseline only (quick comparison) |
 
-Quy luật sinh (hệ số trong `synth.Coef`): logit = β0 + 0,1·lead_time/7 − 1,3·(đặt trong 1 ngày) + 1,4·(đặt trước > 14 ngày)
-+ 1,1·logit(tỉ lệ vắng làm mượt) + 0,35·lần đầu + 0,15·khám trước 8 giờ + 1,6·(trước 8 giờ và từ 60 tuổi)
-+ kênh (staff −0,45, chatbot +0,3) + 1,4·(chatbot và 10–29 tuổi) + chuyên khoa (da liễu +0,35, nhi −0,25) + mùa (cao tháng 1)
-+ thiên hướng ẩn của bệnh nhân (độ lệch 0,9, không có trong đặc trưng). β0 hiệu chỉnh cho tỉ lệ ≈ 18%.
-Các hiệu ứng có ngưỡng và tương tác là chủ ý: hành vi thật không tuyến tính, và nếu dữ liệu chỉ tuyến tính thì LR luôn thắng,
-khiến cổng "hơn baseline" vô nghĩa.
+Data-generating rules (coefficients in `synth.Coef`): logit = β0 + 0.1·lead_time/7 − 1.3·(booked within 1 day) + 1.4·(booked > 14 days ahead)
++ 1.1·logit(smoothed no-show rate) + 0.35·first visit + 0.15·visit before 8 am + 1.6·(before 8 am and aged 60+)
++ channel (staff −0.45, chatbot +0.3) + 1.4·(chatbot and age 10–29) + specialty (dermatology +0.35, pediatrics −0.25) + season (peak in January)
++ latent patient propensity (sd 0.9, not a feature). β0 is calibrated to a rate ≈ 18%.
+The threshold effects and interactions are intentional: real behavior is non-linear, and if the data were purely linear LR would always win,
+making the "beats baseline" gate meaningless.
 
-Kết quả seed 42 (máy SA, 2026-11-01): no-show 18,0%; baseline LR AUC **0,769**; LightGBM AUC **0,784**, ECE 0,019,
-p95 dự đoán 6,7 ms, mọi nhóm con đạt; ngưỡng nguy cơ cao tự chọn 0,31.
+Seed 42 results (SA machine, 2026-11-01): no-show 18.0%; LR baseline AUC **0.769**; LightGBM AUC **0.784**, ECE 0.019,
+p95 prediction latency 6.7 ms, every subgroup passes; the auto-selected high-risk threshold is 0.31.
 
-### Huấn luyện, cổng chất lượng, đăng ký (ML-03..05, ML-13, ML-17, ML-18)
+### Training, quality gates, registration (ML-03..05, ML-13, ML-17, ML-18)
 
-| Lệnh | Việc |
+| Command | Task |
 |---|---|
-| `python -m shp_ml.pipeline --data data/noshow.parquet --registry runs/registry --promote-first` | toàn bộ pipeline với registry thư mục; `--promote-first` chỉ dùng lần khởi tạo |
-| `pip install -e ".[train,mlflow]"` rồi `python -m shp_ml.pipeline --data ... --mlflow http://mlflow:5000` | cùng pipeline, ghi MLflow (cụm) |
+| `python -m shp_ml.pipeline --data data/noshow.parquet --registry runs/registry --promote-first` | full pipeline with a directory registry; `--promote-first` is only for the first bootstrap |
+| `pip install -e ".[train,mlflow]"` then `python -m shp_ml.pipeline --data ... --mlflow http://mlflow:5000` | same pipeline, logging to MLflow (cluster) |
 
-Model lưu dạng văn bản LightGBM (không pickle) kèm sha256, kiểm lại khi nạp. Job huấn luyện chỉ đặt alias `candidate`;
-`production` chỉ đổi qua shadow/canary (ML-24) hoặc người có quyền. Không đạt cổng: không đăng ký, run vẫn được ghi kèm lý do.
+The model is stored as LightGBM text (no pickle) with sha256, re-verified on load. The training job only sets the `candidate` alias;
+`production` changes only through shadow/canary (ML-24) or an authorized person. Gate failure: nothing is registered, but the run is still logged with the reason.
 
-**Giới hạn:** mô hình chỉ học lại quy luật nhóm tự viết; con số chứng minh quy trình MLOps, không chứng minh khả năng dự đoán thực tế.
+**Limitations:** the model only relearns self-written group rules; the numbers demonstrate the MLOps process, not real predictive ability.
 
-`shp_platform` trong `src/` là bản chép của `libs/python`: không sửa ở đây, sửa ở nguồn rồi chạy `python tools/pylib/sync.py`.
+`shp_platform` in `src/` is a copy of `libs/python`: do not edit it here; edit the source and run `python tools/pylib/sync.py`.
 
-## Phục vụ, giám sát và huấn luyện lại (US-064, US-065, US-073, US-074)
+## Serving, monitoring and retraining (US-064, US-065, US-073, US-074)
 
 ```
 scheduling ─E1/E2/E3/E5, clinical E7─► consumer (inbox, 1 transaction) ─► appointment_facts, patient_stats
-                                          └─► chấm điểm production (+ shadow candidate) ─► predictions + outbox E10
-02:00 VN  monitor: PSI 7 ngày (đặc trưng từ predictions) + AUC thực tế 14 ngày ─► metric ─► retrain_requests
-Job       retrain: khóa ─► snapshot Parquet 24 tháng (hash) ─► pipeline + cổng ─► alias candidate (không bao giờ production)
+                                          └─► score production (+ shadow candidate) ─► predictions + outbox E10
+02:00 VN  monitor: 7-day PSI (features from predictions) + 14-day live AUC ─► metric ─► retrain_requests
+Job       retrain: lock ─► Parquet snapshot 24 months (hash) ─► pipeline + gates ─► candidate alias (never production)
 ```
 
-| Lệnh | Việc |
+| Command | Task |
 |---|---|
-| `uvicorn shp_ml.main:app --port 8090` (cần `MONGODB_URI`, `RABBITMQ_URL`, `REGISTRY_DIR` hoặc `MLFLOW_TRACKING_URI`) | service: consumer, relay outbox, nạp model, giám sát hằng ngày, `/metrics` |
-| `python -m shp_ml.monitor` | chạy giám sát một lần (CronJob) |
-| `python -m shp_ml.retrain --datasets /data/datasets` | xử lý yêu cầu huấn luyện lại (Kubernetes Job, image huấn luyện) |
+| `uvicorn shp_ml.main:app --port 8090` (needs `MONGODB_URI`, `RABBITMQ_URL`, `REGISTRY_DIR` or `MLFLOW_TRACKING_URI`) | service: consumer, outbox relay, model loading, daily monitoring, `/metrics` |
+| `python -m shp_ml.monitor` | run monitoring once (CronJob) |
+| `python -m shp_ml.retrain --datasets /data/datasets` | process retraining requests (Kubernetes Job, training image) |
 
-Test tích hợp dùng MongoDB replica set và RabbitMQ thật qua testcontainers (cần Docker); có `SHP_TEST_MONGO_URI`
-thì dùng luôn cụm local. Không có Docker thì các test đó được bỏ qua.
+Integration tests use a real MongoDB replica set and RabbitMQ via testcontainers (needs Docker); if `SHP_TEST_MONGO_URI` is set
+the local cluster is used instead. Without Docker those tests are skipped.

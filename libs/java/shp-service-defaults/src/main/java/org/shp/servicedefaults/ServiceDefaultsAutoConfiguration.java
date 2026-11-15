@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Cấu hình chung: health live/ready, /info, tracing, metric Prometheus. Service chỉ cần có thư viện
- * này trên classpath; không cần code.
+ * Shared configuration: health live/ready, /info, tracing, Prometheus metrics. A service only needs
+ * this library on the classpath; no code required.
  */
 @AutoConfiguration
 public class ServiceDefaultsAutoConfiguration {

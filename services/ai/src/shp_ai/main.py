@@ -1,4 +1,4 @@
-"""Service ai (12): kho tri thức, trợ lý RAG, tóm tắt hồ sơ, trích xuất tài liệu, chatbot đặt lịch, usage."""
+"""AI service (12): knowledge base, RAG assistant, record summaries, document extraction, booking chatbot, usage."""
 
 import logging
 import threading
@@ -18,7 +18,8 @@ from shp_platform.telemetry import install_tracing
 
 LOG = logging.getLogger("shp.ai")
 Registrar = Callable[[FastAPI, Callable[[], Deps], Authenticator], None]
-EXTRA_ROUTERS: list[Registrar] = []  # các module tính năng tự đăng ký (assistant, summary, extraction, booking, usage)
+# feature modules register themselves (assistant, summary, extraction, booking, usage)
+EXTRA_ROUTERS: list[Registrar] = []
 
 
 def build_app(
@@ -73,23 +74,23 @@ def build_app(
     return app
 
 
-def _default_deps() -> Deps:  # pragma: no cover - dựng hạ tầng thật
+def _default_deps() -> Deps:  # pragma: no cover - builds real infrastructure
     from shp_ai import wiring
 
     return wiring.from_settings(Settings())
 
 
-def _start(deps: Deps, stop: threading.Event) -> None:  # pragma: no cover - hạ tầng thật
+def _start(deps: Deps, stop: threading.Event) -> None:  # pragma: no cover - real infrastructure
     from shp_ai import wiring
 
     wiring.start_background(deps, stop)
 
 
 def _create() -> Any:
-    from shp_ai import features  # noqa: F401 - đăng ký các router tính năng vào EXTRA_ROUTERS
+    from shp_ai import features  # noqa: F401 - registers the feature routers into EXTRA_ROUTERS
 
     settings = Settings()
-    if not settings.mongodb_uri:  # chạy không hạ tầng (test khói, CI): chỉ endpoint nền tảng
+    if not settings.mongodb_uri:  # run without infrastructure (smoke test, CI): platform endpoints only
         from shp_ai.wiring import offline_deps
 
         return build_app(lambda: offline_deps(settings), Authenticator(AuthSettings.from_env()))

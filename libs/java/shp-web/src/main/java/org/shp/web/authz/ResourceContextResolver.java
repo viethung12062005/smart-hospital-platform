@@ -6,8 +6,8 @@ import org.shp.authz.Principal;
 import org.shp.authz.ResourceContext;
 
 /**
- * Tra dữ kiện về tài nguyên (chủ sở hữu, quan hệ điều trị, trạng thái...) từ request. Ném
- * ShpException("not-found") nếu không có.
+ * Look up facts about the resource (owner, care relationship, state...) from the request. Throws
+ * ShpException("not-found") if absent.
  */
 @FunctionalInterface
 public interface ResourceContextResolver {

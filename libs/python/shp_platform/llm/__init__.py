@@ -1,6 +1,7 @@
-"""LLM: giao diện provider, adapter OpenAI-compatible (DeepSeek, Gemini, Ollama), router có fallback (PY-07..09).
+"""LLM: provider interface, OpenAI-compatible adapter (DeepSeek, Gemini, Ollama), router with fallback (PY-07..09).
 
-Chuỗi model theo tác vụ đọc từ ConfigMap (06-data-ai §4); API key lấy từ biến môi trường do Key Vault cấp.
+Per-task model chains are read from the ConfigMap (06-data-ai §4); API keys come from environment variables
+supplied by Key Vault.
 """
 
 from shp_platform.llm.provider import ChatMessage, Completion, FakeProvider, LlmError, Provider, ToolCall

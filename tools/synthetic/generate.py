@@ -64,7 +64,7 @@ def generate(scale: str, seed: int, output_root: Path) -> None:
     """Generate all DAT-01 and DAT-02 resources."""
 
     if scale not in PATIENT_COUNTS:
-        raise ValueError(f"Scale không hợp lệ: {scale}")
+        raise ValueError(f"Invalid scale: {scale}")
 
     output_dir = output_root / f"{scale}-seed-{seed}"
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,7 @@
-"""Danh mục mã lỗi và Problem Details (RFC 9457) cho FastAPI (PY-05).
+"""Error code catalog and Problem Details (RFC 9457) for FastAPI (PY-05).
 
-Khớp org.shp.web.errors.ErrorCatalog và bảng 07-api-conventions §5. `detail` là thông điệp cho người dùng theo
-Accept-Language, không bao giờ chứa PII hay stack trace.
+Matches org.shp.web.errors.ErrorCatalog and table 07-api-conventions §5. `detail` is the user-facing message per
+Accept-Language and never contains PII or a stack trace.
 """
 
 from dataclasses import dataclass
@@ -139,7 +139,7 @@ _CATALOG: dict[str, ErrorInfo] = {
 def error_info(code: str) -> ErrorInfo:
     info = _CATALOG.get(code)
     if info is None:
-        raise ValueError(f"Mã lỗi chưa khai báo: {code}")
+        raise ValueError(f"Unknown error code: {code}")
     return info
 
 
@@ -148,7 +148,8 @@ def all_errors() -> list[ErrorInfo]:
 
 
 class ShpError(Exception):
-    """Lỗi nghiệp vụ có mã trong danh mục. `detail` (tùy chọn) thay thông điệp mặc định; không đưa PII vào."""
+    """Business error with a code from the catalog. `detail` (optional) replaces the default message; do not include
+    PII."""
 
     def __init__(self, code: str, detail: str | None = None, retry_after_seconds: int | None = None) -> None:
         self.info = error_info(code)
@@ -193,14 +194,15 @@ _STATUS_CODE = {
 
 
 def install_error_handlers(app: FastAPI) -> None:
-    """Mọi lỗi trả Problem Details. Lỗi không lường trước trả internal-error, không lộ thông điệp gốc."""
+    """Every error returns Problem Details. Unexpected errors return internal-error without exposing the original
+    message."""
 
     async def on_shp(request: Request, exc: Exception) -> JSONResponse:
         assert isinstance(exc, ShpError)
         return problem_response(request, exc.info, exc.detail, exc.retry_after_seconds)
 
     async def on_validation(request: Request, exc: Exception) -> JSONResponse:
-        # Không trả lại giá trị người dùng gửi (có thể là PII); chỉ báo vị trí trường sai.
+        # Do not echo submitted values (which may be PII); report only the position of the bad field.
         assert isinstance(exc, RequestValidationError)
         fields = sorted({".".join(str(p) for p in err.get("loc", ())) for err in exc.errors()})
         detail = None if not fields else ("Trường không hợp lệ: " + ", ".join(fields))

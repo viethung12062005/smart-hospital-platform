@@ -1,21 +1,21 @@
 # 01 — Domain model
 
-## 1. Bounded context và quyền sở hữu dữ liệu
+## 1. Bounded contexts and data ownership
 
-Mỗi loại dữ liệu có **đúng một service sở hữu** (chỉ service đó được ghi). Service khác chỉ giữ **tham chiếu theo ID**
-(`Patient/0192...`) hoặc projection chỉ đọc được cập nhật từ event.
+Each data type has **exactly one owning service** (only that service may write). Other services keep only **ID references**
+(`Patient/0192...`) or read-only projections updated from events.
 
-| Context / service | Resource FHIR sở hữu | Dữ liệu nội bộ (không phải FHIR) | Kho |
+| Context / service | Owned FHIR resources | Internal data (non-FHIR) | Store |
 |---|---|---|---|
 | **clinical** | Patient, Practitioner, PractitionerRole, Encounter, Observation, Condition, AllergyIntolerance | `identity_links`, `care_relationships` (projection), `break_glass_sessions` | MongoDB `clinical` |
 | **scheduling** | Schedule, Slot, Appointment | `schedule_template`, `outbox`, `idempotency_key`, `inbox` | PostgreSQL `scheduling` |
-| **document** | DocumentReference | `upload_sessions`; file gốc trên Blob | MongoDB `document` + Blob |
+| **document** | DocumentReference | `upload_sessions`; original files on Blob | MongoDB `document` + Blob |
 | **notification** | — | `reminder`, `delivery_attempt`, `notification_preference`, `inbox` | PostgreSQL `notification` |
-| **audit** | — (xuất được dạng FHIR AuditEvent) | Bản ghi audit | Blob WORM + Log Analytics |
+| **audit** | — (exportable as FHIR AuditEvent) | Audit records | Blob WORM + Log Analytics |
 | **ai** | — | `kb_documents`, `conversations`, `messages`, `feedback`, `extraction_jobs` | MongoDB `ai` + AI Search |
 | **ml** | — | `attendance_stats`, `prediction` | PostgreSQL `ml` + MLflow |
 
-## 2. Sơ đồ quan hệ
+## 2. Relationship diagram
 
 ```mermaid
 erDiagram
@@ -23,7 +23,7 @@ erDiagram
     PRACTITIONER ||--o{ PRACTITIONER_ROLE : has
     PRACTITIONER ||--o{ SCHEDULE : "actor (scheduling)"
     SCHEDULE ||--o{ SLOT : contains
-    SLOT ||--o| APPOINTMENT : "booked by (tối đa 1 lịch hẹn hiệu lực)"
+    SLOT ||--o| APPOINTMENT : "booked by (at most 1 active appointment)"
     APPOINTMENT ||--o| ENCOUNTER : "Encounter.appointment (clinical)"
     PATIENT ||--o{ ENCOUNTER : subject
     ENCOUNTER ||--o{ OBSERVATION : encounter
@@ -38,26 +38,26 @@ erDiagram
     PATIENT ||--o{ CARE_RELATIONSHIP : ""
 ```
 
-Tham chiếu xuyên service (ví dụ `Encounter.appointment` → scheduling) **không có khóa ngoại**; tính toàn vẹn được bảo đảm
-bằng việc chỉ tạo tham chiếu từ ID nhận qua event hoặc API đã xác thực.
+Cross-service references (for example `Encounter.appointment` → scheduling) **have no foreign keys**; integrity is ensured
+by creating references only from IDs received through events or an authenticated API.
 
-## 3. Value set dùng chung
+## 3. Shared value sets
 
-| Value set | Mã |
+| Value set | Codes |
 |---|---|
-| Chuyên khoa (`specialty`) | `internal-medicine` Nội tổng quát · `cardiology` Tim mạch · `pediatrics` Nhi · `obstetrics-gynecology` Sản phụ khoa · `dermatology` Da liễu · `ent` Tai mũi họng · `ophthalmology` Mắt · `orthopedics` Chấn thương chỉnh hình · `neurology` Thần kinh · `gastroenterology` Tiêu hóa · `endocrinology` Nội tiết · `general-surgery` Ngoại tổng quát |
-| Lý do hủy lịch (`cancel-reason`) | `patient-request` · `practitioner-unavailable` · `duplicate` · `rescheduled` · `system-noshow-cleanup` · `other` |
-| Kênh đặt lịch (`booking-channel`) | `web` · `chatbot` · `staff` |
-| Vai trò lâm sàng (`practitioner-role`, `PractitionerRole.code`) | `doctor` Bác sĩ · `nurse` Điều dưỡng |
-| Sinh hiệu (LOINC) | `8867-4` mạch (/min) · `85354-9` huyết áp (panel: `8480-6` tâm thu, `8462-4` tâm trương, mm[Hg]) · `8310-5` nhiệt độ (Cel) · `9279-1` nhịp thở (/min) · `59408-5` SpO2 (%) · `29463-7` cân nặng (kg) · `8302-2` chiều cao (cm) · `39156-5` BMI (kg/m2) |
-| Loại tài liệu (LOINC) | `11502-2` kết quả xét nghiệm · `18748-4` kết quả chẩn đoán hình ảnh · `57833-6` đơn thuốc · `57133-1` giấy chuyển viện · `34133-9` tóm tắt đợt điều trị · `51851-4` giấy tờ hành chính |
-| Chẩn đoán | ICD-10 (`http://hl7.org/fhir/sid/icd-10`) |
+| Specialty (`specialty`) | `internal-medicine` Internal medicine · `cardiology` Cardiology · `pediatrics` Pediatrics · `obstetrics-gynecology` Obstetrics and gynecology · `dermatology` Dermatology · `ent` Ear, nose, and throat · `ophthalmology` Ophthalmology · `orthopedics` Orthopedics · `neurology` Neurology · `gastroenterology` Gastroenterology · `endocrinology` Endocrinology · `general-surgery` General surgery |
+| Cancellation reason (`cancel-reason`) | `patient-request` · `practitioner-unavailable` · `duplicate` · `rescheduled` · `system-noshow-cleanup` · `other` |
+| Booking channel (`booking-channel`) | `web` · `chatbot` · `staff` |
+| Clinical role (`practitioner-role`, `PractitionerRole.code`) | `doctor` Doctor · `nurse` Nurse |
+| Vital signs (LOINC) | `8867-4` heart rate (/min) · `85354-9` blood pressure (panel: `8480-6` systolic, `8462-4` diastolic, mm[Hg]) · `8310-5` temperature (Cel) · `9279-1` respiratory rate (/min) · `59408-5` SpO2 (%) · `29463-7` weight (kg) · `8302-2` height (cm) · `39156-5` BMI (kg/m2) |
+| Document type (LOINC) | `11502-2` laboratory test result · `18748-4` diagnostic imaging result · `57833-6` prescription · `57133-1` referral letter · `34133-9` care encounter summary · `51851-4` administrative document |
+| Diagnosis | ICD-10 (`http://hl7.org/fhir/sid/icd-10`) |
 
-### 3.1 Extension do SHP định nghĩa
+### 3.1 SHP-defined extensions
 
-URL theo quy ước canonical (`https://shp.example.org/fhir/StructureDefinition/<khóa>`); danh sách máy đọc ở `contracts/terminology/code-systems.yaml` (`extensions`).
+URL follows the canonical convention (`https://shp.example.org/fhir/StructureDefinition/<key>`); the machine-readable list is in `contracts/terminology/code-systems.yaml` (`extensions`).
 
-| Khóa | Gắn vào | Kiểu giá trị |
+| Key | Attached to | Value type |
 |---|---|---|
 | `booking-channel` | Appointment | `valueCode` (value set `booking-channel`) |
 | `rescheduled-from` | Appointment | `valueReference` (`Appointment`) |
@@ -65,142 +65,142 @@ URL theo quy ước canonical (`https://shp.example.org/fhir/StructureDefinition
 | `addendum` | Encounter | complex: `author` (`valueReference` Practitioner), `recordedAt` (`valueDateTime`), `text` (`valueMarkdown`) |
 | `released-to-patient` | DocumentReference | complex: `releasedAt` (`valueDateTime`), `releasedBy` (`valueReference` Practitioner) |
 
-## 4. Profile từng resource
+## 4. Profile per resource
 
-Ký hiệu: **1..1** bắt buộc · **0..1** tùy chọn · **0..\*** nhiều. Trường không liệt kê thì **không dùng** và bị từ chối
-khi ghi (giảm bề mặt dữ liệu, tối thiểu hóa dữ liệu cá nhân).
+Notation: **1..1** required · **0..1** optional · **0..\*** many. Fields not listed are **not used** and are rejected
+on write (reduce the data surface, minimize personal data).
 
 ### 4.1 Patient (clinical)
 
-| Trường | Card. | Ràng buộc / ghi chú |
+| Field | Card. | Constraint / note |
 |---|---|---|
-| `identifier[mrn]` | 1..1 | system `urn:shp:mrn`, value `BN-YYYY-NNNNNN`, server sinh, không đổi |
-| `active` | 1..1 | `false` khi gộp hồ sơ trùng |
-| `name` | 1..1 | `use=official`, `family`, `given[]`, `text` (họ tên đầy đủ); độ dài 2–100 |
-| `telecom[phone]` | 1..1 | `system=phone`, E.164 (`+84...`); dùng để nhắc lịch và chống trùng |
+| `identifier[mrn]` | 1..1 | system `urn:shp:mrn`, value `BN-YYYY-NNNNNN`, server-generated, immutable |
+| `active` | 1..1 | `false` when merging duplicate records |
+| `name` | 1..1 | `use=official`, `family`, `given[]`, `text` (full name); length 2–100 |
+| `telecom[phone]` | 1..1 | `system=phone`, E.164 (`+84...`); used for reminders and deduplication |
 | `telecom[email]` | 0..1 | `system=email` |
-| `identifier[cccd]` | 0..1 | system `urn:shp:cccd`; số căn cước công dân 12 chữ số, **không bắt buộc**, chỉ điều dưỡng ghi khi bệnh nhân đến khám và đồng ý; lưu mã hóa, chỉ trả bản che (4 số cuối) |
+| `identifier[cccd]` | 0..1 | system `urn:shp:cccd`; 12-digit citizen identity number, **not required**, only recorded by a nurse when the patient arrives and consents; stored encrypted, returned only masked (last 4 digits) |
 | `gender` | 1..1 | `male` · `female` · `other` · `unknown` |
-| `birthDate` | 1..1 | không ở tương lai, tuổi ≤ 120 |
-| `address` | 0..1 | `text`, `city`, `district` (không lưu số nhà chi tiết) |
-| `contact` | 0..1 | người liên hệ khẩn cấp: `name.text`, `telecom[phone]`, `relationship.text` |
-| `communication.language` | 0..1 | `vi` (mặc định) hoặc `en`; quyết định ngôn ngữ thông báo |
-| `link` | 0..\* | `type=replaced-by` khi gộp hồ sơ trùng (UC-01 luồng phụ) |
+| `birthDate` | 1..1 | not in the future, age ≤ 120 |
+| `address` | 0..1 | `text`, `city`, `district` (do not store detailed street address) |
+| `contact` | 0..1 | emergency contact: `name.text`, `telecom[phone]`, `relationship.text` |
+| `communication.language` | 0..1 | `vi` (default) or `en`; determines notification language |
+| `link` | 0..\* | `type=replaced-by` when merging duplicate records (UC-01 alternate flow) |
 
-Một tài khoản có một hồ sơ "bản thân" (`identity_links`) và có thể quản lý thêm hồ sơ khác qua `profile_links` (con dưới 16 tuổi, người lớn ủy quyền; ADR-0018). Quan hệ này không phải resource FHIR; khi cần trao đổi có thể ánh xạ sang `RelatedPerson`.
+An account has one "self" profile (`identity_links`) and can manage additional profiles through `profile_links` (children under 16, authorized adults; ADR-0018). This relationship is not a FHIR resource; when exchange is needed it can be mapped to `RelatedPerson`.
 
-Không lưu nghề nghiệp, dân tộc, CMND 9 số (không cần cho phạm vi; tối thiểu hóa dữ liệu nhạy cảm). Số CCCD chỉ lưu khi bệnh nhân đồng ý và được bổ sung khi đến khám (SRS UC `supplement-national-id`).
+Do not store occupation, ethnicity, or 9-digit ID card (not needed for scope; minimize sensitive data). The national ID number is stored only when the patient consents and is added at the visit (SRS UC `supplement-national-id`).
 
-### 4.2 Practitioner và PractitionerRole (clinical)
+### 4.2 Practitioner and PractitionerRole (clinical)
 
-| Practitioner | Card. | Ghi chú |
+| Practitioner | Card. | Note |
 |---|---|---|
 | `identifier[staff]` | 1..1 | `urn:shp:practitioner`, `NV-NNNN` |
 | `active` | 1..1 | |
-| `name` | 1..1 | `text`, `prefix` (ví dụ `BS.`, `ThS.BS.`) |
-| `telecom[work]` | 0..1 | email công việc |
+| `name` | 1..1 | `text`, `prefix` (for example `Dr.`, `MSc.Dr.`) |
+| `telecom[work]` | 0..1 | work email |
 | `gender` | 0..1 | |
-| `qualification[].code.text` | 0..\* | ví dụ "Chuyên khoa I Tim mạch" |
+| `qualification[].code.text` | 0..\* | for example "Specialist Level I, Cardiology" |
 
-| PractitionerRole | Card. | Ghi chú |
+| PractitionerRole | Card. | Note |
 |---|---|---|
 | `practitioner` | 1..1 | `Practitioner/{id}` |
 | `active` | 1..1 | |
-| `specialty` | 1..1 | value set chuyên khoa |
-| `code` | 1..1 | `doctor` · `nurse` (vai trò lâm sàng; khác với role đăng nhập) |
+| `specialty` | 1..1 | specialty value set |
+| `code` | 1..1 | `doctor` · `nurse` (clinical role; different from the login role) |
 
 ### 4.3 Schedule (scheduling)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `active` | 1..1 | |
-| `actor` | 1..1 | đúng một `Practitioner/{id}`, có `display` (tên bác sĩ, denormalize để hiển thị) |
-| `specialty` | 1..1 | mỗi bác sĩ tối đa **một** Schedule đang hoạt động cho mỗi chuyên khoa |
-| `planningHorizon` | 1..1 | `start` = hôm nay, `end` = hôm nay + 30 ngày (BR-04), cập nhật bởi job sinh slot |
+| `actor` | 1..1 | exactly one `Practitioner/{id}`, with `display` (doctor name, denormalized for display) |
+| `specialty` | 1..1 | each doctor has at most **one** active Schedule per specialty |
+| `planningHorizon` | 1..1 | `start` = today, `end` = today + 30 days (BR-04), updated by the slot generation job |
 | `comment` | 0..1 | |
 
-Mẫu lịch tuần (`schedule_template`, không phải FHIR): thứ trong tuần, giờ bắt đầu/kết thúc, độ dài slot (10/15/20/30 phút),
-hiệu lực từ/đến. Chi tiết trong [02-db-scheduling.md](02-db-scheduling.md).
+Weekly schedule template (`schedule_template`, not FHIR): day of week, start/end time, slot length (10/15/20/30 minutes),
+effective from/to. Details in [02-db-scheduling.md](02-db-scheduling.md).
 
 ### 4.4 Slot (scheduling)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `schedule` | 1..1 | `Schedule/{id}` |
-| `status` | 1..1 | `free` · `busy` · `busy-unavailable` (bị chặn) |
-| `start`, `end` | 1..1 | `end > start`; không chồng lấn trong cùng Schedule (ràng buộc DB) |
-| `specialty` | 1..1 | sao chép từ Schedule để lọc nhanh |
-| `comment` | 0..1 | lý do chặn |
+| `status` | 1..1 | `free` · `busy` · `busy-unavailable` (blocked) |
+| `start`, `end` | 1..1 | `end > start`; no overlap within the same Schedule (DB constraint) |
+| `specialty` | 1..1 | copied from Schedule for fast filtering |
+| `comment` | 0..1 | block reason |
 
 ### 4.5 Appointment (scheduling)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
-| `status` | 1..1 | `booked` · `arrived` · `fulfilled` · `cancelled` · `noshow` (xem state machine) |
-| `slot` | 1..1 | đúng một `Slot/{id}` |
-| `start`, `end` | 1..1 | sao chép từ Slot |
-| `specialty` | 1..1 | sao chép từ Slot |
+| `status` | 1..1 | `booked` · `arrived` · `fulfilled` · `cancelled` · `noshow` (see state machine) |
+| `slot` | 1..1 | exactly one `Slot/{id}` |
+| `start`, `end` | 1..1 | copied from Slot |
+| `specialty` | 1..1 | copied from Slot |
 | `participant[patient]` | 1..1 | `actor=Patient/{id}`, `status=accepted` |
 | `participant[practitioner]` | 1..1 | `actor=Practitioner/{id}` (+`display`), `status=accepted` |
-| `created` | 1..1 | thời điểm đặt |
-| `comment` | 0..1 | ghi chú của bệnh nhân, ≤ 500 ký tự |
-| `cancelationReason` | 0..1 | bắt buộc khi `status=cancelled`; value set lý do hủy |
+| `created` | 1..1 | booking time |
+| `comment` | 0..1 | patient note, ≤ 500 characters |
+| `cancelationReason` | 0..1 | required when `status=cancelled`; cancellation reason value set |
 | `extension[booking-channel]` | 1..1 | `web` · `chatbot` · `staff` |
-| `extension[rescheduled-from]` | 0..1 | `Appointment/{id}` của lịch cũ khi đổi lịch |
+| `extension[rescheduled-from]` | 0..1 | `Appointment/{id}` of the old appointment when rescheduled |
 
 ### 4.6 Encounter (clinical)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `status` | 1..1 | `arrived` · `in-progress` · `finished` · `cancelled` |
-| `class` | 1..1 | `AMB` (ngoại trú, `http://terminology.hl7.org/CodeSystem/v3-ActCode`) |
+| `class` | 1..1 | `AMB` (outpatient, `http://terminology.hl7.org/CodeSystem/v3-ActCode`) |
 | `subject` | 1..1 | `Patient/{id}` |
 | `participant[attender]` | 1..1 | `Practitioner/{id}`, `type=ATND` |
-| `appointment` | 1..1 | `Appointment/{id}` (tạo từ event check-in) |
-| `serviceType` | 1..1 | chuyên khoa |
-| `period` | 1..1 | `start` lúc check-in, `end` lúc kết thúc |
-| `reasonCode[].text` | 0..\* | lý do khám |
+| `appointment` | 1..1 | `Appointment/{id}` (created from the check-in event) |
+| `serviceType` | 1..1 | specialty |
+| `period` | 1..1 | `start` at check-in, `end` at finish |
+| `reasonCode[].text` | 0..\* | visit reason |
 | `diagnosis[].condition` | 0..\* | `Condition/{id}` |
-| `extension[clinical-note]` | 0..1 | `valueMarkdown`: bệnh sử, khám lâm sàng; chỉ sửa được khi chưa `finished` |
-| `extension[addendum]` | 0..\* | complex: `author` (Practitioner), `recordedAt`, `text`; cách duy nhất để bổ sung sau khi `finished` (AC-04.2) |
+| `extension[clinical-note]` | 0..1 | `valueMarkdown`: history, clinical examination; editable only before `finished` |
+| `extension[addendum]` | 0..\* | complex: `author` (Practitioner), `recordedAt`, `text`; the only way to add after `finished` (AC-04.2) |
 
 ### 4.7 Observation (clinical)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `status` | 1..1 | `final` · `amended` · `entered-in-error` |
-| `category` | 1..1 | `vital-signs` hoặc `laboratory` |
-| `code` | 1..1 | LOINC theo value set sinh hiệu; xét nghiệm dùng LOINC tự do |
+| `category` | 1..1 | `vital-signs` or `laboratory` |
+| `code` | 1..1 | LOINC per the vital signs value set; laboratory tests use free LOINC |
 | `subject` | 1..1 | `Patient/{id}` |
-| `encounter` | 0..1 | bắt buộc với sinh hiệu |
+| `encounter` | 0..1 | required for vital signs |
 | `effectiveDateTime` | 1..1 | |
 | `performer` | 1..1 | `Practitioner/{id}` |
-| `valueQuantity` | 0..1 | đơn vị UCUM theo bảng value set; có kiểm tra khoảng hợp lý (ví dụ nhiệt độ 30–45 °C) |
-| `component[]` | 0..\* | chỉ cho huyết áp (tâm thu, tâm trương) |
-| `interpretation` | 0..1 | `H` · `L` · `N`, server tính theo `referenceRange` |
+| `valueQuantity` | 0..1 | UCUM units per the value set table; includes plausibility range checks (for example temperature 30–45 °C) |
+| `component[]` | 0..\* | only for blood pressure (systolic, diastolic) |
+| `interpretation` | 0..1 | `H` · `L` · `N`, computed by the server from `referenceRange` |
 | `referenceRange` | 0..1 | |
-| `derivedFrom` | 0..1 | `DocumentReference/{id}` khi tạo từ kết quả trích xuất AI đã duyệt |
+| `derivedFrom` | 0..1 | `DocumentReference/{id}` when created from an approved AI extraction result |
 
 ### 4.8 Condition (clinical)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `clinicalStatus` | 1..1 | `active` · `resolved` |
 | `verificationStatus` | 1..1 | `provisional` · `confirmed` |
-| `category` | 1..1 | `encounter-diagnosis` · `problem-list-item` (bệnh nền) |
+| `category` | 1..1 | `encounter-diagnosis` · `problem-list-item` (underlying condition) |
 | `code` | 1..1 | ICD-10 |
 | `subject` | 1..1 | |
-| `encounter` | 0..1 | bắt buộc với `encounter-diagnosis` |
+| `encounter` | 0..1 | required with `encounter-diagnosis` |
 | `recordedDate` | 1..1 | |
-| `recorder` | 1..1 | `Practitioner/{id}`, phải có quan hệ điều trị |
+| `recorder` | 1..1 | `Practitioner/{id}`, must have a care relationship |
 | `note[].text` | 0..\* | |
 
 ### 4.9 AllergyIntolerance (clinical)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `clinicalStatus` | 1..1 | `active` · `inactive` |
-| `code.text` | 1..1 | tên dị nguyên |
+| `code.text` | 1..1 | allergen name |
 | `patient` | 1..1 | |
 | `criticality` | 0..1 | `low` · `high` · `unable-to-assess` |
 | `reaction[].manifestation[].text` | 0..\* | |
@@ -208,17 +208,17 @@ hiệu lực từ/đến. Chi tiết trong [02-db-scheduling.md](02-db-schedulin
 
 ### 4.10 DocumentReference (document)
 
-| Trường | Card. | Ghi chú |
+| Field | Card. | Note |
 |---|---|---|
 | `status` | 1..1 | `current` · `entered-in-error` |
-| `docStatus` | 1..1 | `preliminary` (đang quét) · `final` |
-| `type` | 1..1 | value set loại tài liệu |
+| `docStatus` | 1..1 | `preliminary` (scanning) · `final` |
+| `type` | 1..1 | document type value set |
 | `subject` | 1..1 | `Patient/{id}` |
-| `date` | 1..1 | thời điểm tải lên |
+| `date` | 1..1 | upload time |
 | `author` | 1..1 | `Practitioner/{id}` |
 | `context.encounter` | 0..1 | `Encounter/{id}` |
-| `description` | 0..1 | ≤ 200 ký tự |
-| `content[0].attachment` | 1..1 | `contentType` (`application/pdf`, `image/jpeg`, `image/png`), `size` ≤ 20 MB, `hash` (SHA-1 base64 theo FHIR), `title`, `creation`; **không lưu `url`**: link tải được cấp riêng, hết hạn sau 5 phút |
+| `description` | 0..1 | ≤ 200 characters |
+| `content[0].attachment` | 1..1 | `contentType` (`application/pdf`, `image/jpeg`, `image/png`), `size` ≤ 20 MB, `hash` (SHA-1 base64 per FHIR), `title`, `creation`; **do not store `url`**: the download link is issued separately and expires after 5 minutes |
 | `extension[released-to-patient]` | 0..1 | complex: `releasedAt`, `releasedBy` (AC-05.3) |
 
 ## 5. State machine
@@ -227,24 +227,24 @@ hiệu lực từ/đến. Chi tiết trong [02-db-scheduling.md](02-db-schedulin
 ```mermaid
 stateDiagram-v2
     [*] --> booked: $book
-    booked --> cancelled: $cancel (BR-02) / đổi lịch
+    booked --> cancelled: $cancel (BR-02) / reschedule
     booked --> arrived: $check-in (nurse)
-    booked --> noshow: job, end + 30 phút mà chưa arrived
+    booked --> noshow: job, end + 30 minutes without arrived
     arrived --> fulfilled: Encounter finished (event)
-    arrived --> cancelled: nurse hủy (ghi lý do)
+    arrived --> cancelled: nurse cancels (record reason)
     fulfilled --> [*]
     cancelled --> [*]
     noshow --> [*]
 ```
-Slot đi kèm: `free → busy` khi `booked`; `busy → free` khi `cancelled` **trước** giờ khám; các trạng thái kết thúc khác giữ `busy`.
+Slot side effects: `free → busy` when `booked`; `busy → free` when `cancelled` **before** the appointment time; other terminal states keep `busy`.
 
 ### Encounter
-`arrived` (tạo từ event check-in) → `in-progress` (bác sĩ mở) → `finished` (bác sĩ kết thúc; phát `EncounterFinished`) ;
-`arrived` → `cancelled` (bệnh nhân bỏ về).
+`arrived` (created from the check-in event) → `in-progress` (doctor opens) → `finished` (doctor ends; emits `EncounterFinished`) ;
+`arrived` → `cancelled` (patient leaves).
 
-### DocumentReference (trạng thái xử lý nội bộ)
-`pending-upload` → `scanning` → `available` (phát `DocumentUploaded`) | `quarantined` (có mã độc) ; `available` → `entered-in-error`.
+### DocumentReference (internal processing status)
+`pending-upload` → `scanning` → `available` (emits `DocumentUploaded`) | `quarantined` (malware present) ; `available` → `entered-in-error`.
 
 ### Extraction job (ai)
 `queued` → `ocr` → `classifying` → `extracting` → `validating` → `needs-review` → `accepted` | `rejected` ;
-bất kỳ bước nào lỗi → retry (tối đa 3) → `failed` (dead-letter).
+any step fails → retry (max 3) → `failed` (dead-letter).

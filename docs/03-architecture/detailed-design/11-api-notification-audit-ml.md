@@ -1,93 +1,93 @@
 # 11 — API notification, audit, ML
 
-Quy ước: [07-api-conventions.md](07-api-conventions.md).
+Conventions: [07-api-conventions.md](07-api-conventions.md).
 
 ## 1. Notification (`/api/v1/notifications`)
 
-Phần lớn hoạt động là **bất đồng bộ qua event**; API chỉ phục vụ tùy chọn người dùng, thiết bị và vận hành.
+Most activity is **asynchronous via events**; the API only serves user preferences, devices, and operations.
 
-| # | Method + đường dẫn | Mục đích | Quyền |
+| # | Method + path | Purpose | Permission |
 |---|---|---|---|
-| N1 | `PUT /api/v1/notifications/devices` | Đăng ký/làm mới token thiết bị | P, D, N (của mình) |
-| N2 | `DELETE /api/v1/notifications/devices/{tokenId}` | Hủy đăng ký | chủ token |
-| N3 | `GET /api/v1/notifications/preferences` | Xem tùy chọn nhận thông báo | P |
-| N4 | `PUT /api/v1/notifications/preferences` | Đổi kênh/ngôn ngữ/khung giờ yên tĩnh | P |
-| N5 | `GET /api/v1/notifications/reminders?appointment={id}` | Xem các lần nhắc của một lịch hẹn | N, A |
-| N6 | `GET /api/v1/notifications/dead-letters` | Danh sách nhắc lỗi hẳn | A |
-| N7 | `POST /api/v1/notifications/dead-letters/{id}/retry` | Đưa lại hàng đợi | A |
-| N8 | `POST /internal/v1/otp/send` | Tạo và gửi mã OTP (Zalo trước, SMS sau, hoặc email) | clinical, Keycloak |
-| N9 | `POST /internal/v1/otp/verify` | Kiểm mã OTP | clinical, Keycloak |
+| N1 | `PUT /api/v1/notifications/devices` | Register/refresh a device token | P, D, N (own) |
+| N2 | `DELETE /api/v1/notifications/devices/{tokenId}` | Unregister | token owner |
+| N3 | `GET /api/v1/notifications/preferences` | View notification preferences | P |
+| N4 | `PUT /api/v1/notifications/preferences` | Change channels/language/quiet hours | P |
+| N5 | `GET /api/v1/notifications/reminders?appointment={id}` | View the reminders for an appointment | N, A |
+| N6 | `GET /api/v1/notifications/dead-letters` | List of permanently failed reminders | A |
+| N7 | `POST /api/v1/notifications/dead-letters/{id}/retry` | Put back in the queue | A |
+| N8 | `POST /internal/v1/otp/send` | Create and send an OTP code (Zalo first, then SMS, or email) | clinical, Keycloak |
+| N9 | `POST /internal/v1/otp/verify` | Verify the OTP code | clinical, Keycloak |
 
-### N8/N9 OTP (nội bộ, gọi từ clinical và từ authenticator của Keycloak)
-`N8` nhận `{ purpose: "register"|"claim-record"|"link-relative"|"change-phone", channelHint: "phone"|"email", destination, locale, context }`
-và trả `{ challengeId, channel, expiresAt }`. `N9` nhận `{ challengeId, code }` và trả `{ ok }`.
-- **Kênh:** với số điện thoại, thử **Zalo** (tin xác thực) trước; nếu Zalo báo lỗi, số không dùng Zalo, hoặc chưa có kết quả giao sau 30 giây thì
-  gửi **SMS với cùng mã**. Email dùng kênh email. Mỗi kênh là một adapter sau giao diện `OtpChannel`; có bản giả cho dev và test.
-- **Mã:** 6 chữ số ngẫu nhiên an toàn, chỉ lưu **băm** (HMAC) trong collection `otp_challenges` (TTL 5 phút), dùng một lần; sai 5 lần thì khóa 15 phút
-  (429 `otp-locked`). Mỗi số nhận tối đa 5 mã/giờ, mỗi IP tối đa 20 mã/giờ (429 `otp-rate-limited`).
-- **Nội dung tin:** theo template version hóa; tin ủy quyền (`link-relative`) nêu rõ **ai** (tên đã rút gọn) xin **phạm vi** nào. Không chèn dữ liệu y tế.
-- **Chi phí và theo dõi:** metric số tin theo kênh, tỉ lệ giao thành công, tỉ lệ rơi xuống SMS; cảnh báo khi vượt ngân sách tháng.
-- Chỉ service có role `internal.otp` gọi được; gateway không route `/internal`. Không bao giờ log `destination` hay `code`.
+### N8/N9 OTP (internal, called from clinical and from Keycloak's authenticator)
+`N8` accepts `{ purpose: "register"|"claim-record"|"link-relative"|"change-phone", channelHint: "phone"|"email", destination, locale, context }`
+and returns `{ challengeId, channel, expiresAt }`. `N9` accepts `{ challengeId, code }` and returns `{ ok }`.
+- **Channel:** for phone numbers, try **Zalo** (verification message) first; if Zalo fails, the number does not use Zalo, or there is no delivery result after 30 seconds, send
+  **SMS with the same code**. Email uses the email channel. Each channel is an adapter behind the `OtpChannel` interface; there are fakes for dev and test.
+- **Code:** 6 secure random digits, only the **hash** (HMAC) is stored in the `otp_challenges` collection (TTL 5 minutes), single use; 5 wrong attempts locks it for 15 minutes
+  (429 `otp-locked`). Each number receives at most 5 codes/hour, each IP at most 20 codes/hour (429 `otp-rate-limited`).
+- **Message content:** per versioned template; the authorization message (`link-relative`) states clearly **who** (shortened name) is requesting **which scope**. It does not include medical data.
+- **Cost and monitoring:** metrics for messages by channel, delivery success rate, SMS fallback rate; alert when the monthly budget is exceeded.
+- Only services with the `internal.otp` role can call it; the gateway does not route `/internal`. Never log `destination` or `code`.
 
 ### N1 `PUT /api/v1/notifications/devices`
-`{ "platform": "ios|android|web", "token": "<FCM/APNs token>" }` → 200 `{ "tokenId" }`. Upsert theo `token`; chủ sở hữu lấy từ
-`fhirUser` của người gọi (không nhận từ body). 400 nếu token rỗng hoặc > 4.096 ký tự.
+`{ "platform": "ios|android|web", "token": "<FCM/APNs token>" }` → 200 `{ "tokenId" }`. Upsert by `token`; the owner comes from the
+caller's `fhirUser` (not accepted from the body). 400 if the token is empty or > 4,096 characters.
 
 ### N4 `PUT /api/v1/notifications/preferences`
 ```json
 { "channels": ["push", "email", "sms"], "locale": "vi", "quietHours": { "start": "22:00", "end": "07:00" } }
 ```
-`channels` ≥ 1 phần tử, thứ tự = ưu tiên (phần tử sau là dự phòng). Nhắc `t-2h` **bỏ qua** khung giờ yên tĩnh. 400 nếu kênh ngoài {push, sms, email}.
+`channels` ≥ 1 element, order = priority (later elements are fallback). The `t-2h` reminder **ignores** quiet hours. 400 if a channel is outside {push, sms, email}.
 
 ### N6/N7 Dead-letter
 Item: `{ "reminderId", "kind", "subject": "Appointment/...", "attempts": 5, "lastError": "provider-timeout", "deadLetteredAt" }`
-— **không** chứa thông tin liên hệ. `retry` đặt `status=scheduled`, `attempts=0`; 409 nếu lịch hẹn đã qua giờ khám.
+— contains **no** contact information. `retry` sets `status=scheduled`, `attempts=0`; 409 if the appointment is past its start time.
 
-Nội dung thông báo (đa ngôn ngữ) lấy từ bộ template version hóa trong repo `templates/<kind>.<locale>.txt`, biến chèn:
-`{doctorName}`, `{startTime}`, `{place}`; không chèn chẩn đoán hay kết quả vào nội dung (chỉ "có kết quả mới, mở ứng dụng để xem").
+Notification content (multilingual) comes from versioned templates in the repo `templates/<kind>.<locale>.txt`, with variables:
+`{doctorName}`, `{startTime}`, `{place}`; diagnosis or results are not included in the content (only "a new result is available, open the app to view").
 
 ## 2. Audit (`/api/v1/audit`)
 
-Quyền: **DPO** (đọc, xuất), **A** (đọc, **không** thấy trường `reason` của break-glass và không truy vấn theo bệnh nhân khi
-không có yêu cầu hợp lệ — ghi chú vận hành). Không có endpoint ghi/sửa/xóa (AC-09.2); ghi chỉ qua event.
+Permissions: **DPO** (read, export), **A** (read, **does not** see the break-glass `reason` field and does not query by patient when
+there is no valid request — operational note). There is no write/edit/delete endpoint (AC-09.2); writing happens only through events.
 
-| # | Method + đường dẫn | Mục đích |
+| # | Method + path | Purpose |
 |---|---|---|
-| A1 | `GET /api/v1/audit/events` | Tra cứu |
-| A2 | `POST /api/v1/audit/exports` | Tạo báo cáo xuất |
-| A3 | `GET /api/v1/audit/exports/{id}` | Trạng thái/ link tải (SAS 5 phút) |
-| A4 | `GET /api/v1/audit/integrity` | Kết quả kiểm tra chuỗi hash gần nhất |
-| A5 | `GET /api/v1/audit/break-glass` | Danh sách break-glass chờ DPO xem xét |
+| A1 | `GET /api/v1/audit/events` | Search |
+| A2 | `POST /api/v1/audit/exports` | Create an export report |
+| A3 | `GET /api/v1/audit/exports/{id}` | Status / download link (5-minute SAS) |
+| A4 | `GET /api/v1/audit/integrity` | Result of the most recent hash chain check |
+| A5 | `GET /api/v1/audit/break-glass` | List of break-glass sessions awaiting DPO review |
 
 ### A1 `GET /api/v1/audit/events`
-| Tham số | Ghi chú |
+| Parameter | Note |
 |---|---|
-| `patientId` | tùy chọn |
-| `actor` | `Practitioner/...` hoặc subject |
-| `action`, `outcome`, `purposeOfUse` | enum (nhiều giá trị phân cách bằng phẩy) |
-| `from`, `to` | **bắt buộc**, khoảng ≤ 90 ngày |
+| `patientId` | optional |
+| `actor` | `Practitioner/...` or subject |
+| `action`, `outcome`, `purposeOfUse` | enum (multiple values comma-separated) |
+| `from`, `to` | **required**, range ≤ 90 days |
 | `limit` ≤ 200, `cursor` | |
 
-Response `{ "items": [ <bản ghi theo 05 §1.1> ], "nextCursor" }`. Truy vấn thực hiện trên Log Analytics (KQL) hoặc Loki; việc
-tra cứu **cũng bị audit** (`action = audit-query`). Độ trễ dữ liệu ≤ 1 phút (NFR-SEC5).
+Response `{ "items": [ <record per 05 §1.1> ], "nextCursor" }`. The query is performed on Log Analytics (KQL) or Loki; the
+lookup **is also audited** (`action = audit-query`). Data latency ≤ 1 minute (NFR-SEC5).
 
 ### A2 `POST /api/v1/audit/exports`
-`{ "from": "...", "to": "...", "patientId"?: "...", "format": "csv" }` → 202 `{ "exportId" }`. Job nền xuất file vào container
-`audit-exports` (retention 7 ngày) và ghi audit `export`. Tối đa 3 export đồng thời/người dùng; khoảng ≤ 366 ngày.
+`{ "from": "...", "to": "...", "patientId"?: "...", "format": "csv" }` → 202 `{ "exportId" }`. A background job writes the file to the
+`audit-exports` container (retention 7 days) and writes an `export` audit record. At most 3 concurrent exports/user; range ≤ 366 days.
 
 ### A5 `GET /api/v1/audit/break-glass`
-Trạng thái `new` → `acknowledged` (`PUT .../{id}` với `{ "decision": "justified|unjustified", "note" }`, chỉ DPO). Mỗi lần
-break-glass mới gửi thông báo cho DPO ≤ 5 phút (AC-10.1) qua notification (kênh email + push).
+Status `new` → `acknowledged` (`PUT .../{id}` with `{ "decision": "justified|unjustified", "note" }`, DPO only). Each new
+break-glass sends a notification to the DPO within ≤ 5 minutes (AC-10.1) via notification (email + push channels).
 
-## 3. ML (`/api/v1/ml` + nội bộ)
+## 3. ML (`/api/v1/ml` + internal)
 
-ML hoạt động chủ yếu qua event (xem [04](04-db-notification-ml.md) §2.4). API công khai chỉ để quan sát:
+ML works mainly through events (see [04](04-db-notification-ml.md) §2.4). The public API is for observation only:
 
-| # | Method + đường dẫn | Mục đích | Quyền |
+| # | Method + path | Purpose | Permission |
 |---|---|---|---|
-| M1 | `GET /api/v1/ml/predictions?appointment={id}` | Dự đoán đã lưu cho một lịch hẹn | N, A |
-| M2 | `GET /api/v1/ml/model` | Phiên bản model đang chạy, metric lúc đăng ký | A |
-| M3 | `POST /internal/v1/ml/predict` | Dự đoán đồng bộ (chỉ để kiểm thử/eval) | service nội bộ, CI |
+| M1 | `GET /api/v1/ml/predictions?appointment={id}` | Stored prediction for an appointment | N, A |
+| M2 | `GET /api/v1/ml/model` | Running model version, metrics at registration | A |
+| M3 | `POST /internal/v1/ml/predict` | Synchronous prediction (for testing/eval only) | internal services, CI |
 
 ### M1 response
 ```json
@@ -95,11 +95,11 @@ ML hoạt động chủ yếu qua event (xem [04](04-db-notification-ml.md) §2.
   "modelName": "shp-no-show", "modelVersion": "7", "predictedAt": "2026-11-20T02:15:03Z",
   "features": { "lead_time_days": 21, "prior_noshow": 2, "prior_booked": 4, "start_hour": 8, "specialty": "cardiology" } }
 ```
-(AC-15.2: mọi dự đoán lưu phiên bản model và đặc trưng.) 404 nếu chưa có dự đoán (ML tắt/lỗi — không ảnh hưởng nhắc lịch, AC-15.1).
+(AC-15.2: every prediction stores the model version and features.) 404 if there is no prediction yet (ML off/failing — does not affect reminders, AC-15.1).
 
 ### M3 `POST /internal/v1/ml/predict`
-Body: vector đặc trưng (theo [04](04-db-notification-ml.md) §2.3) → `{ "score", "highRisk", "modelVersion" }`; p95 ≤ 100 ms.
-Mô hình tải từ MLflow registry theo alias `production`; đổi alias (sau khi vượt cổng chất lượng AUC ≥ 0,75 và hơn baseline,
-NFR-AI6) → pod tự nạp lại trong ≤ 60 giây mà không cần deploy lại.
+Body: feature vector (per [04](04-db-notification-ml.md) §2.3) → `{ "score", "highRisk", "modelVersion" }`; p95 ≤ 100 ms.
+The model is loaded from the MLflow registry by the `production` alias; changing the alias (after passing the quality gate AUC ≥ 0.75 and better than baseline,
+NFR-AI6) → the pod reloads within ≤ 60 seconds without redeploying.
 
-Ngưỡng `threshold` là cấu hình (mặc định 0,60), chọn trên tập validation để đạt precision ≥ 0,5 ở recall tối đa; lưu cùng model version.
+The `threshold` is configuration (default 0.60), chosen on the validation set to achieve precision ≥ 0.5 at maximum recall; it is stored with the model version.

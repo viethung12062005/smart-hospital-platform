@@ -8,7 +8,7 @@ import org.springframework.cloud.stream.config.BindingServiceConfiguration;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 
-/** {@link EventPublisher} thật cho relay outbox của service: Spring Cloud Stream. */
+/** Real {@link EventPublisher} for the service outbox relay: Spring Cloud Stream. */
 @AutoConfiguration(after = BindingServiceConfiguration.class)
 public class ShpMessagingAutoConfiguration {
   @Bean

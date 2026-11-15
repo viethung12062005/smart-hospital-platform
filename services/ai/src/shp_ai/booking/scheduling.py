@@ -1,7 +1,7 @@
-"""Client gọi API công khai của scheduling bằng token của chính bệnh nhân (AI-29; 12 §5).
+"""Client for scheduling's public API using the patient's own token (AI-29; 12 §5).
 
-Bot không có token dịch vụ riêng: mọi lời gọi dùng nguyên `Authorization` của người dùng (không đổi token), nên
-scheduling áp đúng quyền của bệnh nhân (chỉ xem slot free, chỉ đặt/hủy cho chính mình hoặc hồ sơ đã liên kết).
+The bot has no service token of its own: every call reuses the user's `Authorization` unchanged, so
+scheduling enforces the patient's permissions (see free slots only, book/cancel only for themselves or a linked record).
 """
 
 import uuid
@@ -15,7 +15,8 @@ from shp_platform.errors import ShpError
 
 
 class SlotConflictError(ShpError):
-    """409 slot-unavailable kèm gợi ý 3 slot gần nhất (S11) — bot đề xuất lại thay vì chỉ báo lỗi."""
+    """409 slot-unavailable with the 3 nearest suggested slots (S11) — the bot proposes again instead of just
+    reporting an error."""
 
     def __init__(self, suggestions: list[dict[str, Any]]) -> None:
         self.suggestions = suggestions
@@ -52,7 +53,7 @@ class SchedulingClient:
         except (ValueError, KeyError, IndexError, TypeError):
             return "forbidden" if res.status_code == 403 else "validation-failed"
 
-    # ---------------- S8: tìm slot ----------------
+    # ---------------- S8: find slots ----------------
     def search_slots(
         self, specialty: str, start: date, end: date, practitioner_id: str | None = None, limit: int = 10
     ) -> list[dict[str, Any]]:
@@ -70,7 +71,7 @@ class SchedulingClient:
         bundle = res.json()
         return [e["resource"] for e in bundle.get("entry", [])]
 
-    # ---------------- S13: lịch hẹn của chính mình ----------------
+    # ---------------- S13: my own appointments ----------------
     def my_appointments(self, patient_id: str, status: str = "booked") -> list[dict[str, Any]]:
         res = self._call(
             "GET",
@@ -82,7 +83,7 @@ class SchedulingClient:
             raise ShpError(self._problem_code(res))
         return [e["resource"] for e in res.json().get("entry", [])]
 
-    # ---------------- S11: đặt lịch (chỉ gọi khi người dùng đã xác nhận, AI8) ----------------
+    # ---------------- S11: book (called only after the user confirms, AI8) ----------------
     def book(self, slot_id: str, patient_id: str, comment: str | None, idempotency_key: str) -> dict[str, Any]:
         parameters: list[dict[str, Any]] = [
             {"name": "slot", "valueReference": {"reference": f"Slot/{slot_id}"}},
@@ -96,7 +97,7 @@ class SchedulingClient:
             "POST", "/fhir/Appointment/$book", json=body, headers=self._headers(idempotency_key=idempotency_key)
         )
         if res.status_code == 409:
-            # S11: 409 trên $book luôn là slot-unavailable; OperationOutcome kèm extension[suggested-slots]
+            # S11: a 409 on $book always means slot-unavailable; OperationOutcome carries extension[suggested-slots]
             info = res.json() if res.content else {}
             suggestions = (info.get("issue", [{}])[0].get("extension", {}) or {}).get("suggested-slots") or []
             raise SlotConflictError(suggestions)
@@ -104,7 +105,7 @@ class SchedulingClient:
             raise ShpError(self._problem_code(res))
         return dict(res.json())
 
-    # ---------------- S14: hủy lịch ----------------
+    # ---------------- S14: cancel appointment ----------------
     def cancel(self, appointment_id: str, etag: str, idempotency_key: str) -> dict[str, Any]:
         body = {"resourceType": "Parameters", "parameter": [{"name": "reason", "valueCode": "patient-request"}]}
         res = self._call(

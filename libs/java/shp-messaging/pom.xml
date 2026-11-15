@@ -9,7 +9,7 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <artifactId>shp-messaging</artifactId>
-  <name>shp-messaging — phát và nhận CloudEvents qua Spring Cloud Stream (RabbitMQ local, Service Bus cloud)</name>
+  <name>shp-messaging — publish and receive CloudEvents via Spring Cloud Stream (RabbitMQ local, Service Bus cloud)</name>
 
   <dependencies>
     <dependency>

@@ -7,7 +7,7 @@ from typing import Any
 from tools.synthetic.generators.ids import UUID7Generator
 from tools.synthetic.generators.names import random_name, slug
 
-# Cố định ngày tham chiếu để cùng seed luôn cho cùng kết quả.
+# Fix the reference date so the same seed always yields the same result.
 REFERENCE_DATE = date(2026, 11, 7)
 MRN_YEAR = 2026
 
@@ -17,7 +17,7 @@ PATIENT_COUNTS = {
     "large": 500_000,
 }
 
-# Phân bố tuổi theo ARC-11.
+# Age distribution per ARC-11.
 AGE_GROUPS = [
     (0, 14, 18),
     (15, 44, 35),
@@ -65,15 +65,17 @@ def _random_birth_date(
     return earliest + timedelta(days=rng.randint(0, days))
 
 
-# Dải số giả theo ARC-11: 09000xxxxx (100.000 số) đủ cho small/medium. large cần 500.000 số nên mở rộng sang
-# 0900xxxxxx (1.000.000 số, vẫn là dải chưa cấp phát); 100.000 số đầu trùng dải gốc nên small/medium không đổi.
+# Fake number range per ARC-11: 09000xxxxx (100,000 numbers) suffices for small/medium. large needs 500,000, so it extends to
+# 0900xxxxxx (1,000,000 numbers, still an unallocated range); the first 100,000 numbers match the original range, so small/medium are unchanged.
 PHONE_CAPACITY = 1_000_000
 
 
 def fake_phone(index: int) -> str:
     """E.164 phone for the 1-based patient index: +84900000000, +84900000001... (unique per index)."""
     if not 1 <= index <= PHONE_CAPACITY:
-        raise ValueError(f"Hết dải số giả: index {index} > {PHONE_CAPACITY}")
+        raise ValueError(
+            f"Fake number range exhausted: index {index} > {PHONE_CAPACITY}"
+        )
     return f"+84900{index - 1:06d}"
 
 
@@ -96,7 +98,7 @@ def generate_patients(
     """Generate fake FHIR Patient resources for the selected scale."""
     if scale not in PATIENT_COUNTS:
         raise ValueError(
-            f"Scale không hợp lệ: {scale}. Chọn một trong: {', '.join(PATIENT_COUNTS)}"
+            f"Invalid scale: {scale}. Choose one of: {', '.join(PATIENT_COUNTS)}"
         )
 
     count = PATIENT_COUNTS[scale]

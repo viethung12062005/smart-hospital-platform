@@ -1,4 +1,4 @@
-# Values riêng của clinical khi chạy trên kind (make -C dev deploy SVC=clinical); nạp sau dev/chart/app-values-local.yaml.
+# Clinical-specific values when running on kind (make -C dev deploy SVC=clinical); loaded after dev/chart/app-values-local.yaml.
 image:
   repository: localhost/shp-clinical
   tag: dev

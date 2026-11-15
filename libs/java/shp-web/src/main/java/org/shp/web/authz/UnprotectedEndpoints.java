@@ -5,9 +5,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
- * Endpoint chưa khai báo quyền (thiếu {@link RequireShpAuthz} và {@link ShpPublicEndpoint}).
- * Endpoint actuator (/health, /info) không nằm trong danh sách. Dùng trong test của từng service:
- * {@code assertThat(UnprotectedEndpoints.find(ctx)).isEmpty()}.
+ * Endpoint without a declared permission (missing {@link RequireShpAuthz} and {@link
+ * ShpPublicEndpoint}). Actuator endpoints (/health, /info) are not in the list. Used in each
+ * service's tests: {@code assertThat(UnprotectedEndpoints.find(ctx)).isEmpty()}.
  */
 public final class UnprotectedEndpoints {
   private UnprotectedEndpoints() {}

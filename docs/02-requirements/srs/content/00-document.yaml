@@ -1,97 +1,97 @@
-# Thông tin tài liệu và Chương 1 (Giới thiệu).
+# Document information and Chapter 1 (Introduction).
 document:
   system: Smart Hospital Platform
-  subtitle: Nền tảng đặt lịch khám, hồ sơ lâm sàng, tài liệu bệnh nhân và trợ lý AI cho bệnh viện
+  subtitle: Platform for appointment booking, clinical records, patient documents and an AI assistant for hospitals
   version: "0.96"
-  team: Nhóm 12
-  prepared_by: Business Analyst – Nhóm 12
-  date_text: Tháng 10/2026
+  team: Team 12
+  prepared_by: Business Analyst - Team 12
+  date_text: October 2026
   approval_text: >-
-    Chữ ký trên tài liệu này thể hiện sự thống nhất giữa nhóm phát triển và người phê duyệt về nội dung “Đặc tả yêu cầu
-    phần mềm Smart Hospital Platform”. Mọi thay đổi sau khi phê duyệt phải đi qua yêu cầu thay đổi và được ghi vào bảng
-    Lịch sử thay đổi.
+    The signatures on this document express the agreement between the development team and the approver on the content of the
+    "Smart Hospital Platform Software Requirements Specification". Any change after approval must go through a change request
+    and be recorded in the Change History table.
   approvals:
-    - ["Người soạn", "Business Analyst (Nhóm 12)"]
-    - ["Người review", "Kiến trúc sư hệ thống / Trưởng nhóm"]
-    - ["Người review", "Đại diện nhóm phát triển"]
-    - ["Người phê duyệt", "Giảng viên hướng dẫn"]
+    - ["Author", "Business Analyst (Team 12)"]
+    - ["Reviewer", "System Architect / Team Lead"]
+    - ["Reviewer", "Development team representative"]
+    - ["Approver", "Course instructor"]
   history:
-    - {date: "31/10/2026", version: "0.96", author: "BA", change: "Đổi nhà cung cấp định danh: Keycloak cho mọi môi trường (ADR-0017); đăng ký bệnh nhân bằng số điện thoại (mã OTP) hoặc email (UC-01, AC-RG.2); bổ sung số CCCD khi đến khám, có đồng ý, lưu mã hóa, hiển thị che (UC mới supplement-national-id, AC-ID.1 đến AC-ID.4); MFA nhân viên không dùng SMS (NFR-SEC1, UC-08); OTP gửi Zalo trước, SMS sau (AC-RG.3, AC-RG.4); tự nhận hồ sơ đã có (UC claim-record); hồ sơ người thân: con dưới 16 tuổi và người lớn được ủy quyền, phạm vi, thu hồi (UC add-dependent, link-relative, revoke-link, AC-03.7)"}
-    - {date: "26/10/2026", version: "0.5", author: "BA", change: "Tài liệu yêu cầu Pha 2 (functional-requirements.md, non-functional-requirements.md, user-stories.md) – gate G2"}
-    - {date: "30/10/2026", version: "0.9", author: "BA", change: "Chuyển toàn bộ yêu cầu sang mẫu SRS: use case chi tiết có activity diagram và quy tắc nghiệp vụ, ma trận phân quyền, site map, danh sách màn hình, NFR có cách đo, danh sách thông điệp và mẫu thông báo. Bản để review nội bộ."}
-    - {date: "31/10/2026", version: "0.95", author: "BA", change: "Thêm Phụ lục A: cơ sở đặt ngưỡng và căn cứ pháp lý (Luật BVDLCN 91/2025/QH15, Luật Khám bệnh chữa bệnh 2023, NIST SP 800-63B-4, nghiên cứu về nhắc lịch và dự đoán no-show). Đổi truy cập khẩn cấp từ chặn cứng sang leo thang; đặt lại ngưỡng no-show 0,30, phiên làm việc, thời hạn lưu audit. Thêm mockup cho 22 màn hình (7 ảnh chụp từ giao diện web, 15 wireframe)."}
-    - {date: "", version: "1.0", author: "", change: "Bản chính thức sau review (baseline). Mọi thay đổi sau đó đi qua yêu cầu thay đổi."}
+    - {date: "31/10/2026", version: "0.96", author: "BA", change: "Changed the identity provider: Keycloak for every environment (ADR-0017); patient registration by phone number (OTP code) or email (UC-01, AC-RG.2); added national ID number at visit time, with consent, stored encrypted, displayed masked (new UC supplement-national-id, AC-ID.1 to AC-ID.4); staff MFA does not use SMS (NFR-SEC1, UC-08); OTP sent via Zalo first, SMS second (AC-RG.3, AC-RG.4); automatic claim of an existing record (UC claim-record); relative profiles: children under 16 and authorized adults, scope, revocation (UC add-dependent, link-relative, revoke-link, AC-03.7)"}
+    - {date: "26/10/2026", version: "0.5", author: "BA", change: "Phase 2 requirements documents (functional-requirements.md, non-functional-requirements.md, user-stories.md) - gate G2"}
+    - {date: "30/10/2026", version: "0.9", author: "BA", change: "Moved all requirements into the SRS template: detailed use cases with activity diagrams and business rules, access control matrix, site map, screen list, NFRs with measurement methods, message list and notification templates. Internal review version."}
+    - {date: "31/10/2026", version: "0.95", author: "BA", change: "Added Appendix A: threshold rationale and legal basis (Personal Data Protection Law 91/2025/QH15, Medical Examination and Treatment Law 2023, NIST SP 800-63B-4, research on reminders and no-show prediction). Changed emergency access from a hard block to escalation; reset the no-show threshold to 0.30, session duration, audit retention period. Added mockups for 22 screens (7 screenshots from the web interface, 15 wireframes)."}
+    - {date: "", version: "1.0", author: "", change: "Official post-review version (baseline). Any later change goes through a change request."}
 
 introduction:
   purpose: >-
-    Đặc tả yêu cầu phần mềm (SRS) này là tuyên bố chính thức về các yêu cầu chức năng và phi chức năng của Smart Hospital
-    Platform. Tài liệu mô tả những khả năng hệ thống phải cung cấp và những ràng buộc hệ thống phải tuân thủ, làm cơ sở
-    thống nhất giữa nhóm phát triển, người review và người phê duyệt về cách hệ thống hoạt động.
+    This Software Requirements Specification (SRS) is the formal statement of the functional and non-functional requirements of the Smart Hospital
+    Platform. The document describes the capabilities the system must provide and the constraints the system must comply with, as a basis
+    for agreement between the development team, reviewers and the approver on how the system works.
   purpose_points:
-    - Xác định phạm vi mục tiêu nghiệp vụ, chức năng và cấu trúc của hệ thống.
-    - Xác định các quy trình nghiệp vụ mà hệ thống hỗ trợ.
-    - Tạo hiểu biết chung về yêu cầu chức năng cho mọi bên liên quan.
-    - Làm cơ sở để xây dựng kế hoạch kiểm thử và tiêu chí nghiệm thu (mỗi quy tắc nghiệp vụ và tiêu chí nghiệm thu được truy vết sang test case).
+    - Define the scope of the business objectives, functions and structure of the system.
+    - Define the business processes that the system supports.
+    - Create a shared understanding of the functional requirements for all stakeholders.
+    - Serve as the basis for building the test plan and acceptance criteria (every business rule and acceptance criterion is traced to a test case).
   overview:
     - >-
-      Smart Hospital Platform là nền tảng cloud-native phục vụ khám ngoại trú của một bệnh viện đa khoa tư nhân quy mô vừa
-      (giả định: 300 giường, 40 phòng khám chuyên khoa, 120 bác sĩ, khoảng 1.500 lượt khám/ngày, 50.000 bệnh nhân năm đầu).
-      Hệ thống giải quyết 6 vấn đề nghiệp vụ: tổng đài đặt lịch quá tải, tỉ lệ bệnh nhân không đến khám khoảng 18%, hồ sơ
-      và kết quả rời rạc, tra cứu phác đồ thủ công, không truy vết được ai đã xem hồ sơ, và nhập tay dữ liệu từ giấy tờ.
+      Smart Hospital Platform is a cloud-native platform serving outpatient care at a medium-sized private general hospital
+      (assumptions: 300 beds, 40 specialty clinics, 120 doctors, about 1,500 visits/day, 50,000 patients in the first year).
+      The system addresses 6 business problems: an overloaded booking hotline, a no-show rate of about 18%, fragmented records
+      and results, manual protocol lookup, inability to trace who viewed a record, and manual data entry from paper documents.
     - >-
-      Phạm vi gồm: đặt/hủy/đổi lịch khám và quản lý lịch làm việc bác sĩ; hồ sơ bệnh nhân, tiếp đón, ghi nhận lần khám theo
-      chuẩn FHIR R4; upload, phát hành và tải tài liệu lâm sàng; nhắc lịch tự động; ghi nhật ký (audit) mọi truy cập dữ liệu
-      bệnh nhân và truy cập khẩn cấp; trợ lý tri thức y tế (RAG) có trích dẫn, tóm tắt hồ sơ, trích xuất dữ liệu từ tài liệu,
-      chatbot đặt lịch và mô hình dự đoán nguy cơ không đến khám.
+      The scope includes: booking/cancelling/rescheduling visits and managing doctor schedules; patient records, reception and visit
+      recording according to FHIR R4; uploading, releasing and downloading clinical documents; automatic reminders; audit logging of every access
+      to patient data and every emergency access; a medical knowledge assistant (RAG) with citations, record summaries, data extraction from documents,
+      a booking chatbot and a no-show risk prediction model.
     - >-
-      Ngoài phạm vi: thanh toán và viện phí, nội trú, kê đơn và cấp phát thuốc, tích hợp với hệ thống của Bộ Y tế/BHXH,
-      ứng dụng di động riêng (giao diện web có responsive). Toàn bộ dữ liệu bệnh nhân dùng trong dự án là dữ liệu giả.
+      Out of scope: payments and hospital fees, inpatient care, prescribing and dispensing medication, integration with Ministry of Health/social insurance
+      systems, a dedicated mobile app (the web interface is responsive). All patient data used in the project is synthetic data.
   audience:
-    - "Nhóm phát triển: thiết kế chi tiết, hiện thực, kiểm thử đơn vị, tích hợp và hệ thống."
-    - "Nhóm kiểm thử: xây dựng kế hoạch kiểm thử, test case và tiêu chí nghiệm thu từ các quy tắc nghiệp vụ và tiêu chí Given/When/Then."
-    - "Kiến trúc sư / DevOps: đối chiếu yêu cầu phi chức năng với kiến trúc, hạ tầng và kịch bản đo."
-    - "Giảng viên và người review: đánh giá phạm vi, mức độ đầy đủ và khả năng kiểm chứng của yêu cầu."
+    - "Development team: detailed design, implementation, unit, integration and system testing."
+    - "Test team: build the test plan, test cases and acceptance criteria from the business rules and Given/When/Then criteria."
+    - "Architect / DevOps: align non-functional requirements with the architecture, infrastructure and measurement scenarios."
+    - "Instructors and reviewers: assess the scope, completeness and verifiability of the requirements."
   reading: >-
-    Chương 2 cho cái nhìn tổng quan (đối tượng, quy trình, trạng thái, use case, phân quyền, site map). Chương 3 là đặc tả
-    chi tiết từng use case: mỗi use case có bảng tóm tắt, activity diagram với các bước đánh số, và bảng quy tắc nghiệp vụ
-    tham chiếu đúng số bước. Chương 4 mô tả màn hình. Chương 5 là yêu cầu phi chức năng có chỉ số và cách đo. Phụ lục liệt kê
-    thông điệp và mẫu thông báo. Mã trong ngoặc như UC-03, AC-03.1, BR-02, NFR-P1, US-012 trỏ về tài liệu yêu cầu gốc trong repo.
+    Chapter 2 gives an overview (objects, workflows, states, use cases, authorization, site map). Chapter 3 is the detailed specification
+    of each use case: every use case has a summary table, an activity diagram with numbered steps, and a business rule table
+    referencing the correct step numbers. Chapter 4 describes the screens. Chapter 5 contains the non-functional requirements with metrics and measurement methods. The appendices list
+    messages and notification templates. Codes in parentheses such as UC-03, AC-03.1, BR-02, NFR-P1, US-012 refer to the original requirements documents in the repo.
   glossary:
-    - ["SRS", "Software Requirements Specification – Đặc tả yêu cầu phần mềm"]
+    - ["SRS", "Software Requirements Specification"]
     - ["UC", "Use case"]
-    - ["CMUC", "Common use case – use case dùng chung"]
-    - ["BR", "Business rule – quy tắc nghiệp vụ (trong use case)"]
-    - ["CBR", "Common business rule – quy tắc nghiệp vụ dùng chung"]
-    - ["ET", "Mẫu thông báo (email/SMS/push)"]
-    - ["EMSG / IEM / CFD / SMSG", "Thông điệp lỗi / lỗi tại trường / hộp thoại xác nhận / thông báo thành công"]
-    - ["NFR", "Non-functional requirement – yêu cầu phi chức năng"]
-    - ["AC", "Acceptance criteria – tiêu chí nghiệm thu dạng Given/When/Then"]
-    - ["FHIR", "Fast Healthcare Interoperability Resources (HL7 FHIR R4) – chuẩn dữ liệu y tế"]
-    - ["RAG", "Retrieval-Augmented Generation – sinh câu trả lời dựa trên tài liệu truy xuất được"]
-    - ["OIDC / MFA", "OpenID Connect / xác thực nhiều yếu tố"]
-    - ["DPO", "Data Protection Officer – cán bộ bảo vệ dữ liệu"]
-    - ["Break-glass", "Truy cập khẩn cấp vào hồ sơ khi không có quan hệ điều trị, bắt buộc lý do và bị giám sát"]
-    - ["Quan hệ điều trị (Care)", "Bác sĩ có lịch hẹn/lần khám với bệnh nhân trong 12 tháng gần nhất hoặc có lịch hẹn tương lai"]
-    - ["Slot", "Khung giờ khám của một bác sĩ (mặc định 15 phút)"]
-    - ["No-show", "Bệnh nhân không đến khám theo lịch hẹn"]
-    - ["Idempotency-Key", "Khóa do client sinh để gửi lại yêu cầu mà không tạo bản ghi trùng"]
-    - ["N/A", "Không áp dụng / không có"]
-    - ["TBU", "To be updated – sẽ cập nhật"]
-    - ["[Trường]", "Quy ước khi nhắc tới một trường dữ liệu, ví dụ [Trạng thái]"]
-    - ["“Giá trị”", "Quy ước khi nhắc tới một giá trị, ví dụ “booked”"]
-    - ["<Giá trị đặc biệt>", "Giá trị do hệ thống xác định lúc chạy, ví dụ <Hôm nay>, <Người dùng hiện tại>"]
-    - ["<<Trường>>", "Giá trị của trường trong mẫu thông báo"]
+    - ["CMUC", "Common use case - shared use case"]
+    - ["BR", "Business rule (within a use case)"]
+    - ["CBR", "Common business rule - shared business rule"]
+    - ["ET", "Notification template (email/SMS/push)"]
+    - ["EMSG / IEM / CFD / SMSG", "Error message / field-level error / confirmation dialog / success message"]
+    - ["NFR", "Non-functional requirement"]
+    - ["AC", "Acceptance criteria in Given/When/Then form"]
+    - ["FHIR", "Fast Healthcare Interoperability Resources (HL7 FHIR R4) - the healthcare data standard"]
+    - ["RAG", "Retrieval-Augmented Generation - generating answers grounded in retrieved documents"]
+    - ["OIDC / MFA", "OpenID Connect / multi-factor authentication"]
+    - ["DPO", "Data Protection Officer"]
+    - ["Break-glass", "Emergency access to a record when there is no treatment relationship; a reason is mandatory and access is monitored"]
+    - ["Treatment relationship (Care)", "The doctor has an appointment/encounter with the patient within the last 12 months or has a future appointment"]
+    - ["Slot", "A doctor's examination time slot (15 minutes by default)"]
+    - ["No-show", "A patient who does not attend the scheduled appointment"]
+    - ["Idempotency-Key", "A key generated by the client so a retried request does not create a duplicate record"]
+    - ["N/A", "Not applicable / none"]
+    - ["TBU", "To be updated"]
+    - ["[Field]", "Convention when referring to a data field, for example [Status]"]
+    - ["\"Value\"", "Convention when referring to a value, for example \"booked\""]
+    - ["<Special value>", "A value determined by the system at runtime, for example <Today>, <Current user>"]
+    - ["<<Field>>", "The value of the field in a notification template"]
   references:
-    - ["Phân tích nghiệp vụ (G1)", "docs/01-business-analysis/business-analysis.md", "Bối cảnh, vấn đề BP-1..6, stakeholder, quy trình as-is/to-be, quy tắc BR-01..11"]
-    - ["Yêu cầu chức năng (G2)", "docs/02-requirements/functional-requirements.md", "16 use case nghiệp vụ UC-01..16 với tiêu chí nghiệm thu"]
-    - ["Yêu cầu phi chức năng (G2)", "docs/02-requirements/non-functional-requirements.md", "49 NFR có chỉ số và cách đo"]
-    - ["User stories", "docs/02-requirements/user-stories.md", "74 user story US-001..074"]
-    - ["Ma trận phân quyền", "docs/02-requirements/access-control-matrix.md; contracts/authz/matrix.yaml", "Quyền theo vai trò và quan hệ điều trị; bản máy đọc được dùng trong code và test"]
-    - ["Thiết kế chi tiết", "docs/03-architecture/detailed-design/", "Mô hình dữ liệu, API từng service, danh mục sự kiện, phân quyền chi tiết"]
-    - ["Hợp đồng API", "contracts/openapi/*.yaml", "OpenAPI 3 của 7 service"]
-    - ["HL7 FHIR R4", "https://hl7.org/fhir/R4/", "Chuẩn tài nguyên Patient, Appointment, Slot, Encounter, Observation, DocumentReference…"]
-    - ["Luật Bảo vệ dữ liệu cá nhân", "Luật số 91/2025/QH15, hiệu lực 01/01/2026", "Dữ liệu sức khỏe là dữ liệu cá nhân nhạy cảm – cơ sở cho đồng ý, audit, DPO, che PII, thông báo vi phạm 72 giờ (Điều 23), chuyển dữ liệu ra nước ngoài (Điều 20), đánh giá tác động (Điều 21–22), AI và điện toán đám mây (Điều 30), thông tin sức khỏe (Điều 26)"]
-    - ["Nghị định hướng dẫn", "Nghị định 356/2025/NĐ-CP", "Hướng dẫn thi hành Luật 91/2025/QH15"]
-    - ["Luật Khám bệnh, chữa bệnh", "Luật 2023, Điều 69", "Hồ sơ bệnh án giấy hoặc điện tử có giá trị pháp lý như nhau; lưu trữ theo pháp luật về lưu trữ"]
-    - ["NIST SP 800-63B-4", "https://pages.nist.gov/800-63-4/sp800-63b/aal", "Mức bảo đảm xác thực AAL2: thời gian đăng nhập lại và không thao tác"]
-    - ["Cơ sở đặt ngưỡng và căn cứ pháp lý", "Chương 9, mục “Cơ sở đặt ngưỡng và căn cứ pháp lý”", "Giá trị từng ngưỡng, nguồn, mức chắc chắn, câu hỏi mở cần xác minh"]
+    - ["Business analysis (G1)", "docs/01-business-analysis/business-analysis.md", "Context, problems BP-1..6, stakeholders, as-is/to-be processes, rules BR-01..11"]
+    - ["Functional requirements (G2)", "docs/02-requirements/functional-requirements.md", "16 business use cases UC-01..16 with acceptance criteria"]
+    - ["Non-functional requirements (G2)", "docs/02-requirements/non-functional-requirements.md", "49 NFRs with metrics and measurement methods"]
+    - ["User stories", "docs/02-requirements/user-stories.md", "74 user stories US-001..074"]
+    - ["Access control matrix", "docs/02-requirements/access-control-matrix.md; contracts/authz/matrix.yaml", "Permissions by role and treatment relationship; the machine-readable version is used in code and tests"]
+    - ["Detailed design", "docs/03-architecture/detailed-design/", "Data model, per-service APIs, event catalog, detailed authorization"]
+    - ["API contracts", "contracts/openapi/*.yaml", "OpenAPI 3 for 7 services"]
+    - ["HL7 FHIR R4", "https://hl7.org/fhir/R4/", "Standard for Patient, Appointment, Slot, Encounter, Observation, DocumentReference resources..."]
+    - ["Personal Data Protection Law", "Law No. 91/2025/QH15, effective 01/01/2026", "Health data is sensitive personal data - the basis for consent, audit, DPO, PII masking, 72-hour breach notification (Article 23), cross-border data transfer (Article 20), impact assessments (Articles 21-22), AI and cloud computing (Article 30), health information (Article 26)"]
+    - ["Implementing decree", "Decree 356/2025/ND-CP", "Guidance for implementing Law 91/2025/QH15"]
+    - ["Medical Examination and Treatment Law", "Law 2023, Article 69", "Paper or electronic medical records have equal legal validity; retention follows archival law"]
+    - ["NIST SP 800-63B-4", "https://pages.nist.gov/800-63-4/sp800-63b/aal", "Authenticator Assurance Level AAL2: reauthentication and inactivity timeouts"]
+    - ["Threshold rationale and legal basis", "Chapter 9, section \"Threshold rationale and legal basis\"", "Value of each threshold, source, confidence level, open questions to verify"]

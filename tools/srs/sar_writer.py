@@ -14,9 +14,9 @@ HFONT = Font(name="Arial", size=10, bold=True, color="FFFFFF")
 BFONT = Font(name="Arial", size=10)
 BOLD = Font(name="Arial", size=10, bold=True)
 
-FUNCTION_TYPES = ("Basic: chức năng cơ bản (tạo, xem, sửa, xóa, tìm kiếm...) để người dùng làm việc với một đối tượng dữ "
-                  "liệu.\nWorkflow: chức năng theo quy trình nghiệp vụ, ràng buộc chặt về trạng thái và vai trò (ví dụ: đặt "
-                  "lịch, check-in, kết thúc lần khám).\nOther: chức năng khác (job định kỳ, AI, tích hợp).")
+FUNCTION_TYPES = ("Basic: basic functions (create, view, edit, delete, search...) that let users work with a data "
+                  "object.\nWorkflow: functions following a business process, with strict constraints on state and roles (e.g. "
+                  "booking, check-in, finishing an encounter).\nOther: other functions (scheduled jobs, AI, integration).")
 
 
 def _header(ws, row, col, names, widths):
@@ -41,7 +41,7 @@ def write(m, path):
 
     ws = wb.active
     ws.title = "List of requirement"
-    _header(ws, 2, 1, ["NO", "DESCRIPTION", "Ưu tiên", "Nguồn"], [6, 90, 10, 22])
+    _header(ws, 2, 1, ["NO", "DESCRIPTION", "Priority", "Source"], [6, 90, 10, 22])
     for i, req in enumerate(m["requirements"], 1):
         _row(ws, 2 + i, 1, [i, f"{req['id']} {req['title']}: {req['description']}", req["priority"], req["source"]], True)
 
@@ -75,12 +75,12 @@ def write(m, path):
                 ws.merge_cells(start_row=first, start_column=col, end_row=row - 1, end_column=col)
 
     ws = wb.create_sheet("Metadata")
-    ws["A1"] = "Bảng mô tả loại của từng thuộc tính trong sheet Data Object Details."
+    ws["A1"] = "Table describing the type of each attribute in the Data Object Details sheet."
     _header(ws, 2, 1, ["Type", "Description"], [20, 90])
-    for i, (t, d) in enumerate((("Free Input", "Người dùng nhập tự do theo định dạng quy định (văn bản, số, ngày...)."),
-                                ("Input in a list", "Người dùng chỉ chọn từ danh sách giá trị định sẵn (value set)."),
-                                ("System generated", "Hệ thống tự sinh hoặc tự cập nhật (mã, thời điểm, trạng thái...)."),
-                                ("From external system", "Đồng bộ từ hệ thống bên ngoài (nhà cung cấp định danh...).")), 1):
+    for i, (t, d) in enumerate((("Free Input", "The user enters a value freely in the prescribed format (text, number, date...)."),
+                                ("Input in a list", "The user selects only from a predefined list of values (value set)."),
+                                ("System generated", "The system generates or updates it automatically (code, timestamp, status...)."),
+                                ("From external system", "Synchronized from an external system (identity provider...).")), 1):
         _row(ws, 2 + i, 1, [t, d])
 
     ws = wb.create_sheet("Function List")
@@ -104,7 +104,7 @@ def write(m, path):
     sc_rows = []
     for portal in m["screens"]:
         for s in portal["items"]:
-            sc_rows.append([m.num[("SCR", s["key"])].replace("Màn hình ", "S"), portal["portal"], s["name"], r(s["purpose"])])
+            sc_rows.append([m.num[("SCR", s["key"])].replace("Screen ", "S"), portal["portal"], s["name"], r(s["purpose"])])
     ws["B2"], ws["C2"] = "Total Number of screen", len(sc_rows)
     ws["B2"].font, ws["C2"].font = BOLD, BOLD
     _header(ws, 4, 2, ["Trace Code", "Category (module)", "Screen", "Description / Objective / Remarks"], [11, 24, 36, 90])

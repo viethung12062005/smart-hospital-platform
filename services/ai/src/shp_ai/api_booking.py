@@ -22,7 +22,7 @@ UNAVAILABLE_FALLBACK = {"type": "booking-form", "url": "/booking"}
 
 
 class ChatBody(BaseModel):
-    conversationId: str | None = Field(default=None, max_length=64)  # noqa: N815 - theo hợp đồng API
+    conversationId: str | None = Field(default=None, max_length=64)  # noqa: N815 - per the API contract
     message: str = Field(min_length=1, max_length=1000)
 
 
@@ -93,7 +93,8 @@ def register(app: FastAPI, deps: Callable[[], Deps], auth: Authenticator) -> Non
         if not idempotency_key:
             raise ShpError("idempotency-key-required")
         d = deps()
-        # chủ hội thoại được xác định qua conversationId lưu trong action; tìm hội thoại patient đang có với bot
+        # the conversation owner is identified by the conversationId stored in the action; find the patient's
+        # existing conversation with the bot
         own_convo_ids = {c["_id"] for c in d.db.conversations.find({"userSubject": p.subject, "kind": KIND})}
         action = d.db.pending_actions.find_one({"_id": action_id})
         if action is None or action["conversationId"] not in own_convo_ids:

@@ -1,7 +1,7 @@
-# Test case của module 'scheduling'. Nguồn: tiêu chí nghiệm thu / NFR trong docs/02-requirements/srs. Tự động hóa: xem automation.yaml
+# Test cases for module 'scheduling'. Source: acceptance criteria / NFRs in docs/02-requirements/srs. Automation: see automation.yaml
 testcases:
 - id: TC-AC-FS.1
-  title: 'Tìm bác sĩ và khung giờ trống: AC-FS.1'
+  title: 'Find doctors and free time slots: AC-FS.1'
   covers:
   - AC-FS.1
   srs_uc: find-slot
@@ -9,10 +9,10 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given lịch làm việc có 14 slot trống ngày mai, When bệnh nhân tìm theo chuyên khoa đó, Then thấy đúng 14 slot theo
-    thứ tự giờ.
+  spec: Given the schedule has 14 free slots tomorrow, When the patient searches by that specialty, Then they see exactly 14
+    slots in time order.
 - id: TC-AC-FS.2
-  title: 'Tìm bác sĩ và khung giờ trống: AC-FS.2'
+  title: 'Find doctors and free time slots: AC-FS.2'
   covers:
   - AC-FS.2
   srs_uc: find-slot
@@ -20,9 +20,9 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given khoảng ngày vượt 30 ngày, When tìm, Then chỉ trả slot đến <Hôm nay> + 30 ngày.
+  spec: Given the date range exceeds 30 days, When searching, Then only slots up to <Today> + 30 days are returned.
 - id: TC-AC-FS.3
-  title: 'Tìm bác sĩ và khung giờ trống: AC-FS.3'
+  title: 'Find doctors and free time slots: AC-FS.3'
   covers:
   - AC-FS.3
   srs_uc: find-slot
@@ -30,10 +30,10 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given bệnh nhân, When lọc trạng thái “busy”, Then yêu cầu bị từ chối hoặc bỏ qua tham số, không lộ lịch hẹn của người
-    khác.
+  spec: Given a patient, When filtering by status "busy", Then the request is rejected or the parameter ignored, without
+    exposing other people's appointments.
 - id: TC-AC-03.1
-  title: 'Đặt lịch khám: AC-03.1'
+  title: 'Book an appointment: AC-03.1'
   covers:
   - AC-03.1
   srs_uc: book
@@ -41,10 +41,10 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given 1 slot trống và 50 yêu cầu đặt đồng thời từ 50 bệnh nhân, When xử lý xong, Then đúng 1 yêu cầu thành công và
-    49 nhận lỗi “slot-unavailable”.
+  spec: Given 1 free slot and 50 concurrent booking requests from 50 patients, When processing completes, Then exactly 1
+    request succeeds and 49 receive the "slot-unavailable" error.
 - id: TC-AC-03.2
-  title: 'Đặt lịch khám: AC-03.2'
+  title: 'Book an appointment: AC-03.2'
   covers:
   - AC-03.2
   srs_uc: book
@@ -52,9 +52,10 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given cùng Idempotency-Key gửi 2 lần với cùng nội dung, Then cả hai nhận cùng một lịch hẹn và chỉ 1 lịch hẹn tồn tại.
+  spec: Given the same Idempotency-Key sent twice with the same content, Then both receive the same appointment and only 1
+    appointment exists.
 - id: TC-AC-03.3
-  title: 'Đặt lịch khám: AC-03.3'
+  title: 'Book an appointment: AC-03.3'
   covers:
   - AC-03.3
   srs_uc: book
@@ -62,9 +63,9 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given cùng Idempotency-Key nhưng nội dung khác, When gửi, Then bị từ chối và không có thay đổi.
+  spec: Given the same Idempotency-Key but different content, When sent, Then it is rejected and nothing changes.
 - id: TC-AC-03.4
-  title: 'Đặt lịch khám: AC-03.4'
+  title: 'Book an appointment: AC-03.4'
   covers:
   - AC-03.4
   srs_uc: book
@@ -72,9 +73,10 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given bệnh nhân đã có 3 lịch hẹn tương lai, When đặt thêm, Then bị từ chối với “max-future-appointments”.
+  spec: Given the patient already has 3 future appointments, When booking another, Then it is rejected with
+    "max-future-appointments".
 - id: TC-AC-03.6
-  title: 'Đặt lịch khám: AC-03.6'
+  title: 'Book an appointment: AC-03.6'
   covers:
   - AC-03.6
   srs_uc: book
@@ -82,9 +84,9 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given bệnh nhân A, When đặt lịch cho bệnh nhân B, Then bị từ chối và có bản ghi audit “deny”.
+  spec: Given patient A, When booking for patient B, Then it is rejected and a "deny" audit record exists.
 - id: TC-AC-BK.1
-  title: 'Đặt lịch khám: AC-BK.1'
+  title: 'Book an appointment: AC-BK.1'
   covers:
   - AC-BK.1
   srs_uc: book
@@ -92,9 +94,9 @@ testcases:
   module: scheduling
   level: integration
   priority: P0
-  spec: Given đặt lịch thành công, Then sự kiện phát ra không chứa họ tên, SĐT, email hay lý do khám.
+  spec: Given a successful booking, Then the emitted event contains no name, phone number, email or visit reason.
 - id: TC-AC-03.5
-  title: 'Hủy lịch khám: AC-03.5'
+  title: 'Cancel an appointment: AC-03.5'
   covers:
   - AC-03.5
   srs_uc: cancel
@@ -102,10 +104,10 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given còn 1 giờ đến giờ khám, When bệnh nhân hủy, Then bị từ chối “cancellation-too-late”; When điều dưỡng hủy, Then
-    thành công.
+  spec: Given 1 hour remains until the appointment, When the patient cancels, Then it is rejected with
+    "cancellation-too-late"; When a nurse cancels, Then it succeeds.
 - id: TC-AC-07.1
-  title: 'Hủy lịch khám: AC-07.1'
+  title: 'Cancel an appointment: AC-07.1'
   covers:
   - AC-07.1
   srs_uc: cancel
@@ -113,9 +115,9 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given lịch hẹn bị hủy trước giờ nhắc, Then không có lần nhắc nào được gửi.
+  spec: Given the appointment is cancelled before the reminder time, Then no reminder is sent.
 - id: TC-AC-CN.1
-  title: 'Hủy lịch khám: AC-CN.1'
+  title: 'Cancel an appointment: AC-CN.1'
   covers:
   - AC-CN.1
   srs_uc: cancel
@@ -123,9 +125,10 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given hủy thành công, Then slot trở lại “free” và xuất hiện trong kết quả tìm kiếm trong ≤ 5 giây.
+  spec: Given a successful cancellation, Then the slot returns to "free" and appears in search results within <= 5
+    seconds.
 - id: TC-AC-RS.1
-  title: 'Đổi lịch khám: AC-RS.1'
+  title: 'Reschedule an appointment: AC-RS.1'
   covers:
   - AC-RS.1
   srs_uc: reschedule
@@ -133,9 +136,10 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given slot mới vừa bị người khác đặt, When đổi lịch, Then lịch cũ vẫn “booked” và không có lịch hẹn mới.
+  spec: Given the new slot was just booked by someone else, When rescheduling, Then the old appointment remains "booked"
+    and no new appointment exists.
 - id: TC-AC-RS.2
-  title: 'Đổi lịch khám: AC-RS.2'
+  title: 'Reschedule an appointment: AC-RS.2'
   covers:
   - AC-RS.2
   srs_uc: reschedule
@@ -143,9 +147,9 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given bệnh nhân có 3 lịch hẹn tương lai, When đổi một lịch, Then thành công (không vướng BR-03).
+  spec: Given the patient has 3 future appointments, When rescheduling one, Then it succeeds (BR-03 does not block it).
 - id: TC-AC-MA.1
-  title: 'Xem lịch hẹn của tôi: AC-MA.1'
+  title: 'View my appointments: AC-MA.1'
   covers:
   - AC-MA.1
   srs_uc: my-appointments
@@ -153,9 +157,9 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given bệnh nhân A gửi yêu cầu lọc lịch hẹn của bệnh nhân B, Then chỉ nhận lịch hẹn của A.
+  spec: Given patient A sends a request to filter patient B's appointments, Then they only receive A's appointments.
 - id: TC-AC-ST.1
-  title: 'Tạo lịch làm việc và mẫu lịch tuần: AC-ST.1'
+  title: 'Create work schedule and weekly schedule template: AC-ST.1'
   covers:
   - AC-ST.1
   srs_uc: schedule-template
@@ -163,10 +167,10 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given mẫu 08:00–11:30 slot 15 phút, When lưu, Then hợp lệ; Given 08:00–11:20 slot 15 phút, Then báo lỗi chia không
-    hết.
+  spec: Given a template 08:00-11:30 with 15-minute slots, When saved, Then it is valid; Given 08:00-11:20 with 15-minute
+    slots, Then an uneven-division error is returned.
 - id: TC-AC-02.1
-  title: 'Sinh slot theo mẫu: AC-02.1'
+  title: 'Generate slots from a template: AC-02.1'
   covers:
   - AC-02.1
   srs_uc: generate-slots
@@ -174,9 +178,10 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given mẫu 08:00–11:30 slot 15 phút, When sinh slot cho một ngày, Then có đúng 14 slot “free”.
+  spec: Given a template 08:00-11:30 with 15-minute slots, When generating slots for one day, Then there are exactly 14
+    "free" slots.
 - id: TC-AC-GS.1
-  title: 'Sinh slot theo mẫu: AC-GS.1'
+  title: 'Generate slots from a template: AC-GS.1'
   covers:
   - AC-GS.1
   srs_uc: generate-slots
@@ -184,9 +189,10 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given đã sinh slot ngày D, When sinh lại ngày D, Then tổng số slot ngày D không đổi.
+  spec: Given slots for day D have been generated, When regenerating day D, Then the total number of slots for day D is
+    unchanged.
 - id: TC-AC-02.2
-  title: 'Chặn / mở chặn slot: AC-02.2'
+  title: 'Block / unblock slot: AC-02.2'
   covers:
   - AC-02.2
   srs_uc: block-slot
@@ -194,9 +200,9 @@ testcases:
   module: scheduling
   level: api
   priority: P1
-  spec: Given slot đã được đặt, When chặn slot, Then trả lỗi “slot-has-appointment”.
+  spec: Given a slot has been booked, When blocking the slot, Then return the "slot-has-appointment" error.
 - id: TC-AC-02.3
-  title: 'Bác sĩ xem lịch làm việc và lịch khám của mình: AC-02.3'
+  title: 'Doctor views own work schedule and appointment schedule: AC-02.3'
   covers:
   - AC-02.3
   srs_uc: view-own-schedule
@@ -204,9 +210,9 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: Given bác sĩ A, When xem lịch của bác sĩ B hoặc sửa lịch của mình, Then bị từ chối và ghi audit.
+  spec: Given doctor A, When viewing doctor B's schedule or editing their own schedule, Then it is rejected and audited.
 - id: TC-AC-03.7
-  title: 'Đặt lịch khám: AC-03.7'
+  title: 'Book an appointment: AC-03.7'
   covers:
   - AC-03.7
   srs_uc: book
@@ -214,4 +220,4 @@ testcases:
   module: scheduling
   level: api
   priority: P0
-  spec: "Given hồ sơ người thân đã liên kết, When tài khoản của A đặt lịch cho hồ sơ đó, Then đặt thành công và audit ghi tài khoản thực hiện và hồ sơ được đặt."
+  spec: "Given a linked family member medical record, When A's account books for that record, Then the booking succeeds and the audit log records the acting account and the record booked."

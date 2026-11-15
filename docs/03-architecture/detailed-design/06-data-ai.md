@@ -1,29 +1,29 @@
-# 06 — Dữ liệu AI (ai service)
+# 06 — AI data (ai service)
 
-Kho: MongoDB database `ai` (cùng cluster với clinical, user riêng) + Azure AI Search (local: OpenSearch) + Blob container `kb`.
+Store: MongoDB database `ai` (same cluster as clinical, separate user) + Azure AI Search (local: OpenSearch) + Blob container `kb`.
 
-## 1. Kho tri thức RAG
+## 1. RAG knowledge base
 
-### 1.1 Vòng đời tài liệu tri thức (`kb_documents`)
+### 1.1 Knowledge document lifecycle (`kb_documents`)
 
-`draft` (admin tải lên) → `approved` (trưởng khoa/admin duyệt, UC-11 "tài liệu đã duyệt") → `indexed` (đã chunk + embed) →
-`retired` (gỡ khỏi index, giữ bản ghi). Chỉ tài liệu `indexed` được truy xuất.
+`draft` (admin uploads) → `approved` (head of department/admin approves, UC-11 "approved documents") → `indexed` (chunked + embedded) →
+`retired` (removed from the index, record kept). Only `indexed` documents are retrievable.
 
-| Trường | Kiểu | Ghi chú |
+| Field | Type | Note |
 |---|---|---|
 | `_id` | uuid | |
-| `title`, `source` | string | nguồn: "Phác đồ nội bộ khoa Tim mạch 2026" (tài liệu giả định/công khai) |
-| `department` | string | chuyên khoa (value set `specialty`) hoặc `hospital-wide` |
-| `allowedRoles[]` | string[] | `doctor`, `nurse` — dùng cho security trimming |
-| `version` | int | tăng khi thay file; version cũ bị gỡ khỏi index |
+| `title`, `source` | string | source: "Internal protocol of the Cardiology department 2026" (fictional/public document) |
+| `department` | string | specialty (value set `specialty`) or `hospital-wide` |
+| `allowedRoles[]` | string[] | `doctor`, `nurse` — used for security trimming |
+| `version` | int | incremented when the file is replaced; the old version is removed from the index |
 | `status` | enum | `draft` · `approved` · `indexed` · `retired` |
-| `blobPath`, `contentType`, `sha256` | | file gốc trên container `kb` |
+| `blobPath`, `contentType`, `sha256` | | original file on the `kb` container |
 | `chunkCount`, `indexedAt`, `embeddingModel` | | |
 | `approvedBy`, `approvedAt`, `createdBy`, `createdAt` | | |
 
 Index: `{status:1, department:1}`.
 
-### 1.2 Index AI Search `kb-chunks-v1`
+### 1.2 AI Search index `kb-chunks-v1`
 
 ```json
 {
@@ -49,48 +49,48 @@ Index: `{status:1, department:1}`.
 }
 ```
 
-| Tham số | Giá trị | Lý do |
+| Parameter | Value | Reason |
 |---|---|---|
-| Chunk | 600 token, overlap 80, tách theo tiêu đề mục trước rồi mới theo độ dài | Giữ nguyên ngữ cảnh mục phác đồ |
-| Embedding | `bge-m3` (1024 chiều) chạy local qua Ollama ([ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md)) | Miễn phí, đa ngôn ngữ tốt cho tiếng Việt; đổi model = tạo index `v2` và re-index (không trộn vector khác model) |
-| Truy xuất | Hybrid: BM25 + vector (top 50) → RRF → (tùy chọn) rerank cross-encoder local → top 5 | Đúng pipeline Retrieve → Rerank của đề |
-| Security trimming | `$filter = allowedRoles/any(r: r eq '<role>') and (department eq '<khoa>' or department eq 'hospital-wide')` | Lọc ngay trong truy vấn (UC-11), không lọc sau |
-| Fallback | Embedding lỗi → chỉ BM25 + reranker; rerank lỗi → hybrid không rerank | Xuống cấp có kiểm soát (ADR-0006) |
+| Chunk | 600 tokens, overlap 80, split by section heading first and then by length | Preserves the section context of the protocol |
+| Embedding | `bge-m3` (1024 dimensions) run locally via Ollama ([ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md)) | Free, good multilingual support for Vietnamese; changing the model = create a `v2` index and re-index (never mix vectors from different models) |
+| Retrieval | Hybrid: BM25 + vector (top 50) → RRF → (optional) local cross-encoder rerank → top 5 | Matches the project's Retrieve → Rerank pipeline |
+| Security trimming | `$filter = allowedRoles/any(r: r eq '<role>') and (department eq '<specialty>' or department eq 'hospital-wide')` | Filter inside the query (UC-11), not afterwards |
+| Fallback | Embedding fails → BM25 + reranker only; rerank fails → hybrid without rerank | Controlled degradation (ADR-0006) |
 
-## 2. Hội thoại, câu trả lời và phản hồi
+## 2. Conversations, answers, and feedback
 
-| Collection | Trường chính | Index / TTL |
+| Collection | Main fields | Index / TTL |
 |---|---|---|
-| `conversations` | `_id`, `userSubject`, `kind` (`assistant` · `booking-bot`), `patientContext` (Patient id khi bot đặt lịch cho chính bệnh nhân), `createdAt`, `lastMessageAt` | `{userSubject:1, lastMessageAt:-1}` · TTL 30 ngày trên `lastMessageAt` |
-| `messages` | `_id`, `conversationId`, `role` (`user` · `assistant` · `tool`), `content` (đã redact PII nếu đi ra provider ngoài Azure), `citations[]` (`{chunkId, documentId, title, section, page}`), `toolCalls[]`, `model`, `provider`, `fallbackLevel` (0 = model chính), `tokens` (`in`, `out`), `costUsd`, `latencyMs`, `guardrail` (`passed` · `blocked:<lý do>`), `createdAt` | `{conversationId:1, createdAt:1}` · TTL 30 ngày |
-| `feedback` | `_id`, `messageId`, `userSubject`, `rating` (`up` · `down`), `comment`, `createdAt` | `{messageId:1}` (giữ lâu dài để làm eval) |
-| `pending_actions` | `_id`, `conversationId`, `tool` (`book_appointment` · `cancel_appointment`), `arguments`, `expiresAt`, `confirmedAt` | TTL trên `expiresAt` (5 phút) — hành động chatbot chỉ chạy khi người dùng xác nhận (AC-14.1) |
+| `conversations` | `_id`, `userSubject`, `kind` (`assistant` · `booking-bot`), `patientContext` (Patient id when the bot books for the patient themselves), `createdAt`, `lastMessageAt` | `{userSubject:1, lastMessageAt:-1}` · TTL 30 days on `lastMessageAt` |
+| `messages` | `_id`, `conversationId`, `role` (`user` · `assistant` · `tool`), `content` (PII redacted if sent to a provider outside Azure), `citations[]` (`{chunkId, documentId, title, section, page}`), `toolCalls[]`, `model`, `provider`, `fallbackLevel` (0 = primary model), `tokens` (`in`, `out`), `costUsd`, `latencyMs`, `guardrail` (`passed` · `blocked:<reason>`), `createdAt` | `{conversationId:1, createdAt:1}` · TTL 30 days |
+| `feedback` | `_id`, `messageId`, `userSubject`, `rating` (`up` · `down`), `comment`, `createdAt` | `{messageId:1}` (kept long-term for eval) |
+| `pending_actions` | `_id`, `conversationId`, `tool` (`book_appointment` · `cancel_appointment`), `arguments`, `expiresAt`, `confirmedAt` | TTL on `expiresAt` (5 minutes) — chatbot actions run only when the user confirms (AC-14.1) |
 
-## 3. Trích xuất tài liệu
+## 3. Document extraction
 
 `extraction_jobs`:
 
-| Trường | Ghi chú |
+| Field | Note |
 |---|---|
-| `_id`, `documentId`, `documentVersion`, `patientId` | `{documentId, documentVersion}` **unique** — event lặp không tạo job trùng |
-| `status` | state machine trong [01-domain-model.md](01-domain-model.md) §5 |
-| `attempts`, `lastError`, `nextAttemptAt` | retry tối đa 3, backoff 1/5/15 phút |
-| `ocr` | `{engine, pages, textBlobPath}` (văn bản OCR lưu Blob, không lưu trong document) |
+| `_id`, `documentId`, `documentVersion`, `patientId` | `{documentId, documentVersion}` **unique** — duplicate events do not create duplicate jobs |
+| `status` | state machine in [01-domain-model.md](01-domain-model.md) §5 |
+| `attempts`, `lastError`, `nextAttemptAt` | retry at most 3 times, backoff 1/5/15 minutes |
+| `ocr` | `{engine, pages, textBlobPath}` (OCR text stored in Blob, not in the document) |
 | `classification` | `{docType (LOINC), confidence}` |
-| `fields[]` | `{name, value, unit, confidence, page, bbox}`, ví dụ `{name: "glucose", value: 6.8, unit: "mmol/L", confidence: 0.93}` |
-| `overallConfidence` | min của các trường bắt buộc |
+| `fields[]` | `{name, value, unit, confidence, page, bbox}`, for example `{name: "glucose", value: 6.8, unit: "mmol/L", confidence: 0.93}` |
+| `overallConfidence` | minimum of the required fields |
 | `review` | `{reviewedBy, reviewedAt, decision (accepted · rejected), editedFields[], createdObservationIds[]}` |
 | `model`, `provider`, `fallbackLevel`, `tokens`, `costUsd` | |
 
-Index: `{status:1, nextAttemptAt:1}` (worker lấy việc), `{patientId:1, createdAt:-1}` (hàng chờ duyệt theo bệnh nhân).
+Index: `{status:1, nextAttemptAt:1}` (worker fetches work), `{patientId:1, createdAt:-1}` (review queue by patient).
 
-Ngưỡng: `overallConfidence ≥ 0.85` → đánh dấu "đề xuất chấp nhận"; thấp hơn → "cần kiểm tra kỹ". MVP **luôn cần người
-duyệt** (AC-13.1). Khi duyệt, ai service gọi clinical tạo `Observation` (`derivedFrom = DocumentReference`) **bằng token
-của người duyệt**.
+Threshold: `overallConfidence ≥ 0.85` → mark "suggest accept"; lower → "needs careful review". MVP **always requires a human
+reviewer** (AC-13.1). On approval, the ai service calls clinical to create an `Observation` (`derivedFrom = DocumentReference`) **using the
+reviewer's token**.
 
-## 4. Cấu hình chuỗi model (router)
+## 4. Model chain configuration (router)
 
-Cấu hình nằm trong ConfigMap (Helm values), không nằm trong DB:
+Configuration is in a ConfigMap (Helm values), not in the DB:
 
 ```yaml
 tasks:
@@ -99,9 +99,9 @@ tasks:
     maxOutputTokens: 800
     chain:
       - { provider: deepseek, model: deepseek-chat, redactPii: true }
-      - { provider: gemini, model: gemini-flash, redactPii: true }     # free tier, hạn mức thấp
-      - { provider: ollama, model: qwen2.5-7b-instruct, redactPii: false }   # chạy trong cluster, node pool ai
-    finalFallback: retrieval-only          # trả danh sách tài liệu liên quan
+      - { provider: gemini, model: gemini-flash, redactPii: true }     # free tier, low quota
+      - { provider: ollama, model: qwen2.5-7b-instruct, redactPii: false }   # runs in the cluster, ai node pool
+    finalFallback: retrieval-only          # return the list of related documents
   patient-summary:
     timeoutSeconds: 15
     chain: [ { provider: deepseek, model: deepseek-chat, redactPii: true }, { provider: gemini, model: gemini-flash, redactPii: true } ]
@@ -117,46 +117,48 @@ embedding: { provider: ollama, model: bge-m3, dimensions: 1024 }
 circuitBreaker: { failureThreshold: 5, windowSeconds: 60, openSeconds: 30 }
 budget: { dailyTokenLimit: 2000000, alertAtPercent: 80 }
 ```
-Tên model là giá trị cấu hình, chốt khi dựng môi trường theo danh mục model sẵn có của DeepSeek/Gemini lúc đó; API key lấy từ Key Vault (không nằm trong ConfigMap). Chuỗi do [ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md) quy định.
-mọi model trong chuỗi đều phải chạy qua bộ eval (NFR-AI7) trước khi đưa vào chuỗi.
+Model names are configuration values, fixed when the environment is built according to the DeepSeek/Gemini model catalog available at that
+time; API keys come from Key Vault (not in the ConfigMap). The chain is specified by [ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md).
+Every model in the chain must pass the eval suite (NFR-AI7) before being added to the chain.
 
-Prompt template được version hóa trong repo (`prompts/<task>/v<N>.md`), ID phiên bản prompt được ghi vào `messages` để truy vết.
+Prompt templates are versioned in the repo (`prompts/<task>/v<N>.md`); the prompt version ID is recorded in `messages` for traceability.
 
-## 5. Messaging và idempotency
+## 5. Messaging and idempotency
 
-Database `ai` có thêm ba collection nền tảng. `outbox`, `inbox` cùng định nghĩa với [03](03-db-clinical-document.md) §2.7;
-`idempotency` (tên khác `idempotency_keys` của Java vì schema khác) là **biến thể có trạng thái** (§5.1), vì thao tác của ai gọi service khác.
+Database `ai` has three additional platform collections. `outbox` and `inbox` have the same definition as [03](03-db-clinical-document.md) §2.7;
+`idempotency` (named differently from Java's `idempotency_keys` because the schema differs) is the **stateful variant** (§5.1), because
+ai's operations call other services.
 
-| Collection | Dùng cho | Ghi chú |
+| Collection | Used for | Note |
 |---|---|---|
-| `outbox` | Phát E11 `audit.recorded` cho `ai-query`, `ai-summary` ([05](05-storage-audit-blob.md) §1.1) | Ghi cùng transaction với `messages` / `extraction_jobs`; relay giống Java (`shp_platform.mongo`). Lần đọc hồ sơ thay mặt người dùng do clinical tự audit |
-| `inbox` | Nhận E8 `document-uploaded` (consumer `ai`) | `insert inbox` + tạo `extraction_jobs` trong **một transaction**: event lặp thì bỏ qua cả event. Index unique `{documentId, documentVersion}` của `extraction_jobs` là lớp chặn thứ hai |
-| `idempotency` | AI4 tóm tắt hồ sơ, AI6 duyệt trích xuất, AI8 xác nhận hành động chatbot ([12](12-api-ai.md)) | Request lặp trả lại đúng phản hồi cũ: AI6 không tạo `Observation` hai lần, AI8 không đặt hai lịch |
+| `outbox` | Emits E11 `audit.recorded` for `ai-query`, `ai-summary` ([05](05-storage-audit-blob.md) §1.1) | Written in the same transaction as `messages` / `extraction_jobs`; relay same as Java (`shp_platform.mongo`). Reads of records on behalf of the user are audited by clinical itself |
+| `inbox` | Receives E8 `document-uploaded` (consumer `ai`) | `insert inbox` + create `extraction_jobs` in **one transaction**: a duplicate event skips the whole event. The unique index `{documentId, documentVersion}` on `extraction_jobs` is the second layer |
+| `idempotency` | AI4 summary, AI6 extraction review, AI8 chatbot action confirmation ([12](12-api-ai.md)) | A repeated request returns exactly the old response: AI6 does not create the `Observation` twice, AI8 does not book two appointments |
 
-### 5.1 `idempotency` của ai
+### 5.1 ai `idempotency`
 
-Khác Java (giành khóa trong cùng transaction với dữ liệu, [03](03-db-clinical-document.md) §2.7): AI4, AI6, AI8 gọi clinical/scheduling/LLM qua mạng,
-không gói được vào một transaction MongoDB. Vì vậy khóa có trạng thái và lưu lại phản hồi.
+Unlike Java (acquires the lock in the same transaction as the data, [03](03-db-clinical-document.md) §2.7): AI4, AI6, AI8 call clinical/scheduling/LLM over the
+network and cannot be wrapped in one MongoDB transaction. Therefore the key is stateful and stores the response.
 
-| Trường | Ý nghĩa |
+| Field | Meaning |
 |---|---|
-| `_id` | `SHA-256(<subject>\|<scope>\|<key>)`; `scope` = tên thao tác (`summary`, `extraction-review`, `booking-confirm`) |
-| `hash` | SHA-256 của body (JSON sắp khóa) — không lưu body |
+| `_id` | `SHA-256(<subject>\|<scope>\|<key>)`; `scope` = operation name (`summary`, `extraction-review`, `booking-confirm`) |
+| `hash` | SHA-256 of the body (JSON with sorted keys) — the body is not stored |
 | `state` | `processing` → `done` |
-| `response` | `{status, body}` của lần xử lý đầu (chỉ có khi `done`) |
-| `createdAt` | **TTL** 24 giờ |
+| `response` | `{status, body}` from the first processing (only present when `done`) |
+| `createdAt` | **TTL** 24 hours |
 
-| Tình huống | Kết quả |
+| Situation | Result |
 |---|---|
-| Key mới | Ghi `processing`, xử lý; xong → `done` + lưu phản hồi; lỗi → **xóa bản ghi** để người dùng thử lại cùng key |
-| Cùng key, cùng body, `done` | Trả lại phản hồi đã lưu |
-| Cùng key, cùng body, đang `processing` | **409** `invalid-state-transition` |
-| Cùng key, khác body | **422** `idempotency-key-reused` |
+| New key | Write `processing`, process; on success → `done` + store the response; on error → **delete the record** so the user can retry with the same key |
+| Same key, same body, `done` | Return the stored response |
+| Same key, same body, `processing` | **409** `invalid-state-transition` |
+| Same key, different body | **422** `idempotency-key-reused` |
 
-Bảo mật (dữ liệu sức khỏe):
-- `response` của AI4 là bản tóm tắt hồ sơ (PHI). Collection được bảo vệ như `messages`: chỉ user DB của ai đọc/ghi, mã hóa at-rest, TTL 24 giờ, **không ghi log** nội dung.
-- **Kiểm quyền trước khi trả bản replay**: xác thực token, tài khoản chưa bị khóa, và quan hệ điều trị (Care) còn hiệu lực — y như request mới. Người bị thu hồi quyền trong 24 giờ không được lấy lại bản đã lưu.
-- AI8 gọi `$book`/`$cancel` kèm `Idempotency-Key` (bắt buộc ở scheduling), nên scheduling chặn trùng thêm một lớp.
+Security (health data):
+- `response` of AI4 is a record summary (PHI). The collection is protected like `messages`: only the ai DB user can read/write, encrypted at rest, TTL 24 hours, **do not log** the content.
+- **Check permissions before returning a replay**: validate the token, that the account is not locked, and that the care relationship is still valid — exactly like a new request. A person whose permission was revoked within 24 hours cannot retrieve the stored copy.
+- AI8 calls `$book`/`$cancel` with an `Idempotency-Key` (required by scheduling), so scheduling blocks duplicates with one more layer.
 
-Hiện thực: `libs/python/shp_platform/idempotency.py` (`COLLECTION = "idempotency"`, index TTL 24 giờ tạo bởi `ensure_indexes`), dùng ở `api_summary.py` (AI4) và `api_booking.py` (AI8).
-Thư viện Python chưa có bản stateless giống `MongoIdempotency` của Java; service Python nào cần thì dùng bản có trạng thái này.
+Implementation: `libs/python/shp_platform/idempotency.py` (`COLLECTION = "idempotency"`, TTL index of 24 hours created by `ensure_indexes`), used in `api_summary.py` (AI4) and `api_booking.py` (AI8).
+The Python library does not yet have a stateless version like Java's `MongoIdempotency`; any Python service that needs one uses this stateful version.

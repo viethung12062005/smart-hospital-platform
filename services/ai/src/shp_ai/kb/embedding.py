@@ -1,7 +1,7 @@
-"""Embedding (AI-04; ADR-0013): bge-m3 1024 chiều chạy local qua Ollama, văn bản không rời cụm.
+"""Embedding (AI-04; ADR-0013): bge-m3 1024 dimensions running locally via Ollama, text never leaves the cluster.
 
-`HashingEmbedder` là bản giả xác định (băm từ vào 1024 chiều) cho test và dev không có Ollama; đủ để truy xuất theo
-từ khóa hoạt động, không dùng ở môi trường thật.
+`HashingEmbedder` is a deterministic fake (hashes terms into 1024 dimensions) for tests and dev without Ollama; enough
+for keyword retrieval to work, never used in real environments.
 """
 
 import hashlib
@@ -44,7 +44,7 @@ class OllamaEmbedder:
                 raise EmbeddingError(f"ollama {res.status_code}")
             vectors = res.json().get("embeddings")
             if not isinstance(vectors, list) or any(len(v) != self.dimensions for v in vectors):
-                raise EmbeddingError("số chiều embedding sai")
+                raise EmbeddingError("wrong embedding dimensions")
             out.extend([float(x) for x in v] for v in vectors)
         return out
 

@@ -1,30 +1,30 @@
-# Runbook: cài đặt GitHub cho 4 repo (GOV-01..GOV-06, IAC-03)
+# Runbook: GitHub setup for 4 repos (GOV-01..GOV-06, IAC-03)
 
-> Người thực hiện: SA. Làm một lần ở W1, sau đó mọi thay đổi qua PR. Quyết định gốc: [ADR-0009](../03-architecture/adr/0009-cicd-ephemeral-environments.md), [ADR-0010](../03-architecture/adr/0010-repository-strategy.md).
-> **Không đặt secret** (client secret, key, token) vào repo, variable hay workflow: đăng nhập Azure bằng OIDC.
+> Performed by: SA. Done once in W1, after that every change goes through a PR. Foundational decisions: [ADR-0009](../03-architecture/adr/0009-cicd-ephemeral-environments.md), [ADR-0010](../03-architecture/adr/0010-repository-strategy.md).
+> **Do not put secrets** (client secret, key, token) in the repo, variables or workflows: Azure login uses OIDC.
 
-## 1. Tạo repo (GOV-01)
+## 1. Create repos (GOV-01)
 
-| Repo | Visibility | Nội dung ban đầu |
+| Repo | Visibility | Initial content |
 |---|---|---|
-| `smart-hospital-platform` (đã có dưới tên `smart-hospital-platform`; đổi tên nếu muốn, GitHub tự chuyển hướng) | private | tài liệu, `tools/plan/` hiện có |
+| `smart-hospital-platform` (already exists under the name `smart-hospital-platform`; rename if desired, GitHub redirects automatically) | private | documents, existing `tools/plan/` |
 | `shp-platform-templates` | private | `.github/workflows/` (reusable), `charts/microservice/`, `CHANGELOG.md` |
 | `shp-infra` | private | `bootstrap/`, `modules/`, `envs/{uat,prod}/`, `.github/workflows/` |
 | `shp-gitops` | private | `bootstrap/`, `platform/`, `policies/`, `envs/{uat,prod}/`, `services/` |
 
-Nhánh mặc định `main`. Bật cho cả 4 repo: **Secret scanning + Push protection**, **Dependabot alerts**, **Private vulnerability reporting**.
+Default branch `main`. Enable for all 4 repos: **Secret scanning + Push protection**, **Dependabot alerts**, **Private vulnerability reporting**.
 
-## 2. Ruleset bảo vệ `main` (GOV-02)
+## 2. Ruleset protecting `main` (GOV-02)
 
-| Quy tắc | Giá trị |
+| Rule | Value |
 |---|---|
-| Bắt buộc Pull Request | có; tối thiểu **1 review**; hủy approval khi có commit mới; yêu cầu review của Code Owners |
-| Status check bắt buộc | app repo: chỉ `pr-gate` (workflow `pr-gate.yml` tổng hợp kết quả `pr-checks`, `contracts`, `libs-java`, mọi `svc-*`; các workflow này lọc theo đường dẫn nên không bắt buộc riêng được); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
-| Cấm force-push và xóa nhánh `main` | có |
-| Yêu cầu lịch sử tuyến tính | có (squash merge) |
-| Bypass | chỉ **GitHub App bot GitOps** trên `shp-gitops` cho đường dẫn `envs/uat/**` |
+| Require Pull Request | yes; minimum **1 review**; dismiss approval when new commits are pushed; require review from Code Owners |
+| Required status checks | app repo: only `pr-gate` (workflow `pr-gate.yml` aggregates the results of `pr-checks`, `contracts`, `libs-java`, every `svc-*`; these workflows are path-filtered so they cannot be required individually); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
+| Block force-push and deletion of branch `main` | yes |
+| Require linear history | yes (squash merge) |
+| Bypass | only the **GitOps bot GitHub App** on `shp-gitops` for path `envs/uat/**` |
 
-## 3. CODEOWNERS và template (GOV-03)
+## 3. CODEOWNERS and template (GOV-03)
 
 ```
 # smart-hospital-platform
@@ -35,98 +35,98 @@ Nhánh mặc định `main`. Bật cho cả 4 repo: **Secret scanning + Push pro
 /services/audit/        @D2
 /services/ai/ /services/ml/ @D3
 /libs/ /contracts/ /.github/ /docs/03-architecture/ @SA
-# shp-infra, shp-gitops, shp-platform-templates: toàn bộ @SA ; shp-gitops/envs/prod/ cần @SA (Architect)
+# shp-infra, shp-gitops, shp-platform-templates: all @SA ; shp-gitops/envs/prod/ requires @SA (Architect)
 ```
-(`@D1`, `@D2`, `@D3`, `@SA` thay bằng tài khoản GitHub thật của từng người; không đặt email hay thông tin cá nhân vào file.)
+(`@D1`, `@D2`, `@D3`, `@SA` are replaced with each person's real GitHub account; do not put emails or personal information in the file.)
 
-PR template (`.github/pull_request_template.md`): task ID, story, ảnh hưởng hợp đồng API/event (có/không), checklist Definition of Done (test, lint, không secret, tài liệu).
+PR template (`.github/pull_request_template.md`): task ID, story, API/event contract impact (yes/no), Definition of Done checklist (tests, lint, no secrets, docs).
 
 ## 4. GitHub Environments (GOV-04)
 
 | Repo | Environment | Reviewer | Wait timer |
 |---|---|---|---|
-| app / gitops | `deploy-uat` | SA | — |
-| app / gitops | `deploy-prod` | SA (Architect) + SA (DevOps) | 10 phút |
-| shp-infra | `infra-uat`, `infra-prod` | SA | — |
-| shp-infra | `infra-uat-destroy`, `infra-prod-destroy` | SA | 5 phút |
+| app / gitops | `deploy-uat` | SA | - |
+| app / gitops | `deploy-prod` | SA (Architect) + SA (DevOps) | 10 minutes |
+| shp-infra | `infra-uat`, `infra-prod` | SA | - |
+| shp-infra | `infra-uat-destroy`, `infra-prod-destroy` | SA | 5 minutes |
 
-> Khi nhóm chỉ có một người giữ vai trò SA, bật "Prevent self-review" sẽ làm environment không thể duyệt: chấp nhận rủi ro này một cách có chủ đích, hoặc thêm một dev làm người duyệt thứ hai cho `prod` (khuyến nghị cho `prod`).
+> When the team has only one person holding the SA role, enabling "Prevent self-review" makes the environment impossible to approve: either accept this risk deliberately, or add a developer as a second reviewer for `prod` (recommended for `prod`).
 
 ## 5. Actions (GOV-06, CIT-09)
 
-- `shp-platform-templates` → Settings → Actions → Access: **Accessible from repositories owned by the user** để repo khác gọi reusable workflow và kéo chart.
-- Mọi repo: Actions permissions = chỉ cho phép action từ GitHub và danh sách đã ghim; **ghim theo commit SHA**; `GITHUB_TOKEN` mặc định chỉ đọc, workflow khai báo quyền tối thiểu.
-- Dependabot cho: github-actions, maven, pip, docker, terraform (app repo: `.github/dependabot.yml`) (GOV-06).
+- `shp-platform-templates` -> Settings -> Actions -> Access: **Accessible from repositories owned by the user** so that other repos can call the reusable workflow and pull the chart.
+- Every repo: Actions permissions = allow only actions from GitHub and the pinned list; **pin by commit SHA**; `GITHUB_TOKEN` read-only by default, workflows declare least privilege.
+- Dependabot for: github-actions, maven, pip, docker, terraform (app repo: `.github/dependabot.yml`) (GOV-06).
 
-## 6. Đăng nhập Azure bằng OIDC (IAC-03)
+## 6. Azure login via OIDC (IAC-03)
 
-Không lưu client secret. Mỗi identity (User-Assigned Managed Identity) có federated credential theo `subject`:
+Do not store a client secret. Each identity (User-Assigned Managed Identity) has a federated credential by `subject`:
 
-| Identity | Quyền Azure | Federated credential `subject` |
+| Identity | Azure permissions | Federated credential `subject` |
 |---|---|---|
-| `id-shp-ci-plan` | Reader + đọc state | `repo:<owner>/shp-infra:pull_request` |
-| `id-shp-infra-<env>` | Contributor trên resource group của môi trường + User Access Administrator có điều kiện | `repo:<owner>/shp-infra:environment:infra-<env>` (và `infra-<env>-destroy`) |
+| `id-shp-ci-plan` | Reader + state read | `repo:<owner>/shp-infra:pull_request` |
+| `id-shp-infra-<env>` | Contributor on the environment's resource group + conditional User Access Administrator | `repo:<owner>/shp-infra:environment:infra-<env>` (and `infra-<env>-destroy`) |
 | `id-shp-acr-push` | AcrPush | `repo:<owner>/smart-hospital-platform:ref:refs/heads/main` |
-| `id-shp-gitops-bot` | (không có quyền Azure) | — |
+| `id-shp-gitops-bot` | (no Azure permissions) | - |
 
-Variables (không phải secret) ở từng repo: `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `ACR_NAME`, `AZURE_CLIENT_ID_<identity>`.
+Variables (not secrets) in each repo: `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `ACR_NAME`, `AZURE_CLIENT_ID_<identity>`.
 
-## 7. Bot GitOps (GOV-05)
+## 7. GitOps bot (GOV-05)
 
-GitHub App riêng: quyền **Contents: read/write** và **Pull requests: read/write** chỉ trên `shp-gitops`; không quyền Actions, Secrets, Administration.
-App ID và private key lưu ở **Environment secret** của app repo (một nơi duy nhất), CI dùng để mở PR hoặc commit digest image vào `shp-gitops`.
-Xoay key mỗi 90 ngày (nhắc trong `cost-guard`/issue định kỳ).
+Separate GitHub App: **Contents: read/write** and **Pull requests: read/write** permissions on `shp-gitops` only; no Actions, Secrets, Administration permissions.
+App ID and private key are stored in the **Environment secret** of the app repo (a single place), CI uses them to open PRs or commit image digests into `shp-gitops`.
+Rotate the key every 90 days (reminder in `cost-guard`/periodic issue).
 
-### 7.1. Các bước tạo App (làm trên giao diện, không có API/CLI)
+### 7.1. Steps to create the App (done in the UI, no API/CLI)
 
-1. GitHub → **Settings → Developer settings → GitHub Apps → New GitHub App**.
-2. Name `shp-gitops-bot`, Homepage là URL repo bất kỳ; **bỏ tick Webhook Active** (không cần webhook).
-3. Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**; **Metadata: Read-only** (tự bật). Không cấp quyền Actions, Secrets, Administration.
+1. GitHub -> **Settings -> Developer settings -> GitHub Apps -> New GitHub App**.
+2. Name `shp-gitops-bot`, Homepage is any repo URL; **uncheck Webhook Active** (no webhook needed).
+3. Repository permissions: **Contents: Read and write**, **Pull requests: Read and write**; **Metadata: Read-only** (enabled automatically). Do not grant Actions, Secrets, Administration permissions.
 4. "Where can this GitHub App be installed": **Only on this account**.
-5. **Create GitHub App** → ghi lại **App ID** → **Generate a private key** (tải `.pem`, chỉ tải được một lần).
-6. **Install App** → chọn **Only select repositories → `shp-gitops`**.
-7. Lưu thông tin ở **một nơi duy nhất** là Environment `deploy-uat`/`deploy-prod` của repo ứng dụng và templates:
+5. **Create GitHub App** -> note the **App ID** -> **Generate a private key** (download the `.pem`, it can only be downloaded once).
+6. **Install App** -> select **Only select repositories -> `shp-gitops`**.
+7. Store the information in **a single place**, the `deploy-uat`/`deploy-prod` Environment of the application and templates repos:
    - variable `GITOPS_APP_ID` = App ID;
-   - secret `gitops-app-private-key` = toàn bộ nội dung `.pem` (kể cả dòng BEGIN/END).
-8. Không đặt App ID/private key vào repo, workflow hay biến thường.
+   - secret `gitops-app-private-key` = the entire contents of the `.pem` (including the BEGIN/END lines).
+8. Do not put the App ID/private key in the repo, workflows or ordinary variables.
 
-### 7.2. Kiểm tra
+### 7.2. Verification
 
-- `gitops-promote.yml` gọi `actions/create-github-app-token` với `app-id` và secret ở trên; log bước này phải in ra token ngắn hạn (không in private key).
-- Chạy workflow ở chế độ `pr`: phải mở được PR trong `shp-gitops` với tác giả là bot (`shp-gitops-bot[bot]`), không phải tài khoản cá nhân.
-- Kiểm quyền tối thiểu: bot **không** mở được PR ở repo khác và **không** đọc được secret/Actions.
+- `gitops-promote.yml` calls `actions/create-github-app-token` with the `app-id` and the secret above; the log of this step must print only the short-lived token (never the private key).
+- Run the workflow in `pr` mode: it must be able to open a PR in `shp-gitops` with the bot as the author (`shp-gitops-bot[bot]`), not a personal account.
+- Check least privilege: the bot **cannot** open PRs in other repos and **cannot** read secrets/Actions.
 
-### 7.3. Xoay khóa
+### 7.3. Key rotation
 
-Tạo private key mới trên trang App → cập nhật secret → chạy lại một workflow `gitops-promote` → xóa key cũ trên trang App. Ghi ngày xoay gần nhất vào issue định kỳ của `cost-guard`.
+Create a new private key on the App page -> update the secret -> re-run a `gitops-promote` workflow -> delete the old key on the App page. Record the rotation date in the `cost-guard` periodic issue.
 
-## 8. Kiểm tra sau khi cài (đưa vào ENV-05)
+## 8. Post-setup checks (feed into ENV-05)
 
-- [ ] Push trực tiếp lên `main` bị chặn ở cả 4 repo
-- [ ] PR thiếu status check hoặc thiếu review không merge được
-- [ ] Workflow `env-provision`/`env-destroy` do người khác chủ repo bấm thì dừng ngay ở bước kiểm tra người chạy
-- [ ] Reusable workflow từ `shp-platform-templates` gọi được từ app repo
-- [ ] Image không ký bị cluster chặn (GOP-07)
+- [ ] Direct push to `main` is blocked in all 4 repos
+- [ ] PRs missing a status check or a review cannot be merged
+- [ ] The `env-provision`/`env-destroy` workflows stop immediately at the actor check when triggered by someone other than the repo owner
+- [ ] The reusable workflow from `shp-platform-templates` can be called from the app repo
+- [ ] Unsigned images are rejected by the cluster (GOP-07)
 
-## 9. Trạng thái thực tế và giới hạn gói GitHub (cập nhật 2026-10-28)
+## 9. Actual status and GitHub plan limitations (updated 2026-10-28)
 
-Đã áp dụng cho cả 4 repo: ruleset `protect-main` (mục 2), squash-only, xóa nhánh sau merge, Dependabot alerts, Environments (mục 4, chưa có reviewer).
+Applied to all 4 repos: ruleset `protect-main` (section 2), squash-only, delete branch after merge, Dependabot alerts, Environments (section 4, no reviewers yet).
 
-| Mục trong runbook | Thực tế | Cách xử lý |
+| Runbook item | Actual | Workaround |
 |---|---|---|
-| Secret scanning + push protection | Không có ở repo private gói thường | `gitleaks` trong `pr-checks` thay thế; bật lại khi nâng gói |
-| Required reviewers / wait timer cho Environment | Không hỗ trợ ở repo private gói thường | Cổng duyệt = review PR (CODEOWNERS); `envs/prod/` do SA duyệt. Workflow hạ tầng (`env-provision`, `env-destroy`) tự kiểm tra `github.triggering_actor` là chủ repo |
-| Đẩy image khi chưa có Azure | `svc-*` trên `main` chỉ push khi biến `ACR_NAME` có giá trị | Chưa có biến: job `not-pushed` ghi chú vào Summary, `promote-uat` bỏ qua, `main` xanh |
-| Bot GitOps commit thẳng `envs/uat/**` | Ruleset `protect-main` của `shp-gitops` chưa có App trong danh sách bypass | Khi tạo App GitOps: thêm App vào bypass của ruleset `shp-gitops`, nếu không `promote-uat` (mode `commit`) bị chặn |
-| `dependency-review`, CodeQL | Cần GitHub Advanced Security | Bỏ qua ở repo private (templates PR #2) |
-| GitHub Project (GOV-07) | Token `gh` thiếu scope `project` | `gh auth refresh -s project,read:project` rồi import `docs/05-plan/backlog.csv` |
-| Bot GitOps (GOV-05) | Chưa tạo GitHub App (cần thao tác trên web) | Xem mục 7 |
+| Secret scanning + push protection | Not available on private repos on the standard plan | `gitleaks` in `pr-checks` replaces it; re-enable when upgrading the plan |
+| Required reviewers / wait timer for Environments | Not supported on private repos on the standard plan | Approval gate = PR review (CODEOWNERS); `envs/prod/` approved by SA. The infrastructure workflows (`env-provision`, `env-destroy`) check that `github.triggering_actor` is the repo owner |
+| Push images before Azure exists | `svc-*` on `main` only push when the `ACR_NAME` variable has a value | No variable yet: the `not-pushed` job writes a note to the Summary, `promote-uat` is skipped, `main` stays green |
+| GitOps bot committing directly to `envs/uat/**` | The `protect-main` ruleset of `shp-gitops` does not yet list the App in its bypass list | When creating the GitOps App: add the App to the bypass list of the `shp-gitops` ruleset, otherwise `promote-uat` (mode `commit`) is blocked |
+| `dependency-review`, CodeQL | Require GitHub Advanced Security | Skipped on private repos (templates PR #2) |
+| GitHub Project (GOV-07) | The `gh` token lacks the `project` scope | `gh auth refresh -s project,read:project` then import `docs/05-plan/backlog.csv` |
+| GitOps bot (GOV-05) | GitHub App not yet created (requires web UI actions) | See section 7 |
 
-### Cho `shp-gitops` đọc được chart ở repo private (deploy key chỉ-đọc)
+### Letting `shp-gitops` read the chart in the private repo (read-only deploy key)
 ```bash
 ssh-keygen -t ed25519 -N "" -C shp-gitops-ci -f ./k
 gh repo deploy-key add ./k.pub -R <owner>/shp-platform-templates -t "gitops-ci (read-only)"
 gh secret set TEMPLATES_DEPLOY_KEY -R <owner>/shp-gitops < ./k
-shred -u ./k ./k.pub   # xóa khóa khỏi máy
+shred -u ./k ./k.pub   # remove the key from the machine
 ```
-Workflow `validate` của `shp-gitops` đã dùng secret này (`ssh-key`).
+The `validate` workflow of `shp-gitops` already uses this secret (`ssh-key`).

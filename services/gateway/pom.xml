@@ -11,7 +11,7 @@
   <artifactId>gateway</artifactId>
   <name>gateway — API gateway (Spring Cloud Gateway)</name>
 
-  <!-- Phiên bản Spring Cloud do pom gốc quản lý (spring-cloud.version), dùng chung với shp-messaging -->
+  <!-- Spring Cloud version is managed by the root pom (spring-cloud.version), shared with shp-messaging -->
 
   <dependencies>
     <dependency>
@@ -23,7 +23,7 @@
       <artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
     </dependency>
     <dependency>
-      <!-- Bộ đếm rate limit theo sub (07 §6, ADR-0014) -->
+      <!-- Rate limit counters per sub (07 §6, ADR-0014) -->
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
     </dependency>

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Ghi chuỗi kết nối cho service chạy NGOÀI cụm (IDE, mvn spring-boot:run, uvicorn) vào dev/.local/connection.env
+# Write connection strings for services running OUTSIDE the cluster (IDE, mvn spring-boot:run, uvicorn) to dev/.local/connection.env
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 ensure_credentials
 out="$LOCAL_DIR/connection.env"
 ( umask 077
 cat > "$out" <<EOT
-# Sinh tự động bởi dev/scripts/env.sh. KHÔNG commit. Dùng: set -a; . dev/.local/connection.env; set +a
-# --- Service Java (Spring Boot đọc trực tiếp các biến SPRING_*) ---
+# Generated automatically by dev/scripts/env.sh. Do NOT commit. Usage: set -a; . dev/.local/connection.env; set +a
+# --- Java services (Spring Boot reads the SPRING_* variables directly) ---
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:15432/scheduling
 SPRING_DATASOURCE_USERNAME=shp
 SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
@@ -18,10 +18,10 @@ SPRING_RABBITMQ_HOST=localhost
 SPRING_RABBITMQ_PORT=35672
 SPRING_RABBITMQ_USERNAME=shp
 SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
-# clinical chạy trong cụm: kubectl --context kind-shp-local -n shp-apps port-forward svc/clinical 18081:80
+# clinical running in the cluster: kubectl --context kind-shp-local -n shp-apps port-forward svc/clinical 18081:80
 SHP_CLINICAL_URL=http://localhost:18081
 SHP_REQUIRE_MFA_FOR_STAFF=false
-# --- Dùng chung / Python ---
+# --- Shared / Python ---
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 MONGODB_URI=mongodb://localhost:27117/?directConnection=true
 RABBITMQ_URL=amqp://shp:${RABBITMQ_PASSWORD}@localhost:35672/
@@ -39,7 +39,7 @@ OLLAMA_URL=http://localhost:21434
 MLFLOW_TRACKING_URI=http://localhost:15000
 GRAFANA_URL=http://localhost:13000
 GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
-# Trong cụm: OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.shp-deps:4318
+# In the cluster: OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.shp-deps:4318
 EOT
 )
-log "Đã ghi $out"
+log "Wrote $out"
