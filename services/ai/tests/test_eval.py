@@ -103,3 +103,19 @@ def test_usage_report_says_it_cannot_judge_without_rag_calls(make_deps: Any) -> 
     today = datetime.now(UTC).date()
     md = render(deps.db, today, today, daily_limit=1000)
     assert "NFR-C2: no rag-answer call in the period — cannot judge the cost target." in md
+
+
+def test_question_set_json_file_matches_the_code_and_the_schema() -> None:
+    """AI-14: the criterion names a JSON question file; keep the committed file and the code identical."""
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).parent / "data" / "rag-questions.v1.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["version"] == 1
+    assert [q.__dict__ for q in rag.questions()] == payload["questions"], (
+        "regenerate with: python -m shp_ai.eval.rag --dump-questions tests/data/rag-questions.v1.json"
+    )
+    validator = Draft202012Validator(rag.QUESTION_SCHEMA)
+    for q in payload["questions"]:
+        validator.validate(q)

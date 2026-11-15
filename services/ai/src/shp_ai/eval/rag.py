@@ -179,12 +179,27 @@ def report_markdown(results: dict[str, dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def dump_questions(path: str) -> None:
+    """Write the question set as JSON (AI-14 names a JSON file; the code keeps it in sync via a test)."""
+    import json
+    from pathlib import Path
+
+    payload = {"version": 1, "questions": [q.__dict__ for q in questions()]}
+    Path(path).write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--out", type=Path, help="report directory (not needed with --dump-questions)")
+    ap.add_argument("--dump-questions", help="write the question set as JSON and exit")
     ap.add_argument("--live", action="store_true", help="evaluate each real model in the rag-answer chain (AI-18)")
     ap.add_argument("--ollama", default="", help="Ollama URL to use bge-m3 instead of the hashing embedder")
     a = ap.parse_args()
+    if a.dump_questions:
+        dump_questions(a.dump_questions)
+        return
+    if a.out is None:
+        ap.error("--out is required unless --dump-questions is given")
     embedder: Embedder = HashingEmbedder()
     if a.ollama:
         from shp_ai.kb.embedding import OllamaEmbedder
