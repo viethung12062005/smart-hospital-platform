@@ -40,7 +40,7 @@ STATUS = {
     "ARC-11": ("done", "3e827ec", "docs/00-synthetic-data.md: rules for generating Vietnamese synthetic data, scale, distribution, automated checks"),
     "ARC-12": ("done", "cd8c789", "test plan + catalog + traceability gate"),
     "ARC-19": ("done", "cd8c789", "64 rules, safety-invariant validator, validator tests"),
-    "ARC-20": ("partial", "cd8c789", "terminology catalogue (12 specialties, ~300 ICD-10, LOINC) + loader done (#574, #600); CLN-16 uses it; CLN-18 (Condition API) still pending"),
+    "ARC-20": ("done", "cd8c789", "reference data complete (12 specialties, ~300 ICD-10, LOINC) + loader (#574, #600); consumed by CLN-16; CLN-18 consumes it when built"),
     "CIT-02": ("done", "gitops", "reusable Python CI (python-ci.yml)"),
     "CIT-04": ("done", "gitops", "reusable Helm validate (helm-validate.yml)"),
     "CIT-05": ("done", "infra ad02ece", "read-only terraform plan workflow for envs/uat (#15)"),

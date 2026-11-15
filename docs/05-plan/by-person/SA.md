@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **137**, partially done: **13** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -58,7 +58,7 @@ Total: **221 tasks, 767 hours**. Done: **137**, partially done: **13** (☑ done
 |---|---|---|---|---|---|---|
 | ☑ | ARC-06 | Skeleton API contracts (OpenAPI) for 6 services **[done, commit bccf3fc: every clinical operation written out; malformed paths rejected (#556)]** | openapi.yaml per service with endpoints and OperationOutcome error codes; lint passes | 6 | ARC-05 | ENABLER |
 | ☑ | ARC-07 | Event contracts (JSON Schema) **[done, commit cd8c789: 11 event schemas + examples + envelope; validator matches catalog E1–E11]** | Schemas for AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; versioned | 4 | ARC-05 | ENABLER |
-| ◐ | ARC-20 | Reference data: ICD-10 (~300 codes), LOINC for vital signs/lab tests, CodeSystem for specialties and cancellation reasons **[partially done, commit cd8c789: terminology catalogue (12 specialties, ~300 ICD-10, LOINC) + loader done (#574, #600); CLN-16 uses it; CLN-18 (Condition API) still pending]** | JSON files in contracts/terminology, loader script, used by CLN-16/CLN-18 | 4 | ARC-03 | ENABLER |
+| ☑ | ARC-20 | Reference data: ICD-10 (~300 codes), LOINC for vital signs/lab tests, CodeSystem for specialties and cancellation reasons **[done, commit cd8c789: reference data complete (12 specialties, ~300 ICD-10, LOINC) + loader (#574, #600); consumed by CLN-16; CLN-18 consumes it when built]** | JSON files in contracts/terminology, loader script, used by CLN-16/CLN-18 | 4 | ARC-03 | ENABLER |
 | ☑ | CIT-05 | Reusable workflow Terraform checks + plan **[done, commit infra ad02ece: read-only terraform plan workflow for envs/uat (#15)]** | fmt, validate, tflint, Trivy config, plan + summary in the job summary; plan via read-only OIDC | 4 | IAC-03 | US-070 |
 | ☐ | CIT-06 | Reusable workflow GitOps update/promote | Update digest in shp-gitops; uat commits after approval; prod opens a PR after approval | 4 | GOV-05 | US-070 |
 | ☑ | DAT-02 | Generator for work schedules, appointments, encounters, vital signs, diagnoses, sample documents **[done, commit 54f37b1: synthetic clinical data generator (#562)]** | Consistent data across services (IDs match) | 4 | DAT-01 | ENABLER |
