@@ -126,7 +126,16 @@ automation:
     status: partial
     refs:
       - "tools/contracts/test_validators.py::def test_"
-    gap: "OpenAPI/event schema contract tests exist; FHIR resources not yet validated with the FHIR validator."
+      - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::contractBookedExampleCreatesTheReminderMilestones
+      - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::contractNoShowScoredExampleAddsTheHighRiskReminder
+      - services/ml/tests/test_event_contracts.py::test_every_consumed_type_has_a_producer_example
+      - services/ml/tests/test_event_contracts.py::test_consumer_accepts_every_producer_example
+      - services/ml/tests/test_event_contracts.py::test_booked_then_cancelled_example_marks_the_fact_cancelled
+      - services/ml/tests/test_event_contracts.py::test_status_example_marks_the_fact_fulfilled
+      - services/ml/tests/test_event_contracts.py::test_rescheduled_example_creates_the_new_appointment_fact
+      - services/ml/tests/test_event_contracts.py::test_patient_merged_example_moves_the_stats
+      - services/ml/tests/test_event_contracts.py::test_consumer_ignores_forward_compatible_extra_fields
+    gap: "OpenAPI schemas validate and the notification/ml consumers read the producer examples; FHIR resources are not yet validated with the FHIR validator, and the clinical, scheduling and ai consumers are still scaffolds with no consumer contract test."
   TC-NFR-SEC9:
     status: automated
     refs:

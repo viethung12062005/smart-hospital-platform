@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.data.domain.Sort.Direction.ASC;
 
 import com.mongodb.client.MongoClients;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -17,6 +20,7 @@ import org.shp.data.mongo.MongoInbox;
 import org.shp.data.mongo.MongoMessaging;
 import org.shp.events.CloudEvent;
 import org.shp.events.CloudEvents;
+import org.shp.events.EventSchemas;
 import org.shp.events.Uuids;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -154,6 +158,64 @@ class ReminderServiceTest {
     // No shp.ml.no-show-scored.v1 event: ML is down.
 
     assertThat(remindersByKind()).containsKeys("t-24h", "t-2h").doesNotContainKey("t-6h-risk");
+  }
+
+  /**
+   * Producer/consumer contract test (13-events §5): the notification consumer reads the scheduling
+   * producer's E1 example, validated against the contract schema, and creates the same milestones
+   * as an event built in code.
+   */
+  @Test
+  void contractBookedExampleCreatesTheReminderMilestones() throws IOException {
+    reminders.onBooked(contractEvent("scheduling", "appointment-booked"));
+
+    Map<String, Document> saved = remindersByKind();
+    assertThat(saved).containsOnlyKeys("booking-confirmation", "t-24h", "t-2h");
+    assertThat(saved.get("t-24h").getString("patientId")).isEqualTo(PATIENT_ID);
+    assertThat(dueAt(saved.get("t-24h"))).isEqualTo(START.minus(Duration.ofHours(24)));
+  }
+
+  /**
+   * Producer/consumer contract test (13-events §5): the ML producer's E10 example adds the
+   * high-risk reminder. Together with the test above it proves both consumers of the booked
+   * appointment agree on the contract.
+   */
+  @Test
+  void contractNoShowScoredExampleAddsTheHighRiskReminder() throws IOException {
+    reminders.onBooked(contractEvent("scheduling", "appointment-booked"));
+    reminders.onNoShowScored(contractEvent("ml", "no-show-scored"));
+
+    Map<String, Document> saved = remindersByKind();
+    assertThat(saved).containsOnlyKeys("booking-confirmation", "t-24h", "t-2h", "t-6h-risk");
+    assertThat(dueAt(saved.get("t-6h-risk"))).isEqualTo(START.minus(Duration.ofHours(6)));
+  }
+
+  /**
+   * Wrap the producer's contract example as the bus delivers it: the envelope is built by the
+   * shared library and the {@code data} is checked against the embedded contract schema.
+   */
+  private static CloudEvent contractEvent(String context, String event) throws IOException {
+    Path root = Path.of("").toAbsolutePath();
+    while (root != null && !Files.isDirectory(root.resolve("contracts/events"))) {
+      root = root.getParent();
+    }
+    if (root == null) {
+      throw new IllegalStateException("Could not find the repository root");
+    }
+    Path file =
+        root.resolve("contracts/events").resolve(context).resolve(event + ".v1.example.json");
+    var data = CloudEvents.JSON.readTree(Files.readString(file));
+    String type = "shp." + context + "." + event + ".v1";
+    CloudEvent evt =
+        CloudEvents.create(
+            context,
+            type,
+            "Appointment/" + data.get("appointmentId").asString(),
+            data,
+            CLOCK,
+            Uuids.v7(CLOCK));
+    assertThat(EventSchemas.validate(evt)).isEmpty();
+    return evt;
   }
 
   private static long count() {
