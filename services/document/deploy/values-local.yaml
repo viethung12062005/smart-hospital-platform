@@ -5,3 +5,8 @@ image:
 env:
   OTEL_SERVICE_NAME: document
   SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true
+  # Blob container names (05-storage-audit-blob §2). The connection string itself comes from
+  # dev/chart/app-values-local.yaml (AZURE_STORAGE_CONNECTION_STRING, local Azurite).
+  SHP_BLOB_DOCUMENTS_CONTAINER: documents
+  SHP_BLOB_QUARANTINE_CONTAINER: quarantine
+  SHP_BLOB_KB_CONTAINER: kb
