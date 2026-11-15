@@ -92,15 +92,14 @@ class RateLimitFilter implements GlobalFilter, Ordered {
     Policy policy = policyFor(exchange.getRequest());
     return key(exchange, policy)
         .flatMap(k -> limiter.isAllowed(policy.id(), policy.id() + ":" + k))
-        .flatMap(
-            r -> {
-              if (r.isAllowed()) {
-                return chain.filter(exchange);
-              }
-              var res = exchange.getResponse();
-              res.getHeaders().set("Retry-After", Long.toString(policy.retryAfterSeconds()));
-              return GatewaySecurity.problem(res, HttpStatus.TOO_MANY_REQUESTS, "rate-limited");
-            })
+        .flatMap(r -> {
+          if (r.isAllowed()) {
+            return chain.filter(exchange);
+          }
+          var res = exchange.getResponse();
+          res.getHeaders().set("Retry-After", Long.toString(policy.retryAfterSeconds()));
+          return GatewaySecurity.problem(res, HttpStatus.TOO_MANY_REQUESTS, "rate-limited");
+        })
         // Public paths (health, info) have no user: not limited.
         .switchIfEmpty(Mono.defer(() -> chain.filter(exchange)));
   }

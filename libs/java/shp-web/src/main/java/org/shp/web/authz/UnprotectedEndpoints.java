@@ -15,12 +15,11 @@ public final class UnprotectedEndpoints {
   public static List<String> find(ApplicationContext ctx) {
     return ctx.getBeansOfType(RequestMappingHandlerMapping.class).values().stream()
         .flatMap(m -> m.getHandlerMethods().entrySet().stream())
-        .filter(
-            e ->
-                !e.getValue().hasMethodAnnotation(RequireShpAuthz.class)
-                    && !e.getValue().hasMethodAnnotation(ShpPublicEndpoint.class)
-                    && !e.getValue().getBeanType().isAnnotationPresent(ShpPublicEndpoint.class)
-                    && !e.getValue().getBeanType().getName().startsWith("org.springframework."))
+        .filter(e ->
+            !e.getValue().hasMethodAnnotation(RequireShpAuthz.class)
+                && !e.getValue().hasMethodAnnotation(ShpPublicEndpoint.class)
+                && !e.getValue().getBeanType().isAnnotationPresent(ShpPublicEndpoint.class)
+                && !e.getValue().getBeanType().getName().startsWith("org.springframework."))
         .flatMap(e -> e.getKey().getPatternValues().stream())
         .sorted()
         .toList();

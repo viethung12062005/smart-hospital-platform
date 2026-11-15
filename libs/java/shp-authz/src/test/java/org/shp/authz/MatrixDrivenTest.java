@@ -54,15 +54,14 @@ class MatrixDrivenTest {
     MATRIX.rules().stream()
         .map(r -> r.resource() + "|" + r.action())
         .distinct()
-        .forEach(
-            ra -> {
-              String[] p = ra.split("\\|");
-              for (String role : ROLES) {
-                if (!covered.contains(ra + "|" + role)) {
-                  out.add(Arguments.of(p[0], p[1], role));
-                }
-              }
-            });
+        .forEach(ra -> {
+          String[] p = ra.split("\\|");
+          for (String role : ROLES) {
+            if (!covered.contains(ra + "|" + role)) {
+              out.add(Arguments.of(p[0], p[1], role));
+            }
+          }
+        });
     return out.stream();
   }
 
@@ -112,31 +111,29 @@ class MatrixDrivenTest {
   void adminAndDpoNeverReachClinicalResources() {
     MATRIX
         .clinicalByResource()
-        .forEach(
-            (resource, clinical) -> {
-              if (!clinical) {
-                return;
-              }
-              MATRIX.rules().stream()
-                  .filter(r -> r.resource().equals(resource))
-                  .map(AuthzRule::action)
-                  .distinct()
-                  .forEach(
-                      action -> {
-                        for (String role : List.of("admin", "dpo")) {
-                          assertThat(
-                                  ENGINE
-                                      .decide(
-                                          principal(role),
-                                          resource,
-                                          action,
-                                          ctx(Set.copyOf(ALL_PREDICATES), false))
-                                      .allowed())
-                              .as("%s touches %s.%s", role, resource, action)
-                              .isFalse();
-                        }
-                      });
-            });
+        .forEach((resource, clinical) -> {
+          if (!clinical) {
+            return;
+          }
+          MATRIX.rules().stream()
+              .filter(r -> r.resource().equals(resource))
+              .map(AuthzRule::action)
+              .distinct()
+              .forEach(action -> {
+                for (String role : List.of("admin", "dpo")) {
+                  assertThat(
+                          ENGINE
+                              .decide(
+                                  principal(role),
+                                  resource,
+                                  action,
+                                  ctx(Set.copyOf(ALL_PREDICATES), false))
+                              .allowed())
+                      .as("%s touches %s.%s", role, resource, action)
+                      .isFalse();
+                }
+              });
+        });
   }
 
   @Test

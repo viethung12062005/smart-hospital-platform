@@ -72,15 +72,14 @@ class MongoInboxIdempotencyTest extends MongoTestBase {
   @Test
   void failingHandlerRollsEverythingBackSoRedeliveryIsProcessed() {
     var e = evt();
-    assertThatThrownBy(
-            () ->
-                inbox.handleOnce(
-                    "c",
-                    e,
-                    () -> {
-                      insertThing("half-done");
-                      throw new IllegalStateException("boom");
-                    }))
+    assertThatThrownBy(() ->
+            inbox.handleOnce(
+                "c",
+                e,
+                () -> {
+                  insertThing("half-done");
+                  throw new IllegalStateException("boom");
+                }))
         .isInstanceOf(IllegalStateException.class);
     assertThat(count("thing")).isZero();
     assertThat(count(MongoMessaging.INBOX)).isZero();

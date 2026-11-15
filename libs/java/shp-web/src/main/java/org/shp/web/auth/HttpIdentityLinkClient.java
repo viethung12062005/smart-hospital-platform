@@ -22,17 +22,16 @@ public final class HttpIdentityLinkClient implements IdentityLinkClient {
     Dto dto =
         http.get()
             .uri("/internal/v1/identity/{subject}", subject)
-            .exchange(
-                (req, res) -> {
-                  if (res.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND)) {
-                    return null;
-                  }
-                  if (!res.getStatusCode().is2xxSuccessful()) {
-                    throw new IllegalStateException(
-                        "identity service returned " + res.getStatusCode().value());
-                  }
-                  return res.bodyTo(Dto.class);
-                });
+            .exchange((req, res) -> {
+              if (res.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                return null;
+              }
+              if (!res.getStatusCode().is2xxSuccessful()) {
+                throw new IllegalStateException(
+                    "identity service returned " + res.getStatusCode().value());
+              }
+              return res.bodyTo(Dto.class);
+            });
     if (dto == null) {
       return Optional.empty();
     }
