@@ -21,6 +21,11 @@
       <artifactId>shp-web</artifactId>
     </dependency>
     <dependency>
+      <!-- Parsed search criteria (SHR-03) that the search executor compiles to a Mongo query. -->
+      <groupId>org.shp</groupId>
+      <artifactId>shp-fhir</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-mongodb</artifactId>
     </dependency>
