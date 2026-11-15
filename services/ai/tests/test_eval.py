@@ -55,7 +55,7 @@ def test_ingest_drops_injected_chunks(make_deps: Any) -> None:
 
 
 def test_usage_report_renders_from_usage_rows(make_deps: Any) -> None:
-    from datetime import date
+    from datetime import UTC, datetime
 
     from shp_ai import usage
     from shp_ai.report_usage import render
@@ -66,9 +66,40 @@ def test_usage_report_renders_from_usage_rows(make_deps: Any) -> None:
         answered=True, provider="deepseek", model="deepseek-chat", fallback_level=1, tokens_in=1000, tokens_out=50
     )
     usage.record(deps.db, "rag-answer", r, 0.0003, "doctor")
-    today = date.today()
+    # UTC, like usage.record: a local date would make this test flaky around midnight.
+    today = datetime.now(UTC).date()
     md = render(deps.db, today, today, daily_limit=1000)
     assert (
         "| rag-answer | 1 | 1000 | 50 | 0.0003 | 1.0 |" in md
         and f"Days hitting the 80% budget: {today.isoformat()}" in md
     )
+    # NFR-C2: the report must judge the average cost of a RAG request against 0.005 USD.
+    assert "NFR-C2: rag-answer average 0.0003 USD/request (limit 0.005) — PASS." in md
+
+
+def test_usage_report_fails_nfr_c2_when_the_average_cost_is_too_high(make_deps: Any) -> None:
+    from datetime import UTC, datetime
+
+    from shp_ai import usage
+    from shp_ai.report_usage import render
+    from shp_platform.llm.router import RouterResult
+
+    deps = make_deps()
+    r = RouterResult(
+        answered=True, provider="deepseek", model="deepseek-chat", fallback_level=0, tokens_in=4000, tokens_out=500
+    )
+    usage.record(deps.db, "rag-answer", r, 0.009, "doctor")
+    today = datetime.now(UTC).date()
+    md = render(deps.db, today, today, daily_limit=1_000_000)
+    assert "NFR-C2: rag-answer average 0.0090 USD/request (limit 0.005) — FAIL" in md
+
+
+def test_usage_report_says_it_cannot_judge_without_rag_calls(make_deps: Any) -> None:
+    from datetime import UTC, datetime
+
+    from shp_ai.report_usage import render
+
+    deps = make_deps()
+    today = datetime.now(UTC).date()
+    md = render(deps.db, today, today, daily_limit=1000)
+    assert "NFR-C2: no rag-answer call in the period — cannot judge the cost target." in md
