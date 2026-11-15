@@ -36,5 +36,8 @@ check("reminder + outbox transaction rolls back fully", ntf.reminders.countDocum
 check("TTL index cleans up reminders after 90 days", ntf.reminders.getIndexes().some(i => i.name === "ttl_reminder_90d" && i.expireAfterSeconds === 7776000));
 check("inbox TTL 14 days", ntf.inbox.getIndexes().some(i => i.expireAfterSeconds === 1209600));
 check("predictions exists", ml.getCollectionNames().includes("predictions"));
+check("score above 1 is rejected (ML-11)", rejects(() => ml.predictions.insertOne({ appointmentId: "a2", modelVersion: "v1", predictedAt: now, score: 1.5 })));
+check("score below 0 is rejected (ML-11)", rejects(() => ml.predictions.insertOne({ appointmentId: "a3", modelVersion: "v1", predictedAt: now, score: -0.1 })));
+check("a valid prediction is accepted", (() => { try { ml.predictions.insertOne({ appointmentId: "a4", modelVersion: "v1", predictedAt: now, score: 0.42 }); return true; } catch (e) { return false; } })());
 print(failures === 0 ? "ALL PASSED" : failures + " FAILED");
 if (failures) quit(1);
