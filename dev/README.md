@@ -89,12 +89,34 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | The whole cluster disconnects, `docker inspect` shows the node `OOMKilled` | The Docker VM ran out of RAM while bringing up `full` + 8 services at once: increase Docker Desktop RAM, then `docker start shp-local-control-plane` |
 | Pod `Not Ready` with `probe ... timed out after 1s` | The machine was overloaded during startup; wait a few minutes, the probe already sets `timeoutSeconds: 5` so it recovers on its own |
 | `helm ... timed out` | Slow image pulls: re-run the command that failed (all steps are re-runnable) |
+| `helm upgrade` fails with `another operation (install/upgrade/rollback) is in progress` | An earlier `make deploy` was interrupted. Wait for its timeout, then `make -C dev undeploy SVC=<svc>` and deploy again; `helm --kube-context kind-shp-local -n shp-apps history <svc>` lists the revisions |
+| `helm upgrade`/`helm template` fails while rendering (`nil pointer evaluating`, `function ... not defined`, `values don't meet the specifications of the schema`) | Render it by hand to see the raw error: `helm template <svc> dev/.local/templates/charts/microservice -f dev/chart/app-values-local.yaml -f services/<svc>/deploy/values-local.yaml --set fullnameOverride=<svc>`. Usually the YAML indentation in `services/<svc>/deploy/values-local.yaml`, or `SHP_CHART_DIR` points at a different branch: `rm -rf dev/.local/templates` re-pulls the pinned chart tag |
 | `deploy` fails with `ErrImageNeverPull` | The image was not loaded: re-run `make -C dev deploy SVC=<svc>` |
+| `make deploy` stops in `docker build` | Read the build output above the error. BuildKit is required (`deploy.sh` sets `DOCKER_BUILDKIT=1`) and the first build downloads Maven/npm dependencies. Reproduce by hand: `docker build -t localhost/shp-<svc>:dev -f services/<svc>/Dockerfile .`. The build aborts before `kind load`, so a running pod keeps the previous image |
 | Service pod in `CrashLoopBackOff` | `make -C dev app-logs SVC=<svc>`: usually missing configuration or the DB is not ready |
+| Logs show Flyway `Migration checksum mismatch` | The local database was created by an older revision of the migration files (they changed on `main` since). The local DB is throwaway, so recreate that service's database: `make -C dev undeploy SVC=scheduling` (releases its connections), then `kubectl --context kind-shp-local -n shp-deps exec -it statefulset/postgres -- psql -U shp -d postgres -c 'DROP DATABASE scheduling;' -c 'CREATE DATABASE scheduling OWNER shp;'`, then `make -C dev deploy SVC=scheduling`. Never edit a merged migration to make the checksum match. To reset everything: `make down && make up` |
+| First `scheduling` deploy works, the next one fails with `Found non-empty schema(s) "scheduling" but no schema history table` | Flyway takes its default schema from the connection `search_path` (`scheduling, public`): after the first run the `scheduling` schema holds the tables while `flyway_schema_history` is in `public`, so the next start validates the wrong schema. Until the service pins `spring.flyway.default-schema`, add `SPRING_FLYWAY_DEFAULT_SCHEMA: public` to `services/scheduling/deploy/values-local.yaml` and redeploy (then the log says `Schema "public" is up to date`). This is a service configuration issue, not stale local data: report it to the SA instead of editing a merged migration |
+| Pod is `Running` but an API call returns `401`/`500` mentioning `JWT`, `JWKSet` or `Couldn't retrieve remote JWK set` | Locally the issuer and the key set URL deliberately differ: `OIDC_AUTHORITY` is `http://localhost:18080/realms/shp` (tokens are minted on your machine) while `OIDC_JWK_SET_URI` points at Keycloak inside the cluster (`dev/chart/app-values-local.yaml`). Check Keycloak is Ready and the realm finished importing: `make -C dev logs APP=keycloak` (the first import takes 1–2 minutes) |
+| Logs show `Failed to publish metrics to OTLP receiver (url=http://localhost:4318/v1/metrics)` | Expected with profile `core`: no collector runs inside the pod, so the push fails. It is harmless. With `PROFILE=full` the collector runs, but services are not wired to it: add `OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.shp-deps:4318`, `MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-collector.shp-deps:4318/v1/metrics` (metrics; verified) and, for traces, `SHP_OTLP_EXPORT: "true"` to the service's `values-local.yaml`, then redeploy |
+| `make port-forward` fails with `bind: address already in use` | Another port-forward or process holds 18000. Stop it, or forward to another local port: `kubectl --context kind-shp-local -n shp-apps port-forward svc/gateway 18002:80` |
 | Docker Hub `429 Too Many Requests` | `docker login` and re-run (Python images already use the `mirror.gcr.io` mirror) |
 | Keycloak `Not Ready` for a long time | The first realm import takes ~1–2 minutes; `make -C dev logs APP=keycloak` |
 | Company network blocks tool downloads | Install kind/kubectl/helm yourself at the versions in section 1 and skip `make tools` |
 | Want a clean slate | `make -C dev down && rm -rf dev/.local` |
+
+### Inspecting a deployed service
+```bash
+kubectl --context kind-shp-local -n shp-apps get pods -l app.kubernetes.io/instance=scheduling
+kubectl --context kind-shp-local -n shp-apps describe pod -l app.kubernetes.io/instance=scheduling
+kubectl --context kind-shp-local -n shp-apps events --sort-by=.lastTimestamp | tail -20
+helm --kube-context kind-shp-local -n shp-apps get values scheduling   # values the chart actually received
+helm --kube-context kind-shp-local -n shp-apps status scheduling       # why the last revision failed
+```
+`make -C dev app-logs SVC=<svc>` follows the logs; `describe` shows the last exit code, restart count and which
+probe fails. The Java images are distroless (no shell or `curl` inside the pod; the Python images are `slim`), so
+reach a service through a port-forward instead, e.g.
+`kubectl --context kind-shp-local -n shp-apps port-forward svc/scheduling 18001:80` then
+`curl -sS http://localhost:18001/health/ready`, or through the gateway with `make port-forward`.
 
 ## 7. Profile `full` (LOC-08)
 Enable only when a task needs it: `make -C dev up PROFILE=full` (for a cluster previously created with profile `core`: `make -C dev down` then `up` again to get the new ports). Requires **Docker ≥ 12 GB RAM** (core ~6 GB + full ~5 GB) and 25 GB free disk.
@@ -127,3 +149,11 @@ mappers, and a TOTP policy for MFA. Two deliberate differences from UAT/prod:
 > `kubeconform --strict`; `make -C dev up` (core) and `make -C dev up PROFILE=full` have been run end-to-end on a real
 > kind cluster (14/14 dependencies Ready, health checks green); `make -C dev deploy SVC=all` brings all 8 services to
 > `Running` with `/health/ready` 200 through the gateway. Report any new failure to the SA.
+>
+> LOC-05 re-check (16/11/2026) on a real kind cluster: `make -C dev deploy SVC=gateway` completed the whole path
+> (build → `kind load` → `helm upgrade --wait`) and the pod answered `/info` and `/health/ready` 200. For
+> `SVC=scheduling` the same build and image load succeeded; that machine's database predated the current migration
+> files, and a restart needs `SPRING_FLYWAY_DEFAULT_SCHEMA=public` (both cases in the Flyway rows in §6). With those,
+> the pod applied V0.1→V002, restarted against the migrated database and answered `/health/ready` 200. `helm lint`
+> and `helm template` for all 8 services with the local values pass, and metrics reach the collector once the OTLP
+> variables above are set. A full `make quickstart` on a deleted cluster was not part of this run.
