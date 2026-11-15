@@ -11,6 +11,9 @@ spring:
       connection-init-sql: SET search_path TO scheduling, public
   flyway:
     # Platform tables (outbox, inbox, idempotency_key) come from shp-data-postgres; the service's migrations live in db/migration (V1+).
+    # Keep the history table in public (not the search_path's `scheduling`) so a redeploy does not hit
+    # "Found non-empty schema 'scheduling' without schema history table" (verified workaround, LOC-05).
+    default-schema: public
     locations: classpath:db/migration,classpath:db/shp-messaging/postgres
 shp:
   clinical:
