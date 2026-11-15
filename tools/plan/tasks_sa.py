@@ -161,4 +161,5 @@ SA_TASKS = [
     # ---------------- scheduling service ----------------
     ("SCH-01", "US-009, US-011", "Migration V001: schedule, schedule_template, slot (+ extension, exclusion constraint)",
      "Runs cleanly on Postgres 16 with Testcontainers; constraint prevents overlapping slots", "D1", 2, "SCF-01", "S1", "02 §2"),
+    ('TST-05', 'ENABLER', 'Automated API and contract test framework in CI (Testcontainers, OpenAPI, event schema)', 'Every service has API tests running in CI; producer/consumer contract tests', 'SA', 8, 'ARC-12', 'S4', 'TST'),
 ]
