@@ -88,7 +88,11 @@ class PlatformConfig {
           mongo.createCollection(c);
         }
       }
-      MongoMessaging.ensureIndexes(mongo);
+      MongoMessaging.ensureIndexes(
+          mongo,
+          MongoMessaging.Store.OUTBOX,
+          MongoMessaging.Store.INBOX,
+          MongoMessaging.Store.IDEMPOTENCY);
     };
   }
 }
