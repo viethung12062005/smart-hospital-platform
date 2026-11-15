@@ -20,6 +20,10 @@ public final class MongoMessaging {
   public static final String OUTBOX = "outbox";
   public static final String INBOX = "inbox";
   public static final String IDEMPOTENCY = "idempotency_keys";
+
+  /** Version history shared by every resource collection (03 §2.2). */
+  public static final String RESOURCE_HISTORY = "resource_history";
+
   static final int MAX_ATTEMPTS = 8;
 
   private MongoMessaging() {}
@@ -29,7 +33,9 @@ public final class MongoMessaging {
     OUTBOX,
     INBOX,
     /** Only services that accept Idempotency-Key requests (scheduling, document). */
-    IDEMPOTENCY
+    IDEMPOTENCY,
+    /** Resource version history, needed by every service that stores FHIR resources in MongoDB. */
+    RESOURCE_HISTORY
   }
 
   /**
@@ -72,6 +78,15 @@ public final class MongoMessaging {
                         .on("createdAt", Sort.Direction.ASC)
                         .named("ttl_idempotency_24h")
                         .expire(Duration.ofHours(24)));
+        case RESOURCE_HISTORY ->
+            mongo
+                .indexOps(RESOURCE_HISTORY)
+                .createIndex(
+                    new Index()
+                        .on("resourceType", Sort.Direction.ASC)
+                        .on("id", Sort.Direction.ASC)
+                        .on("versionId", Sort.Direction.DESC)
+                        .named("ix_resource_history"));
       }
     }
   }

@@ -75,6 +75,13 @@ automation:
     refs:
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
+
+  # ---- Clinical: version history ----
+  TC-AC-01.3:
+    status: partial
+    refs:
+      - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
+    gap: "The Mongo store records every version and its history is queryable; the patient update endpoint and the version-view API are not implemented yet (CLN-xx)."
   TC-NFR-SEC5:
     status: partial
     refs:
