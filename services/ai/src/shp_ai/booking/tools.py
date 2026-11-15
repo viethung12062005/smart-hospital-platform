@@ -95,34 +95,34 @@ class ToolValidationError(ValueError):
 
 def validate_args(name: str, args: dict[str, Any]) -> dict[str, Any]:
     if name not in ALLOWED_TOOLS:
-        raise ToolValidationError(f"tool không được phép: {name}")
+        raise ToolValidationError(f"tool not allowed: {name}")
     if name == SEARCH_SLOTS:
         specialty, from_, to = args.get("specialty"), args.get("from"), args.get("to")
         if specialty not in SPECIALTIES:
-            raise ToolValidationError("specialty không hợp lệ")
+            raise ToolValidationError("invalid specialty")
         if not isinstance(from_, str) or not isinstance(to, str):
-            raise ToolValidationError("from/to phải là ngày YYYY-MM-DD")
+            raise ToolValidationError("from/to must be a YYYY-MM-DD date")
         try:
             start, end = date.fromisoformat(from_), date.fromisoformat(to)
         except ValueError as exc:
-            raise ToolValidationError("from/to phải là ngày YYYY-MM-DD") from exc
+            raise ToolValidationError("from/to must be a YYYY-MM-DD date") from exc
         if end <= start or (end - start) > timedelta(days=MAX_RANGE_DAYS) or start < date.today():
-            raise ToolValidationError("khoảng ngày không hợp lệ (tối đa 31 ngày, không ở quá khứ)")
+            raise ToolValidationError("invalid date range (at most 31 days, not in the past)")
         pid = args.get("practitionerId")
         if pid is not None and not _UUID.match(str(pid)):
-            raise ToolValidationError("practitionerId không hợp lệ")
+            raise ToolValidationError("invalid practitionerId")
         return {"specialty": specialty, "from": start.isoformat(), "to": end.isoformat(), "practitionerId": pid}
     if name == LIST_MY_APPOINTMENTS:
         return {}
     if name == PROPOSE_BOOKING:
         slot_id = args.get("slotId")
         if not isinstance(slot_id, str) or not _UUID.match(slot_id):
-            raise ToolValidationError("slotId không hợp lệ")
+            raise ToolValidationError("invalid slotId")
         comment = args.get("comment")
         if comment is not None and (not isinstance(comment, str) or len(comment) > 500):
-            raise ToolValidationError("comment không hợp lệ")
+            raise ToolValidationError("invalid comment")
         return {"slotId": slot_id, "comment": comment}
     appointment_id = args.get("appointmentId")
     if not isinstance(appointment_id, str) or not _UUID.match(appointment_id):
-        raise ToolValidationError("appointmentId không hợp lệ")
+        raise ToolValidationError("invalid appointmentId")
     return {"appointmentId": appointment_id}
