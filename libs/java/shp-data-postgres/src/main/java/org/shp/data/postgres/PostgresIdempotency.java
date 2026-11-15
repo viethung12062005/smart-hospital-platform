@@ -56,9 +56,8 @@ public final class PostgresIdempotency {
         jdbc.sql(
                 "SELECT operation, request_hash, resource_id FROM idempotency_key WHERE subject = ? AND key = ?")
             .params(subject, key)
-            .query(
-                (rs, i) ->
-                    new Existing(rs.getString(1), rs.getBytes(2), rs.getObject(3, UUID.class)))
+            .query((rs, i) ->
+                new Existing(rs.getString(1), rs.getBytes(2), rs.getObject(3, UUID.class)))
             .single();
     if (!e.operation().equals(operation) || !MessageDigest.isEqual(e.hash(), requestHash)) {
       throw new ShpException("idempotency-key-reused");

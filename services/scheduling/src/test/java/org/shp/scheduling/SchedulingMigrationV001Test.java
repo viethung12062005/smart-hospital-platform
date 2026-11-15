@@ -111,15 +111,14 @@ class SchedulingMigrationV001Test {
     void horizonCheckConstraint() {
       UUID id = UUID.randomUUID();
       UUID practitionerId = UUID.randomUUID();
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.schedule (id, version_id, last_updated, active, practitioner_id, specialty, horizon_start, horizon_end, content)
-                          VALUES (?, 1, now(), false, ?, 'pediatrics', '2026-11-30', '2026-11-01', '{}'::jsonb)
-                          """)
-                      .params(id, practitionerId)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.schedule (id, version_id, last_updated, active, practitioner_id, specialty, horizon_start, horizon_end, content)
+                      VALUES (?, 1, now(), false, ?, 'pediatrics', '2026-11-30', '2026-11-01', '{}'::jsonb)
+                      """)
+                  .params(id, practitionerId)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_schedule_horizon");
     }
@@ -140,15 +139,14 @@ class SchedulingMigrationV001Test {
           .update();
 
       // Adding a 2nd active schedule with the same doctor + specialty must fail
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.schedule (id, version_id, last_updated, active, practitioner_id, specialty, horizon_start, horizon_end, content)
-                          VALUES (?, 1, now(), true, ?, ?, '2026-12-01', '2026-12-31', '{}'::jsonb)
-                          """)
-                      .params(UUID.randomUUID(), practitionerId, specialty)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.schedule (id, version_id, last_updated, active, practitioner_id, specialty, horizon_start, horizon_end, content)
+                      VALUES (?, 1, now(), true, ?, ?, '2026-12-01', '2026-12-31', '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), practitionerId, specialty)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ux_schedule_active_practitioner_specialty");
 
@@ -195,52 +193,48 @@ class SchedulingMigrationV001Test {
           .update();
 
       // weekday violation (8 > 7)
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
-                          VALUES (?, ?, 8, '08:00', '11:30', 15, '2026-11-01', now(), 'nurse1')
-                          """)
-                      .params(UUID.randomUUID(), scheduleId)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
+                      VALUES (?, ?, 8, '08:00', '11:30', 15, '2026-11-01', now(), 'nurse1')
+                      """)
+                  .params(UUID.randomUUID(), scheduleId)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
       // slot_minutes violation (25 is not in (10, 15, 20, 30))
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
-                          VALUES (?, ?, 2, '08:00', '11:30', 25, '2026-11-01', now(), 'nurse1')
-                          """)
-                      .params(UUID.randomUUID(), scheduleId)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
+                      VALUES (?, ?, 2, '08:00', '11:30', 25, '2026-11-01', now(), 'nurse1')
+                      """)
+                  .params(UUID.randomUUID(), scheduleId)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
       // end_time <= start_time violation (ck_template_time)
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
-                          VALUES (?, ?, 3, '11:30', '08:00', 15, '2026-11-01', now(), 'nurse1')
-                          """)
-                      .params(UUID.randomUUID(), scheduleId)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, created_at, created_by)
+                      VALUES (?, ?, 3, '11:30', '08:00', 15, '2026-11-01', now(), 'nurse1')
+                      """)
+                  .params(UUID.randomUUID(), scheduleId)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_template_time");
 
       // valid_to < valid_from violation (ck_template_valid)
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, valid_to, created_at, created_by)
-                          VALUES (?, ?, 4, '08:00', '11:30', 15, '2026-11-30', '2026-11-01', now(), 'nurse1')
-                          """)
-                      .params(UUID.randomUUID(), scheduleId)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.schedule_template (id, schedule_id, weekday, start_time, end_time, slot_minutes, valid_from, valid_to, created_at, created_by)
+                      VALUES (?, ?, 4, '08:00', '11:30', 15, '2026-11-30', '2026-11-01', now(), 'nurse1')
+                      """)
+                  .params(UUID.randomUUID(), scheduleId)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_template_valid");
     }
@@ -269,28 +263,26 @@ class SchedulingMigrationV001Test {
       UUID scheduleId = createSchedule(practitionerId, "dermatology");
 
       // Invalid status
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
-                          VALUES (?, 1, now(), ?, ?, 'dermatology', 'invalid-status', now(), now() + interval '15 minutes', '{}'::jsonb)
-                          """)
-                      .params(UUID.randomUUID(), scheduleId, practitionerId)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
+                      VALUES (?, 1, now(), ?, ?, 'dermatology', 'invalid-status', now(), now() + interval '15 minutes', '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), scheduleId, practitionerId)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class);
 
       // end_at <= start_at violates ck_slot_period
       OffsetDateTime now = OffsetDateTime.parse("2026-11-20T08:00:00Z");
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
-                          VALUES (?, 1, now(), ?, ?, 'dermatology', 'free', ?, ?, '{}'::jsonb)
-                          """)
-                      .params(UUID.randomUUID(), scheduleId, practitionerId, now, now)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
+                      VALUES (?, 1, now(), ?, ?, 'dermatology', 'free', ?, ?, '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), scheduleId, practitionerId, now, now)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ck_slot_period");
     }
@@ -354,15 +346,14 @@ class SchedulingMigrationV001Test {
       OffsetDateTime start2 = OffsetDateTime.parse("2026-11-20T09:15:00Z");
       OffsetDateTime end2 = OffsetDateTime.parse("2026-11-20T09:45:00Z");
 
-      assertThatThrownBy(
-              () ->
-                  jdbc.sql(
-                          """
-                          INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
-                          VALUES (?, 1, now(), ?, ?, 'ophthalmology', 'free', ?, ?, '{}'::jsonb)
-                          """)
-                      .params(UUID.randomUUID(), scheduleId, practitionerId, start2, end2)
-                      .update())
+      assertThatThrownBy(() ->
+              jdbc.sql(
+                      """
+                      INSERT INTO scheduling.slot (id, version_id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content)
+                      VALUES (?, 1, now(), ?, ?, 'ophthalmology', 'free', ?, ?, '{}'::jsonb)
+                      """)
+                  .params(UUID.randomUUID(), scheduleId, practitionerId, start2, end2)
+                  .update())
           .isInstanceOf(DataIntegrityViolationException.class)
           .hasMessageContaining("ex_slot_no_overlap");
     }
