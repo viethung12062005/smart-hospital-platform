@@ -11,7 +11,7 @@ Total: **348 tasks**, **1199 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W1 | 12 |  |  |  |
 | W2 | 24 |  |  | 4 |
 | W3 | 10 |  | 27 |  |
-| W4 | 13 | 22 | 29 | 27 |
+| W4 | 13 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
 | W7 | **47** | 30 | 30 | 30 |
@@ -20,7 +20,7 @@ Total: **348 tasks**, **1199 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **285** | **120** | **171** | **128** |
+| **Total** | **285** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 

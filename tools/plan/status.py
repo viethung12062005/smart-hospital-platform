@@ -158,4 +158,5 @@ STATUS = {
     "SCH-01": ("done", "ffbc26e", "migration V001 schedule/slot tables (#530)"),
     "SCH-02": ("done", "18e006e", "migration V002 appointment/resource_history/outbox/inbox (#576)"),
     "SCH-03": ("done", "db4b6f7", "schedule repository with version CAS + history (#577)"),
+    "CLN-25": ("done", "5b07036", "terminology loader (idempotent load, O(1) lookup) + ObservationCodeValidator (#600)"),
 }
