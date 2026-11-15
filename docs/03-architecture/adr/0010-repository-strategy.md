@@ -7,6 +7,8 @@ Accepted (2026-10-26) — approved by the Solution Architect/PM together with ga
 A team of 4 (1 Solution Architect/PM/DevOps, 3 devs), 8 services, a requirement for a separate pipeline per service,
 shared templates, GitOps, and clear permission separation between application code, infrastructure, and deployment configuration.
 
+Related requirements: NFR-D1, NFR-D2, NFR-D3, NFR-D4, NFR-O1, NFR-O2, NFR-O3, NFR-O4, NFR-SEC6, NFR-SEC7.
+
 ## Decision: 4 repositories
 
 | Repo | Contents | Who can merge | Reason for separation |

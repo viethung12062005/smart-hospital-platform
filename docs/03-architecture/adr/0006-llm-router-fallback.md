@@ -3,6 +3,9 @@
 ## Status
 Accepted (2026-10-26). **The model chain table below is replaced by [ADR-0013](0013-llm-deepseek-gemini-local-embedding.md)** (2026-10-27); the rest remains in effect.
 
+## Context
+Related requirements: UC-11, UC-13, NFR-P5, NFR-P7, NFR-AI1, NFR-AI2, NFR-AI3, NFR-AI4, NFR-AI7.
+
 ## Decision
 `ai-service` has a small hand-written router. Each task declares an **ordered model chain**:
 
