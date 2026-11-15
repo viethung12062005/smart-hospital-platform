@@ -78,14 +78,21 @@ The SA closes a US issue when:
 - It is clear where the test data comes from (synthetic data generator or seed).
 
 ## 4. Definition of Done (can merge)
-- Unit + integration tests green; line coverage >= 70%; lint/format clean; no compiler warnings.
-- The contract (`contracts/`) matches the code; `tools/contracts/check_all.sh` is green if anything changed.
-- The endpoint has `@RequireShpAuthz` and a row in the authorization matrix; audit is emitted for every decision.
-- No secrets, no PII in code/logs/tests; synthetic data only.
-- Image/dependency scans have no High/Critical with an available fix.
-- Tried on the local cluster (`make -C dev deploy SVC=<svc>`) if runtime behavior changed.
-- Testing per requirements: every acceptance criterion (AC) of the feature has a test case in `docs/06-testing/catalog` and a corresponding automated test; update `catalog/automation.yaml` and run `python -I tools/qa/trace.py --update-baseline` so the automation level only increases. Test cases involving patient data, authorization, audit or AI (P0) must have automated tests before merge. Bug fixes come with a regression test.
-- Related documentation is updated; the PR is reviewed and squash merged through the pipeline.
+The checklist in the [PR template](../.github/pull_request_template.md) is this list, item for item: change one and change
+the other in the same PR. Every item is ticked before the PR leaves Draft; an item that does not apply is ticked with
+"(not applicable: reason)", never left empty.
+
+1. Self-reviewed the diff on GitHub: no debug code, dead code or unrelated changes.
+2. Unit + integration tests green; line coverage >= 70%; lint/format clean; no compiler warnings.
+3. The contract (`contracts/`) matches the code; `tools/contracts/check_all.sh` is green if anything changed.
+4. The endpoint has `@RequireShpAuthz` and a row in the authorization matrix; audit is emitted for every decision; business errors use catalog codes (07 §5).
+5. Events are published with `outbox.add(...)` in the same transaction; consumers are wrapped in `inbox.handleOnce(...)`.
+6. No secrets, no PII in code/logs/tests; synthetic data only.
+7. Image/dependency scans have no High/Critical with an available fix.
+8. No change to files owned by the SA (section 5: Dockerfile, pipeline, Helm, `config/PlatformConfig`) without an SA issue.
+9. Tried on the local cluster (`make -C dev deploy SVC=<svc>`) if runtime behavior changed.
+10. Testing per requirements: every acceptance criterion (AC) of the feature has a test case in `docs/06-testing/catalog` and a corresponding automated test; update `catalog/automation.yaml` and run `python -I tools/qa/trace.py --update-baseline` so the automation level only increases. Test cases involving patient data, authorization, audit or AI (P0) must have automated tests before merge. Bug fixes come with a regression test.
+11. Related documentation is updated; the PR is reviewed and squash merged through the pipeline.
 
 ## 5. Who changes what
 | Area | Changed by | Note |
