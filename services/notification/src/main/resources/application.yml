@@ -6,6 +6,14 @@ spring:
   mongodb:
     uri: ${SPRING_MONGODB_URI:mongodb://localhost:27117/?directConnection=true}
     database: notification
+  cloud:
+    function:
+      definition: appointmentEvents
+    stream:
+      bindings:
+        appointmentEvents-in-0:
+          destination: shp-events
+          group: notification
 shp:
   clinical:
     url: ${SHP_CLINICAL_URL:http://clinical}
