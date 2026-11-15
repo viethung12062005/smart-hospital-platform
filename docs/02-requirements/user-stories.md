@@ -87,7 +87,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-067](#us-067) | Restore data to a point in time | Administrator | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | System handles slot-opening load at 07:00 | Project team | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | System tolerates dependency failures | Project team | Must |  | 2 | 9 |
-| [US-070](#us-070) | Safe, approval-gated deployment | DevOps | Must |  | 38 | 141 |
+| [US-070](#us-070) | Safe, approval-gated deployment | DevOps | Must |  | 39 | 145 |
 
 ## Functional requirement acceptance criteria coverage
 
@@ -1889,6 +1889,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | GOV-10 | Convert GitHub issues, pull requests and comments to English | SA | 8 | W4 |
 | GOV-11 | Translate the infra, GitOps and templates repositories to English | SA | 4 | W4 |
 | GOV-12 | Definition of Done audit of every completed task | SA | 8 | W4 |
+| GOV-13 | Instructions for AI agents (AGENTS.md, CLAUDE.md) in the four repositories | SA | 4 | W4 |
 | ENV-01 | Workflow env-provision | SA | 6 | W5 |
 | ENV-02 | Workflow env-destroy | SA | 2 | W5 |
 | GOP-06 | Platform add-on: OpenTelemetry Collector | SA | 3 | W5 |
