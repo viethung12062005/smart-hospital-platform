@@ -155,4 +155,7 @@ STATUS = {
     "WEB-01": ("partial", "branch WEB-01-frontend-base", "web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), role-based routes/menu, vi/en i18n, ErrorBoundary, design system + AppShell ported from the portal PoC (Apache-2.0); 6 sample screens run with MSW; NOT YET real Keycloak login tested in a browser"),
     "WEB-02": ("done", "branch WEB-01-frontend-base", "web/src/api/client.ts: token, Accept-Language, Idempotency-Key, If-Match/ETag, OperationOutcome/Problem Details + 409 slot suggestions; tests"),
     "WEB-10": ("partial", "branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5", "Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster"),
+    "SCH-01": ("done", "ffbc26e", "migration V001 schedule/slot tables (#530)"),
+    "SCH-02": ("done", "18e006e", "migration V002 appointment/resource_history/outbox/inbox (#576)"),
+    "SCH-03": ("done", "db4b6f7", "schedule repository with version CAS + history (#577)"),
 }
