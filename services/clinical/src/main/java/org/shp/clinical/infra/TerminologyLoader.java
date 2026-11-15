@@ -54,10 +54,9 @@ public class TerminologyLoader implements ApplicationRunner {
       List<Document> concepts = new ArrayList<>();
       root.get("concepts")
           .properties()
-          .forEach(
-              e ->
-                  concepts.add(
-                      new Document("code", e.getKey()).append("label", e.getValue().asString())));
+          .forEach(e ->
+              concepts.add(
+                  new Document("code", e.getKey()).append("label", e.getValue().asString())));
       Document doc =
           new Document()
               .append("_id", system)
