@@ -373,7 +373,9 @@ provider failures. See [ADR-0001](adr/0001-microservice-boundaries.md).
 
 See [ADR-0004](adr/0004-azure-first-portable.md).
 
-## 8. Security (summary — details in the P3 threat model)
+## 8. Security (summary — details in the [P3 threat model](threat-model.md))
+
+Per-data-flow STRIDE analysis, mitigations and their NFR-SEC traceability: [threat-model.md](threat-model.md).
 
 - OIDC + JWT; roles: `patient`, `practitioner`, `nurse`, `admin`. Claim `fhir_user`
   (`Patient/123`) is used for object-level authorization (patients see only their own data).
