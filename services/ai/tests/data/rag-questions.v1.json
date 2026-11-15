@@ -1,0 +1,805 @@
+{
+  "version": 1,
+  "questions": [
+    {
+      "id": "q001",
+      "question": "Đích huyết áp cần đạt ở người lớn là bao nhiêu?",
+      "answerable": true,
+      "document": "tha",
+      "section": "1. Mục tiêu điều trị",
+      "part": 1
+    },
+    {
+      "id": "q002",
+      "question": "Trước khi đo huyết áp người bệnh phải nghỉ bao lâu?",
+      "answerable": true,
+      "document": "tha",
+      "section": "2. Đo huyết áp",
+      "part": 1
+    },
+    {
+      "id": "q003",
+      "question": "Lượng muối khuyến cáo mỗi ngày cho người tăng huyết áp?",
+      "answerable": true,
+      "document": "tha",
+      "section": "3. Thay đổi lối sống",
+      "part": 1
+    },
+    {
+      "id": "q004",
+      "question": "Ngưỡng huyết áp nào cần chuyển tuyến?",
+      "answerable": true,
+      "document": "tha",
+      "section": "4. Chuyển tuyến",
+      "part": 1
+    },
+    {
+      "id": "q005",
+      "question": "Bệnh nhân tăng huyết áp ổn định tái khám định kỳ bao lâu một lần?",
+      "answerable": true,
+      "document": "tha",
+      "section": "5. Tái khám",
+      "part": 1
+    },
+    {
+      "id": "q006",
+      "question": "Nhật ký huyết áp tại nhà cần ghi trong mấy ngày?",
+      "answerable": true,
+      "document": "tha",
+      "section": "6. Theo dõi tại nhà",
+      "part": 1
+    },
+    {
+      "id": "q007",
+      "question": "Xử trí cơn tăng huyết áp cấp cứu ở đâu?",
+      "answerable": true,
+      "document": "tha",
+      "section": "7. Cấp cứu",
+      "part": 1
+    },
+    {
+      "id": "q008",
+      "question": "Thai phụ bị tăng huyết áp cần phối hợp với khoa nào?",
+      "answerable": true,
+      "document": "tha",
+      "section": "8. Phụ nữ mang thai",
+      "part": 1
+    },
+    {
+      "id": "q009",
+      "question": "Dấu hiệu nào khiến người tăng huyết áp phải đến viện ngay?",
+      "answerable": true,
+      "document": "tha",
+      "section": "9. Giáo dục",
+      "part": 1
+    },
+    {
+      "id": "q010",
+      "question": "Glucose lúc đói bao nhiêu thì chẩn đoán đái tháo đường?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "1. Chẩn đoán",
+      "part": 1
+    },
+    {
+      "id": "q011",
+      "question": "HbA1c mục tiêu là bao nhiêu?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "2. HbA1c",
+      "part": 1
+    },
+    {
+      "id": "q012",
+      "question": "Bao lâu thì làm lại HbA1c khi bệnh đã ổn định?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "3. Theo dõi",
+      "part": 1
+    },
+    {
+      "id": "q013",
+      "question": "Người đái tháo đường cần khám đáy mắt định kỳ thế nào?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "4. Biến chứng mắt",
+      "part": 1
+    },
+    {
+      "id": "q014",
+      "question": "Khi nào cần kiểm tra bàn chân người bệnh đái tháo đường?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "5. Chăm sóc bàn chân",
+      "part": 1
+    },
+    {
+      "id": "q015",
+      "question": "Xử trí ban đầu hạ đường huyết như thế nào?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "6. Hạ đường huyết",
+      "part": 1
+    },
+    {
+      "id": "q016",
+      "question": "Lời khuyên ăn uống cho người đái tháo đường?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "7. Dinh dưỡng",
+      "part": 1
+    },
+    {
+      "id": "q017",
+      "question": "Khi nào chuyển người bệnh đái tháo đường lên khoa nội tiết?",
+      "answerable": true,
+      "document": "dtd",
+      "section": "8. Chuyển chuyên khoa",
+      "part": 1
+    },
+    {
+      "id": "q018",
+      "question": "Đánh giá mức độ cơn hen ở trẻ dựa vào gì?",
+      "answerable": true,
+      "document": "hen",
+      "section": "1. Đánh giá mức độ",
+      "part": 1
+    },
+    {
+      "id": "q019",
+      "question": "SpO2 bao nhiêu thì cho trẻ hen thở oxy?",
+      "answerable": true,
+      "document": "hen",
+      "section": "2. Oxy",
+      "part": 1
+    },
+    {
+      "id": "q020",
+      "question": "Trong giờ đầu, khí dung giãn phế quản cách nhau bao lâu?",
+      "answerable": true,
+      "document": "hen",
+      "section": "3. Khí dung",
+      "part": 1
+    },
+    {
+      "id": "q021",
+      "question": "Trẻ hen cần nhập viện khi nào?",
+      "answerable": true,
+      "document": "hen",
+      "section": "4. Nhập viện",
+      "part": 1
+    },
+    {
+      "id": "q022",
+      "question": "Trẻ dưới 5 tuổi xịt thuốc hen cần dụng cụ gì?",
+      "answerable": true,
+      "document": "hen",
+      "section": "5. Hướng dẫn phụ huynh",
+      "part": 1
+    },
+    {
+      "id": "q023",
+      "question": "Trẻ hen ra viện thì bao lâu tái khám?",
+      "answerable": true,
+      "document": "hen",
+      "section": "6. Tái khám",
+      "part": 1
+    },
+    {
+      "id": "q024",
+      "question": "Những yếu tố nào hay làm khởi phát cơn hen ở trẻ?",
+      "answerable": true,
+      "document": "hen",
+      "section": "7. Yếu tố khởi phát",
+      "part": 1
+    },
+    {
+      "id": "q025",
+      "question": "Trẻ vừa sốt vừa khò khè cần loại trừ bệnh gì?",
+      "answerable": true,
+      "document": "hen",
+      "section": "8. Sốt kèm theo",
+      "part": 1
+    },
+    {
+      "id": "q026",
+      "question": "Thai phụ cần khám thai tối thiểu mấy lần?",
+      "answerable": true,
+      "document": "thai",
+      "section": "1. Lịch khám",
+      "part": 1
+    },
+    {
+      "id": "q027",
+      "question": "Siêu âm hình thái thai nhi làm ở tuần nào?",
+      "answerable": true,
+      "document": "thai",
+      "section": "2. Siêu âm hình thái",
+      "part": 1
+    },
+    {
+      "id": "q028",
+      "question": "Tầm soát đái tháo đường thai kỳ vào thời điểm nào?",
+      "answerable": true,
+      "document": "thai",
+      "section": "3. Nghiệm pháp dung nạp glucose",
+      "part": 1
+    },
+    {
+      "id": "q029",
+      "question": "Thai phụ cần bổ sung vi chất gì trong suốt thai kỳ?",
+      "answerable": true,
+      "document": "thai",
+      "section": "4. Sắt và axit folic",
+      "part": 1
+    },
+    {
+      "id": "q030",
+      "question": "Dấu hiệu bất thường nào khi mang thai cần nhập viện ngay?",
+      "answerable": true,
+      "document": "thai",
+      "section": "5. Dấu hiệu nguy hiểm",
+      "part": 1
+    },
+    {
+      "id": "q031",
+      "question": "Thai phụ cần tiêm phòng bệnh gì?",
+      "answerable": true,
+      "document": "thai",
+      "section": "6. Tiêm phòng",
+      "part": 1
+    },
+    {
+      "id": "q032",
+      "question": "Từ tuần thai thứ mấy bắt đầu đếm cử động thai?",
+      "answerable": true,
+      "document": "thai",
+      "section": "7. Đếm cử động thai",
+      "part": 1
+    },
+    {
+      "id": "q033",
+      "question": "Nên sinh ở cơ sở y tế như thế nào?",
+      "answerable": true,
+      "document": "thai",
+      "section": "8. Sinh tại viện",
+      "part": 1
+    },
+    {
+      "id": "q034",
+      "question": "Người viêm da cơ địa nên bôi dưỡng ẩm mấy lần một ngày?",
+      "answerable": true,
+      "document": "da",
+      "section": "1. Dưỡng ẩm",
+      "part": 1
+    },
+    {
+      "id": "q035",
+      "question": "Tắm thế nào cho người viêm da cơ địa?",
+      "answerable": true,
+      "document": "da",
+      "section": "2. Tắm",
+      "part": 1
+    },
+    {
+      "id": "q036",
+      "question": "Chất liệu quần áo phù hợp cho người viêm da cơ địa?",
+      "answerable": true,
+      "document": "da",
+      "section": "3. Quần áo",
+      "part": 1
+    },
+    {
+      "id": "q037",
+      "question": "Dấu hiệu bội nhiễm ở da viêm cơ địa là gì?",
+      "answerable": true,
+      "document": "da",
+      "section": "4. Nhiễm trùng",
+      "part": 1
+    },
+    {
+      "id": "q038",
+      "question": "Điều trị đợt cấp viêm da cơ địa thì bao lâu tái khám?",
+      "answerable": true,
+      "document": "da",
+      "section": "5. Tái khám",
+      "part": 1
+    },
+    {
+      "id": "q039",
+      "question": "Làm gì để hạn chế tổn thương do gãi?",
+      "answerable": true,
+      "document": "da",
+      "section": "6. Giáo dục",
+      "part": 1
+    },
+    {
+      "id": "q040",
+      "question": "Viêm da lan rộng bao nhiêu thì chuyển tuyến?",
+      "answerable": true,
+      "document": "da",
+      "section": "7. Chuyển tuyến",
+      "part": 1
+    },
+    {
+      "id": "q041",
+      "question": "Môi trường phòng ngủ phù hợp cho người viêm da?",
+      "answerable": true,
+      "document": "da",
+      "section": "8. Môi trường",
+      "part": 1
+    },
+    {
+      "id": "q042",
+      "question": "Dựa vào đâu để chẩn đoán viêm tai giữa cấp?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "1. Chẩn đoán",
+      "part": 1
+    },
+    {
+      "id": "q043",
+      "question": "Trẻ lớn triệu chứng nhẹ có thể theo dõi bao lâu?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "2. Theo dõi",
+      "part": 1
+    },
+    {
+      "id": "q044",
+      "question": "Điều trị nền tảng của viêm tai giữa cấp là gì?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "3. Giảm đau",
+      "part": 1
+    },
+    {
+      "id": "q045",
+      "question": "Biến chứng nào của viêm tai giữa cần nhập viện?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "4. Biến chứng",
+      "part": 1
+    },
+    {
+      "id": "q046",
+      "question": "Khi nào bệnh nhân viêm tai giữa cần tái khám?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "5. Tái khám",
+      "part": 1
+    },
+    {
+      "id": "q047",
+      "question": "Tư thế bú nào làm tăng nguy cơ viêm tai ở trẻ?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "6. Phòng ngừa",
+      "part": 1
+    },
+    {
+      "id": "q048",
+      "question": "Khi nào cần đo thính lực cho trẻ viêm tai?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "7. Thính lực",
+      "part": 1
+    },
+    {
+      "id": "q049",
+      "question": "Có nên tự nhỏ thuốc tai khi chưa khám không?",
+      "answerable": true,
+      "document": "tmh",
+      "section": "8. Nhỏ tai",
+      "part": 1
+    },
+    {
+      "id": "q050",
+      "question": "Sau mổ đục thủy tinh thể phải che mắt bao lâu?",
+      "answerable": true,
+      "document": "mat",
+      "section": "1. Băng mắt",
+      "part": 1
+    },
+    {
+      "id": "q051",
+      "question": "Cần làm gì trước khi nhỏ thuốc mắt sau mổ?",
+      "answerable": true,
+      "document": "mat",
+      "section": "2. Nhỏ mắt",
+      "part": 2
+    },
+    {
+      "id": "q052",
+      "question": "Kiêng hoạt động gì sau mổ thủy tinh thể?",
+      "answerable": true,
+      "document": "mat",
+      "section": "3. Sinh hoạt",
+      "part": 2
+    },
+    {
+      "id": "q053",
+      "question": "Bao lâu thì được để nước vào mắt khi gội đầu?",
+      "answerable": true,
+      "document": "mat",
+      "section": "4. Tắm gội",
+      "part": 2
+    },
+    {
+      "id": "q054",
+      "question": "Dấu hiệu nào sau mổ mắt cần đi khám ngay?",
+      "answerable": true,
+      "document": "mat",
+      "section": "5. Dấu hiệu bất thường",
+      "part": 2
+    },
+    {
+      "id": "q055",
+      "question": "Lịch tái khám sau mổ đục thủy tinh thể?",
+      "answerable": true,
+      "document": "mat",
+      "section": "6. Tái khám",
+      "part": 2
+    },
+    {
+      "id": "q056",
+      "question": "Khi nào đo kính lại sau mổ?",
+      "answerable": true,
+      "document": "mat",
+      "section": "7. Kính",
+      "part": 2
+    },
+    {
+      "id": "q057",
+      "question": "Ra ngoài sau mổ mắt cần bảo vệ thế nào?",
+      "answerable": true,
+      "document": "mat",
+      "section": "8. Bảo vệ",
+      "part": 2
+    },
+    {
+      "id": "q058",
+      "question": "Sau bó bột cần kê cao chi trong bao lâu?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "1. Kê cao chi",
+      "part": 2
+    },
+    {
+      "id": "q059",
+      "question": "Dấu hiệu chèn ép khi bó bột là gì?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "2. Hội chứng chèn ép",
+      "part": 2
+    },
+    {
+      "id": "q060",
+      "question": "Khi tắm cần làm gì với bột?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "3. Giữ khô",
+      "part": 2
+    },
+    {
+      "id": "q061",
+      "question": "Ngứa trong bột có được dùng vật nhọn gãi không?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "4. Ngứa",
+      "part": 2
+    },
+    {
+      "id": "q062",
+      "question": "Người bó bột nên vận động thế nào?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "5. Vận động",
+      "part": 2
+    },
+    {
+      "id": "q063",
+      "question": "Sau bó bột bao lâu thì chụp X-quang kiểm tra?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "6. Tái khám",
+      "part": 2
+    },
+    {
+      "id": "q064",
+      "question": "Ai quyết định thời điểm tháo bột?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "7. Tháo bột",
+      "part": 2
+    },
+    {
+      "id": "q065",
+      "question": "Sau tháo bột cần làm gì để phục hồi?",
+      "answerable": true,
+      "document": "ctch",
+      "section": "8. Phục hồi",
+      "part": 2
+    },
+    {
+      "id": "q066",
+      "question": "Cách nhận biết nhanh đột quỵ là gì?",
+      "answerable": true,
+      "document": "tk",
+      "section": "1. Nhận biết",
+      "part": 2
+    },
+    {
+      "id": "q067",
+      "question": "Vì sao cần ghi thời điểm khởi phát đột quỵ?",
+      "answerable": true,
+      "document": "tk",
+      "section": "2. Thời gian vàng",
+      "part": 2
+    },
+    {
+      "id": "q068",
+      "question": "Xét nghiệm nhanh nào làm ngay khi tiếp nhận nghi đột quỵ?",
+      "answerable": true,
+      "document": "tk",
+      "section": "3. Đường huyết",
+      "part": 2
+    },
+    {
+      "id": "q069",
+      "question": "Chẩn đoán hình ảnh đầu tiên khi nghi đột quỵ?",
+      "answerable": true,
+      "document": "tk",
+      "section": "4. Chẩn đoán hình ảnh",
+      "part": 2
+    },
+    {
+      "id": "q070",
+      "question": "Trước khi cho người đột quỵ ăn cần đánh giá gì?",
+      "answerable": true,
+      "document": "tk",
+      "section": "5. Nuốt",
+      "part": 2
+    },
+    {
+      "id": "q071",
+      "question": "Tư thế nằm cho người bệnh đột quỵ?",
+      "answerable": true,
+      "document": "tk",
+      "section": "6. Tư thế",
+      "part": 2
+    },
+    {
+      "id": "q072",
+      "question": "Khi nào bắt đầu phục hồi chức năng sau đột quỵ?",
+      "answerable": true,
+      "document": "tk",
+      "section": "7. Phục hồi",
+      "part": 2
+    },
+    {
+      "id": "q073",
+      "question": "Biện pháp phòng đột quỵ tái phát?",
+      "answerable": true,
+      "document": "tk",
+      "section": "8. Phòng tái phát",
+      "part": 2
+    },
+    {
+      "id": "q074",
+      "question": "Chà tay bằng dung dịch cồn tối thiểu bao lâu?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "1. Vệ sinh tay",
+      "part": 2
+    },
+    {
+      "id": "q075",
+      "question": "Sau khi tháo găng tay cần làm gì?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "2. Găng tay",
+      "part": 2
+    },
+    {
+      "id": "q076",
+      "question": "Xử lý kim tiêm sau sử dụng thế nào?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "3. Vật sắc nhọn",
+      "part": 2
+    },
+    {
+      "id": "q077",
+      "question": "Bị kim đâm phải báo cáo trong bao lâu?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "4. Phơi nhiễm",
+      "part": 2
+    },
+    {
+      "id": "q078",
+      "question": "Người bệnh nghi lao phổi cần được xử trí thế nào khi tiếp nhận?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "5. Cách ly",
+      "part": 2
+    },
+    {
+      "id": "q079",
+      "question": "Chất thải lây nhiễm bỏ vào túi màu gì?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "6. Chất thải",
+      "part": 2
+    },
+    {
+      "id": "q080",
+      "question": "Bao lâu thì lau khử khuẩn giường bệnh?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "7. Khử khuẩn bề mặt",
+      "part": 2
+    },
+    {
+      "id": "q081",
+      "question": "Nhân viên y tế được tiêm phòng bệnh gì?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "8. Tiêm chủng nhân viên",
+      "part": 2
+    },
+    {
+      "id": "q082",
+      "question": "Khi nào nhân viên cần đeo khẩu trang y tế?",
+      "answerable": true,
+      "document": "ksnk",
+      "section": "9. Khẩu trang",
+      "part": 2
+    },
+    {
+      "id": "u001",
+      "question": "Giá một lần chụp MRI ở bệnh viện là bao nhiêu?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u002",
+      "question": "Quy trình xin nghỉ phép năm của nhân viên?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u003",
+      "question": "Liều hóa trị cho ung thư phổi giai đoạn 4?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u004",
+      "question": "Bãi đỗ xe của bệnh viện mở cửa mấy giờ?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u005",
+      "question": "Phác đồ điều trị sốt xuất huyết Dengue?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u006",
+      "question": "Tiêu chuẩn ghép thận cho người hiến sống?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u007",
+      "question": "Lịch trực Tết của khoa cấp cứu năm nay?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u008",
+      "question": "Cách cài máy in trong phòng khám?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u009",
+      "question": "Phác đồ điều trị viêm gan C bằng thuốc kháng virus?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u010",
+      "question": "Quy trình nội soi đại tràng gây mê?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u011",
+      "question": "Mức lương trực đêm của điều dưỡng?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u012",
+      "question": "Chỉ định phẫu thuật thay khớp háng?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u013",
+      "question": "Điều trị bỏng độ 3 diện rộng?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u014",
+      "question": "Liều vắc xin dại sau khi bị chó cắn?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u015",
+      "question": "Quy trình chạy thận nhân tạo cấp cứu?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u016",
+      "question": "Thực đơn căng tin bệnh viện tuần này?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u017",
+      "question": "Cách đặt nội khí quản ở trẻ sơ sinh?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    },
+    {
+      "id": "u018",
+      "question": "Cách tính điểm thi đua cuối năm của khoa?",
+      "answerable": false,
+      "document": null,
+      "section": null,
+      "part": 2
+    }
+  ]
+}
