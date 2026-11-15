@@ -130,3 +130,56 @@ gh secret set TEMPLATES_DEPLOY_KEY -R <owner>/shp-gitops < ./k
 shred -u ./k ./k.pub   # remove the key from the machine
 ```
 The `validate` workflow of `shp-gitops` already uses this secret (`ssh-key`).
+
+## 10. GitHub Packages (Maven) for the shared Java libraries (CIT-10)
+
+The nine `libs/java/*` modules plus the `org.shp:shp-parent` POM are published to GitHub Packages at
+`https://maven.pkg.github.com/viethung12062005/smart-hospital-platform`. The root `pom.xml` declares this URL in
+`distributionManagement` (publishing) and in `repositories` (consuming), both under the server id `github`.
+
+GitHub Packages requires authentication for **reads as well as writes**. Each developer and each build needs a
+`~/.m2/settings.xml` entry with the id `github`; use a personal token with `read:packages` (add `write:packages` only
+to publish from a workstation). Never commit the token or the `settings.xml`:
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>${env.GITHUB_ACTOR}</username>
+      <password>${env.GITHUB_TOKEN}</password>
+    </server>
+  </servers>
+</settings>
+```
+
+Export `GITHUB_ACTOR` (your GitHub username) and `GITHUB_TOKEN` (the token) in the shell before running Maven; Maven
+reads the values from the environment.
+
+**Publish a release.** The POMs stay on `0.1.0-SNAPSHOT` for local development. A release is a `vX.Y.Z` tag on a
+`main` commit (`docs/00-git-github.md` section 9). The `publish-maven` workflow verifies the commit with the shared
+`java-ci` workflow, checks that the commit is an ancestor of `main`, stamps the tag version into the reactor with the
+versions plugin, and deploys `shp-parent` followed by the libraries. It authenticates with the workflow's
+`GITHUB_TOKEN` (`packages: write`), so no long-lived secret is stored. The tag is the published version; publishing
+the same version twice is refused by GitHub Packages, and a bad release gets a new tag.
+
+Publishing a SNAPSHOT from a workstation (optional, for integration testing) is the normal Maven command:
+
+```bash
+mvn -B -N deploy                                  # org.shp:shp-parent
+mvn -B -pl libs/java/shp-service-defaults,libs/java/shp-authz,libs/java/shp-events,libs/java/shp-security,libs/java/shp-web,libs/java/shp-data-postgres,libs/java/shp-data-mongo,libs/java/shp-messaging,libs/java/shp-fhir deploy
+```
+
+**Consume a published version.** Inside this reactor a service build takes the libraries from `libs/java`, so no
+remote lookup is needed (`mvn -pl services/<svc> -am verify`). To build against published artifacts, set the version
+the services resolve and build without the libraries in the reactor:
+
+```bash
+mvn -B -Dshp.libs.version=0.1.0 -pl services/scheduling test
+```
+
+`shp.libs.version` defaults to `${project.version}` in the root `pom.xml`, which keeps local development on the
+reactor.
+
+No release tag has been published yet: the first `vX.Y.Z` tag on `main` creates the packages. Until then the
+`publish-maven` workflow has only been validated by the local commands recorded in its PR.

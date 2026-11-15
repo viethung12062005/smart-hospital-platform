@@ -219,7 +219,9 @@ Always use `--force-with-lease`, never `--force`. Before a command that can lose
 
 ## 9. Tags and releases
 
-- Currently only `shp-platform-templates` releases tags (all 4 repos have the `protect-tags` ruleset): `git tag -a vX.Y.Z -m "vX.Y.Z: <summary>"` on a `main` commit.
+- `shp-platform-templates` tags reusable workflows and the Helm chart; `smart-hospital-platform` tags releases of the shared Java libraries that are published to GitHub Packages (CIT-10).
+- Create a release tag on a `main` commit: `git tag -a vX.Y.Z -m "vX.Y.Z: <summary>"`, then `git push origin vX.Y.Z` (all 4 repos have the `protect-tags` ruleset).
+- In the application repo, a `vX.Y.Z` tag is the version of the `org.shp` libraries: `publish-maven.yml` verifies the tagged commit and publishes it to GitHub Packages. The POMs stay on `0.1.0-SNAPSHOT` between releases, and a tagged release never publishes a SNAPSHOT. How to consume a published version: `docs/04-devops/github-setup.md` section 10.
 - SemVer: compatible bug fix -> `Z`; compatible input/feature addition -> `Y`; breaking change (renaming an input, removing a job) -> `X`.
 - Tags are never moved or deleted; a bad release gets a new tag.
 - Consuming repos pin by tag (`...python-ci.yml@vX.Y.Z`); bump the pin in a separate PR per section 2.1.

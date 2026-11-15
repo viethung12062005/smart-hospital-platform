@@ -55,6 +55,12 @@
     <archunit.version>1.5.1</archunit.version>
     <spotless.version>3.11.0</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
+    <!-- Pinned in pluginManagement; the release workflow uses it to stamp a tag version into the reactor -->
+    <versions-maven-plugin.version>2.25.2</versions-maven-plugin.version>
+    <!-- Version of the org.shp shared libraries the services depend on. Defaults to the reactor version, so a normal
+         build resolves libs/java from the reactor. Override with -Dshp.libs.version=<release> to consume the artifacts
+         published to GitHub Packages instead (docs/04-devops/github-setup.md section 10). -->
+    <shp.libs.version>${project.version}</shp.libs.version>
     <!-- Checked on Maven Central on 2026-11-03 (06/10 build): JDBC plugin that obtains Entra tokens for PostgreSQL on Azure (02-db-scheduling §5) -->
     <azure-identity-extensions.version>1.2.10</azure-identity-extensions.version>
     <!-- HAPI FHIR pulls guava 33.2.1-jre, which has CVE-2026-102554 (HIGH, DoS during deserialization; fixed in
@@ -74,42 +80,42 @@
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-service-defaults</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-authz</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-events</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-security</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-web</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-data-postgres</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-data-mongo</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-fhir</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
@@ -139,7 +145,7 @@
       <dependency>
         <groupId>org.shp</groupId>
         <artifactId>shp-messaging</artifactId>
-        <version>${project.version}</version>
+        <version>${shp.libs.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.cloud</groupId>
@@ -181,6 +187,11 @@
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>${jacoco.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>${versions-maven-plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -252,4 +263,34 @@
       </plugin>
     </plugins>
   </build>
+
+  <!-- Publish this POM and the libs/java modules to GitHub Packages (Maven). `mvn deploy` authenticates with the
+       <server id="github"> entry in ~/.m2/settings.xml (docs/04-devops/github-setup.md section 10). GitHub Packages
+       serves snapshots and releases from the same URL. The version comes from <version> above; the release workflow
+       stamps a vX.Y.Z tag into it with the versions plugin, so a tagged build publishes an immutable release. -->
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages (smart-hospital-platform)</name>
+      <url>https://maven.pkg.github.com/viethung12062005/smart-hospital-platform</url>
+    </repository>
+    <snapshotRepository>
+      <id>github</id>
+      <name>GitHub Packages (smart-hospital-platform)</name>
+      <url>https://maven.pkg.github.com/viethung12062005/smart-hospital-platform</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <!-- Consume the org.shp library artifacts published by this repository. GitHub Packages requires authentication for
+       reads too, so the same <server id="github"> must exist in settings.xml. Services inside this reactor take the
+       libraries from the reactor; this entry is used when a build resolves them from a published version. -->
+  <repositories>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages (smart-hospital-platform)</name>
+      <url>https://maven.pkg.github.com/viethung12062005/smart-hospital-platform</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>
 </project>
