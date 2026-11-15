@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 python3 -I -m unittest discover -s tools/contracts -p 'test_*.py'
 for v in authz events openapi terminology; do python3 -I "tools/contracts/validate_$v.py"; done
+python3 -I tools/contracts/export_terminology.py --check
 # Generated docs and schemas must match the generator (do not hand-edit generated files).
 python3 -I tools/contracts/gen_events.py >/dev/null && python3 -I tools/contracts/gen_openapi.py >/dev/null
 git diff --exit-code -- contracts/events contracts/openapi >/dev/null || { echo "ERROR: generated files differ from the generator output; re-run gen_*.py and commit"; exit 1; }

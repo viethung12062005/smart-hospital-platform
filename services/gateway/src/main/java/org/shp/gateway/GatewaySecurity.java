@@ -41,16 +41,14 @@ class GatewaySecurity {
       throw new IllegalStateException(
           "Missing shp.auth.authority/audience (or OIDC_AUTHORITY, OIDC_AUDIENCE)");
     }
-    return new SupplierReactiveJwtDecoder(
-        () -> {
-          var d =
-              props.jwkSetUri().isBlank()
-                  ? (NimbusReactiveJwtDecoder)
-                      ReactiveJwtDecoders.fromIssuerLocation(props.authority())
-                  : NimbusReactiveJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
-          d.setJwtValidator(ShpJwt.validator(props, clock));
-          return d;
-        });
+    return new SupplierReactiveJwtDecoder(() -> {
+      var d =
+          props.jwkSetUri().isBlank()
+              ? (NimbusReactiveJwtDecoder) ReactiveJwtDecoders.fromIssuerLocation(props.authority())
+              : NimbusReactiveJwtDecoder.withJwkSetUri(props.jwkSetUri()).build();
+      d.setJwtValidator(ShpJwt.validator(props, clock));
+      return d;
+    });
   }
 
   @Bean
@@ -58,31 +56,25 @@ class GatewaySecurity {
     return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
         .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
         .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-        .authorizeExchange(
-            a ->
-                a.pathMatchers("/internal/**")
-                    .denyAll()
-                    .pathMatchers("/health", "/health/**", "/info", "/prometheus")
-                    .permitAll()
-                    .anyExchange()
-                    .authenticated())
-        .oauth2ResourceServer(
-            o ->
-                o.jwt(
-                        j ->
-                            j.jwtAuthenticationConverter(
-                                new ReactiveJwtAuthenticationConverterAdapter(
-                                    ShpJwt.authenticationConverter())))
-                    .authenticationEntryPoint(
-                        (ex, e) ->
-                            problem(ex.getResponse(), HttpStatus.UNAUTHORIZED, "unauthenticated"))
-                    .accessDeniedHandler(
-                        (ex, e) -> problem(ex.getResponse(), HttpStatus.NOT_FOUND, "not-found")))
-        .exceptionHandling(
-            e ->
-                e.authenticationEntryPoint(
-                    (ex, err) ->
-                        problem(ex.getResponse(), HttpStatus.UNAUTHORIZED, "unauthenticated")))
+        .authorizeExchange(a ->
+            a.pathMatchers("/internal/**")
+                .denyAll()
+                .pathMatchers("/health", "/health/**", "/info", "/prometheus")
+                .permitAll()
+                .anyExchange()
+                .authenticated())
+        .oauth2ResourceServer(o ->
+            o.jwt(j ->
+                    j.jwtAuthenticationConverter(
+                        new ReactiveJwtAuthenticationConverterAdapter(
+                            ShpJwt.authenticationConverter())))
+                .authenticationEntryPoint((ex, e) ->
+                    problem(ex.getResponse(), HttpStatus.UNAUTHORIZED, "unauthenticated"))
+                .accessDeniedHandler(
+                    (ex, e) -> problem(ex.getResponse(), HttpStatus.NOT_FOUND, "not-found")))
+        .exceptionHandling(e ->
+            e.authenticationEntryPoint(
+                (ex, err) -> problem(ex.getResponse(), HttpStatus.UNAUTHORIZED, "unauthenticated")))
         .build();
   }
 

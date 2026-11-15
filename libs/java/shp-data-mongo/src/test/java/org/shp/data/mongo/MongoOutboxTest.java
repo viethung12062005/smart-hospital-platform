@@ -89,12 +89,11 @@ class MongoOutboxTest extends MongoTestBase {
 
   @Test
   void dataChangeAndEventCommitOrRollBackTogether() {
-    TX.executeWithoutResult(
-        s -> {
-          insertThing("a");
-          outbox.add(evt(1));
-          s.setRollbackOnly();
-        });
+    TX.executeWithoutResult(s -> {
+      insertThing("a");
+      outbox.add(evt(1));
+      s.setRollbackOnly();
+    });
     assertThat(count("thing")).isZero();
     assertThat(count(MongoMessaging.OUTBOX)).isZero();
     add(evt(1));
@@ -172,16 +171,15 @@ class MongoOutboxTest extends MongoTestBase {
       for (int i = 0; i < 4; i++) {
         var r = relay(pub, 10);
         futures.add(
-            pool.submit(
-                () -> {
-                  int total = 0;
-                  int sent;
-                  do {
-                    sent = r.relayOnce();
-                    total += sent;
-                  } while (sent > 0);
-                  return total;
-                }));
+            pool.submit(() -> {
+              int total = 0;
+              int sent;
+              do {
+                sent = r.relayOnce();
+                total += sent;
+              } while (sent > 0);
+              return total;
+            }));
       }
       int sum = 0;
       for (var f : futures) {

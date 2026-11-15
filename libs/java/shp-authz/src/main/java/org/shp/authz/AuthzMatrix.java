@@ -83,12 +83,11 @@ public final class AuthzMatrix {
     Map<String, Boolean> clinical = new LinkedHashMap<>();
     Map<String, List<String>> actions = new LinkedHashMap<>();
     map(doc.get("resources"))
-        .forEach(
-            (k, v) -> {
-              Map<?, ?> spec = map(v);
-              clinical.put(String.valueOf(k), Boolean.TRUE.equals(spec.get("clinical")));
-              actions.put(String.valueOf(k), strings(spec.get("actions")));
-            });
+        .forEach((k, v) -> {
+          Map<?, ?> spec = map(v);
+          clinical.put(String.valueOf(k), Boolean.TRUE.equals(spec.get("clinical")));
+          actions.put(String.valueOf(k), strings(spec.get("actions")));
+        });
     Set<String> deny = new HashSet<>();
     for (Object d : list(doc.get("denyAll"))) {
       Map<?, ?> m = map(d);
@@ -115,14 +114,13 @@ public final class AuthzMatrix {
       covered.add(key(rule.resource(), rule.action()));
       rules.add(rule);
     }
-    actions.forEach(
-        (res, acts) -> {
-          for (String a : acts) {
-            if (!covered.contains(key(res, a)) && !deny.contains(key(res, a))) {
-              errors.add("(" + res + "," + a + "): no rule and not listed in denyAll");
-            }
-          }
-        });
+    actions.forEach((res, acts) -> {
+      for (String a : acts) {
+        if (!covered.contains(key(res, a)) && !deny.contains(key(res, a))) {
+          errors.add("(" + res + "," + a + "): no rule and not listed in denyAll");
+        }
+      }
+    });
     if (!errors.isEmpty()) {
       throw new AuthzMatrixException(errors);
     }

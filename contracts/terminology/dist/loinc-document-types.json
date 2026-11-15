@@ -1,0 +1,11 @@
+{
+  "concepts": {
+    "11502-2": "Laboratory report",
+    "18748-4": "Diagnostic imaging study",
+    "34133-9": "Summarization of episode note",
+    "51851-4": "Administrative note",
+    "57133-1": "Referral note",
+    "57833-6": "Prescription for medication"
+  },
+  "url": "http://loinc.org"
+}

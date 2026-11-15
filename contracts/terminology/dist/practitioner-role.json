@@ -1,0 +1,7 @@
+{
+  "concepts": {
+    "doctor": "Bác sĩ",
+    "nurse": "Điều dưỡng"
+  },
+  "url": "https://shp.example.org/fhir/CodeSystem/practitioner-role"
+}

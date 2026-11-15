@@ -22,6 +22,10 @@
     </dependency>
     <dependency>
       <groupId>org.shp</groupId>
+      <artifactId>shp-fhir</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.shp</groupId>
       <artifactId>shp-data-postgres</artifactId>
     </dependency>
     <dependency>

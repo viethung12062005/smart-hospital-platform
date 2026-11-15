@@ -56,16 +56,25 @@ ensureCollection(ml, "appointment_facts", { $jsonSchema: { bsonType: "object", r
 ml.appointment_facts.createIndex({ startAt: 1 });
 ml.appointment_facts.createIndex({ patientId: 1, startAt: -1 });
 // predictions: time-series if the engine supports it (MongoDB 5+; Cosmos vCore: verify when building UAT), otherwise a regular collection.
+// The validator keeps a probability where it belongs (ML-11): score in [0, 1], and the identity fields always present.
+const predictionValidator = { $jsonSchema: { bsonType: "object", required: ["appointmentId", "score", "predictedAt", "modelVersion"], properties: {
+  appointmentId: { bsonType: "string" },
+  modelVersion: { bsonType: "string" },
+  predictedAt: { bsonType: "date" },
+  score: { bsonType: ["double", "int", "decimal"], minimum: 0, maximum: 1 } } } };
 if (!ml.getCollectionNames().includes("predictions")) {
   try {
-    ml.createCollection("predictions", { timeseries: { timeField: "predictedAt", metaField: "modelVersion", granularity: "minutes" }, expireAfterSeconds: 400 * 24 * 3600 });
+    ml.createCollection("predictions", { timeseries: { timeField: "predictedAt", metaField: "modelVersion", granularity: "minutes" }, expireAfterSeconds: 400 * 24 * 3600, validator: predictionValidator });
     print("ml.predictions: time-series collection");
   } catch (e) {
-    ml.createCollection("predictions");
+    ml.createCollection("predictions", { validator: predictionValidator });
     // The name must match shp_ml/store.py (ensure_schema) — MongoDB reports error 85 when the same key already exists under another name.
     ml.predictions.createIndex({ predictedAt: 1 }, { name: "ttl_predictedAt", expireAfterSeconds: 400 * 24 * 3600 });
     print("ml.predictions: regular collection (" + e.codeName + ")");
   }
+} else {
+  // Re-runs must apply the validator to a collection created before it existed.
+  try { ml.runCommand({ collMod: "predictions", validator: predictionValidator, validationLevel: "moderate" }); } catch (e) { print("ml.predictions: collMod skipped (" + e.codeName + ")"); }
 }
 ml.predictions.createIndex({ modelVersion: 1, predictedAt: 1 });
 ml.predictions.createIndex({ appointmentId: 1 });

@@ -25,12 +25,11 @@ class AuditSinkTest extends PostgresTestBase {
             null,
             null,
             null);
-    TX.executeWithoutResult(
-        s -> {
-          insertThing("business");
-          sink.emit(rec);
-          s.setRollbackOnly();
-        });
+    TX.executeWithoutResult(s -> {
+      insertThing("business");
+      sink.emit(rec);
+      s.setRollbackOnly();
+    });
     assertThat(count("SELECT count(*) FROM thing")).isZero();
     assertThat(count("SELECT count(*) FROM outbox WHERE event_type = 'shp.audit.recorded.v1'"))
         .isEqualTo(1);

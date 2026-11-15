@@ -99,12 +99,11 @@ class SchedulingApplicationTest {
 
     await()
         .atMost(Duration.ofSeconds(20))
-        .until(
-            () ->
-                jdbc.sql("SELECT published_at IS NOT NULL FROM outbox WHERE id = ?")
-                    .param(UUID.fromString(evt.id()))
-                    .query(Boolean.class)
-                    .single());
+        .until(() ->
+            jdbc.sql("SELECT published_at IS NOT NULL FROM outbox WHERE id = ?")
+                .param(UUID.fromString(evt.id()))
+                .query(Boolean.class)
+                .single());
   }
 
   @Test

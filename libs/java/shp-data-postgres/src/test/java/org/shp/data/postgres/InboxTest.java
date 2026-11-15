@@ -64,15 +64,14 @@ class InboxTest extends PostgresTestBase {
   @Test
   void failingHandlerRollsEverythingBackSoRedeliveryIsProcessed() {
     var e = evt();
-    assertThatThrownBy(
-            () ->
-                inbox.handleOnce(
-                    "c",
-                    e,
-                    () -> {
-                      insertThing("half-done");
-                      throw new IllegalStateException("boom");
-                    }))
+    assertThatThrownBy(() ->
+            inbox.handleOnce(
+                "c",
+                e,
+                () -> {
+                  insertThing("half-done");
+                  throw new IllegalStateException("boom");
+                }))
         .isInstanceOf(IllegalStateException.class);
     assertThat(count("SELECT count(*) FROM thing")).isZero();
     assertThat(count("SELECT count(*) FROM inbox")).isZero();
@@ -88,15 +87,14 @@ class InboxTest extends PostgresTestBase {
     try (var pool = Executors.newFixedThreadPool(20)) {
       for (int i = 0; i < 20; i++) {
         results.add(
-            pool.submit(
-                () ->
-                    inbox.handleOnce(
-                        "scheduling",
-                        e,
-                        () -> {
-                          runs.incrementAndGet();
-                          insertThing("x");
-                        })));
+            pool.submit(() ->
+                inbox.handleOnce(
+                    "scheduling",
+                    e,
+                    () -> {
+                      runs.incrementAndGet();
+                      insertThing("x");
+                    })));
       }
       int ok = 0;
       for (var f : results) {

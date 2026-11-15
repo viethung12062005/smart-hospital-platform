@@ -50,11 +50,8 @@ public final class ShpJwt {
   public static JwtAuthenticationConverter authenticationConverter() {
     var c = new JwtAuthenticationConverter();
     c.setPrincipalClaimName("sub");
-    c.setJwtGrantedAuthoritiesConverter(
-        jwt ->
-            roles(jwt).stream()
-                .map(r -> (GrantedAuthority) new SimpleGrantedAuthority(r))
-                .toList());
+    c.setJwtGrantedAuthoritiesConverter(jwt ->
+        roles(jwt).stream().map(r -> (GrantedAuthority) new SimpleGrantedAuthority(r)).toList());
     return c;
   }
 

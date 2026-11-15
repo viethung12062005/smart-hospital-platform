@@ -5,3 +5,7 @@ image:
 env:
   OTEL_SERVICE_NAME: audit
   SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true
+  # Log Analytics query table disabled locally (05-storage-audit-blob §1.3); AUD-02 wires it in the
+  # cloud. Empty values keep the sink off so the worker still starts against a bare cluster.
+  SHP_AUDIT_SINK_WORKSPACE_ID: ""
+  SHP_AUDIT_SINK_ENDPOINT: ""
