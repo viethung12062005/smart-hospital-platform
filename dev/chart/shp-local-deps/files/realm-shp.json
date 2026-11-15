@@ -83,7 +83,8 @@
       "clientId": "shp-api",
       "name": "Smart Hospital API (audience)",
       "enabled": true,
-      "bearerOnly": true
+      "bearerOnly": true,
+      "protocolMappers": []
     },
     {
       "clientId": "shp-test",
@@ -123,5 +124,10 @@
         }
       ]
     }
-  ]
+  ],
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpPolicyInitialCounter": 0
 }

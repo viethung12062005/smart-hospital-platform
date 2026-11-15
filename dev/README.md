@@ -112,10 +112,18 @@ Measured on a kind cluster (10/11/2026, Docker VM 15,6 GB): bringing up `core` +
 
 Variables for services running outside the cluster are in `dev/.local/connection.env` (the "Profile full" block). Fake data for the cluster is created by `make seed-users` and by each service's seed (the SA generates fake data per ARC-11).
 
-## Not yet available (backlog)
-- **LOC-02** — complete realm (MFA for staff, additional claims).
-- **LOC-02** — complete realm (MFA for staff, additional claims).
+## Realm scope (LOC-02)
 
-> Verification status: `install-tools.sh` has been run for real (download + sha256 check, a second run does not re-download); the chart renders for all 8 services via `kubeconform --strict`;
-> the Java images (gateway, scheduling) and Python images build and run (non-root, `/info` returns 200); dependencies have been tried with Docker. **`make quickstart` has not been run end-to-end on a real kind cluster**
-> (the docs build environment cannot run kind): the first person to run it on a real machine should report any errors to the SA.
+The local realm ships the five roles (`patient`, `doctor`, `nurse`, `admin`, `dpo`), the `roles` and `audience`
+mappers, and a TOTP policy for MFA. Two deliberate differences from UAT/prod:
+
+- **MFA is off locally.** The chart sets `SHP_REQUIRE_MFA_FOR_STAFF=false` so the seeded staff users can sign in
+  without enrolling an authenticator; UAT/prod keep the default (`true`) and staff must enrol TOTP/WebAuthn.
+- **No `fhir_user` token claim.** The FHIR identity is resolved server-side from `identity_links` (60-second cache,
+  `detailed-design/15-authorization.md` §2, ADR-0018), so the token does not carry it and a stale claim cannot grant
+  access to the wrong record.
+
+> Verification status: `install-tools.sh` has been run for real; the chart renders for all 8 services via
+> `kubeconform --strict`; `make -C dev up` (core) and `make -C dev up PROFILE=full` have been run end-to-end on a real
+> kind cluster (14/14 dependencies Ready, health checks green); `make -C dev deploy SVC=all` brings all 8 services to
+> `Running` with `/health/ready` 200 through the gateway. Report any new failure to the SA.
