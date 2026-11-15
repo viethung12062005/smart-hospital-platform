@@ -24,32 +24,56 @@ public final class MongoMessaging {
 
   private MongoMessaging() {}
 
+  /** The collections whose platform indexes a service needs (03 §2, 04 §1–2). */
+  public enum Store {
+    OUTBOX,
+    INBOX,
+    /** Only services that accept Idempotency-Key requests (scheduling, document). */
+    IDEMPOTENCY
+  }
+
   /**
-   * Create the required indexes (idempotent). A service calls this at startup or in its init script
-   * (03 §2, 04 §1–2).
+   * Create every platform index (idempotent). Kept for tests and tooling; a service should call
+   * {@link #ensureIndexes(MongoTemplate, Store...)} with the stores it actually uses, so it does
+   * not create collections it never writes.
    */
   public static void ensureIndexes(MongoTemplate mongo) {
-    mongo
-        .indexOps(OUTBOX)
-        .createIndex(
-            new Index()
-                .on("occurredAt", Sort.Direction.ASC)
-                .named("ix_outbox_unpublished")
-                .partial(PartialIndexFilter.of(Criteria.where("publishedAt").is(null))));
-    mongo
-        .indexOps(INBOX)
-        .createIndex(
-            new Index()
-                .on("processedAt", Sort.Direction.ASC)
-                .named("ttl_inbox_14d")
-                .expire(14, TimeUnit.DAYS));
-    mongo
-        .indexOps(IDEMPOTENCY)
-        .createIndex(
-            new Index()
-                .on("createdAt", Sort.Direction.ASC)
-                .named("ttl_idempotency_24h")
-                .expire(Duration.ofHours(24)));
+    ensureIndexes(mongo, Store.values());
+  }
+
+  /**
+   * Create the indexes of the named stores (idempotent). A service calls this at startup or in its
+   * init script (03 §2, 04 §1–2).
+   */
+  public static void ensureIndexes(MongoTemplate mongo, Store... stores) {
+    for (Store store : stores) {
+      switch (store) {
+        case OUTBOX ->
+            mongo
+                .indexOps(OUTBOX)
+                .createIndex(
+                    new Index()
+                        .on("occurredAt", Sort.Direction.ASC)
+                        .named("ix_outbox_unpublished")
+                        .partial(PartialIndexFilter.of(Criteria.where("publishedAt").is(null))));
+        case INBOX ->
+            mongo
+                .indexOps(INBOX)
+                .createIndex(
+                    new Index()
+                        .on("processedAt", Sort.Direction.ASC)
+                        .named("ttl_inbox_14d")
+                        .expire(14, TimeUnit.DAYS));
+        case IDEMPOTENCY ->
+            mongo
+                .indexOps(IDEMPOTENCY)
+                .createIndex(
+                    new Index()
+                        .on("createdAt", Sort.Direction.ASC)
+                        .named("ttl_idempotency_24h")
+                        .expire(Duration.ofHours(24)));
+      }
+    }
   }
 
   /**
