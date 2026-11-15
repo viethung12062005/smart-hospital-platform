@@ -220,3 +220,69 @@ def test_only_patients_can_use_booking_chat(api: Any, role: str) -> None:
     with tc:
         other = bearer(sub="u2", roles=[role])
         assert tc.post(CHAT, json={"message": "x"}, headers=other).status_code == 403
+
+
+# ---------- AI-29: bad tool arguments and the 10-second deadline ----------
+def test_validate_args_rejects_bad_tool_calls() -> None:
+    from shp_ai.booking.tools import ToolValidationError, validate_args
+
+    today = datetime.now(UTC).date()
+    far = today + timedelta(days=60)
+    cases = [
+        ("delete_everything", {}),  # tool not in the allow-list
+        (SEARCH_SLOTS, {"specialty": "not-a-specialty", "from": today.isoformat(), "to": far.isoformat()}),
+        (SEARCH_SLOTS, {"specialty": "cardiology", "from": "03/12/2026", "to": far.isoformat()}),
+        # > 31 days
+        (
+            SEARCH_SLOTS,
+            {"specialty": "cardiology", "from": today.isoformat(), "to": (today + timedelta(days=40)).isoformat()},
+        ),
+        # in the past
+        (
+            SEARCH_SLOTS,
+            {
+                "specialty": "cardiology",
+                "from": (today - timedelta(days=2)).isoformat(),
+                "to": (today + timedelta(days=1)).isoformat(),
+            },
+        ),
+        (SEARCH_SLOTS, {"specialty": "cardiology", "from": today.isoformat(), "to": "2026-13-40"}),
+        (PROPOSE_BOOKING, {"slotId": "not-a-uuid"}),
+        (PROPOSE_CANCEL, {"appointmentId": "not-a-uuid"}),
+    ]
+    for name, args in cases:
+        with pytest.raises(ToolValidationError) as exc:
+            validate_args(name, args)
+        assert str(exc.value), (name, args)
+
+
+def test_validate_args_accepts_a_good_search() -> None:
+    from shp_ai.booking.tools import validate_args
+
+    today = datetime.now(UTC).date()
+    args = validate_args(
+        SEARCH_SLOTS,
+        {"specialty": "cardiology", "from": today.isoformat(), "to": (today + timedelta(days=7)).isoformat()},
+    )
+    assert args["specialty"] == "cardiology" and args["from"] == today.isoformat()
+
+
+def test_the_deadline_stops_the_loop_at_ten_seconds(monkeypatch: pytest.MonkeyPatch) -> None:
+    import shp_ai.booking.service as booking_service
+
+    monotonic = iter([0.0, booking_service.TOTAL_TIMEOUT_SECONDS + 0.001])
+    monkeypatch.setattr("shp_ai.booking.service.time.monotonic", lambda: next(monotonic, 1e9))
+
+    class NeverCalledRouter:
+        def complete(self, *a: Any, **kw: Any) -> Any:
+            raise AssertionError("the router must not be called after the deadline")
+
+    result = booking_service.run_turn(
+        NeverCalledRouter(),  # type: ignore[arg-type]
+        object(),  # type: ignore[arg-type]
+        "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01",
+        [],
+        "tôi muốn khám tim mạch",
+    )
+    assert result.reply == booking_service.DEFAULT_REPLY_NO_CONVERGENCE
+    assert result.rounds_used == 0 and result.options == []
