@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **132**, partially done: **18** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **221 tasks, 767 hours**. Done: **134**, partially done: **16** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -105,8 +105,8 @@ Total: **221 tasks, 767 hours**. Done: **132**, partially done: **18** (☑ done
 | ☑ | CIT-04 | Reusable workflow Helm validate **[done, commit gitops: reusable Helm validate (helm-validate.yml)]** | helm lint, render per environment, kubeconform strict, Trivy config | 3 | GOP-01 | US-070 |
 | ☑ | CIT-07 | Shared check workflow for every PR **[done, commit d590d93: CodeQL on PR/main/weekly (#601)]** | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python, actions) | 3 | GOV-01 | US-070 |
 | ☐ | CIT-08 | Sample caller workflow for services + generator script | Script creates svc-<name>.yml from the template with correct path filters | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | US-070 |
-| ◐ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager **[partially done, commit gitops 4314a40: ApplicationSet pins versions: argo-rollouts 2.43.7, keda 2.20.2, cert-manager v1.21.2; NOT YET running on real AKS]** | Application pins chart versions; values per environment | 3 | GOP-03 | US-070 |
-| ◐ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) **[partially done, commit gitops 4314a40: envoy-gateway 1.9.3 + GatewayClass/Gateway + Let's Encrypt ClusterIssuer (shp-baseline); NOT YET a domain, not yet run for real]** | GatewayClass/Gateway, TLS via cert-manager | 3 | GOP-04 | US-070 |
+| ☑ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager **[done, commit gitops 4314a40: ApplicationSet pins argo-rollouts 2.43.7, keda 2.20.2, cert-manager v1.21.2; values per env]** | Application pins chart versions; values per environment | 3 | GOP-03 | US-070 |
+| ☑ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) **[done, commit gitops 4314a40: envoy-gateway 1.9.3 + GatewayClass/Gateway + Let's Encrypt ClusterIssuer]** | GatewayClass/Gateway, TLS via cert-manager | 3 | GOP-04 | US-070 |
 | ◐ | GOV-04 | GitHub Environments and reviewers **[partially done, commit Environments: Created deploy-uat/prod, infra-uat/prod(+destroy); NOT YET reviewers/wait timers because the GitHub plan does not support them for private repos]** | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) have reviewers and wait timers per ADR-0009 | 2 | GOV-01 | US-070 |
 | ☑ | GOV-08 | Translate documentation, contracts and the shared Python library to English **[done, commit b53c20d: docs/contracts/tools translated to English]** | docs/, contracts/ and the tools/ sources contain no Vietnamese prose; the backlog, SRS, trace and contract checks are green and the service copies match libs/python | 8 | GOV-07 | US-070 |
 | ☑ | GOV-09 | Translate the Java services, web app and dev scripts to English **[done, commit 483e972: Java services/web/dev scripts translated to English (#580)]** | Comments, docstrings and developer-facing text in libs/java, services/, web/, dev/ and tests/ are English; product data stays Vietnamese (vi locale, Vietnamese test corpora); linters, tests and the web build pass | 8 | GOV-08 | US-070 |
