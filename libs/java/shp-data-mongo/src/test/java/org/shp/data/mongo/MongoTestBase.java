@@ -45,7 +45,12 @@ abstract class MongoTestBase {
     TX = new TransactionTemplate(new MongoTransactionManager(factory));
     for (String c :
         new String[] {
-          MongoMessaging.OUTBOX, MongoMessaging.INBOX, MongoMessaging.IDEMPOTENCY, "thing"
+          MongoMessaging.OUTBOX,
+          MongoMessaging.INBOX,
+          MongoMessaging.IDEMPOTENCY,
+          MongoMessaging.RESOURCE_HISTORY,
+          "thing",
+          "encounters"
         }) {
       if (!DB.collectionExists(c)) {
         DB.createCollection(c); // transactions do not create collections
@@ -58,7 +63,12 @@ abstract class MongoTestBase {
   void reset() {
     for (String c :
         new String[] {
-          MongoMessaging.OUTBOX, MongoMessaging.INBOX, MongoMessaging.IDEMPOTENCY, "thing"
+          MongoMessaging.OUTBOX,
+          MongoMessaging.INBOX,
+          MongoMessaging.IDEMPOTENCY,
+          MongoMessaging.RESOURCE_HISTORY,
+          "thing",
+          "encounters"
         }) {
       DB.getCollection(c).deleteMany(new Document());
     }
