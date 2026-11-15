@@ -18,11 +18,14 @@ import org.shp.fhir.search.Criterion.Token;
 import org.shp.fhir.search.Criterion.TokenCriterion;
 import org.shp.web.errors.ShpException;
 
-/** Parser tham số tìm kiếm FHIR (07 §4, SHR-03). Ngày không có giờ hiểu theo giờ Việt Nam (+07). */
+/**
+ * FHIR search-parameter parser (07 §4, SHR-03). A date without a time is interpreted in Vietnam
+ * time (+07).
+ */
 class SearchParserTest {
   final SearchParser parser = SearchParser.standard();
 
-  /** {@code "a=1&b=2&a=3"} → map giữ thứ tự, giá trị lặp gom lại (giống servlet). */
+  /** {@code "a=1&b=2&a=3"} → an ordered map that groups repeated values (like a servlet). */
   static Map<String, List<String>> q(String query) {
     Map<String, String[]> m = new LinkedHashMap<>();
     for (String pair : query.split("&")) {
@@ -50,7 +53,7 @@ class SearchParserTest {
             e -> {
               assertThat(e.info().code()).isEqualTo(code);
               assertThat(e.info().status()).isEqualTo(400);
-              assertThat(e.detail()).isNull(); // không lặp lại giá trị gửi lên (có thể là PII)
+              assertThat(e.detail()).isNull(); // do not echo the submitted value (it may be PII)
             });
   }
 
@@ -58,7 +61,7 @@ class SearchParserTest {
     return Instant.parse(s);
   }
 
-  // ---------- date: độ chính xác ----------
+  // ---------- date: precision ----------
   @ParameterizedTest(name = "{0}")
   @CsvSource({
     "2026,                          2025-12-31T17:00:00Z,     2026-12-31T17:00:00Z",
@@ -95,7 +98,7 @@ class SearchParserTest {
 
   @Test
   void repeatedDateParamsAreAnded() {
-    // Ví dụ của 08 S8: start=ge2026-12-01&start=lt2026-12-08
+    // Example from 08 S8: start=ge2026-12-01&start=lt2026-12-08
     var query = parse("Slot", "specialty=cardiology&start=ge2026-12-01&start=lt2026-12-08");
     assertThat(query.criteria("start"))
         .containsExactly(
@@ -117,7 +120,7 @@ class SearchParserTest {
         "start=2026-02-30",
         "start=26-11-01",
         "start=12/04/2026",
-        "start=2026-12-03T08:15", // có giờ mà thiếu múi giờ
+        "start=2026-12-03T08:15", // has a time but no timezone
         "start=2026-12-03T25:00Z",
         "start=xx2026-11",
         "start=ge",
@@ -224,12 +227,12 @@ class SearchParserTest {
     assertError("validation-failed", () -> parse("Appointment", "_page_token="));
   }
 
-  // ---------- tham số lạ → 400 (strict) ----------
+  // ---------- unknown parameter → 400 (strict) ----------
   @ParameterizedTest
   @ValueSource(
       strings = {
         "foo=1",
-        "name:exact=An", // modifier không hỗ trợ
+        "name:exact=An", // unsupported modifier
         "_sort=date",
         "_total=accurate",
         "start=2026-11" // Slot có start, Appointment thì không

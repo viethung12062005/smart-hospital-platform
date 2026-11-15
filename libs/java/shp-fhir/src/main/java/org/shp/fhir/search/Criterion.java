@@ -4,24 +4,25 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Một tiêu chí đã parse, có kiểu. Nhiều tiêu chí trong một {@link SearchQuery} là AND; nhiều giá
- * trị trong một tiêu chí (dấu phẩy) là OR. Store (SHR-10, SHR-11) dịch thẳng sang truy vấn DB.
+ * A parsed criterion with a type. Multiple criteria in one {@link SearchQuery} are AND-ed; multiple
+ * values in one criterion (comma-separated) are OR-ed. The store (SHR-10, SHR-11) translates them
+ * straight to a DB query.
  */
 public sealed interface Criterion {
   String param();
 
-  /** Mã có hoặc không có system; system null = khớp mọi system. */
+  /** A code with or without a system; a null system matches every system. */
   record Token(String system, String code) {}
 
   record TokenCriterion(String param, List<Token> anyOf) implements Criterion {}
 
-  /** Id của resource {@code targetType} (đã bỏ tiền tố {@code Type/}). */
+  /** The id of the {@code targetType} resource (the {@code Type/} prefix removed). */
   record ReferenceCriterion(String param, String targetType, List<String> anyOfIds)
       implements Criterion {}
 
   /**
-   * Khoảng thời gian đã chuẩn hóa từ tiền tố + độ chính xác: giá trị khớp khi {@code from ≤ t <
-   * to}. Biên null = không giới hạn phía đó.
+   * The normalized interval from the prefix + precision: a value matches when {@code from ≤ t <
+   * to}. A null bound means unbounded on that side.
    */
   record DateCriterion(String param, Instant from, Instant to) implements Criterion {}
 

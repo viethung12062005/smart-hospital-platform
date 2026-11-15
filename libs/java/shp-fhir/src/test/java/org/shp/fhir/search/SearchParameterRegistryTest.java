@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-/** Registry khớp các bảng tham số tìm kiếm của tài liệu API 08–10. */
+/** The registry matches the search-parameter tables of API docs 08–10. */
 class SearchParameterRegistryTest {
   final SearchParameterRegistry registry = SearchParameterRegistry.standard();
 

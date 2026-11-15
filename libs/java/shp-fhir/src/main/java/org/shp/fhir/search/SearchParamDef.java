@@ -1,15 +1,16 @@
 package org.shp.fhir.search;
 
 /**
- * Một tham số tìm kiếm của một resource type.
+ * One search parameter of one resource type.
  *
- * @param target resource type được tham chiếu (chỉ cho {@link SearchParamType#REFERENCE}), null với
- *     kiểu khác
+ * @param target the referenced resource type (only for {@link SearchParamType#REFERENCE}), null for
+ *     other types
  */
 public record SearchParamDef(String name, SearchParamType type, String target) {
   public SearchParamDef {
     if ((type == SearchParamType.REFERENCE) != (target != null)) {
-      throw new IllegalArgumentException("target chỉ dùng (và bắt buộc) cho REFERENCE: " + name);
+      throw new IllegalArgumentException(
+          "target is only valid (and required) for REFERENCE: " + name);
     }
   }
 

@@ -25,21 +25,24 @@ import org.shp.web.errors.ShpException;
 
 /**
  * Parse query FHIR ({@code status=free&start=ge2026-11-01}) thành {@link SearchQuery} (ADR-0003, 07
- * §4). Tham số lạ, modifier ({@code name:exact}) hoặc tiền tố không hỗ trợ → 400 {@code
- * unsupported-parameter}; giá trị sai → 400 {@code validation-failed}. Lỗi không kèm giá trị gửi
- * lên (có thể là PII như tên, số điện thoại).
+ * §4). An unknown parameter, a modifier ({@code name:exact}) or an unsupported prefix → 400 {@code
+ * unsupported-parameter}; a bad value → 400 {@code validation-failed}. Errors do not echo the
+ * submitted value (it may be PII such as a name or phone number).
  */
 public final class SearchParser {
   public static final int DEFAULT_COUNT = 20;
   public static final int MAX_COUNT = 100;
 
-  /** Ngày không có giờ ({@code 2026-11}) hiểu theo giờ Việt Nam; giá trị lưu ở UTC. */
+  /**
+   * A date without a time ({@code 2026-11}) is interpreted in Vietnam time; values are stored in
+   * UTC.
+   */
   public static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
   private static final int MAX_STRING = 100;
   private static final Set<String> UNSUPPORTED_PREFIXES = Set.of("ne", "sa", "eb", "ap");
   private static final Pattern ID = Pattern.compile("[A-Za-z0-9\\-.]{1,64}");
-  // YYYY[-MM[-DD[Thh:mm[:ss[.f]](Z|±hh:mm)]]]: có giờ thì bắt buộc múi giờ (FHIR dateTime).
+  // YYYY[-MM[-DD[Thh:mm[:ss[.f]](Z|±hh:mm)]]]: a time requires a timezone (FHIR dateTime).
   private static final Pattern DATE =
       Pattern.compile(
           "(\\d{4})(?:-(\\d{2})(?:-(\\d{2})"
@@ -53,12 +56,12 @@ public final class SearchParser {
     this.zone = zone;
   }
 
-  /** Parser với tham số chuẩn (08–10) và giờ Việt Nam. */
+  /** A parser with the standard parameters (08–10) and Vietnam time. */
   public static SearchParser standard() {
     return new SearchParser(SearchParameterRegistry.standard(), DEFAULT_ZONE);
   }
 
-  /** {@code HttpServletRequest.getParameterMap()} → dạng {@link #parse} nhận. */
+  /** {@code HttpServletRequest.getParameterMap()} → the shape {@link #parse} accepts. */
   public static Map<String, List<String>> fromServlet(Map<String, String[]> params) {
     Map<String, List<String>> out = new LinkedHashMap<>();
     params.forEach((k, v) -> out.put(k, Arrays.asList(v)));
@@ -113,7 +116,8 @@ public final class SearchParser {
   }
 
   /**
-   * {@code code}, {@code system|code}, {@code system|} (mọi mã của system); {@code |code} = code.
+   * {@code code}, {@code system|code}, {@code system|} (every code of the system); {@code |code} =
+   * code.
    */
   private Token token(String value) {
     int bar = value.indexOf('|');
@@ -164,7 +168,10 @@ public final class SearchParser {
     };
   }
 
-  /** Khoảng {@code [start, end)} mà giá trị phủ theo độ chính xác: năm, tháng, ngày, phút, giây… */
+  /**
+   * The {@code [start, end)} interval a value covers by precision: year, month, day, minute,
+   * second…
+   */
   private Instant[] range(String value) {
     Matcher m = DATE.matcher(value);
     if (!m.matches()) {

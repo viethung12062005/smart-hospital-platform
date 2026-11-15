@@ -3,16 +3,17 @@ package org.shp.fhir.search;
 import java.util.List;
 
 /**
- * Truy vấn tìm kiếm đã parse.
+ * A parsed search query.
  *
  * @param criteria các tiêu chí (AND)
- * @param count số kết quả mỗi trang ({@code _count}: mặc định 20, tối đa 100)
- * @param pageToken {@code _page_token} mờ của trang tiếp, null ở trang đầu (giải mã ở SHR-04)
+ * @param count the number of results per page ({@code _count}: default 20, maximum 100)
+ * @param pageToken the opaque {@code _page_token} of the next page, null on the first page (decoded
+ *     in SHR-04)
  */
 public record SearchQuery(
     String resourceType, List<Criterion> criteria, int count, String pageToken) {
 
-  /** Các tiêu chí của một tham số, theo thứ tự xuất hiện. */
+  /** The criteria of one parameter, in the order they appeared. */
   public List<Criterion> criteria(String param) {
     return criteria.stream().filter(c -> c.param().equals(param)).toList();
   }

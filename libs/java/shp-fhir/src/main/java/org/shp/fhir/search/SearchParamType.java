@@ -1,15 +1,16 @@
 package org.shp.fhir.search;
 
-/** Kiểu tham số tìm kiếm FHIR mà SHP hỗ trợ (ADR-0003, 07 §4). */
+/** The FHIR search parameter types SHP supports (ADR-0003, 07 §4). */
 public enum SearchParamType {
-  /** {@code code} hoặc {@code system|code}; dấu phẩy = OR. */
+  /** {@code code} or {@code system|code}; a comma means OR. */
   TOKEN,
-  /** {@code Type/id} hoặc {@code id}; dấu phẩy = OR. */
+  /** {@code Type/id} or {@code id}; a comma means OR. */
   REFERENCE,
   /**
-   * Ngày/giờ có tiền tố {@code eq|ge|gt|le|lt}; độ chính xác quyết định khoảng (năm, tháng, ngày…).
+   * A date/time with a {@code eq|ge|gt|le|lt} prefix; the precision determines the interval (year,
+   * month, day…).
    */
   DATE,
-  /** Chuỗi tự do (ví dụ tên); chuẩn hóa so khớp do service làm. */
+  /** A free string (e.g. a name); the service normalizes the match. */
   STRING
 }

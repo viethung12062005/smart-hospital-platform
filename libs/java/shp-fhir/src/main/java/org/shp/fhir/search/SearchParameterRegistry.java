@@ -11,12 +11,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Tham số tìm kiếm hỗ trợ theo resource type (ADR-0003). Tham số không khai báo ở đây → 400 {@code
- * unsupported-parameter} (07 §4, strict). Endpoint có thể đòi thêm ràng buộc riêng (tham số bắt
- * buộc, khoảng ngày tối đa) sau khi parse.
+ * The supported search parameters per resource type (ADR-0003). A parameter not declared here → 400
+ * {@code unsupported-parameter} (07 §4, strict). An endpoint may add its own constraints (a
+ * required parameter, a maximum date range) after parsing.
  */
 public final class SearchParameterRegistry {
-  /** Resource type trong phạm vi (01 §1). */
+  /** The in-scope resource type (01 §1). */
   public static final Set<String> RESOURCE_TYPES =
       Set.of(
           "Patient",
@@ -77,7 +77,7 @@ public final class SearchParameterRegistry {
     this.byType = byType;
   }
 
-  /** Tham số theo các bảng API 08–10. */
+  /** The parameters per the API tables 08–10. */
   public static SearchParameterRegistry standard() {
     return STANDARD;
   }
@@ -86,15 +86,18 @@ public final class SearchParameterRegistry {
     return new Builder();
   }
 
-  /** Định nghĩa tham số; rỗng nếu resource type không hỗ trợ tham số đó. */
+  /** The parameter definition; empty when the resource type does not support it. */
   public Optional<SearchParamDef> find(String resourceType, String name) {
     return Optional.ofNullable(params(resourceType).get(name));
   }
 
-  /** Mọi tham số của một resource type (rỗng nếu chỉ hỗ trợ {@code _count}/{@code _page_token}). */
+  /**
+   * All parameters of a resource type (empty when only {@code _count}/{@code _page_token} are
+   * supported).
+   */
   public Map<String, SearchParamDef> params(String resourceType) {
     if (!RESOURCE_TYPES.contains(resourceType)) {
-      throw new IllegalArgumentException("Resource type ngoài phạm vi: " + resourceType);
+      throw new IllegalArgumentException("Resource type out of scope: " + resourceType);
     }
     return byType.getOrDefault(resourceType, Map.of());
   }
@@ -106,12 +109,12 @@ public final class SearchParameterRegistry {
 
     public Builder add(String resourceType, SearchParamDef... defs) {
       if (!RESOURCE_TYPES.contains(resourceType)) {
-        throw new IllegalArgumentException("Resource type ngoài phạm vi: " + resourceType);
+        throw new IllegalArgumentException("Resource type out of scope: " + resourceType);
       }
       var params = byType.computeIfAbsent(resourceType, t -> new LinkedHashMap<>());
       for (SearchParamDef d : defs) {
         if (d.name().startsWith("_") || params.putIfAbsent(d.name(), d) != null) {
-          throw new IllegalArgumentException("Tham số trùng hoặc dành riêng: " + d.name());
+          throw new IllegalArgumentException("Duplicate or reserved parameter: " + d.name());
         }
       }
       return this;
