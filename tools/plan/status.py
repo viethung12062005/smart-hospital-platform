@@ -138,7 +138,7 @@ STATUS = {
     "SHR-06": ("done", "5e423ab", "libs/java/shp-events: CloudEvent + CloudEvents.create (UUIDv7, traceparent, ≤64KB) + EventSchemas.validate (embedded schemas)"),
     "SHR-07": ("done", "3764d57", "shp-data-postgres + shp-data-mongo: outbox written in the same transaction + relay (SKIP LOCKED / findAndModify with lease expiry); the real EventPublisher is StreamEventPublisher (shp-messaging, SHR-08); relay runs in 5 services, outbox → RabbitMQ tested in scheduling"),
     "SHR-08": ("done", "3764d57", "PostgresInbox + MongoInbox; shp-messaging: Spring Cloud Stream (RabbitMQ local, Service Bus cloud), EventConsumers.idempotent; tested with real RabbitMQ: duplicate events processed once, 5 deliveries then DLQ, bad schema to DLQ. Service Bus checked when uat exists"),
-    "SHR-09": ("partial", "5e423ab", "shp-events AuditRecordBuilder (redacts IPs, blocks values in resource) + AuditSink; NOT YET a sink that writes the outbox"),
+    "SHR-09": ("done", "5e423ab", "AuditRecordBuilder + AuditSink (InMemory + Mongo/Postgres outbox sinks) + tests"),
     "SHR-10": ("done", "c1832c5", "Mongo resource store with version CAS + history + outbox (#605)"),
     "SHR-11": ("done", "7f3cb08", "Mongo search executor (#608)"),
     "SHR-12": ("done", "3764d57", "shp-data-mongo MongoIdempotency + MongoMessaging.inTransaction (retry on conflict); 21 tests against real MongoDB"),

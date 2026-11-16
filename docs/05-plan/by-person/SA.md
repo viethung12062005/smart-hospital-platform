@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **141**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **221 tasks, 767 hours**. Done: **142**, partially done: **10** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -130,7 +130,7 @@ Total: **221 tasks, 767 hours**. Done: **141**, partially done: **11** (☑ done
 | ☑ | SCF-05 | Scaffold audit worker (code skeleton, pipeline, values, Blob WORM/Log Analytics) **[done, commit 8a9aada: audit Blob WORM + Log Analytics wiring (#599)]** | Service from template; svc-audit.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☑ | SCF-06 | Scaffold ai-service FastAPI (code skeleton, pipeline, values, ai node pool) **[done, commit gitops: ai service scaffold + ai node pool (#10)]** | FastAPI from template; svc-ai.yml; ai node pool | 2 | LOC-04, CIT-08 | ENABLER |
 | ☑ | SCF-07 | Scaffold ml-service (Python code skeleton, Dockerfile, pipeline, values, MongoDB/bus/MLflow wiring) **[done, commit c909d5b: ml service scaffold]** | Sample service runs through the template pipeline | 2 | LOC-04, CIT-08 | ENABLER |
-| ◐ | SHR-09 | Audit emitter library: builds audit.recorded (schema 05), redacts IPs, blocks PII, FHIR middleware **[partially done, commit 5e423ab: shp-events AuditRecordBuilder (redacts IPs, blocks values in resource) + AuditSink; NOT YET a sink that writes the outbox]** | Audit contains no clinical content; search records only parameter names | 4 | SHR-06 | US-047 |
+| ☑ | SHR-09 | Audit emitter library: builds audit.recorded (schema 05), redacts IPs, blocks PII, FHIR middleware **[done, commit 5e423ab: AuditRecordBuilder + AuditSink (InMemory + Mongo/Postgres outbox sinks) + tests]** | Audit contains no clinical content; search records only parameter names | 4 | SHR-06 | US-047 |
 | ☑ | SHR-11 | Mongo search executor: compile search criteria to query + use index **[done, commit 7f3cb08: Mongo search executor (#608)]** | Query plan uses IXSCAN for main queries | 3 | SHR-10 | ENABLER |
 | ☑ | SHR-12 | Idempotency-Key for MongoDB (document service) **[done, commit 3764d57: shp-data-mongo MongoIdempotency + MongoMessaging.inTransaction (retry on conflict); 21 tests against real MongoDB]** | Same key → same result; different body 422 | 2 | SHR-05, SHR-10 | US-035 |
 | ☑ | SHR-27 | Authz: emit audit for every decision (allow and deny) **[done, commit 5e423ab: AuthzAudit.fromDecision + interceptor records audit for allow, deny, 5xx errors]** | Every Deny emits audit outcome=denied with a reason code; tests | 2 | SHR-24, SHR-09 | US-047 |
