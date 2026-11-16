@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **142**, partially done: **10** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **221 tasks, 767 hours**. Done: **143**, partially done: **9** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -47,7 +47,7 @@ Total: **221 tasks, 767 hours**. Done: **142**, partially done: **10** (☑ done
 | ☑ | SHR-01 | FHIR R4 JSON serialize/parse (HAPI FHIR) + round-trip tests for in-scope resources **[done, commit 9344576: FHIR R4 parse/serialize (HAPI) in shp-fhir]** | Invalid parse returns 400 validation-failed; test each resource type | 3 | LOC-03 | ENABLER |
 | ☑ | SHR-02 | Error model: exception → OperationOutcome / Problem Details + error code catalog **[done, commit 5e423ab: libs/java/shp-web/errors: ErrorCatalog (27 codes, tests cross-check 07 §5), ShpException, ErrorWriter, ShpExceptionHandler]** | Every code in 07 §5 has a test; vi/en messages, no PII/stack trace leaks | 3 | SHR-01 | ENABLER |
 | ☑ | SHR-03 | Search parameter registry + parser (token, reference, date with precision, _count) **[done, commit 9344576: FHIR search parameter registry and parser (#561)]** | ge/gt/le/lt/eq, '2026-11' = whole month; unknown parameter → 400 | 4 | SHR-01 | ENABLER |
-| ◐ | SHR-20 | JWT bearer from Keycloak (standard OIDC): map roles claim, enforce amr=mfa for staff **[partially done, commit 5e423ab: shp-web ShpJwt + SecurityFilterChain (issuer, audience, expiry, staff MFA); tested with local HMAC tokens; NOT YET tested against real Keycloak]** | Tests for valid/bad-signature/expired/wrong-aud tokens and staff missing MFA; configured via environment variables | 3 | LOC-02 | US-008, US-066 |
+| ☑ | SHR-20 | JWT bearer from Keycloak (standard OIDC): map roles claim, enforce amr=mfa for staff **[done, commit 5e423ab: ShpJwt + SecurityFilterChain; KeycloakTokenTest against a real Keycloak (Testcontainers)]** | Tests for valid/bad-signature/expired/wrong-aud tokens and staff missing MFA; configured via environment variables | 3 | LOC-02 | US-008, US-066 |
 | ☑ | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled + linkedProfiles (record, scope), 60-second cache **[done, commit 5e423ab: shp-web IdentityResolver (60s/5s cache) + HttpIdentityLinkClient + IdentityInterceptor; clinical-side internal endpoint is a dev task]** | Locked accounts rejected within ≤ 60 seconds; cache expires correctly; on clinical failure use the cache, return 503 when there is no cache | 3 | SHR-20 | US-007 |
 | ☑ | SHR-22 | Authz: schema + loader + validator for contracts/authz/matrix.yaml **[done, commit 95d2f74: libs/java/shp-authz: AuthzMatrix (Java)]** | A matrix with a bad schema (missing role, unknown predicate) fails the build; unit tests | 3 | ARC-19 | ENABLER |
 | ☑ | SHR-23 | Authz: predicates own, self-practitioner, care, breakglass, released, before-2h, encounter-finished, not-care **[done, commit 95d2f74: Predicates in AuthorizationEngine (care/breakglass received via ResourceContext, no network calls)]** | Each predicate has allow/deny tests; care/breakglass predicates go through a mockable interface | 4 | SHR-22 | ENABLER |

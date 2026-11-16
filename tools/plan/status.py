@@ -142,7 +142,7 @@ STATUS = {
     "SHR-10": ("done", "c1832c5", "Mongo resource store with version CAS + history + outbox (#605)"),
     "SHR-11": ("done", "7f3cb08", "Mongo search executor (#608)"),
     "SHR-12": ("done", "3764d57", "shp-data-mongo MongoIdempotency + MongoMessaging.inTransaction (retry on conflict); 21 tests against real MongoDB"),
-    "SHR-20": ("partial", "5e423ab", "shp-web ShpJwt + SecurityFilterChain (issuer, audience, expiry, staff MFA); tested with local HMAC tokens; NOT YET tested against real Keycloak"),
+    "SHR-20": ("done", "5e423ab", "ShpJwt + SecurityFilterChain; KeycloakTokenTest against a real Keycloak (Testcontainers)"),
     "SHR-21": ("done", "5e423ab", "shp-web IdentityResolver (60s/5s cache) + HttpIdentityLinkClient + IdentityInterceptor; clinical-side internal endpoint is a dev task"),
     "SHR-22": ("done", "95d2f74", "libs/java/shp-authz: AuthzMatrix (Java)"),
     "SHR-23": ("done", "95d2f74", "Predicates in AuthorizationEngine (care/breakglass received via ResourceContext, no network calls)"),
