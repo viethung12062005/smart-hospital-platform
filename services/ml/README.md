@@ -41,6 +41,22 @@ p95 prediction latency 6.7 ms, every subgroup passes; the auto-selected high-ris
 The model is stored as LightGBM text (no pickle) with sha256, re-verified on load. The training job only sets the `candidate` alias;
 `production` changes only through shadow/canary (ML-24) or an authorized person. Gate failure: nothing is registered, but the run is still logged with the reason.
 
+### Training in CI (MLO-01)
+
+`.github/workflows/ml-train.yml` runs the commands a reviewer would run by hand, on every change to the
+training code or the data generator (and on manual dispatch):
+
+```
+python -m shp_ml.synth --out data/noshow.parquet --seed 42          # dataset + noshow.json (hash)
+python -m shp_ml.pipeline --data data/noshow.parquet --registry runs/registry --seed 42   # exit code 2 = gate failed
+```
+
+The job fails when a data check or a gate fails. The model (`model.txt`), `meta.json`, the model card and the run log
+are published as the workflow artifact `no-show-model-<git sha>`; the dataset hash, the model hash and the gate table are
+in the job summary. On `main`, when the repository variable `MLFLOW_TRACKING_URI` is set, the `register` job runs the
+same pipeline against the cluster MLflow and sets `candidate`; without the variable it is skipped with a note. What
+happens after `candidate` (shadow, canary, rollback) is [16-mlops §6](../../docs/03-architecture/detailed-design/16-mlops.md).
+
 **Limitations:** the model only relearns self-written group rules; the numbers demonstrate the MLOps process, not real predictive ability.
 
 `shp_platform` in `src/` is a copy of `libs/python`: do not edit it here; edit the source and run `python tools/pylib/sync.py`.

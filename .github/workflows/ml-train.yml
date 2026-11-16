@@ -1,0 +1,174 @@
+# Training pipeline for the no-show model (MLO-01; 16-mlops §2, §3, §6).
+#   train           synthetic dataset (fixed seed) -> data validation -> LR baseline + LightGBM -> quality gate.
+#                   A failed data check or a failed gate fails the job. The model, model card, metrics and run log are
+#                   published as a workflow artifact; the dataset hash and the model hash are in the job summary.
+#   register        only on main (or manual dispatch) and only when the MLFLOW_TRACKING_URI variable is set: runs the same
+#                   pipeline against the cluster MLflow, so the full gate (including "no regression vs production")
+#                   decides, and sets the `candidate` alias. It never moves `production`: the serving pods pick the
+#                   candidate up, shadow it and the canary promotes or rolls back (16-mlops §6, shp-gitops envs/*/ml).
+#   not-registered  the same trigger without the variable: writes a note to the summary, main stays green.
+# Nothing here talks to Azure. Synthetic data only: the dataset is generated in the job, never downloaded.
+name: ml-train
+on:
+  pull_request:
+    paths: &training-paths
+      - services/ml/src/shp_ml/synth.py
+      - services/ml/src/shp_ml/checks.py
+      - services/ml/src/shp_ml/features.py
+      - services/ml/src/shp_ml/train.py
+      - services/ml/src/shp_ml/pipeline.py
+      - services/ml/src/shp_ml/evaluate.py
+      - services/ml/src/shp_ml/model.py
+      - services/ml/src/shp_ml/registry.py
+      - services/ml/src/shp_ml/card.py
+      - services/ml/pyproject.toml
+      - .github/workflows/ml-train.yml
+  push:
+    branches: [main]
+    paths: *training-paths
+  workflow_dispatch:
+    inputs:
+      seed: { description: "Seed for the data generator and the training", required: false, default: "42" }
+permissions:
+  contents: read
+concurrency:
+  group: ml-train-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+env:
+  SEED: ${{ inputs.seed || '42' }}
+  DATASET: data/noshow.parquet
+defaults:
+  run:
+    shell: bash
+    working-directory: services/ml
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      dataset-sha256: ${{ steps.data.outputs.sha256 }}
+      model-sha256: ${{ steps.summary.outputs.model-sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/ml/pyproject.toml
+      - name: Install the training dependencies
+        run: python -m pip install -e ".[train]"
+      - name: Generate the synthetic dataset
+        id: data
+        run: |
+          python -m shp_ml.synth --out "$DATASET" --seed "$SEED"
+          echo "sha256=$(sha256sum "$DATASET" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Validate the data (schema, ranges, missing rate, leakage, label rate)
+        run: |
+          python - <<'PY'
+          import os
+          import pandas as pd
+          from shp_ml.checks import check
+          facts = pd.read_parquet(os.environ["DATASET"])
+          check(facts)  # raises DataCheckError: the job stops before training
+          print(f"data checks passed: {len(facts)} rows")
+          PY
+      - name: Train and apply the quality gate
+        # Exit code 2 when a gate fails: nothing is registered, the run log still records which gate and which value.
+        run: |
+          mkdir -p runs
+          python -m shp_ml.pipeline --data "$DATASET" --registry runs/registry --seed "$SEED" | tee runs/result.json
+      - name: Job summary (dataset hash, model hash, gates)
+        id: summary
+        if: always()
+        env:
+          DATASET_SHA256: ${{ steps.data.outputs.sha256 }}
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          import os
+          from pathlib import Path
+
+          reg = Path("runs/registry")
+          print("## No-show model training\n")
+          print("Synthetic data only: the numbers demonstrate the MLOps process, not real predictive ability.\n")
+          print("| Item | Value |\n|---|---|")
+          print(f"| Seed | `{os.environ['SEED']}` |")
+          print(f"| Dataset sha256 | `{os.environ.get('DATASET_SHA256') or 'not generated'}` |")
+          runs = sorted((reg / "runs").glob("*.json")) if (reg / "runs").is_dir() else []
+          run = json.loads(runs[-1].read_text(encoding="utf-8")) if runs else None
+          metas = sorted(reg.glob("models/*/meta.json"))
+          meta = json.loads(metas[-1].read_text(encoding="utf-8")) if metas else None
+          if meta:
+              print(f"| Model sha256 (`model.txt`) | `{meta['modelSha256']}` |")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+                  out.write(f"model-sha256={meta['modelSha256']}\n")
+          if run:
+              print(f"| Git SHA | `{run['tags']['gitSha']}` |")
+              print(f"| Parameters | `{json.dumps(run['params'])}` |")
+              print(f"| Quality gate | **{'passed' if run['gate']['passed'] else 'FAILED - nothing registered'}** |")
+              print("\n| Gate | Value | Limit | Result |\n|---|---|---|---|")
+              for c in run["gate"]["checks"]:
+                  print(f"| {c['name']} | {c['value']} | {c['limit']} | {'pass' if c['passed'] else 'FAIL'} |")
+          else:
+              print("\nNo training run was logged: the job stopped before training (see the failed step).")
+          PY
+      - name: Publish the model, model card, metrics and run log
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: no-show-model-${{ github.sha }}
+          path: |
+            services/ml/runs/
+            services/ml/data/noshow.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  register:
+    # Needs a deployed MLflow that the runner can reach. Until the variable exists this job is skipped (see not-registered).
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.MLFLOW_TRACKING_URI != ''
+    needs: train
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MLFLOW_TRACKING_URI: ${{ vars.MLFLOW_TRACKING_URI }}
+      # Optional basic-auth for the MLflow ingress; mlflow reads both from the environment. Empty when not configured.
+      MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
+      MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
+      EXPECTED_SHA256: ${{ needs.train.outputs.dataset-sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: services/ml/pyproject.toml
+      - name: Install the training dependencies and the MLflow client
+        run: python -m pip install -e ".[train,mlflow]"
+      - name: Regenerate the dataset and check it is the one the train job used
+        run: |
+          python -m shp_ml.synth --out "$DATASET" --seed "$SEED"
+          echo "$EXPECTED_SHA256  $DATASET" | sha256sum --check -
+      - name: Train against the cluster registry and set the candidate alias
+        # Same seed + same dataset hash = same model as the train job; here the gate also compares with `production`.
+        run: |
+          python -m shp_ml.pipeline --data "$DATASET" --mlflow "$MLFLOW_TRACKING_URI" --seed "$SEED" | tee result.json
+          {
+            echo "## Registered in MLflow"
+            echo "Alias \`candidate\` -> version \`$(jq -r .version result.json)\` (run \`$(jq -r .runId result.json)\`)."
+            echo "The production alias is not touched: shadow and canary decide (16-mlops §6)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  not-registered:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.MLFLOW_TRACKING_URI == ''
+    needs: train
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Report that the model was trained but not registered
+        working-directory: .
+        run: |
+          msg="Model trained and gated, not registered: MLflow is not configured yet (repository variable MLFLOW_TRACKING_URI). The candidate alias and the canary start once the environment exists."
+          echo "::notice::$msg"
+          echo "$msg" >> "$GITHUB_STEP_SUMMARY"

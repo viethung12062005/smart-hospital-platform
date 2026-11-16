@@ -287,6 +287,7 @@ automation:
       - services/ml/tests/test_training_pipeline.py::test_gate_rules
       - services/ml/tests/test_training_pipeline.py::test_candidate_worse_than_production_is_rejected
       - services/ml/tests/test_training_pipeline.py::test_ece_and_threshold
+      - services/ml/tests/test_training_pipeline.py::test_ci_commands_generate_train_and_exit_2_when_the_gate_fails
   TC-NFR-C2:
     status: automated
     refs:

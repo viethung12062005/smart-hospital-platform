@@ -19,7 +19,7 @@ Default branch `main`. Enable for all 4 repos: **Secret scanning + Push protecti
 | Rule | Value |
 |---|---|
 | Require Pull Request | yes; minimum **1 review**; dismiss approval when new commits are pushed; require review from Code Owners |
-| Required status checks | app repo: only `pr-gate` (workflow `pr-gate.yml` aggregates the results of `pr-checks`, `contracts`, `libs-java`, every `svc-*`; these workflows are path-filtered so they cannot be required individually); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
+| Required status checks | app repo: only `pr-gate` (workflow `pr-gate.yml` aggregates the results of `pr-checks`, `contracts`, `libs-java`, `ml-train`, every `svc-*`; these workflows are path-filtered so they cannot be required individually); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
 | Block force-push and deletion of branch `main` | yes |
 | Require linear history | yes (squash merge) |
 | Bypass | only the **GitOps bot GitHub App** on `shp-gitops` for path `envs/uat/**` |
@@ -117,6 +117,7 @@ Applied to all 4 repos: ruleset `protect-main` (section 2), squash-only, delete 
 | Secret scanning + push protection | Not available on private repos on the standard plan | `gitleaks` in `pr-checks` replaces it; re-enable when upgrading the plan |
 | Required reviewers / wait timer for Environments | Not supported on private repos on the standard plan | Approval gate = PR review (CODEOWNERS); `envs/prod/` approved by SA. The infrastructure workflows (`env-provision`, `env-destroy`) check that `github.triggering_actor` is the repo owner |
 | Push images before Azure exists | `svc-*` on `main` only push when the `ACR_NAME` variable has a value | No variable yet: the `not-pushed` job writes a note to the Summary, `promote-uat` is skipped, `main` stays green |
+| Register the model before the cluster exists | `ml-train` on `main` only registers in MLflow when the `MLFLOW_TRACKING_URI` variable has a value (optional secrets `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`) | No variable yet: the `not-registered` job writes a note to the Summary, the model stays a workflow artifact, `main` stays green |
 | GitOps bot committing directly to `envs/uat/**` | The `protect-main` ruleset of `shp-gitops` does not yet list the App in its bypass list | When creating the GitOps App: add the App to the bypass list of the `shp-gitops` ruleset, otherwise `promote-uat` (mode `commit`) is blocked |
 | `dependency-review`, CodeQL | Require GitHub Advanced Security | Skipped on private repos (templates PR #2) |
 | GitHub Project (GOV-07) | The `gh` token lacks the `project` scope | `gh auth refresh -s project,read:project` then import `docs/05-plan/backlog.csv` |
