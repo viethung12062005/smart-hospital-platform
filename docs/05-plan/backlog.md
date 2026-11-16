@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **348 tasks**, **1199 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **349 tasks**, **1207 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -14,13 +14,13 @@ Total: **348 tasks**, **1199 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W4 | 13 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
-| W7 | **47** | 30 | 30 | 30 |
+| W7 | **55** | 30 | 30 | 30 |
 | W8 | **65** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **285** | **120** | **169** | **128** |
+| **Total** | **309** | **128** | **171** | **131** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 

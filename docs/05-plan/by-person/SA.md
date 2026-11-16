@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **222 tasks, 775 hours**. Done: **132**, partially done: **18** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -190,7 +190,7 @@ Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done
 | ◐ | ML-25 | Export metrics for canary analysis: error rate, p95, score distribution, agreement, version label **[partially done, commit d5d63c1: Per-model_version metrics: latency, errors, score distribution, highRisk, agreement; AnalysisTemplate (MLO-03) NOT YET]** | Prometheus has metrics per model_version for AnalysisTemplate | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart for the web app **[partially done, commit branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5: Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster]** | Non-root nginx container using the shared chart | 2 | WEB-01 | US-066 |
 
-## Week 7 — 81 hours
+## Week 7 — 89 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -217,6 +217,7 @@ Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done
 | ☐ | IAM-08 | Sign-up page with phone number or email, terms of use | Sign-up does not reveal existing accounts; Vietnamese by default | 3 | IAM-03 | US-001, US-008 |
 | ☐ | OBS-01 | Standard RED dashboard for every service | Grafana dashboard by service label: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLOs + burn-rate alerts | SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts | 3 | OBS-01 | ENABLER |
+| ☐ | TST-05 | Automated API and contract test framework in CI (Testcontainers, OpenAPI, event schema) | Every service has API tests running in CI; producer/consumer contract tests | 8 | ARC-12 | ENABLER |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
 ## Week 8 — 69 hours
