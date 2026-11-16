@@ -161,4 +161,6 @@ STATUS = {
     "CLN-25": ("done", "5b07036", "terminology loader (idempotent load, O(1) lookup) + ObservationCodeValidator (#600)"),
     "ARC-13": ("done", "701ddb7", "Sprint S1 review and S2 planning minutes in docs/05-plan/sprint-reviews/S1.md (#619)"),
     "CIT-08": ("done", "c909d5b", "tools/scaffold/java_service.py and python_service.py generate svc-<name>.yml with path filters"),
+    "TST-05": ("done", "0f14a8e", "every service runs API tests in its svc-* workflow; consumer contract tests for the implemented consumers (notification E1/E10, ml E1/E2/E3/E5/E7) (#620); contracts workflow checks OpenAPI and event schemas"),
+    "REQ-09": ("partial", "3e001c8", "baseline and change-request process in docs/02-requirements/CHANGE-REQUEST.md (#617), cross-review checks green; NOT YET the recorded team sign-off"),
 }
