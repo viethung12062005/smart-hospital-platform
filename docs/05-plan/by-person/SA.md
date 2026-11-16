@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **221 tasks, 767 hours**. Done: **141**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -100,11 +100,11 @@ Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done
 | ☑ | AI-02 | Document parser: PDF, DOCX, Markdown → structured text (sections, pages) **[done, commit 2b6a50c: PDF/DOCX/Markdown parser keeps headings and pages]** | Keeps section titles and page numbers; test with sample documents | 3 | AI-01 | US-052 |
 | ☑ | AI-03 | Chunker: 600 tokens, 80 overlap, split by section heading **[done, commit 2b6a50c: 600/80 chunker does not cut mid-heading]** | Chunks do not cut across sections; length tests | 4 | AI-02 | US-052 |
 | ☑ | AI-04 | Local bge-m3 embedding (Ollama, 1024 dims) + index upsert/delete; version swap with no gap **[done, commit 2b6a50c: bge-m3 embeddings (Ollama) + upsert/delete; old chunks deleted after new chunks enter the index]** | New chunks indexed before old deleted; test | 4 | AI-03, PY-07 | US-052 |
-| ☐ | ARC-13 | Sprint review + planning S1 | Demo, update backlog status and risks; short minutes | 2 |  | ENABLER |
+| ☑ | ARC-13 | Sprint review + planning S1 **[done, commit edbccde: sprint S1 review + S2 planning minutes (#619)]** | Demo, update backlog status and risks; short minutes | 2 |  | ENABLER |
 | ☑ | CIT-02 | Reusable workflow Python CI **[done, commit gitops: reusable Python CI (python-ci.yml)]** | ruff lint+format, mypy, pytest + coverage, pip-audit | 3 | GOV-01 | US-070 |
 | ☑ | CIT-04 | Reusable workflow Helm validate **[done, commit gitops: reusable Helm validate (helm-validate.yml)]** | helm lint, render per environment, kubeconform strict, Trivy config | 3 | GOP-01 | US-070 |
 | ☑ | CIT-07 | Shared check workflow for every PR **[done, commit d590d93: CodeQL on PR/main/weekly (#601)]** | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python, actions) | 3 | GOV-01 | US-070 |
-| ☐ | CIT-08 | Sample caller workflow for services + generator script | Script creates svc-<name>.yml from the template with correct path filters | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | US-070 |
+| ☑ | CIT-08 | Sample caller workflow for services + generator script **[done, commit main: svc-<name>.yml generator (tools/scaffold) + generated workflows]** | Script creates svc-<name>.yml from the template with correct path filters | 2 | CIT-01, CIT-02, CIT-03, CIT-06 | US-070 |
 | ☑ | GOP-04 | Platform add-on: Argo Rollouts, KEDA, cert-manager **[done, commit gitops 4314a40: ApplicationSet pins argo-rollouts 2.43.7, keda 2.20.2, cert-manager v1.21.2; values per env]** | Application pins chart versions; values per environment | 3 | GOP-03 | US-070 |
 | ☑ | GOP-05 | Platform add-on: Envoy Gateway (Gateway API) **[done, commit gitops 4314a40: envoy-gateway 1.9.3 + GatewayClass/Gateway + Let's Encrypt ClusterIssuer]** | GatewayClass/Gateway, TLS via cert-manager | 3 | GOP-04 | US-070 |
 | ◐ | GOV-04 | GitHub Environments and reviewers **[partially done, commit Environments: Created deploy-uat/prod, infra-uat/prod(+destroy); NOT YET reviewers/wait timers because the GitHub plan does not support them for private repos]** | deploy-uat, deploy-prod, infra-<env>, infra-<env>-destroy (env = uat, prod) have reviewers and wait timers per ADR-0009 | 2 | GOV-01 | US-070 |
@@ -116,7 +116,7 @@ Total: **221 tasks, 767 hours**. Done: **138**, partially done: **12** (☑ done
 | ☑ | GOV-13 | Instructions for AI agents (AGENTS.md, CLAUDE.md) in the four repositories **[done, commit 91d3a76: AGENTS.md + CLAUDE.md in the four repos (#555)]** | Each repo has an AGENTS.md that states the non-negotiable rules and routes to the convention documents, and a CLAUDE.md that imports it; every path it names exists; conventions stay defined in docs/ | 4 | GOV-12 | US-070 |
 | ☑ | IAC-04 | Bootstrap: budget alert + tag policy **[done, commit infra: budget alert + tag policy (tag-policy module)]** | Budget alerts at 50/80/100%; shp-env, created-at, ttl-hours tags required | 2 | IAC-01 | ENABLER |
 | ☑ | IAC-08 | Module key vault **[done, commit infra: module key vault]** | RBAC mode, private endpoint, purge protection only in prod, name with random suffix | 2 | IAC-05 | ENABLER |
-| ◐ | LOC-05 | Run services on the local cluster with the shared microservice chart (make deploy SVC=...) **[partially done, commit c909d5b: deploy.sh + app-values-local for Java (SPRING_*, in-cluster JWKS); chart renders per service; NOT YET make quickstart run on real kind]** | Sample service builds, loads into kind and runs with the same chart used for UAT/prod; debug guide included | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |
+| ☑ | LOC-05 | Run services on the local cluster with the shared microservice chart (make deploy SVC=...) **[done, commit c909d5b: deploy verified on kind (gateway + scheduling) + debug guide (#621)]** | Sample service builds, loads into kind and runs with the same chart used for UAT/prod; debug guide included | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |
 | ☑ | LOC-07 | Developer onboarding guide **[done, commit c909d5b: developer onboarding guide (docs/onboarding.md)]** | From cloning the repo to running locally and opening a first PR in < 1 hour | 2 | LOC-01, LOC-03 | ENABLER |
 | ☑ | ML-05 | Quality gate and model registry: AUC ≥ 0,75 and above baseline before production alias registration **[done, commit main: quality gate + registry verified (MLflow live tests)]** | Weak model blocked; gate has tests | 3 | ML-04, LOC-08 | US-063 |
 | ☑ | ML-18 | Auto-generate model card on model registration **[done, commit 34b171e: card.md generated on registration, includes a synthetic-data warning]** | Model card stored with artifact in MLflow; all sections per 16-mlops §3 | 3 | ML-17, ML-05 | US-072 |

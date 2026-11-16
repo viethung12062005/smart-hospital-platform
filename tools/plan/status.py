@@ -84,7 +84,7 @@ STATUS = {
     "LOC-02": ("done", "a4433c2", "realm TOTP policy + fhir_user scope (#593)"),
     "LOC-03": ("done", "c909d5b", "6 Java services: health/info/prometheus, OTel, distroless non-root Dockerfile; run through the real template pipeline on main (e.g. svc-scheduling run 41487094998: verify, build + image scan); image push to ACR pending IAC-02"),
     "LOC-04": ("done", "c909d5b", "Python FastAPI skeleton (ai/ml services)"),
-    "LOC-05": ("partial", "c909d5b", "deploy.sh + app-values-local for Java (SPRING_*, in-cluster JWKS); chart renders per service; NOT YET make quickstart run on real kind"),
+    "LOC-05": ("done", "c909d5b", "deploy verified on kind (gateway + scheduling) + debug guide (#621)"),
     "LOC-07": ("done", "c909d5b", "developer onboarding guide (docs/onboarding.md)"),
     "LOC-08": ("partial", "e8e2fe2", "shp-local-full chart (ClamAV, OpenSearch, Ollama, MLflow, Loki, Grafana, OTel) + make up PROFILE=full + pull-models; helm lint/template done; NOT YET run on real kind"),
     "ML-01": ("done", "f108284", "synth: 80k appointments, 18% no-show, with threshold and interaction effects"),
@@ -159,4 +159,6 @@ STATUS = {
     "SCH-02": ("done", "18e006e", "migration V002 appointment/resource_history/outbox/inbox (#576)"),
     "SCH-03": ("done", "db4b6f7", "schedule repository with version CAS + history (#577)"),
     "CLN-25": ("done", "5b07036", "terminology loader (idempotent load, O(1) lookup) + ObservationCodeValidator (#600)"),
+    "ARC-13": ("done", "edbccde", "sprint S1 review + S2 planning minutes (#619)"),
+    "CIT-08": ("done", "main", "svc-<name>.yml generator (tools/scaffold) + generated workflows"),
 }
