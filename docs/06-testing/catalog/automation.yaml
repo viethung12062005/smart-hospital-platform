@@ -93,6 +93,13 @@ automation:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::withoutNoShowScoreT24hAndT2hAreStillCreated
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
 
+  # ---- Scheduling: doctor work schedule ----
+  TC-AC-02.3:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::doctorViewingAnotherDoctorScheduleIsRejected
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::doctorEditingScheduleIsRejected
+
   # ---- Clinical: version history ----
   TC-SEC-03:
     status: partial
