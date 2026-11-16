@@ -34,7 +34,14 @@ Open an issue with the `change-request` label and fill in:
 
 ## Cross-review checklist (team sign-off)
 
-- [ ] Every FR has numbered acceptance criteria and is traced to a story and a test case.
-- [ ] Every NFR has a measurement method (ARC-02).
-- [ ] The authorization matrix matches the contract matrix (`contracts/authz/matrix.yaml`).
-- [ ] API/event contracts match the design documents and `contracts/`.
+Tool checks, last run 2026-11-16 on `main`:
+
+- [x] Every FR has numbered acceptance criteria and is traced to a story and a test case
+      (`python3 -I tools/srs/build.py --check`, `python3 -I tools/qa/trace.py --check`: OK, 203 test cases).
+- [x] Every NFR has a measurement method (ARC-02): 49 of 49 rows in `non-functional-requirements.md`.
+- [x] The authorization matrix matches the contract matrix (`python3 -I tools/contracts/validate_authz.py`: OK, 72 rules).
+- [x] API/event contracts match the design documents and `contracts/` (`tools/contracts/check_all.sh`: all checks passed).
+
+Sign-off (a person records it; the tools cannot):
+
+- [ ] Each team member has reviewed SRS v1.0 and approves it as the baseline, recorded as a comment on the REQ-09 issue.
