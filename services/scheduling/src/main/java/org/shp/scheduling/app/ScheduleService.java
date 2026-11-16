@@ -1,9 +1,13 @@
 package org.shp.scheduling.app;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -14,30 +18,53 @@ import org.shp.fhir.FhirJson;
 import org.shp.scheduling.domain.PractitionerRoleClient;
 import org.shp.scheduling.domain.ScheduleFilter;
 import org.shp.scheduling.domain.ScheduleRecord;
+import org.shp.scheduling.domain.ScheduleTemplateRecord;
 import org.shp.scheduling.domain.SpecialtyCatalog;
 import org.shp.scheduling.infra.ScheduleRepository;
+import org.shp.scheduling.infra.ScheduleTemplateRepository;
 import org.shp.web.errors.ShpException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Use cases for doctor work schedules (FHIR Schedule). */
+/** Use cases for doctor work schedules (FHIR Schedule) and weekly schedule templates. */
 @Service
 public class ScheduleService {
 
   private static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
   private final ScheduleRepository repository;
+  private final ScheduleTemplateRepository templateRepository;
   private final PractitionerRoleClient practitionerRoleClient;
   private final Clock clock;
 
+  @Autowired
   public ScheduleService(
-      ScheduleRepository repository, PractitionerRoleClient practitionerRoleClient, Clock clock) {
+      ScheduleRepository repository,
+      ScheduleTemplateRepository templateRepository,
+      PractitionerRoleClient practitionerRoleClient,
+      Clock clock) {
     this.repository = Objects.requireNonNull(repository, "repository must not be null");
+    this.templateRepository =
+        Objects.requireNonNull(templateRepository, "templateRepository must not be null");
     this.practitionerRoleClient =
         Objects.requireNonNull(practitionerRoleClient, "practitionerRoleClient must not be null");
     this.clock = Objects.requireNonNull(clock, "clock must not be null");
   }
+
+  public record TemplateInput(
+      Integer weekday,
+      String startTime,
+      String endTime,
+      Integer slotMinutes,
+      String validFrom,
+      String validTo) {}
+
+  public record ReplaceTemplatesResult(
+      List<ScheduleTemplateRecord> templates, int scheduleVersion, int affectedFutureSlots) {}
+
+  public record GetTemplatesResult(List<ScheduleTemplateRecord> templates, int scheduleVersion) {}
 
   /** S1: Create a doctor's work schedule. */
   @Transactional
@@ -172,6 +199,153 @@ public class ScheduleService {
       return repository.update(updatedRecord, (int) expectedVersion, changedBy);
     } catch (DataIntegrityViolationException e) {
       throw new ShpException("invalid-state-transition");
+    }
+  }
+
+  /** S5: Replace a schedule's entire weekly template set in one transaction with CAS on version. */
+  @Transactional
+  public ReplaceTemplatesResult replaceTemplates(
+      UUID scheduleId, List<TemplateInput> inputs, long expectedVersion, String changedBy) {
+    Objects.requireNonNull(scheduleId, "scheduleId must not be null");
+    String actor = (changedBy == null || changedBy.isBlank()) ? "system" : changedBy;
+    Instant now = clock.instant();
+
+    List<ScheduleTemplateRecord> records =
+        validateAndBuildTemplates(scheduleId, inputs, now, actor);
+
+    ScheduleRecord existing =
+        repository.findById(scheduleId).orElseThrow(() -> new ShpException("not-found"));
+
+    int nextVersion = (int) expectedVersion + 1;
+    Schedule fhirSchedule = FhirJson.parse(existing.content(), Schedule.class);
+    fhirSchedule.getMeta().setVersionId(String.valueOf(nextVersion)).setLastUpdated(Date.from(now));
+    String updatedContent = FhirJson.serialize(fhirSchedule);
+
+    var updatedScheduleRecord =
+        new ScheduleRecord(
+            existing.id(),
+            nextVersion,
+            now,
+            existing.active(),
+            existing.practitionerId(),
+            existing.specialty(),
+            existing.horizonStart(),
+            existing.horizonEnd(),
+            updatedContent);
+
+    ScheduleRecord savedSchedule =
+        repository.update(updatedScheduleRecord, (int) expectedVersion, actor);
+    List<ScheduleTemplateRecord> savedTemplates =
+        templateRepository.replaceAll(scheduleId, records, actor);
+
+    return new ReplaceTemplatesResult(savedTemplates, savedSchedule.versionId(), 0);
+  }
+
+  /** S6: Retrieve a schedule's weekly template rows along with the schedule version. */
+  @Transactional(readOnly = true)
+  public GetTemplatesResult getTemplates(UUID scheduleId) {
+    Objects.requireNonNull(scheduleId, "scheduleId must not be null");
+    ScheduleRecord existing =
+        repository.findById(scheduleId).orElseThrow(() -> new ShpException("not-found"));
+    List<ScheduleTemplateRecord> templates = templateRepository.findByScheduleId(scheduleId);
+    return new GetTemplatesResult(templates, existing.versionId());
+  }
+
+  private static List<ScheduleTemplateRecord> validateAndBuildTemplates(
+      UUID scheduleId, List<TemplateInput> inputs, Instant now, String changedBy) {
+    if (inputs == null) {
+      throw new ShpException("validation-failed");
+    }
+
+    List<ScheduleTemplateRecord> result = new ArrayList<>(inputs.size());
+    for (TemplateInput item : inputs) {
+      if (item == null
+          || item.weekday() == null
+          || item.startTime() == null
+          || item.endTime() == null
+          || item.slotMinutes() == null
+          || item.validFrom() == null
+          || item.validFrom().isBlank()) {
+        throw new ShpException("validation-failed");
+      }
+
+      int weekday = item.weekday();
+      if (weekday < 1 || weekday > 7) {
+        throw new ShpException("validation-failed");
+      }
+
+      int slotMinutes = item.slotMinutes();
+      if (!ScheduleTemplateRecord.ALLOWED_SLOT_MINUTES.contains(slotMinutes)) {
+        throw new ShpException("validation-failed");
+      }
+
+      LocalTime startTime = parseMinuteAlignedTime(item.startTime());
+      LocalTime endTime = parseMinuteAlignedTime(item.endTime());
+      if (!startTime.isBefore(endTime)) {
+        throw new ShpException("validation-failed");
+      }
+
+      long totalMinutes = Duration.between(startTime, endTime).toMinutes();
+      if (totalMinutes <= 0 || totalMinutes % slotMinutes != 0) {
+        throw new ShpException("validation-failed");
+      }
+
+      LocalDate validFrom = parseIsoDate(item.validFrom());
+      LocalDate validTo = null;
+      if (item.validTo() != null && !item.validTo().isBlank()) {
+        validTo = parseIsoDate(item.validTo());
+        if (validTo.isBefore(validFrom)) {
+          throw new ShpException("validation-failed");
+        }
+      }
+
+      result.add(
+          new ScheduleTemplateRecord(
+              UUID.randomUUID(),
+              scheduleId,
+              weekday,
+              startTime,
+              endTime,
+              slotMinutes,
+              validFrom,
+              validTo,
+              now,
+              changedBy));
+    }
+
+    // Check overlapping intervals on the same weekday: [a.start, a.end) overlaps [b.start, b.end)
+    for (int i = 0; i < result.size(); i++) {
+      ScheduleTemplateRecord a = result.get(i);
+      for (int j = i + 1; j < result.size(); j++) {
+        ScheduleTemplateRecord b = result.get(j);
+        if (a.weekday() == b.weekday()
+            && a.startTime().isBefore(b.endTime())
+            && b.startTime().isBefore(a.endTime())) {
+          throw new ShpException("validation-failed");
+        }
+      }
+    }
+
+    return result;
+  }
+
+  private static LocalTime parseMinuteAlignedTime(String raw) {
+    try {
+      LocalTime parsed = LocalTime.parse(raw.strip());
+      if (parsed.getSecond() != 0 || parsed.getNano() != 0) {
+        throw new ShpException("validation-failed");
+      }
+      return parsed;
+    } catch (DateTimeParseException e) {
+      throw new ShpException("validation-failed");
+    }
+  }
+
+  private static LocalDate parseIsoDate(String raw) {
+    try {
+      return LocalDate.parse(raw.strip());
+    } catch (DateTimeParseException e) {
+      throw new ShpException("validation-failed");
     }
   }
 

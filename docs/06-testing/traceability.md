@@ -7,8 +7,8 @@
 | Metric | Value |
 |---|---|
 | Test case | 203 |
-| Automated or partially automated | 60 (29%) |
-| Fully automated | 28 |
+| Automated or partially automated | 61 (30%) |
+| Fully automated | 29 |
 | P0 (security, patient data, patient safety) | 122, automated at least partially: 34 |
 
 ## By module and status
@@ -20,7 +20,7 @@
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
-| scheduling | 21 | 1 | 8 | 12 | 0 |
+| scheduling | 21 | 2 | 8 | 11 | 0 |
 | security | 28 | 7 | 6 | 15 | 0 |
 | system | 10 | 3 | 1 | 6 | 0 |
 
@@ -31,7 +31,7 @@
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 5 | 6 | 18 | 0 |
-| api | 90 | 2 | 11 | 77 | 0 |
+| api | 90 | 3 | 11 | 76 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -250,7 +250,7 @@
 | AC-SN.1 | TC-AC-SN.1 (integration, P1) | planned |
 | AC-SP.1 | TC-AC-SP.1 (api, P0) | planned |
 | AC-SR.1 | TC-AC-SR.1 (integration, P1) | automated |
-| AC-ST.1 | TC-AC-ST.1 (api, P1) | planned |
+| AC-ST.1 | TC-AC-ST.1 (api, P1) | automated |
 | AC-TL.1 | TC-AC-TL.1 (api, P0) | planned |
 | AC-TL.2 | TC-AC-TL.2 (api, P0) | planned |
 | AC-UD.1 | TC-AC-UD.1 (api, P0) | planned |

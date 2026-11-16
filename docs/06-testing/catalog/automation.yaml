@@ -92,6 +92,10 @@ automation:
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::doctorViewingAnotherDoctorScheduleIsRejected
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::doctorEditingScheduleIsRejected
+  TC-AC-ST.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleTemplateApiTest.java::validTemplateSavesAndNonDivisibleRangeReturns400
 
   # ---- Clinical: version history ----
   TC-AC-01.3:
