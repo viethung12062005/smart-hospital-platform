@@ -27,6 +27,7 @@ predicates:
 # Each resource declares its valid actions; `clinical: true` means clinical data (admin/dpo may never touch it).
 resources:
   Patient:         { clinical: true,  actions: [read, create, update, search] }
+  Schedule:        { clinical: false, actions: [read, create, update, search] }
   Slot:            { clinical: false, actions: [read, create, update, block] }
   Appointment:     { clinical: true,  actions: [book, cancel, read] }
   Encounter:       { clinical: true,  actions: [read, create, update] }
@@ -61,7 +62,18 @@ rules:
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
   - { id: PAT-SEARCH-DOC,  resource: Patient, action: search, role: doctor,  when: [] }
   - { id: PAT-SEARCH-NUR,  resource: Patient, action: search, role: nurse,   when: [] }
-  # Schedule / Slot
+  # Schedule
+  - { id: SCHED-CREATE-NUR, resource: Schedule, action: create, role: nurse,  when: [] }
+  - { id: SCHED-CREATE-ADM, resource: Schedule, action: create, role: admin,  when: [] }
+  - { id: SCHED-READ-NUR,   resource: Schedule, action: read,   role: nurse,  when: [] }
+  - { id: SCHED-READ-ADM,   resource: Schedule, action: read,   role: admin,  when: [] }
+  - { id: SCHED-READ-DOC,   resource: Schedule, action: read,   role: doctor, when: [self-practitioner] }
+  - { id: SCHED-SEARCH-NUR, resource: Schedule, action: search, role: nurse,  when: [] }
+  - { id: SCHED-SEARCH-ADM, resource: Schedule, action: search, role: admin,  when: [] }
+  - { id: SCHED-SEARCH-DOC, resource: Schedule, action: search, role: doctor, when: [] }
+  - { id: SCHED-UPD-NUR,    resource: Schedule, action: update, role: nurse,  when: [] }
+  - { id: SCHED-UPD-ADM,    resource: Schedule, action: update, role: admin,  when: [] }
+  # Slot
   - { id: SLOT-READ-PAT,   resource: Slot, action: read,   role: patient, when: [] }
   - { id: SLOT-READ-DOC,   resource: Slot, action: read,   role: doctor,  when: [] }
   - { id: SLOT-READ-NUR,   resource: Slot, action: read,   role: nurse,   when: [] }
