@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **222 tasks, 775 hours**. Done: **144**, partially done: **8** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **223 tasks, 778 hours**. Done: **145**, partially done: **9** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -92,7 +92,7 @@ Total: **222 tasks, 775 hours**. Done: **144**, partially done: **8** (☑ done,
 | ☑ | SHR-30 | Authz: linked, linked-records, guardian conditions; onBehalfOf in audit; generate tests from the matrix for linked records **[done, commit main: linked/guardian conditions + onBehalfOf audit (#539)]** | Every *-LINKED rule has Allow and Deny tests; audit records the acting account and the accessed record | 3 | SHR-24, SHR-21 | US-076, US-077 |
 | ◐ | WEB-01 | React/Vite web shell: OIDC (Keycloak), role-based router, layout frame, i18n vi/en **[partially done, commit branch WEB-01-frontend-base: web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), role-based routes/menu, vi/en i18n, ErrorBoundary, design system + AppShell ported from the portal PoC (Apache-2.0); 6 sample screens run with MSW; NOT YET real Keycloak login tested in a browser]** | Login, role-based menu, ErrorBoundary; build via pipeline | 4 | LOC-02, SHR-20 | US-066 |
 
-## Week 4 — 127 hours
+## Week 4 — 138 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -123,6 +123,7 @@ Total: **222 tasks, 775 hours**. Done: **144**, partially done: **8** (☑ done,
 | ☑ | OBS-04 | Standard observability library (OTel, logs with trace-id, PII redaction) **[done, commit 541: structured log with trace-id + PII masking (#541)]** | OTel traces/metrics/logs, logs with trace-id, PII-redacting enricher; test asserts logs contain no PII | 4 | LOC-03 | ENABLER |
 | ☑ | PY-04 | Audit emitter Python (E11) for AI/ML **[done, commit 932b0e4: audit.build: redacts IPs, blocks search values in resource, matches the E11 schema]** | Does not log question content or PII; test | 2 | PY-03 | US-047 |
 | ☑ | PY-09 | Circuit breaker + token/day quota + per-model metrics **[done, commit cf3ed23: Circuit breaker, shared daily token quota (MongoDB), per-model metrics]** | Circuit opens after 5 failures/60s; over budget → ai-budget-exceeded | 3 | PY-08 | US-055 |
+| ◐ | REQ-09 | Cross-review and baseline of SRS v1.0 **[partially done, commit 3e001c8: baseline and change-request process in docs/02-requirements/CHANGE-REQUEST.md (#617), cross-review checks green; NOT YET the recorded team sign-off]** | SRS v1.0 approved by the team; later changes go through a change request | 3 |  | ENABLER |
 | ☑ | SCF-01 | Scaffold scheduling service (code skeleton, Dockerfile, svc-scheduling pipeline, Helm values, DB/bus/OTel wiring) **[done, commit c909d5b: scheduling: Spring Boot skeleton + Flyway + PostgreSQL outbox/inbox/idempotency, Dockerfile, svc-scheduling.yml, local/uat/prod values; uat/prod log in to PostgreSQL with Workload Identity (azure-identity-extensions, shp-gitops + shp-infra SCF-01); bus wiring done in SHR-08]** | Service from template; svc-scheduling.yml; local/uat/prod values | 2 | LOC-03, CIT-08 | ENABLER |
 | ☑ | SCF-02 | Scaffold notification worker (code skeleton, pipeline, values, DB/bus wiring) **[done, commit c909d5b: notification: skeleton + Mongo outbox/inbox + reminder consumer (#612); local/uat/prod values]** | Service from template; svc-notification.yml | 2 | LOC-03, CIT-08 | ENABLER |
 | ☑ | SCF-03 | Scaffold clinical service (code skeleton, pipeline, values, MongoDB/bus wiring) **[done, commit c909d5b: clinical: skeleton + Mongo + MongoIdentityLinkClient + outbox/inbox/relay; local/uat/prod values]** | Service from template; svc-clinical.yml | 2 | LOC-03, CIT-08 | ENABLER |
@@ -134,6 +135,7 @@ Total: **222 tasks, 775 hours**. Done: **144**, partially done: **8** (☑ done,
 | ☑ | SHR-11 | Mongo search executor: compile search criteria to query + use index **[done, commit 7f3cb08: Mongo search executor (#608)]** | Query plan uses IXSCAN for main queries | 3 | SHR-10 | ENABLER |
 | ☑ | SHR-12 | Idempotency-Key for MongoDB (document service) **[done, commit 3764d57: shp-data-mongo MongoIdempotency + MongoMessaging.inTransaction (retry on conflict); 21 tests against real MongoDB]** | Same key → same result; different body 422 | 2 | SHR-05, SHR-10 | US-035 |
 | ☑ | SHR-27 | Authz: emit audit for every decision (allow and deny) **[done, commit 5e423ab: AuthzAudit.fromDecision + interceptor records audit for allow, deny, 5xx errors]** | Every Deny emits audit outcome=denied with a reason code; tests | 2 | SHR-24, SHR-09 | US-047 |
+| ☑ | TST-05 | Automated API and contract test framework in CI (Testcontainers, OpenAPI, event schema) **[done, commit 0f14a8e: every service runs API tests in its svc-* workflow; consumer contract tests for the implemented consumers (notification E1/E10, ml E1/E2/E3/E5/E7) (#620); contracts workflow checks OpenAPI and event schemas]** | Every service has API tests running in CI; producer/consumer contract tests | 8 |  | ENABLER |
 | ☑ | WEB-02 | API client: attach token, Idempotency-Key, If-Match/ETag, map OperationOutcome/Problem Details to messages **[done, commit branch WEB-01-frontend-base: web/src/api/client.ts: token, Accept-Language, Idempotency-Key, If-Match/ETag, OperationOutcome/Problem Details + 409 slot suggestions; tests]** | Show errors per Accept-Language; auto retry login when session expires | 3 | WEB-01 | US-066 |
 
 ## Week 5 — 76 hours
@@ -190,7 +192,7 @@ Total: **222 tasks, 775 hours**. Done: **144**, partially done: **8** (☑ done,
 | ◐ | ML-25 | Export metrics for canary analysis: error rate, p95, score distribution, agreement, version label **[partially done, commit d5d63c1: Per-model_version metrics: latency, errors, score distribution, highRisk, agreement; AnalysisTemplate (MLO-03) NOT YET]** | Prometheus has metrics per model_version for AnalysisTemplate | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart for the web app **[partially done, commit branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5: Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster]** | Non-root nginx container using the shared chart | 2 | WEB-01 | US-066 |
 
-## Week 7 — 89 hours
+## Week 7 — 81 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -217,7 +219,6 @@ Total: **222 tasks, 775 hours**. Done: **144**, partially done: **8** (☑ done,
 | ☐ | IAM-08 | Sign-up page with phone number or email, terms of use | Sign-up does not reveal existing accounts; Vietnamese by default | 3 | IAM-03 | US-001, US-008 |
 | ☐ | OBS-01 | Standard RED dashboard for every service | Grafana dashboard by service label: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☐ | OBS-02 | SLOs + burn-rate alerts | SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts | 3 | OBS-01 | ENABLER |
-| ☐ | TST-05 | Automated API and contract test framework in CI (Testcontainers, OpenAPI, event schema) | Every service has API tests running in CI; producer/consumer contract tests | 8 | ARC-12 | ENABLER |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
 ## Week 8 — 69 hours
