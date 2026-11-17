@@ -11,7 +11,7 @@
 name: ml-train
 on:
   pull_request:
-    paths: &training-paths
+    paths:
       - services/ml/src/shp_ml/synth.py
       - services/ml/src/shp_ml/checks.py
       - services/ml/src/shp_ml/features.py
@@ -25,7 +25,18 @@ on:
       - .github/workflows/ml-train.yml
   push:
     branches: [main]
-    paths: *training-paths
+    paths:
+      - services/ml/src/shp_ml/synth.py
+      - services/ml/src/shp_ml/checks.py
+      - services/ml/src/shp_ml/features.py
+      - services/ml/src/shp_ml/train.py
+      - services/ml/src/shp_ml/pipeline.py
+      - services/ml/src/shp_ml/evaluate.py
+      - services/ml/src/shp_ml/model.py
+      - services/ml/src/shp_ml/registry.py
+      - services/ml/src/shp_ml/card.py
+      - services/ml/pyproject.toml
+      - .github/workflows/ml-train.yml
   workflow_dispatch:
     inputs:
       seed: { description: "Seed for the data generator and the training", required: false, default: "42" }
