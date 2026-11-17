@@ -111,11 +111,14 @@ public class ScheduleService {
     return repository.findById(id).orElseThrow(() -> new ShpException("not-found"));
   }
 
-  /** S3: Search schedules by criteria. */
+  /**
+   * S3: Search schedules by criteria, keyset-paged by id. Returns at most {@code limit} records
+   * after {@code afterId}.
+   */
   @Transactional(readOnly = true)
   public List<ScheduleRecord> searchSchedules(
-      UUID practitionerId, String specialty, Boolean active, int limit, int offset) {
-    return repository.find(new ScheduleFilter(practitionerId, specialty, active, limit, offset));
+      UUID practitionerId, String specialty, Boolean active, int limit, UUID afterId) {
+    return repository.find(new ScheduleFilter(practitionerId, specialty, active, limit, afterId));
   }
 
   /** S4: Edit a schedule (enable/disable, notes). */
