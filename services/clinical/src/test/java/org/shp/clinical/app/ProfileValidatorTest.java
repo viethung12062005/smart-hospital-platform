@@ -134,7 +134,9 @@ class ProfileValidatorTest {
             e -> {
               assertThat(e.info().code()).isEqualTo("validation-failed");
               assertThat(e.info().status()).isEqualTo(400);
+              // the detail names exactly this element path (not a sibling such as "Patient.nameX")
               assertThat(e.detail()).startsWith(path);
+              assertThat(e.detail().substring(path.length())).matches("^[ .\\[].*");
             });
   }
 
