@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.shp.notification.domain.ReminderKind;
@@ -18,6 +19,12 @@ import org.shp.notification.domain.ReminderKind;
 public class NotificationTemplateRenderer {
 
   private static final Set<String> SUPPORTED_LOCALES = Set.of("vi", "en");
+
+  /**
+   * Template text by resource path. Templates are immutable classpath resources, so they are read
+   * once.
+   */
+  private final Map<String, String> templates = new ConcurrentHashMap<>();
 
   private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([a-zA-Z][a-zA-Z0-9]*)}");
 
@@ -40,7 +47,7 @@ public class NotificationTemplateRenderer {
 
     String template = loadTemplate(kind, locale);
     Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
-    StringBuffer rendered = new StringBuffer();
+    StringBuilder rendered = new StringBuilder();
 
     while (matcher.find()) {
       String variableName = matcher.group(1);
@@ -60,6 +67,17 @@ public class NotificationTemplateRenderer {
 
   private String loadTemplate(ReminderKind kind, String locale) {
     String resourcePath = "templates/" + kind.value() + "." + locale + ".txt";
+    String cached = templates.get(resourcePath);
+    if (cached != null) {
+      return cached;
+    }
+    // A missing or unreadable template throws and is not cached, so every call reports it.
+    String text = readTemplate(resourcePath);
+    templates.put(resourcePath, text);
+    return text;
+  }
+
+  private String readTemplate(String resourcePath) {
     ClassLoader classLoader = getClass().getClassLoader();
 
     try (InputStream input = classLoader.getResourceAsStream(resourcePath)) {
