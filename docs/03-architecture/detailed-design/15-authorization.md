@@ -131,7 +131,7 @@ A doctor has `care` with a patient when **a valid source** exists in `care_relat
 
 | Case | Mechanism |
 |---|---|
-| Call to `/internal/*` | Workload identity token, `aud` = target service, app role `internal.<service>`; each internal endpoint has a **list of allowed services** (checked by role, and NetworkPolicy blocks at the network layer) |
+| Call to `/internal/*` | Keycloak service-account token (client credentials, client `svc-<caller>`): realm role `internal.<target>` in `roles`, `aud` = `shp-api` and the targets, `azp` = the caller. The client proves itself with its Kubernetes ServiceAccount token (IAM-02, [keycloak.md](../../04-devops/keycloak.md)). Each internal endpoint has a **list of allowed callers** (`azp`) and requires `internal.<target>`; NetworkPolicy blocks at the network layer. The table of who may call whom is `identity/realm/services.json` |
 | AI reads patient data | **RFC 8693 token exchange** (Keycloak) → a token carrying the user's identity, `aud` = clinical/scheduling; the matrix rules apply unchanged to that user |
 | AI writes (creates `Observation` from extraction, books via chatbot) | Same mechanism, **only after the user confirms** (AI6, AI8) |
 | Background jobs (slot generation, no-show, cleanup) | Service identity; audit `actor.role = system`, `purposeOfUse = HOPERAT` |

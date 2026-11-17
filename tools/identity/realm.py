@@ -66,10 +66,87 @@ def merge_clients(
     return out
 
 
+def service_accounts(realm: dict[str, Any]) -> None:
+    """Expand identity/realm/services.json into roles, confidential clients and their service-account users.
+
+    `serviceClientAuth` (an overlay key, removed here) selects how a client proves who it is: `client-secret` (Keycloak
+    generates the secret on import; it is never in git) or `federated-jwt` (a Kubernetes service-account token, IAM-02).
+    """
+    spec = json.loads((SRC / "services.json").read_text(encoding="utf-8"))
+    auth = realm.pop("serviceClientAuth", {"type": "client-secret"})
+    targets = sorted({t for svc in spec["services"].values() for t in svc["calls"]})
+    realm["roles"]["realm"] += [
+        {"name": f"internal.{t}", "description": f"May call /internal of {t}"}
+        for t in targets
+    ]
+    users: list[dict[str, Any]] = realm.setdefault("users", [])
+    for name, svc in spec["services"].items():
+        client_id = f"svc-{name}"
+        attributes: dict[str, str] = {}
+        if auth["type"] == "federated-jwt":
+            attributes = {
+                "jwt.credential.issuer": auth["identityProvider"],
+                "jwt.credential.sub": f"system:serviceaccount:{spec['namespace']}:{name}",
+            }
+        audiences = ["shp-api", *svc["calls"]]
+        realm["clients"].append(
+            {
+                "clientId": client_id,
+                "name": f"Service account of {name} (/internal)",
+                "enabled": True,
+                "publicClient": False,
+                "clientAuthenticatorType": auth["type"],
+                "serviceAccountsEnabled": True,
+                "standardFlowEnabled": False,
+                "implicitFlowEnabled": False,
+                "directAccessGrantsEnabled": False,
+                "attributes": attributes,
+                "defaultClientScopes": ["basic"],
+                "protocolMappers": [
+                    {
+                        "name": "roles-claim",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                        "config": {
+                            "claim.name": "roles",
+                            "jsonType.label": "String",
+                            "multivalued": "true",
+                            "access.token.claim": "true",
+                            "id.token.claim": "false",
+                            "userinfo.token.claim": "false",
+                        },
+                    },
+                    *[
+                        {
+                            "name": f"audience-{a}",
+                            "protocol": "openid-connect",
+                            "protocolMapper": "oidc-audience-mapper",
+                            "config": {
+                                "included.custom.audience": a,
+                                "access.token.claim": "true",
+                                "id.token.claim": "false",
+                            },
+                        }
+                        for a in audiences
+                    ],
+                ],
+            }
+        )
+        users.append(
+            {
+                "username": f"service-account-{client_id}",
+                "enabled": True,
+                "serviceAccountClientId": client_id,
+                "realmRoles": [f"internal.{t}" for t in svc["calls"]],
+            }
+        )
+
+
 def build(env: str) -> dict[str, Any]:
     base = json.loads((SRC / "base.json").read_text(encoding="utf-8"))
     overlay = json.loads((SRC / f"overlay-{env}.json").read_text(encoding="utf-8"))
     realm: dict[str, Any] = merge(base, overlay)
+    service_accounts(realm)
     return realm
 
 
@@ -80,8 +157,9 @@ def render(env: str) -> str:
 def forbidden(text: str) -> list[str]:
     """Things a cluster realm must not contain: dev hosts, the dev client, users, literal credentials."""
     found = [token for token in FORBIDDEN_IN_PROD if token in text]
-    if '"users"' in text:
-        found.append('"users"')
+    users = json.loads(text).get("users", [])
+    if any("serviceAccountClientId" not in u or "credentials" in u for u in users):
+        found.append('"users" (only service-account users are allowed)')
     if re.search(r'"credentials"\s*:', text):
         found.append('"credentials"')
     if LITERAL_CREDENTIAL.search(text):

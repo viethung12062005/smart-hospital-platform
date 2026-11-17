@@ -75,6 +75,12 @@ final class KeycloakTestSupport {
         "$.access_token");
   }
 
+  /** Claims of a JWT (payload only; the signature is not checked here). */
+  static com.jayway.jsonpath.DocumentContext claims(String jwt) {
+    String payload = jwt.split("\\.")[1];
+    return JsonPath.parse(new String(java.util.Base64.getUrlDecoder().decode(payload)));
+  }
+
   static String form(String url, String body) throws Exception {
     var res = formResponse(url, body);
     assertThat(res.statusCode()).as(res.body()).isEqualTo(200);
