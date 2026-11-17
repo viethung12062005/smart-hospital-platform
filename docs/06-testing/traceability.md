@@ -8,7 +8,7 @@
 |---|---|
 | Test case | 203 |
 | Automated or partially automated | 62 (30%) |
-| Fully automated | 28 |
+| Fully automated | 27 |
 | P0 (security, patient data, patient safety) | 122, automated at least partially: 35 |
 
 ## By module and status
@@ -20,7 +20,7 @@
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
-| scheduling | 21 | 1 | 8 | 12 | 0 |
+| scheduling | 21 | 0 | 9 | 12 | 0 |
 | security | 28 | 7 | 7 | 14 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
 
@@ -31,7 +31,7 @@
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 5 | 7 | 17 | 0 |
-| api | 90 | 2 | 12 | 76 | 0 |
+| api | 90 | 1 | 13 | 76 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -141,7 +141,7 @@
 | AC-01.3 | TC-AC-01.3 (api, P0) | partial |
 | AC-02.1 | TC-AC-02.1 (api, P1) | planned |
 | AC-02.2 | TC-AC-02.2 (api, P1) | planned |
-| AC-02.3 | TC-AC-02.3 (api, P0) | automated |
+| AC-02.3 | TC-AC-02.3 (api, P0) | partial |
 | AC-03.1 | TC-AC-03.1 (api, P1) | partial |
 | AC-03.2 | TC-AC-03.2 (api, P0) | partial |
 | AC-03.3 | TC-AC-03.3 (api, P0) | partial |

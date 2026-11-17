@@ -32,6 +32,9 @@ public class ScheduleController {
 
   private static final MediaType FHIR_MEDIA_TYPE = MediaType.parseMediaType(FhirJson.MEDIA_TYPE);
 
+  /** Maximum {@code _count} per 07-api-conventions section 4. */
+  private static final int MAX_COUNT = 100;
+
   private final ScheduleService service;
 
   public ScheduleController(ScheduleService service) {
@@ -93,6 +96,9 @@ public class ScheduleController {
       @RequestParam(value = "_count", required = false, defaultValue = "20") int count,
       @RequestParam(value = "_offset", required = false, defaultValue = "0") int offset,
       HttpServletRequest request) {
+    if (count < 1 || count > MAX_COUNT || offset < 0) {
+      throw new ShpException("validation-failed");
+    }
     Principal principal = IdentityInterceptor.principal(request);
     UUID targetPractitionerId = null;
 
@@ -121,7 +127,6 @@ public class ScheduleController {
     Bundle bundle = new Bundle();
     bundle.setType(Bundle.BundleType.SEARCHSET);
     bundle.setId(UUID.randomUUID().toString());
-    bundle.setTotal(records.size());
     for (var r : records) {
       Schedule s = FhirJson.parse(r.content(), Schedule.class);
       bundle.addEntry().setResource(s).setFullUrl("/fhir/Schedule/" + r.id());
