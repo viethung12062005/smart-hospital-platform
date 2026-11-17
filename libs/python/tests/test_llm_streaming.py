@@ -45,7 +45,7 @@ def router(ds: FakeProvider, gm: FakeProvider | None = None, ol: FakeProvider | 
 
 
 def run(r: Router, **kw: Any) -> list[Any]:
-    return list(r.stream("t", ASK, {"PERSON": ["Nguyen Van An"]}, **kw))  # type: ignore[arg-type]
+    return list(r.stream("t", ASK, {"PERSON": ["Nguyen Van An"]}, **kw))
 
 
 def text_of(events: Sequence[Any]) -> str:
@@ -129,7 +129,7 @@ def test_usage_budget_and_metrics_accounted_in_stream_mode() -> None:
     budget = TokenBudget(daily_limit=10_000, today=lambda: "2026-11-01")
     seen: list[tuple[str, str, str, int, int]] = []
     ds = FakeProvider("deepseek", reply=lambda m: "x" * 80, chunk_size=10)
-    res = run(router(ds, budget=budget, on_call=lambda *a: seen.append(a)))[-1].result  # type: ignore[attr-defined]
+    res = run(router(ds, budget=budget, on_call=lambda *a: seen.append(a)))[-1].result
     assert res.tokens_out == 20 and res.tokens_in > 0
     assert budget.used() == res.tokens_in + res.tokens_out
     assert seen == [("deepseek", "ds", "success", res.tokens_in, 20)]
@@ -203,7 +203,7 @@ def test_provider_without_stream_is_delivered_as_one_delta() -> None:
 
             return Completion("whole", model, 3, 1, 1)
 
-    r = Router([Plain(), FakeProvider("gemini"), FakeProvider("ollama", external=False)], TASKS)  # type: ignore[list-item]
+    r = Router([Plain(), FakeProvider("gemini"), FakeProvider("ollama", external=False)], TASKS)
     events: list[Any] = list(r.stream("t", ASK))
     assert text_of(events) == "whole" and events[-1].result.tokens_out == 1
 
