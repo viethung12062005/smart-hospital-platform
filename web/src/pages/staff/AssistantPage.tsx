@@ -235,7 +235,16 @@ function TurnView(props: {
           <ul className={styles.sources}>
             {turn.citations.map((c) => (
               <li key={c.index}>
-                <Button variant="light" size="compact-sm" onClick={() => props.onCitation(c)}>
+                <Button
+                  variant="light"
+                  size="compact-sm"
+                  // Real section values are long heading paths: let the label wrap instead of overflowing the card.
+                  styles={{
+                    root: { height: 'auto', maxWidth: '100%', padding: '4px 8px' },
+                    label: { whiteSpace: 'normal', textAlign: 'left', lineHeight: 1.35 },
+                  }}
+                  onClick={() => props.onCitation(c)}
+                >
                   [{c.index}] {c.title}
                   {c.section ? ` - ${c.section}` : ''}
                 </Button>

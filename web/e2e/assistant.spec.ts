@@ -17,12 +17,16 @@ test.describe('Knowledge assistant (doctor)', () => {
     await ask(page, 'Ngưỡng huyết áp cần chuyển tuyến?');
     await expect(page.getByText(/chuyển tuyến khi huyết áp ≥ 180\/110/)).toBeVisible();
 
+    // A long heading path in the source list wraps inside the conversation card instead of overflowing it.
+    const box = await page.getByRole('button', { name: /^\[1\] Phác đồ tăng huyết áp 2026/ }).boundingBox();
+    const card = await page.getByLabel('Câu hỏi').boundingBox();
+    expect(box && card && box.x + box.width <= card.x + card.width + 1).toBe(true);
     await page
       .getByRole('button', { name: /Mở nguồn \[1\]/ })
       .first()
       .click();
     const dialog = page.getByRole('dialog');
-    await expect(dialog.getByText('4.2 Chỉ định chuyển tuyến')).toBeVisible();
+    await expect(dialog.getByText(/4\.2 Chỉ định chuyển tuyến/)).toBeVisible();
     await expect(dialog.getByLabel('Trích đoạn')).toContainText('180/110');
     await dialog.getByRole('button', { name: 'Đóng' }).click();
 
