@@ -40,6 +40,9 @@ final class KeycloakTestSupport {
             .withCopyFileToContainer(
                 MountableFile.forHostPath(repoFile(realmFileInRepo)),
                 "/opt/keycloak/data/import/realm-shp.json")
+            .withCopyFileToContainer(
+                MountableFile.forHostPath(repoFile("identity/realm/breached-passwords.txt")),
+                "/opt/keycloak/data/password-blacklists/breached-passwords.txt")
             .withExposedPorts(8080)
             .waitingFor(
                 Wait.forHttp("/realms/shp")

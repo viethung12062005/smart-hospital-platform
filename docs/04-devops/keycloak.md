@@ -163,3 +163,45 @@ Findings and limits:
 Tested in `KeycloakTokenExchangeTest` (container, Keycloak 26.8.2): sub kept, `aud` = `svc-<target>` only (an exchanged token for
 `scheduling` is refused by `clinical`), shared JWT rules, five other service clients and the public client refused, target outside the
 exchange list refused, tampered subject token refused, and the client switch is what allows the exchange (off: refused, on: accepted).
+
+## 9. Hardening (IAM-06)
+
+Realm settings (`identity/realm/base.json`, both environments), each proven in `KeycloakHardeningTest` on Keycloak 26.8.2:
+
+| Control | Setting | Notes |
+|---|---|---|
+| Password hashing | `hashAlgorithm(argon2)`: Argon2id v1.3, Keycloak defaults (m=7168 KiB, t=5, p=1) | Asserted from the stored credential (`type=id`). |
+| Password policy | `length(12)`, `maxLength(128)`, `notUsername`, `notEmail`, `passwordBlacklist(breached-passwords.txt)`; no composition rules, no expiry | NIST SP 800-63B-4 as in ADR-0017. `notUsername` rejects a password equal to the username, not one that contains it. |
+| Breached list | `identity/realm/breached-passwords.txt`, mounted into Keycloak's `data/password-blacklists/` | Starter list of 45 entries. Replace it with a large breached-password list before real users register. |
+| Lockout | `bruteForceProtected`, 5 failures, temporary (60 s growing to 15 min), never permanent | Per account. An unrelated account keeps working. |
+| Events | login, failures, password and OTP changes, lockouts kept 90 days; admin events on, without details (no password in them) | Feeds IAM-05. |
+
+Differences from ADR-0017 (stock Keycloak cannot do them; decisions for the SA):
+- **Staff password length 14.** A realm has one password policy, so patients and staff share 12. Enforcing 14 for staff needs a custom
+  authenticator or a separate realm.
+- **IP-based blocking.** Keycloak locks accounts, not addresses. The public route has a per-client-IP rate limit in Envoy instead
+  (`BackendTrafficPolicy`, 120 requests per minute); it counts the real client IP only if the load balancer preserves it
+  (`externalTrafficPolicy: Local` or a `ClientTrafficPolicy` that trusts the forwarded header), which is not configured here.
+- **Staff MFA** (TOTP or WebAuthn at first login) is not part of this task and is not configured; the realm does not issue `amr`.
+
+### Admin console not exposed to the Internet
+Three layers: the `/idp` route lists only the OIDC paths (section 3); NetworkPolicy lets only the Envoy proxy and `shp-apps` reach port 8080;
+administrators use `kubectl port-forward` (Kubernetes RBAC) with a named admin account that has MFA, and the bootstrap account is disabled
+(checklist step 4). `tools/validate.sh` fails when the rendered route would route `/idp/admin`, the master realm, client registration,
+health or metrics, or when a sign-in path is missing. It was also exercised through a real Envoy Gateway 1.9.3 on a private kind cluster:
+`/idp/realms/shp/...` answered 200 and `/idp/admin/...`, `/idp/realms/master`, `/idp/realms/shp/clients-registrations/...`, `/idp/health/ready`,
+`/idp/metrics` answered 404 without reaching Keycloak. A service pod in `shp-apps` can still reach `/idp/admin` on port 8080 (NetworkPolicy has no path
+rules); the admin API needs an admin token, and the services have none.
+
+### Backups and restore
+- **Cloud:** the managed PostgreSQL server of IAC-16 keeps automated backups and point-in-time restore (retention `backup_retention_days`,
+  7 by default, geo-redundant in prod); it is a separate server from scheduling so a restore never rolls scheduling back. Restore:
+  `az postgres flexible-server restore --source-server <iam-server> --name <new-server> --restore-time <UTC time>`, then point `database.host`
+  of `envs/<env>/keycloak.yaml` at the new server (Argo CD rolls the pods). **Not tested on Azure** (nothing is applied there yet); do a drill
+  in uat and record the time against the RTO (AC-16.2).
+- **Logical, tested locally:** `KeycloakBackupRestoreTest` runs Keycloak on PostgreSQL A, creates a user, dumps A with `pg_dump -Fc`, destroys A,
+  restores the dump into an empty PostgreSQL B with `pg_restore`, starts Keycloak B on B with no realm import and no bootstrap admin, and checks that
+  the realm settings, the clients, the master-realm administrator, and the user (same `sub`, same password) are all back. Run it with
+  `mvn -B -pl libs/java/shp-security -am verify`. The same commands work against the managed server through a private connection:
+  `pg_dump -h <fqdn> -U keycloak -Fc keycloak > keycloak.dump` and `pg_restore -h <new-fqdn> -U keycloak -d keycloak --no-owner keycloak.dump`.
+- What a backup holds: password hashes (Argon2id) and the realm signing keys. Treat dumps like production secrets (encrypted storage, access limited to the IAM operators).
