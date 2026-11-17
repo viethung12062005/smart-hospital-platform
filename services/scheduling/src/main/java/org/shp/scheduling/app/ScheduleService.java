@@ -137,6 +137,27 @@ public class ScheduleService {
       }
     }
 
+    // S4 edits only active/comment: the Schedule keeps its doctor and specialty (the row columns
+    // and the stored resource must not diverge), and active must be stated explicitly.
+    if (!inputSchedule.hasActiveElement()) {
+      throw new ShpException("validation-failed");
+    }
+    if (inputSchedule.getActor().size() != 1
+        || !existing
+            .practitionerId()
+            .equals(parsePractitionerId(inputSchedule.getActorFirstRep().getReference()))) {
+      throw new ShpException("validation-failed");
+    }
+    if (inputSchedule.getSpecialty().isEmpty()
+        || inputSchedule.getSpecialtyFirstRep().getCoding().isEmpty()
+        || !existing
+            .specialty()
+            .equalsIgnoreCase(
+                String.valueOf(inputSchedule.getSpecialtyFirstRep().getCodingFirstRep().getCode())
+                    .strip())) {
+      throw new ShpException("validation-failed");
+    }
+
     int nextVersion = (int) expectedVersion + 1;
     Instant now = clock.instant();
 

@@ -549,7 +549,7 @@ class ScheduleApiTest {
                         .formatted(docB)))
             .build());
 
-    // Nurse searches -> sees both (total = 2)
+    // Nurse searches -> sees both (2 entries, no total per 07)
     var rNurse =
         send(
             HttpRequest.newBuilder(url("/fhir/Schedule"))
@@ -559,7 +559,8 @@ class ScheduleApiTest {
     assertThat(rNurse.statusCode()).isEqualTo(200);
     JsonNode nurseBundle = JSON.readTree(rNurse.body());
     assertThat(nurseBundle.path("resourceType").asString()).isEqualTo("Bundle");
-    assertThat(nurseBundle.path("total").asInt()).isEqualTo(2);
+    assertThat(nurseBundle.has("total")).isFalse();
+    assertThat(nurseBundle.path("entry")).hasSize(2);
 
     // Doctor A searches WITHOUT actor param -> server automatically sets actor=<self>, returns ONLY
     // 1
@@ -571,7 +572,7 @@ class ScheduleApiTest {
                 .build());
     assertThat(rDocA.statusCode()).isEqualTo(200);
     JsonNode docABundle = JSON.readTree(rDocA.body());
-    assertThat(docABundle.path("total").asInt()).isEqualTo(1);
+    assertThat(docABundle.path("entry")).hasSize(1);
     assertThat(
             docABundle
                 .path("entry")
@@ -709,5 +710,120 @@ class ScheduleApiTest {
                             .formatted(docA)))
                 .build());
     assertThat(rDocUpdate.statusCode()).isEqualTo(403);
+  }
+
+  @Test
+  @DisplayName(
+      "S2-S4 edge cases: bad ids, unknown schedule, immutable actor/specialty, _count bounds")
+  void edgeCasesReturnCatalogErrors() throws Exception {
+    UUID docA = UUID.randomUUID();
+    UUID docB = UUID.randomUUID();
+    practitionerRoles.register(docA, "cardiology");
+    practitionerRoles.register(docB, "cardiology");
+    String nurseToken = token("nurse-edge", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-edge", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+
+    var created = createSchedule(nurseToken, docA);
+    assertThat(created.statusCode()).isEqualTo(201);
+    String id = JSON.readTree(created.body()).path("id").asString().replace("Schedule/", "");
+
+    // Malformed id -> 404; unknown id on PUT -> 404
+    assertThat(get("/fhir/Schedule/not-a-uuid", nurseToken)).isEqualTo(404);
+    assertThat(
+            put(
+                "/fhir/Schedule/" + UUID.randomUUID(),
+                nurseToken,
+                "W/\"1\"",
+                scheduleJson(true, docA, "cardiology")))
+        .isEqualTo(404);
+
+    // Changing the doctor or the specialty, or omitting active, is rejected (400)
+    assertThat(
+            put(
+                "/fhir/Schedule/" + id,
+                nurseToken,
+                "W/\"1\"",
+                scheduleJson(true, docB, "cardiology")))
+        .isEqualTo(400);
+    assertThat(
+            put(
+                "/fhir/Schedule/" + id,
+                nurseToken,
+                "W/\"1\"",
+                scheduleJson(true, docA, "neurology")))
+        .isEqualTo(400);
+    assertThat(
+            put(
+                "/fhir/Schedule/" + id,
+                nurseToken,
+                "W/\"1\"",
+                "{\"resourceType\":\"Schedule\",\"actor\":[{\"reference\":\"Practitioner/"
+                    + docA
+                    + "\"}],\"specialty\":[{\"coding\":[{\"code\":\"cardiology\"}]}]}"))
+        .isEqualTo(400);
+    assertThat(
+            put(
+                "/fhir/Schedule/" + id,
+                nurseToken,
+                "W/\"1\"",
+                "{\"resourceType\":\"Schedule\",\"active\":true,\"specialty\":[{\"coding\":[{\"code\":\"cardiology\"}]}]}"))
+        .isEqualTo(400);
+
+    // Body id that differs from the path id -> 400
+    assertThat(
+            put(
+                "/fhir/Schedule/" + id,
+                nurseToken,
+                "W/\"1\"",
+                scheduleJson(true, docA, "cardiology")
+                    .replace("{", "{\"id\":\"" + UUID.randomUUID() + "\",")))
+        .isEqualTo(400);
+
+    // _count outside 1..100 and a malformed actor -> 400
+    assertThat(get("/fhir/Schedule?_count=0", nurseToken)).isEqualTo(400);
+    assertThat(get("/fhir/Schedule?_count=101", nurseToken)).isEqualTo(400);
+    assertThat(get("/fhir/Schedule?_count=100", nurseToken)).isEqualTo(200);
+    assertThat(get("/fhir/Schedule?actor=Practitioner/not-a-uuid", nurseToken)).isEqualTo(400);
+
+    // Unauthenticated -> 401
+    assertThat(get("/fhir/Schedule", null)).isEqualTo(401);
+
+    // A doctor with no linked identity at all cannot search -> 403
+    assertThat(get("/fhir/Schedule", token("doc-unlinked", List.of("doctor")))).isEqualTo(403);
+  }
+
+  private String scheduleJson(boolean active, UUID doctor, String specialty) {
+    return """
+    {"resourceType":"Schedule","active":%s,"actor":[{"reference":"Practitioner/%s"}],"specialty":[{"coding":[{"code":"%s"}]}]}
+    """
+        .formatted(active, doctor, specialty);
+  }
+
+  private HttpResponse<String> createSchedule(String bearer, UUID doctor) throws Exception {
+    return send(
+        HttpRequest.newBuilder(url("/fhir/Schedule"))
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer)
+            .header(HttpHeaders.CONTENT_TYPE, FhirJson.MEDIA_TYPE)
+            .POST(HttpRequest.BodyPublishers.ofString(scheduleJson(true, doctor, "cardiology")))
+            .build());
+  }
+
+  private int get(String path, String bearer) throws Exception {
+    var b = HttpRequest.newBuilder(url(path)).GET();
+    if (bearer != null) {
+      b.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer);
+    }
+    return send(b.build()).statusCode();
+  }
+
+  private int put(String path, String bearer, String ifMatch, String body) throws Exception {
+    return send(HttpRequest.newBuilder(url(path))
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer)
+            .header(HttpHeaders.CONTENT_TYPE, FhirJson.MEDIA_TYPE)
+            .header(HttpHeaders.IF_MATCH, ifMatch)
+            .PUT(HttpRequest.BodyPublishers.ofString(body))
+            .build())
+        .statusCode();
   }
 }
