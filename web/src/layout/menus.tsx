@@ -3,7 +3,9 @@ import {
   IconCalendarTime,
   IconClipboardHeart,
   IconHome,
+  IconCoin,
   IconListCheck,
+  IconBooks,
   IconMessageChatbot,
   IconStethoscope,
   IconUserSearch,
@@ -57,7 +59,11 @@ export const MENU: readonly MenuGroup[] = [
   },
   {
     title: 'groupAi',
-    links: [{ href: '/assistant', label: 'assistant', icon: <IconMessageChatbot />, roles: ['doctor', 'nurse'] }],
+    links: [
+      { href: '/assistant', label: 'assistant', icon: <IconMessageChatbot />, roles: ['doctor', 'nurse'] },
+      { href: '/knowledge', label: 'knowledge', icon: <IconBooks />, roles: ['doctor', 'admin'] },
+      { href: '/ai-usage', label: 'aiUsage', icon: <IconCoin />, roles: ['admin'] },
+    ],
   },
 ];
 
