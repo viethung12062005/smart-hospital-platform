@@ -3,3 +3,5 @@ Your appointment has been confirmed.
 Doctor: {doctorName}
 Time: {startTime}
 Location: {place}
+Specialty: {specialty}
+Manage your appointment: {manageLink}

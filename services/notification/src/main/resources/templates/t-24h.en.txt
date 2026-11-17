@@ -3,3 +3,5 @@ This is a reminder that you have an appointment in 24 hours.
 Doctor: {doctorName}
 Time: {startTime}
 Location: {place}
+Specialty: {specialty}
+Manage your appointment: {manageLink}

@@ -44,7 +44,7 @@ Item: `{ "reminderId", "kind", "subject": "Appointment/...", "attempts": 5, "las
 — contains **no** contact information. `retry` sets `status=scheduled`, `attempts=0`; 409 if the appointment is past its start time.
 
 Notification content (multilingual) comes from versioned templates in the repo `templates/<kind>.<locale>.txt`, with variables:
-`{doctorName}`, `{startTime}`, `{place}`; diagnosis or results are not included in the content (only "a new result is available, open the app to view").
+`{doctorName}`, `{startTime}`, `{place}`, `{specialty}`, `{manageLink}` (the SRS, UC send-reminder, lists the visit time, doctor name, specialty, location and a link to manage the appointment); diagnosis or results are not included in the content (only "a new result is available, open the app to view").
 
 ## 2. Audit (`/api/v1/audit`)
 
