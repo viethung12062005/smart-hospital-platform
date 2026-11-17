@@ -186,7 +186,7 @@ def test_token_exchange_caches_and_maps_errors() -> None:
     assert body["subject_token"] == ["user-token"]
     assert body["subject_token_type"] == ["urn:ietf:params:oauth:token-type:access_token"]
     assert body["requested_token_type"] == ["urn:ietf:params:oauth:token-type:access_token"]
-    assert body["audience"] == ["clinical"]
+    assert body["audience"] == ["clinical", "shp-api"]  # target + the audience every service validates
     # The exchange never sends the client secret as the subject; it goes in the basic auth header.
     assert "client_secret" not in body
     now[0] = 271
@@ -195,7 +195,7 @@ def test_token_exchange_caches_and_maps_errors() -> None:
     # A different audience is a different cache key.
     tx.exchange("user-token", "document")
     assert len(calls) == 3
-    assert parse_qs(calls[2].decode())["audience"] == ["document"]
+    assert parse_qs(calls[2].decode())["audience"] == ["document", "shp-api"]
     with pytest.raises(ShpError) as e:
         tx.exchange("user-token", "bad")
     assert e.value.info.code == "forbidden"

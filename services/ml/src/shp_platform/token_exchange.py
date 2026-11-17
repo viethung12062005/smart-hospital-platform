@@ -25,6 +25,9 @@ class ExchangeSettings:
     client_id: str
     client_secret: str = ""  # from Key Vault/Kubernetes secrets, never in the repo
     assertion_file: str = ""  # projected ServiceAccount token (preferred over the secret, IAM-02)
+    # Audience the services validate on every request (OIDC_AUDIENCE, `shp-api`). Requested together with the target
+    # so the exchanged token passes the shared JWT rules of the target and still names the target service (IAM-07).
+    also_audience: str = "shp-api"
 
 
 class TokenExchanger:
@@ -54,7 +57,9 @@ class TokenExchanger:
                     "subject_token": subject_token,
                     "subject_token_type": ACCESS_TOKEN_TYPE,
                     "requested_token_type": ACCESS_TOKEN_TYPE,
-                    "audience": audience,
+                    "audience": [audience, self._settings.also_audience]
+                    if self._settings.also_audience and self._settings.also_audience != audience
+                    else audience,
                 }
             )
             res = self._http.post(self._settings.token_endpoint, data=form, auth=basic or httpx.USE_CLIENT_DEFAULT)

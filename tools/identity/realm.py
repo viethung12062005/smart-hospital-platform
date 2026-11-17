@@ -85,6 +85,16 @@ def service_accounts(realm: dict[str, Any]) -> None:
         for t in targets
     ]
     users: list[dict[str, Any]] = realm.setdefault("users", [])
+    for name in sorted({*spec["services"], *targets}):
+        # The audience of a service must exist as a client: token exchange (IAM-07) only accepts an `audience` that is one.
+        realm["clients"].append(
+            {
+                "clientId": name,
+                "name": f"Audience of {name} (resource, no login)",
+                "enabled": True,
+                "bearerOnly": True,
+            }
+        )
     for name, svc in spec["services"].items():
         client_id = f"svc-{name}"
         attributes: dict[str, str] = {}
@@ -93,7 +103,10 @@ def service_accounts(realm: dict[str, Any]) -> None:
                 "jwt.credential.issuer": auth["identityProvider"],
                 "jwt.credential.sub": f"system:serviceaccount:{spec['namespace']}:{name}",
             }
-        audiences = list(dict.fromkeys(f"svc-{t}" for t in svc["calls"]))
+        exchange = svc.get("exchange", [])
+        if exchange:  # standard token exchange v2 (RFC 8693): this client may exchange a user token (IAM-07)
+            attributes["standard.token.exchange.enabled"] = "true"
+        audiences = list(dict.fromkeys(f"svc-{t}" for t in [*svc["calls"], *exchange]))
         realm["clients"].append(
             {
                 "clientId": client_id,
@@ -147,11 +160,37 @@ def service_accounts(realm: dict[str, Any]) -> None:
         )
 
 
+def exchange_audience(realm: dict[str, Any]) -> None:
+    """User-facing clients put `svc-<name>` in the audience of the user's token for every service that exchanges it.
+
+    Standard token exchange only accepts a subject token whose audience contains the requesting client (Keycloak docs,
+    "Standard token exchange"), so without this mapper the exchange of a user token is refused.
+    """
+    spec = json.loads((SRC / "services.json").read_text(encoding="utf-8"))
+    requesters = [f"svc-{n}" for n, s in spec["services"].items() if s.get("exchange")]
+    for client in realm["clients"]:
+        if client["clientId"] in ("shp-web", "shp-test"):
+            for requester in requesters:
+                client.setdefault("protocolMappers", []).append(
+                    {
+                        "name": f"audience-{requester}",
+                        "protocol": "openid-connect",
+                        "protocolMapper": "oidc-audience-mapper",
+                        "config": {
+                            "included.client.audience": requester,
+                            "id.token.claim": "false",
+                            "access.token.claim": "true",
+                        },
+                    }
+                )
+
+
 def build(env: str) -> dict[str, Any]:
     base = json.loads((SRC / "base.json").read_text(encoding="utf-8"))
     overlay = json.loads((SRC / f"overlay-{env}.json").read_text(encoding="utf-8"))
     realm: dict[str, Any] = merge(base, overlay)
     service_accounts(realm)
+    exchange_audience(realm)
     return realm
 
 

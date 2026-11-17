@@ -128,3 +128,36 @@ same behaviour for the Python library.
 Not done here: the `microservice` chart (shp-platform-templates) has no projected-token volume, and services do not yet set
 `CLIENT_ASSERTION_FILE`; until then a service can only use the secret fallback. Follow-up: add `serviceAccountToken` volume
 support to the chart and set the audience to the realm issuer.
+
+## 8. Token exchange for the ai service (IAM-07)
+
+**Variant: standard token exchange v2** (feature `token-exchange-standard:v2`, enabled by default in Keycloak 26.8; `/admin/serverinfo`
+lists the legacy `token-exchange` v1 and `token-exchange-delegation` as preview and disabled, so they are not used). Source: Keycloak
+documentation "Configuring and using token exchange", section "Standard token exchange" (https://www.keycloak.org/securing-apps/token-exchange),
+which states that V2 is "fully supported", V1 is a deprecated preview, that the requesting client must be confidential and have
+the "Standard token exchange" switch on, that the subject token must name the requesting client in its audience, that `audience`
+must be a client id, and how `audience` filters the `aud` claim.
+
+How it is configured (`identity/realm/services.json`, generated into both realms):
+- Only `svc-ai` has `standard.token.exchange.enabled=true`; its `exchange` list (`clinical`, `scheduling`) names the services it may
+  exchange user tokens for. Every other client, and the public web client, has the switch off.
+- The user's access token must contain `svc-ai` in `aud`, so the web clients (`shp-web`, local `shp-test`) carry an audience
+  mapper for every requester in `services.json`. The web app sends the user token to the gateway, which forwards `/api/v1/ai/*` to `ai`.
+- Each service exists as a `bearerOnly` client, because Keycloak rejects an `audience` that is not a client ("Audience not found").
+- The `ai` client requests `audience=<target>` and `audience=shp-api` (`ExchangeSettings.also_audience`). Reason: every service
+  validates `aud = OIDC_AUDIENCE = shp-api` (`envs/services-common.yaml`), so an exchanged token whose audience is only `clinical`
+  would be rejected by `clinical`. The result names the target and passes the shared rules.
+
+What the exchanged token looks like (tested): `sub` = the user's `sub`, `azp` = `svc-ai`, `aud` = `[clinical, shp-api]`, `roles` = the
+user's roles (no `internal.*`), the user's lifetime limits. The matrix therefore applies to the user unchanged (15 section 7).
+
+Findings and limits:
+- A token for a target that is not in the caller's `exchange` list (for example `ml`) is refused: the audience cannot be widened.
+- Not verified: `amr`. A staff token needs `amr` containing `mfa`; the realm does not yet force MFA, so no staff token carries it and
+  it could not be shown whether the exchanged token keeps it. Re-test when IAM-06/IAM-03 turn MFA on, before `ai` serves doctors in uat.
+- Standard v2 does not add an `act` claim (delegation is the preview `token-exchange-delegation`); audit must record `ai` through `azp`.
+- Revoking or disabling the user stops new exchanges (the subject token is validated) but an already exchanged token lives until `exp`.
+
+Tested in `KeycloakTokenExchangeTest` (container, Keycloak 26.8.2): sub kept, audience of the target, shared JWT rules, five other service
+clients and the public client refused, target outside the exchange list refused, tampered subject token refused, and the client switch is
+what allows the exchange (off: refused, on: accepted).

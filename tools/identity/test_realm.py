@@ -95,8 +95,10 @@ def test_service_clients_follow_services_json_in_both_environments() -> None:
                 for m in client["protocolMappers"]
                 if "audience" in m["name"]
             }
-            # audience isolation (ADR-0017): the target services only, never shp-api
-            assert audiences == {f"svc-{t}" for t in svc["calls"]}
+            # audience isolation (ADR-0017): the targets only, never shp-api
+            assert audiences == {
+                f"svc-{t}" for t in [*svc["calls"], *svc.get("exchange", [])]
+            }
         roles = {r["name"] for r in realm.build(env)["roles"]["realm"]}
         assert {
             f"internal.{t}" for s in spec["services"].values() for t in s["calls"]
@@ -136,3 +138,37 @@ def test_client_authentication_differs_by_environment_only_in_the_method() -> No
         == "${SHP_K8S_OIDC_ISSUER}"
     )
     assert "identityProviders" not in realm.build("local")
+
+
+def test_token_exchange_only_for_callers_with_an_exchange_list() -> None:
+    spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
+    for env in ("local", "prod"):
+        built = clients(env)
+        for name, svc in spec["services"].items():
+            enabled = built[f"svc-{name}"]["attributes"].get(
+                "standard.token.exchange.enabled"
+            )
+            assert (enabled == "true") == bool(svc.get("exchange")), f"{env} svc-{name}"
+            for target in svc.get("exchange", []):
+                assert (
+                    built[target]["bearerOnly"] is True
+                )  # the audience must exist as a client
+        for requester in (
+            f"svc-{n}" for n, s in spec["services"].items() if s.get("exchange")
+        ):
+            mappers = {
+                m["config"].get("included.client.audience")
+                for m in built["shp-web"]["protocolMappers"]
+            }
+            assert (
+                requester in mappers
+            )  # the user's token must name the requester or the exchange is refused
+        for client_id, client in built.items():
+            if client_id.startswith("svc-") and not spec["services"][client_id[4:]].get(
+                "exchange"
+            ):
+                assert "standard.token.exchange.enabled" not in client["attributes"]
+        assert built["shp-web"]["publicClient"] is True
+        assert "standard.token.exchange.enabled" not in built["shp-web"].get(
+            "attributes", {}
+        )
