@@ -18,5 +18,9 @@ spring:
 shp:
   clinical:
     url: ${SHP_CLINICAL_URL:http://clinical}
+  paging:
+    # HMAC key of the opaque _page_token (07 section 4), at least 32 bytes. Read from the environment, never committed.
+    # Unset: the service generates a random per-process key (tokens do not survive a restart or cross replicas).
+    token-key: ${SHP_PAGE_TOKEN_KEY:}
 server:
   port: 8080

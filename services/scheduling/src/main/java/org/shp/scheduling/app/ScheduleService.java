@@ -138,11 +138,14 @@ public class ScheduleService {
     return repository.findById(id).orElseThrow(() -> new ShpException("not-found"));
   }
 
-  /** S3: Search schedules by criteria. */
+  /**
+   * S3: Search schedules by criteria, keyset-paged by id. Returns at most {@code limit} records
+   * after {@code afterId}.
+   */
   @Transactional(readOnly = true)
   public List<ScheduleRecord> searchSchedules(
-      UUID practitionerId, String specialty, Boolean active, int limit, int offset) {
-    return repository.find(new ScheduleFilter(practitionerId, specialty, active, limit, offset));
+      UUID practitionerId, String specialty, Boolean active, int limit, UUID afterId) {
+    return repository.find(new ScheduleFilter(practitionerId, specialty, active, limit, afterId));
   }
 
   /** S4: Edit a schedule (enable/disable, notes). */
@@ -162,6 +165,27 @@ public class ScheduleService {
       if (!idPart.equalsIgnoreCase(id.toString()) && !idPart.equalsIgnoreCase("Schedule/" + id)) {
         throw new ShpException("validation-failed");
       }
+    }
+
+    // S4 edits only active/comment: the Schedule keeps its doctor and specialty (the row columns
+    // and the stored resource must not diverge), and active must be stated explicitly.
+    if (!inputSchedule.hasActiveElement()) {
+      throw new ShpException("validation-failed");
+    }
+    if (inputSchedule.getActor().size() != 1
+        || !existing
+            .practitionerId()
+            .equals(parsePractitionerId(inputSchedule.getActorFirstRep().getReference()))) {
+      throw new ShpException("validation-failed");
+    }
+    if (inputSchedule.getSpecialty().isEmpty()
+        || inputSchedule.getSpecialtyFirstRep().getCoding().isEmpty()
+        || !existing
+            .specialty()
+            .equalsIgnoreCase(
+                String.valueOf(inputSchedule.getSpecialtyFirstRep().getCodingFirstRep().getCode())
+                    .strip())) {
+      throw new ShpException("validation-failed");
     }
 
     int nextVersion = (int) expectedVersion + 1;
