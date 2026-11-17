@@ -27,7 +27,7 @@ and returns `{ challengeId, channel, expiresAt }`. `N9` accepts `{ challengeId, 
   (429 `otp-locked`). Each number receives at most 5 codes/hour, each IP at most 20 codes/hour (429 `otp-rate-limited`).
 - **Message content:** per versioned template; the authorization message (`link-relative`) states clearly **who** (shortened name) is requesting **which scope**. It does not include medical data.
 - **Cost and monitoring:** metrics for messages by channel, delivery success rate, SMS fallback rate; alert when the monthly budget is exceeded.
-- Only services with the `internal.otp` role can call it; the gateway does not route `/internal`. Never log `destination` or `code`.
+- Only services with the `internal.notification` role can call it; the gateway does not route `/internal`. Never log `destination` or `code`.
 
 ### N1 `PUT /api/v1/notifications/devices`
 `{ "platform": "ios|android|web", "token": "<FCM/APNs token>" }` → 200 `{ "tokenId" }`. Upsert by `token`; the owner comes from the

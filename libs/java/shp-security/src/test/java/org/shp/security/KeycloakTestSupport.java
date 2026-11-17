@@ -126,4 +126,63 @@ final class KeycloakTestSupport {
         HttpRequest.newBuilder(URI.create(url)).GET().build(),
         HttpResponse.BodyHandlers.ofString());
   }
+
+  /**
+   * A synthetic TOTP seed, TEST FIXTURES ONLY (never in a realm file). Keycloak stores the seed as
+   * a raw string and uses its bytes as the HMAC key, so the same string generates the codes here.
+   */
+  static final String TEST_TOTP_SEED = "synthetic-totp-seed-0001";
+
+  /** RFC 6238 code (HMAC-SHA1, 6 digits, 30 s) for the given seed at the current time. */
+  static String totp(String seed) throws Exception {
+    long counter = System.currentTimeMillis() / 1000 / 30;
+    var mac = javax.crypto.Mac.getInstance("HmacSHA1");
+    mac.init(
+        new javax.crypto.spec.SecretKeySpec(
+            seed.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA1"));
+    byte[] h = mac.doFinal(java.nio.ByteBuffer.allocate(8).putLong(counter).array());
+    int o = h[h.length - 1] & 0x0f;
+    int bin =
+        ((h[o] & 0x7f) << 24)
+            | ((h[o + 1] & 0xff) << 16)
+            | ((h[o + 2] & 0xff) << 8)
+            | (h[o + 3] & 0xff);
+    return String.format("%06d", bin % 1_000_000);
+  }
+
+  /**
+   * Creates a user with a role, a password and optionally an enrolled TOTP credential (the same
+   * representation Keycloak writes when a user scans the QR code) and returns its id.
+   */
+  static String createUser(
+      String base, String admin, String username, String role, String password, String totpSeed)
+      throws Exception {
+    String otp =
+        totpSeed == null
+            ? ""
+            : """
+            ,{"type":"otp","secretData":"{\\"value\\":\\"%s\\"}",
+              "credentialData":"{\\"subType\\":\\"totp\\",\\"digits\\":6,\\"period\\":30,\\"algorithm\\":\\"HmacSHA1\\",\\"counter\\":0}"}
+            """
+                .formatted(totpSeed);
+    String body =
+        """
+        {"username":"%s","enabled":true,"emailVerified":true,"email":"%s@example.test",
+         "firstName":"Test","lastName":"User",
+         "credentials":[{"type":"password","value":"%s","temporary":false}%s]}
+        """
+            .formatted(username, username, password, otp);
+    var created = admin("POST", base + "/admin/realms/shp/users", admin, body);
+    assertThat(created.statusCode()).as(created.body()).isEqualTo(201);
+    String id = created.headers().firstValue("Location").orElseThrow().replaceAll(".*/", "");
+    String roleJson = adminGet(base + "/admin/realms/shp/roles/" + role, admin);
+    var mapped =
+        admin(
+            "POST",
+            base + "/admin/realms/shp/users/" + id + "/role-mappings/realm",
+            admin,
+            "[" + roleJson + "]");
+    assertThat(mapped.statusCode()).isEqualTo(204);
+    return id;
+  }
 }

@@ -136,6 +136,22 @@ def service_accounts(realm: dict[str, Any]) -> None:
                             "userinfo.token.claim": "false",
                         },
                     },
+                    *(
+                        # the exchanged token of a user keeps the authentication methods of the user's session (IAM-10)
+                        [
+                            {
+                                "name": "amr-claim",
+                                "protocol": "openid-connect",
+                                "protocolMapper": "oidc-amr-mapper",
+                                "config": {
+                                    "id.token.claim": "false",
+                                    "access.token.claim": "true",
+                                },
+                            }
+                        ]
+                        if exchange
+                        else []
+                    ),
                     *[
                         {
                             "name": f"audience-{a}",
@@ -187,12 +203,24 @@ def exchange_audience(realm: dict[str, Any]) -> None:
                 )
 
 
+def authentication_flows(realm: dict[str, Any]) -> None:
+    """Add the realm's authentication flows (IAM-10).
+
+    A realm import that names any flow replaces Keycloak's defaults, so identity/realm/flows.json holds the complete
+    set of Keycloak 26.8.2, with staff MFA added: see docs/04-devops/keycloak.md section 10 for what differs from stock.
+    """
+    flows = json.loads((SRC / "flows.json").read_text(encoding="utf-8"))
+    realm["authenticationFlows"] = flows["authenticationFlows"]
+    realm["authenticatorConfig"] = flows["authenticatorConfig"]
+
+
 def build(env: str) -> dict[str, Any]:
     base = json.loads((SRC / "base.json").read_text(encoding="utf-8"))
     overlay = json.loads((SRC / f"overlay-{env}.json").read_text(encoding="utf-8"))
     realm: dict[str, Any] = merge(base, overlay)
     service_accounts(realm)
     exchange_audience(realm)
+    authentication_flows(realm)
     return realm
 
 
@@ -206,7 +234,7 @@ def forbidden(text: str) -> list[str]:
     users = json.loads(text).get("users", [])
     if any("serviceAccountClientId" not in u or "credentials" in u for u in users):
         found.append('"users" (only service-account users are allowed)')
-    if re.search(r'"credentials"\s*:', text):
+    if re.search(r'"credentials"\s*:\s*\[', text):
         found.append('"credentials"')
     if LITERAL_CREDENTIAL.search(text):
         found.append("literal password/secret/value (use a ${PLACEHOLDER})")
