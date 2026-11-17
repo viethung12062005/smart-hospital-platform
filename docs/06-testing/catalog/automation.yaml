@@ -23,7 +23,9 @@ automation:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::wrongAudienceWrongSignatureAndExpiredTokensAre401
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::patientDoesNotNeedMfa
-    gap: "Not yet tested with real Keycloak; token lifetime <= 15 minutes from the IdP not yet measured."
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenTest.java::validPatientTokenIsAcceptedAndRolesAreMapped
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakRealmAsCodeTest.java::accessTokenLifespanIsAtMostFifteenMinutes
+    gap: "Tokens from a real Keycloak 26.8 pass the shared rules and the lifetime is capped at 15 minutes; the realm does not yet force TOTP/WebAuthn for staff, so amr=mfa from the IdP is not produced (IAM-06, IAM-03)."
   TC-SEC-04:
     status: partial
     refs:

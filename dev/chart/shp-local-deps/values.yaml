@@ -7,7 +7,7 @@ images:
   redis: redis:7-alpine
   rabbitmq: rabbitmq:4-management
   azurite: mcr.microsoft.com/azure-storage/azurite:3.37.0
-  keycloak: quay.io/keycloak/keycloak:26.0
+  keycloak: quay.io/keycloak/keycloak:26.8.2   # same version as shp-gitops platform/charts/shp-keycloak (docs/04-devops/keycloak.md)
 
 # Profile: core = enough for most tasks. (Full profile: LOC-08.)
 components:
