@@ -126,7 +126,8 @@ export const CITATION: Citation = {
   index: 1,
   documentId: 'kb-001',
   title: 'Phác đồ tăng huyết áp 2026',
-  section: '4.2 Chỉ định chuyển tuyến',
+  // The real service sends the heading path: <document title> > <heading> > <sub-heading> (found by the real-backend run).
+  section: 'Phác đồ tăng huyết áp 2026 > 4. Điều trị > 4.2 Chỉ định chuyển tuyến',
   page: 12,
   chunkId: 'kb-001:1:3',
   quote: '…chuyển tuyến khi huyết áp ≥ 180/110 mmHg kèm dấu hiệu tổn thương cơ quan đích…',
