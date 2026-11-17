@@ -37,12 +37,33 @@ def test_gate_passes_registers_candidate_only(trained: tuple[FileRegistry, Train
 
 
 def test_same_dataset_and_seed_give_same_model(
-    facts: pd.DataFrame, tmp_path: Path, trained: tuple[FileRegistry, TrainingResult]
+    facts: pd.DataFrame,
+    tmp_path: Path,
+    trained: tuple[FileRegistry, TrainingResult],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    reg, _ = trained
+    """ML-13, extended by MLO-02: not only the model text but its recorded hash and the parameters are identical."""
+    reg, first = trained
+    # The latency gate measures wall-clock time: a loaded machine must not decide whether a second model is registered.
+    monkeypatch.setattr(pipeline, "latency_p95_ms", lambda _score: 1.0)
     again = FileRegistry(tmp_path)
-    train_candidate(facts, again, "a" * 64, seed=42)
+    second = train_candidate(facts, again, "a" * 64, seed=42)
     assert again.load("1")[0].to_text() == reg.load("1")[0].to_text()
+    first_meta, second_meta = reg.load("1")[1], again.load("1")[1]
+    assert first_meta["modelSha256"] == second_meta["modelSha256"]
+    assert first_meta["params"] == second_meta["params"] and first_meta["threshold"] == second_meta["threshold"]
+    assert (
+        first.metrics["auc"] == second.metrics["auc"] and first.metrics["baselineAuc"] == second.metrics["baselineAuc"]
+    )
+
+
+def test_another_seed_gives_another_model(facts: pd.DataFrame, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """The seed is really an input: the comparison above is not trivially true."""
+    monkeypatch.setattr(pipeline, "latency_p95_ms", lambda _score: 1.0)
+    a, b = FileRegistry(tmp_path / "a"), FileRegistry(tmp_path / "b")
+    train_candidate(facts, a, "a" * 64, seed=42)
+    train_candidate(facts, b, "a" * 64, seed=43)
+    assert a.load("1")[1]["modelSha256"] != b.load("1")[1]["modelSha256"]
 
 
 def test_failed_gate_registers_nothing_and_logs_reason(
