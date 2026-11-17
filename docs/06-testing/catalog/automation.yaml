@@ -89,11 +89,12 @@ automation:
   # ---- Scheduling: doctor work schedule ----
   TC-AC-02.3:
     status: partial
-    gap: "Schedule S2/S3/S4 are covered (doctor sees and edits only own schedule: 403, search forced to self). Still open - the doctor's appointment schedule (S13) and the audit record of the rejection."
+    gap: "Schedule S2/S3/S4 are covered (doctor sees and edits only own schedule: 403, search forced to self). The audit record of the denied read is asserted (deniedScheduleReadIsAudited). Still open - the doctor's appointment schedule (S13)."
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s2ReadSchedulePermissions
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s3FindSchedulesWithRoleRestrictions
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s4UpdateSchedule
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::deniedScheduleReadIsAudited
 
   # ---- Clinical: version history ----
   TC-AC-01.3:
