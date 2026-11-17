@@ -106,6 +106,14 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleTemplateApiTest.java::validTemplateSavesAndNonDivisibleRangeReturns400
+  TC-AC-02.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/SlotGeneratorTest.java::template0800To1130With15MinSlotsGenerates14FreeSlots
+  TC-AC-GS.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/SlotGeneratorTest.java::regeneratingSameDayCreatesNoDuplicates
 
   # ---- Clinical: version history ----
   TC-SEC-03:
