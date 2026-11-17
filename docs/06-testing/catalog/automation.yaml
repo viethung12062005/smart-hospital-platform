@@ -73,6 +73,11 @@ automation:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
     gap: "Duplicate-processing protection exists; missing simulation of the provider temporarily failing to send (NTF-xx)."
+  TC-AC-SN.1:
+    status: partial
+    refs:
+      - services/notification/src/test/java/org/shp/notification/app/NotificationTemplateRendererTest.java::everyAppointmentTemplateUsesOnlyTheDesignedPlaceholdersAndNoClinicalWording
+    gap: "Checked at template level (NTF-06): the three designed placeholders only, no diagnosis, reason or result wording. The check on a message actually sent by the work loop awaits the sender (NTF-07)."
   TC-AC-SR.1:
     status: automated
     refs:

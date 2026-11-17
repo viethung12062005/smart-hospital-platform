@@ -7,7 +7,7 @@
 | Metric | Value |
 |---|---|
 | Test case | 203 |
-| Automated or partially automated | 61 (30%) |
+| Automated or partially automated | 62 (30%) |
 | Fully automated | 28 |
 | P0 (security, patient data, patient safety) | 122, automated at least partially: 34 |
 
@@ -22,7 +22,7 @@
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
 | scheduling | 21 | 1 | 9 | 11 | 0 |
 | security | 28 | 7 | 6 | 15 | 0 |
-| system | 10 | 3 | 1 | 6 | 0 |
+| system | 10 | 3 | 2 | 5 | 0 |
 
 ## By test level
 
@@ -30,7 +30,7 @@
 |---|---|---|---|---|---|
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
-| integration | 29 | 5 | 6 | 18 | 0 |
+| integration | 29 | 5 | 7 | 17 | 0 |
 | api | 90 | 2 | 12 | 76 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
@@ -247,7 +247,7 @@
 | AC-SM.1 | TC-AC-SM.1 (ai-eval, P0) | planned |
 | AC-SM.2 | TC-AC-SM.2 (ai-eval, P0) | planned |
 | AC-SM.2 | TC-SEC-18 (integration, P0) | automated |
-| AC-SN.1 | TC-AC-SN.1 (integration, P1) | planned |
+| AC-SN.1 | TC-AC-SN.1 (integration, P1) | partial |
 | AC-SP.1 | TC-AC-SP.1 (api, P0) | planned |
 | AC-SR.1 | TC-AC-SR.1 (integration, P1) | automated |
 | AC-ST.1 | TC-AC-ST.1 (api, P1) | automated |
