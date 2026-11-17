@@ -14,10 +14,14 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.spec.SecretKeySpec;
@@ -61,7 +65,8 @@ import tools.jackson.databind.json.JsonMapper;
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
       "shp.auth.authority=" + ScheduleApiTest.TestSecurityConfig.ISSUER,
-      "shp.auth.audience=" + ScheduleApiTest.TestSecurityConfig.AUDIENCE
+      "shp.auth.audience=" + ScheduleApiTest.TestSecurityConfig.AUDIENCE,
+      "shp.paging.token-key=test-only-page-token-key-32-bytes-minimum!!"
     })
 @Testcontainers
 @Import(ScheduleApiTest.TestSecurityConfig.class)
@@ -791,6 +796,286 @@ class ScheduleApiTest {
 
     // A doctor with no linked identity at all cannot search -> 403
     assertThat(get("/fhir/Schedule", token("doc-unlinked", List.of("doctor")))).isEqualTo(403);
+  }
+
+  @Test
+  @DisplayName("S3: keyset paging - _page_token and Bundle.link[next] walk every schedule once")
+  void s3KeysetPagingWalksAllSchedulesOnce() throws Exception {
+    String nurse = token("nurse-page", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-page", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+    Set<String> created = new HashSet<>();
+    for (int i = 0; i < 5; i++) {
+      UUID doc = UUID.randomUUID();
+      practitionerRoles.register(doc, "cardiology");
+      var res = createSchedule(nurse, doc);
+      assertThat(res.statusCode()).isEqualTo(201);
+      created.add(JSON.readTree(res.body()).path("id").asString().replace("Schedule/", ""));
+    }
+
+    List<String> seen = new ArrayList<>();
+    String path = "/fhir/Schedule?specialty=cardiology&_count=2";
+    int pages = 0;
+    while (path != null) {
+      var res = getResponse(path, nurse);
+      assertThat(res.statusCode()).isEqualTo(200);
+      JsonNode bundle = JSON.readTree(res.body());
+      assertThat(bundle.path("type").asString()).isEqualTo("searchset");
+      assertThat(bundle.has("total")).isFalse();
+      assertThat(link(bundle, "self")).contains("specialty=cardiology").contains("_count=2");
+      assertThat(bundle.path("entry").size()).isLessThanOrEqualTo(2);
+      for (JsonNode entry : bundle.path("entry")) {
+        seen.add(entry.path("resource").path("id").asString().replace("Schedule/", ""));
+        assertThat(entry.path("fullUrl").asString()).endsWith("/fhir/Schedule/" + seen.getLast());
+      }
+      String next = link(bundle, "next");
+      assertThat(next == null).isEqualTo(bundle.path("entry").size() < 2 || pages == 2);
+      if (next != null) {
+        assertThat(next).contains("_page_token=").doesNotContain("_offset");
+        path = next.substring(next.indexOf("/fhir/Schedule"));
+      } else {
+        path = null;
+      }
+      pages++;
+    }
+    assertThat(pages).isEqualTo(3);
+    assertThat(seen)
+        .hasSize(5)
+        .doesNotHaveDuplicates()
+        .containsExactlyInAnyOrderElementsOf(created);
+    assertThat(seen).isSorted();
+  }
+
+  @Test
+  @DisplayName("S3: a page exactly full on the last page has no next link")
+  void s3ExactlyFullLastPageHasNoNextLink() throws Exception {
+    String nurse = token("nurse-exact", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-exact", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+    for (int i = 0; i < 2; i++) {
+      UUID doc = UUID.randomUUID();
+      practitionerRoles.register(doc, "cardiology");
+      assertThat(createSchedule(nurse, doc).statusCode()).isEqualTo(201);
+    }
+    JsonNode bundle = JSON.readTree(getResponse("/fhir/Schedule?_count=2", nurse).body());
+    assertThat(bundle.path("entry")).hasSize(2);
+    assertThat(link(bundle, "next")).isNull();
+    assertThat(link(bundle, "self")).isNotNull();
+  }
+
+  @Test
+  @DisplayName("S3: tampered, foreign, malformed and mismatched _page_token values are 400")
+  void s3InvalidPageTokensAreRejected() throws Exception {
+    String nurse = token("nurse-tok", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-tok", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+    for (int i = 0; i < 3; i++) {
+      UUID doc = UUID.randomUUID();
+      practitionerRoles.register(doc, "cardiology");
+      assertThat(createSchedule(nurse, doc).statusCode()).isEqualTo(201);
+    }
+    JsonNode first =
+        JSON.readTree(getResponse("/fhir/Schedule?specialty=cardiology&_count=1", nurse).body());
+    String next = link(first, "next");
+    String tokenValue =
+        java.net.URLDecoder.decode(
+            next.substring(next.indexOf("_page_token=") + "_page_token=".length()),
+            StandardCharsets.UTF_8);
+
+    // The untouched token works
+    assertThat(
+            get(
+                "/fhir/Schedule?specialty=cardiology&_count=1&_page_token="
+                    + java.net.URLEncoder.encode(tokenValue, StandardCharsets.UTF_8),
+                nurse))
+        .isEqualTo(200);
+
+    // Tampered payload (signature no longer matches)
+    int dot = tokenValue.indexOf('.');
+    String tamperedPayload =
+        Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(
+                    new String(
+                            Base64.getUrlDecoder().decode(tokenValue.substring(0, dot)),
+                            StandardCharsets.UTF_8)
+                        .replace("\"id\"", "\"ID\"")
+                        .getBytes(StandardCharsets.UTF_8))
+            + tokenValue.substring(dot);
+    assertThat(
+            getResponse("/fhir/Schedule?specialty=cardiology&_page_token=" + tamperedPayload, nurse)
+                .statusCode())
+        .isEqualTo(400);
+
+    // Tampered signature
+    String tamperedSig =
+        tokenValue.substring(0, tokenValue.length() - 1) + (tokenValue.endsWith("A") ? "B" : "A");
+    assertThat(get("/fhir/Schedule?specialty=cardiology&_page_token=" + tamperedSig, nurse))
+        .isEqualTo(400);
+
+    // Token issued for another filter set
+    assertThat(get("/fhir/Schedule?specialty=neurology&_page_token=" + tokenValue, nurse))
+        .isEqualTo(400);
+    assertThat(get("/fhir/Schedule?_page_token=" + tokenValue, nurse)).isEqualTo(400);
+
+    // Garbage and an offset-style token
+    assertThat(get("/fhir/Schedule?_page_token=garbage", nurse)).isEqualTo(400);
+    assertThat(get("/fhir/Schedule?_page_token=2", nurse)).isEqualTo(400);
+    assertThat(get("/fhir/Schedule?_page_token=a.b", nurse)).isEqualTo(400);
+  }
+
+  @Test
+  @DisplayName("S3: unsupported parameters and modifiers are 400 unsupported-parameter")
+  void s3UnsupportedParametersAreRejected() throws Exception {
+    String nurse = token("nurse-unsup", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-unsup", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+
+    for (String query :
+        List.of(
+            "_offset=1",
+            "status=active",
+            "name=Quan",
+            "_sort=id",
+            "specialty:exact=cardiology",
+            "specialty:not=cardiology",
+            "actor:Practitioner=" + UUID.randomUUID(),
+            "active:missing=true",
+            "_count:exact=5")) {
+      var res = getResponse("/fhir/Schedule?" + query, nurse);
+      assertThat(res.statusCode()).as(query).isEqualTo(400);
+      assertThat(res.body()).as(query).contains("unsupported-parameter");
+    }
+    // Rejected before authorization-dependent filtering for a doctor too
+    UUID doc = UUID.randomUUID();
+    identityLinks.links.put("doc-unsup", new IdentityLink("Practitioner", doc.toString(), false));
+    var res = getResponse("/fhir/Schedule?bogus=1", token("doc-unsup", List.of("doctor")));
+    assertThat(res.statusCode()).isEqualTo(400);
+    assertThat(res.body()).contains("unsupported-parameter");
+  }
+
+  @Test
+  @DisplayName("S3: invalid values of supported parameters are 400 validation-failed")
+  void s3InvalidParameterValuesAreRejected() throws Exception {
+    String nurse = token("nurse-val", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-val", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+    UUID doc = UUID.randomUUID();
+    for (String query :
+        List.of(
+            "active=maybe",
+            "active=",
+            "specialty=",
+            "specialty=http://other.example.org/cs%7Ccardiology",
+            "actor=Patient/" + doc,
+            "actor=" + doc + "," + UUID.randomUUID(),
+            "actor=Practitioner/" + doc + "&actor=Practitioner/" + UUID.randomUUID(),
+            "_count=abc",
+            "_count=-1",
+            "_count=1&_count=2")) {
+      var res = getResponse("/fhir/Schedule?" + query, nurse);
+      assertThat(res.statusCode()).as(query).isEqualTo(400);
+      assertThat(res.body()).as(query).contains("validation-failed");
+    }
+  }
+
+  @Test
+  @DisplayName("S3: actor, specialty and active filters, with a system-qualified specialty")
+  void s3FiltersApply() throws Exception {
+    String nurse = token("nurse-filter", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-filter", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+    UUID docA = UUID.randomUUID();
+    UUID docB = UUID.randomUUID();
+    practitionerRoles.register(docA, "cardiology");
+    practitionerRoles.register(docB, "neurology");
+    assertThat(createSchedule(nurse, docA).statusCode()).isEqualTo(201);
+    var inactive =
+        send(
+            HttpRequest.newBuilder(url("/fhir/Schedule"))
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + nurse)
+                .header(HttpHeaders.CONTENT_TYPE, FhirJson.MEDIA_TYPE)
+                .POST(HttpRequest.BodyPublishers.ofString(scheduleJson(false, docB, "neurology")))
+                .build());
+    assertThat(inactive.statusCode()).isEqualTo(201);
+
+    assertThat(entries("/fhir/Schedule?specialty=neurology", nurse)).isEqualTo(1);
+    assertThat(
+            entries(
+                "/fhir/Schedule?specialty="
+                    + java.net.URLEncoder.encode(
+                        "https://shp.example.org/fhir/CodeSystem/specialty|cardiology",
+                        StandardCharsets.UTF_8),
+                nurse))
+        .isEqualTo(1);
+    assertThat(entries("/fhir/Schedule?active=true", nurse)).isEqualTo(1);
+    assertThat(entries("/fhir/Schedule?active=false", nurse)).isEqualTo(1);
+    assertThat(entries("/fhir/Schedule?actor=Practitioner/" + docB, nurse)).isEqualTo(1);
+    assertThat(entries("/fhir/Schedule?actor=" + docA + "&active=false", nurse)).isZero();
+  }
+
+  @Test
+  @DisplayName("TC-AC-02.3: the denied read of another doctor's schedule is audited as denied")
+  void deniedScheduleReadIsAudited() throws Exception {
+    UUID docA = UUID.randomUUID();
+    UUID docB = UUID.randomUUID();
+    practitionerRoles.register(docA, "cardiology");
+    String nurse = token("nurse-audit", List.of("nurse"));
+    identityLinks.links.put(
+        "nurse-audit", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+    String subDocB = "audit-doc-" + docB;
+    identityLinks.links.put(subDocB, new IdentityLink("Practitioner", docB.toString(), false));
+    String id =
+        JSON.readTree(createSchedule(nurse, docA).body())
+            .path("id")
+            .asString()
+            .replace("Schedule/", "");
+
+    assertThat(get("/fhir/Schedule/" + id, token(subDocB, List.of("doctor")))).isEqualTo(403);
+
+    var audits =
+        jdbc.sql(
+                """
+                SELECT payload::text FROM outbox
+                WHERE event_type = 'shp.audit.recorded.v1'
+                  AND payload->'data'->>'outcome' = 'denied'
+                  AND payload->'data'->'actor'->>'subject' = ?
+                """)
+            .param(subDocB)
+            .query(String.class)
+            .list();
+    assertThat(audits).hasSize(1);
+    JsonNode audit = JSON.readTree(audits.getFirst()).path("data");
+    assertThat(audit.path("service").asString()).isEqualTo("scheduling");
+    assertThat(audit.path("action").asString()).isEqualTo("read");
+    assertThat(audit.path("actor").path("role").asString()).isEqualTo("doctor");
+    assertThat(audit.path("resource").asString()).startsWith("Schedule");
+    assertThat(audit.path("reason").asString()).isNotBlank();
+    // No clinical content or search values in the record
+    assertThat(audits.getFirst()).doesNotContain("cardiology");
+  }
+
+  private HttpResponse<String> getResponse(String path, String bearer) throws Exception {
+    var b = HttpRequest.newBuilder(url(path)).GET();
+    if (bearer != null) {
+      b.header(HttpHeaders.AUTHORIZATION, "Bearer " + bearer);
+    }
+    return send(b.build());
+  }
+
+  private int entries(String path, String bearer) throws Exception {
+    var res = getResponse(path, bearer);
+    assertThat(res.statusCode()).as(path).isEqualTo(200);
+    return JSON.readTree(res.body()).path("entry").size();
+  }
+
+  private static String link(JsonNode bundle, String relation) {
+    for (JsonNode l : bundle.path("link")) {
+      if (relation.equals(l.path("relation").asString())) {
+        return l.path("url").asString();
+      }
+    }
+    return null;
   }
 
   private String scheduleJson(boolean active, UUID doctor, String specialty) {
