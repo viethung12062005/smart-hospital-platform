@@ -43,9 +43,7 @@ public record ScheduleTemplateRecord(
     if (validTo != null && validTo.isBefore(validFrom)) {
       throw new IllegalArgumentException("validTo must be >= validFrom");
     }
-    if (createdAt == null) {
-      createdAt = Instant.now();
-    }
+    Objects.requireNonNull(createdAt, "createdAt must not be null");
     Objects.requireNonNull(createdBy, "createdBy must not be null");
     if (createdBy.isBlank()) {
       throw new IllegalArgumentException("createdBy must not be blank");

@@ -397,6 +397,76 @@ class ScheduleTemplateApiTest {
 
   @Test
   @DisplayName(
+      "S5: malformed or missing fields return 400; adjacent and cross-weekday ranges are valid")
+  void s5MalformedFieldsReturn400AndNonOverlappingRangesAreAccepted() throws Exception {
+    UUID docId = UUID.randomUUID();
+    practitionerRoles.register(docId, "cardiology");
+    String nurseSub = "mal-nurse-" + docId;
+    identityLinks.links.put(
+        nurseSub, new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
+
+    String scheduleId = createScheduleFor(docId, nurseSub);
+    String nurseToken = token(nurseSub, List.of("nurse"));
+
+    List<String> invalidBodies =
+        List.of(
+            // unparseable start time
+            """
+            { "templates": [{ "weekday": 1, "startTime": "8am", "endTime": "10:00", "slotMinutes": 15, "validFrom": "2026-12-01" }] }
+            """,
+            // time with seconds is not minute-aligned
+            """
+            { "templates": [{ "weekday": 1, "startTime": "08:00:30", "endTime": "10:00", "slotMinutes": 15, "validFrom": "2026-12-01" }] }
+            """,
+            // unparseable validFrom
+            """
+            { "templates": [{ "weekday": 1, "startTime": "08:00", "endTime": "10:00", "slotMinutes": 15, "validFrom": "01/12/2026" }] }
+            """,
+            // unparseable validTo
+            """
+            { "templates": [{ "weekday": 1, "startTime": "08:00", "endTime": "10:00", "slotMinutes": 15, "validFrom": "2026-12-01", "validTo": "never" }] }
+            """,
+            // missing required fields
+            """
+            { "templates": [{ "weekday": 1, "endTime": "10:00", "slotMinutes": 15, "validFrom": "2026-12-01" }] }
+            """,
+            """
+            { "templates": [{ "weekday": 1, "startTime": "08:00", "endTime": "10:00", "validFrom": "2026-12-01" }] }
+            """,
+            """
+            { "templates": [{ "weekday": 1, "startTime": "08:00", "endTime": "10:00", "slotMinutes": 15 }] }
+            """,
+            // null templates array
+            """
+            { "templates": null }
+            """);
+    for (String payload : invalidBodies) {
+      var res = putTemplates(scheduleId, nurseToken, "W/\"1\"", payload);
+      assertThat(res.statusCode()).as("Expected 400 for payload: %s", payload).isEqualTo(400);
+      assertThat(JSON.readTree(res.body()).path("code").asString()).isEqualTo("validation-failed");
+    }
+
+    // Back-to-back ranges on one weekday and the same range on another weekday do not overlap
+    var okRes =
+        putTemplates(
+            scheduleId,
+            nurseToken,
+            "W/\"1\"",
+            """
+            {
+              "templates": [
+                { "weekday": 1, "startTime": "08:00", "endTime": "10:00", "slotMinutes": 20, "validFrom": "2026-12-01", "validTo": "2026-12-31" },
+                { "weekday": 1, "startTime": "10:00", "endTime": "12:00", "slotMinutes": 20, "validFrom": "2026-12-01", "validTo": "2026-12-31" },
+                { "weekday": 2, "startTime": "08:00", "endTime": "10:00", "slotMinutes": 20, "validFrom": "2026-12-01", "validTo": "2026-12-01" }
+              ]
+            }
+            """);
+    assertThat(okRes.statusCode()).isEqualTo(200);
+    assertThat(JSON.readTree(okRes.body()).path("templates")).hasSize(3);
+  }
+
+  @Test
+  @DisplayName(
       "S5 & S6: Missing If-Match returns 428, stale If-Match returns 412, missing schedule returns 404")
   void s5PreconditionConflictAndNotFoundCases() throws Exception {
     UUID docId = UUID.randomUUID();
