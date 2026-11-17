@@ -122,7 +122,9 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::patientViolationIsRejected
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::practitionerViolationIsRejected
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::roleViolationIsRejected
-    gap: "Only the Patient, Practitioner and PractitionerRole profile validator (CLN-02) rejects out-of-profile elements; no endpoint calls it yet (CLN-03, CLN-10) and the other resources (Appointment, Encounter, ...) have no write validator. Owner: D2."
+      - services/clinical/src/test/java/org/shp/clinical/app/PractitionerServiceTest.java::massAssignmentIsRejectedBeforeAnyWrite
+      - services/clinical/src/test/java/org/shp/clinical/app/PractitionerServiceTest.java::clientMetaIsDiscardedBeforeValidation
+    gap: "The Practitioner/PractitionerRole writes (CLN-10, C10) reject out-of-profile elements and ignore a client meta; the Patient endpoints (CLN-03) do not call the validator yet, the other resources (Appointment, Encounter, ...) have no write validator, and no API-level test sends the request over HTTP. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
