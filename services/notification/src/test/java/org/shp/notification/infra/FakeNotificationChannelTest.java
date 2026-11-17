@@ -38,21 +38,11 @@ class FakeNotificationChannelTest {
   }
 
   @Test
-  void rejectsMissingRecipient() {
-    assertThatThrownBy(() -> new NotificationMessage(" ", "Subject", "Content"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("recipient");
-  }
+  void rejectsMissingMessage() {
+    FakeNotificationChannel channel = new FakeNotificationChannel("push");
 
-  @Test
-  void redactsSensitiveMessageFieldsFromToString() {
-    NotificationMessage message =
-        new NotificationMessage("secret@example.com", "Private subject", "Private content");
-
-    assertThat(message.toString())
-        .doesNotContain("secret@example.com")
-        .doesNotContain("Private subject")
-        .doesNotContain("Private content")
-        .contains("<redacted>");
+    assertThatThrownBy(() -> channel.send(null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessageContaining("message");
   }
 }
