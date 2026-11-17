@@ -58,7 +58,7 @@ Job       retrain: lock ─► Parquet snapshot 24 months (hash) ─► pipeline
 |---|---|
 | `uvicorn shp_ml.main:app --port 8090` (needs `MONGODB_URI`, `RABBITMQ_URL`, `REGISTRY_DIR` or `MLFLOW_TRACKING_URI`) | service: consumer, outbox relay, model loading, daily monitoring, `/metrics` |
 | `python -m shp_ml.monitor` | run monitoring once (CronJob) |
-| `python -m shp_ml.retrain --datasets /data/datasets` | process retraining requests (Kubernetes Job, training image) |
+| `python -m shp_ml.retrain --datasets /data/datasets` | process retraining requests (CronJob `ml-retrain` in shp-gitops, `concurrencyPolicy: Forbid`; training image) |
 
 Integration tests use a real MongoDB replica set and RabbitMQ via testcontainers (needs Docker); if `SHP_TEST_MONGO_URI` is set
 the local cluster is used instead. Without Docker those tests are skipped.
