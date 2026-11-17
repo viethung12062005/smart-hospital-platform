@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.shp.clinical.infra.TerminologyService;
 import org.shp.fhir.FhirJson;
 import org.shp.web.errors.ShpException;
@@ -429,6 +430,30 @@ class ProfileValidatorTest {
     PractitionerRole r = role();
     r.getCodeFirstRep().getCodingFirstRep().setCode("nurse");
     assertThatCode(() -> validator.validate(r)).doesNotThrowAnyException();
+  }
+
+  /** FHIR JSON {@code _field} carries extensions on a primitive: out of profile as well. */
+  @ParameterizedTest(name = "{0}")
+  @ValueSource(strings = {"_birthDate", "_gender", "_active"})
+  void extensionOnAPrimitiveElementIsRejected(String field) {
+    String ext = "{\"extension\":[{\"url\":\"https://example.test/x\",\"valueString\":\"x\"}]}";
+    Patient p =
+        FhirJson.parse(
+            PATIENT.replaceFirst(
+                "\"resourceType\": \"Patient\",",
+                "\"resourceType\": \"Patient\", \"" + field + "\": " + ext + ","),
+            Patient.class);
+    assertRejected(() -> validator.validate(p), "Patient." + field.substring(1) + ".extension");
+  }
+
+  @Test
+  void extensionOnANestedPrimitiveIsRejected() {
+    Patient p = patient();
+    p.getNameFirstRep()
+        .getGiven()
+        .getFirst()
+        .addExtension("https://example.test/x", new StringType("x"));
+    assertRejected(() -> validator.validate(p), "Patient.name.given.extension");
   }
 
   // ---------- helpers ----------

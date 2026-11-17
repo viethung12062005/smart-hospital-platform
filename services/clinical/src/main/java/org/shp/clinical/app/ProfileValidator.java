@@ -20,6 +20,7 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Patient.LinkType;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.PractitionerRole;
+import org.hl7.fhir.r4.model.PrimitiveType;
 import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -289,8 +290,18 @@ public class ProfileValidator {
   private static void allowOnly(Base element, String path, String... allowed) {
     Set<String> names = Set.of(allowed);
     for (Property child : element.children()) {
-      if (child.hasValues() && !names.contains(child.getName())) {
+      if (!child.hasValues()) {
+        continue;
+      }
+      if (!names.contains(child.getName())) {
         throw invalid(path + "." + child.getName() + " is not allowed.");
+      }
+      for (Base value : child.getValues()) {
+        // FHIR JSON "_field": a primitive may carry an id or extensions of its own.
+        if (value instanceof PrimitiveType<?> primitive
+            && (primitive.hasExtension() || primitive.hasId())) {
+          throw invalid(path + "." + child.getName() + ".extension is not allowed.");
+        }
       }
     }
   }
