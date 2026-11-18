@@ -1,7 +1,7 @@
 # ADR-0019: Service Bus binder wiring in `shp-messaging` (one binder switch, broker-owned retry)
 
 ## Status
-**Proposed (2026-11-18)**: needs the Solution Architect's agreement (`libs/java` and ADRs are SA-owned). Task SHR-31.
+**Accepted (2026-11-18)**: the Solution Architect accepted the design on 2026-11-18, including the one-switch choice (`SHP_MESSAGING_BINDER`, no separate `servicebus` Spring profile). Task SHR-31; the live Service Bus verification is still pending.
 Supplements [ADR-0004](0004-azure-first-portable.md) and [ADR-0015](0015-java-for-all-services.md); completes the
 "Service Bus cloud" half of SHR-08, which was marked done with RabbitMQ-only evidence.
 
