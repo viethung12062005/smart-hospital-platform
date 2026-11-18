@@ -1,8 +1,10 @@
 package org.shp.clinical.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -183,6 +185,10 @@ class RegistrationApiTest extends ClinicalApiTestBase {
     call(
         "POST", "/api/v1/registration", token("doc-2", "doctor"), body("0901234568", "1985-03-14"));
 
+    // the success record of a request is written after its response, so wait for it
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> assertThat(auditRecords()).hasSize(2));
     List<Document> audit = auditRecords();
     assertThat(audit).hasSize(2);
     Document allowed =
