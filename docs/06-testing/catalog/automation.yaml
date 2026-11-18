@@ -72,7 +72,12 @@ automation:
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
-    gap: "Duplicate-processing protection exists; missing simulation of the provider temporarily failing to send (NTF-xx)."
+      - services/notification/src/test/java/org/shp/notification/app/ReminderSenderTest.java::primaryFailureFallsBackAndStopsAfterSuccess
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::providerFailsTwiceThenSucceedsExactlyOnce
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::workLoopDispatchesAndRetriesUntilSuccess
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::sameClaimCannotPersistDeliveryTwice
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::staleWorkerCannotOverwriteReclaimedAttempt
+    gap: "NTF-07 tests cover transient provider failures, fallback, retry and conditional delivery persistence. Provider-level deduplication after a successful send followed by worker crash still awaits NTF-12 adapters."
   TC-AC-SN.1:
     status: partial
     refs:
