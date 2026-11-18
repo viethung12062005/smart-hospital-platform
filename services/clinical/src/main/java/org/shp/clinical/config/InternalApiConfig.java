@@ -18,18 +18,21 @@ import org.springframework.data.mongodb.core.index.Index;
 @Configuration
 class InternalApiConfig {
   /**
-   * Services allowed to call {@code /internal/v1/identity/*}: every service that resolves
-   * identities (09 §4 "every service"). The {@code roles} claim of their workload token carries
-   * {@code internal.<service>}.
+   * Callers of {@code /internal/v1/identity/*} (09 §4): every service that resolves identities.
+   * Their workload token carries the role of the target, {@code internal.clinical}, and {@code azp
+   * = svc-<caller>} (15 §7).
    */
   @Bean
   FilterRegistrationBean<InternalIdentityFilter> internalIdentityFilter(
       IdentityAccounts accounts,
+      @Value("${shp.clinical.internal-identity.required-role:internal.clinical}")
+          String requiredRole,
       @Value(
-              "${shp.clinical.internal-identity.allowed-roles:internal.scheduling,internal.document,internal.notification,internal.audit,internal.ai,internal.ml,internal.gateway}")
-          Set<String> allowedRoles) {
+              "${shp.clinical.internal-identity.allowed-clients:svc-scheduling,svc-document,svc-notification,svc-audit,svc-ai}")
+          Set<String> allowedClients) {
     var registration =
-        new FilterRegistrationBean<>(new InternalIdentityFilter(accounts, allowedRoles));
+        new FilterRegistrationBean<>(
+            new InternalIdentityFilter(accounts, requiredRole, allowedClients));
     registration.addUrlPatterns("/internal/v1/identity/*");
     // After the Spring Security filter chain (order -100) so the validated token is available.
     registration.setOrder(Ordered.LOWEST_PRECEDENCE - 100);

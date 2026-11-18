@@ -26,7 +26,8 @@ import org.springframework.web.util.UriUtils;
  * is not linked.
  *
  * <p>The caller is a service, not a user: it presents a workload-identity token whose {@code roles}
- * claim holds {@code internal.<service>} (15 §7). The token is validated by the shared security
+ * claim holds the role of the TARGET service, {@code internal.clinical}, and whose {@code azp} is a
+ * known caller client {@code svc-<caller>} (15 §7). The token is validated by the shared security
  * filter chain (signature, issuer, audience, expiry) before this filter runs. This is a servlet
  * filter and not an MVC handler on purpose: the shared MVC interceptors resolve a USER identity
  * from {@code sub} and would reject a service token, which carries no user role. The route has no
@@ -36,11 +37,18 @@ public final class InternalIdentityFilter extends OncePerRequestFilter {
   static final String PREFIX = "/internal/v1/identity/";
 
   private final IdentityAccounts accounts;
-  private final Set<String> allowedRoles;
+  private final String requiredRole;
+  private final Set<String> allowedClients;
 
-  public InternalIdentityFilter(IdentityAccounts accounts, Set<String> allowedRoles) {
+  /**
+   * @param requiredRole role every caller holds for this target ({@code internal.clinical})
+   * @param allowedClients {@code azp} values of the caller clients ({@code svc-<caller>})
+   */
+  public InternalIdentityFilter(
+      IdentityAccounts accounts, String requiredRole, Set<String> allowedClients) {
     this.accounts = accounts;
-    this.allowedRoles = Set.copyOf(allowedRoles);
+    this.requiredRole = requiredRole;
+    this.allowedClients = Set.copyOf(allowedClients);
   }
 
   @Override
@@ -57,7 +65,11 @@ public final class InternalIdentityFilter extends OncePerRequestFilter {
       return;
     }
     List<String> roles = jwt.getToken().getClaimAsStringList("roles");
-    if (roles == null || roles.stream().noneMatch(allowedRoles::contains)) {
+    String client = jwt.getToken().getClaimAsString("azp");
+    if (roles == null
+        || !roles.contains(requiredRole)
+        || client == null
+        || !allowedClients.contains(client)) {
       ErrorWriter.write(req, res, ErrorCatalog.get("forbidden"), null, null);
       return;
     }
