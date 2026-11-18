@@ -44,6 +44,9 @@ class PatientApiTest extends ClinicalApiTestBase {
   String subAn;
   String subBinh;
   String subRel;
+  String subNurse;
+  String subDoc;
+  String subAdmin;
   String cam; // the relative's own record
 
   @BeforeEach
@@ -53,13 +56,16 @@ class PatientApiTest extends ClinicalApiTestBase {
     subAn = "acc-an-" + an;
     subBinh = "acc-binh-" + binh;
     subRel = "acc-rel-" + an;
+    subNurse = "nurse-" + an;
+    subDoc = "doc-" + an;
+    subAdmin = "admin-" + an;
     link(subAn, "Patient/" + an);
     link(subBinh, "Patient/" + binh);
     cam = newPatient("Pham", "Minh Cam", "+84901000003", "1975-11-02");
     link(subRel, "Patient/" + cam);
-    link("nurse-1", "Practitioner/prac-nurse");
-    link("doc-1", "Practitioner/prac-doc");
-    link("admin-1", "Practitioner/prac-admin");
+    link(subNurse, "Practitioner/prac-nurse");
+    link(subDoc, "Practitioner/prac-doc");
+    link(subAdmin, "Practitioner/prac-admin");
   }
 
   String newPatient(String family, String given, String phone, String birthDate) {
@@ -83,7 +89,7 @@ class PatientApiTest extends ClinicalApiTestBase {
 
   /** The current resource of {@code id}, changed by {@code edit}, ready to PUT. */
   String edited(String id, Consumer<ObjectNode> edit) throws Exception {
-    ObjectNode node = (ObjectNode) JSON.readTree(get(id, token("nurse-1", "nurse"), 200));
+    ObjectNode node = (ObjectNode) JSON.readTree(get(id, token(subNurse, "nurse"), 200));
     edit.accept(node);
     return JSON.writeValueAsString(node);
   }
@@ -146,9 +152,9 @@ class PatientApiTest extends ClinicalApiTestBase {
   @Test
   void staffAccessFollowsTheMatrix() throws Exception {
     assertThat(call("GET", "/fhir/Patient/" + an, null, null).statusCode()).isEqualTo(401);
-    get(an, token("nurse-1", "nurse"), 200);
+    get(an, token(subNurse, "nurse"), 200);
 
-    var noCare = call("GET", "/fhir/Patient/" + an, token("doc-1", "doctor"), null);
+    var noCare = call("GET", "/fhir/Patient/" + an, token(subDoc, "doctor"), null);
     assertThat(noCare.statusCode()).isEqualTo(403);
     assertThat(code(noCare)).isEqualTo("no-care-relationship");
 
@@ -156,9 +162,9 @@ class PatientApiTest extends ClinicalApiTestBase {
         new Document("_id", "prac-doc|" + an)
             .append("validUntil", Date.from(Instant.now().plus(30, ChronoUnit.DAYS))),
         "care_relationships");
-    get(an, token("doc-1", "doctor"), 200);
+    get(an, token(subDoc, "doctor"), 200);
 
-    get(an, token("admin-1", "admin"), 403);
+    get(an, token(subAdmin, "admin"), 403);
   }
 
   @Test
@@ -167,14 +173,14 @@ class PatientApiTest extends ClinicalApiTestBase {
         new Document("_id", "prac-doc|" + an)
             .append("validUntil", Date.from(Instant.now().minus(1, ChronoUnit.DAYS))),
         "care_relationships");
-    get(an, token("doc-1", "doctor"), 403);
+    get(an, token(subDoc, "doctor"), 403);
 
     mongo.save(
         new Document("practitionerId", "prac-doc")
             .append("patientId", an)
             .append("expiresAt", Date.from(Instant.now().plus(30, ChronoUnit.MINUTES))),
         "break_glass_sessions");
-    get(an, token("doc-1", "doctor"), 200);
+    get(an, token(subDoc, "doctor"), 200);
   }
 
   @Test
@@ -274,7 +280,7 @@ class PatientApiTest extends ClinicalApiTestBase {
     var r =
         put(
             an,
-            token("nurse-1", "nurse"),
+            token(subNurse, "nurse"),
             "W/\"1\"",
             edited(
                 an,
@@ -289,7 +295,7 @@ class PatientApiTest extends ClinicalApiTestBase {
 
   @Test
   void theMrnAndMergeStateCannotBeChangedByAnyone() throws Exception {
-    String t = token("nurse-1", "nurse");
+    String t = token(subNurse, "nurse");
     var mrn =
         put(
             an,
@@ -343,7 +349,7 @@ class PatientApiTest extends ClinicalApiTestBase {
     put(an, patient, "W/\"1\"", edited(an, p -> setPhone(p, "+84901000040")));
     put(an, patient, "W/\"2\"", edited(an, p -> setPhone(p, "+84901000041")));
 
-    var r = call("GET", "/fhir/Patient/" + an + "/_history", token("nurse-1", "nurse"), null);
+    var r = call("GET", "/fhir/Patient/" + an + "/_history", token(subNurse, "nurse"), null);
     assertThat(r.statusCode()).isEqualTo(200);
     JsonNode bundle = JSON.readTree(r.body());
     assertThat(bundle.get("resourceType").asString()).isEqualTo("Bundle");
@@ -367,14 +373,14 @@ class PatientApiTest extends ClinicalApiTestBase {
     String path = "/fhir/Patient/" + an + "/_history";
     assertThat(call("GET", path, token(subAn, "patient"), null).statusCode()).isEqualTo(403);
     assertThat(call("GET", path, token(subBinh, "patient"), null).statusCode()).isEqualTo(404);
-    assertThat(call("GET", path, token("doc-1", "doctor"), null).statusCode()).isEqualTo(403);
-    assertThat(call("GET", path, token("admin-1", "admin"), null).statusCode()).isEqualTo(403);
+    assertThat(call("GET", path, token(subDoc, "doctor"), null).statusCode()).isEqualTo(403);
+    assertThat(call("GET", path, token(subAdmin, "admin"), null).statusCode()).isEqualTo(403);
     assertThat(call("GET", path, null, null).statusCode()).isEqualTo(401);
     assertThat(
             call(
                     "GET",
                     "/fhir/Patient/0192f8a4-6c1e-7b2a-9f00-000000000000/_history",
-                    token("nurse-1", "nurse"),
+                    token(subNurse, "nurse"),
                     null)
                 .statusCode())
         .isEqualTo(404);
