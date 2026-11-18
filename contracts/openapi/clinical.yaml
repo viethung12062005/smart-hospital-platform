@@ -2505,7 +2505,7 @@ paths:
       summary: Resolve an account to its profile, roles and lock state for other services
       tags:
       - clinical
-      x-permission: services with an `internal.*` role (§4)
+      x-permission: services with the `internal.clinical` role (§4)
       x-roles: []
       x-doc: detailed-design/09-api-clinical.md
       responses:
