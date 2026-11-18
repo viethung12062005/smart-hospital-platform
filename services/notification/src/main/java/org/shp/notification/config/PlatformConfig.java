@@ -12,6 +12,7 @@ import org.shp.events.EventPublisher;
 import org.shp.events.audit.AuditSink;
 import org.shp.web.auth.HttpIdentityLinkClient;
 import org.shp.web.auth.IdentityLinkClient;
+import org.shp.web.auth.ServiceTokenInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -29,12 +30,14 @@ import org.springframework.web.client.RestClient;
 @Configuration
 class PlatformConfig {
   /**
-   * Look up identity links via clinical's internal API (09 §4). Workload identity token: IAC/SHR
-   * task (not yet available).
+   * Look up identity links via clinical's internal API (09 §4). The interceptor attaches this
+   * service's client-credentials token (15 §7, SHR-32).
    */
   @Bean
-  IdentityLinkClient identityLinkClient(@Value("${shp.clinical.url}") String clinicalUrl) {
-    return new HttpIdentityLinkClient(RestClient.builder().baseUrl(clinicalUrl).build());
+  IdentityLinkClient identityLinkClient(
+      @Value("${shp.clinical.url}") String clinicalUrl, ServiceTokenInterceptor serviceToken) {
+    return new HttpIdentityLinkClient(
+        RestClient.builder().baseUrl(clinicalUrl).requestInterceptor(serviceToken).build());
   }
 
   /** MongoDB transaction (needs a replica set) — Boot does not create one automatically. */

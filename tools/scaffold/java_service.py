@@ -125,10 +125,15 @@ def platform_config(name: str, db: str) -> str:
   }}
 """
         if name == "clinical"
-        else """  /** Look up identity links via clinical's internal API (09 §4). Workload identity token: task IAC/SHR (not available yet). */
+        else """  /**
+   * Look up identity links via clinical's internal API (09 §4). The interceptor attaches this
+   * service's client-credentials token (15 §7, SHR-32).
+   */
   @Bean
-  IdentityLinkClient identityLinkClient(@Value("${shp.clinical.url}") String clinicalUrl) {
-    return new HttpIdentityLinkClient(RestClient.builder().baseUrl(clinicalUrl).build());
+  IdentityLinkClient identityLinkClient(
+      @Value("${shp.clinical.url}") String clinicalUrl, ServiceTokenInterceptor serviceToken) {
+    return new HttpIdentityLinkClient(
+        RestClient.builder().baseUrl(clinicalUrl).requestInterceptor(serviceToken).build());
   }
 """
     )
@@ -227,6 +232,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
   }
 """
     extra_imports = "" if name == "clinical" else """import org.shp.web.auth.HttpIdentityLinkClient;
+import org.shp.web.auth.ServiceTokenInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestClient;
 """

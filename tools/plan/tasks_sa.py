@@ -161,6 +161,8 @@ SA_TASKS = [
      "Everything is still published after the bus dies and recovers; multiple replicas do not duplicate", "SA", 4, "SHR-06", "P2", "13 §1"),
     ("SHR-08", "ENABLER", "Platform consumer: idempotent inbox + Spring Cloud Stream (RabbitMQ local, Service Bus cloud), retry/DLQ",
      "Duplicate events are processed once; 5 delivery attempts then DLQ", "SA", 4, "SHR-06", "P2", "13 §1"),
+    ("SHR-32", "US-007", "Service token interceptor for /internal calls: client credentials, cache, wiring in four services",
+     "Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak", "SA", 4, "SHR-21, IAM-02", "S4", "15 §7, 07 §5"),
     ("SHR-28", "US-015", "Idempotency-Key middleware for PostgreSQL (claim, request hash, replay)",
      "Same key+body → return the previous result; different body → 422; missing key → 428; concurrency tests", "SA", 4, "SHR-05", "P2", "02 §3.1, 07 §3"),
 
