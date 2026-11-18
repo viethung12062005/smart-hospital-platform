@@ -21,3 +21,17 @@ Clinical documents: expiring upload/download links, scan status. Owner: **D2**. 
 - Platform beans are already configured in `config/PlatformConfig.java` — no need to change.
 
 Docs: `docs/03-architecture/detailed-design/` (the service's API, DB, events) and `docs/05-plan/by-person/D2.md` (tasks).
+
+## Blob storage (`BlobStore`)
+
+Use cases inject `org.shp.document.domain.BlobStore` (implementation `infra/AzureBlobStore`, Azure Blob SDK): `put`, `get`,
+`stat`, `delete`, `uploadUrl` (create+write, one blob, 10 minutes) and `downloadUrl` (read, one blob, 5 minutes,
+attachment). The same code runs on Azurite and on Azure; configuration (`shp.blob.*`) picks the credential and the SAS method:
+
+| Environment | Set | SAS signing |
+|---|---|---|
+| Local Azurite, or shared-key workaround | `AZURE_STORAGE_CONNECTION_STRING` (+ `SHP_BLOB_CREATE_CONTAINERS=true` for an empty Azurite) | account key |
+| Cloud | `AZURE_STORAGE_ACCOUNT_URL` (identity via `DefaultAzureCredential`, needs `Storage Blob Delegator` + data role) | user delegation |
+
+`SHP_BLOB_SAS_MODE` (`AUTO`, `ACCOUNT_KEY`, `USER_DELEGATION`) overrides the automatic choice. A SAS cannot enforce the upload
+`Content-Type`; the complete step (DOC-04) verifies type, size and magic bytes after the upload.
