@@ -158,6 +158,12 @@ automation:
     refs:
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
     gap: "The Mongo store records every version and its history is queryable; the patient update endpoint and the version-view API are not implemented yet (CLN-xx)."
+  TC-AC-01.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/DuplicatePatientCheckTest.java::samePhoneAndBirthDateIsASuspectedDuplicate
+      - services/clinical/src/test/java/org/shp/clinical/app/DuplicatePatientCheckTest.java::theRefusalDisclosesNothingFromTheExistingRecord
+    gap: "The duplicate check (CLN-04) is tested against a real MongoDB; the registration endpoint that returns it as HTTP 422 is CLN-05. Owner: D2."
   TC-NFR-SEC5:
     status: partial
     refs:
