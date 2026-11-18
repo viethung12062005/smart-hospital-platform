@@ -56,6 +56,7 @@ rules:
   - { id: PAT-READ-DOC-BG, resource: Patient, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: PAT-READ-NUR,    resource: Patient, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: PAT-CREATE-NUR,  resource: Patient, action: create, role: nurse,   when: [] }
+  - { id: PAT-CREATE-PAT,  resource: Patient, action: create, role: patient, when: [] }
   - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-GUARDIAN, resource: Patient, action: update, role: patient, when: [guardian], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }

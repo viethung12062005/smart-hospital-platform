@@ -33,12 +33,20 @@ class PatientStoreConfig {
 
   static void ensurePatientIndexes(MongoTemplate mongo) {
     for (String c :
-        new String[] {PATIENTS, MrnGenerator.COLLECTION, MongoMessaging.RESOURCE_HISTORY}) {
+        new String[] {
+          PATIENTS,
+          MrnGenerator.COLLECTION,
+          MongoMessaging.RESOURCE_HISTORY,
+          IdentityLinkRepository.COLLECTION
+        }) {
       if (!mongo.collectionExists(c)) {
         mongo.createCollection(c);
       }
     }
     MongoMessaging.ensureIndexes(mongo, MongoMessaging.Store.RESOURCE_HISTORY);
+    mongo
+        .indexOps(IdentityLinkRepository.COLLECTION)
+        .createIndex(new Index().on("fhirUser", Sort.Direction.ASC).unique());
     var indexes = mongo.indexOps(PATIENTS);
     indexes.createIndex(new Index().on("search.mrn", Sort.Direction.ASC).unique());
     indexes.createIndex(
