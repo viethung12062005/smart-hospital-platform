@@ -42,6 +42,8 @@ resources:
   Audit:           { clinical: false, actions: [read, export, update, delete] }
   BreakGlass:      { clinical: false, actions: [start] }
   Backup:          { clinical: false, actions: [run, restore] }
+  Device:          { clinical: false, actions: [create, delete] }
+  NotificationPreference: { clinical: false, actions: [read, update] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -130,3 +132,12 @@ rules:
   - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
   - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "via the operations pipeline, with approval" }
   - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "via the operations pipeline, with approval" }
+  # Notification devices and preferences (the owner always comes from the identity, 11 §1)
+  - { id: DEV-REG-PAT,     resource: Device, action: create,     role: patient, when: [] }
+  - { id: DEV-REG-DOC,     resource: Device, action: create,     role: doctor,  when: [] }
+  - { id: DEV-REG-NUR,     resource: Device, action: create,     role: nurse,   when: [] }
+  - { id: DEV-UNREG-PAT,   resource: Device, action: delete,     role: patient, when: [own] }
+  - { id: DEV-UNREG-DOC,   resource: Device, action: delete,     role: doctor,  when: [self-practitioner] }
+  - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
+  - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
+  - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }
