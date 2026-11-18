@@ -155,6 +155,11 @@ class IdentityApiTest {
   // ---------------------------------------------------------------- helpers
 
   static String token(String sub, String... roles) {
+    return serviceToken(sub, null, roles);
+  }
+
+  /** A token as the realm issues it: aud shp-api, roles, and azp for a service client. */
+  static String serviceToken(String sub, String azp, String... roles) {
     try {
       Instant now = Instant.now();
       var claims =
@@ -163,6 +168,7 @@ class IdentityApiTest {
               .subject(sub)
               .audience("shp-api")
               .claim("roles", List.of(roles))
+              .claim("azp", azp)
               .expirationTime(Date.from(now.plusSeconds(600)));
       var jwt = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claims.build());
       jwt.sign(new MACSigner(KEY));
@@ -454,7 +460,7 @@ class IdentityApiTest {
 
   @Test
   void internalLookupReturnsTheLinkAndTheLockStateImmediately() throws Exception {
-    String svc = token("svc-scheduling", "internal.scheduling");
+    String svc = serviceToken("svc-scheduling-sa", "svc-scheduling", "internal.clinical");
     var r = call("GET", "/internal/v1/identity/pat-sub", svc, null);
     assertThat(r.statusCode()).isEqualTo(200);
     assertThat(json(r).get("fhirUser").asString()).isEqualTo("Patient/" + PATIENT_ID);
@@ -471,7 +477,7 @@ class IdentityApiTest {
 
   @Test
   void internalLookupIs404ForAnUnlinkedSubjectAndDecodesTheSubject() throws Exception {
-    String svc = token("svc-document", "internal.document");
+    String svc = serviceToken("svc-document-sa", "svc-document", "internal.clinical");
     assertThat(call("GET", "/internal/v1/identity/nobody", svc, null).statusCode()).isEqualTo(404);
     account("auth|a b", "Patient/p-x", List.of("patient"), false);
     var r = call("GET", "/internal/v1/identity/auth%7Ca%20b", svc, null);
@@ -487,11 +493,45 @@ class IdentityApiTest {
     assertThat(call("GET", "/internal/v1/identity/pat-sub", admin(), null).statusCode())
         .isEqualTo(403);
     assertThat(
-            call("GET", "/internal/v1/identity/pat-sub", token("svc-x", "internal.unknown"), null)
+            call(
+                    "GET",
+                    "/internal/v1/identity/pat-sub",
+                    serviceToken("svc-x-sa", "svc-scheduling", "internal.scheduling"),
+                    null)
+                .statusCode())
+        .isEqualTo(403);
+    // right role, but not a known caller client
+    assertThat(
+            call(
+                    "GET",
+                    "/internal/v1/identity/pat-sub",
+                    serviceToken("s", "svc-other", "internal.clinical"),
+                    null)
                 .statusCode())
         .isEqualTo(403);
     assertThat(
-            call("POST", "/internal/v1/identity/pat-sub", token("s", "internal.audit"), "{}")
+            call(
+                    "GET",
+                    "/internal/v1/identity/pat-sub",
+                    serviceToken("s", null, "internal.clinical"),
+                    null)
+                .statusCode())
+        .isEqualTo(403);
+    // no svc-audit client exists in identity/realm/services.json (IAM-02): it is not a caller
+    assertThat(
+            call(
+                    "GET",
+                    "/internal/v1/identity/pat-sub",
+                    serviceToken("s", "svc-audit", "internal.clinical"),
+                    null)
+                .statusCode())
+        .isEqualTo(403);
+    assertThat(
+            call(
+                    "POST",
+                    "/internal/v1/identity/pat-sub",
+                    serviceToken("s", "svc-notification", "internal.clinical"),
+                    "{}")
                 .statusCode())
         .isEqualTo(400);
   }

@@ -37,7 +37,7 @@ Notation: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin, **DPO**. **Care
 | C27 | `POST /api/v1/me/claim-record` | Claim an existing record: find a matching record and send an OTP | P | UC-01 |
 | C28 | `POST /api/v1/me/claim-record/verify` | Enter the OTP to link an existing record | P | UC-01 |
 | C29 | `POST /api/v1/clinical/patients/{id}/profile-links` | Nurse records a relative's authorization at the counter | N | UC-01 |
-| C30 | `GET /internal/v1/identity/{subject}` | Resolve an account to its profile, roles and lock state for other services | services with an `internal.*` role (§4) | — |
+| C30 | `GET /internal/v1/identity/{subject}` | Resolve an account to its profile, roles and lock state for other services | services with the `internal.clinical` role (§4) | — |
 
 ## 2. Patient
 
@@ -146,7 +146,7 @@ Only D **without** Care. Creates a 60-minute session (`break_glass_sessions`); 2
 
 | Endpoint | Called by | Returns |
 |---|---|---|
-| `GET /internal/v1/identity/{subject}` (C30) | every service | `{ "fhirUser": "Patient/...", "roles": [...], "disabled": false }`; 404 if not linked. Requires a workload-identity token whose `roles` claim holds `internal.<service>` (`scheduling`, `document`, `notification`, `audit`, `ai`, `ml`, `gateway`); a user token, even an Admin's, gets 403, a missing token 401. Always reads the current database row (no cache in clinical): the 60-second cache is on the caller's side. `roles` is empty for a link written before roles were stored |
+| `GET /internal/v1/identity/{subject}` (C30) | every service | `{ "fhirUser": "Patient/...", "roles": [...], "disabled": false }`; 404 if not linked. Requires a workload-identity token whose `roles` claim holds `internal.clinical` (the role of the target service, 15 §7) and whose `azp` is a known caller client (`svc-scheduling`, `svc-document`, `svc-notification`, `svc-ai`; the same list as `identity/realm/services.json`, configurable). Both are checked by the shared guard `ShpJwt.requireService(jwt, "clinical", callers...)`, the Java twin of `require_service`; a user token, even an Admin's, gets 403, a missing token 401. Always reads the current database row (no cache in clinical): the 60-second cache is on the caller's side. `roles` is empty for a link written before roles were stored |
 | `GET /internal/v1/care-relationships/check?practitioner={id}&patient={id}` | document, ai, notification | `{ "care": true, "via": "appointment|encounter|break-glass", "validUntil": "..." }` |
 | `GET /internal/v1/practitioners/{id}/roles` | scheduling | list of `PractitionerRole` (specialty, active) |
 | `GET /internal/v1/patients/{id}/contact` | notification | `{ "phone", "email", "locale" }` — **the only endpoint that returns contact information**; only the `internal.notification` role, every call has a `read` audit record |
