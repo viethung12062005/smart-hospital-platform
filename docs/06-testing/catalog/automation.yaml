@@ -41,10 +41,16 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
   TC-AC-08.1:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
-    gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aLockIsRejectedAtTheLatestWhenTheSixtySecondIdentityCacheExpires
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::internalLookupReturnsTheLinkAndTheLockStateImmediately
+  TC-AC-LP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
   TC-SEC-02:
     status: partial
     refs:
@@ -90,6 +96,19 @@ automation:
     refs:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::withoutNoShowScoreT24hAndT2hAreStillCreated
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
+
+  # ---- Clinical: break-glass ----
+  TC-AC-BG.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::aSixtyMinuteSessionIsStored
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::aSessionAllowsReadingButNotWriting
+    gap: "Sessions end at startedAt + 60 minutes and only unexpired ones count (CLN-24; a TTL index removes them); no test reopens the timeline after 60 minutes over HTTP (the timeline is CLN-23). Owner: D2."
+  TC-AC-BG.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::theReasonIs20To500Characters
+    gap: "A reason under 20 characters is rejected and no session is stored (CLN-24); the screen error is WEB work. Owner: D2."
 
   # ---- Clinical: version history ----
   TC-AC-01.3:
