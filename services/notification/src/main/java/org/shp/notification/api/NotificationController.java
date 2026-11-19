@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.Map;
 import org.shp.notification.app.DeviceService;
 import org.shp.notification.app.PreferenceService;
-import org.shp.notification.domain.NotificationPreferences;
+import org.shp.notification.infra.MongoPreferenceStore;
 import org.shp.web.auth.IdentityInterceptor;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.errors.ShpException;
+import org.shp.web.precondition.PreconditionInterceptor;
+import org.shp.web.precondition.Versioned;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,10 @@ class NotificationController {
   record QuietHours(String start, String end) {}
 
   record PreferencesBody(List<String> channels, String locale, QuietHours quietHours) {}
+
+  /** Response of N3/N4; {@code version} also becomes the ETag and is the next If-Match. */
+  record PreferencesView(List<String> channels, String locale, QuietHours quietHours, long version)
+      implements Versioned {}
 
   private final DeviceService devices;
   private final PreferenceService preferences;
@@ -61,34 +67,37 @@ class NotificationController {
   /** N3: view the caller's own preferences. */
   @GetMapping("/preferences")
   @RequireShpAuthz(resource = "NotificationPreference", action = "read")
-  PreferencesBody getPreferences(HttpServletRequest req) {
+  PreferencesView getPreferences(HttpServletRequest req) {
     var principal = IdentityInterceptor.principal(req);
-    return toBody(preferences.get(principal.fhirUserId()));
+    return toView(preferences.get(principal.fhirUserId()));
   }
 
-  /** N4: replace the caller's own preferences. */
+  /** N4: replace the caller's own preferences; If-Match is the version, {@code W/"0"} to create. */
   @PutMapping("/preferences")
   @RequireShpAuthz(resource = "NotificationPreference", action = "update")
-  PreferencesBody changePreferences(
+  PreferencesView changePreferences(
       @RequestBody(required = false) PreferencesBody body, HttpServletRequest req) {
     if (body == null) {
       throw new ShpException("validation-failed", "A request body is required");
     }
     var principal = IdentityInterceptor.principal(req);
     QuietHours quiet = body.quietHours();
-    return toBody(
+    return toView(
         preferences.change(
             principal.fhirUserId(),
+            PreconditionInterceptor.expectedVersion(req),
             body.channels(),
             body.locale(),
             quiet == null ? null : quiet.start(),
             quiet == null ? null : quiet.end()));
   }
 
-  private static PreferencesBody toBody(NotificationPreferences p) {
-    return new PreferencesBody(
+  private static PreferencesView toView(MongoPreferenceStore.Stored stored) {
+    var p = stored.preferences();
+    return new PreferencesView(
         p.channels(),
         p.locale(),
-        p.hasQuietHours() ? new QuietHours(p.quietStart(), p.quietEnd()) : null);
+        p.hasQuietHours() ? new QuietHours(p.quietStart(), p.quietEnd()) : null,
+        stored.version());
   }
 }

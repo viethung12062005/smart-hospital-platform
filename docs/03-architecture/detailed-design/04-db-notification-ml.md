@@ -21,7 +21,7 @@ Common conventions (same as [03](03-db-clinical-document.md)): `_id` is a UUIDv7
 
 | Collection | Document | Index |
 |---|---|---|
-| `preferences` | `_id` = patientId; `channels` (ordered array ⊂ `push`,`sms`,`email`, ≥ 1); `locale` `vi`\|`en`; `quietStart`, `quietEnd` (`HH:mm` strings, optional); `updatedAt` | `_id` |
+| `preferences` | `_id` = patientId; `version` (integer, optimistic concurrency); `channels` (ordered array ⊂ `push`,`sms`,`email`, ≥ 1); `locale` `vi`\|`en`; `quietStart`, `quietEnd` (`HH:mm` strings, optional); `updatedAt` | `_id` |
 | `device_tokens` | `_id`; `ownerRef` (`Patient/{id}`\|`Practitioner/{id}`); `platform` `ios`\|`android`\|`web`; `token`; `createdAt`, `lastSeenAt` | unique `{token:1}`; `{ownerRef:1}` |
 | `reminders` | see below | see below |
 | `inbox`, `outbox` | as in [03](03-db-clinical-document.md) §2.7 (no `idempotency_keys`: no API requires a key) | as in 03 §2.7 |

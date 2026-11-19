@@ -125,6 +125,11 @@ class NotificationApiTest {
 
   HttpResponse<String> call(String method, String path, String bearer, String body)
       throws Exception {
+    return call(method, path, bearer, body, "W/\"1\"");
+  }
+
+  HttpResponse<String> call(String method, String path, String bearer, String body, String ifMatch)
+      throws Exception {
     var b =
         HttpRequest.newBuilder(
                 URI.create("http://localhost:" + env.getProperty("local.server.port") + path))
@@ -137,8 +142,9 @@ class NotificationApiTest {
       b.header("Content-Type", "application/json");
     }
     if ("PUT".equals(method)) {
-      // 07 §3: the platform requires a well-formed If-Match on every PUT (value not compared here).
-      b.header("If-Match", "W/\"1\"");
+      // 07 §3: the platform requires a well-formed If-Match on every PUT. N1 does not compare it;
+      // N4 compares it with the preference version.
+      b.header("If-Match", ifMatch);
     }
     if (bearer != null) {
       b.header("Authorization", "Bearer " + bearer);
@@ -297,22 +303,24 @@ class NotificationApiTest {
   }
 
   // ---------- N3 / N4 ----------
+  static final String PREFS = "/api/v1/notifications/preferences";
+  static final String VI_PUSH_EMAIL_SMS =
+      "{\"channels\":[\"push\",\"email\",\"sms\"],\"locale\":\"vi\","
+          + "\"quietHours\":{\"start\":\"22:00\",\"end\":\"07:00\"}}";
+
   @Test
-  void preferencesRoundTripInTheGivenChannelOrder() throws Exception {
+  void preferencesRoundTripInTheGivenChannelOrderWithAVersion() throws Exception {
     var t = token("patient", "pat-a");
-    assertThat(call("GET", "/api/v1/notifications/preferences", t, null).statusCode())
-        .isEqualTo(404);
+    assertThat(call("GET", PREFS, t, null).statusCode()).isEqualTo(404);
 
-    var put =
-        call(
-            "PUT",
-            "/api/v1/notifications/preferences",
-            t,
-            "{\"channels\":[\"push\",\"email\",\"sms\"],\"locale\":\"vi\","
-                + "\"quietHours\":{\"start\":\"22:00\",\"end\":\"07:00\"}}");
+    var put = call("PUT", PREFS, t, VI_PUSH_EMAIL_SMS, "W/\"0\"");
     assertThat(put.statusCode()).isEqualTo(200);
+    assertThat(json(put).get("version").asLong()).isEqualTo(1);
+    assertThat(put.headers().firstValue("ETag")).hasValue("W/\"1\"");
 
-    var got = json(call("GET", "/api/v1/notifications/preferences", t, null));
+    var get = call("GET", PREFS, t, null);
+    var got = json(get);
+    assertThat(get.headers().firstValue("ETag")).hasValue("W/\"1\"");
     assertThat(got.get("channels").toString()).isEqualTo("[\"push\",\"email\",\"sms\"]");
     assertThat(got.get("locale").asString()).isEqualTo("vi");
     assertThat(got.get("quietHours").get("start").asString()).isEqualTo("22:00");
@@ -321,25 +329,64 @@ class NotificationApiTest {
   }
 
   @Test
+  void aStaleOrWrongVersionIs412AndNothingIsWritten() throws Exception {
+    var t = token("patient", "pat-a");
+    call("PUT", PREFS, t, VI_PUSH_EMAIL_SMS, "W/\"0\"");
+    var other = "{\"channels\":[\"sms\"],\"locale\":\"en\"}";
+
+    // version 1 is current: a second writer still holding W/"0" or an old W/"7" loses
+    for (String stale : List.of("W/\"0\"", "W/\"7\"", "*")) {
+      var r = call("PUT", PREFS, t, other, stale);
+      assertThat(r.statusCode()).as(stale).isEqualTo(412);
+      assertThat(json(r).get("code").asString()).isEqualTo("version-conflict");
+    }
+    assertThat(json(call("GET", PREFS, t, null)).get("locale").asString()).isEqualTo("vi");
+
+    var ok = call("PUT", PREFS, t, other, "W/\"1\"");
+    assertThat(ok.statusCode()).isEqualTo(200);
+    assertThat(json(ok).get("version").asLong()).isEqualTo(2);
+    // the same version cannot be used twice
+    assertThat(call("PUT", PREFS, t, VI_PUSH_EMAIL_SMS, "W/\"1\"").statusCode()).isEqualTo(412);
+  }
+
+  @Test
+  void aSecondCreateWithVersionZeroIs412() throws Exception {
+    var t = token("patient", "pat-a");
+    assertThat(call("PUT", PREFS, t, VI_PUSH_EMAIL_SMS, "W/\"0\"").statusCode()).isEqualTo(200);
+    assertThat(call("PUT", PREFS, t, VI_PUSH_EMAIL_SMS, "W/\"0\"").statusCode()).isEqualTo(412);
+    assertThat(call("PUT", PREFS, t, VI_PUSH_EMAIL_SMS, "W/\"3\"").statusCode()).isEqualTo(412);
+  }
+
+  @Test
+  void preferencePutWithoutIfMatchIs428() throws Exception {
+    var b =
+        HttpRequest.newBuilder(
+                URI.create("http://localhost:" + env.getProperty("local.server.port") + PREFS))
+            .header("Authorization", "Bearer " + token("patient", "pat-a"))
+            .header("Content-Type", "application/json")
+            .PUT(HttpRequest.BodyPublishers.ofString(VI_PUSH_EMAIL_SMS));
+    try (var c = HttpClient.newHttpClient()) {
+      assertThat(c.send(b.build(), HttpResponse.BodyHandlers.ofString()).statusCode())
+          .isEqualTo(428);
+    }
+    assertThat(mongo.getCollection("preferences").countDocuments()).isZero();
+  }
+
+  @Test
   void preferencesBelongToTheCallerAndQuietHoursCanBeCleared() throws Exception {
     var a = token("patient", "pat-a");
     call(
         "PUT",
-        "/api/v1/notifications/preferences",
+        PREFS,
         a,
-        "{\"channels\":[\"sms\"],\"locale\":\"en\",\"quietHours\":{\"start\":\"21:00\",\"end\":\"06:30\"}}");
-    assertThat(
-            call("GET", "/api/v1/notifications/preferences", token("patient", "pat-b"), null)
-                .statusCode())
-        .isEqualTo(404);
+        "{\"channels\":[\"sms\"],\"locale\":\"en\",\"quietHours\":{\"start\":\"21:00\",\"end\":\"06:30\"}}",
+        "W/\"0\"");
+    assertThat(call("GET", PREFS, token("patient", "pat-b"), null).statusCode()).isEqualTo(404);
 
-    call(
-        "PUT",
-        "/api/v1/notifications/preferences",
-        a,
-        "{\"channels\":[\"email\"],\"locale\":\"en\"}");
-    var got = json(call("GET", "/api/v1/notifications/preferences", a, null));
+    call("PUT", PREFS, a, "{\"channels\":[\"email\"],\"locale\":\"en\"}", "W/\"1\"");
+    var got = json(call("GET", PREFS, a, null));
     assertThat(got.get("channels").toString()).isEqualTo("[\"email\"]");
+    assertThat(got.get("version").asLong()).isEqualTo(2);
     assertThat(got.has("quietHours") && !got.get("quietHours").isNull()).isFalse();
     assertThat(mongo.findById(PATIENT_A, Document.class, "preferences"))
         .doesNotContainKey("quietStart");
@@ -357,7 +404,7 @@ class NotificationApiTest {
             "{\"channels\":[\"push\"],\"locale\":\"fr\"}",
             "{\"channels\":[\"push\"],\"locale\":\"vi\",\"quietHours\":{\"start\":\"25:00\",\"end\":\"07:00\"}}",
             "{\"channels\":[\"push\"],\"locale\":\"vi\",\"quietHours\":{\"start\":\"22:00\"}}")) {
-      var r = call("PUT", "/api/v1/notifications/preferences", t, body);
+      var r = call("PUT", PREFS, t, body, "W/\"0\"");
       assertThat(r.statusCode()).as(body).isEqualTo(400);
       assertThat(json(r).get("code").asString()).isEqualTo("validation-failed");
     }

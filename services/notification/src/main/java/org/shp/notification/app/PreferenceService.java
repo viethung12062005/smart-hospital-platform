@@ -18,12 +18,20 @@ public class PreferenceService {
     this.clock = clock;
   }
 
-  public NotificationPreferences get(String patientId) {
+  public MongoPreferenceStore.Stored get(String patientId) {
     return store.find(patientId).orElseThrow(() -> new ShpException("not-found"));
   }
 
-  public NotificationPreferences change(
-      String patientId, List<String> channels, String locale, String quietStart, String quietEnd) {
+  /**
+   * Returns the new version; a stale {@code expectedVersion} gives 412 {@code version-conflict}.
+   */
+  public MongoPreferenceStore.Stored change(
+      String patientId,
+      long expectedVersion,
+      List<String> channels,
+      String locale,
+      String quietStart,
+      String quietEnd) {
     NotificationPreferences preferences;
     try {
       preferences = new NotificationPreferences(channels, locale, quietStart, quietEnd);
@@ -31,7 +39,10 @@ public class PreferenceService {
       // The domain messages never echo submitted values.
       throw new ShpException("validation-failed", e.getMessage());
     }
-    store.save(patientId, preferences, clock.instant());
-    return preferences;
+    long version =
+        store
+            .save(patientId, preferences, expectedVersion, clock.instant())
+            .orElseThrow(() -> new ShpException("version-conflict"));
+    return new MongoPreferenceStore.Stored(preferences, version);
   }
 }

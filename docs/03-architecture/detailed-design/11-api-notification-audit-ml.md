@@ -30,20 +30,22 @@ and returns `{ challengeId, channel, expiresAt }`. `N9` accepts `{ challengeId, 
 - Only services with the `internal.otp` role can call it; the gateway does not route `/internal`. Never log `destination` or `code`.
 
 ### N1 `PUT /api/v1/notifications/devices`
-`{ "platform": "ios|android|web", "token": "<FCM/APNs token>" }` → 200 `{ "tokenId" }`. Like every `PUT` (07 §3) it needs a well-formed `If-Match: W/"<n>"` header (otherwise 428); a device token has no version, so the value is not compared. Upsert by `token`; the owner comes from the
+`{ "platform": "ios|android|web", "token": "<FCM/APNs token>" }` → 200 `{ "tokenId" }`. Like every `PUT` (07 §3) it needs a well-formed `If-Match: W/"<n>"` header (missing → 428). N1 is a full-replace upsert of a record that carries no user-editable state and has no version: replaying it is harmless and the last registration wins, so there is nothing to lose to a concurrent writer and the value is not compared. Upsert by `token`; the owner comes from the
 caller's `fhirUser` (not accepted from the body). 400 if the token is empty or > 4,096 characters.
 
 ### N2 `DELETE /api/v1/notifications/devices/{tokenId}`
 → 200 with an empty body. Only the owner of the token can unregister it; for anyone else (and for an unknown id) the answer is 404 `not-found`, so the existence of a token is not revealed.
 
 ### N3 `GET /api/v1/notifications/preferences`
-Returns the body of N4 for the caller (the patient comes from the identity). 404 `not-found` while the patient has never saved preferences; the sender applies its own fallback in that case.
+Returns the body of N4 for the caller (the patient comes from the identity), with `version` and `ETag: W/"<version>"`. 404 `not-found` while the patient has never saved preferences; the sender applies its own fallback in that case.
 
 ### N4 `PUT /api/v1/notifications/preferences`
 ```json
 { "channels": ["push", "email", "sms"], "locale": "vi", "quietHours": { "start": "22:00", "end": "07:00" } }
 ```
-`channels` ≥ 1 element without duplicates, order = priority (later elements are fallback); `quietHours` is optional (omit it to clear). Returns 200 with the saved preferences. The `t-2h` reminder **ignores** quiet hours. 400 if a channel is outside {push, sms, email}.
+`channels` ≥ 1 element without duplicates, order = priority (later elements are fallback); `quietHours` is optional (omit it to clear). Returns 200 with the saved preferences and the new `version`
+(`ETag: W/"<version>"`). **Optimistic concurrency (07 §3):** the preferences carry an integer `version` (1 on the first save, +1 per change); `If-Match` must hold the current version,
+or `W/"0"` for the very first save. A stale or unknown version → 412 `version-conflict` and nothing is written; a missing header → 428 `precondition-required`. The `t-2h` reminder **ignores** quiet hours. 400 if a channel is outside {push, sms, email}.
 
 ### N6/N7 Dead-letter
 Item: `{ "reminderId", "kind", "subject": "Appointment/...", "attempts": 5, "lastError": "provider-timeout", "deadLetteredAt" }`
