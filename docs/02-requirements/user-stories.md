@@ -87,7 +87,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-067](#us-067) | Restore data to a point in time | Administrator | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | System handles slot-opening load at 07:00 | Project team | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | System tolerates dependency failures | Project team | Must |  | 2 | 9 |
-| [US-070](#us-070) | Safe, approval-gated deployment | DevOps | Must |  | 39 | 145 |
+| [US-070](#us-070) | Safe, approval-gated deployment | DevOps | Must |  | 40 | 148 |
 
 ## Functional requirement acceptance criteria coverage
 
@@ -1899,6 +1899,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | IAC-20 | Wire the data and identity modules (IAC-09..IAC-16) into both stacks | SA | 4 | W6 |
 | CIT-09 | Versioned template releases | SA | 2 | W7 |
 | CIT-10 | Internal Maven packaging for shared libraries | SA | 3 | W7 |
+| CIT-11 | Dependency-Check suppression file support and a dated suppression for dev-only picomatch | SA | 3 | W7 |
 | GOP-02 | Unit tests for the chart | SA | 3 | W7 |
 | GOP-09 | Prod canary with Argo Rollouts | SA | 3 | W7 |
 | GOV-06 | Dependabot for actions, maven, pip, docker, terraform | SA | 2 | W7 |
