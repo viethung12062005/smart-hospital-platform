@@ -284,6 +284,7 @@ IAM-07,IAM,"US-053, US-066",RFC 8693 token exchange for ai (on behalf of the use
 IAM-08,IAM,"US-001, US-008","Sign-up page with phone number or email, terms of use",Sign-up does not reveal existing accounts; Vietnamese by default,SA,3,IAM-03,S4,7,"UC-01, ADR-0017"
 OBS-01,OBS,ENABLER,Standard RED dashboard for every service,"Grafana dashboard by service label: rate, errors, duration p50/p95/p99",SA,3,GOP-06,S4,7,NFR-O2
 OBS-02,OBS,ENABLER,SLOs + burn-rate alerts,"SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts",SA,3,OBS-01,S4,7,"NFR-O2, O3"
+PY-10,PY,ENABLER,Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0),"A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests",SA,1,PY-03,S4,7,13 §1
 SCH-19,SCH,"US-017, US-019",$reschedule API (S15) atomic: book new + cancel old in one transaction,Midway failure keeps old appointment; emit appointment-rescheduled,D1,4,SCH-18,S4,7,"S15, E3(pub)"
 SCH-29,SCH,"US-009, US-012, US-016, US-017",Run authz matrix test suite for all scheduling endpoints,All scheduling-related cells green; every Deny has audit,D1,4,"SCH-22, SHR-26",S5,7,NFR-SEC2
 SCH-30,SCH,US-015,Contract test for events E1-E5 (producer emits correct schema),JSON schema validates in CI,D1,3,"SCH-25, SHR-06",S5,7,"E1(pub), E2(pub), E3(pub), E4(pub), E5(pub)"

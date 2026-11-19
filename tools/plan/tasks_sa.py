@@ -152,6 +152,8 @@ SA_TASKS = [
      "Adding an endpoint without a rule fails the CI test; 403/404 follow the convention", "SA", 4, "SHR-24", "P2", "15 §3"),
     ("SHR-27", "US-047", "Authz: emit audit for every decision (allow and deny)",
      "Every Deny emits audit outcome=denied with a reason code; tests", "SA", 2, "SHR-24, SHR-09", "S1", "05 §1, E11(pub)"),
+    ("PY-10", "ENABLER", "Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0)",
+     "A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests", "SA", 1, "PY-03", "S4", "13 §1"),
     # Moved to SA: outbox/inbox/idempotency (PostgreSQL version first; MongoDB and Spring Cloud Stream versions remain).
     ("SHR-07", "ENABLER", "Shared outbox relay (PostgreSQL and MongoDB stores), 1-second poll, SKIP LOCKED",
      "Everything is still published after the bus dies and recovers; multiple replicas do not duplicate", "SA", 4, "SHR-06", "P2", "13 §1"),

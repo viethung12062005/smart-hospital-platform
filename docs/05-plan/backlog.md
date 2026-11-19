@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **352 tasks**, **1215 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **353 tasks**, **1216 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -14,13 +14,13 @@ Total: **352 tasks**, **1215 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W4 | 3 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
-| W7 | 39 | 30 | 30 | 30 |
+| W7 | 40 | 30 | 30 | 30 |
 | W8 | **63** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **262** | **120** | **169** | **128** |
+| **Total** | **263** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -259,6 +259,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | PY-08 | US-055 | Router: model chain per task, timeout, failover to next model, final result when chain exhausted | Record fallbackLevel; test all error branches | SA | 4 | PY-07 | P2 | 06 §4 |
 | PY-04 | US-047 | Audit emitter Python (E11) for AI/ML | Does not log question content or PII; test | SA | 2 | PY-03 | S1 | E11(pub), 12 §0 |
 | PY-09 | US-055 | Circuit breaker + token/day quota + per-model metrics | Circuit opens after 5 failures/60s; over budget → ai-budget-exceeded | SA | 3 | PY-08 | S1 | 06 §4, NFR-C2 |
+| PY-10 | ENABLER | Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0) | A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests | SA | 1 | PY-03 | S4 | 13 §1 |
 
 ## DAT — Synthetic data
 
