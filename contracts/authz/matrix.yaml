@@ -148,7 +148,7 @@ rules:
   - { id: AUDIT-EXP-DPO,   resource: Audit, action: export, role: dpo,   when: [], purpose: HOPERAT }
   - { id: AUDIT-READ-ADM,  resource: Audit, action: read,   role: admin, when: [], hide: [reason] }
   - { id: AUDIT-EXP-ADM,   resource: Audit, action: export, role: admin, when: [], hide: [reason] }
-  - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
+  - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care], purpose: ETREAT }
   - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "via the operations pipeline, with approval" }
   - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "via the operations pipeline, with approval" }
   # Notification devices and preferences (the owner always comes from the identity, 11 §1)

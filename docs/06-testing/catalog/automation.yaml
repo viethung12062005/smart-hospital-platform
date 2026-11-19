@@ -187,6 +187,18 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/app/SlotGeneratorTest.java::regeneratingSameDayCreatesNoDuplicates
+  # ---- Clinical: break-glass ----
+  TC-AC-BG.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::aSixtyMinuteSessionIsStored
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::aSessionAllowsReadingButNotWriting
+    gap: "Sessions end at startedAt + 60 minutes and only unexpired ones count (CLN-24; a TTL index removes them); no test reopens the timeline after 60 minutes over HTTP (the timeline is CLN-23). Owner: D2."
+  TC-AC-BG.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::theReasonIs20To500Characters
+    gap: "A reason under 20 characters is rejected and no session is stored (CLN-24); the screen error is WEB work. Owner: D2."
 
   # ---- Clinical: version history ----
   TC-SEC-03:
