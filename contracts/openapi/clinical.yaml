@@ -2499,6 +2499,69 @@ paths:
         required: true
         schema:
           type: string
+  /internal/v1/identity/{subject}:
+    get:
+      operationId: C30
+      summary: Resolve an account to its profile, roles and lock state for other services
+      tags:
+      - clinical
+      x-permission: services with the `internal.clinical` role (§4)
+      x-roles: []
+      x-doc: detailed-design/09-api-clinical.md
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Not authenticated
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Insufficient permission (audited)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: Conflict (version/idempotency)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Invalid data
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+      parameters:
+      - name: subject
+        in: path
+        required: true
+        schema:
+          type: string
+      x-internal: true
+      security:
+      - workloadIdentity: []
 components:
   schemas:
     OperationOutcome:
