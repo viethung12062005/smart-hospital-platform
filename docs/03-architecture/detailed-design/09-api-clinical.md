@@ -146,7 +146,7 @@ Only D **without** Care. Creates a 60-minute session (`break_glass_sessions`); 2
 
 | Endpoint | Called by | Returns |
 |---|---|---|
-| `GET /internal/v1/identity/{subject}` (C30) | every service | `{ "fhirUser": "Patient/...", "roles": [...], "disabled": false }`; 404 if not linked. Requires a workload-identity token whose `roles` claim holds `internal.clinical` (the role of the target service, 15 §7) and whose `azp` is a known caller client (`svc-scheduling`, `svc-document`, `svc-notification`, `svc-audit`, `svc-ai`; configurable); a user token, even an Admin's, gets 403, a missing token 401. Always reads the current database row (no cache in clinical): the 60-second cache is on the caller's side. `roles` is empty for a link written before roles were stored |
+| `GET /internal/v1/identity/{subject}` (C30) | every service | `{ "fhirUser": "Patient/...", "roles": [...], "disabled": false, "linkedProfiles": [...] }` (`linkedProfiles` as in [§5 C2](#c2-get-apiv1me)); 404 if not linked. Requires a workload-identity token whose `roles` claim holds `internal.clinical` (the role of the target service, 15 §7) and whose `azp` is a known caller client (`svc-scheduling`, `svc-document`, `svc-notification`, `svc-audit`, `svc-ai`; configurable); a user token, even an Admin's, gets 403, a missing token 401. Always reads the current database row (no cache in clinical): the 60-second cache is on the caller's side. `roles` is empty for a link written before roles were stored |
 | `GET /internal/v1/care-relationships/check?practitioner={id}&patient={id}` | document, ai, notification | `{ "care": true, "via": "appointment|encounter|break-glass", "validUntil": "..." }` |
 | `GET /internal/v1/practitioners/{id}/roles` | scheduling | list of `PractitionerRole` (specialty, active) |
 | `GET /internal/v1/patients/{id}/contact` | notification | `{ "phone", "email", "locale" }` — **the only endpoint that returns contact information**; only the `internal.notification` role, every call has a `read` audit record |
@@ -157,7 +157,12 @@ Only D **without** Care. Creates a 60-minute session (`break_glass_sessions`); 2
 ### C2 `GET /api/v1/me`
 Any authenticated account, including one that is not linked yet (the web app sends it to registration, C1). Returns
 `{ "subject", "fhirUser", "roles", "linkedProfiles" }`: `fhirUser` is `Patient/{id}` or `Practitioner/{id}`, `null` before the link exists;
-`roles` come from the token; `linkedProfiles` is `[]` until `profile_links` exist ([§9](#9-profile-links-relatives-and-claiming-a-record-c22-to-c29), CLN-33).
+`roles` come from the token; `linkedProfiles` lists the other profiles the account manages
+([§9](#9-profile-links-relatives-and-claiming-a-record-c22-to-c29), ADR-0018) as
+`[{ "patientId", "relationship": "guardian"|"proxy", "scope": "booking"|"records"|"full", "expiresAt" }]`, ordered by `createdAt` then `patientId`.
+Only links with `status=active` that have not expired (`expiresAt` null or in the future) are listed; `pending`, `revoked` and `expired` links are ignored,
+and a link whose `expiresAt` has passed is ignored even before a job marks it `expired`. The list is `[]` when there is none. It is read from the current
+`profile_links` rows on every call, so a revocation is visible at once in clinical and, through the callers' 60-second identity cache, in at most 60 seconds elsewhere.
 A locked account gets 403 (`forbidden`) like on every other endpoint; no token gets 401.
 
 ### C21 `/api/v1/admin/users` (Admin only, matrix `User/manage`)

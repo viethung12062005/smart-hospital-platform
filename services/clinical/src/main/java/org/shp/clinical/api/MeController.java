@@ -1,7 +1,10 @@
 package org.shp.clinical.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Clock;
 import java.util.List;
+import org.shp.clinical.app.ProfileLinks;
+import org.shp.clinical.domain.LinkedProfile;
 import org.shp.web.auth.AllowUnlinkedIdentity;
 import org.shp.web.auth.IdentityInterceptor;
 import org.shp.web.auth.IdentityLink;
@@ -20,15 +23,19 @@ import org.springframework.web.bind.annotation.RestController;
 class MeController {
   /**
    * @param fhirUser {@code Patient/{id}} or {@code Practitioner/{id}}; null when not linked yet
-   * @param linkedProfiles profiles the account manages through {@code profile_links}; empty until
-   *     CLN-33 adds them
+   * @param linkedProfiles active, unexpired {@code profile_links} of the account (09 §5)
    */
-  record Me(String subject, String fhirUser, List<String> roles, List<Object> linkedProfiles) {}
+  record Me(
+      String subject, String fhirUser, List<String> roles, List<LinkedProfile> linkedProfiles) {}
 
   private final IdentityResolver identity;
+  private final ProfileLinks links;
+  private final Clock clock;
 
-  MeController(IdentityResolver identity) {
+  MeController(IdentityResolver identity, ProfileLinks links, Clock clock) {
     this.identity = identity;
+    this.links = links;
+    this.clock = clock;
   }
 
   // Authentication is enforced by the security filter chain; the matrix has no rule for "me".
@@ -42,6 +49,9 @@ class MeController {
             .map((IdentityLink l) -> l.fhirUserType() + "/" + l.fhirUserId())
             .orElse(null);
     return new Me(
-        principal.subject(), fhirUser, principal.roles().stream().sorted().toList(), List.of());
+        principal.subject(),
+        fhirUser,
+        principal.roles().stream().sorted().toList(),
+        links.activeFor(principal.subject(), clock.instant()));
   }
 }
