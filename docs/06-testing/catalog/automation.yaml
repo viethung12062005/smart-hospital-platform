@@ -85,11 +85,12 @@ automation:
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::sameKeyWithAnotherBodyIsRejectedWithoutSideEffects
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::aKeyBelongsToTheCallerThatClaimedIt
   TC-AC-03.1:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::parallelRequestsWithOneKeyProduceExactlyOneNewClaim
       - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::oneWinnerOnARace
-    gap: "12 concurrent bookings of one slot on real PostgreSQL give exactly one appointment (BookingService, SCH-13); the 50-request test through the endpoint is SCH-16."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingConcurrencyApiTest.java::fiftyConcurrentBookingsOfOneSlotCreateOneAppointment
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingConcurrencyApiTest.java::fiftyRetriesOfOneRequestCreateOneAppointment
   TC-AC-03.4:
     status: automated
     refs:
