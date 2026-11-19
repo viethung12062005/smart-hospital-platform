@@ -41,10 +41,16 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
   TC-AC-08.1:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
-    gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aLockIsRejectedAtTheLatestWhenTheSixtySecondIdentityCacheExpires
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::internalLookupReturnsTheLinkAndTheLockStateImmediately
+  TC-AC-LP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
   TC-SEC-02:
     status: partial
     refs:
@@ -92,6 +98,26 @@ automation:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
 
   # ---- Clinical: version history ----
+  TC-SEC-03:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::patientViolationIsRejected
+      - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::practitionerViolationIsRejected
+      - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::roleViolationIsRejected
+    gap: "Only the Patient, Practitioner and PractitionerRole profile validator (CLN-02) rejects out-of-profile elements; no endpoint calls it yet (CLN-03, CLN-10) and the other resources (Appointment, Encounter, ...) have no write validator. Owner: D2."
+  # ---- Clinical: vital signs ----
+  TC-AC-VT.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::spo2Of120IsValueOutOfRange
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::implausibleValuesAreRejected
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationServiceTest.java::temperature50IsRejectedAndNothingIsSaved
+    gap: "The validator (CLN-16) and the service behind POST /fhir/Observation (CLN-17) reject an implausible value with value-out-of-range, name the field and save nothing; no test sends the request over HTTP yet. Owner: D2."
+  TC-AC-VT.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
+    gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
