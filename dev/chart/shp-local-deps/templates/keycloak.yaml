@@ -56,7 +56,10 @@ spec:
       containers:
         - name: keycloak
           image: {{ .Values.images.keycloak }}
-          args: ["start-dev", "--import-realm", "--http-port=8080", "--hostname-strict=false"]
+          # The issuer must be the same for every client: browsers and `make token` use localhost:18080, a pod uses the in-cluster
+          # service name. A fixed frontend hostname keeps iss=http://localhost:18080/realms/shp for both (services validate it as
+          # OIDC_AUTHORITY); the back channel (token and JWKS URLs seen from a pod) stays dynamic, so pods still reach Keycloak by DNS.
+          args: ["start-dev", "--import-realm", "--http-port=8080", "--hostname=http://localhost:18080", "--hostname-backchannel-dynamic=true"]
           env:
             - { name: KC_BOOTSTRAP_ADMIN_USERNAME, value: admin }
             - { name: JAVA_OPTS_KC_HEAP, value: {{ .Values.keycloakJvm.heap | quote }} }

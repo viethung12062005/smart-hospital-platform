@@ -42,6 +42,7 @@ curl -i http://localhost:18000/fhir/Appointment  # goes through the gateway to s
 | Redeploy everything | `make -C dev deploy SVC=all` |
 | View logs / status | `make -C dev app-logs SVC=scheduling` · `make -C dev apps` · `make -C dev status` (dependencies) |
 | Remove a service | `make -C dev undeploy SVC=scheduling` |
+| Give services their workload client secret | `make -C dev service-clients` (also run by every `deploy`): creates the `svc-*` clients in a running Keycloak if missing and stores each secret, read from the Keycloak admin API, in the Secret `svc-<name>-client` (shp-apps); `deploy` injects it as `OIDC_CLIENT_SECRET` |
 | Get an API token | `make -C dev token USER=doctor.demo` (patient.demo, doctor.demo, nurse.demo, admin.demo, dpo.demo) |
 | Access the DB | `make -C dev psql DB=scheduling` · `make -C dev mongosh` · `make -C dev redis-cli` |
 | Shut down / free RAM | `make -C dev down` (deletes the cluster, in-cluster data is lost; passwords are kept) |
@@ -62,6 +63,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | Azurite (Blob/Queue emulator, account `shp`) | `AZURE_STORAGE_CONNECTION_STRING` in `connection.env` | `AZURE_STORAGE_CONNECTION_STRING` |
 | Keycloak 26, realm `shp` | http://localhost:18080/realms/shp | `OIDC_AUTHORITY` (= localhost issuer), `OIDC_JWK_SET_URI` (keys fetched via in-cluster DNS), `OIDC_AUDIENCE` |
 | Mailpit (mail catcher for Keycloak's forgot-password mail) | `kubectl -n shp-deps port-forward svc/mailpit 18025:8025`, then http://localhost:18025 | none |
+| Keycloak workload clients `svc-<service>` (SHR-32) | `OIDC_TOKEN_ENDPOINT` (in-cluster URL), `OIDC_CLIENT_SECRET` from Secret `svc-<name>-client`; client id defaults to `svc-<service>`. Keycloak runs with a fixed frontend hostname (`http://localhost:18080`), so a token fetched by a pod has the same issuer as one fetched from your machine |
 | 8 application services (namespace `shp-apps`) | via the gateway: `make port-forward` → `localhost:18000` | `http://<service name>` (port 80) |
 
 - **Passwords and the Azurite key** are randomly generated per machine and stored in `dev/.local/` (mode 600, gitignored). The repo contains no passwords.
