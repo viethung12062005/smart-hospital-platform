@@ -1,0 +1,5 @@
+Lịch hẹn của bạn đã được xác nhận.
+
+Bác sĩ: {doctorName}
+Thời gian: {startTime}
+Địa điểm: {place}
