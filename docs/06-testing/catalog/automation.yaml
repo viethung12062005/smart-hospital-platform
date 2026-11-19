@@ -203,6 +203,27 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
+  # ---- Clinical: encounter, diagnosis, addendum ----
+  TC-AC-04.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ConditionAuthzTest.java::breakGlassDoesNotAllowRecording
+    gap: "The matrix denies a doctor without care (even under break-glass) with no-care-relationship for the facts POST /fhir/Condition builds (CLN-18); not yet asserted over HTTP. Owner: D2."
+  TC-AC-DX.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ConditionServiceTest.java::aCodeOutsideTheIcd10TableIs422
+    gap: "The Condition service rejects a code outside the loaded ICD-10 table with 422 invalid-code naming the field (CLN-18); not yet asserted over HTTP. Owner: D2."
+  TC-AC-04.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterServiceTest.java::aFinishedVisitIs409AndUnchanged
+    gap: "Editing a finished Encounter is 409 invalid-state-transition and changes nothing (CLN-15); not yet asserted over HTTP. Owner: D2."
+  TC-AC-AD.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterAddendaTest.java::anAddendumIsAddedAndTheOriginalIsUnchanged
+    gap: "An addendum on a finished Encounter keeps every original element (CLN-21); not yet asserted over HTTP. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
