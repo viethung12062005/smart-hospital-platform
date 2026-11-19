@@ -48,6 +48,11 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
     gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
+  TC-AC-RV.1:
+    status: partial
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkedProfilesAreCachedForSixtySecondsAndAnExpiredOneIsDropped
+    gap: "Only the consumer side is checked (callers hold linkedProfiles for 60 seconds, a revoked link is gone at the refresh, an expired one is dropped at once); no API test of the revoke endpoint and its audit record yet."
   TC-SEC-02:
     status: partial
     refs:

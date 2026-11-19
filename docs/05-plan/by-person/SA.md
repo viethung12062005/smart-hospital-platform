@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -193,7 +193,7 @@ Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done
 | ◐ | ML-25 | Export metrics for canary analysis: error rate, p95, score distribution, agreement, version label **[partially done, commit d5d63c1: Per-model_version metrics: latency, errors, score distribution, highRisk, agreement; AnalysisTemplate (MLO-03) NOT YET]** | Prometheus has metrics per model_version for AnalysisTemplate | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart for the web app **[partially done, commit branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5: Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster]** | Non-root nginx container using the shared chart | 2 | WEB-01 | US-066 |
 
-## Week 7 — 87 hours
+## Week 7 — 90 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -223,6 +223,7 @@ Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | OBS-01 | Standard RED dashboard for every service **[done, commit gitops 85550ad: RED dashboard by service label + kube-prometheus-stack scrape jobs (gitops #13)]** | Grafana dashboard by service label: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☑ | OBS-02 | SLOs + burn-rate alerts **[done, commit gitops 68fe8da: SLOs for NFR-A1, P1, P2 with multi-window burn-rate alerts and an error-budget dashboard (gitops #14)]** | SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts | 3 | OBS-01 | ENABLER |
 | ☐ | PY-10 | Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0) | A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests | 1 | PY-03 | ENABLER |
+| ☐ | SHR-33 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | HttpIdentityLinkClient and IdentityLink carry linkedProfiles (absent field tolerated, entries past expiresAt dropped); Principal exposes them so linked, linked-records and guardian can be set from them; cached 60 seconds, expired entries dropped; tests | 3 | SHR-21, SHR-30, CLN-33 | US-076, US-077 |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
 ## Week 8 — 69 hours
