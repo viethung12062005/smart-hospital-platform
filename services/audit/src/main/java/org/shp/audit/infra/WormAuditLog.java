@@ -30,6 +30,12 @@ import org.shp.audit.domain.AuditBatch;
  * <p>The chain head (last blob name, hash, sequence) is recovered from the container on first use,
  * so a restarted instance continues its own chain. One instance owns one chain; calls are
  * serialised. The head only advances after the whole batch is written.
+ *
+ * <p>If creating or filling a blob fails, the incomplete blob stays (it cannot be deleted under a
+ * locked policy) and its metadata hash does not match its content; AUD-06 reports it as a break.
+ * The failed sequence number is burnt, so a retry writes a fresh blob that chains to the last
+ * complete batch. After a restart the head is read from the highest blob name, which may be such an
+ * incomplete blob; that is also reported by AUD-06.
  */
 public class WormAuditLog {
 
@@ -50,6 +56,8 @@ public class WormAuditLog {
   private String lastBlob;
   private String lastHash = AuditBatch.GENESIS_HASH;
   private long lastSequence;
+  // Highest sequence ever tried, so a blob left incomplete by a failed write is never reused.
+  private long attemptedSequence;
 
   public WormAuditLog(BlobContainerClient container, String instance, Clock clock) {
     if (!instance.matches("[A-Za-z0-9_-]+")) {
@@ -73,7 +81,8 @@ public class WormAuditLog {
   public synchronized Receipt append(List<String> recordLines) {
     loadHead();
     AuditBatch batch = AuditBatch.of(lastBlob, lastHash, recordLines);
-    long sequence = lastSequence + 1;
+    long sequence = Math.max(lastSequence, attemptedSequence) + 1;
+    attemptedSequence = sequence;
     String name =
         PREFIX
             + HOUR_PATH.format(ZonedDateTime.now(clock))
@@ -94,13 +103,18 @@ public class WormAuditLog {
     byte[] content = batch.content();
     for (int from = 0; from < content.length; from += MAX_BLOCK_BYTES) {
       int to = Math.min(content.length, from + MAX_BLOCK_BYTES);
-      blob.appendBlock(new ByteArrayInputStream(content, from, to - from), to - from);
+      writeBlock(blob, content, from, to);
     }
 
     lastBlob = name;
     lastHash = batch.batchHash();
     lastSequence = sequence;
     return new Receipt(name, batch.batchHash(), batch.count());
+  }
+
+  /** Writes one block; separate so tests can simulate a failing write. */
+  void writeBlock(AppendBlobClient blob, byte[] content, int from, int to) {
+    blob.appendBlock(new ByteArrayInputStream(content, from, to - from), to - from);
   }
 
   /** Reads the NDJSON content of a batch (used by tests and the integrity tool). */

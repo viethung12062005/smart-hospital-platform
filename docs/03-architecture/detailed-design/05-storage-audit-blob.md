@@ -44,8 +44,9 @@ Can be exported to FHIR `AuditEvent` when exchange is needed (1-1 mapping of the
   (`v1/yyyy/MM/dd/HH/<instance>-<sequence>.ndjson`, without the container name). The blob is created with the `batchHash`
   metadata already set (metadata cannot change once the policy applies) and then filled with append blocks of at most 4 MiB.
   The container policy must allow protected append writes (`allowProtectedAppendWrites`, owned by IAC-12) so the blob can be
-  filled after creation. A failure between create and the last block leaves an incomplete blob whose hash does not match; the
-  chain head does not advance, and AUD-06 reports it as a break.
+  filled after creation. A failure between create and the last block leaves an incomplete blob whose hash does not match; it stays
+  (it cannot be deleted under the lock) and AUD-06 reports it as a break. The chain head does not advance and the failed
+  sequence number is not reused: the retry writes a new blob that chains to the last complete batch.
 - **Consumer (AUD-01).** The audit service binds the queue `shp-events.audit` (routing key `shp.audit.recorded.v1`). Each event is
   validated against `contracts/events/audit/recorded.v1.json` (an invalid one is rejected and dead-lettered after the delivery
   limit, and the message names only the failing field, never a value) and its `data.eventId` must equal the CloudEvents `id`.
