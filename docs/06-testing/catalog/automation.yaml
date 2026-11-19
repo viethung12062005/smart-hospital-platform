@@ -51,6 +51,12 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
       - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
+  TC-AC-LK.4:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRevokedLinkDisappearsAtOnceAndALinkThatReachesItsExpiryIsIgnored
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::meAndTheInternalLookupListOnlyActiveUnexpiredLinks
+    gap: "Only the clinical side is tested: an expired or revoked profile link is dropped from linkedProfiles. Rejection at the booking service and renewal (CLN-35) are not built yet."
   TC-SEC-02:
     status: partial
     refs:

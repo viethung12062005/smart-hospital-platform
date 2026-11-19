@@ -7,16 +7,16 @@
 | Metric | Value |
 |---|---|
 | Test case | 203 |
-| Automated or partially automated | 62 (30%) |
+| Automated or partially automated | 63 (31%) |
 | Fully automated | 29 |
-| P0 (security, patient data, patient safety) | 122, automated at least partially: 35 |
+| P0 (security, patient data, patient safety) | 122, automated at least partially: 36 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 0 | 1 | 43 | 0 |
+| clinical | 44 | 0 | 2 | 42 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 3 | 0 | 12 | 0 |
@@ -31,7 +31,7 @@
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 5 | 7 | 17 | 0 |
-| api | 90 | 3 | 11 | 76 | 0 |
+| api | 90 | 3 | 12 | 75 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -82,7 +82,6 @@
 | TC-AC-LK.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-LK.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-PG.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-PX.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-RE.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
@@ -226,7 +225,7 @@
 | AC-LK.1 | TC-AC-LK.1 (api, P0) | planned |
 | AC-LK.2 | TC-AC-LK.2 (api, P0) | planned |
 | AC-LK.3 | TC-AC-LK.3 (api, P0) | planned |
-| AC-LK.4 | TC-AC-LK.4 (api, P0) | planned |
+| AC-LK.4 | TC-AC-LK.4 (api, P0) | partial |
 | AC-LP.1 | TC-AC-LP.1 (api, P0) | automated |
 | AC-MA.1 | TC-AC-MA.1 (api, P0) | partial |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | planned |
