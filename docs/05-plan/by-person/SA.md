@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **223 tasks, 778 hours**. Done: **145**, partially done: **9** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **224 tasks, 781 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -192,7 +192,7 @@ Total: **223 tasks, 778 hours**. Done: **145**, partially done: **9** (☑ done,
 | ◐ | ML-25 | Export metrics for canary analysis: error rate, p95, score distribution, agreement, version label **[partially done, commit d5d63c1: Per-model_version metrics: latency, errors, score distribution, highRisk, agreement; AnalysisTemplate (MLO-03) NOT YET]** | Prometheus has metrics per model_version for AnalysisTemplate | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart for the web app **[partially done, commit branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5: Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster]** | Non-root nginx container using the shared chart | 2 | WEB-01 | US-066 |
 
-## Week 7 — 81 hours
+## Week 7 — 84 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -205,20 +205,21 @@ Total: **223 tasks, 778 hours**. Done: **145**, partially done: **9** (☑ done,
 | ☑ | ARC-12 | Test strategy **[done, commit cd8c789: test plan + catalog + traceability gate]** | Test levels, coverage thresholds, load/failure test scenarios mapped to NFRs | 4 | ARC-02 | ENABLER |
 | ☐ | ARC-16 | Sprint review + planning S4 | Demo, update backlog status and risks; short minutes | 2 |  | ENABLER |
 | ☐ | CIT-09 | Versioned template releases | vX.Y.Z tags on shp-platform-templates; charts pushed as OCI to ACR; CHANGELOG | 2 | CIT-01, GOP-01 | US-070 |
-| ☐ | CIT-10 | Internal Maven packaging for shared libraries | Libraries published to GitHub Packages (Maven) with versions; services reference by version | 3 | SHR-01 | US-070 |
-| ☑ | GOP-02 | Unit tests for the chart **[done, commit gitops: helm-unittest for the microservice chart (push pending workflow scope)]** | helm-unittest for the main values combinations; runs in CI | 3 | GOP-01 | US-070 |
-| ☐ | GOP-09 | Prod canary with Argo Rollouts | Steps 10%-50%-100%, pauses for manual promotion, automatic rollback on failure | 3 | GOP-04 | US-070 |
+| ◐ | CIT-10 | Internal Maven packaging for shared libraries **[partially done, commit d106007: distributionManagement, shp.libs.version and the publish-maven workflow (#614); NOT YET published: no vX.Y.Z tag has been pushed and services still use the reactor version]** | Libraries published to GitHub Packages (Maven) with versions; services reference by version | 3 | SHR-01 | US-070 |
+| ☐ | CIT-11 | Dependency-Check suppression file support and a dated suppression for dev-only picomatch | pr-checks passes dependency-check-suppressions.xml to Dependency-Check when it exists (--failOnCVSS 7 kept); the app repo suppresses only npm picomatch 4.0.7 (GHSA-fc5q-39xc-vjpf, no fixed version, dev-only) with notes, review date and an until expiry; policy documented in docs/04-devops; pin bumped to the templates tag that has the feature; checks / dependency-check green | 3 | CIT-07 | US-070 |
+| ☑ | GOP-02 | Unit tests for the chart **[done, commit templates 835e824: helm-unittest: 9 suites, 63 tests for the microservice chart, run by helm-validate in CI (templates #15)]** | helm-unittest for the main values combinations; runs in CI | 3 | GOP-01 | US-070 |
+| ☑ | GOP-09 | Prod canary with Argo Rollouts **[done, commit gitops 4bc5d95: prod canary 10% -> 50% with blocking analysis -> manual promotion pause -> 100%; failureLimit 0 rolls back (gitops #16); not exercised on a live cluster]** | Steps 10%-50%-100%, pauses for manual promotion, automatic rollback on failure | 3 | GOP-04 | US-070 |
 | ☑ | GOV-06 | Dependabot for actions, maven, pip, docker, terraform **[done, commit infra/gitops/templates: dependabot.yml in the four repos]** | dependabot.yml in every repo; actions pinned by commit SHA | 2 | GOV-01 | US-070 |
-| ☐ | IAC-18 | Module Defender for Storage + Event Grid → queue for scan results | New blobs are scanned; results go to a queue for the document service to process | 3 | IAC-12 | US-036 |
-| ☐ | IAC-19 | ai node pool running Ollama (bge-m3, qwen2.5) + DeepSeek/Gemini API key secret in Key Vault | Ollama has a model cache PVC; keys only in Key Vault, loaded via CSI, never in the repo/values | 4 | IAC-05 | US-055 |
+| ◐ | IAC-18 | Module Defender for Storage + Event Grid → queue for scan results **[partially done, commit infra bd5d20d: Defender for Storage + Event Grid -> malware-scan-results queue (infra #16), validate + tflint clean; NOT YET applied, so scanning and delivery are unverified]** | New blobs are scanned; results go to a queue for the document service to process | 3 | IAC-12 | US-036 |
+| ☑ | IAC-19 | ai node pool running Ollama (bge-m3, qwen2.5) + DeepSeek/Gemini API key secret in Key Vault **[done, commit infra 9e60ae8: ai node pool, Ollama model-cache PVC, Key Vault CSI reference; secret values only in Key Vault (infra #17); validate + tflint clean, apply not run]** | Ollama has a model cache PVC; keys only in Key Vault, loaded via CSI, never in the repo/values | 4 | IAC-05 | US-055 |
 | ☐ | IAM-01 | Keycloak on the cluster (ADR-0017): chart, GitOps app, shp realm as code | Chart + GitOps app, 2 replicas in prod; realm has shp-web PKCE client, shp-api audience, roles; rebuilt from code | 4 | IAC-16, GOP-03 | US-001, US-008, US-066 |
 | ☐ | IAM-02 | Service accounts: client credentials for /internal per service | Client auth method finalized (ServiceAccount token assertion or 90-day rotating secret); tested against real Keycloak | 3 | IAM-01, SHR-20 | US-053, US-066 |
 | ☐ | IAM-03 | Keycloak theme vi/en: login, forgot password | Matches the SHP design system; meets WCAG AA; does not reveal existing accounts | 3 | IAM-01 | US-001, US-008 |
 | ☐ | IAM-06 | Hardened Keycloak: Argon2id, password policy, brute-force lockout, internal admin console, backups | Admin console not exposed to the Internet; DB restore from backup tested successfully | 4 | IAM-01 | US-001, US-008, US-066 |
 | ☐ | IAM-07 | RFC 8693 token exchange for ai (on behalf of the user) | Exchanged token keeps the user sub and correct target service aud; other clients cannot exchange | 3 | IAM-02 | US-053, US-066 |
 | ☐ | IAM-08 | Sign-up page with phone number or email, terms of use | Sign-up does not reveal existing accounts; Vietnamese by default | 3 | IAM-03 | US-001, US-008 |
-| ☐ | OBS-01 | Standard RED dashboard for every service | Grafana dashboard by service label: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
-| ☐ | OBS-02 | SLOs + burn-rate alerts | SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts | 3 | OBS-01 | ENABLER |
+| ☑ | OBS-01 | Standard RED dashboard for every service **[done, commit gitops 85550ad: RED dashboard by service label + kube-prometheus-stack scrape jobs (gitops #13)]** | Grafana dashboard by service label: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
+| ☑ | OBS-02 | SLOs + burn-rate alerts **[done, commit gitops 68fe8da: SLOs for NFR-A1, P1, P2 with multi-window burn-rate alerts and an error-budget dashboard (gitops #14)]** | SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts | 3 | OBS-01 | ENABLER |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
 ## Week 8 — 69 hours
@@ -240,7 +241,7 @@ Total: **223 tasks, 778 hours**. Done: **145**, partially done: **9** (☑ done,
 | ☐ | MLO-02 | Reproducible training image: pinned library versions, seeds, fixed image, vulnerability scan | Same image + dataset hash + seed produce the same model; image signed | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary for ml-service + AnalysisTemplate (Prometheus), auto-promote or rollback | 10%, 50%, 100% steps with analysis; bad model rolls back automatically; autoPromote configured per environment | 6 | GOP-04, SCF-07, ML-25 | US-073 |
 | ☐ | MLO-04 | Retraining orchestration on the cluster: CronJob/KEDA receives requests from ML-22, runs ML-23, monitors and audits | A simulated drift alert starts exactly one retraining run; no overlapping runs | 5 | ML-23, GOP-10 | US-074 |
-| ☐ | OBS-03 | DLQ and pipeline failure alerts | Alerts when a dead-letter queue has messages, a cert is expiring, or an Argo CD app is degraded | 2 | OBS-01 | ENABLER |
+| ☑ | OBS-03 | DLQ and pipeline failure alerts **[done, commit gitops ecb9906: alerts for dead-letter queues, certificate expiry and degraded Argo CD apps (gitops #15)]** | Alerts when a dead-letter queue has messages, a cert is expiring, or an Argo CD app is degraded | 2 | OBS-01 | ENABLER |
 | ☐ | PRD-10 | k6 script: find slot + book (1x/5x/10x scenarios) | 1x/5x/10x scenarios per workload analysis; runs on UAT (prod-sized) | 4 | SCH-14 | US-068 |
 | ☐ | PRD-11 | KEDA cron scale before 07:00 + HPA for scheduling | prod/uat values scale before the slot-opening window | 1 | SCF-01, GOP-04 | US-068 |
 | ☐ | WEB-31 | Knowledge base management and AI cost UI (Admin) | Upload, approve, remove; usage table | 4 | WEB-30, AI-13 | US-053, US-052 |
