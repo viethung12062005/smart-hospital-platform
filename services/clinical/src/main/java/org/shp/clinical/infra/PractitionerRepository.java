@@ -1,8 +1,10 @@
 package org.shp.clinical.infra;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import org.bson.Document;
+import org.shp.data.mongo.MongoOutbox;
 import org.shp.data.mongo.MongoResourceStore;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.data.mongo.MongoResourceStore.ResourceInput;
@@ -13,11 +15,16 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Practitioner and PractitionerRole persistence (03 §2.2): writes go through the versioned resource
  * store (resource + history in one transaction); the directory is read directly, keyed on {@code
  * _id} (UUIDv7, so the order is the creation order).
+ *
+ * <p>The store is a stateless helper created here rather than a {@code resourceStore} bean:
+ * CLN-03's {@code PatientStoreConfig} declares that bean too, and two declarations would stop the
+ * service from starting once both are merged.
  */
 @Component
 public class PractitionerRepository {
@@ -27,8 +34,9 @@ public class PractitionerRepository {
   private final MongoResourceStore store;
   private final MongoTemplate mongo;
 
-  public PractitionerRepository(MongoResourceStore store, MongoTemplate mongo) {
-    this.store = store;
+  public PractitionerRepository(
+      MongoTemplate mongo, TransactionTemplate tx, MongoOutbox outbox, Clock clock) {
+    this.store = new MongoResourceStore(mongo, tx, outbox, clock);
     this.mongo = mongo;
   }
 
