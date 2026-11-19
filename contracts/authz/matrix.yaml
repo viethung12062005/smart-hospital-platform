@@ -29,6 +29,7 @@ resources:
   Patient:         { clinical: true,  actions: [read, create, update, search] }
   Slot:            { clinical: false, actions: [read, create, update, block] }
   Appointment:     { clinical: true,  actions: [book, cancel, read] }
+  AppointmentHistory: { clinical: false, actions: [read] }
   Encounter:       { clinical: true,  actions: [read, create, update] }
   Observation:     { clinical: true,  actions: [read, create] }
   Condition:       { clinical: true,  actions: [create] }
@@ -83,6 +84,8 @@ rules:
   - { id: APPT-READ-LINKED, resource: Appointment, action: read,   role: patient, when: [linked] }
   - { id: APPT-READ-DOC,   resource: Appointment, action: read,   role: doctor,  when: [self-practitioner] }
   - { id: APPT-READ-NUR,   resource: Appointment, action: read,   role: nurse,   when: [] }
+  - { id: APPT-HIST-NUR,   resource: AppointmentHistory, action: read,   role: nurse,   when: [] }
+  - { id: APPT-HIST-ADM,   resource: AppointmentHistory, action: read,   role: admin,   when: [] }
   # Encounter
   - { id: ENC-READ-PAT,    resource: Encounter, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
   - { id: ENC-READ-LINKED, resource: Encounter, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
