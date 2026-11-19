@@ -11,7 +11,7 @@ spring:
       definition: appointmentEvents
     stream:
       bindings:
-        # 13 §1.1: appointment events (E1, E2, E3, E5) -> care relationships
+        # 13 §1.1: appointment events (E1, E2, E3, E5) -> care relationships; E4 -> Encounter
         appointmentEvents-in-0:
           destination: shp-events
           group: clinical
