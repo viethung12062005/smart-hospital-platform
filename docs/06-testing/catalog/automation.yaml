@@ -17,6 +17,7 @@ automation:
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyDeclaredActionAndRoleGetsEveryFeasibleConditionCell
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyRuleHasAnAllowCaseAndADenyCasePerCondition
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentHistoryApiTest.java::historyAuthorizationMatrix
+      - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
     gap: "Only at the decision-library and interface level; no test calls each real endpoint yet (SCH-/CLN-/DOC-). Owner: D1, D2."
   TC-NFR-SEC1:
     status: partial
@@ -83,6 +84,10 @@ automation:
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::commitIncludesTheOutboxEvent
     gap: "The appointment-booked event written by BookingService is schema-valid and carries only ids, codes and timestamps; the check through the $book endpoint awaits SCH-14."
+  TC-AC-MA.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::patientFilterIsAlwaysForcedToSelf
   TC-AC-07.2:
     status: partial
     refs:
