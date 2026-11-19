@@ -209,7 +209,13 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::spo2Of120IsValueOutOfRange
       - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::implausibleValuesAreRejected
-    gap: "The Observation validator (CLN-16) rejects SpO2 = 120 with value-out-of-range and names the field; the POST /fhir/Observation endpoint (C16) that returns the 422 and saves nothing is not built yet. Owner: D2."
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationServiceTest.java::temperature50IsRejectedAndNothingIsSaved
+    gap: "The validator (CLN-16) and the service behind POST /fhir/Observation (CLN-17) reject an implausible value with value-out-of-range, name the field and save nothing; no test sends the request over HTTP yet. Owner: D2."
+  TC-AC-VT.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
+    gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
