@@ -111,6 +111,18 @@ automation:
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/app/SlotGeneratorTest.java::template0800To1130With15MinSlotsGenerates14FreeSlots
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotGenerationApiTest.java::generatesFourteenSlotsPerDayAndRerunSkipsExisting
+  TC-AC-FS.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchApiTest.java::fourteenFreeSlotsTomorrowAreReturnedInTimeOrder
+  TC-AC-FS.2:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchApiTest.java::patientGetsNothingBeyondTheBookingWindow
+  TC-AC-FS.3:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchApiTest.java::patientSeesOnlyFreeFutureSlots
   TC-AC-GS.1:
     status: automated
     refs:
