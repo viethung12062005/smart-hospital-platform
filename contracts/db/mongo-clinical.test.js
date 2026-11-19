@@ -69,6 +69,13 @@ check("care check is one read by _id", JSON.stringify(c.care_relationships.find(
 check("break-glass sessions expire (TTL on expiresAt)", c.break_glass_sessions.getIndexes().some(i => i.expireAfterSeconds === 0));
 check("inbox TTL 14 days", c.inbox.getIndexes().some(i => i.name === "ttl_inbox_14d" && i.expireAfterSeconds === 1209600));
 check("link attempts TTL 24 hours", c.link_attempts.getIndexes().some(i => i.expireAfterSeconds === 86400));
+// The search executor (SHR-11) hints these names; a missing name fails every search (BadValue 2).
+const hinted = { patients: ["ix_patients_mrn", "ix_patients_phone_birthdate", "ix_patients_national_id_hash", "ix_patients_name_tokens_birthdate"],
+  observations: ["ix_observations_patient_category_effective", "ix_observations_encounter_id"] };
+check("the indexes the search executor hints exist by name", Object.keys(hinted).every(coll =>
+  hinted[coll].every(n => c.getCollection(coll).getIndexes().some(i => i.name === n))));
+check("a name search can use the hinted index", (() => {
+  try { c.patients.find({ "search.nameTokens": "an" }).hint("ix_patients_name_tokens_birthdate").toArray(); return true; } catch (e) { return false; } })());
 check("every collection of 03 §2.2 exists", ["patients", "practitioners", "practitioner_roles", "encounters", "observations", "conditions", "allergy_intolerances",
   "resource_history", "identity_links", "profile_links", "link_attempts", "care_relationships", "break_glass_sessions", "mrn_counters", "outbox", "inbox"]
   .every(x => c.getCollectionNames().includes(x)));

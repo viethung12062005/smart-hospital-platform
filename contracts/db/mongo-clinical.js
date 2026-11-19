@@ -37,10 +37,11 @@ const c = db.getSiblingDB("clinical");
 
 // ---------------- resources ----------------
 ensureCollection(c, "patients", resourceValidator("Patient", false, ["mrn"], { active: { bsonType: "bool" } }));
-c.patients.createIndex({ "search.mrn": 1 }, { unique: true });
-c.patients.createIndex({ "search.phone": 1, "search.birthDate": 1 });
-c.patients.createIndex({ "search.nationalIdHash": 1 }, { unique: true, partialFilterExpression: { "search.nationalIdHash": { $exists: true } } });
-c.patients.createIndex({ "search.nameTokens": 1, "search.birthDate": 1 });
+// Names = libs/java/shp-data-mongo SearchIndexes: the search executor (SHR-11) hints them by name.
+c.patients.createIndex({ "search.mrn": 1 }, { unique: true, name: "ix_patients_mrn" });
+c.patients.createIndex({ "search.phone": 1, "search.birthDate": 1 }, { name: "ix_patients_phone_birthdate" });
+c.patients.createIndex({ "search.nationalIdHash": 1 }, { unique: true, name: "ix_patients_national_id_hash", partialFilterExpression: { "search.nationalIdHash": { $exists: true } } });
+c.patients.createIndex({ "search.nameTokens": 1, "search.birthDate": 1 }, { name: "ix_patients_name_tokens_birthdate" });
 
 ensureCollection(c, "practitioners", resourceValidator("Practitioner", false, ["staffCode", "active"]));
 c.practitioners.createIndex({ "search.staffCode": 1 }, { unique: true, name: "ux_practitioners_staff_code" });
@@ -59,8 +60,8 @@ c.encounters.createIndex({ "search.appointmentId": 1 }, { unique: true, name: "u
 
 ensureCollection(c, "observations", resourceValidator("Observation", true, ["category", "code", "effective"],
   { status: { enum: ["final", "amended", "entered-in-error"] } }, ["status", "code", "subject"]));
-c.observations.createIndex({ patientId: 1, "search.category": 1, "search.effective": -1 });
-c.observations.createIndex({ "search.encounterId": 1 });
+c.observations.createIndex({ patientId: 1, "search.category": 1, "search.effective": -1 }, { name: "ix_observations_patient_category_effective" });
+c.observations.createIndex({ "search.encounterId": 1 }, { name: "ix_observations_encounter_id" });
 
 ensureCollection(c, "conditions", resourceValidator("Condition", true, ["code", "recordedDate"], {}, ["code", "subject"]));
 c.conditions.createIndex({ patientId: 1, "search.recordedDate": -1 });
