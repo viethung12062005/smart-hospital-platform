@@ -4,6 +4,7 @@
 > [backlog](../05-plan/backlog.md). Foundational decisions: [ADR-0009](../03-architecture/adr/0009-cicd-ephemeral-environments.md), [ADR-0010](../03-architecture/adr/0010-repository-strategy.md).
 > Every cloud environment is **ephemeral**: create -> test -> destroy.
 > Step-by-step GitHub setup (repo, ruleset, environment, OIDC, bot): [github-setup.md](github-setup.md).
+> Reviewed, expiring exceptions for the Dependency-Check gate: [dependency-check-suppressions.md](dependency-check-suppressions.md).
 > Goal: complete **the entire pipeline and environment before** the dev team starts writing services.
 
 ## Outputs of this phase
