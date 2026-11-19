@@ -41,10 +41,16 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
   TC-AC-08.1:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
-    gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aLockIsRejectedAtTheLatestWhenTheSixtySecondIdentityCacheExpires
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::internalLookupReturnsTheLinkAndTheLockStateImmediately
+  TC-AC-LP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
   TC-SEC-02:
     status: partial
     refs:
@@ -92,6 +98,34 @@ automation:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
 
   # ---- Clinical: version history ----
+  TC-SEC-03:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::patientViolationIsRejected
+      - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::practitionerViolationIsRejected
+      - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::roleViolationIsRejected
+    gap: "Only the Patient, Practitioner and PractitionerRole profile validator (CLN-02) rejects out-of-profile elements; no endpoint calls it yet (CLN-03, CLN-10) and the other resources (Appointment, Encounter, ...) have no write validator. Owner: D2."
+  # ---- Clinical: encounter, diagnosis, addendum ----
+  TC-AC-04.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ConditionAuthzTest.java::breakGlassDoesNotAllowRecording
+    gap: "The matrix denies a doctor without care (even under break-glass) with no-care-relationship for the facts POST /fhir/Condition builds (CLN-18); not yet asserted over HTTP. Owner: D2."
+  TC-AC-DX.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ConditionServiceTest.java::aCodeOutsideTheIcd10TableIs422
+    gap: "The Condition service rejects a code outside the loaded ICD-10 table with 422 invalid-code naming the field (CLN-18); not yet asserted over HTTP. Owner: D2."
+  TC-AC-04.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterServiceTest.java::aFinishedVisitIs409AndUnchanged
+    gap: "Editing a finished Encounter is 409 invalid-state-transition and changes nothing (CLN-15); not yet asserted over HTTP. Owner: D2."
+  TC-AC-AD.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterAddendaTest.java::anAddendumIsAddedAndTheOriginalIsUnchanged
+    gap: "An addendum on a finished Encounter keeps every original element (CLN-21); not yet asserted over HTTP. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
@@ -140,7 +174,10 @@ automation:
       - services/ml/tests/test_event_contracts.py::test_rescheduled_example_creates_the_new_appointment_fact
       - services/ml/tests/test_event_contracts.py::test_patient_merged_example_moves_the_stats
       - services/ml/tests/test_event_contracts.py::test_consumer_ignores_forward_compatible_extra_fields
-    gap: "OpenAPI schemas validate and the notification/ml consumers read the producer examples; FHIR resources are not yet validated with the FHIR validator, and the clinical, scheduling and ai consumers are still scaffolds with no consumer contract test."
+      - services/clinical/src/test/java/org/shp/clinical/messaging/ClinicalEventContractTest.java::everyProducerExampleIsValidAndAccepted
+      - services/clinical/src/test/java/org/shp/clinical/messaging/ClinicalEventContractTest.java::anUnknownOptionalFieldIsTolerated
+      - services/clinical/src/test/java/org/shp/clinical/messaging/ClinicalEventContractTest.java::theE6ClinicalEmitsMatchesTheSchemaAndTheExample
+    gap: "OpenAPI schemas validate; the notification, ml and clinical consumers read the producer examples and clinical's E6 matches its schema; FHIR resources are not yet validated with the FHIR validator, clinical does not produce E7 yet (CLN-09), and the scheduling and ai consumers have no consumer contract test."
   TC-NFR-SEC9:
     status: automated
     refs:
