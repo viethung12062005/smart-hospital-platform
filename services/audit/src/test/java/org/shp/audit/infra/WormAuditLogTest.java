@@ -186,4 +186,40 @@ class WormAuditLogTest {
     assertThat(container.getBlobClient(written.blobName()).getProperties().getMetadata())
         .containsEntry("batchHash", written.batchHash());
   }
+
+  @Test
+  void aFailedBlockWriteLeavesTheHeadAndTheRetryUsesAFreshBlob() {
+    var container = freshContainer("t-retry");
+    var failNext = new java.util.concurrent.atomic.AtomicBoolean();
+    var log =
+        new WormAuditLog(container, "audit-0", CLOCK) {
+          @Override
+          void writeBlock(
+              com.azure.storage.blob.specialized.AppendBlobClient blob,
+              byte[] c,
+              int from,
+              int to) {
+            if (failNext.getAndSet(false)) {
+              throw new IllegalStateException("simulated block write failure");
+            }
+            super.writeBlock(blob, c, from, to);
+          }
+        };
+    var first = log.append(records("a", 1));
+
+    failNext.set(true);
+    assertThatThrownBy(() -> log.append(records("b", 1))).isInstanceOf(IllegalStateException.class);
+    assertThat(log.headHash()).isEqualTo(first.batchHash());
+
+    var retry = log.append(records("b", 1));
+
+    assertThat(retry.blobName()).endsWith("audit-0-3.ndjson");
+    assertThat(lines(log, retry.blobName())[0])
+        .contains("\"prevBatch\":\"" + first.blobName() + "\"")
+        .contains("\"prevHash\":\"" + first.batchHash() + "\"");
+    // The incomplete blob stays: empty content, metadata hash that matches nothing stored.
+    var orphan = container.getBlobClient("v1/2026/11/18/10/audit-0-2.ndjson");
+    assertThat(orphan.getProperties().getBlobSize()).isZero();
+    assertThat(orphan.getProperties().getMetadata()).containsKey("batchHash");
+  }
 }
