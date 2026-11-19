@@ -1,0 +1,5 @@
+Bạn có lịch hẹn với bác sĩ sau 2 giờ nữa.
+
+Bác sĩ: {doctorName}
+Thời gian: {startTime}
+Địa điểm: {place}

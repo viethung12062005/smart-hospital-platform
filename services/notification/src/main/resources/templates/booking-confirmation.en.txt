@@ -1,0 +1,5 @@
+Your appointment has been confirmed.
+
+Doctor: {doctorName}
+Time: {startTime}
+Location: {place}
