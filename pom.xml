@@ -281,16 +281,28 @@
     </snapshotRepository>
   </distributionManagement>
 
-  <!-- Consume the org.shp library artifacts published by this repository. GitHub Packages requires authentication for
-       reads too, so the same <server id="github"> must exist in settings.xml. Services inside this reactor take the
-       libraries from the reactor; this entry is used when a build resolves them from a published version. -->
-  <repositories>
-    <repository>
-      <id>github</id>
-      <name>GitHub Packages (smart-hospital-platform)</name>
-      <url>https://maven.pkg.github.com/viethung12062005/smart-hospital-platform</url>
-      <releases><enabled>true</enabled></releases>
-      <snapshots><enabled>true</enabled></snapshots>
-    </repository>
-  </repositories>
+  <!-- Read published org.shp library versions from GitHub Packages. Only when a build asks for a published version
+       (-Dshp.libs.version=X.Y.Z, docs/04-devops/github-setup.md section 10). It is deliberately not a top-level
+       <repositories> entry: Maven queries every declared repository for every artifact, and GitHub Packages answers an
+       unauthenticated read with 401 (not 404), which fails the whole resolution of third-party artifacts (CIT-12).
+       Default builds, including Docker builds without credentials, therefore only talk to Maven Central (the HAPI FHIR
+       "github-releases" repository is mirrored to Central in .mvn/settings.xml). A build that
+       activates this profile needs <server id="github"> in settings.xml. -->
+  <profiles>
+    <profile>
+      <id>published-shp-libs</id>
+      <activation>
+        <property><name>shp.libs.version</name></property>
+      </activation>
+      <repositories>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages (smart-hospital-platform)</name>
+          <url>https://maven.pkg.github.com/viethung12062005/smart-hospital-platform</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
 </project>

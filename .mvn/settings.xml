@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Global Maven settings for every build of this repository, loaded by .mvn/maven.config (-gs). It is merged with the
+     user's ~/.m2/settings.xml, so the "github" server entry used by publish-maven still applies (CIT-12).
+
+     Why: the POMs of HAPI FHIR (ca.uhn.hapi.fhir:hapi-fhir, org.hl7.fhir.*) declare a repository with the id
+     "github-releases" at https://maven.pkg.github.com/FHIR/fhir-test-cases/. Maven adds the repositories of every POM
+     it reads, so it asked GitHub Packages for third-party artifacts (for example com.networknt:json-schema-validator).
+     GitHub Packages answers an unauthenticated read with 401, not 404, and Maven treats that as a hard failure; CI and
+     Docker builds have no credentials. The mirror below sends that repository id to Maven Central, which holds
+     every artifact we need, so no request reaches maven.pkg.github.com. -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <mirrors>
+    <mirror>
+      <id>central-instead-of-github-releases</id>
+      <name>Maven Central instead of the unauthenticated GitHub Packages repository of HAPI FHIR</name>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <mirrorOf>github-releases</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>
