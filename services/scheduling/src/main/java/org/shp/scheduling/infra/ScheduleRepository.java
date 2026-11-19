@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -171,6 +172,26 @@ public class ScheduleRepository {
     params.add(filter.limit());
 
     return jdbc.sql(sql.toString()).params(params).query(SCHEDULE_MAPPER).list();
+  }
+
+  /**
+   * Return all active schedules whose {@code horizon_end} is strictly before {@code
+   * targetHorizonEnd}.
+   */
+  @Transactional(readOnly = true)
+  public List<ScheduleRecord> findActiveBeforeHorizonEnd(LocalDate targetHorizonEnd) {
+    Objects.requireNonNull(targetHorizonEnd, "targetHorizonEnd must not be null");
+    return jdbc.sql(
+            """
+            SELECT id, version_id, last_updated, active, practitioner_id,
+                   specialty, horizon_start, horizon_end, content
+            FROM scheduling.schedule
+            WHERE active = true AND horizon_end < ?
+            ORDER BY id ASC
+            """)
+        .param(Date.valueOf(targetHorizonEnd))
+        .query(SCHEDULE_MAPPER)
+        .list();
   }
 
   /**
