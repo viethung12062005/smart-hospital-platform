@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **223 tasks, 778 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **224 tasks, 781 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -192,7 +192,7 @@ Total: **223 tasks, 778 hours**. Done: **150**, partially done: **11** (☑ done
 | ◐ | ML-25 | Export metrics for canary analysis: error rate, p95, score distribution, agreement, version label **[partially done, commit d5d63c1: Per-model_version metrics: latency, errors, score distribution, highRisk, agreement; AnalysisTemplate (MLO-03) NOT YET]** | Prometheus has metrics per model_version for AnalysisTemplate | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart for the web app **[partially done, commit branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5: Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster]** | Non-root nginx container using the shared chart | 2 | WEB-01 | US-066 |
 
-## Week 7 — 81 hours
+## Week 7 — 84 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -206,6 +206,7 @@ Total: **223 tasks, 778 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | ARC-16 | Sprint review + planning S4 | Demo, update backlog status and risks; short minutes | 2 |  | ENABLER |
 | ☐ | CIT-09 | Versioned template releases | vX.Y.Z tags on shp-platform-templates; charts pushed as OCI to ACR; CHANGELOG | 2 | CIT-01, GOP-01 | US-070 |
 | ◐ | CIT-10 | Internal Maven packaging for shared libraries **[partially done, commit d106007: distributionManagement, shp.libs.version and the publish-maven workflow (#614); NOT YET published: no vX.Y.Z tag has been pushed and services still use the reactor version]** | Libraries published to GitHub Packages (Maven) with versions; services reference by version | 3 | SHR-01 | US-070 |
+| ☐ | CIT-11 | Dependency-Check suppression file support and a dated suppression for dev-only picomatch | pr-checks passes dependency-check-suppressions.xml to Dependency-Check when it exists (--failOnCVSS 7 kept); the app repo suppresses only npm picomatch 4.0.7 (GHSA-fc5q-39xc-vjpf, no fixed version, dev-only) with notes, review date and an until expiry; policy documented in docs/04-devops; pin bumped to the templates tag that has the feature; checks / dependency-check green | 3 | CIT-07 | US-070 |
 | ☑ | GOP-02 | Unit tests for the chart **[done, commit templates 835e824: helm-unittest: 9 suites, 63 tests for the microservice chart, run by helm-validate in CI (templates #15)]** | helm-unittest for the main values combinations; runs in CI | 3 | GOP-01 | US-070 |
 | ☑ | GOP-09 | Prod canary with Argo Rollouts **[done, commit gitops 4bc5d95: prod canary 10% -> 50% with blocking analysis -> manual promotion pause -> 100%; failureLimit 0 rolls back (gitops #16); not exercised on a live cluster]** | Steps 10%-50%-100%, pauses for manual promotion, automatic rollback on failure | 3 | GOP-04 | US-070 |
 | ☑ | GOV-06 | Dependabot for actions, maven, pip, docker, terraform **[done, commit infra/gitops/templates: dependabot.yml in the four repos]** | dependabot.yml in every repo; actions pinned by commit SHA | 2 | GOV-01 | US-070 |
