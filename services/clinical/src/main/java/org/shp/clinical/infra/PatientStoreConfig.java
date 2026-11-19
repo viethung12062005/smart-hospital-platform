@@ -4,6 +4,7 @@ import java.time.Clock;
 import org.shp.data.mongo.MongoMessaging;
 import org.shp.data.mongo.MongoOutbox;
 import org.shp.data.mongo.MongoResourceStore;
+import org.shp.data.mongo.search.SearchIndexes;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -50,15 +51,23 @@ class PatientStoreConfig {
     mongo
         .indexOps(IdentityLinkRepository.COLLECTION)
         .createIndex(new Index().on("fhirUser", Sort.Direction.ASC).unique().named("ux_fhir_user"));
+    // The patient indexes carry the names the search executor (SHR-11) hints; with the default
+    // names every C6 search fails with "hint provided does not correspond to an existing index".
     var indexes = mongo.indexOps(PATIENTS);
-    indexes.createIndex(new Index().on("search.mrn", Sort.Direction.ASC).unique());
+    indexes.createIndex(
+        new Index()
+            .on("search.mrn", Sort.Direction.ASC)
+            .unique()
+            .named(SearchIndexes.IX_PATIENTS_MRN));
     indexes.createIndex(
         new Index()
             .on("search.phone", Sort.Direction.ASC)
-            .on("search.birthDate", Sort.Direction.ASC));
+            .on("search.birthDate", Sort.Direction.ASC)
+            .named(SearchIndexes.IX_PATIENTS_PHONE_BIRTHDATE));
     indexes.createIndex(
         new Index()
             .on("search.nameTokens", Sort.Direction.ASC)
-            .on("search.birthDate", Sort.Direction.ASC));
+            .on("search.birthDate", Sort.Direction.ASC)
+            .named(SearchIndexes.IX_PATIENTS_NAME_TOKENS_BIRTHDATE));
   }
 }
