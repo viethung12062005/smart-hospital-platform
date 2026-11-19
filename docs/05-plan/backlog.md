@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **352 tasks**, **1214 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **353 tasks**, **1216 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -14,13 +14,13 @@ Total: **352 tasks**, **1214 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W4 | 3 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
-| W7 | 38 | 30 | 30 | 30 |
+| W7 | 40 | 30 | 30 | 30 |
 | W8 | **63** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **261** | **120** | **169** | **128** |
+| **Total** | **263** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -126,6 +126,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | CIT-09 | US-070 | Versioned template releases | vX.Y.Z tags on shp-platform-templates; charts pushed as OCI to ACR; CHANGELOG | SA | 2 | CIT-01, GOP-01 | S4 | ADR-0010 |
 | CIT-10 | US-070 | Internal Maven packaging for shared libraries | Libraries published to GitHub Packages (Maven) with versions; services reference by version | SA | 3 | SHR-01 | S4 | ADR-0010 |
 | CIT-11 | US-070 | Dependency-Check suppression file support and a dated suppression for dev-only picomatch | pr-checks passes dependency-check-suppressions.xml to Dependency-Check when it exists (--failOnCVSS 7 kept); the app repo suppresses only npm picomatch 4.0.7 (GHSA-fc5q-39xc-vjpf, no fixed version, dev-only) with notes, review date and an until expiry; policy documented in docs/04-devops; pin bumped to the templates tag that has the feature; checks / dependency-check green | SA | 3 | CIT-07 | S4 | ADR-0009, NFR-SEC6 |
+| CIT-12 | US-070 | Stop intermittent Maven 401 from GitHub Packages in CI and Docker builds | Default Maven builds, with no credentials, never request maven.pkg.github.com (GitHub Packages is declared only in distributionManagement and in a profile active when shp.libs.version is set; the HAPI FHIR github-releases repository is mirrored to Central in .mvn/settings.xml); a clean-repository build of services/scheduling and libs/java/shp-messaging and a Docker build show zero requests to it; ci / verify and container / build green | SA | 2 | CIT-10 | S4 | ADR-0010 |
 
 ## GOP — Helm & GitOps (Argo CD)
 
