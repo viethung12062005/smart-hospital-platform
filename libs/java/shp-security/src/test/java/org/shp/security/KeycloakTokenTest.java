@@ -47,7 +47,7 @@ class KeycloakTokenTest {
       new GenericContainer<>(
               DockerImageName.parse(
                   System.getenv()
-                      .getOrDefault("SHP_TEST_KEYCLOAK_IMAGE", "quay.io/keycloak/keycloak:26.0")))
+                      .getOrDefault("SHP_TEST_KEYCLOAK_IMAGE", "quay.io/keycloak/keycloak:26.8.2")))
           .withCommand("start-dev", "--import-realm", "--http-port=8080")
           .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
           .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", ADMIN_PASSWORD)
