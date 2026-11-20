@@ -1,0 +1,24 @@
+# Keycloak realm as code (IAM-01): the local and the cluster realm are generated from identity/realm/ by tools/identity/realm.py.
+# This job fails when a generated file drifts from its source or the cluster realm contains development content.
+name: identity
+on:
+  pull_request:
+    paths: ["identity/**", "tools/identity/**", "dev/chart/shp-local-deps/files/**", ".github/workflows/identity.yml"]
+  push:
+    branches: [main]
+    paths: ["identity/**", "tools/identity/**", "dev/chart/shp-local-deps/files/**"]
+permissions:
+  contents: read
+jobs:
+  realm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.12" }
+      - name: Generated realms match identity/realm/
+        run: python -I tools/identity/realm.py --check
+      - name: Generator tests
+        run: pip install pytest && python -m pytest -q tools/identity

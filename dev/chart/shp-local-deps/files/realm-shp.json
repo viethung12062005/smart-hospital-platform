@@ -129,5 +129,6 @@
   "otpPolicyAlgorithm": "HmacSHA1",
   "otpPolicyDigits": 6,
   "otpPolicyPeriod": 30,
-  "otpPolicyInitialCounter": 0
+  "otpPolicyInitialCounter": 0,
+  "sslRequired": "none"
 }

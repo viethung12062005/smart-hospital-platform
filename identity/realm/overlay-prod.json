@@ -1,0 +1,13 @@
+{
+  "clients": [
+    {
+      "clientId": "shp-web",
+      "redirectUris": [
+        "https://${SHP_PUBLIC_HOST}/*"
+      ],
+      "webOrigins": [
+        "https://${SHP_PUBLIC_HOST}"
+      ]
+    }
+  ]
+}
