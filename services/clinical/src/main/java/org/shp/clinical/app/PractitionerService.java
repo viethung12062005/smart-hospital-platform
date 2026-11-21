@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.Practitioner;
 import org.hl7.fhir.r4.model.PractitionerRole;
@@ -30,6 +31,12 @@ public class PractitionerService {
 
   /** A stored resource with its version, for the ETag and Location headers. */
   public record Stored<T extends Resource>(T resource, int version) {}
+
+  /**
+   * One keyset page. {@code nextAfterId} is the id of the last entry when another page exists (the
+   * caller signs it into {@code _page_token}), or null on the last page.
+   */
+  public record Page<T extends Resource>(List<T> items, String nextAfterId) {}
 
   private final PractitionerRepository repository;
   private final ProfileValidator validator;
@@ -81,11 +88,10 @@ public class PractitionerService {
     return s;
   }
 
-  /** Active practitioners for the directory, without contact details. */
-  public List<Practitioner> directory(int count) {
-    return repository.listActive(PRACTITIONER, count).stream()
-        .map(e -> stored(e, Practitioner.class).resource().setTelecom(null))
-        .toList();
+  /** Active practitioners for the directory, without contact details, keyset-paged by id. */
+  public Page<Practitioner> directory(int count, String afterId) {
+    List<Entry> entries = repository.listActive(PRACTITIONER, count + 1, afterId);
+    return page(entries, count, e -> stored(e, Practitioner.class).resource().setTelecom(null));
   }
 
   // ---------- PractitionerRole ----------
@@ -111,11 +117,21 @@ public class PractitionerService {
     return stored(e, PractitionerRole.class);
   }
 
-  /** Active roles for the directory (who practises which specialty). */
-  public List<PractitionerRole> roles(int count) {
-    return repository.listActive(ROLE, count).stream()
-        .map(e -> stored(e, PractitionerRole.class).resource())
-        .toList();
+  /** Active roles for the directory (who practises which specialty), keyset-paged by id. */
+  public Page<PractitionerRole> roles(int count, String afterId) {
+    List<Entry> entries = repository.listActive(ROLE, count + 1, afterId);
+    return page(entries, count, e -> stored(e, PractitionerRole.class).resource());
+  }
+
+  /**
+   * One extra row tells whether a next page exists, so a full page never looks like the last one.
+   */
+  private static <T extends Resource> Page<T> page(
+      List<Entry> entries, int count, Function<Entry, T> mapper) {
+    boolean hasNext = entries.size() > count;
+    List<Entry> rows = hasNext ? entries.subList(0, count) : entries;
+    String nextAfterId = hasNext ? rows.getLast().id() : null;
+    return new Page<>(rows.stream().map(mapper).toList(), nextAfterId);
   }
 
   // ---------- mapping ----------

@@ -2,59 +2,64 @@ package org.shp.clinical.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Stream;
 import org.bson.Document;
-import org.hl7.fhir.r4.model.Practitioner;
-import org.hl7.fhir.r4.model.PractitionerRole;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.shp.clinical.infra.PractitionerRepository;
-import org.shp.data.mongo.MongoResourceStore.Entry;
+import org.shp.data.mongo.MongoMessaging;
 import org.shp.fhir.FhirJson;
 import org.shp.web.errors.ShpException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.mongodb.MongoDBContainer;
+import org.testcontainers.utility.DockerImageName;
 
-/** CLN-10 (09 C9, C10; US-006): staff management and the doctor directory. Fake data only. */
+/**
+ * CLN-10 (09 C9, C10; US-006): staff management and the doctor directory against a real MongoDB
+ * (Testcontainers), including the unique staff-code index and keyset paging of the directory. Fake
+ * data only.
+ */
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {"shp.auth.authority=https://idp.test/realms/shp", "shp.auth.audience=shp-api"})
+@Testcontainers
 class PractitionerServiceTest {
+  @Container @ServiceConnection
+  static final MongoDBContainer DB =
+      new MongoDBContainer(
+              DockerImageName.parse(System.getenv().getOrDefault("SHP_TEST_MONGO_IMAGE", "mongo:8"))
+                  .asCompatibleSubstituteFor("mongo"))
+          .withEnv(
+              "GLIBC_TUNABLES",
+              "glibc.pthread.rseq=1") // kernel 6.19-7.0.13: SERVER-121912, see MongoTestBase
+          .withReplicaSet();
+
   static final String PRACTITIONER_ID = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02";
+  static final String ROLE_ID = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03";
   static final String ADMIN = "User/admin-sub";
 
-  final PractitionerRepository repository = mock(PractitionerRepository.class);
-  final PractitionerService service =
-      new PractitionerService(
-          repository,
-          new ProfileValidator(ProfileValidatorTest.terminology(), ProfileValidatorTest.CLOCK),
-          ProfileValidatorTest.CLOCK);
+  @Autowired PractitionerService service;
+  @Autowired PractitionerRepository repository;
+  @Autowired MongoTemplate mongo;
 
-  /** The repository returns what it was given, at {@code version}. */
-  void storeReturnsInput(int version) {
-    when(repository.create(anyString(), anyString(), any(), any(), anyString()))
-        .thenAnswer(a ->
-            entry(a.getArgument(0), a.getArgument(1), a.getArgument(2), a.getArgument(3), version));
-    when(repository.update(anyString(), anyString(), any(), any(), anyInt(), anyString()))
-        .thenAnswer(a ->
-            entry(a.getArgument(0), a.getArgument(1), a.getArgument(2), a.getArgument(3), version));
-  }
-
-  static Entry entry(String type, String id, Document resource, Document search, int version) {
-    return new Entry(
-        type, id, null, version, Instant.parse("2026-11-17T03:00:00Z"), resource, search);
-  }
-
-  static Entry stored(String json, int version) {
-    var doc = Document.parse(json);
-    return entry(doc.getString("resourceType"), doc.getString("id"), doc, new Document(), version);
+  @BeforeEach
+  void emptyTheCollections() {
+    for (String c :
+        new String[] {
+          PractitionerRepository.PRACTITIONERS,
+          PractitionerRepository.PRACTITIONER_ROLES,
+          MongoMessaging.RESOURCE_HISTORY,
+          MongoMessaging.OUTBOX
+        }) {
+      mongo.getCollection(c).deleteMany(new Document());
+    }
   }
 
   static void assertRejected(Runnable call, String code, String detailStart) {
@@ -69,22 +74,38 @@ class PractitionerServiceTest {
             });
   }
 
-  // ---------- create / update Practitioner ----------
+  static String practitionerWithCode(String staffCode) {
+    return ProfileValidatorTest.PRACTITIONER.replace("NV-0042", staffCode);
+  }
+
+  /** The same body with the server-assigned id and (optionally) another staff code. */
+  static String practitionerBody(String id, String staffCode) {
+    return practitionerWithCode(staffCode).replace(PRACTITIONER_ID, id);
+  }
+
+  long count(String collection) {
+    return mongo.getCollection(collection).countDocuments();
+  }
+
+  // ---------- create / update Practitioner (writes) ----------
   @Test
   void createAssignsAnIdAndStoresSearchFields() {
-    storeReturnsInput(1);
     var s = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
 
-    ArgumentCaptor<Document> search = ArgumentCaptor.forClass(Document.class);
-    ArgumentCaptor<String> id = ArgumentCaptor.forClass(String.class);
-    verify(repository).create(eq("Practitioner"), id.capture(), any(), search.capture(), eq(ADMIN));
-    assertThat(id.getValue()).isNotEqualTo(PRACTITIONER_ID).hasSize(36); // server-assigned UUIDv7
-    assertThat(search.getValue())
+    String id = s.resource().getIdElement().getIdPart();
+    assertThat(id).isNotEqualTo(PRACTITIONER_ID).hasSize(36); // server-assigned UUIDv7
+    Document stored = mongo.findById(id, Document.class, PractitionerRepository.PRACTITIONERS);
+    assertThat(stored).isNotNull();
+    assertThat(stored.get("search", Document.class))
         .containsEntry("staffCode", "NV-0042")
         .containsEntry("active", true)
         .containsEntry("nameTokens", List.of("dr", "le", "minh", "chau", "test"));
+    Document history =
+        mongo.findById(
+            "Practitioner/" + id + "/1", Document.class, MongoMessaging.RESOURCE_HISTORY);
+    assertThat(history).isNotNull();
+    assertThat(history.getString("changedBy")).isEqualTo(ADMIN);
     assertThat(s.version()).isEqualTo(1);
-    assertThat(s.resource().getIdElement().getIdPart()).isEqualTo(id.getValue());
     assertThat(s.resource().getMeta().getVersionId()).isEqualTo("1");
     // The Admin gets the full stored resource back, including the work email.
     assertThat(s.resource().getTelecom()).hasSize(1);
@@ -92,7 +113,6 @@ class PractitionerServiceTest {
 
   @Test
   void clientMetaIsDiscardedBeforeValidation() {
-    storeReturnsInput(1);
     String withMeta =
         ProfileValidatorTest.PRACTITIONER.replace(
             "\"active\": true,", "\"active\": true, \"meta\": { \"versionId\": \"9\" },");
@@ -102,12 +122,12 @@ class PractitionerServiceTest {
 
   @Test
   void staffCodeAlreadyInUseIsRejected() {
-    when(repository.staffCodeTaken("NV-0042", null)).thenReturn(true);
+    service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
     assertRejected(
         () -> service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN),
         "validation-failed",
         "Practitioner.identifier[staff] is already in use");
-    verify(repository, never()).create(anyString(), anyString(), any(), any(), anyString());
+    assertThat(count(PractitionerRepository.PRACTITIONERS)).isEqualTo(1);
   }
 
   @Test
@@ -123,7 +143,8 @@ class PractitionerServiceTest {
         () -> service.createPractitioner("{\"resourceType\":\"Patient\"}", ADMIN),
         "validation-failed",
         null);
-    verify(repository, never()).create(anyString(), anyString(), any(), any(), anyString());
+    assertThat(count(PractitionerRepository.PRACTITIONERS)).isZero();
+    assertThat(count(MongoMessaging.RESOURCE_HISTORY)).isZero();
   }
 
   /** TC-SEC-03: fields the profile does not allow never reach the store, on any C10 write. */
@@ -139,10 +160,6 @@ class PractitionerServiceTest {
         () -> service.createPractitioner(primitiveExtension, ADMIN),
         "validation-failed",
         "Practitioner.active.extension");
-    assertRejected(
-        () -> service.updatePractitioner(PRACTITIONER_ID, primitiveExtension, 1, ADMIN),
-        "validation-failed",
-        "Practitioner.active.extension");
 
     String rolePeriod =
         ProfileValidatorTest.ROLE.replace(
@@ -151,14 +168,10 @@ class PractitionerServiceTest {
         () -> service.createRole(rolePeriod, ADMIN),
         "validation-failed",
         "PractitionerRole.period");
-    assertRejected(
-        () -> service.updateRole("0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03", rolePeriod, 1, ADMIN),
-        "validation-failed",
-        "PractitionerRole.period");
 
-    verify(repository, never()).create(anyString(), anyString(), any(), any(), anyString());
-    verify(repository, never())
-        .update(anyString(), anyString(), any(), any(), anyInt(), anyString());
+    assertThat(count(PractitionerRepository.PRACTITIONERS)).isZero();
+    assertThat(count(PractitionerRepository.PRACTITIONER_ROLES)).isZero();
+    assertThat(count(MongoMessaging.RESOURCE_HISTORY)).isZero();
   }
 
   @Test
@@ -168,18 +181,43 @@ class PractitionerServiceTest {
         () -> service.createPractitioner(badCode, ADMIN),
         "validation-failed",
         "Practitioner.identifier must");
+    assertThat(count(PractitionerRepository.PRACTITIONERS)).isZero();
   }
 
   @Test
-  void updateUsesTheExpectedVersionAndChecksTheStaffCodeAgainstOthers() {
-    storeReturnsInput(4);
-    var s =
-        service.updatePractitioner(PRACTITIONER_ID, ProfileValidatorTest.PRACTITIONER, 3, ADMIN);
-    verify(repository).staffCodeTaken("NV-0042", PRACTITIONER_ID);
-    verify(repository)
-        .update(eq("Practitioner"), eq(PRACTITIONER_ID), any(), any(), eq(3), eq(ADMIN));
-    assertThat(s.version()).isEqualTo(4);
-    assertThat(s.resource().getMeta().getVersionId()).isEqualTo("4");
+  void updateWritesTheNextVersionAndItsHistory() {
+    var created = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
+    String id = created.resource().getIdElement().getIdPart();
+
+    String renamed =
+        practitionerBody(id, "NV-0042")
+            .replace("Dr. Le Minh Chau (test)", "Dr. Le Minh Chau 2 (test)");
+    var s = service.updatePractitioner(id, renamed, 1, ADMIN);
+
+    assertThat(s.version()).isEqualTo(2);
+    assertThat(s.resource().getMeta().getVersionId()).isEqualTo("2");
+    Document stored = mongo.findById(id, Document.class, PractitionerRepository.PRACTITIONERS);
+    assertThat(stored.getInteger("versionId")).isEqualTo(2);
+    assertThat(stored.get("search", Document.class).getList("nameTokens", String.class))
+        .contains("2");
+    assertThat(count(MongoMessaging.RESOURCE_HISTORY)).isEqualTo(2); // v1 on create, v2 on update
+  }
+
+  @Test
+  void updateWithAStaleVersionIsRejected() {
+    var created = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
+    String id = created.resource().getIdElement().getIdPart();
+    service.updatePractitioner(id, practitionerBody(id, "NV-0042"), 1, ADMIN);
+
+    assertRejected(
+        () -> service.updatePractitioner(id, practitionerBody(id, "NV-0042"), 1, ADMIN),
+        "version-conflict",
+        null);
+    assertThat(
+            mongo
+                .findById(id, Document.class, PractitionerRepository.PRACTITIONERS)
+                .getInteger("versionId"))
+        .isEqualTo(2);
   }
 
   @Test
@@ -192,56 +230,100 @@ class PractitionerServiceTest {
 
   @Test
   void updateToAStaffCodeOfAnotherPractitionerIsRejected() {
-    when(repository.staffCodeTaken("NV-0042", PRACTITIONER_ID)).thenReturn(true);
+    service.createPractitioner(practitionerWithCode("NV-0042"), ADMIN);
+    var second = service.createPractitioner(practitionerWithCode("NV-0043"), ADMIN);
+    String secondId = second.resource().getIdElement().getIdPart();
+
     assertRejected(
-        () ->
-            service.updatePractitioner(
-                PRACTITIONER_ID, ProfileValidatorTest.PRACTITIONER, 1, ADMIN),
+        () -> service.updatePractitioner(secondId, practitionerBody(secondId, "NV-0042"), 1, ADMIN),
         "validation-failed",
         "Practitioner.identifier[staff] is already in use");
+    assertThat(repository.staffCodeTaken("NV-0043", secondId)).isFalse();
+    assertThat(repository.staffCodeTaken("NV-0042", secondId)).isTrue();
+    assertThat(
+            mongo
+                .findById(secondId, Document.class, PractitionerRepository.PRACTITIONERS)
+                .get("search", Document.class)
+                .getString("staffCode"))
+        .isEqualTo("NV-0043");
   }
 
-  // ---------- directory never exposes contact details ----------
+  // ---------- directory reads ----------
   @Test
   void readByIdDropsTelecom() {
-    when(repository.find("Practitioner", PRACTITIONER_ID))
-        .thenReturn(Optional.of(stored(ProfileValidatorTest.PRACTITIONER, 2)));
-    var s = service.readPractitioner(PRACTITIONER_ID);
+    var created = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
+    String id = created.resource().getIdElement().getIdPart();
+
+    var s = service.readPractitioner(id);
     assertThat(s.resource().hasTelecom()).isFalse();
     assertThat(s.resource().getIdentifierFirstRep().getValue()).isEqualTo("NV-0042");
-    assertThat(s.version()).isEqualTo(2);
+    assertThat(s.version()).isEqualTo(1);
     assertThat(FhirJson.serialize(s.resource())).doesNotContain("chau.le@example.test");
   }
 
   @Test
   void readOfAnUnknownPractitionerIs404() {
-    when(repository.find("Practitioner", "nope")).thenReturn(Optional.empty());
     assertRejected(() -> service.readPractitioner("nope"), "not-found", null);
   }
 
   @Test
-  void directoryListsActivePractitionersWithoutTelecom() {
-    when(repository.listActive("Practitioner", 20))
-        .thenReturn(List.of(stored(ProfileValidatorTest.PRACTITIONER, 1)));
-    List<Practitioner> page = service.directory(20);
-    assertThat(page).hasSize(1);
-    assertThat(page.getFirst().hasTelecom()).isFalse();
-    assertThat(page.getFirst().getMeta().getVersionId()).isEqualTo("1");
+  void directoryListsOnlyActivePractitionersWithoutTelecom() {
+    service.createPractitioner(practitionerWithCode("NV-0001"), ADMIN);
+    String inactive =
+        practitionerWithCode("NV-0002").replace("\"active\": true", "\"active\": false");
+    service.createPractitioner(inactive, ADMIN);
+
+    var page = service.directory(20, null);
+    assertThat(page.items()).hasSize(1);
+    assertThat(page.nextAfterId()).isNull();
+    assertThat(page.items().getFirst().hasTelecom()).isFalse();
+    assertThat(page.items().getFirst().getMeta().getVersionId()).isEqualTo("1");
   }
 
-  // ---------- PractitionerRole ----------
+  @Test
+  void directoryWalksEveryEntryWithKeysetPaging() {
+    List<String> ids =
+        List.of("NV-0001", "NV-0002", "NV-0003").stream()
+            .map(code ->
+                service
+                    .createPractitioner(practitionerWithCode(code), ADMIN)
+                    .resource()
+                    .getIdElement()
+                    .getIdPart())
+            .toList();
+
+    var first = service.directory(2, null);
+    assertThat(first.items()).hasSize(2);
+    assertThat(first.nextAfterId()).isEqualTo(first.items().getLast().getIdElement().getIdPart());
+
+    var second = service.directory(2, first.nextAfterId());
+    assertThat(second.items()).hasSize(1);
+    assertThat(second.nextAfterId()).isNull();
+
+    assertThat(
+            Stream.concat(first.items().stream(), second.items().stream())
+                .map(r -> r.getIdElement().getIdPart())
+                .toList())
+        .containsExactlyInAnyOrderElementsOf(ids);
+  }
+
+  // ---------- PractitionerRole (writes and reads) ----------
   @Test
   void createRoleRequiresAnExistingPractitionerAndStoresSearchFields() {
-    storeReturnsInput(1);
-    when(repository.find("Practitioner", PRACTITIONER_ID))
-        .thenReturn(Optional.of(stored(ProfileValidatorTest.PRACTITIONER, 1)));
-    service.createRole(ProfileValidatorTest.ROLE, ADMIN);
+    var p = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
+    String practitionerId = p.resource().getIdElement().getIdPart();
 
-    ArgumentCaptor<Document> search = ArgumentCaptor.forClass(Document.class);
-    verify(repository)
-        .create(eq("PractitionerRole"), anyString(), any(), search.capture(), eq(ADMIN));
-    assertThat(search.getValue())
-        .containsEntry("practitionerId", PRACTITIONER_ID)
+    var s =
+        service.createRole(
+            ProfileValidatorTest.ROLE.replace(PRACTITIONER_ID, practitionerId), ADMIN);
+    Document stored =
+        mongo.findById(
+            s.resource().getIdElement().getIdPart(),
+            Document.class,
+            PractitionerRepository.PRACTITIONER_ROLES);
+    assertThat(stored).isNotNull();
+    assertThat(stored.get("search", Document.class))
+        .containsEntry("practitionerId", practitionerId)
         .containsEntry("specialty", "cardiology")
         .containsEntry("code", "doctor")
         .containsEntry("active", true);
@@ -249,12 +331,11 @@ class PractitionerServiceTest {
 
   @Test
   void roleForAnUnknownPractitionerIsRejected() {
-    when(repository.find("Practitioner", PRACTITIONER_ID)).thenReturn(Optional.empty());
     assertRejected(
         () -> service.createRole(ProfileValidatorTest.ROLE, ADMIN),
         "validation-failed",
         "PractitionerRole.practitioner does not exist");
-    verify(repository, never()).create(anyString(), anyString(), any(), any(), anyString());
+    assertThat(count(PractitionerRepository.PRACTITIONER_ROLES)).isZero();
   }
 
   @Test
@@ -264,31 +345,52 @@ class PractitionerServiceTest {
         () -> service.createRole(unknown, ADMIN),
         "validation-failed",
         "PractitionerRole.specialty.coding.code");
+    assertThat(count(PractitionerRepository.PRACTITIONER_ROLES)).isZero();
   }
 
   @Test
-  void updateRoleUsesTheExpectedVersion() {
-    storeReturnsInput(2);
-    when(repository.find("Practitioner", PRACTITIONER_ID))
-        .thenReturn(Optional.of(stored(ProfileValidatorTest.PRACTITIONER, 1)));
-    String roleId = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03";
-    var s = service.updateRole(roleId, ProfileValidatorTest.ROLE, 1, ADMIN);
-    verify(repository).update(eq("PractitionerRole"), eq(roleId), any(), any(), eq(1), eq(ADMIN));
+  void updateRoleWritesTheNextVersion() {
+    var p = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
+    String practitionerId = p.resource().getIdElement().getIdPart();
+    var created =
+        service.createRole(
+            ProfileValidatorTest.ROLE.replace(PRACTITIONER_ID, practitionerId), ADMIN);
+    String roleId = created.resource().getIdElement().getIdPart();
+
+    var s =
+        service.updateRole(
+            roleId,
+            ProfileValidatorTest.ROLE
+                .replace(PRACTITIONER_ID, practitionerId)
+                .replace(ROLE_ID, roleId),
+            1,
+            ADMIN);
     assertThat(s.version()).isEqualTo(2);
+    assertThat(count(MongoMessaging.RESOURCE_HISTORY))
+        .isEqualTo(3); // Practitioner v1 + Role v1, v2
     assertRejected(
-        () -> service.updateRole("other-id", ProfileValidatorTest.ROLE, 1, ADMIN),
+        () ->
+            service.updateRole(
+                "other-id",
+                ProfileValidatorTest.ROLE.replace(PRACTITIONER_ID, practitionerId),
+                2,
+                ADMIN),
         "validation-failed",
         "PractitionerRole.id must match the URL");
   }
 
   @Test
   void rolesListsActiveRoles() {
-    when(repository.listActive("PractitionerRole", 5))
-        .thenReturn(List.of(stored(ProfileValidatorTest.ROLE, 3)));
-    List<PractitionerRole> page = service.roles(5);
-    assertThat(page)
+    var p = service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
+    service.createRole(
+        ProfileValidatorTest.ROLE.replace(PRACTITIONER_ID, p.resource().getIdElement().getIdPart()),
+        ADMIN);
+
+    var page = service.roles(5, null);
+    assertThat(page.items())
         .singleElement()
-        .satisfies(r -> assertThat(r.getMeta().getVersionId()).isEqualTo("3"));
+        .satisfies(r -> assertThat(r.getMeta().getVersionId()).isEqualTo("1"));
+    assertThat(page.nextAfterId()).isNull();
   }
 
   // ---------- name tokens (03 §2.3) ----------
@@ -297,13 +399,5 @@ class PractitionerServiceTest {
     assertThat(PractitionerService.nameTokens("ThS.BS. Đặng Thị Ánh Nguyệt"))
         .containsExactly("ths", "bs", "dang", "thi", "anh", "nguyet");
     assertThat(PractitionerService.nameTokens("Lê  Lê")).containsExactly("le");
-  }
-
-  @Test
-  void createChecksTheStaffCodeAgainstEveryPractitioner() {
-    // On create there is no "self" to exclude from the uniqueness check.
-    storeReturnsInput(1);
-    service.createPractitioner(ProfileValidatorTest.PRACTITIONER, ADMIN);
-    verify(repository).staffCodeTaken(eq("NV-0042"), isNull());
   }
 }

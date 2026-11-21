@@ -79,14 +79,20 @@ public class PractitionerRepository {
     return mongo.exists(Query.query(criteria), PRACTITIONERS);
   }
 
-  /** Active resources of the directory, oldest first, at most {@code limit}. */
-  public List<Entry> listActive(String resourceType, int limit) {
+  /**
+   * Active resources of the directory, oldest first, at most {@code limit}. Keyset paging: {@code
+   * afterId} (exclusive) is the id of the last entry of the previous page; UUIDv7 ids keep the
+   * creation order.
+   */
+  public List<Entry> listActive(String resourceType, int limit, String afterId) {
     String collection = "Practitioner".equals(resourceType) ? PRACTITIONERS : PRACTITIONER_ROLES;
+    Criteria criteria = Criteria.where("search.active").is(true);
+    if (afterId != null) {
+      criteria = criteria.and("_id").gt(afterId);
+    }
     return mongo
         .find(
-            Query.query(Criteria.where("search.active").is(true))
-                .with(Sort.by(Sort.Direction.ASC, "_id"))
-                .limit(limit),
+            Query.query(criteria).with(Sort.by(Sort.Direction.ASC, "_id")).limit(limit),
             Document.class,
             collection)
         .stream()

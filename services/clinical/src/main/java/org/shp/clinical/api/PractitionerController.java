@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 import org.hl7.fhir.r4.model.Resource;
 import org.shp.clinical.app.PractitionerService;
+import org.shp.clinical.app.PractitionerService.Page;
 import org.shp.clinical.app.PractitionerService.Stored;
 import org.shp.fhir.FhirJson;
+import org.shp.fhir.search.PageToken;
+import org.shp.fhir.search.PageTokens;
 import org.shp.fhir.search.SearchBundles;
 import org.shp.fhir.search.SearchParser;
 import org.shp.fhir.search.SearchQuery;
@@ -37,12 +40,16 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RestController
 public class PractitionerController {
   private static final MediaType FHIR = MediaType.parseMediaType(FhirJson.MEDIA_TYPE);
+  private static final int MAX_COUNT = SearchParser.MAX_COUNT;
+  private static final String KEY_ID = "id";
 
   private final PractitionerService service;
+  private final PageTokens pageTokens;
   private final SearchParser parser = SearchParser.standard();
 
-  public PractitionerController(PractitionerService service) {
+  public PractitionerController(PractitionerService service, PageTokens pageTokens) {
     this.service = service;
+    this.pageTokens = pageTokens;
   }
 
   // ---------- C9: directory ----------
@@ -50,8 +57,9 @@ public class PractitionerController {
   @GetMapping("/fhir/Practitioner")
   @ShpPublicEndpoint
   public ResponseEntity<String> directory(HttpServletRequest req) {
-    SearchQuery q = firstPageOnly("Practitioner", req);
-    return bundle(req, service.directory(q.count()));
+    SearchQuery q = parse("Practitioner", req);
+    var page = service.directory(q.count(), afterId(q));
+    return bundle(req, page, q);
   }
 
   @GetMapping("/fhir/Practitioner/{id}")
@@ -63,8 +71,9 @@ public class PractitionerController {
   @GetMapping("/fhir/PractitionerRole")
   @ShpPublicEndpoint
   public ResponseEntity<String> roles(HttpServletRequest req) {
-    SearchQuery q = firstPageOnly("PractitionerRole", req);
-    return bundle(req, service.roles(q.count()));
+    SearchQuery q = parse("PractitionerRole", req);
+    var page = service.roles(q.count(), afterId(q));
+    return bundle(req, page, q);
   }
 
   // ---------- C10: staff management ----------
@@ -110,26 +119,48 @@ public class PractitionerController {
   // ---------- helpers ----------
 
   /**
-   * Only {@code _count} is supported: the signing key for {@code _page_token} is not configured
-   * yet, so a next page cannot be issued or read.
+   * Search parameters follow 07 §4: {@code _count} (1..100) and keyset {@code _page_token};
+   * anything else is a 400 {@code unsupported-parameter}.
    */
-  private SearchQuery firstPageOnly(String resourceType, HttpServletRequest req) {
-    SearchQuery q = parser.parse(resourceType, params(req));
-    if (q.pageToken() != null) {
-      throw new ShpException("unsupported-parameter");
+  private SearchQuery parse(String resourceType, HttpServletRequest req) {
+    Map<String, List<String>> params = params(req);
+    SearchQuery q = parser.parse(resourceType, params);
+    // The parser clamps _count above the maximum; 07 §4 says outside 1..100 is a 400.
+    if (params.containsKey("_count")
+        && Integer.parseInt(params.get("_count").getFirst()) > MAX_COUNT) {
+      throw new ShpException("validation-failed");
     }
     return q;
+  }
+
+  /** The id of the last entry of the previous page, from the signed keyset token. */
+  private String afterId(SearchQuery q) {
+    if (q.pageToken() == null) {
+      return null;
+    }
+    PageToken token = pageTokens.decode(q.pageToken(), q);
+    if (token.keyset().size() != 1 || !KEY_ID.equals(token.keyset().getFirst().name())) {
+      throw new ShpException("validation-failed");
+    }
+    return token.keyset().getFirst().value();
   }
 
   private static Map<String, List<String>> params(HttpServletRequest req) {
     return SearchParser.fromServlet(req.getParameterMap());
   }
 
-  private ResponseEntity<String> bundle(HttpServletRequest req, List<? extends Resource> page) {
+  private ResponseEntity<String> bundle(
+      HttpServletRequest req, Page<? extends Resource> page, SearchQuery q) {
     String base = ServletUriComponentsBuilder.fromRequestUri(req).replaceQuery(null).toUriString();
+    String nextToken =
+        page.nextAfterId() == null
+            ? null
+            : pageTokens.encode(q, List.of(new PageToken.Key(KEY_ID, page.nextAfterId())));
     return ResponseEntity.ok()
         .contentType(FHIR)
-        .body(FhirJson.serialize(SearchBundles.searchset(base, params(req), page, null)));
+        .body(
+            FhirJson.serialize(
+                SearchBundles.searchset(base, params(req), page.items(), nextToken)));
   }
 
   private static ResponseEntity<String> resource(
