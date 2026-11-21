@@ -65,6 +65,12 @@ public final class ErrorCatalog {
                 "Trạng thái hiện tại không cho phép thao tác này.",
                 "The current state does not allow this."),
             e(
+                "already-registered",
+                409,
+                "conflict",
+                "Tài khoản này đã có hồ sơ bệnh nhân.",
+                "This account already has a patient record."),
+            e(
                 "version-conflict",
                 412,
                 "conflict",

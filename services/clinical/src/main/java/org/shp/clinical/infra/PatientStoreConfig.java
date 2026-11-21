@@ -33,12 +33,23 @@ class PatientStoreConfig {
 
   static void ensurePatientIndexes(MongoTemplate mongo) {
     for (String c :
-        new String[] {PATIENTS, MrnGenerator.COLLECTION, MongoMessaging.RESOURCE_HISTORY}) {
+        new String[] {
+          PATIENTS,
+          MrnGenerator.COLLECTION,
+          MongoMessaging.RESOURCE_HISTORY,
+          IdentityLinkRepository.COLLECTION
+        }) {
       if (!mongo.collectionExists(c)) {
         mongo.createCollection(c);
       }
     }
     MongoMessaging.ensureIndexes(mongo, MongoMessaging.Store.RESOURCE_HISTORY);
+    // An explicit name keeps the index stable across deployments: MongoDB rejects an unnamed index
+    // on the same key with IndexOptionsConflict when the collection already holds it under another
+    // name, which makes the service fail at startup (seen on the local cluster).
+    mongo
+        .indexOps(IdentityLinkRepository.COLLECTION)
+        .createIndex(new Index().on("fhirUser", Sort.Direction.ASC).unique().named("ux_fhir_user"));
     var indexes = mongo.indexOps(PATIENTS);
     indexes.createIndex(new Index().on("search.mrn", Sort.Direction.ASC).unique());
     indexes.createIndex(
