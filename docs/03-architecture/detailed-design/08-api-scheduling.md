@@ -26,7 +26,7 @@ Permission notation: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin. `own
 | S17 | `GET /fhir/Appointment/{id}/_history` | Version history | N, A | UC-03 |
 | S18 | `GET /internal/v1/appointments/{id}` | Read an appointment (other service) | service `clinical`, `ml` | — |
 
-A doctor **must not** book, cancel, or reschedule; Admin does not view patient appointments (per the [access control matrix](../../02-requirements/access-control-matrix.md)).
+A doctor **must not** book, cancel, or reschedule; Admin does not read a patient appointment directly (S1–S16) but may read its version history (S17), per the [access control matrix](../../02-requirements/access-control-matrix.md).
 
 ## 2. Work schedule
 
