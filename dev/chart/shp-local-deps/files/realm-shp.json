@@ -4,6 +4,15 @@
   "displayName": "Smart Hospital (local)",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "loginTheme": "shp",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "vi",
+    "en"
+  ],
+  "defaultLocale": "vi",
   "accessTokenLifespan": 900,
   "roles": {
     "realm": [
@@ -547,6 +556,15 @@
   ],
   "adminEventsEnabled": true,
   "adminEventsDetailsEnabled": false,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@shp.local",
+    "fromDisplayName": "Smart Hospital (local)",
+    "auth": "false",
+    "starttls": "false",
+    "ssl": "false"
+  },
   "users": [
     {
       "username": "service-account-svc-clinical",

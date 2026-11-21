@@ -4,6 +4,15 @@
   "displayName": "Smart Hospital",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "loginTheme": "shp",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "vi",
+    "en"
+  ],
+  "defaultLocale": "vi",
   "accessTokenLifespan": 900,
   "roles": {
     "realm": [
@@ -517,6 +526,17 @@
       }
     }
   ],
+  "smtpServer": {
+    "host": "${SHP_SMTP_HOST}",
+    "port": "${SHP_SMTP_PORT}",
+    "from": "${SHP_SMTP_FROM}",
+    "fromDisplayName": "Smart Hospital",
+    "auth": "true",
+    "user": "${SHP_SMTP_USER}",
+    "password": "${SHP_SMTP_PASSWORD}",
+    "starttls": "true",
+    "ssl": "false"
+  },
   "users": [
     {
       "username": "service-account-svc-clinical",

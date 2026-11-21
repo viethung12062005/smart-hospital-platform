@@ -262,7 +262,9 @@ def test_prod_realm_demands_otp_from_staff_and_issues_amr() -> None:
             "auth-otp-form",
         ]
         assert all(e["requirement"] == "REQUIRED" for e in steps)
-        assert configs[steps[0]["authenticatorConfig"]]["condUserRole"] == "mfa-required"
+        assert (
+            configs[steps[0]["authenticatorConfig"]]["condUserRole"] == "mfa-required"
+        )
         assert configs[steps[0]["authenticatorConfig"]]["negate"] == "false"
         assert (
             configs[steps[1]["authenticatorConfig"]]["default.reference.value"] == "mfa"
@@ -302,3 +304,22 @@ def test_exchanging_client_carries_the_amr_mapper_and_others_do_not() -> None:
                 m["protocolMapper"] for m in built[f"svc-{name}"]["protocolMappers"]
             }
             assert has == bool(svc.get("exchange")), f"{env} svc-{name}"
+
+
+def test_login_theme_is_vietnamese_first_in_both_realms() -> None:
+    for env in ("local", "prod"):
+        r = realm.build(env)
+        assert r["loginTheme"] == "shp", env
+        assert r["internationalizationEnabled"] is True, env
+        assert r["supportedLocales"] == ["vi", "en"] and r["defaultLocale"] == "vi", env
+        assert r["resetPasswordAllowed"] is True, env
+
+
+def test_mail_server_is_the_local_catcher_or_placeholders() -> None:
+    # Forgot password needs a working mail server: without one Keycloak answers an existing account with an error and an
+    # unknown one with "email sent", which reveals who has an account (IAM-03).
+    assert realm.build("local")["smtpServer"]["host"] == "mailpit"
+    prod = realm.build("prod")["smtpServer"]
+    for key in ("host", "port", "from", "user", "password"):
+        assert prod[key].startswith("${SHP_SMTP_"), key
+    assert prod["auth"] == "true" and prod["starttls"] == "true"
