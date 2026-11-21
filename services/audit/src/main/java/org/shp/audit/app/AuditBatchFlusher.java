@@ -15,9 +15,11 @@ import org.shp.audit.infra.WormAuditLog;
  * are waiting or the oldest has waited {@code maxAge} (05-storage-audit-blob §1.2).
  *
  * <p>Order of a flush: remember the chosen record ids (flush plan), append the batch, delete the
- * records and the plan. A failure at any point leaves the plan, and the next call finishes the same
- * batch: if the chain head already equals the hash of that batch the blob was written and only the
- * clean-up is left, otherwise the same records are appended again. So nothing is lost and nothing
+ * records and the plan in one transaction. A failure at any point leaves the plan, and the next
+ * call finishes the same batch: if the chain head already equals the hash of that batch the blob
+ * was written completely and only the clean-up is left, otherwise the same records are appended
+ * again. The head only counts a blob whose content verifies, so a blob left incomplete by a crash
+ * is skipped and its records are rewritten instead of being deleted. So nothing is lost and nothing
  * is written twice.
  */
 public class AuditBatchFlusher {

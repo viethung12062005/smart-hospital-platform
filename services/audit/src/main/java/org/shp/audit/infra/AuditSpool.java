@@ -1,5 +1,7 @@
 package org.shp.audit.infra;
 
+import com.mongodb.ClientSessionOptions;
+import com.mongodb.client.ClientSession;
 import java.time.Clock;
 import java.util.Date;
 import java.util.List;
@@ -118,9 +120,30 @@ public class AuditSpool {
         PLAN);
   }
 
-  /** Removes the written records and the plan. */
+  /**
+   * Removes the written records and the plan in one transaction. Both deletes commit together, so a
+   * partial failure cannot leave a plan whose records are already gone (which would make every
+   * later flush fail) nor delete the plan while the records stay (which would write them twice).
+   */
   public void complete(String instance, List<String> ids) {
-    mongo.remove(Query.query(Criteria.where("_id").in(ids)), SPOOL);
-    mongo.remove(Query.query(Criteria.where("_id").is(instance)), PLAN);
+    ClientSessionOptions options = ClientSessionOptions.builder().causallyConsistent(true).build();
+    try (ClientSession session = mongo.getMongoDatabaseFactory().getSession(options)) {
+      MongoTemplate tx = mongo.withSession(session);
+      session.withTransaction(() -> {
+        removeRecords(tx, ids);
+        removePlan(tx, instance);
+        return null;
+      });
+    }
+  }
+
+  /** First half of {@link #complete}; protected so a test can fail between the two deletes. */
+  protected void removeRecords(MongoTemplate tx, List<String> ids) {
+    tx.remove(Query.query(Criteria.where("_id").in(ids)), SPOOL);
+  }
+
+  /** Second half of {@link #complete}; protected so a test can fail between the two deletes. */
+  protected void removePlan(MongoTemplate tx, String instance) {
+    tx.remove(Query.query(Criteria.where("_id").is(instance)), PLAN);
   }
 }

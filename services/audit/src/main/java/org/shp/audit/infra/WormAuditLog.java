@@ -14,8 +14,10 @@ import java.time.Clock;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.shp.audit.domain.AuditBatch;
@@ -34,8 +36,9 @@ import org.shp.audit.domain.AuditBatch;
  * <p>If creating or filling a blob fails, the incomplete blob stays (it cannot be deleted under a
  * locked policy) and its metadata hash does not match its content; AUD-06 reports it as a break.
  * The failed sequence number is burnt, so a retry writes a fresh blob that chains to the last
- * complete batch. After a restart the head is read from the highest blob name, which may be such an
- * incomplete blob; that is also reported by AUD-06.
+ * complete batch. After a restart the head is the highest blob that verifies as complete: an
+ * incomplete blob is skipped even though its metadata carries a hash, so the spooled records are
+ * written again in the next batch. Its sequence stays burnt and AUD-06 reports the orphan.
  */
 public class WormAuditLog {
 
@@ -137,22 +140,43 @@ public class WormAuditLog {
         new ListBlobsOptions()
             .setPrefix(PREFIX)
             .setDetails(new BlobListDetails().setRetrieveMetadata(true));
+    TreeMap<Long, BlobItem> batches = new TreeMap<>(Comparator.reverseOrder());
     for (BlobItem item : container.listBlobs(options, null)) {
       Matcher m = namePattern.matcher(item.getName());
       if (m.matches()) {
-        long sequence = Long.parseLong(m.group(1));
-        if (sequence > lastSequence) {
-          String hash = item.getMetadata() == null ? null : item.getMetadata().get(HASH_METADATA);
-          if (hash == null) {
-            throw new IllegalStateException(
-                "Chain head " + item.getName() + " has no " + HASH_METADATA + " metadata");
-          }
-          lastSequence = sequence;
-          lastBlob = item.getName();
-          lastHash = hash;
-        }
+        batches.put(Long.parseLong(m.group(1)), item);
       }
     }
+    for (Map.Entry<Long, BlobItem> batch : batches.entrySet()) {
+      long sequence = batch.getKey();
+      // The sequence is used even when the blob is incomplete: a failed write never reuses a name.
+      attemptedSequence = Math.max(attemptedSequence, sequence);
+      if (sequence <= lastSequence) {
+        continue;
+      }
+      String hash =
+          batch.getValue().getMetadata() == null
+              ? null
+              : batch.getValue().getMetadata().get(HASH_METADATA);
+      if (hash == null) {
+        throw new IllegalStateException(
+            "Chain head " + batch.getValue().getName() + " has no " + HASH_METADATA + " metadata");
+      }
+      if (isComplete(batch.getValue().getName(), hash)) {
+        lastSequence = sequence;
+        lastBlob = batch.getValue().getName();
+        lastHash = hash;
+        break;
+      }
+      // The blob was created but its content never finished (or was altered): it is not a link in
+      // the chain. Keep the previous complete batch as the head, so the spooled records are still
+      // written in the next batch; AUD-06 reports this blob as an orphan.
+    }
     headLoaded = true;
+  }
+
+  /** A blob is a valid link only when its content matches the {@code batchHash} metadata. */
+  private boolean isComplete(String blobName, String expectedHash) {
+    return AuditBatch.isComplete(read(blobName).toString(), expectedHash);
   }
 }

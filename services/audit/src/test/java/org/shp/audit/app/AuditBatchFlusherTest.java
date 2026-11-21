@@ -5,12 +5,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.options.AppendBlobCreateOptions;
 import com.mongodb.client.MongoClients;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterAll;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.shp.audit.AuditEvents;
 import org.shp.audit.AuditTestContainers;
+import org.shp.audit.domain.AuditBatch;
 import org.shp.audit.infra.AuditSpool;
 import org.shp.audit.infra.WormAuditLog;
 import org.shp.data.mongo.MongoInbox;
@@ -197,6 +200,81 @@ class AuditBatchFlusherTest {
     assertThat(occurrences(instance, a)).isEqualTo(1);
     assertThat(spool.count(instance)).isZero();
     assertThat(spool.plan(instance)).isEmpty();
+  }
+
+  @Test
+  void aCrashDuringTheBlockWriteKeepsTheSpooledRecordsForTheNextBatch() {
+    String instance = newInstance();
+    var spool = new AuditSpool(mongo, at(T0));
+    UUID a = UUID.randomUUID();
+    new AuditIntake(spool, instance).onRecorded(event(a));
+    String line = spool.next(instance, 10).get(0).getString("line");
+    // The flush plan was saved and the blob was created, then the process died before any block
+    // was written: the blob exists with its batchHash metadata but no content.
+    spool.savePlan(instance, new AuditSpool.Plan(List.of(a.toString()), AuditBatch.GENESIS_HASH));
+    var planned = AuditBatch.of(null, AuditBatch.GENESIS_HASH, List.of(line));
+    blobs
+        .getBlobClient("v1/2026/11/18/10/" + instance + "-1.ndjson")
+        .getAppendBlobClient()
+        .createWithResponse(
+            new AppendBlobCreateOptions()
+                .setMetadata(Map.of(WormAuditLog.HASH_METADATA, planned.batchHash())),
+            null,
+            null);
+
+    // Restart: the incomplete blob must not become the head, so the planned batch is not treated
+    // as written and its records are not deleted from the spool.
+    var restarted = new WormAuditLog(blobs, instance, at(T0));
+    var flusher =
+        new AuditBatchFlusher(
+            spool, restarted, instance, 5000, Duration.ofSeconds(60), at(T0.plusSeconds(61)));
+
+    assertThat(restarted.headHash()).isEqualTo(AuditBatch.GENESIS_HASH);
+    var receipt = flusher.flushIfDue();
+
+    assertThat(receipt).isPresent();
+    assertThat(receipt.get().count()).isEqualTo(1);
+    assertThat(occurrences(instance, a)).isEqualTo(1);
+    assertThat(spool.count(instance)).isZero();
+    assertThat(spool.plan(instance)).isEmpty();
+  }
+
+  @Test
+  void aFailureBetweenTheTwoDeletesDoesNotWedgeTheFlusher() {
+    String instance = newInstance();
+    var failPlanDelete = new AtomicBoolean(true);
+    var spool =
+        new AuditSpool(mongo, at(T0)) {
+          @Override
+          protected void removePlan(MongoTemplate tx, String id) {
+            if (failPlanDelete.getAndSet(false)) {
+              throw new IllegalStateException("simulated failure between the two deletes");
+            }
+            super.removePlan(tx, id);
+          }
+        };
+    UUID a = UUID.randomUUID();
+    new AuditIntake(spool, instance).onRecorded(event(a));
+    var flusher =
+        new AuditBatchFlusher(
+            spool,
+            new WormAuditLog(blobs, instance, at(T0)),
+            instance,
+            5000,
+            Duration.ofSeconds(60),
+            at(T0.plusSeconds(61)));
+
+    assertThatThrownBy(flusher::flushIfDue).hasMessageContaining("between the two deletes");
+    // The blob was written, but the transaction rolled back: plan and record are still there.
+    assertThat(occurrences(instance, a)).isEqualTo(1);
+    assertThat(spool.count(instance)).isEqualTo(1);
+    assertThat(spool.plan(instance)).isPresent();
+
+    // The next tick finishes the same batch, without a duplicate and without being wedged.
+    assertThat(flusher.flushIfDue()).isEmpty();
+    assertThat(spool.count(instance)).isZero();
+    assertThat(spool.plan(instance)).isEmpty();
+    assertThat(occurrences(instance, a)).isEqualTo(1);
   }
 
   @Test
