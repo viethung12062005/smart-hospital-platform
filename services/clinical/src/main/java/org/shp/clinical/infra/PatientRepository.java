@@ -17,6 +17,9 @@ import org.shp.data.mongo.MongoResourceStore.ResourceInput;
 import org.shp.events.CloudEvent;
 import org.shp.events.Uuids;
 import org.shp.fhir.FhirJson;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -30,13 +33,19 @@ public class PatientRepository {
   static final String TYPE = "Patient";
   static final String MRN_SYSTEM = "urn:shp:mrn";
 
+  private final MongoTemplate mongo;
   private final MongoResourceStore store;
   private final MrnGenerator mrns;
   private final ProfileValidator validator;
   private final Clock clock;
 
   public PatientRepository(
-      MongoResourceStore store, MrnGenerator mrns, ProfileValidator validator, Clock clock) {
+      MongoTemplate mongo,
+      MongoResourceStore store,
+      MrnGenerator mrns,
+      ProfileValidator validator,
+      Clock clock) {
+    this.mongo = mongo;
     this.store = store;
     this.mrns = mrns;
     this.validator = validator;
@@ -72,6 +81,22 @@ public class PatientRepository {
 
   public Optional<Entry> find(String id) {
     return store.find(TYPE, id);
+  }
+
+  /**
+   * True when an active patient has this E.164 phone and birth date (03 §2.6; index {@code
+   * search.phone, search.birthDate}). Returns only a boolean so no caller can read another record.
+   */
+  public boolean existsActiveByPhoneAndBirthDate(String phoneE164, String birthDate) {
+    return mongo.exists(
+        Query.query(
+            Criteria.where("search.phone")
+                .is(phoneE164)
+                .and("search.birthDate")
+                .is(birthDate)
+                .and("search.active")
+                .is(true)),
+        "patients");
   }
 
   /** Parse the stored FHIR JSON of an entry. */
