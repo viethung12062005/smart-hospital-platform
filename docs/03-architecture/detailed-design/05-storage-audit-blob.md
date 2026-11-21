@@ -77,8 +77,9 @@ SHPAudit_CL | where Outcome == "denied" | summarize n = count() by ActorSubject,
 | | `kb` | `kb/{kbDocumentId}/v{version}/{filename}` | Original documents of the RAG knowledge base (ai service) |
 | `stshpaudit<suffix>` | `audit` | see §1.2 | WORM |
 
-- **Upload**: the client receives a **user delegation SAS** with only `create/write` permission for exactly one blob, valid for 10 minutes, restricted
-  by `Content-Type`; the client uploads directly to Blob (not through the API, so it does not consume service bandwidth).
+- **Upload**: the client receives a **user delegation SAS** with only `create/write` permission for exactly one blob, valid for 10 minutes; the
+  signature scopes the blob, the permission and the expiry, and a write SAS cannot restrict `Content-Type`. The client uploads directly to Blob (not
+  through the API, so it does not consume service bandwidth). Content-type, size and magic-byte validation of the uploaded object is deferred to DOC-04.
 - **Download**: a user delegation SAS with only `read` permission for exactly one blob, **valid for 5 minutes** (BR-08), with
   `Content-Disposition: attachment`; every issuance writes an audit `download-url` record.
 - **Malware scan**: Microsoft Defender for Storage (cloud) / ClamAV (local) scans when the blob is created; results are pushed back to the document
