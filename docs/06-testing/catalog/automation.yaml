@@ -177,6 +177,13 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::practitionerViolationIsRejected
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::roleViolationIsRejected
     gap: "Only the Patient, Practitioner and PractitionerRole profile validator (CLN-02) rejects out-of-profile elements; registration (C1, CLN-05) calls it, the staff endpoints (CLN-10) do not yet and the other resources (Appointment, Encounter, ...) have no write validator. Owner: D2."
+  # ---- Clinical: vital signs ----
+  TC-AC-VT.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::spo2Of120IsValueOutOfRange
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::implausibleValuesAreRejected
+    gap: "The Observation validator (CLN-16) rejects SpO2 = 120 with value-out-of-range and names the field; the POST /fhir/Observation endpoint (C16) that returns the 422 and saves nothing is not built yet. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
