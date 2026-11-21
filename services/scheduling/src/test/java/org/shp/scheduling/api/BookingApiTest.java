@@ -285,8 +285,11 @@ class BookingApiTest {
     jdbc.sql(
             """
             UPDATE scheduling.appointment SET version_id = 2, status = 'cancelled',
+              cancel_reason = 'patient-request',
               content = jsonb_set(jsonb_set(content, '{meta,versionId}', '"2"'), '{status}', '"cancelled"')
+            WHERE id = ?
             """)
+        .param(UUID.fromString(JSON.readTree(created.body()).path("id").asString()))
         .update();
 
     var replay = book(patientAToken, key, body);
