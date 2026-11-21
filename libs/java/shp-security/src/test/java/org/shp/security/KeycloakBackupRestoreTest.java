@@ -146,6 +146,6 @@ class KeycloakBackupRestoreTest {
     // subject.
     var claims = KeycloakTestSupport.claims(token(keycloakB, "backup.user", USER_PASSWORD));
     assertThat(claims.<String>read("$.sub")).isEqualTo(subA);
-    assertThat(claims.<java.util.List<String>>read("$.aud")).contains("shp-api");
+    assertThat(KeycloakTokenExchangeTest.audiences(claims)).containsExactly("shp-api");
   }
 }

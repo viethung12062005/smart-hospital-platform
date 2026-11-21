@@ -76,6 +76,19 @@ class ShpJwtTest {
   }
 
   @Test
+  void refusesAnIdTokenEvenWithTheSharedAudience() {
+    var user = token("shp-api", "shp-web", List.of("patient"));
+    var idToken =
+        Jwt.withTokenValue(user.getTokenValue())
+            .headers(headers -> headers.putAll(user.getHeaders()))
+            .claims(claims -> claims.putAll(user.getClaims()))
+            .claim("typ", "ID")
+            .build();
+    assertThat(validate(props("svc-clinical"), idToken).getErrors())
+        .anySatisfy(e -> assertThat(e.getDescription()).isEqualTo("id-token-not-accepted"));
+  }
+
+  @Test
   void theUserAudienceIsAcceptedEvenWhenTheServiceAudienceIsUnset() {
     // gateway: user-facing only, OIDC_AUDIENCE stays shp-api
     assertThat(ShpJwt.acceptedAudiences(props(""))).containsExactly(ShpJwt.SHARED_AUDIENCE);
