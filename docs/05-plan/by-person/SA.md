@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **228 tasks, 790 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -225,7 +225,7 @@ Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | PY-10 | Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0) | A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests | 1 | PY-03 | ENABLER |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
-## Week 8 — 69 hours
+## Week 8 — 73 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -240,6 +240,7 @@ Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | IAM-04 | OTP authenticator (Keycloak SPI) calling notification N8, N9 on sign-up | Verify phone (Zalo first, SMS later) or email ownership with a code; code expires in 5 minutes, single use | 4 | IAM-01 | US-001 |
 | ☐ | IAM-05 | Identity events to audit | Successful/failed login, sign-up, account lock, password/phone change emit audit.recorded; no passwords or OTP codes recorded | 4 | IAM-01, SHR-09 | US-008, US-031 |
 | ☐ | IAM-09 | OTP for phone/email changes, rate limits per phone and IP, fake provider for dev and tests | Over-limit requests rejected; no codes or phone numbers in logs; tested with fake notification | 4 | IAM-04, NTF-16 | US-001 |
+| ☐ | IAM-10 | Staff MFA and design fixes for the realm | Staff roles need TOTP and tokens carry amr mfa; one 12-character password policy; audience rule documented and tested | 4 | IAM-06 | US-008, US-066 |
 | ☐ | MLO-01 | ML training pipeline in CI + model canary deploy | Runs when data/code changes; model artifact; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Reproducible training image: pinned library versions, seeds, fixed image, vulnerability scan | Same image + dataset hash + seed produce the same model; image signed | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary for ml-service + AnalysisTemplate (Prometheus), auto-promote or rollback | 10%, 50%, 100% steps with analysis; bad model rolls back automatically; autoPromote configured per environment | 6 | GOP-04, SCF-07, ML-25 | US-073 |

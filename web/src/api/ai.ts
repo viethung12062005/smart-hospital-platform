@@ -280,3 +280,113 @@ export async function getConversation(id: string): Promise<Conversation> {
   const { data } = await apiRequest<Conversation>(`/api/v1/ai/conversations/${encodeURIComponent(id)}`);
   return data;
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// AI9: knowledge base management
+// ---------------------------------------------------------------------------------------------------------------
+
+/** Lifecycle of a document: draft → approved → indexed → retired (replacing the file goes back to draft). */
+export type KbStatus = 'draft' | 'approved' | 'indexed' | 'retired';
+
+export interface KbDocument {
+  readonly id: string;
+  readonly title: string;
+  readonly source: string;
+  readonly department: string;
+  readonly allowedRoles: readonly string[];
+  readonly version: number;
+  readonly status: KbStatus;
+  readonly indexedVersion?: number | null;
+  readonly contentType?: string;
+  readonly sizeBytes?: number;
+  readonly chunkCount?: number | null;
+  /** Set when indexing failed; the document stays `approved` and the service raises an alert. */
+  readonly indexError?: string | null;
+  readonly createdAt?: string;
+  readonly updatedAt?: string;
+  readonly approvedAt?: string;
+  readonly indexedAt?: string;
+}
+
+export interface NewKbDocument {
+  readonly title: string;
+  readonly source: string;
+  readonly department: string;
+  readonly allowedRoles: readonly string[];
+  readonly file: File;
+}
+
+/** File limit of AI9 (PDF, DOCX or Markdown, at most 30 MB). */
+export const KB_MAX_BYTES = 30 * 1024 * 1024;
+export const KB_ACCEPT = '.pdf,.docx,.md,application/pdf,text/markdown';
+
+export async function listKbDocuments(status?: KbStatus): Promise<KbDocument[]> {
+  const { data } = await apiRequest<{ items: KbDocument[] }>(
+    `/api/v1/ai/kb/documents${status ? `?status=${status}` : ''}`,
+  );
+  return data.items;
+}
+
+export async function uploadKbDocument(doc: NewKbDocument): Promise<KbDocument> {
+  const form = new FormData();
+  form.set('title', doc.title);
+  form.set('source', doc.source);
+  form.set('department', doc.department);
+  doc.allowedRoles.forEach((r) => form.append('allowedRoles', r));
+  form.set('file', doc.file, doc.file.name);
+  const res = await aiFetch('/api/v1/ai/kb/documents', { method: 'POST', body: form });
+  return (await res.json()) as KbDocument;
+}
+
+/** Replace the file: version + 1, the document goes back to `draft` and needs a new approval. */
+export async function replaceKbFile(id: string, file: File): Promise<KbDocument> {
+  const form = new FormData();
+  form.set('file', file, file.name);
+  const res = await aiFetch(`/api/v1/ai/kb/documents/${encodeURIComponent(id)}`, { method: 'PUT', body: form });
+  return (await res.json()) as KbDocument;
+}
+
+export async function approveKbDocument(id: string): Promise<KbDocument> {
+  const { data } = await apiRequest<KbDocument>(`/api/v1/ai/kb/documents/${encodeURIComponent(id)}/approve`, {
+    method: 'POST',
+  });
+  return data;
+}
+
+/** "Remove": takes the document out of the index and keeps the record (status `retired`). */
+export async function retireKbDocument(id: string): Promise<KbDocument> {
+  const { data } = await apiRequest<KbDocument>(`/api/v1/ai/kb/documents/${encodeURIComponent(id)}/retire`, {
+    method: 'POST',
+  });
+  return data;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// AI10: usage and cost
+// ---------------------------------------------------------------------------------------------------------------
+
+export type UsageGroup = 'task' | 'model' | 'day';
+
+export interface UsageRow {
+  readonly key: string;
+  readonly requests: number;
+  readonly inputTokens: number;
+  readonly outputTokens: number;
+  readonly costUsd: number;
+  readonly fallbackRate: number;
+}
+
+export async function getUsage(params: { from?: string; to?: string; groupBy: UsageGroup }): Promise<UsageRow[]> {
+  const qs = new URLSearchParams({ groupBy: params.groupBy });
+  if (params.from) qs.set('from', params.from);
+  if (params.to) qs.set('to', params.to);
+  const { data } = await apiRequest<{ items: UsageRow[] }>(`/api/v1/ai/usage?${qs.toString()}`);
+  return data.items;
+}
+
+/**
+ * The daily token budget and its alert threshold. AI10 does not return them, so they mirror the documented defaults
+ * (06-data-ai.md: `budget: { dailyTokenLimit: 2000000, alertAtPercent: 80 }`); change here if the environment differs.
+ */
+export const DAILY_TOKEN_LIMIT = 2_000_000;
+export const BUDGET_ALERT_AT = 0.8;

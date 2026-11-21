@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     registry_dir: str = ""  # FileRegistry (local/CI)
     mlflow_tracking_uri: str = ""  # cluster
     model_poll_seconds: float = 30.0  # production alias change → reload within ≤ 60 seconds (ML-09)
+    # Model canary (MLO-03, 16-mlops section 6): when set, the pod serves exactly this registry version instead of the
+    # `production` alias, so a model change is a pod template change that Argo Rollouts can canary and abort.
+    # Empty = follow the `production` alias (local, tests).
+    serving_model_version: str = ""
     shadow_enabled: bool = True  # candidate scores in parallel when it differs from production (ML-24)
     # Score PSI between candidate (shadow) and production on the same appointments (ML-25, 16-mlops section 6)
     shadow_psi_window: int = 1000  # last N paired scores

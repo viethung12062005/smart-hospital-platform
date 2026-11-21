@@ -3,6 +3,8 @@ image:
   repository: localhost/shp-document
   tag: dev
 env:
+  # Audience isolation (ADR-0017): this service accepts tokens issued for svc-document (service tokens) and shp-api (user tokens).
+  OIDC_AUDIENCE: svc-document
   OTEL_SERVICE_NAME: document
   SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true
   # Blob container names (05-storage-audit-blob §2). The connection string itself comes from

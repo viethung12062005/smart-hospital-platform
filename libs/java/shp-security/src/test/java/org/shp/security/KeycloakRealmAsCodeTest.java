@@ -23,7 +23,11 @@ class KeycloakRealmAsCodeTest {
   @Container
   static final GenericContainer<?> KEYCLOAK =
       KeycloakTestSupport.container(
-          "identity/realm/dist/realm-shp-prod.json", "SHP_PUBLIC_HOST", HOST);
+          "identity/realm/dist/realm-shp-prod.json",
+          "SHP_PUBLIC_HOST",
+          HOST,
+          "SHP_K8S_OIDC_ISSUER",
+          "https://kubernetes.example.test");
 
   static String base;
   static String admin;
@@ -39,8 +43,12 @@ class KeycloakRealmAsCodeTest {
   }
 
   @Test
-  void hasNoUsersAndNoDevelopmentClient() throws Exception {
-    assertThat(Integer.parseInt(get("/users/count"))).isZero();
+  void hasNoPersonUsersAndNoDevelopmentClient() throws Exception {
+    // The user search never lists service-account users, so a non-empty result would be a person.
+    assertThat(JsonPath.<List<?>>read(get("/users"), "$")).isEmpty();
+    String ai = JsonPath.read(get("/clients?clientId=svc-ai"), "$[0].id");
+    assertThat(JsonPath.<String>read(get("/clients/" + ai + "/service-account-user"), "$.username"))
+        .isEqualTo("service-account-svc-ai");
     List<String> clientIds = JsonPath.read(get("/clients"), "$[*].clientId");
     assertThat(clientIds).contains("shp-web", "shp-api").doesNotContain("shp-test");
   }

@@ -3,6 +3,9 @@
 #   - the generated test suite (SHR-09): each (resource, action) × 5 roles × condition combinations
 # Docs: docs/02-requirements/access-control-matrix.md, docs/03-architecture/detailed-design/15-authorization.md
 # Rule: DENY by default. An action is allowed only when a rule matches and every `when` condition holds.
+# Service-to-service calls are not matrix rows: /internal endpoints require a service token whose `aud` is the target
+# only (`svc-<target>`, never the user audience `shp-api`) plus the role internal.<target> and an allowed `azp`
+# (require_service / ShpJwt.requireService; ADR-0017 section 1 and 7 of the detailed design).
 # Changing this file requires a PR approved by the SA (CODEOWNERS) and `python3 -I tools/contracts/validate.py` must be green.
 version: 1
 
@@ -44,6 +47,8 @@ resources:
   Audit:           { clinical: false, actions: [read, export, update, delete] }
   BreakGlass:      { clinical: false, actions: [start] }
   Backup:          { clinical: false, actions: [run, restore] }
+  Device:          { clinical: false, actions: [create, delete] }
+  NotificationPreference: { clinical: false, actions: [read, update] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -58,6 +63,7 @@ rules:
   - { id: PAT-READ-DOC-BG, resource: Patient, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: PAT-READ-NUR,    resource: Patient, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: PAT-CREATE-NUR,  resource: Patient, action: create, role: nurse,   when: [] }
+  - { id: PAT-CREATE-PAT,  resource: Patient, action: create, role: patient, when: [] }
   - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-GUARDIAN, resource: Patient, action: update, role: patient, when: [guardian], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
@@ -145,3 +151,12 @@ rules:
   - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
   - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "via the operations pipeline, with approval" }
   - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "via the operations pipeline, with approval" }
+  # Notification devices and preferences (the owner always comes from the identity, 11 §1)
+  - { id: DEV-REG-PAT,     resource: Device, action: create,     role: patient, when: [] }
+  - { id: DEV-REG-DOC,     resource: Device, action: create,     role: doctor,  when: [] }
+  - { id: DEV-REG-NUR,     resource: Device, action: create,     role: nurse,   when: [] }
+  - { id: DEV-UNREG-PAT,   resource: Device, action: delete,     role: patient, when: [own] }
+  - { id: DEV-UNREG-DOC,   resource: Device, action: delete,     role: doctor,  when: [self-practitioner] }
+  - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
+  - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
+  - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }
