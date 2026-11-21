@@ -172,3 +172,28 @@ def test_token_exchange_only_for_callers_with_an_exchange_list() -> None:
         assert "standard.token.exchange.enabled" not in built["shp-web"].get(
             "attributes", {}
         )
+
+
+def test_hardening_is_in_both_realms() -> None:
+    for env in ("local", "prod"):
+        built = realm.build(env)
+        assert (
+            "hashAlgorithm(argon2)" in built["passwordPolicy"]
+            and "length(12)" in built["passwordPolicy"]
+        )
+        assert (
+            built["bruteForceProtected"] is True and built["permanentLockout"] is False
+        )
+        assert built["failureFactor"] == 5
+        assert (
+            built["adminEventsEnabled"] is True
+            and built["adminEventsDetailsEnabled"] is False
+        )
+    assert realm.build("prod")["sslRequired"] == "external"
+
+
+def test_breached_list_has_no_entry_shorter_than_the_minimum_length() -> None:
+    lines = [x for x in realm.BLACKLIST.read_text(encoding="utf-8").splitlines() if x]
+    assert lines and all(
+        len(x) >= 12 for x in lines
+    )  # shorter ones are rejected by length(12) anyway

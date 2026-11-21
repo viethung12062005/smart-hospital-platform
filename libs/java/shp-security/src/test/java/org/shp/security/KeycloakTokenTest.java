@@ -54,6 +54,11 @@ class KeycloakTokenTest {
           .withEnv("JAVA_OPTS_KC_HEAP", "-XX:MaxRAMPercentage=50")
           .withCopyFileToContainer(
               MountableFile.forHostPath(realmFile()), "/opt/keycloak/data/import/realm-shp.json")
+          // the realm's password policy reads this list (IAM-06)
+          .withCopyFileToContainer(
+              MountableFile.forHostPath(
+                  KeycloakTestSupport.repoFile("identity/realm/breached-passwords.txt")),
+              "/opt/keycloak/data/password-blacklists/breached-passwords.txt")
           .withExposedPorts(8080)
           .waitingFor(
               Wait.forHttp("/realms/shp").forPort(8080).withStartupTimeout(Duration.ofMinutes(4)));
