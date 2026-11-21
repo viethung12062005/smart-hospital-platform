@@ -199,13 +199,20 @@ class ScheduleRepositoryTest {
     assertThat(docACardio.get(0).practitionerId()).isEqualTo(docA);
 
     // Pagination
-    var page1 = repository.find(new ScheduleFilter(null, null, null, 2, 0));
+    var page1 = repository.find(new ScheduleFilter(null, null, null, 2, null));
     assertThat(page1).hasSize(2);
 
-    var page2 = repository.find(new ScheduleFilter(null, null, null, 2, 2));
+    var page2 = repository.find(new ScheduleFilter(null, null, null, 2, page1.get(1).id()));
     assertThat(page2).hasSize(2);
 
-    assertThat(page1.get(0).id()).isNotEqualTo(page2.get(0).id());
+    // Keyset order is id ascending (PostgreSQL uuid order equals lower-case hex string order): the
+    // pages are disjoint and together cover all 4 rows in order.
+    var ids = new java.util.ArrayList<String>();
+    page1.forEach(r -> ids.add(r.id().toString()));
+    page2.forEach(r -> ids.add(r.id().toString()));
+    assertThat(ids).doesNotHaveDuplicates().isSorted();
+    assertThat(repository.find(new ScheduleFilter(null, null, null, 2, page2.get(1).id())))
+        .isEmpty();
   }
 
   @Test

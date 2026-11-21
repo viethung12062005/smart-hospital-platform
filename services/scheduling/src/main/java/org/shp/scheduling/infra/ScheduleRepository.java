@@ -131,7 +131,10 @@ public class ScheduleRepository {
         .optional();
   }
 
-  /** Search schedules with optional filtering by practitioner, specialty, and active status. */
+  /**
+   * Search schedules with optional filtering by practitioner, specialty, and active status, in
+   * keyset order (id ascending, after {@code filter.afterId()}).
+   */
   @Transactional(readOnly = true)
   public List<ScheduleRecord> find(ScheduleFilter filter) {
     Objects.requireNonNull(filter, "filter must not be null");
@@ -158,9 +161,14 @@ public class ScheduleRepository {
       params.add(filter.active());
     }
 
-    sql.append(" ORDER BY last_updated DESC, id ASC LIMIT ? OFFSET ?");
+    if (filter.afterId() != null) {
+      sql.append(" AND id > ?");
+      params.add(filter.afterId());
+    }
+
+    // Keyset order: id is immutable and unique, so pages stay stable while schedules change.
+    sql.append(" ORDER BY id ASC LIMIT ?");
     params.add(filter.limit());
-    params.add(filter.offset());
 
     return jdbc.sql(sql.toString()).params(params).query(SCHEDULE_MAPPER).list();
   }

@@ -75,6 +75,19 @@
 
   <build>
     <finalName>app</finalName>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <!-- Embed the terminology catalogue: SpecialtyCatalog reads the exact version in contracts/ -->
+        <directory>${project.basedir}/../../contracts/terminology/dist</directory>
+        <targetPath>terminology</targetPath>
+        <includes>
+          <include>specialty.json</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>

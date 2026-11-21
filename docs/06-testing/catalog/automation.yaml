@@ -93,6 +93,16 @@ automation:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::withoutNoShowScoreT24hAndT2hAreStillCreated
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
 
+  # ---- Scheduling: doctor work schedule ----
+  TC-AC-02.3:
+    status: partial
+    gap: "Schedule S2/S3/S4 are covered (doctor sees and edits only own schedule: 403, search forced to self). The audit record of the denied read is asserted (deniedScheduleReadIsAudited). Still open - the doctor's appointment schedule (S13)."
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s2ReadSchedulePermissions
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s3FindSchedulesWithRoleRestrictions
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s4UpdateSchedule
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::deniedScheduleReadIsAudited
+
   # ---- Clinical: version history ----
   TC-SEC-03:
     status: partial
