@@ -52,11 +52,19 @@ public final class ShpJwt {
     return new DelegatingOAuth2TokenValidator<>(
         timestamps,
         new JwtIssuerValidator(props.authority()),
-        // A Keycloak ID token is not an API access token, even when its audience is shp-api.
-        new JwtClaimValidator<String>("typ", type -> !"ID".equals(type)),
+        ShpJwt::rejectIdToken,
         new JwtClaimValidator<Collection<String>>(
             "aud", aud -> aud != null && aud.stream().anyMatch(accepted::contains)),
         jwt -> mfa(jwt, props));
+  }
+
+  private static OAuth2TokenValidatorResult rejectIdToken(Jwt jwt) {
+    // Keycloak ID tokens are not API access tokens, even when their audience is shp-api.
+    // Other compatible issuers need not supply a typ claim.
+    return "ID".equals(jwt.getClaims().get("typ"))
+        ? OAuth2TokenValidatorResult.failure(
+            new OAuth2Error("invalid_token", "id-token-not-accepted", null))
+        : OAuth2TokenValidatorResult.success();
   }
 
   /** Valid roles in the {@code roles} claim (unknown values dropped, case-insensitive). */

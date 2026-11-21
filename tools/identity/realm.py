@@ -129,6 +129,9 @@ def single_target_policies(
             {
                 "name": name,
                 "enabled": True,
+                # Unrelated events (notably authorization-code redemption) may make
+                # the grant condition abstain. Do not apply these policies on abstentions.
+                "mode": "STRICT",
                 "conditions": [
                     {
                         "condition": "grant-type",

@@ -121,6 +121,15 @@ def test_service_tokens_never_carry_the_user_audience() -> None:
                 } == {"shp-api"}
 
 
+def test_target_policies_require_all_conditions_to_match() -> None:
+    for env in ("local", "prod"):
+        policies = realm.build(env)["clientPolicies"]["policies"]
+        assert policies
+        for policy in policies:
+            assert policy["mode"] == "STRICT"
+            assert policy["conditions"][0]["condition"] == "grant-type"
+
+
 def test_every_java_service_that_resolves_identities_may_call_clinical() -> None:
     """SHR-32: HttpIdentityLinkClient calls clinical's GET /internal/v1/identity/{subject} (09 section 4)."""
     spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))

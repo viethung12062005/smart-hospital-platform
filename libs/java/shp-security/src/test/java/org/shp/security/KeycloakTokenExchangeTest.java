@@ -144,7 +144,7 @@ class KeycloakTokenExchangeTest {
   void browserTokenHasOnlyTheUserAudienceAndSupportsStandardExchange() throws Exception {
     var login = new KeycloakBrowserLogin(issuer).signIn("patient.ex", USER_PASSWORD, () -> "");
     String token = login.accessToken();
-    assertThat(token).isNotBlank();
+    assertThat(token != null && !token.isBlank()).as("browser received access token").isTrue();
     assertThat(audiences(KeycloakTestSupport.claims(token))).containsExactly("shp-api");
     var response = exchange("shp-api", token, "svc-clinical");
     assertThat(response.statusCode()).isEqualTo(200);
@@ -226,7 +226,7 @@ class KeycloakTokenExchangeTest {
     // it.
     var res = exchange("shp-api", userToken, "svc-ml");
     assertThat(res.statusCode()).isIn(400, 403);
-    assertThat(res.body()).doesNotContain("access_token");
+    assertNoAccessToken(res);
   }
 
   @Test
@@ -242,7 +242,7 @@ class KeycloakTokenExchangeTest {
             "svc-audit")) {
       var res = exchange(client, userToken, "svc-clinical");
       assertThat(res.statusCode()).as(client).isIn(400, 401, 403);
-      assertThat(res.body()).as(client).doesNotContain("access_token");
+      assertNoAccessToken(res);
     }
     // A public client (the web app) cannot exchange either.
     var pub =
@@ -256,7 +256,7 @@ class KeycloakTokenExchangeTest {
                 + enc(ACCESS)
                 + "&audience=svc-clinical");
     assertThat(pub.statusCode()).isIn(400, 401, 403);
-    assertThat(pub.body()).doesNotContain("access_token");
+    assertNoAccessToken(pub);
   }
 
   @Test
@@ -314,7 +314,11 @@ class KeycloakTokenExchangeTest {
 
   static void assertRejected(HttpResponse<String> response) {
     assertThat(response.statusCode()).isIn(400, 401, 403);
-    assertThat(response.body()).doesNotContain("access_token");
+    assertNoAccessToken(response);
+  }
+
+  private static void assertNoAccessToken(HttpResponse<String> response) {
+    assertThat(response.body().contains("\"access_token\"")).as("includes access token").isFalse();
   }
 
   @Test
@@ -324,7 +328,7 @@ class KeycloakTokenExchangeTest {
     String tampered = userToken.substring(0, userToken.lastIndexOf('.') + 1) + flipped;
     var res = exchange("shp-api", tampered, "svc-clinical");
     assertThat(res.statusCode()).isIn(400, 401, 403);
-    assertThat(res.body()).doesNotContain("access_token");
+    assertNoAccessToken(res);
   }
 
   /** Switch standard token exchange of a client on or off through the admin API. */
@@ -350,7 +354,7 @@ class KeycloakTokenExchangeTest {
     try {
       var res = exchange("shp-api", userToken, "svc-clinical");
       assertThat(res.statusCode()).isIn(400, 401, 403);
-      assertThat(res.body()).doesNotContain("access_token");
+      assertNoAccessToken(res);
     } finally {
       setExchange("shp-api", true);
     }

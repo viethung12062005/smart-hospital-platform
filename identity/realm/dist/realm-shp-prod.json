@@ -741,6 +741,7 @@
       {
         "name": "shp-call-target-required",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -772,6 +773,7 @@
       {
         "name": "shp-reject-call-clinical-plus-call-document",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -809,6 +811,7 @@
       {
         "name": "shp-reject-call-clinical-plus-call-ml",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -846,6 +849,7 @@
       {
         "name": "shp-reject-call-document-plus-call-notification",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -883,6 +887,7 @@
       {
         "name": "shp-reject-call-document-plus-call-scheduling",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -920,6 +925,7 @@
       {
         "name": "shp-reject-call-notification-plus-call-scheduling",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -957,6 +963,7 @@
       {
         "name": "shp-exchange-target-required",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",
@@ -985,6 +992,7 @@
       {
         "name": "shp-reject-exchange-clinical-plus-exchange-scheduling",
         "enabled": true,
+        "mode": "STRICT",
         "conditions": [
           {
             "condition": "grant-type",

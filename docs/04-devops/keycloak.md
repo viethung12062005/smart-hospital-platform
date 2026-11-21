@@ -101,6 +101,8 @@ How it is built: `identity/realm/services.json` lists each caller and the servic
 the confidential client `svc-<caller>` with roles `internal.<target>` for its `calls` list. The caller sends exactly one
 of its optional OAuth scopes, `scope=call-<target>`; that scope maps only `svc-<target>` into the access token.
 Keycloak validates the scope assignment, and built-in client policies reject missing or combined target scopes.
+These policies use strict matching: if the grant or scope condition cannot evaluate an event, the policy does not
+apply. This keeps the policies off unrelated flows such as browser authorization-code redemption.
 An `audience` parameter does not select a target for client credentials. In the cluster realm the identity provider
 `kubernetes` takes its issuer from `${SHP_K8S_OIDC_ISSUER}` (chart value `kubernetesClientAuth.issuer`).
 

@@ -96,6 +96,7 @@ class KeycloakServiceAccountTest {
             "&audience=svc-clinical",
             "&scope=call-clinical+call-ml",
             "&scope=call-document",
+            "&scope=call-clinical+call-document",
             "&scope=call-clinical&scope=call-ml")) {
       assertRejected(request("svc-scheduling", params));
     }
@@ -106,7 +107,7 @@ class KeycloakServiceAccountTest {
 
   private static void assertRejected(java.net.http.HttpResponse<String> response) {
     assertThat(response.statusCode()).isIn(400, 401, 403);
-    assertThat(response.body()).doesNotContain("access_token");
+    assertThat(response.body().contains("\"access_token\"")).as("includes access token").isFalse();
   }
 
   @Test
@@ -128,9 +129,11 @@ class KeycloakServiceAccountTest {
 
   @Test
   void aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience() throws Exception {
-    String token = serviceToken("svc-notification", "clinical");
+    // The caller can request both clinical and ml, and this token carries both internal roles.
+    // Its clinical audience must still prevent it from being used at ml.
+    String token = serviceToken("svc-scheduling", "clinical");
     String issuer = KeycloakTestSupport.base(KEYCLOAK) + "/realms/shp";
-    for (String audience : List.of("svc-scheduling", "shp-api", "svc-notification")) {
+    for (String audience : List.of("svc-ml", "shp-api", "svc-scheduling")) {
       var props =
           new ShpAuthProperties(issuer, audience, true, java.time.Duration.ofSeconds(30), "");
       NimbusJwtDecoder decoder =
