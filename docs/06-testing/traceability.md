@@ -7,20 +7,20 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 69 (33%) |
-| Fully automated | 34 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 38 |
+| Automated or partially automated | 71 (34%) |
+| Fully automated | 35 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 40 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 0 | 1 | 43 | 0 |
+| clinical | 44 | 0 | 2 | 42 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
-| scheduling | 21 | 6 | 8 | 7 | 0 |
+| scheduling | 21 | 7 | 8 | 6 | 0 |
 | security | 29 | 8 | 8 | 13 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
 
@@ -30,8 +30,8 @@
 |---|---|---|---|---|---|
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
-| integration | 29 | 5 | 8 | 16 | 0 |
-| api | 90 | 7 | 12 | 71 | 0 |
+| integration | 29 | 5 | 9 | 15 | 0 |
+| api | 90 | 8 | 12 | 70 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -46,7 +46,6 @@
 | Test case | Blocked by | Owner |
 |---|---|---|
 | TC-AC-01.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-01.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-03.6 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-03.7 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-04.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -64,7 +63,6 @@
 | TC-AC-BG.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-BG.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-BG.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-BK.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-CI.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -135,7 +133,7 @@
 | Requirement | Test case | Status |
 |---|---|---|
 | AC-01.1 | TC-AC-01.1 (api, P0) | planned |
-| AC-01.2 | TC-AC-01.2 (api, P0) | planned |
+| AC-01.2 | TC-AC-01.2 (api, P0) | partial |
 | AC-01.3 | TC-AC-01.3 (api, P0) | partial |
 | AC-02.1 | TC-AC-02.1 (api, P1) | automated |
 | AC-02.2 | TC-AC-02.2 (api, P1) | planned |
@@ -193,7 +191,7 @@
 | AC-BG.2 | TC-AC-BG.2 (api, P0) | planned |
 | AC-BG.3 | TC-AC-BG.3 (api, P0) | planned |
 | AC-BG.3 | TC-SEC-25 (api, P0) | planned |
-| AC-BK.1 | TC-AC-BK.1 (integration, P0) | planned |
+| AC-BK.1 | TC-AC-BK.1 (integration, P0) | partial |
 | AC-CI.1 | TC-AC-CI.1 (api, P0) | planned |
 | AC-CL.1 | TC-AC-CL.1 (api, P0) | planned |
 | AC-CL.2 | TC-AC-CL.2 (security, P0) | planned |
@@ -226,7 +224,7 @@
 | AC-LK.3 | TC-AC-LK.3 (api, P0) | planned |
 | AC-LK.4 | TC-AC-LK.4 (api, P0) | planned |
 | AC-LP.1 | TC-AC-LP.1 (api, P0) | planned |
-| AC-MA.1 | TC-AC-MA.1 (api, P0) | partial |
+| AC-MA.1 | TC-AC-MA.1 (api, P0) | automated |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | planned |
 | AC-NP.1 | TC-AC-NP.1 (api, P1) | planned |
 | AC-NS.1 | TC-AC-NS.1 (integration, P1) | planned |
