@@ -907,9 +907,14 @@ class ScheduleApiTest {
                 .statusCode())
         .isEqualTo(400);
 
-    // Tampered signature
+    // Tampered signature: flip a bit in a real signature byte. Replacing the last base64url
+    // character is not enough, because its low bits are padding the decoder ignores.
+    byte[] signature = Base64.getUrlDecoder().decode(tokenValue.substring(dot + 1));
+    signature[0] ^= 0x01;
     String tamperedSig =
-        tokenValue.substring(0, tokenValue.length() - 1) + (tokenValue.endsWith("A") ? "B" : "A");
+        tokenValue.substring(0, dot + 1)
+            + Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
+    assertThat(tamperedSig).isNotEqualTo(tokenValue);
     assertThat(get("/fhir/Schedule?specialty=cardiology&_page_token=" + tamperedSig, nurse))
         .isEqualTo(400);
 
