@@ -116,6 +116,7 @@ faster than finding out from CI.
 | `docs/06-testing/traceability.md`, `docs/06-testing/dist/*` | `docs/06-testing/catalog/*.yaml` | `python3 -I tools/qa/trace.py` |
 | `contracts/openapi/*.yaml` (paths and operations) | the endpoint tables in `detailed-design/08`–`12` | `python3 -I tools/contracts/gen_openapi.py` |
 | `contracts/events/**` | `tools/contracts/gen_events.py` (and `detailed-design/13-events.md`) | `python3 -I tools/contracts/gen_events.py` |
+| `contracts/terminology/dist/*.json` | `contracts/terminology/code-systems.yaml` | `python3 -I tools/contracts/export_terminology.py` |
 | `dev/chart/shp-local-deps/files/realm-shp.json`, `identity/realm/dist/*` | `identity/realm/base.json`, `overlay-<env>.json` | `python3 -I tools/identity/realm.py` |
 | `services/ai/src/shp_platform`, `services/ml/src/shp_platform` | `libs/python/shp_platform`, `contracts/events` | `python3 tools/pylib/sync.py` |
 
