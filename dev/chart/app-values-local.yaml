@@ -19,6 +19,9 @@ secretEnv:
   - { name: AZURE_STORAGE_CONNECTION_STRING, secretName: shp-local-conn, key: blob }
   - { name: MONGODB_URI, secretName: shp-local-conn, key: mongodb }
   - { name: RABBITMQ_URL, secretName: shp-local-conn, key: rabbitmq }
+  # Workload token for /internal calls (SHR-32). __SVC__ is replaced by deploy.sh with the service name (Secret written by
+  # scripts/service-clients.sh from the Keycloak admin API); the line is dropped for services without a svc-* client.
+  - { name: OIDC_CLIENT_SECRET, secretName: "svc-__SVC__-client", key: client-secret }
 env:
   # Tokens are obtained from the dev machine via http://localhost:18080, so the issuer is localhost; a pod cannot reach the machine localhost
   # → the signing keys (JWKS) are fetched via in-cluster DNS, while the issuer still validates against the localhost value.
@@ -27,6 +30,7 @@ env:
   # Audience of user (interactive) tokens. Services that receive service tokens override it with their own svc-<name>
   # in services/<svc>/deploy/values-local.yaml (audience isolation, ADR-0017); every service accepts shp-api as well.
   OIDC_AUDIENCE: shp-api
+  OIDC_TOKEN_ENDPOINT: http://keycloak.shp-deps.svc.cluster.local:8080/realms/shp/protocol/openid-connect/token   # client id defaults to svc-<service>
   SHP_REQUIRE_MFA_FOR_STAFF: "false"   # test users in the local Keycloak do not have MFA
   SHP_CLINICAL_URL: http://clinical
   SPRING_RABBITMQ_HOST: rabbitmq.shp-deps.svc.cluster.local
