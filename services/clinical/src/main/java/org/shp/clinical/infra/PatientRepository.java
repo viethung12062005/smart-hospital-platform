@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.bson.Document;
 import org.hl7.fhir.r4.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.shp.clinical.app.ProfileValidator;
 import org.shp.clinical.domain.PatientNormalizer;
+import org.shp.data.mongo.MongoMessaging;
 import org.shp.data.mongo.MongoResourceStore;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.data.mongo.MongoResourceStore.ResourceInput;
@@ -21,6 +23,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Patient persistence (03 §2.2, §2.3). Builds the stored document: server-generated id, MRN, {@code
@@ -37,6 +40,7 @@ public class PatientRepository {
   private final MongoResourceStore store;
   private final MrnGenerator mrns;
   private final ProfileValidator validator;
+  private final TransactionTemplate tx;
   private final Clock clock;
 
   public PatientRepository(
@@ -44,11 +48,13 @@ public class PatientRepository {
       MongoResourceStore store,
       MrnGenerator mrns,
       ProfileValidator validator,
+      TransactionTemplate tx,
       Clock clock) {
     this.mongo = mongo;
     this.store = store;
     this.mrns = mrns;
     this.validator = validator;
+    this.tx = tx;
     this.clock = clock;
   }
 
@@ -59,16 +65,45 @@ public class PatientRepository {
    * @param event outbox event written in the same transaction, or null
    */
   public Entry create(Patient draft, String changedBy, CloudEvent event) {
+    return create(draft, changedBy, event, entry -> {});
+  }
+
+  /**
+   * Like {@link #create(Patient, String, CloudEvent)}, and runs {@code sameTransaction} with the
+   * stored entry inside the same transaction as the patient, its history and the event. If it
+   * throws, everything rolls back (for example the identity link of C1).
+   */
+  public Entry create(
+      Patient draft, String changedBy, CloudEvent event, Consumer<Entry> sameTransaction) {
     Patient patient = draft.copy();
     String id = Uuids.v7(clock).toString();
-    String mrn = mrns.next();
+    String mrn = mrns.next(); // outside the transaction, see MrnGenerator
     patient.setId(id);
     List<Identifier> others =
         patient.getIdentifier().stream().filter(i -> !MRN_SYSTEM.equals(i.getSystem())).toList();
     patient.setIdentifier(new ArrayList<>(others));
     patient.addIdentifier().setSystem(MRN_SYSTEM).setValue(mrn);
     patient.setActive(true);
-    return store.create(input(patient, 1), changedBy, event);
+    ResourceInput input = input(patient, 1);
+    return MongoMessaging.inTransaction(
+        tx,
+        () -> {
+          Entry entry = store.create(input, changedBy, event);
+          sameTransaction.accept(entry);
+          return entry;
+        });
+  }
+
+  /**
+   * Check a registration draft against the profile (01 §4.1) before an MRN is spent on it. The
+   * server-generated elements are filled with placeholders, as {@link #create} would.
+   */
+  public void validateDraft(Patient draft) {
+    Patient probe = draft.copy();
+    probe.setIdentifier(new ArrayList<>());
+    probe.addIdentifier().setSystem(MRN_SYSTEM).setValue("BN-0000-000000");
+    probe.setActive(true);
+    validator.validate(probe);
   }
 
   /**

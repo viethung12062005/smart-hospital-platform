@@ -66,7 +66,7 @@ Two API styles:
 | 401 | Missing/invalid token | `unauthenticated` |
 | 403 | No permission | `forbidden`, `no-care-relationship`, `break-glass-required` |
 | 404 | Does not exist or the caller is not allowed to know it exists | `not-found` |
-| 409 | State conflict | `slot-unavailable`, `slot-has-appointment`, `invalid-state-transition` |
+| 409 | State conflict | `slot-unavailable`, `slot-has-appointment`, `invalid-state-transition`, `already-registered` |
 | 412 | Wrong `If-Match` | `version-conflict` |
 | 413 | File too large | `file-too-large` |
 | 415 | File type not allowed | `invalid-file-type` |
