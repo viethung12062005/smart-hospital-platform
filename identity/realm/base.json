@@ -13,19 +13,43 @@
       },
       {
         "name": "doctor",
-        "description": "Doctor"
+        "description": "Doctor",
+        "composites": {
+          "realm": [
+            "mfa-required"
+          ]
+        }
       },
       {
         "name": "nurse",
-        "description": "Nurse"
+        "description": "Nurse",
+        "composites": {
+          "realm": [
+            "mfa-required"
+          ]
+        }
       },
       {
         "name": "admin",
-        "description": "Administrator"
+        "description": "Administrator",
+        "composites": {
+          "realm": [
+            "mfa-required"
+          ]
+        }
       },
       {
         "name": "dpo",
-        "description": "Data protection officer"
+        "description": "Data protection officer",
+        "composites": {
+          "realm": [
+            "mfa-required"
+          ]
+        }
+      },
+      {
+        "name": "mfa-required",
+        "description": "Marker included in every staff role: the browser flow demands a TOTP code from its holders (IAM-10)"
       }
     ]
   },
@@ -69,6 +93,15 @@
           "config": {
             "included.client.audience": "shp-api",
             "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "amr-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-amr-mapper",
+          "config": {
+            "id.token.claim": "true",
             "access.token.claim": "true"
           }
         }

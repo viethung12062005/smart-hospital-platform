@@ -116,8 +116,8 @@ it cannot be replayed against a user API.
 The endpoint side: `require_service(<target>, "svc-<caller>")` (Python `Authenticator.require_service`, Java
 `ShpJwt.requireService`) checks `azp` against the allow-list and requires the role `internal.<target>`. Use the guard on
 every `/internal` endpoint; the gateway additionally never routes `/internal/**` from outside.
-Note: detailed-design 11 names the role of the OTP endpoints `internal.otp`; the code convention and the realm use `internal.<target service>`
-(`internal.notification`), so that endpoint should require `internal.notification`.
+The OTP endpoints of `notification` require `internal.notification`, the same convention as every other target
+(detailed-design 11 was aligned in IAM-10).
 
 Tested against Keycloak 26.8.2 in containers: `KeycloakServiceAccountTest` (roles and audiences per service, a service token
 refused by another service and by the `shp-api` audience, wrong secret, no password grant, the token carries no user role)
@@ -156,8 +156,8 @@ unchanged (15 section 7).
 
 Findings and limits:
 - A token for a target that is not in the caller's `exchange` list (for example `ml`) is refused: the audience cannot be widened.
-- Not verified: `amr`. A staff token needs `amr` containing `mfa`; the realm does not yet force MFA, so no staff token carries it and
-  it could not be shown whether the exchanged token keeps it. Re-test when IAM-06/IAM-03 turn MFA on, before `ai` serves doctors in uat.
+- `amr` (IAM-10): the exchanged token of a staff user keeps `amr` containing `mfa` and passes the shared rules as staff
+  (`KeycloakTokenExchangeTest`); `svc-ai` carries the AMR mapper for this. It was not testable before IAM-10 because no staff token carried `amr`.
 - Standard v2 does not add an `act` claim (delegation is the preview `token-exchange-delegation`); audit must record `ai` through `azp`.
 - Revoking or disabling the user stops new exchanges (the subject token is validated) but an already exchanged token lives until `exp`.
 
@@ -172,18 +172,17 @@ Realm settings (`identity/realm/base.json`, both environments), each proven in `
 | Control | Setting | Notes |
 |---|---|---|
 | Password hashing | `hashAlgorithm(argon2)`: Argon2id v1.3, Keycloak defaults (m=7168 KiB, t=5, p=1) | Asserted from the stored credential (`type=id`). |
-| Password policy | `length(12)`, `maxLength(128)`, `notUsername`, `notEmail`, `passwordBlacklist(breached-passwords.txt)`; no composition rules, no expiry | NIST SP 800-63B-4 as in ADR-0017. `notUsername` rejects a password equal to the username, not one that contains it. |
+| Password policy | `length(12)`, `maxLength(128)`, `notUsername`, `notEmail`, `passwordBlacklist(breached-passwords.txt)`; no composition rules, no expiry | NIST SP 800-63B-4 as in ADR-0017. `notUsername` rejects only a password that is exactly the username (tested); Keycloak 26.8 also has `notContainsUsername` (rejects a password that contains it), which is not enabled because it would reject legitimate passphrases for short usernames. |
 | Breached list | `identity/realm/breached-passwords.txt`, mounted into Keycloak's `data/password-blacklists/` | Starter list of 45 entries. Replace it with a large breached-password list before real users register. |
 | Lockout | `bruteForceProtected`, 5 failures, temporary (60 s growing to 15 min), never permanent | Per account. An unrelated account keeps working. |
 | Events | login, failures, password and OTP changes, lockouts kept 90 days; admin events on, without details (no password in them) | Feeds IAM-05. |
 
 Differences from ADR-0017 (stock Keycloak cannot do them; decisions for the SA):
-- **Staff password length 14.** A realm has one password policy, so patients and staff share 12. Enforcing 14 for staff needs a custom
-  authenticator or a separate realm.
+- **Staff password length 14.** Decided in IAM-10: one policy of 12 characters for everyone (a realm has a single password policy); the staff guarantee is the second factor (section 10).
 - **IP-based blocking.** Keycloak locks accounts, not addresses. The public route has a per-client-IP rate limit in Envoy instead
   (`BackendTrafficPolicy`, 120 requests per minute); it counts the real client IP only if the load balancer preserves it
   (`externalTrafficPolicy: Local` or a `ClientTrafficPolicy` that trusts the forwarded header), which is not configured here.
-- **Staff MFA** (TOTP or WebAuthn at first login) is not part of this task and is not configured; the realm does not issue `amr`.
+- **Staff MFA**: done in IAM-10 (section 10).
 
 ### Admin console not exposed to the Internet
 The `/idp` HTTPRoute is the **only** path control from outside: it lists only the OIDC paths (section 3), so `/idp/admin`, the master
@@ -210,3 +209,39 @@ follow-up, not a property of the current setup.
   `mvn -B -pl libs/java/shp-security -am verify`. The same commands work against the managed server through a private connection:
   `pg_dump -h <fqdn> -U keycloak -Fc keycloak > keycloak.dump` and `pg_restore -h <new-fqdn> -U keycloak -d keycloak --no-owner keycloak.dump`.
 - What a backup holds: password hashes (Argon2id) and the realm signing keys. Treat dumps like production secrets (encrypted storage, access limited to the IAM operators).
+
+## 10. Staff MFA and recorded design decisions (IAM-10)
+
+### Recorded decisions (SA)
+1. **Staff MFA is TOTP, enforced by the realm and visible in the token.** Patients are not forced. WebAuthn is optional and not enabled.
+2. **One password policy for everyone: minimum 12 characters** (`length(12)`). The earlier "14 for staff" in ADR-0017 is withdrawn; staff are protected by the second factor.
+3. **Audience.** `aud` is an isolation boundary (IAM-02): a user token carries `shp-api`, a service token carries only the target's `svc-<target>`, and a service accepts its own audience or `shp-api`. Exchanged tokens (IAM-07) name the target only (section 7).
+4. **Naming.** The role for the OTP endpoints of `notification` is `internal.notification` (the code and realm convention), not `internal.otp`.
+
+### How staff MFA is built (supported mechanism, no script, no custom code)
+Researched on Keycloak 26.8.2 through `/admin/serverinfo` and by experiment: the protocol mapper `oidc-amr-mapper` (*Authentication Method Reference (AMR)*) exists and is supported. It
+emits the reference values configured on the authentication steps that ran: an authenticator execution carries `default.reference.value` (and a max age) in its config, and the mapper writes those
+values into `amr`. Without that config the claim is an empty list. So the realm sets reference value `mfa` on the OTP step and adds the mapper to `shp-web` (and the local `shp-test`, and `svc-ai` for exchanged tokens).
+- `identity/realm/flows.json` holds the complete authentication flows of Keycloak 26.8.2 (a realm import that names any flow replaces the defaults) with these changes, merged by `tools/identity/realm.py` **into the cluster realm only**: the local realm keeps the stock flows (decision N3), because a developer's seeded staff user must sign in with a password on their own machine. `SHP_REQUIRE_MFA_FOR_STAFF` is the one switch both libraries read (the local chart sets `false`). The flows are:
+  a conditional sub-flow **Browser - Staff MFA** in `forms` (condition: holds role `mfa-required`; step: OTP form REQUIRED, reference `mfa`). An OTP form step with no enrolled factor makes
+  Keycloak start the *Configure OTP* required action, so staff without a factor are forced to enrol. The stock conditional OTP sub-flow now skips staff (they were just asked) and applies to patients who chose to enrol OTP.
+  The same pair exists in the direct-grant flow (the `shp-test` client; the local realm has neither, and the MFA test creates a test-only client so it can run against the cluster realm).
+- Staff roles `doctor`, `nurse`, `admin`, `dpo` are composites that include the marker role `mfa-required`, so a user with any staff role (even next to `patient`) is caught by one condition.
+  The marker appears in the `roles` claim and is ignored by `ShpJwt` (it keeps only SHP roles).
+- `ShpJwt`, shp-web and the Python library are **unchanged**: they already demand `amr` containing `mfa` for staff.
+- Upgrading Keycloak: `flows.json` pins the stock flows of 26.8.2; on an upgrade regenerate it from a partial export (`/admin/realms/shp/partial-export`) and re-apply the edits (`Browser - Staff MFA`, `Direct Grant - Staff MFA`, the patient exclusion, the reference config).
+
+### What is proven (real Keycloak 26.8.2 in a container; `KeycloakStaffMfaTest`, `KeycloakTokenTest`, `KeycloakTokenExchangeTest`, `KeycloakHardeningTest`)
+- Each staff role: password alone gets no token; password plus a valid TOTP code gets a token with `amr` containing `mfa` that `ShpJwt` accepts as staff; a wrong code is refused.
+- A staff user with no factor cannot get a token by direct grant, and in the browser flow is sent to *Configure OTP* after the password page.
+- A patient signs in with the password only (no OTP page) and passes `ShpJwt` with the MFA rule on; a patient who enrolled OTP is asked for it.
+- The exchanged token of a staff user keeps `amr` containing `mfa` and names only `svc-clinical`; internal service tokens name only their targets (`svc-<target>`).
+- A password of 11 characters is refused, 12 accepted.
+
+### What is not proven or is limited
+- **First login:** the token issued in the same login that enrols the first TOTP has no `amr: mfa` (the factor was created in that session, not presented), so `ShpJwt` refuses it as a staff token; the user signs in again and is asked for the code. The web app must tell the user to sign in again after enrolling.
+- Only TOTP is covered; WebAuthn is not configured. Recovery codes and loss of the authenticator are not designed here (an admin resets the credential).
+- The `amr` claim states that an OTP step ran in the session. An existing single-sign-on session keeps its original `amr`; session lifetime is bounded by the realm's session settings.
+- Direct grant: the cluster realm has no client with the password grant (`shp-test` is local only), so staff MFA is enforced there only through the browser flow; a test that needs the direct grant creates its own client (`KeycloakTestSupport.createTestClient`). The earlier observation that a staff user without a factor gets a 500 `unknown_error` from the direct grant came from the local realm while it still carried the staff-MFA flows; since decision N3 the local realm is stock and cannot reproduce it.
+- Not tested in a browser with a real authenticator app or on the cluster; the realm of a running environment is not changed by a merge (section 2).
+- Local dev users made by `make seed-users` hold a staff role but need no second factor: the local realm has no staff-MFA flow (decision N3), and `make token USER=doctor.demo` needs no code. `TOTP=<code> make token ...` still works if you enrol an authenticator locally (the stock conditional OTP applies to any user who has one).
