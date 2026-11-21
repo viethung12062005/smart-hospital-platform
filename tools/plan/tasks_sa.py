@@ -144,6 +144,8 @@ SA_TASKS = [
      "Tests for valid/bad-signature/expired/wrong-aud tokens and staff missing MFA; configured via environment variables", "SA", 3, "LOC-02", "P1", "07 §2, 15 §1"),
     ("SHR-21", "US-007", "Identity resolver: sub → fhirUser + roles + disabled + linkedProfiles (record, scope), 60-second cache",
      "Locked accounts rejected within ≤ 60 seconds; cache expires correctly; on clinical failure use the cache, return 503 when there is no cache", "SA", 3, "SHR-20", "P1", "15 §8, C2"),
+    ("SHR-33", "US-076, US-077", "Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts",
+     "HttpIdentityLinkClient and IdentityLink carry linkedProfiles (absent field tolerated, entries past expiresAt dropped); Principal exposes them so linked, linked-records and guardian can be set from them; cached 60 seconds, expired entries dropped; tests", "SA", 3, "SHR-21, SHR-30, CLN-33", "S4", "15 §3, §8, ADR-0018"),
     # Moved to SA: event envelope, audit emitter, endpoint-bound authorization filter.
     ("SHR-06", "ENABLER", "CloudEvents envelope + JSON Schema validation + contract test helper",
      "Events with a bad schema are rejected; helper used by every service", "SA", 3, "ARC-07", "P2", "13 §1"),

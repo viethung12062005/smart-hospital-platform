@@ -99,6 +99,18 @@ public record ResourceContext(
       return this;
     }
 
+    /**
+     * Set {@code linkedProfile}, {@code linkedRecords} and {@code guardianLink} from the caller's
+     * unexpired link to {@code patientId} (15 §3). No link means all three stay false.
+     */
+    public Builder linkedFrom(Principal principal, String patientId, Instant now) {
+      var link = principal.linkTo(patientId, now);
+      linkedProfile = link.isPresent();
+      linkedRecords = link.map(LinkedProfile::coversRecords).orElse(false);
+      guardianLink = link.map(LinkedProfile::isGuardian).orElse(false);
+      return this;
+    }
+
     public ResourceContext build() {
       return new ResourceContext(
           patientId,

@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **354 tasks**, **1218 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **355 tasks**, **1221 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -14,13 +14,13 @@ Total: **354 tasks**, **1218 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W4 | 5 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
-| W7 | 40 | 30 | 30 | 30 |
+| W7 | 43 | 30 | 30 | 30 |
 | W8 | **63** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **265** | **120** | **169** | **128** |
+| **Total** | **268** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -246,6 +246,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | SHR-11 | ENABLER | Mongo search executor: compile search criteria to query + use index | Query plan uses IXSCAN for main queries | SA | 3 | SHR-10 | S1 | 03 §2.6 |
 | SHR-12 | US-035 | Idempotency-Key for MongoDB (document service) | Same key → same result; different body 422 | SA | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
 | SHR-27 | US-047 | Authz: emit audit for every decision (allow and deny) | Every Deny emits audit outcome=denied with a reason code; tests | SA | 2 | SHR-24, SHR-09 | S1 | 05 §1, E11(pub) |
+| SHR-33 | US-076, US-077 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | HttpIdentityLinkClient and IdentityLink carry linkedProfiles (absent field tolerated, entries past expiresAt dropped); Principal exposes them so linked, linked-records and guardian can be set from them; cached 60 seconds, expired entries dropped; tests | SA | 3 | SHR-21, SHR-30, CLN-33 | S4 | 15 §3, §8, ADR-0018 |
 
 ## PY — Shared libraries (Python, for ai/ml, SA)
 
