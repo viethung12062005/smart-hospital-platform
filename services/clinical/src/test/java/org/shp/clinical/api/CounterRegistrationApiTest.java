@@ -164,6 +164,14 @@ class CounterRegistrationApiTest extends ClinicalApiTestBase {
         .isEqualTo(403);
     assertThat(create(null, body("Le", "Thi Hoa", PHONE, BIRTH), "").statusCode()).isEqualTo(401);
     assertThat(patients()).isZero();
+    // The matrix allows a patient to create a Patient (self-registration, C1), so the shared
+    // interceptor logs the request as an allow; the refusal must still be in the trail as a denial.
+    assertThat(auditRecords())
+        .filteredOn(a ->
+            "create".equals(a.getString("action"))
+                && "Patient".equals(a.getString("resource"))
+                && "denied".equals(a.getString("outcome")))
+        .isNotEmpty();
   }
 
   @Test

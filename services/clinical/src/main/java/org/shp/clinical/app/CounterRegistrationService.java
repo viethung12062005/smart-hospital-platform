@@ -1,15 +1,19 @@
 package org.shp.clinical.app;
 
+import io.opentelemetry.api.trace.Span;
 import java.time.Clock;
 import java.util.UUID;
 import org.hl7.fhir.r4.model.ContactPoint;
 import org.hl7.fhir.r4.model.Patient;
+import org.shp.authz.AuthzDecision;
+import org.shp.authz.Principal;
 import org.shp.clinical.infra.PatientRepository;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.events.audit.AuditActions;
 import org.shp.events.audit.AuditRecord;
 import org.shp.events.audit.AuditRecordBuilder;
 import org.shp.events.audit.AuditSink;
+import org.shp.events.audit.AuthzAudit;
 import org.shp.fhir.FhirJson;
 import org.shp.web.errors.ShpException;
 import org.springframework.stereotype.Service;
@@ -72,6 +76,30 @@ public class CounterRegistrationService {
       auditOverride(created.id(), reason, nurse);
     }
     return created;
+  }
+
+  /**
+   * C3 is the counter path and is for nurses only, but the matrix also lets a patient create a
+   * Patient ({@code PAT-CREATE-PAT}, self-registration C1). The matrix therefore allows the request
+   * and the shared interceptor would record its 403 as a success; record the refusal as the denial
+   * it is, as the field-rule refusals of C5 do.
+   */
+  public void auditRefusal(Principal principal, String clientIp) {
+    var span = Span.current().getSpanContext();
+    audit.emit(
+        AuthzAudit.fromDecision(
+            clock,
+            SERVICE,
+            principal,
+            "Patient",
+            "create",
+            "Patient",
+            AuthzDecision.deny("role-not-allowed"),
+            null,
+            span.isValid() ? span.getTraceId() : null,
+            clientIp,
+            null,
+            null));
   }
 
   /** The override of a suspected duplicate, with its reason (C3: "audited"). */

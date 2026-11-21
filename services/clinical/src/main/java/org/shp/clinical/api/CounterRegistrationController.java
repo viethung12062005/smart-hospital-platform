@@ -50,6 +50,7 @@ public class CounterRegistrationController {
     // The matrix also lets a patient create a Patient (PAT-CREATE-PAT, for self-registration C1);
     // C3 is the counter path and is for nurses only.
     if (!p.roles().contains("nurse")) {
+      service.auditRefusal(p, req.getRemoteAddr());
       throw new ShpException("forbidden", "Only a nurse creates a record at the counter.");
     }
     Entry created =
