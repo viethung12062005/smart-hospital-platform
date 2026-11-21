@@ -12,3 +12,6 @@ dev/.local
 .vscode
 *.iml
 **/dist
+# contracts/terminology/dist is committed generated source (export_terminology.py), not build
+# output: the Java modules embed it in the jar at build time, so it must stay in the context.
+!contracts/terminology/dist

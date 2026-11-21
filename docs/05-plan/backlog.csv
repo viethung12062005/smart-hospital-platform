@@ -84,6 +84,7 @@ AI-02,AI,US-052,"Document parser: PDF, DOCX, Markdown → structured text (secti
 AI-03,AI,US-052,"Chunker: 600 tokens, 80 overlap, split by section heading",Chunks do not cut across sections; length tests,SA,4,AI-02,S1,4,06 §1.2
 AI-04,AI,US-052,"Local bge-m3 embedding (Ollama, 1024 dims) + index upsert/delete; version swap with no gap",New chunks indexed before old deleted; test,SA,4,"AI-03, PY-07",S1,4,06 §1.2
 ARC-13,ARC,ENABLER,Sprint review + planning S1,"Demo, update backlog status and risks; short minutes",SA,2,,S1,4,PM
+ARC-21,ARC,ENABLER,Include the terminology catalogue in the Docker build context,Docker-built scheduling and clinical images contain BOOT-INF/classes/terminology/*.json; the SCH-08 job and S1 schedule creation work from the image,SA,2,ARC-20,P3,4,01-domain-model §3
 CIT-02,CIT,US-070,Reusable workflow Python CI,"ruff lint+format, mypy, pytest + coverage, pip-audit",SA,3,GOV-01,P3,4,ADR-0009
 CIT-04,CIT,US-070,Reusable workflow Helm validate,"helm lint, render per environment, kubeconform strict, Trivy config",SA,3,GOP-01,P3,4,ADR-0009
 CIT-07,CIT,US-070,Shared check workflow for every PR,"gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python, actions)",SA,3,GOV-01,P3,4,NFR-SEC6
