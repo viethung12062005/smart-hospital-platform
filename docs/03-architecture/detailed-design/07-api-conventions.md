@@ -122,9 +122,11 @@ When slots open (07:00) and load exceeds the threshold, the gateway enables a **
   `require_service` (Python) / `ShpJwt.requireService` (Java), checked on `azp` + `internal.<target>` (ADR-0017).
   Java services attach the token with `ServiceTokenInterceptor` (library `shp-web`, token from `shp.auth.client.*`:
   cached, refreshed 30 seconds before expiry, never logged); the `RestClient` of every client of an `/internal` API
-  gets it (SHR-32). A service token carries only `svc-<target>` for the services its caller may call, never `shp-api`.
+  gets an interceptor bound to its target (SHR-32). The token endpoint requires the single optional scope
+  `call-<target>` from the caller's `calls` allow-list and issues only `svc-<target>`, never `shp-api`.
 - When AI needs to read patient data **on behalf of the user**, AI uses RFC 8693 token exchange
-  (Keycloak) to call public APIs, so all of the user's permission checks still apply.
+  (Keycloak) with the exchange-only client `shp-api`, scope `exchange-<target>` and audience `svc-<target>` to
+  call public APIs, so all of the user's permission checks still apply.
 
 ## 9. Health and metrics
 

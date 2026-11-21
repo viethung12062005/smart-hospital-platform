@@ -45,4 +45,8 @@ class Settings(BaseSettings):
     client_secret: str = ""
     client_assertion_file: str = ""  # projected ServiceAccount token; preferred over client_secret (IAM-02)
 
+    # Standard exchange uses the existing user audience as a dedicated client identity.
+    exchange_client_secret: str = ""  # local only
+    exchange_client_assertion_file: str = ""  # separate ServiceAccount binding for the exchange-only client
+
     daily_token_limit: int = 2_000_000

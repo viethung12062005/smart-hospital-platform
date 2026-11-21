@@ -52,6 +52,8 @@ public final class ShpJwt {
     return new DelegatingOAuth2TokenValidator<>(
         timestamps,
         new JwtIssuerValidator(props.authority()),
+        // A Keycloak ID token is not an API access token, even when its audience is shp-api.
+        new JwtClaimValidator<String>("typ", type -> !"ID".equals(type)),
         new JwtClaimValidator<Collection<String>>(
             "aud", aud -> aud != null && aud.stream().anyMatch(accepted::contains)),
         jwt -> mfa(jwt, props));
