@@ -1,8 +1,9 @@
 """Token exchange on behalf of the user (RFC 8693, Keycloak) for ai calling clinical/scheduling (PY-02, 15 §7).
 
-The resulting token keeps the user's `sub`, so the authorization matrix applies unchanged; `audience` is the target
-service.
-Results are cached by (original token, audience) until 30 seconds before expiry. Never log tokens.
+The resulting token keeps the user's `sub`, so the authorization matrix applies unchanged. Its `aud` is the target
+service's own audience `svc-<target>` and nothing else: `aud` is an isolation boundary, so the exchanged token is
+accepted by that service and by no other (ADR-0017).
+Results are cached by (original token, target) until 30 seconds before expiry. Never log tokens.
 """
 
 import hashlib
@@ -17,6 +18,11 @@ from shp_platform.errors import ShpError
 
 GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
 ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token"  # noqa: S105 - token type name, not a secret
+
+
+def service_audience(service: str) -> str:
+    """Audience of a service token: the service's client id `svc-<name>` (ADR-0017)."""
+    return service if service.startswith("svc-") else f"svc-{service}"
 
 
 @dataclass(frozen=True)
@@ -39,7 +45,9 @@ class TokenExchanger:
         self._clock = clock
         self._cache: dict[tuple[str, str], tuple[str, float]] = {}
 
-    def exchange(self, subject_token: str, audience: str) -> str:
+    def exchange(self, subject_token: str, target: str) -> str:
+        """Exchange the user's token for one accepted by `target` (a service name such as `clinical`)."""
+        audience = service_audience(target)
         key = (hashlib.sha256(subject_token.encode()).hexdigest(), audience)
         hit = self._cache.get(key)
         now = self._clock()
