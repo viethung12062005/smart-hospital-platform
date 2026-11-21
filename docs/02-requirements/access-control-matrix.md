@@ -17,6 +17,7 @@
 | Appointment: book | Own | No | Yes | No | No |
 | Appointment: cancel | Own (>= 2h before the visit) | No | Yes | No | No |
 | Appointment: view | Own | The doctor's own | Yes | No | No |
+| Appointment: view version history (`GET /fhir/Appointment/{id}/_history`) | No | No | Yes | Yes | No |
 | Encounter / Observation: read | Own (finished) | Care / BG | Yes | No | No |
 | Encounter: create / check-in | No | Care | Yes | No | No |
 | Condition (diagnosis): write | No | Care | No | No | No |
@@ -34,6 +35,10 @@
 | Audit: modify / delete | No | No | No | No | No |
 | Break-glass | No | Yes (reason required, 60 minutes) | No | No | No |
 | Backup / restore | No | No | No | Yes (via operations pipeline, with approval) | No |
+
+> **Admin and appointment history (SCH-21):** Admin reads an appointment's **version history** through
+> `GET /fhir/Appointment/{id}/_history` (`AppointmentHistory`, non-clinical) but has no direct `Appointment` read:
+> `Appointment` stays clinical data. Rules `APPT-HIST-NUR` and `APPT-HIST-ADM` in `contracts/authz/matrix.yaml`.
 
 ## Enforcement rules
 1. **Default deny**: an action not present in the table is denied.

@@ -60,6 +60,8 @@ rules:
   - { id: APPT-CANCEL-PAT,resource: Appointment, action: cancel, role: patient, when: [own, before-2h] }
   - { id: APPT-CANCEL-NUR,resource: Appointment, action: cancel, role: nurse,   when: [] }
   - { id: APPT-READ-DOC,  resource: Appointment, action: read,   role: doctor,  when: [self-practitioner] }
+  - { id: APPT-HIST-NUR, resource: AppointmentHistory, action: read, role: nurse, when: [] }
+  - { id: APPT-HIST-ADM, resource: AppointmentHistory, action: read, role: admin, when: [] }
   - { id: ENC-READ-PAT,   resource: Encounter,   action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
   - { id: ENC-WRITE-DOC,  resource: Encounter,   action: update, role: doctor,  when: [care, unfinished-encounter] }
   - { id: COND-WRITE-DOC, resource: Condition,   action: create, role: doctor,  when: [care] }
@@ -70,7 +72,17 @@ rules:
   - { id: AUDIT-READ-ADM, resource: Audit,       action: read,   role: admin,   when: [], hide: [reason] }
   - { id: BG-START-DOC,   resource: BreakGlass,  action: start,  role: doctor,  when: [not-care] }
 ```
-Beyond the rows above: **admin has no row for clinical data**, `dpo` only has rows for `Audit`.
+Beyond the rows above: **admin has no row for clinical data** (`AppointmentHistory` is declared `clinical: false`, see
+below), `dpo` only has rows for `Audit`.
+
+**Appointment history and admin (SA decision, SCH-21).** `Appointment` is `clinical: true`, so there is no `admin` rule for
+`Appointment/read`: an admin cannot read an appointment directly. The change history is a **separate resource**,
+`AppointmentHistory` (`clinical: false`, action `read`), with `APPT-HIST-NUR` and `APPT-HIST-ADM`: Nurse and Admin may call
+`GET /fhir/Appointment/{id}/_history` (S17), which returns every stored version of that appointment from
+`scheduling.resource_history` (`meta.versionId`, `meta.lastUpdated`, `meta.source` = the user who changed it), newest first.
+Patient, Doctor and DPO have no rule and receive `403` without learning whether the appointment exists. Modelling the
+decision as its own resource instead of widening `Appointment/read` for admin keeps it deny-by-default, gives it its own
+allow/deny test grid from `AuthzTestGenerator`, and audits it like every other decision.
 
 **Test generation (SHR-26):** `AuthzTestGenerator` in `libs/java/shp-authz` derives the test grid from the matrix itself: every
 declared `(resource, action)` × each of the 5 roles × every combination of conditions that pair's rules use (honouring the
