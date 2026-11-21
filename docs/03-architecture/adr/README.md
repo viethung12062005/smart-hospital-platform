@@ -22,3 +22,4 @@ Each ADR follows the format: Context → Decision → Alternatives considered �
 | [0016](0016-frontend-web-app.md) | One PWA web app (React + TypeScript + Vite + Mantine 7) in the application repo; selectively reuse the PoC portal | Proposed |
 | [0017](0017-keycloak-identity-everywhere.md) | Keycloak is the single identity provider for application users in every environment (replaces Entra ID in the cloud) | Accepted |
 | [0018](0018-profile-links-and-claim.md) | One account manages multiple profiles (children under 16, authorized adults), self-claims existing records via OTP, shared OTP service (Zalo first, SMS after) | Accepted |
+| [0019](0019-service-bus-binder-wiring.md) | Service Bus binder wiring in shp-messaging: one binder switch, session subscription, broker-owned retry (5 deliveries) | Accepted |
