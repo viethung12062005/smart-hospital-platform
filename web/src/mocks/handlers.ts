@@ -1,8 +1,16 @@
-import type { Appointment, Bundle, OperationOutcome, Parameters, Resource } from '@medplum/fhirtypes';
+import type { Appointment, Bundle, OperationOutcome, Parameters, Resource, Schedule } from '@medplum/fhirtypes';
 import dayjs from 'dayjs';
 import { http, HttpResponse, type HttpResponseResolver } from 'msw';
+import type { ScheduleTemplateInput } from '@/api/scheduling';
+import { SPECIALTIES } from '@/api/terminology';
 import { decodeJwtPayload, rolesFromClaims, type Role } from '@/auth/roles';
 import { MOCK_USERS } from '@/auth/session';
+import {
+  hasTemplateErrors,
+  MAX_COMMENT_LENGTH,
+  type TemplateRowDraft,
+  validateTemplateRows,
+} from '@/pages/staff/scheduleValidation';
 import { aiHandlers, resetAiMock } from './ai';
 import { createDb, type MockDb } from './data';
 
@@ -13,10 +21,12 @@ import { createDb, type MockDb } from './data';
  */
 let db: MockDb = createDb();
 const idempotency = new Map<string, { body: string; appointmentId: string }>();
+let scheduleSeq = 0;
 
 export function resetMockDb(): void {
   db = createDb();
   idempotency.clear();
+  scheduleSeq = 0;
   resetAiMock();
 }
 
@@ -50,7 +60,26 @@ const MESSAGES: Record<string, [string, string]> = {
   forbidden: ['Bạn không có quyền thực hiện thao tác này.', 'You are not allowed to do this.'],
   'not-found': ['Không tìm thấy.', 'Not found.'],
   unauthenticated: ['Chưa đăng nhập.', 'Not signed in.'],
+  'validation-failed': ['Dữ liệu không hợp lệ.', 'Validation failed.'],
 };
+
+function problemJson(request: Request, status: number, code: string) {
+  const en = request.headers.get('Accept-Language')?.startsWith('en');
+  const msg = MESSAGES[code] ?? ['Lỗi', 'Error'];
+  const detail = en ? msg[1] : msg[0];
+  return HttpResponse.json(
+    { type: `https://shp.example.org/problems/${code}`, title: detail, status, code, detail },
+    {
+      status,
+      headers: { 'Content-Type': 'application/problem+json', 'X-Request-Id': `mock-${Date.now().toString(16)}` },
+    },
+  );
+}
+
+const canReadSchedule = (me: Caller) =>
+  me.roles.includes('nurse') || me.roles.includes('admin') || me.roles.includes('doctor');
+const canManageSchedule = (me: Caller) => me.roles.includes('nurse') || me.roles.includes('admin');
+const isDoctorOnly = (me: Caller) => me.roles.includes('doctor') && !canManageSchedule(me);
 
 function outcome(request: Request, status: number, code: string, extra: Partial<OperationOutcome> = {}) {
   const en = request.headers.get('Accept-Language')?.startsWith('en');
@@ -151,6 +180,204 @@ export const handlers = [
   http.get(
     '/fhir/Practitioner',
     authed(() => HttpResponse.json(bundle(db.practitioners))),
+  ),
+
+  http.get(
+    '/fhir/Schedule',
+    authed(({ request, me }) => {
+      if (!canReadSchedule(me)) return outcome(request, 403, 'forbidden');
+      const qs = new URL(request.url).searchParams;
+      const actorRaw = qs.get('actor');
+      let actor = actorRaw ? (actorRaw.startsWith('Practitioner/') ? actorRaw : `Practitioner/${actorRaw}`) : null;
+      if (isDoctorOnly(me)) {
+        if (actor && actor !== me.fhirUser) return outcome(request, 403, 'forbidden');
+        actor = me.fhirUser ?? '__none__';
+      }
+      const specRaw = qs.get('specialty');
+      const specialty = specRaw ? specRaw.split('|').pop()?.toLowerCase() : null;
+      const activeRaw = qs.get('active');
+      const list = db.schedules.filter(
+        (s) =>
+          (!actor || s.actor?.[0]?.reference === actor) &&
+          (!specialty || s.specialty?.[0]?.coding?.[0]?.code?.toLowerCase() === specialty) &&
+          (activeRaw === null || String(!!s.active) === activeRaw),
+      );
+      return HttpResponse.json(bundle(list));
+    }),
+  ),
+
+  http.get(
+    '/fhir/Schedule/:id',
+    authed(({ request, params, me }) => {
+      if (!canReadSchedule(me)) return outcome(request, 403, 'forbidden');
+      const s = db.schedules.find((x) => x.id === params['id']);
+      if (!s) return outcome(request, 404, 'not-found');
+      if (isDoctorOnly(me) && s.actor?.[0]?.reference !== me.fhirUser) return outcome(request, 403, 'forbidden');
+      return withEtag(s);
+    }),
+  ),
+
+  http.post(
+    '/fhir/Schedule',
+    authed(async ({ request, me }) => {
+      if (!canManageSchedule(me)) return outcome(request, 403, 'forbidden');
+      const body = (await request.json()) as Partial<Schedule>;
+      if (body.actor?.length !== 1) return outcome(request, 400, 'validation-failed');
+      const actorRef = body.actor[0]?.reference;
+      const specCode = body.specialty?.[0]?.coding?.[0]?.code?.trim().toLowerCase();
+      if (!actorRef || !specCode || !SPECIALTIES.some((sp) => sp.code === specCode)) {
+        return outcome(request, 400, 'validation-failed');
+      }
+      const hasRole = db.roles.some(
+        (r) =>
+          r.active !== false &&
+          r.practitioner?.reference === actorRef &&
+          r.specialty?.[0]?.coding?.[0]?.code === specCode,
+      );
+      if (!hasRole) return outcome(request, 400, 'validation-failed');
+      const comment = body.comment?.trim();
+      if (comment && comment.length > MAX_COMMENT_LENGTH) return outcome(request, 400, 'validation-failed');
+
+      const duplicate = db.schedules.some(
+        (s) => s.active && s.actor?.[0]?.reference === actorRef && s.specialty?.[0]?.coding?.[0]?.code === specCode,
+      );
+      if (duplicate) return outcome(request, 409, 'invalid-state-transition');
+
+      const practitioner = db.practitioners.find((p) => `Practitioner/${p.id}` === actorRef);
+      const displayName =
+        body.actor[0]?.display ??
+        (practitioner
+          ? [
+              ...(practitioner.name?.[0]?.prefix ?? []),
+              practitioner.name?.[0]?.family,
+              ...(practitioner.name?.[0]?.given ?? []),
+            ]
+              .filter(Boolean)
+              .join(' ')
+          : actorRef);
+      const now = dayjs().startOf('day');
+      const created: Schedule = {
+        resourceType: 'Schedule',
+        id: `sch-new-${++scheduleSeq}`,
+        meta: { versionId: '1', lastUpdated: new Date().toISOString() },
+        active: typeof body.active === 'boolean' ? body.active : true,
+        actor: [{ reference: actorRef, display: displayName }],
+        specialty: body.specialty,
+        planningHorizon: {
+          start: now.toISOString(),
+          end: now.add(30, 'day').hour(23).minute(59).second(59).toISOString(),
+        },
+        ...(comment ? { comment } : {}),
+      };
+      db.schedules.push(created);
+      db.templates[created.id!] = [];
+      return withEtag(created, 201);
+    }),
+  ),
+
+  http.put(
+    '/fhir/Schedule/:id',
+    authed(async ({ request, params, me }) => {
+      if (!canManageSchedule(me)) return outcome(request, 403, 'forbidden');
+      const idx = db.schedules.findIndex((x) => x.id === params['id']);
+      const existing = idx >= 0 ? db.schedules[idx] : undefined;
+      if (!existing) return outcome(request, 404, 'not-found');
+      const ifMatch = request.headers.get('If-Match');
+      if (!ifMatch) return outcome(request, 428, 'precondition-required');
+      if (ifMatch !== `W/"${existing.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
+
+      const body = (await request.json()) as Partial<Schedule>;
+      if (typeof body.active !== 'boolean') return outcome(request, 400, 'validation-failed');
+      const existingActor = existing.actor?.[0]?.reference;
+      const existingSpec = existing.specialty?.[0]?.coding?.[0]?.code;
+      if (
+        body.actor?.length !== 1 ||
+        body.actor[0]?.reference !== existingActor ||
+        body.specialty?.[0]?.coding?.[0]?.code !== existingSpec
+      ) {
+        return outcome(request, 400, 'validation-failed');
+      }
+      const comment = body.comment?.trim();
+      if (comment && comment.length > MAX_COMMENT_LENGTH) return outcome(request, 400, 'validation-failed');
+      if (body.active) {
+        const dup = db.schedules.some(
+          (s) =>
+            s.id !== existing.id &&
+            s.active &&
+            s.actor?.[0]?.reference === existingActor &&
+            s.specialty?.[0]?.coding?.[0]?.code === existingSpec,
+        );
+        if (dup) return outcome(request, 409, 'invalid-state-transition');
+      }
+
+      const nextVersion = String(Number(existing.meta?.versionId ?? '1') + 1);
+      const updated: Schedule = {
+        ...existing,
+        meta: { versionId: nextVersion, lastUpdated: new Date().toISOString() },
+        active: body.active,
+        ...(comment ? { comment } : {}),
+      };
+      if (!comment) delete updated.comment;
+      db.schedules[idx] = updated;
+      return withEtag(updated);
+    }),
+  ),
+
+  http.get(
+    '/api/v1/scheduling/schedules/:id/templates',
+    authed(({ request, params, me }) => {
+      if (!canReadSchedule(me)) return problemJson(request, 403, 'forbidden');
+      const s = db.schedules.find((x) => x.id === params['id']);
+      if (!s) return problemJson(request, 404, 'not-found');
+      if (isDoctorOnly(me) && s.actor?.[0]?.reference !== me.fhirUser) return problemJson(request, 403, 'forbidden');
+      return HttpResponse.json(
+        { templates: db.templates[s.id!] ?? [] },
+        { headers: { ETag: `W/"${s.meta?.versionId ?? '1'}"` } },
+      );
+    }),
+  ),
+
+  http.put(
+    '/api/v1/scheduling/schedules/:id/templates',
+    authed(async ({ request, params, me }) => {
+      if (!canManageSchedule(me)) return problemJson(request, 403, 'forbidden');
+      const idx = db.schedules.findIndex((x) => x.id === params['id']);
+      const existing = idx >= 0 ? db.schedules[idx] : undefined;
+      if (!existing) return problemJson(request, 404, 'not-found');
+      const ifMatch = request.headers.get('If-Match');
+      if (!ifMatch) return problemJson(request, 428, 'precondition-required');
+      if (ifMatch !== `W/"${existing.meta?.versionId ?? '1'}"`) return problemJson(request, 412, 'version-conflict');
+
+      const body = (await request.json()) as { templates?: ScheduleTemplateInput[] };
+      if (!Array.isArray(body?.templates)) return problemJson(request, 400, 'validation-failed');
+      const drafts: TemplateRowDraft[] = body.templates.map((item, i) => ({
+        key: String(i),
+        weekday: String(item.weekday ?? ''),
+        startTime: String(item.startTime ?? ''),
+        endTime: String(item.endTime ?? ''),
+        slotMinutes: String(item.slotMinutes ?? ''),
+        validFrom: String(item.validFrom ?? ''),
+        validTo: item.validTo ? String(item.validTo) : '',
+      }));
+      if (hasTemplateErrors(validateTemplateRows(drafts))) return problemJson(request, 400, 'validation-failed');
+
+      const nextVersion = String(Number(existing.meta?.versionId ?? '1') + 1);
+      db.schedules[idx] = { ...existing, meta: { versionId: nextVersion, lastUpdated: new Date().toISOString() } };
+      const saved = body.templates.map((t, i) => ({
+        id: `tpl-${existing.id}-${++scheduleSeq}-${i}`,
+        weekday: t.weekday,
+        startTime: t.startTime,
+        endTime: t.endTime,
+        slotMinutes: t.slotMinutes,
+        validFrom: t.validFrom,
+        validTo: t.validTo ?? null,
+      }));
+      db.templates[existing.id!] = saved;
+      return HttpResponse.json(
+        { templates: saved, affectedFutureSlots: 0 },
+        { headers: { ETag: `W/"${nextVersion}"` } },
+      );
+    }),
   ),
 
   http.get(

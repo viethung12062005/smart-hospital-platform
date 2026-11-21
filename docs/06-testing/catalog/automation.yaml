@@ -147,6 +147,7 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleTemplateApiTest.java::validTemplateSavesAndNonDivisibleRangeReturns400
+      - web/src/pages/staff/SchedulePage.test.tsx::TC-AC-ST.1
   TC-AC-02.1:
     status: automated
     refs:
