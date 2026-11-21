@@ -21,6 +21,12 @@ SHADOW_AGREE = Counter(
     "highRisk agreement between candidate (shadow) and production",
     ["model_version", "agree"],
 )
+SHADOW_SCORE_PSI = Gauge(
+    "shp_ml_shadow_score_psi",
+    "PSI of candidate (shadow) scores against production scores on the same appointments, over the last "
+    "SHADOW_PSI_WINDOW pairs; set once SHADOW_PSI_MIN_PAIRS pairs exist (16-mlops section 6: < 0.1)",
+    ["model_version"],
+)
 MODEL_INFO = Gauge("shp_ml_model_info", "Currently loaded model", ["model_version", "role"])
 EVENTS = Counter("shp_ml_events_total", "Events received by type and outcome", ["type", "outcome"])
 SCORING_SKIPPED = Counter("shp_ml_scoring_skipped_total", "Appointments not scored (no model yet)", ["reason"])

@@ -255,7 +255,8 @@ def _default_state() -> State:
     s = Settings()
     client: Any = MongoClient(s.mongodb_uri, tz_aware=True) if s.mongodb_uri else None
     registry = make_registry(s)
-    return State(s, client, ModelHolder(registry, s.shadow_enabled), registry)
+    holder = ModelHolder(registry, s.shadow_enabled, s.shadow_psi_window, s.shadow_psi_min_pairs)
+    return State(s, client, holder, registry)
 
 
 app = build_app(_default_state, Authenticator(AuthSettings.from_env()), Settings().callers())
