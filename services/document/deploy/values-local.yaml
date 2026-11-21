@@ -10,3 +10,5 @@ env:
   SHP_BLOB_DOCUMENTS_CONTAINER: documents
   SHP_BLOB_QUARANTINE_CONTAINER: quarantine
   SHP_BLOB_KB_CONTAINER: kb
+  # Azurite starts with no containers; create them on first use (never set in the cloud).
+  SHP_BLOB_CREATE_CONTAINERS: "true"
