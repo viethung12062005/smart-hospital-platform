@@ -104,3 +104,17 @@ def test_removed_candidate_stops_exporting_psi(registry: FileRegistry, rows: lis
 def test_window_settings_are_validated(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         ModelHolder(FileRegistry(tmp_path), psi_window=10, psi_min_pairs=20)
+
+
+def test_counter_series_exist_at_zero_once_a_version_is_loaded(registry: FileRegistry) -> None:
+    """The canary error-rate and highRisk queries need a 0 series for a version that has no error yet."""
+    registry.set_alias("candidate", "2")
+    holder = ModelHolder(registry, shadow_enabled=True)
+    holder.refresh()
+    for version in ("1", "2"):
+        assert REGISTRY.get_sample_value("shp_ml_predict_errors_total", {"model_version": version}) is not None
+        for flag in ("true", "false"):
+            labels = {"model_version": version, "high_risk": flag}
+            assert REGISTRY.get_sample_value("shp_ml_high_risk_total", labels) is not None
+    agree = {"model_version": "2", "agree": "false"}
+    assert REGISTRY.get_sample_value("shp_ml_shadow_agreement_total", agree) is not None

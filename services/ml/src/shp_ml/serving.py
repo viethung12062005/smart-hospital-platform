@@ -22,7 +22,15 @@ from typing import Any
 import pandas as pd
 
 from shp_ml.drift import psi
-from shp_ml.metrics import MODEL_INFO, PREDICT_ERRORS, PREDICT_LATENCY, SCORE_HIST, SHADOW_AGREE, SHADOW_SCORE_PSI
+from shp_ml.metrics import (
+    HIGH_RISK,
+    MODEL_INFO,
+    PREDICT_ERRORS,
+    PREDICT_LATENCY,
+    SCORE_HIST,
+    SHADOW_AGREE,
+    SHADOW_SCORE_PSI,
+)
 from shp_ml.model import NoShowModel
 from shp_ml.registry import Registry
 
@@ -76,6 +84,7 @@ class ModelHolder:
                 with self._lock:
                     self._production = loaded
                 MODEL_INFO.labels(model_version=prod_v, role="production").set(1)
+                _init_series(prod_v, shadow=False)
                 LOG.info("loaded production model %s", prod_v)
                 changed = True
             want_cand = cand_v if (self._shadow_enabled and cand_v is not None and cand_v != prod_v) else None
@@ -84,6 +93,8 @@ class ModelHolder:
                 cand = self._registry.load(want_cand)[0] if want_cand else None
                 with self._lock:
                     self._candidate = cand
+                if want_cand:
+                    _init_series(want_cand, shadow=True)
                 self._reset_pairs()
                 changed = True
             return changed
@@ -162,6 +173,17 @@ class ModelHolder:
         self._pairs.clear()
         self._pairs_key = None
         self._pairs_seen = 0
+
+
+def _init_series(version: str, shadow: bool) -> None:
+    """Create the counter series at 0 as soon as a version is loaded. A labelled counter otherwise appears only on its
+    first increment, so a healthy version would have no error series and the canary error-rate query would return
+    nothing instead of 0 (ML-25)."""
+    PREDICT_ERRORS.labels(model_version=version)
+    for flag in ("true", "false"):
+        HIGH_RISK.labels(model_version=version, high_risk=flag)
+        if shadow:
+            SHADOW_AGREE.labels(model_version=version, agree=flag)
 
 
 def start_poller(holder: ModelHolder, interval: float, stop: threading.Event) -> threading.Thread:
