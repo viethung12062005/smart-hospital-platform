@@ -50,6 +50,8 @@ spec:
   template:
     metadata:
       labels: { app: keycloak }
+      annotations:
+        shp.local/image-id: {{ .Values.keycloakImageId | default "" | quote }}
     spec:
       containers:
         - name: keycloak

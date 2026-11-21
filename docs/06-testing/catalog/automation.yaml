@@ -49,6 +49,19 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
     gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
+  TC-SEC-15:
+    status: partial
+    refs:
+      - identity/keycloak/src/test/java/org/shp/identity/keycloak/LoginThemeIT.java::unknownAccountWrongPasswordAndLockedAccountGetTheSameAnswer
+      - identity/keycloak/src/test/java/org/shp/identity/keycloak/LoginThemeIT.java::forgotPasswordAnswersTheSameAndMailsOnlyAnExistingAccount
+    gap: "Sign-in side on a real Keycloak 26.8 (IAM-03): lock after 5 failures, and the same answer for an unknown account, a wrong password, a locked account and forgot password. The API rate limit (429) and the bulk-search rule are not tested here (gateway, clinical)."
+  TC-NFR-U1:
+    status: partial
+    refs:
+      - identity/keycloak/src/test/java/org/shp/identity/keycloak/LoginThemeIT.java::loginPageIsVietnameseByDefaultAndOffersEnglish
+      - identity/keycloak/src/test/java/org/shp/identity/keycloak/LoginThemeIT.java::loginPageIsEnglishWhenTheBrowserAsksForIt
+      - identity/keycloak/src/test/java/org/shp/identity/keycloak/ThemeContrastTest.java::textMeetsWcagAa
+    gap: "Web screens: axe-core in the E2E tests (web/e2e/quality.spec.ts). Keycloak sign-in pages (IAM-03): language and colour contrast are automated; the axe-core scan of those pages was run by hand against a Keycloak container (0 violations, vi and en) and is not in CI."
   TC-SEC-02:
     status: partial
     refs:

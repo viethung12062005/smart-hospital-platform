@@ -28,6 +28,7 @@
     <module>libs/java/shp-data-mongo</module>
     <module>libs/java/shp-messaging</module>
     <module>libs/java/shp-fhir</module>
+    <module>identity/keycloak</module>
     <module>services/gateway</module>
     <module>services/scheduling</module>
     <module>services/notification</module>
