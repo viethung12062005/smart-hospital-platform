@@ -136,6 +136,22 @@ def service_accounts(realm: dict[str, Any]) -> None:
                             "userinfo.token.claim": "false",
                         },
                     },
+                    *(
+                        # the exchanged token of a user keeps the authentication methods of the user's session (IAM-10)
+                        [
+                            {
+                                "name": "amr-claim",
+                                "protocol": "openid-connect",
+                                "protocolMapper": "oidc-amr-mapper",
+                                "config": {
+                                    "id.token.claim": "false",
+                                    "access.token.claim": "true",
+                                },
+                            }
+                        ]
+                        if exchange
+                        else []
+                    ),
                     *[
                         {
                             "name": f"audience-{a}",
@@ -187,12 +203,60 @@ def exchange_audience(realm: dict[str, Any]) -> None:
                 )
 
 
+def authentication_flows(realm: dict[str, Any], env: str) -> None:
+    """Add the realm's authentication flows (IAM-10).
+
+    A realm import that names any flow replaces Keycloak's defaults, so identity/realm/flows.json holds the complete
+    set of Keycloak 26.8.2 with the staff-MFA sub-flows: see docs/04-devops/keycloak.md section 10 for what differs from
+    stock. The local realm keeps the stock flows (decision N3): the seeded staff users sign in with their password only,
+    because a flow that demands a second factor from every staff role would lock a developer out of their own cluster.
+    The cluster realm, which is where staff actually sign in, gets the staff-MFA flows.
+    """
+    flows = json.loads((SRC / "flows.json").read_text(encoding="utf-8"))
+    if env == "local":
+        flows = without_staff_mfa(flows)
+    realm["authenticationFlows"] = flows["authenticationFlows"]
+    realm["authenticatorConfig"] = flows["authenticatorConfig"]
+
+
+# The IAM-10 additions to the stock flows: two sub-flows, the conditions that select them and their OTP reference values.
+STAFF_MFA_FLOWS = ("Browser - Staff MFA", "Direct Grant - Staff MFA")
+STAFF_MFA_CONFIGS = (
+    "shp-user-is-staff",
+    "shp-user-is-not-staff",
+    "shp-otp-reference-mfa-staff-browser",
+    "shp-otp-reference-mfa-staff-direct-grant",
+)
+
+
+def without_staff_mfa(flows: dict[str, Any]) -> dict[str, Any]:
+    """The stock flows: the staff-MFA sub-flows, the executions that call them and their configs removed (N3)."""
+    out = copy.deepcopy(flows)
+    for flow in out["authenticationFlows"]:
+        flow["authenticationExecutions"] = [
+            execution
+            for execution in flow.get("authenticationExecutions", [])
+            if execution.get("flowAlias") not in STAFF_MFA_FLOWS
+            and execution.get("authenticatorConfig") not in STAFF_MFA_CONFIGS
+        ]
+    out["authenticationFlows"] = [
+        flow for flow in out["authenticationFlows"] if flow["alias"] not in STAFF_MFA_FLOWS
+    ]
+    out["authenticatorConfig"] = [
+        config
+        for config in out["authenticatorConfig"]
+        if config["alias"] not in STAFF_MFA_CONFIGS
+    ]
+    return out
+
+
 def build(env: str) -> dict[str, Any]:
     base = json.loads((SRC / "base.json").read_text(encoding="utf-8"))
     overlay = json.loads((SRC / f"overlay-{env}.json").read_text(encoding="utf-8"))
     realm: dict[str, Any] = merge(base, overlay)
     service_accounts(realm)
     exchange_audience(realm)
+    authentication_flows(realm, env)
     return realm
 
 
@@ -206,7 +270,7 @@ def forbidden(text: str) -> list[str]:
     users = json.loads(text).get("users", [])
     if any("serviceAccountClientId" not in u or "credentials" in u for u in users):
         found.append('"users" (only service-account users are allowed)')
-    if re.search(r'"credentials"\s*:', text):
+    if re.search(r'"credentials"\s*:\s*\[', text):
         found.append('"credentials"')
     if LITERAL_CREDENTIAL.search(text):
         found.append("literal password/secret/value (use a ${PLACEHOLDER})")

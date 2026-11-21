@@ -91,7 +91,9 @@ class KeycloakTokenTest {
                     + ADMIN_PASSWORD),
             "access_token");
     createUser(admin, "patient.it", "patient");
-    createUser(admin, "doctor.it", "doctor");
+    // staff must present a TOTP code (IAM-10); the seed is a synthetic test fixture
+    KeycloakTestSupport.createUser(
+        base, admin, "doctor.it", "doctor", USER_PASSWORD, KeycloakTestSupport.TEST_TOTP_SEED);
   }
 
   static void createUser(String admin, String username, String role) throws Exception {
@@ -150,13 +152,18 @@ class KeycloakTokenTest {
 
   /** Real token via password grant of the test client {@code shp-test} (same as `make token`). */
   static String token(String username) throws Exception {
+    String totp =
+        username.startsWith("doctor")
+            ? "&totp=" + KeycloakTestSupport.totp(KeycloakTestSupport.TEST_TOTP_SEED)
+            : "";
     return field(
         form(
             issuer + "/protocol/openid-connect/token",
             "grant_type=password&client_id=shp-test&username="
                 + username
                 + "&password="
-                + URLEncoder.encode(USER_PASSWORD, StandardCharsets.UTF_8)),
+                + URLEncoder.encode(USER_PASSWORD, StandardCharsets.UTF_8)
+                + totp),
         "access_token");
   }
 
@@ -234,17 +241,13 @@ class KeycloakTokenTest {
   }
 
   @Test
-  void staffWithoutMfaIsRejectedUnlessMfaIsSwitchedOff() throws Exception {
+  void staffTokenCarriesAmrMfaAndIsAcceptedWhenMfaIsRequired() throws Exception {
     String t = token("doctor.it");
-    // The local realm has no MFA configured, so staff tokens have no amr=mfa (US-008)
-    assertThatThrownBy(() -> decoder("shp-api", true, Clock.systemUTC()).decode(t))
-        .isInstanceOfSatisfying(
-            JwtValidationException.class,
-            e ->
-                assertThat(e.getErrors())
-                    .anySatisfy(err -> assertThat(err.getDescription()).isEqualTo("mfa-required")));
-    // The local cluster sets SHP_REQUIRE_MFA_FOR_STAFF=false so devs can log in
-    Jwt jwt = decoder("shp-api", false, Clock.systemUTC()).decode(t);
+    // The realm forces a TOTP code for staff and its AMR mapper puts mfa in the token (IAM-10)
+    assertThat(KeycloakTestSupport.claims(t).<java.util.List<String>>read("$.amr")).contains("mfa");
+    Jwt jwt = decoder("shp-api", true, Clock.systemUTC()).decode(t);
     assertThat(ShpJwt.roles(jwt)).containsExactly("doctor");
+    // and still accepted where a dev switched the MFA rule off
+    assertThat(decoder("shp-api", false, Clock.systemUTC()).decode(t)).isNotNull();
   }
 }

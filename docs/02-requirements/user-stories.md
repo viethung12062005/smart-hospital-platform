@@ -21,7 +21,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-005](#us-005) | Patient chooses notification channels and devices | Patient | Should | UC-07 | 3 | 10 |
 | [US-006](#us-006) | Administrator manages clinical staff | Administrator | Must | UC-08 | 2 | 8 |
 | [US-007](#us-007) | Administrator links and locks accounts | Administrator | Must | UC-08 | 2 | 7 |
-| [US-008](#us-008) | Staff must use MFA | Administrator | Must | UC-08 | 8 | 28 |
+| [US-008](#us-008) | Staff must use MFA | Administrator | Must | UC-08 | 9 | 32 |
 | [US-009](#us-009) | Nurse creates a work schedule for a doctor | Nurse | Must | UC-02 | 6 | 20 |
 | [US-010](#us-010) | Nurse sets weekly schedule templates | Nurse | Must | UC-02 | 2 | 8 |
 | [US-011](#us-011) | System generates slots from weekly templates | System | Must | UC-02 | 5 | 14 |
@@ -83,7 +83,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-072](#us-072) | Evaluate the model by subgroup and produce a model card | Project team | Should | UC-15 | 2 | 7 |
 | [US-073](#us-073) | Deploy a new model with automatic canary | DevOps | Should | UC-15 | 3 | 12 |
 | [US-074](#us-074) | Automatic retraining on drift | System | Should | UC-15 | 3 | 12 |
-| [US-066](#us-066) | User signs in and sees a role-based interface | User | Must | UC-08 | 11 | 36 |
+| [US-066](#us-066) | User signs in and sees a role-based interface | User | Must | UC-08 | 12 | 40 |
 | [US-067](#us-067) | Restore data to a point in time | Administrator | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | System handles slot-opening load at 07:00 | Project team | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | System tolerates dependency failures | Project team | Must |  | 2 | 9 |
@@ -434,6 +434,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | IAM-06 | Hardened Keycloak: Argon2id, password policy, brute-force lockout, internal admin console, backups | SA | 4 | W7 |
 | IAM-08 | Sign-up page with phone number or email, terms of use | SA | 3 | W7 |
 | IAM-05 | Identity events to audit | SA | 4 | W8 |
+| IAM-10 | Staff MFA and design fixes for the realm | SA | 4 | W8 |
 
 ## US-009
 ### Nurse creates a work schedule for a doctor — Must
@@ -1787,6 +1788,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | IAM-02 | Service accounts: client credentials for /internal per service | SA | 3 | W7 |
 | IAM-06 | Hardened Keycloak: Argon2id, password policy, brute-force lockout, internal admin console, backups | SA | 4 | W7 |
 | IAM-07 | RFC 8693 token exchange for ai (on behalf of the user) | SA | 3 | W7 |
+| IAM-10 | Staff MFA and design fixes for the realm | SA | 4 | W8 |
 
 ## US-067
 ### Restore data to a point in time — Must

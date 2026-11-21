@@ -197,3 +197,108 @@ def test_breached_list_has_no_entry_shorter_than_the_minimum_length() -> None:
     assert lines and all(
         len(x) >= 12 for x in lines
     )  # shorter ones are rejected by length(12) anyway
+
+
+STAFF = ("doctor", "nurse", "admin", "dpo")
+
+
+def test_staff_roles_carry_the_mfa_marker_and_patient_does_not() -> None:
+    for env in ("local", "prod"):
+        roles = {r["name"]: r for r in realm.build(env)["roles"]["realm"]}
+        assert "mfa-required" in roles
+        for name in STAFF:
+            assert roles[name]["composites"]["realm"] == ["mfa-required"], name
+        assert "composites" not in roles["patient"]
+
+
+def test_local_realm_keeps_the_stock_flows_without_staff_mfa() -> None:
+    # decision N3: the local realm has no staff-MFA flow, so the seeded staff users sign in with a password only
+    local = realm.build("local")
+    flows = {f["alias"]: f for f in local["authenticationFlows"]}
+    assert "Browser - Staff MFA" not in flows
+    assert "Direct Grant - Staff MFA" not in flows
+    configs = {c["alias"] for c in local["authenticatorConfig"]}
+    assert not any(alias.startswith("shp-") and "staff" in alias for alias in configs)
+    for flow in local["authenticationFlows"]:
+        assert not any(
+            e.get("flowAlias") in realm.STAFF_MFA_FLOWS
+            or e.get("authenticatorConfig") in realm.STAFF_MFA_CONFIGS
+            for e in flow.get("authenticationExecutions", [])
+        ), flow["alias"]
+    # a user who enrolled a TOTP locally is still asked for it (stock Keycloak), staff or not
+    sub = {
+        e["flowAlias"]
+        for e in flows["forms"]["authenticationExecutions"]
+        if "flowAlias" in e
+    }
+    assert "Browser - Conditional 2FA" in sub
+    # the stock flow bindings by name must all exist, because the import replaces the defaults
+    for name in (
+        "browser",
+        "direct grant",
+        "reset credentials",
+        "registration",
+        "clients",
+        "first broker login",
+        "docker auth",
+    ):
+        assert name in flows
+
+
+def test_prod_realm_demands_otp_from_staff_and_issues_amr() -> None:
+    for env in ("prod",):
+        built = realm.build(env)
+        flows = {f["alias"]: f for f in built["authenticationFlows"]}
+        configs = {c["alias"]: c["config"] for c in built["authenticatorConfig"]}
+        sub = {
+            e["flowAlias"]: e
+            for e in flows["forms"]["authenticationExecutions"]
+            if "flowAlias" in e
+        }
+        assert sub["Browser - Staff MFA"]["requirement"] == "CONDITIONAL"
+        steps = flows["Browser - Staff MFA"]["authenticationExecutions"]
+        assert [e["authenticator"] for e in steps] == [
+            "conditional-user-role",
+            "auth-otp-form",
+        ]
+        assert all(e["requirement"] == "REQUIRED" for e in steps)
+        assert configs[steps[0]["authenticatorConfig"]]["condUserRole"] == "mfa-required"
+        assert configs[steps[0]["authenticatorConfig"]]["negate"] == "false"
+        assert (
+            configs[steps[1]["authenticatorConfig"]]["default.reference.value"] == "mfa"
+        )
+        # the realm names no flow bindings, so Keycloak binds these defaults by name: they must exist
+        for name in (
+            "browser",
+            "direct grant",
+            "reset credentials",
+            "registration",
+            "clients",
+            "first broker login",
+            "docker auth",
+        ):
+            assert name in flows
+        clients = {c["clientId"]: c for c in built["clients"]}
+        mappers = {m["protocolMapper"] for m in clients["shp-web"]["protocolMappers"]}
+        assert "oidc-amr-mapper" in mappers
+    local = {c["clientId"]: c for c in realm.build("local")["clients"]}
+    assert "oidc-amr-mapper" in {
+        m["protocolMapper"] for m in local["shp-test"]["protocolMappers"]
+    }
+
+
+def test_one_password_policy_of_twelve_for_everyone() -> None:
+    for env in ("local", "prod"):
+        policy = realm.build(env)["passwordPolicy"]
+        assert "length(12)" in policy and "length(14)" not in policy
+
+
+def test_exchanging_client_carries_the_amr_mapper_and_others_do_not() -> None:
+    spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
+    for env in ("local", "prod"):
+        built = clients(env)
+        for name, svc in spec["services"].items():
+            has = "oidc-amr-mapper" in {
+                m["protocolMapper"] for m in built[f"svc-{name}"]["protocolMappers"]
+            }
+            assert has == bool(svc.get("exchange")), f"{env} svc-{name}"

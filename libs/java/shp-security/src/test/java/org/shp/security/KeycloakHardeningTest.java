@@ -60,6 +60,7 @@ class KeycloakHardeningTest {
 
   @Test
   void passwordPolicyRejectsShortUsernameAndBreachedPasswords() throws Exception {
+    // one policy for patients and staff (IAM-10): staff are protected by MFA, not a longer password
     var tooShort = createUser("pol.short", "Abcdefghij1"); // 11 characters
     assertThat(tooShort.statusCode()).isEqualTo(400);
     assertThat(tooShort.body()).contains("Invalid password");

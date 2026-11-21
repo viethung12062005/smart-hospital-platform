@@ -166,6 +166,34 @@ class KeycloakTokenExchangeTest {
   }
 
   @Test
+  void exchangedTokenOfAStaffUserKeepsAmrMfaAndPassesAsStaff() throws Exception {
+    String admin = KeycloakTestSupport.adminToken(base);
+    KeycloakTestSupport.createUser(
+        base, admin, "doctor.ex", "doctor", USER_PASSWORD, KeycloakTestSupport.TEST_TOTP_SEED);
+    String staffToken =
+        JsonPath.read(
+            KeycloakTestSupport.form(
+                tokenUrl,
+                "grant_type=password&client_id=shp-test&username=doctor.ex&password="
+                    + enc(USER_PASSWORD)
+                    + "&totp="
+                    + KeycloakTestSupport.totp(KeycloakTestSupport.TEST_TOTP_SEED)),
+            "$.access_token");
+    var res = exchange("svc-ai", staffToken, "svc-clinical");
+    assertThat(res.statusCode()).as(res.body()).isEqualTo(200);
+    String exchanged = JsonPath.read(res.body(), "$.access_token");
+    DocumentContext claims = KeycloakTestSupport.claims(exchanged);
+    // audience rule (15 section 7): the target only
+    assertThat(audiences(claims)).containsExactly("svc-clinical");
+    assertThat(claims.<List<String>>read("$.amr")).contains("mfa");
+    var props = new ShpAuthProperties(issuer, "svc-clinical", true, Duration.ofSeconds(30), "");
+    NimbusJwtDecoder d =
+        NimbusJwtDecoder.withJwkSetUri(issuer + "/protocol/openid-connect/certs").build();
+    d.setJwtValidator(ShpJwt.validator(props, Clock.systemUTC()));
+    assertThat(ShpJwt.roles(d.decode(exchanged))).containsExactly("doctor");
+  }
+
+  @Test
   void onlyTheTargetsOfTheCallerCanBeRequested() throws Exception {
     // ml is a service but not an exchange target of ai: the token cannot be widened by asking for
     // it.

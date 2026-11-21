@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Create test users (FAKE DATA) in the shp realm; random passwords are stored in dev/.local/users.env.
+# No authenticator is enrolled: the local realm has no staff-MFA flow (decision N3), so a staff user signs in with the
+# password only. That is why `make token USER=doctor.demo` needs no TOTP code locally while UAT/prod do.
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 ensure_credentials
 users_file="$LOCAL_DIR/users.env"
