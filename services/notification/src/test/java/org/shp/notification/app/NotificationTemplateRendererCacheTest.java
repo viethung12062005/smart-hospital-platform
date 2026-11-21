@@ -19,7 +19,9 @@ class NotificationTemplateRendererCacheTest {
       Map.of(
           "doctorName", "Dr. Nguyen",
           "startTime", "09:30 20/11/2026",
-          "place", "Room 301");
+          "place", "Room 301",
+          "specialty", "Cardiology",
+          "manageLink", "https://example.org/appointments/manage/xyz");
 
   private final NotificationTemplateRenderer renderer = new NotificationTemplateRenderer();
 
