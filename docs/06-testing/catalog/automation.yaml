@@ -70,18 +70,20 @@ automation:
 
   # ---- Audit, events, idempotency, inbox ----
   TC-AC-03.2:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::firstRequestClaimsAndSameRequestReplaysTheSameResource
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::replayReturnsTheSameAppointment
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::replayReturnsVersionOneAfterTheAppointmentChanges
-    gap: "The $book endpoint replays with 200 and the same appointment (SCH-14); the end-to-end idempotency test is SCH-15. UI: E2E TC-AC-03.2."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::replayReturnsTheFirstResultAndLeavesNoSecondBooking
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::parallelRequestsWithOneKeyCreateOneAppointment
   TC-AC-03.3:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::sameKeyWithADifferentBodyOrOperationIs422
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::sameKeyDifferentBodyIsRejected
-    gap: "The $book endpoint answers 422 idempotency-key-reused (SCH-14); the end-to-end idempotency test is SCH-15."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::sameKeyWithAnotherBodyIsRejectedWithoutSideEffects
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::aKeyBelongsToTheCallerThatClaimedIt
   TC-AC-03.1:
     status: partial
     refs:
