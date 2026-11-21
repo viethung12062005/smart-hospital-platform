@@ -124,6 +124,19 @@ def test_service_tokens_never_carry_the_user_audience() -> None:
                 assert "shp-api" in audiences, client_id
 
 
+def test_every_java_service_that_resolves_identities_may_call_clinical() -> None:
+    """SHR-32: HttpIdentityLinkClient calls clinical's GET /internal/v1/identity/{subject} (09 section 4)."""
+    spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
+    for caller in ("scheduling", "notification", "audit", "document"):
+        assert "clinical" in spec["services"][caller]["calls"], caller
+    for env in ("local", "prod"):
+        built = clients(env)
+        audit = built["svc-audit"]
+        assert audit["serviceAccountsEnabled"] is True
+        roles = {r["username"]: r["realmRoles"] for r in realm.build(env)["users"]}
+        assert roles["service-account-svc-audit"] == ["internal.clinical"]
+
+
 def test_client_authentication_differs_by_environment_only_in_the_method() -> None:
     assert clients("local")["svc-ai"]["clientAuthenticatorType"] == "client-secret"
     prod = clients("prod")["svc-ai"]
@@ -262,7 +275,9 @@ def test_prod_realm_demands_otp_from_staff_and_issues_amr() -> None:
             "auth-otp-form",
         ]
         assert all(e["requirement"] == "REQUIRED" for e in steps)
-        assert configs[steps[0]["authenticatorConfig"]]["condUserRole"] == "mfa-required"
+        assert (
+            configs[steps[0]["authenticatorConfig"]]["condUserRole"] == "mfa-required"
+        )
         assert configs[steps[0]["authenticatorConfig"]]["negate"] == "false"
         assert (
             configs[steps[1]["authenticatorConfig"]]["default.reference.value"] == "mfa"
@@ -302,3 +317,46 @@ def test_exchanging_client_carries_the_amr_mapper_and_others_do_not() -> None:
                 m["protocolMapper"] for m in built[f"svc-{name}"]["protocolMappers"]
             }
             assert has == bool(svc.get("exchange")), f"{env} svc-{name}"
+
+
+def test_login_theme_is_vietnamese_first_in_both_realms() -> None:
+    for env in ("local", "prod"):
+        r = realm.build(env)
+        assert r["loginTheme"] == "shp", env
+        assert r["internationalizationEnabled"] is True, env
+        assert r["supportedLocales"] == ["vi", "en"] and r["defaultLocale"] == "vi", env
+        assert r["resetPasswordAllowed"] is True, env
+
+
+def test_patient_signup_flow_is_present_but_closed_until_the_otp_provider() -> None:
+    expected_steps = [
+        "shp-registration-identifier",
+        "shp-ownership-code",
+        "shp-registration-account",
+    ]
+    for env in ("local", "prod"):
+        built = realm.build(env)
+        assert built["registrationAllowed"] is False
+        assert built["registrationFlow"] == "shp registration"
+        flows = {flow["alias"]: flow for flow in built["authenticationFlows"]}
+        signup = flows["shp registration"]
+        assert [step["authenticator"] for step in signup["authenticationExecutions"]] == (
+            expected_steps
+        )
+        profile = built["components"][
+            "org.keycloak.userprofile.UserProfileProvider"
+        ][0]["config"]["kc.user.profile.config"][0]
+        attributes = {item["name"] for item in json.loads(profile)["attributes"]}
+        assert {"phoneNumber", "phoneNumberVerified", "terms_and_conditions"} <= (
+            attributes
+        )
+
+
+def test_mail_server_is_the_local_catcher_or_placeholders() -> None:
+    # Forgot password needs a working mail server: without one Keycloak answers an existing account with an error and an
+    # unknown one with "email sent", which reveals who has an account (IAM-03).
+    assert realm.build("local")["smtpServer"]["host"] == "mailpit"
+    prod = realm.build("prod")["smtpServer"]
+    for key in ("host", "port", "from", "user", "password"):
+        assert prod[key].startswith("${SHP_SMTP_"), key
+    assert prod["auth"] == "true" and prod["starttls"] == "true"

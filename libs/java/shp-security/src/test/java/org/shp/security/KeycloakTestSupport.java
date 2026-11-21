@@ -25,6 +25,7 @@ final class KeycloakTestSupport {
   static final String IMAGE =
       System.getenv().getOrDefault("SHP_TEST_KEYCLOAK_IMAGE", "quay.io/keycloak/keycloak:26.8.2");
   static final String ADMIN_PASSWORD = "test-only-admin";
+  static final String SMTP_HOST = "smtp.example.test";
   static final HttpClient HTTP = HttpClient.newHttpClient();
 
   private KeycloakTestSupport() {}
@@ -43,6 +44,14 @@ final class KeycloakTestSupport {
             .withCopyFileToContainer(
                 MountableFile.forHostPath(repoFile("identity/realm/breached-passwords.txt")),
                 "/opt/keycloak/data/password-blacklists/breached-passwords.txt")
+            // The cluster realm takes its mail server from these variables (IAM-03) and Keycloak
+            // validates the sender address on import. Synthetic values: nothing is sent in these
+            // tests.
+            .withEnv("SHP_SMTP_HOST", SMTP_HOST)
+            .withEnv("SHP_SMTP_PORT", "587")
+            .withEnv("SHP_SMTP_FROM", "no-reply@example.test")
+            .withEnv("SHP_SMTP_USER", "shp-mail")
+            .withEnv("SHP_SMTP_PASSWORD", "test-only-smtp")
             .withExposedPorts(8080)
             .waitingFor(
                 Wait.forHttp("/realms/shp")

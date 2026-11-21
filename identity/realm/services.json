@@ -39,6 +39,11 @@
       "calls": [
         "scheduling"
       ]
+    },
+    "audit": {
+      "calls": [
+        "clinical"
+      ]
     }
   }
 }

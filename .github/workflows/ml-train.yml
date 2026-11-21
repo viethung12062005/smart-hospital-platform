@@ -7,6 +7,8 @@
 #                   decides, and sets the `candidate` alias. It never moves `production`: the serving pods pick the
 #                   candidate up, shadow it and the canary promotes or rolls back (16-mlops §6, shp-gitops envs/*/ml).
 #   not-registered  the same trigger without the variable: writes a note to the summary, main stays green.
+#   reproducible-image (MLO-02) builds the training image (Dockerfile.train, hash-locked dependencies), then trains twice in
+#                   two fresh containers without network, same seed, and fails unless dataset hash and model hash are equal.
 # Nothing here talks to Azure. Synthetic data only: the dataset is generated in the job, never downloaded.
 name: ml-train
 on:
@@ -22,6 +24,10 @@ on:
       - services/ml/src/shp_ml/registry.py
       - services/ml/src/shp_ml/card.py
       - services/ml/pyproject.toml
+      - services/ml/Dockerfile.train
+      - services/ml/requirements-train.in
+      - services/ml/requirements-train.lock
+      - services/ml/scripts/reproduce.sh
       - .github/workflows/ml-train.yml
   push:
     branches: [main]
@@ -36,6 +42,10 @@ on:
       - services/ml/src/shp_ml/registry.py
       - services/ml/src/shp_ml/card.py
       - services/ml/pyproject.toml
+      - services/ml/Dockerfile.train
+      - services/ml/requirements-train.in
+      - services/ml/requirements-train.lock
+      - services/ml/scripts/reproduce.sh
       - .github/workflows/ml-train.yml
   workflow_dispatch:
     inputs:
@@ -134,6 +144,27 @@ jobs:
             services/ml/data/noshow.json
           if-no-files-found: warn
           retention-days: 30
+
+  reproducible-image:
+    # MLO-02: same image + same dataset hash + same seed = same model, proven on every change to the image or the training code.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Build the training image
+        run: docker build -f Dockerfile.train -t shp-ml-train:ci .
+      - name: Train twice in fresh containers and compare the hashes
+        run: scripts/reproduce.sh shp-ml-train:ci "$SEED" | tee reproduce.log
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Reproducibility of the training image"
+            echo '```'
+            cat reproduce.log 2>/dev/null || echo "not run"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   register:
     # Needs a deployed MLflow that the runner can reach. Until the variable exists this job is skipped (see not-registered).

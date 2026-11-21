@@ -20,7 +20,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-079](#us-079) | OTP code sent via Zalo first, SMS after | Patient | Must | UC-07 | 3 | 11 |
 | [US-005](#us-005) | Patient chooses notification channels and devices | Patient | Should | UC-07 | 3 | 10 |
 | [US-006](#us-006) | Administrator manages clinical staff | Administrator | Must | UC-08 | 2 | 8 |
-| [US-007](#us-007) | Administrator links and locks accounts | Administrator | Must | UC-08 | 2 | 7 |
+| [US-007](#us-007) | Administrator links and locks accounts | Administrator | Must | UC-08 | 3 | 11 |
 | [US-008](#us-008) | Staff must use MFA | Administrator | Must | UC-08 | 9 | 32 |
 | [US-009](#us-009) | Nurse creates a work schedule for a doctor | Nurse | Must | UC-02 | 6 | 20 |
 | [US-010](#us-010) | Nurse sets weekly schedule templates | Nurse | Must | UC-02 | 2 | 8 |
@@ -409,6 +409,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 |---|---|---|---|---|
 | SHR-21 | Identity resolver: sub → fhirUser + roles + disabled + linkedProfiles (record, scope), 60-second cache | SA | 3 | W2 |
 | CLN-11 | /me API (C2), manage link/account lock (C21), internal identity API | D2 | 4 | W3 |
+| SHR-32 | Service token interceptor for /internal calls: client credentials, cache, wiring in four services | SA | 4 | W7 |
 
 ## US-008
 ### Staff must use MFA — Must

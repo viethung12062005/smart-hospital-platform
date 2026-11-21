@@ -54,6 +54,18 @@ class KeycloakRealmAsCodeTest {
   }
 
   @Test
+  void mailServerAndLoginThemeComeFromTheRealmAndTheEnvironment() throws Exception {
+    String realm = get("");
+    assertThat(JsonPath.<String>read(realm, "$.smtpServer.host"))
+        .isEqualTo(KeycloakTestSupport.SMTP_HOST);
+    assertThat(JsonPath.<String>read(realm, "$.smtpServer.from"))
+        .isEqualTo("no-reply@example.test");
+    assertThat(JsonPath.<String>read(realm, "$.smtpServer.starttls")).isEqualTo("true");
+    assertThat(JsonPath.<String>read(realm, "$.loginTheme")).isEqualTo("shp");
+    assertThat(JsonPath.<String>read(realm, "$.defaultLocale")).isEqualTo("vi");
+  }
+
+  @Test
   void hasTheFiveRoles() throws Exception {
     List<String> roles = JsonPath.read(get("/roles"), "$[*].name");
     assertThat(roles).contains("patient", "doctor", "nurse", "admin", "dpo");

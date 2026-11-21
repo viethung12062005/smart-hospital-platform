@@ -3,7 +3,18 @@
   "enabled": true,
   "displayName": "Smart Hospital",
   "registrationAllowed": false,
+  "registrationFlow": "shp registration",
+  "editUsernameAllowed": false,
   "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "loginTheme": "shp",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "vi",
+    "en"
+  ],
+  "defaultLocale": "vi",
   "accessTokenLifespan": 900,
   "roles": {
     "realm": [
@@ -465,6 +476,49 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "svc-audit",
+      "name": "Service account of audit (/internal)",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "federated-jwt",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "attributes": {
+        "jwt.credential.issuer": "kubernetes",
+        "jwt.credential.sub": "system:serviceaccount:shp-apps:audit"
+      },
+      "defaultClientScopes": [
+        "basic"
+      ],
+      "protocolMappers": [
+        {
+          "name": "roles-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "audience-svc-clinical",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "svc-clinical",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
     }
   ],
   "otpPolicyType": "totp",
@@ -517,6 +571,17 @@
       }
     }
   ],
+  "smtpServer": {
+    "host": "${SHP_SMTP_HOST}",
+    "port": "${SHP_SMTP_PORT}",
+    "from": "${SHP_SMTP_FROM}",
+    "fromDisplayName": "Smart Hospital",
+    "auth": "true",
+    "user": "${SHP_SMTP_USER}",
+    "password": "${SHP_SMTP_PASSWORD}",
+    "starttls": "true",
+    "ssl": "false"
+  },
   "users": [
     {
       "username": "service-account-svc-clinical",
@@ -568,6 +633,14 @@
       "serviceAccountClientId": "svc-ml",
       "realmRoles": [
         "internal.scheduling"
+      ]
+    },
+    {
+      "username": "service-account-svc-audit",
+      "enabled": true,
+      "serviceAccountClientId": "svc-audit",
+      "realmRoles": [
+        "internal.clinical"
       ]
     }
   ],
@@ -1238,6 +1311,36 @@
           "authenticatorConfig": "shp-otp-reference-mfa-staff-direct-grant"
         }
       ]
+    },
+    {
+      "alias": "shp registration",
+      "description": "SHP sign-up (IAM-08): phone number or email and terms, ownership code, then the account. Nothing reveals whether an account exists before the code is verified.",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "shp-registration-identifier",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "shp-ownership-code",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "shp-registration-account",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false
+        }
+      ]
     }
   ],
   "authenticatorConfig": [
@@ -1307,5 +1410,18 @@
         "default.reference.maxAge": "36000"
       }
     }
-  ]
+  ],
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\":[{\"name\":\"username\",\"displayName\":\"${username}\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\"]},\"validations\":{\"length\":{\"min\":3,\"max\":255},\"username-prohibited-characters\":{},\"up-username-not-idn-homograph\":{}}},{\"name\":\"email\",\"displayName\":\"${email}\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\"]},\"validations\":{\"email\":{},\"length\":{\"max\":255}}},{\"name\":\"firstName\",\"displayName\":\"${firstName}\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}}},{\"name\":\"lastName\",\"displayName\":\"${lastName}\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\",\"user\"]},\"validations\":{\"length\":{\"max\":255},\"person-name-prohibited-characters\":{}}},{\"name\":\"phoneNumber\",\"displayName\":\"${phoneNumber}\",\"permissions\":{\"view\":[\"admin\",\"user\"],\"edit\":[\"admin\"]},\"validations\":{\"pattern\":{\"pattern\":\"^\\\\+84[35789][0-9]{8}$\",\"error-message\":\"shpPhoneNumberInvalid\"}}},{\"name\":\"phoneNumberVerified\",\"displayName\":\"Phone number verified\",\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]},\"validations\":{\"options\":{\"options\":[\"true\",\"false\"]}}},{\"name\":\"terms_and_conditions\",\"displayName\":\"Terms of use accepted at (epoch seconds)\",\"permissions\":{\"view\":[\"admin\"],\"edit\":[\"admin\"]}}],\"groups\":[{\"name\":\"user-metadata\",\"displayHeader\":\"User metadata\",\"displayDescription\":\"Attributes, which refer to user metadata\"}]}"
+          ]
+        }
+      }
+    ]
+  }
 }

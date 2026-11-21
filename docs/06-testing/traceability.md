@@ -7,9 +7,9 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 72 (35%) |
+| Automated or partially automated | 73 (35%) |
 | Fully automated | 36 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 41 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 42 |
 
 ## By module and status
 
@@ -21,7 +21,7 @@
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
 | scheduling | 21 | 7 | 8 | 6 | 0 |
-| security | 29 | 8 | 8 | 13 | 0 |
+| security | 29 | 8 | 9 | 12 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
 
 ## By test level
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 5 | 9 | 15 | 0 |
-| api | 90 | 9 | 12 | 69 | 0 |
+| api | 90 | 9 | 13 | 68 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -119,7 +119,6 @@
 | TC-SEC-12 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-13 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-14 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
-| TC-SEC-15 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-16 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-21 | UAT AKS with NetworkPolicy enabled | viethung12062005 |
 | TC-SEC-22 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
@@ -318,7 +317,7 @@
 | NFR-SEC15 | TC-SEC-09 (security, P0) | automated |
 | NFR-SEC15 | TC-SEC-10 (security, P0) | automated |
 | NFR-SEC16 | TC-NFR-SEC16 (api, P0) | planned |
-| NFR-SEC16 | TC-SEC-15 (api, P0) | planned |
+| NFR-SEC16 | TC-SEC-15 (api, P0) | partial |
 | NFR-SEC17 | TC-NFR-SEC17 (integration, P0) | planned |
 | NFR-SEC17 | TC-SEC-13 (integration, P0) | planned |
 | NFR-SEC17 | TC-SEC-14 (integration, P0) | planned |

@@ -1,0 +1,3 @@
+org.shp.identity.keycloak.registration.IdentifierStep$Factory
+org.shp.identity.keycloak.registration.OwnershipCodeStep$Factory
+org.shp.identity.keycloak.registration.AccountStep$Factory

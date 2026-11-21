@@ -132,6 +132,12 @@ public final class ErrorCatalog {
                 "Yêu cầu xác nhận đã hết hạn.",
                 "The confirmation has expired."),
             e(
+                "role-mismatch",
+                422,
+                "business-rule",
+                "Vai trò không khớp với hồ sơ liên kết.",
+                "The role does not match the linked profile."),
+            e(
                 "precondition-required",
                 428,
                 "invalid",
