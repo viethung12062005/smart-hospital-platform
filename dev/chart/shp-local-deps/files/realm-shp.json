@@ -506,6 +506,46 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "svc-audit",
+      "name": "Service account of audit (/internal)",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "attributes": {},
+      "defaultClientScopes": [
+        "basic"
+      ],
+      "protocolMappers": [
+        {
+          "name": "roles-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "audience-svc-clinical",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "svc-clinical",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
     }
   ],
   "otpPolicyType": "totp",
@@ -598,6 +638,14 @@
       "serviceAccountClientId": "svc-ml",
       "realmRoles": [
         "internal.scheduling"
+      ]
+    },
+    {
+      "username": "service-account-svc-audit",
+      "enabled": true,
+      "serviceAccountClientId": "svc-audit",
+      "realmRoles": [
+        "internal.clinical"
       ]
     }
   ],
