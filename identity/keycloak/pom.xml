@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Keycloak extensions of the shp realm (ADR-0017): the login theme (IAM-03). Packaged as one provider JAR that the Keycloak
-     image built by identity/keycloak/Dockerfile copies into /opt/keycloak/providers. Integration tests (*IT) run after `package`
+<!-- Keycloak extensions of the shp realm (ADR-0017): the login theme (IAM-03) and the sign-up flow (IAM-08). Packaged as one
+     provider JAR that the Keycloak image built by identity/keycloak/Dockerfile copies into /opt/keycloak/providers. Integration tests (*IT) run after `package`
      against a real Keycloak in a container with that JAR, so the tested artifact is the deployed one. -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -15,6 +15,19 @@
   <name>shp-keycloak — Keycloak theme and extensions of the shp realm</name>
 
   <dependencies>
+    <!-- Keycloak's own APIs: provided by the Keycloak server, never packaged -->
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi-private</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-services</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -25,12 +38,41 @@
       <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <!-- The application code runs inside the Keycloak Testcontainer. Put the same JaCoCo agent in that JVM so the
+           normal 70% gate measures the provider instead of reporting zero coverage from the test JVM. -->
+      <groupId>org.jacoco</groupId>
+      <artifactId>org.jacoco.agent</artifactId>
+      <version>${jacoco.version}</version>
+      <classifier>runtime</classifier>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <!-- Fixed name: the Dockerfile and the integration tests copy this file -->
     <finalName>shp-keycloak</finalName>
     <plugins>
+      <plugin>
+        <!-- A second, test-only provider JAR (shp-keycloak-test-otp.jar): an OTP provider that records codes in the container
+             instead of calling notification, so the integration tests can complete a sign-up. Never in the image. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>test-otp-provider</id>
+            <phase>package</phase>
+            <goals><goal>test-jar</goal></goals>
+            <configuration>
+              <classifier>test-otp</classifier>
+              <includes>
+                <include>org/shp/identity/keycloak/testotp/**</include>
+                <include>META-INF/services/org.shp.identity.keycloak.otp.OtpProviderFactory</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>

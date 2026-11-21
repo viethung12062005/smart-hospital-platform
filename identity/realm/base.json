@@ -3,6 +3,8 @@
   "enabled": true,
   "displayName": "Smart Hospital",
   "registrationAllowed": false,
+  "registrationFlow": "shp registration",
+  "editUsernameAllowed": false,
   "loginWithEmailAllowed": true,
   "resetPasswordAllowed": true,
   "duplicateEmailsAllowed": false,

@@ -11,7 +11,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import org.jacoco.agent.rt.RT;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -25,6 +27,8 @@ import org.testcontainers.utility.MountableFile;
  * only: they run after {@code package}.
  */
 final class KeycloakEnvironment implements AutoCloseable {
+  private static final Object COVERAGE_LOCK = new Object();
+  private static final String CONTAINER_COVERAGE = "/opt/keycloak/data/shp-keycloak-jacoco.exec";
   static final String IMAGE =
       System.getenv().getOrDefault("SHP_TEST_KEYCLOAK_IMAGE", "quay.io/keycloak/keycloak:26.8.2");
   static final String MAILPIT_IMAGE = "axllent/mailpit:v1.33.1";
@@ -48,9 +52,19 @@ final class KeycloakEnvironment implements AutoCloseable {
             .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
             .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", ADMIN_PASSWORD)
             .withEnv("JAVA_OPTS_KC_HEAP", "-XX:MaxRAMPercentage=50")
+            .withEnv(
+                "JAVA_OPTS_APPEND",
+                "-javaagent:/opt/keycloak/jacocoagent.jar=destfile="
+                    + CONTAINER_COVERAGE
+                    + ",append=false")
+            .withCopyFileToContainer(
+                MountableFile.forHostPath(coverageAgent()), "/opt/keycloak/jacocoagent.jar")
             .withCopyFileToContainer(
                 MountableFile.forHostPath(providerJar()),
                 "/opt/keycloak/providers/shp-keycloak.jar")
+            .withCopyFileToContainer(
+                MountableFile.forHostPath(testOtpJar()),
+                "/opt/keycloak/providers/shp-keycloak-test-otp.jar")
             .withCopyFileToContainer(
                 MountableFile.forHostPath(
                     repoFile("dev/chart/shp-local-deps/files/realm-shp.json")),
@@ -73,9 +87,22 @@ final class KeycloakEnvironment implements AutoCloseable {
 
   @Override
   public void close() {
-    keycloak.stop();
-    mailpit.stop();
-    network.close();
+    try {
+      if (keycloak.isRunning()) {
+        // A graceful JVM stop makes the agent write its execution data. Docker can copy a file
+        // from the stopped container before Testcontainers removes it.
+        keycloak
+            .getDockerClient()
+            .stopContainerCmd(keycloak.getContainerId())
+            .withTimeout(30)
+            .exec();
+        appendContainerCoverage();
+      }
+    } finally {
+      keycloak.stop();
+      mailpit.stop();
+      network.close();
+    }
   }
 
   String base() {
@@ -96,6 +123,55 @@ final class KeycloakEnvironment implements AutoCloseable {
       throw new IllegalStateException(jar + " missing: integration tests run after `mvn package`");
     }
     return jar;
+  }
+
+  /** The JaCoCo runtime JAR on the test class path, copied into the disposable Keycloak JVM. */
+  static Path coverageAgent() {
+    try {
+      return Path.of(RT.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+    } catch (Exception e) {
+      throw new IllegalStateException("cannot locate the JaCoCo runtime agent", e);
+    }
+  }
+
+  private void appendContainerCoverage() {
+    byte[] executionData =
+        keycloak.copyFileFromContainer(CONTAINER_COVERAGE, in -> in.readAllBytes());
+    synchronized (COVERAGE_LOCK) {
+      try {
+        Files.write(
+            Path.of("target", "jacoco.exec"),
+            executionData,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.APPEND);
+      } catch (java.io.IOException e) {
+        throw new IllegalStateException("cannot preserve Keycloak coverage", e);
+      }
+    }
+  }
+
+  /** The test-only OTP provider (testotp package), built next to the provider JAR. */
+  static Path testOtpJar() {
+    Path jar = Path.of("target", "shp-keycloak-test-otp.jar").toAbsolutePath();
+    if (!Files.exists(jar)) {
+      throw new IllegalStateException(jar + " missing: integration tests run after `mvn package`");
+    }
+    return jar;
+  }
+
+  /** The last code the test OTP provider sent to a destination: "purpose channel locale code". */
+  String lastCode(String destination) {
+    return keycloak.copyFileFromContainer(
+        "/opt/keycloak/data/test-otp/" + enc(destination),
+        in -> new String(in.readAllBytes(), StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Turns sign-up on, as the realm will once the notification-backed code provider ships (IAM-04).
+   */
+  void allowRegistration() throws Exception {
+    var res = admin("PUT", "", "{\"registrationAllowed\":true}");
+    assertThat(res.statusCode()).as(res.body()).isEqualTo(204);
   }
 
   static Path repoFile(String relative) {
