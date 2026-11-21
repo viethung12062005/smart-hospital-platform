@@ -1,5 +1,6 @@
 # Keycloak realm as code (IAM-01): the local and the cluster realm are generated from identity/realm/ by tools/identity/realm.py.
 # This job fails when a generated file drifts from its source or the cluster realm contains development content.
+# The second job compares the copy that Argo CD deploys in shp-gitops with the generated prod realm (cross-repo drift, N6).
 name: identity
 on:
   pull_request:
@@ -22,3 +23,32 @@ jobs:
         run: python -I tools/identity/realm.py --check
       - name: Generator tests
         run: pip install pytest && python -m pytest -q tools/identity
+
+  # Cross-repo drift (N6): the realm file Argo CD applies lives in shp-gitops. Set the repository variable
+  # SHP_GITOPS_REALM_CHECK=true once shp-gitops carries the final realm (one realm file, decisions N4); the token is the
+  # existing gitops GitHub App, so no new secret is needed. `realm.py --gitops` compares both the prod realm and the
+  # breached-password list.
+  gitops-realm:
+    if: vars.SHP_GITOPS_REALM_CHECK == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.GITOPS_APP_ID }}
+          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: shp-gitops
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/shp-gitops
+          path: shp-gitops
+          token: ${{ steps.app.outputs.token }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with: { python-version: "3.12" }
+      - name: Deployed realm copy matches identity/realm/ (shp-gitops)
+        run: python -I tools/identity/realm.py --check --gitops shp-gitops
