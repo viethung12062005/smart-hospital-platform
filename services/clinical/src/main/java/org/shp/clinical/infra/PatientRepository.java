@@ -15,6 +15,7 @@ import org.shp.clinical.domain.PatientNormalizer;
 import org.shp.data.mongo.MongoMessaging;
 import org.shp.data.mongo.MongoResourceStore;
 import org.shp.data.mongo.MongoResourceStore.Entry;
+import org.shp.data.mongo.MongoResourceStore.History;
 import org.shp.data.mongo.MongoResourceStore.ResourceInput;
 import org.shp.events.CloudEvent;
 import org.shp.events.Uuids;
@@ -132,6 +133,11 @@ public class PatientRepository {
                 .and("search.active")
                 .is(true)),
         "patients");
+  }
+
+  /** Every stored version of a patient, oldest first. */
+  public List<History> history(String id) {
+    return store.history(TYPE, id);
   }
 
   /** Parse the stored FHIR JSON of an entry. */
