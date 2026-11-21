@@ -124,6 +124,19 @@ def test_service_tokens_never_carry_the_user_audience() -> None:
                 assert "shp-api" in audiences, client_id
 
 
+def test_every_java_service_that_resolves_identities_may_call_clinical() -> None:
+    """SHR-32: HttpIdentityLinkClient calls clinical's GET /internal/v1/identity/{subject} (09 section 4)."""
+    spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
+    for caller in ("scheduling", "notification", "audit", "document"):
+        assert "clinical" in spec["services"][caller]["calls"], caller
+    for env in ("local", "prod"):
+        built = clients(env)
+        audit = built["svc-audit"]
+        assert audit["serviceAccountsEnabled"] is True
+        roles = {r["username"]: r["realmRoles"] for r in realm.build(env)["users"]}
+        assert roles["service-account-svc-audit"] == ["internal.clinical"]
+
+
 def test_client_authentication_differs_by_environment_only_in_the_method() -> None:
     assert clients("local")["svc-ai"]["clientAuthenticatorType"] == "client-secret"
     prod = clients("prod")["svc-ai"]
