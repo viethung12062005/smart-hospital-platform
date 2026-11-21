@@ -7,9 +7,9 @@
 | Metric | Value |
 |---|---|
 | Test case | 203 |
-| Automated or partially automated | 60 (29%) |
+| Automated or partially automated | 62 (30%) |
 | Fully automated | 27 |
-| P0 (security, patient data, patient safety) | 122, automated at least partially: 34 |
+| P0 (security, patient data, patient safety) | 122, automated at least partially: 35 |
 
 ## By module and status
 
@@ -21,8 +21,8 @@
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
 | scheduling | 21 | 0 | 9 | 12 | 0 |
-| security | 28 | 7 | 6 | 15 | 0 |
-| system | 10 | 3 | 1 | 6 | 0 |
+| security | 28 | 7 | 7 | 14 | 0 |
+| system | 10 | 3 | 2 | 5 | 0 |
 
 ## By test level
 
@@ -30,8 +30,8 @@
 |---|---|---|---|---|---|
 | unit | 4 | 1 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
-| integration | 29 | 5 | 6 | 18 | 0 |
-| api | 90 | 1 | 12 | 77 | 0 |
+| integration | 29 | 5 | 7 | 17 | 0 |
+| api | 90 | 1 | 13 | 76 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -118,7 +118,6 @@
 | TC-NFR-SEC3 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-NFR-SEC7 | UAT AKS with NetworkPolicy enabled | viethung12062005 |
 | TC-SEC-01 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
-| TC-SEC-03 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-05 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-07 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-12 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
@@ -247,7 +246,7 @@
 | AC-SM.1 | TC-AC-SM.1 (ai-eval, P0) | planned |
 | AC-SM.2 | TC-AC-SM.2 (ai-eval, P0) | planned |
 | AC-SM.2 | TC-SEC-18 (integration, P0) | automated |
-| AC-SN.1 | TC-AC-SN.1 (integration, P1) | planned |
+| AC-SN.1 | TC-AC-SN.1 (integration, P1) | partial |
 | AC-SP.1 | TC-AC-SP.1 (api, P0) | planned |
 | AC-SR.1 | TC-AC-SR.1 (integration, P1) | automated |
 | AC-ST.1 | TC-AC-ST.1 (api, P1) | planned |
@@ -307,7 +306,7 @@
 | NFR-SEC1 | TC-SEC-06 (unit, P0) | automated |
 | NFR-SEC1 | TC-SEC-28 (e2e, P0) | partial |
 | NFR-SEC10 | TC-NFR-SEC10 (api, P0) | planned |
-| NFR-SEC10 | TC-SEC-03 (api, P0) | planned |
+| NFR-SEC10 | TC-SEC-03 (api, P0) | partial |
 | NFR-SEC10 | TC-SEC-16 (api, P0) | planned |
 | NFR-SEC11 | TC-NFR-SEC11 (api, P0) | planned |
 | NFR-SEC12 | TC-NFR-SEC12 (e2e, P0) | planned |
@@ -332,7 +331,7 @@
 | NFR-SEC2 | TC-NFR-SEC2 (unit, P0) | partial |
 | NFR-SEC2 | TC-SEC-01 (api, P0) | planned |
 | NFR-SEC2 | TC-SEC-02 (api, P0) | partial |
-| NFR-SEC2 | TC-SEC-03 (api, P0) | planned |
+| NFR-SEC2 | TC-SEC-03 (api, P0) | partial |
 | NFR-SEC2 | TC-SEC-05 (api, P0) | planned |
 | NFR-SEC2 | TC-SEC-07 (api, P0) | planned |
 | NFR-SEC2 | TC-SEC-20 (integration, P0) | planned |
