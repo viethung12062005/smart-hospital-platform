@@ -14,6 +14,8 @@ KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 OTHER = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 ISS = "http://localhost:18080/realms/shp"
 SETTINGS = AuthSettings(authority=ISS, audience="shp-api")
+# clinical runs with OIDC_AUDIENCE=svc-clinical; shp-api (user tokens) is accepted as well (ADR-0017)
+CLINICAL = AuthSettings(authority=ISS, audience="svc-clinical")
 
 
 def resolver(_token: str) -> Any:
@@ -75,6 +77,28 @@ def test_unconfigured_settings_reject_everything() -> None:
         verify_token(token(), AuthSettings(authority="", audience=""), resolver)
 
 
+def test_service_audience_accepts_its_own_and_the_user_audience_only() -> None:
+    # audience isolation (ADR-0017): user tokens carry shp-api, service tokens carry svc-<target>
+    assert CLINICAL.accepted_audiences() == ("svc-clinical", "shp-api")
+    assert verify_token(token(aud=["shp-api"]), CLINICAL, resolver).subject == "u1"
+    p = verify_token(
+        token(aud=["svc-clinical"], azp="svc-scheduling", roles=["internal.clinical"]),
+        CLINICAL,
+        resolver,
+    )
+    assert p.claims["azp"] == "svc-scheduling" and not p.roles
+    for other in ("svc-document", "svc-scheduling"):
+        with pytest.raises(ShpError) as e:
+            verify_token(token(aud=[other]), CLINICAL, resolver)
+        assert e.value.info.code == "unauthenticated"
+
+
+def test_gateway_keeps_the_user_audience_only() -> None:
+    # a user-facing service (gateway) sets no service audience: only shp-api is accepted
+    assert AuthSettings(authority=ISS, audience="shp-api").accepted_audiences() == ("shp-api",)
+    assert AuthSettings(authority=ISS, audience="").accepted_audiences() == ("shp-api",)
+
+
 def _app() -> TestClient:
     auth = Authenticator(SETTINGS, resolver)
     app = FastAPI()
@@ -106,3 +130,31 @@ def test_fastapi_dependencies_return_problem_details() -> None:
 def test_unknown_role_in_require_roles_fails_fast() -> None:
     with pytest.raises(ValueError):
         Authenticator(SETTINGS, resolver).require_roles("root")
+
+
+def test_require_service_checks_azp_and_the_internal_role() -> None:
+    auth = Authenticator(CLINICAL, resolver)
+    app = FastAPI()
+    install_error_handlers(app)
+
+    @app.get("/internal/v1/patients/{pid}")
+    def internal(
+        pid: str, p: Annotated[Principal, Depends(auth.require_service("clinical", "svc-scheduling"))]
+    ) -> dict[str, str]:
+        return {"sub": p.subject, "pid": pid}
+
+    c = TestClient(app)
+
+    def call(**claims: Any) -> int:
+        status: int = c.get(
+            "/internal/v1/patients/patient-1",
+            headers={"Authorization": f"Bearer {token(**claims)}"},
+        ).status_code
+        return status
+
+    # Java parity: org.shp.security.ShpJwt.requireService
+    assert call(aud=["svc-clinical"], azp="svc-scheduling", roles=["internal.clinical"]) == 200
+    assert call(aud=["svc-clinical"], azp="svc-ai", roles=["internal.clinical"]) == 403
+    assert call(aud=["svc-clinical"], azp="svc-scheduling", roles=["internal.document"]) == 403
+    # a user token never passes an internal endpoint, even one whose audience contains shp-api
+    assert call(aud=["shp-api"], roles=["doctor"], amr=["mfa"]) == 403

@@ -68,7 +68,9 @@ is a later change that needs a custom image (it comes with IAM-03, which builds 
 
 ## 5. Bring-up checklist (uat / prod)
 1. IAC-16 applied; `terraform output keycloak_values` copied (non-secret fields) into `shp-gitops` `envs/<env>/keycloak.yaml`.
-2. `envs/<env>/services.yaml`: `OIDC_AUTHORITY=https://<gateway.hostname>/idp/realms/shp`, `OIDC_AUDIENCE=shp-api`.
+2. `envs/<env>/services.yaml`: `OIDC_AUTHORITY=https://<gateway.hostname>/idp/realms/shp`, and per service
+   `OIDC_AUDIENCE=svc-<service>` for every service that receives service tokens (the gateway keeps `shp-api`; every
+   service accepts `shp-api` as well, see section 7).
 3. Argo CD syncs the `keycloak` Application (wave -1). First start runs the Quarkus build, then imports the realm (2 to 4 minutes).
 4. Log in through `port-forward` with the `admin` account, create a permanent administrator with MFA, then disable the bootstrap account.
 
@@ -94,15 +96,34 @@ finds the client by (issuer, `sub` = `system:serviceaccount:shp-apps:<service>`)
 
 How it is built: `identity/realm/services.json` lists each caller and the services it may call. The generator creates, per
 caller, the confidential client `svc-<caller>` (service account only, no browser or password flow) with roles
-`internal.<target>` on its service-account user, a `roles` claim, and `aud` = `shp-api` plus the targets. In the cluster realm
-the identity provider `kubernetes` takes its issuer from `${SHP_K8S_OIDC_ISSUER}` (chart value `kubernetesClientAuth.issuer`).
-The endpoint side is unchanged: `require_service(<target>, "svc-<caller>")` checks `azp` and `internal.<target>`.
+`internal.<target>` on its service-account user, a `roles` claim, and `aud` = **only** the target services
+(`svc-<target>`). In the cluster realm the identity provider `kubernetes` takes its issuer from
+`${SHP_K8S_OIDC_ISSUER}` (chart value `kubernetesClientAuth.issuer`).
+
+**Audience is an isolation boundary (ADR-0017).** Two audience classes exist:
+
+| Token | `aud` | Accepted by |
+|---|---|---|
+| User (interactive, `shp-web`/`shp-test`) | `shp-api` | every service |
+| Service (client credentials, `svc-<caller>`) | the target services only (`svc-<target>`), never `shp-api` | the target only |
+
+A service sets `OIDC_AUDIENCE=svc-<name>` and its validator accepts that value or `shp-api` (Java
+`ShpJwt.acceptedAudiences`, Python `AuthSettings.accepted_audiences`); a token issued for another service is refused
+before any role is read. A leaked service token therefore opens nothing beyond the services that caller may call, and
+it cannot be replayed against a user API.
+
+The endpoint side: `require_service(<target>, "svc-<caller>")` (Python `Authenticator.require_service`, Java
+`ShpJwt.requireService`) checks `azp` against the allow-list and requires the role `internal.<target>`. Use the guard on
+every `/internal` endpoint; the gateway additionally never routes `/internal/**` from outside.
 Note: detailed-design 11 names the role of the OTP endpoints `internal.otp`; the code convention and the realm use `internal.<target service>`
 (`internal.notification`), so that endpoint should require `internal.notification`.
 
-Tested against Keycloak 26.8.2 in containers: `KeycloakServiceAccountTest` (roles and audiences per service, wrong secret, no
-password grant, the token carries no user role) and `KeycloakFederatedClientAuthTest` (cluster realm; a container plays the
-cluster's OIDC issuer; right ServiceAccount accepted; another ServiceAccount, wrong audience, expired token, foreign key and a client secret all refused).
+Tested against Keycloak 26.8.2 in containers: `KeycloakServiceAccountTest` (roles and audiences per service, a service token
+refused by another service and by the `shp-api` audience, wrong secret, no password grant, the token carries no user role)
+and `KeycloakFederatedClientAuthTest` (cluster realm; a container plays the cluster's OIDC issuer; right ServiceAccount
+accepted; another ServiceAccount, wrong audience, expired token, foreign key and a client secret all refused).
+`ShpJwtTest` covers the audience rule and the guard without a container; `libs/python/tests/test_security.py` proves the
+same behaviour for the Python library.
 
 Not done here: the `microservice` chart (shp-platform-templates) has no projected-token volume, and services do not yet set
 `CLIENT_ASSERTION_FILE`; until then a service can only use the secret fallback. Follow-up: add `serviceAccountToken` volume

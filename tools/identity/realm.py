@@ -71,6 +71,11 @@ def service_accounts(realm: dict[str, Any]) -> None:
 
     `serviceClientAuth` (an overlay key, removed here) selects how a client proves who it is: `client-secret` (Keycloak
     generates the secret on import; it is never in git) or `federated-jwt` (a Kubernetes service-account token, IAM-02).
+
+    Audience is an isolation boundary (ADR-0017, 15 section 1): a service token names **only** the services it is
+    allowed to call (`svc-<target>`), never `shp-api`, which is the audience of user tokens. A leaked service token
+    therefore opens nothing beyond its own callers, and a user endpoint cannot be reached with it even before the
+    role check.
     """
     spec = json.loads((SRC / "services.json").read_text(encoding="utf-8"))
     auth = realm.pop("serviceClientAuth", {"type": "client-secret"})
@@ -88,7 +93,7 @@ def service_accounts(realm: dict[str, Any]) -> None:
                 "jwt.credential.issuer": auth["identityProvider"],
                 "jwt.credential.sub": f"system:serviceaccount:{spec['namespace']}:{name}",
             }
-        audiences = ["shp-api", *svc["calls"]]
+        audiences = list(dict.fromkeys(f"svc-{t}" for t in svc["calls"]))
         realm["clients"].append(
             {
                 "clientId": client_id,

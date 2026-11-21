@@ -95,11 +95,32 @@ def test_service_clients_follow_services_json_in_both_environments() -> None:
                 for m in client["protocolMappers"]
                 if "audience" in m["name"]
             }
-            assert audiences == {"shp-api", *svc["calls"]}
+            # audience isolation (ADR-0017): the target services only, never shp-api
+            assert audiences == {f"svc-{t}" for t in svc["calls"]}
         roles = {r["name"] for r in realm.build(env)["roles"]["realm"]}
         assert {
             f"internal.{t}" for s in spec["services"].values() for t in s["calls"]
         } <= roles
+
+
+def test_service_tokens_never_carry_the_user_audience() -> None:
+    # ADR-0017: shp-api is the audience of user (interactive) tokens; a service token names only
+    # its targets, so a leaked service token cannot be replayed against a user-facing API.
+    for env in ("local", "prod"):
+        built = clients(env)
+        for client_id, client in built.items():
+            audiences = {
+                m["config"].get("included.custom.audience")
+                or m["config"].get("included.client.audience")
+                for m in client.get("protocolMappers", [])
+                if "audience" in m["name"]
+            }
+            if client_id.startswith("svc-"):
+                assert "shp-api" not in audiences, client_id
+                assert audiences, client_id
+                assert all(a.startswith("svc-") for a in audiences), client_id
+            elif client_id in ("shp-web", "shp-test"):
+                assert "shp-api" in audiences, client_id
 
 
 def test_client_authentication_differs_by_environment_only_in_the_method() -> None:

@@ -3,5 +3,7 @@ image:
   repository: localhost/shp-clinical
   tag: dev
 env:
+  # Audience isolation (ADR-0017): this service accepts tokens issued for svc-clinical (service tokens) and shp-api (user tokens).
+  OIDC_AUDIENCE: svc-clinical
   OTEL_SERVICE_NAME: clinical
   SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true

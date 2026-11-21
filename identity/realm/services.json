@@ -1,5 +1,5 @@
 {
-  "$comment": "Service accounts for /internal (IAM-02, 15 section 7). Key = caller service; calls = target services whose /internal API it may use. Each target gets a realm role internal.<target>; each caller gets the client svc-<caller> whose token carries those roles and aud = shp-api plus the targets. Source: the endpoint tables in detailed-design 08-11.",
+  "$comment": "Service accounts for /internal (IAM-02, 15 section 7). Key = caller service; calls = target services whose /internal API it may use. Each target gets a realm role internal.<target>; each caller gets the client svc-<caller> whose token carries those roles and aud = svc-<target> only (never shp-api, which belongs to user tokens; ADR-0017). Source: the endpoint tables in detailed-design 08-11.",
   "namespace": "shp-apps",
   "services": {
     "clinical": { "calls": ["document", "scheduling", "notification"] },

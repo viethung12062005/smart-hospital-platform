@@ -173,41 +173,31 @@
           }
         },
         {
-          "name": "audience-shp-api",
+          "name": "audience-svc-document",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "shp-api",
+            "included.custom.audience": "svc-document",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
         },
         {
-          "name": "audience-document",
+          "name": "audience-svc-scheduling",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "document",
+            "included.custom.audience": "svc-scheduling",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
         },
         {
-          "name": "audience-scheduling",
+          "name": "audience-svc-notification",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "scheduling",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        },
-        {
-          "name": "audience-notification",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "notification",
+            "included.custom.audience": "svc-notification",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -243,31 +233,21 @@
           }
         },
         {
-          "name": "audience-shp-api",
+          "name": "audience-svc-clinical",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "shp-api",
+            "included.custom.audience": "svc-clinical",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
         },
         {
-          "name": "audience-clinical",
+          "name": "audience-svc-ml",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "clinical",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        },
-        {
-          "name": "audience-ml",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "ml",
+            "included.custom.audience": "svc-ml",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -303,21 +283,11 @@
           }
         },
         {
-          "name": "audience-shp-api",
+          "name": "audience-svc-clinical",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "shp-api",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        },
-        {
-          "name": "audience-clinical",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "clinical",
+            "included.custom.audience": "svc-clinical",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -353,21 +323,11 @@
           }
         },
         {
-          "name": "audience-shp-api",
+          "name": "audience-svc-clinical",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "shp-api",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        },
-        {
-          "name": "audience-clinical",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "clinical",
+            "included.custom.audience": "svc-clinical",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -403,31 +363,21 @@
           }
         },
         {
-          "name": "audience-shp-api",
+          "name": "audience-svc-clinical",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "shp-api",
+            "included.custom.audience": "svc-clinical",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
         },
         {
-          "name": "audience-clinical",
+          "name": "audience-svc-document",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "clinical",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        },
-        {
-          "name": "audience-document",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "document",
+            "included.custom.audience": "svc-document",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -463,21 +413,11 @@
           }
         },
         {
-          "name": "audience-shp-api",
+          "name": "audience-svc-scheduling",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "shp-api",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        },
-        {
-          "name": "audience-scheduling",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "scheduling",
+            "included.custom.audience": "svc-scheduling",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }

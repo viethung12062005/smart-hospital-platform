@@ -16,6 +16,11 @@ Combines **RBAC** (roles in the token) and **ABAC** (the relationship between th
 
 The gateway **does not** decide business permissions (only layer 1 and rate limiting). Services do not trust headers added by the gateway.
 
+`aud` inside layer 1 is an **isolation boundary** (ADR-0017): a user (interactive) token carries `shp-api`, a service token
+carries only the target's `svc-<name>`. A service sets `OIDC_AUDIENCE=svc-<name>` and accepts that value or `shp-api`
+(`ShpJwt.acceptedAudiences`, Python `AuthSettings.accepted_audiences`), so a token minted for another service never reaches
+layer 2 — and `/internal` endpoints additionally require `azp` + `internal.<target>` (section 7).
+
 ## 2. Decision model
 
 ```
@@ -131,7 +136,7 @@ A doctor has `care` with a patient when **a valid source** exists in `care_relat
 
 | Case | Mechanism |
 |---|---|
-| Call to `/internal/*` | Keycloak service-account token (client credentials, client `svc-<caller>`): realm role `internal.<target>` in `roles`, `aud` = `shp-api` and the targets, `azp` = the caller. The client proves itself with its Kubernetes ServiceAccount token (IAM-02, [keycloak.md](../../04-devops/keycloak.md)). Each internal endpoint has a **list of allowed callers** (`azp`) and requires `internal.<target>`; NetworkPolicy blocks at the network layer. The table of who may call whom is `identity/realm/services.json` |
+| Call to `/internal/*` | Keycloak service-account token (client credentials, client `svc-<caller>`): realm role `internal.<target>` in `roles`, `aud` = the targets only (`svc-<target>`; never `shp-api`), `azp` = the caller. The client proves itself with its Kubernetes ServiceAccount token (IAM-02, [keycloak.md](../../04-devops/keycloak.md)). Each internal endpoint has a **list of allowed callers** (`azp`) and requires `internal.<target>` (`require_service`; Java `ShpJwt.requireService`); NetworkPolicy blocks at the network layer. The table of who may call whom is `identity/realm/services.json` |
 | AI reads patient data | **RFC 8693 token exchange** (Keycloak) → a token carrying the user's identity, `aud` = clinical/scheduling; the matrix rules apply unchanged to that user |
 | AI writes (creates `Observation` from extraction, books via chatbot) | Same mechanism, **only after the user confirms** (AI6, AI8) |
 | Background jobs (slot generation, no-show, cleanup) | Service identity; audit `actor.role = system`, `purposeOfUse = HOPERAT` |

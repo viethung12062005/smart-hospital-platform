@@ -148,7 +148,13 @@ class KeycloakFederatedClientAuthTest {
     var claims = KeycloakTestSupport.claims(JsonPath.read(res.body(), "$.access_token"));
     assertThat(claims.<String>read("$.azp")).isEqualTo("svc-notification");
     assertThat(claims.<List<String>>read("$.roles")).contains("internal.clinical");
-    assertThat(claims.<List<String>>read("$.aud")).contains("shp-api", "clinical");
+    // audience isolation (ADR-0017): the targets only, no shp-api
+    Object aud = claims.read("$.aud");
+    List<String> audiences =
+        aud instanceof List<?> l
+            ? l.stream().map(String::valueOf).toList()
+            : List.of(String.valueOf(aud));
+    assertThat(audiences).containsExactly("svc-clinical").doesNotContain("shp-api");
   }
 
   @Test

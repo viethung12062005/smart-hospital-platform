@@ -259,6 +259,13 @@ automation:
     status: planned
     blocked_by: "The UI has no logout that clears data and blocks Back (WEB-xx)."
     owner: SA
+  TC-SEC-29:
+    status: automated
+    refs:
+      - tools/identity/test_realm.py::test_service_tokens_never_carry_the_user_audience
+      - libs/java/shp-security/src/test/java/org/shp/security/ShpJwtTest.java::refusesATokenIssuedForAnotherService
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience
+      - libs/python/tests/test_security.py::test_service_audience_accepts_its_own_and_the_user_audience_only
 
   # ---- Performance (k6) ----
   TC-NFR-P1: {status: partial, refs: ["tests/performance/k6/slots-search.js::p(95)<300"], gap: "The script exists and its syntax is checked in CI; run on a production-sized UAT when Azure is available (PRD-10, PRD-01)."}

@@ -1,6 +1,7 @@
 package org.shp.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.jayway.jsonpath.JsonPath;
 import java.net.URLEncoder;
@@ -18,8 +19,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 /**
  * IAM-02: service accounts for {@code /internal} against a real Keycloak (local realm: client
  * secret). Every service client in identity/realm/services.json gets exactly the roles of the
- * services it may call, an audience made of {@code shp-api} and its targets, and can do nothing
- * else.
+ * services it may call, an audience made of its targets only ({@code svc-<target>}, never {@code
+ * shp-api}; ADR-0017), and can do nothing else.
  */
 @Testcontainers
 class KeycloakServiceAccountTest {
@@ -81,7 +82,11 @@ class KeycloakServiceAccountTest {
           aud instanceof List<?> l
               ? l.stream().map(String::valueOf).toList()
               : List.of(String.valueOf(aud));
-      assertThat(audiences).contains("shp-api").containsAll(calls);
+      // audience isolation: the token names the targets and nothing else (not shp-api, not another
+      // service)
+      assertThat(audiences)
+          .containsExactlyInAnyOrderElementsOf(calls.stream().map(c -> "svc-" + c).toList())
+          .doesNotContain("shp-api");
     }
   }
 
@@ -89,8 +94,9 @@ class KeycloakServiceAccountTest {
   void serviceTokenPassesTheSharedJwtRulesButCarriesNoUserRole() throws Exception {
     String token = serviceToken("svc-notification");
     String issuer = KeycloakTestSupport.base(KEYCLOAK) + "/realms/shp";
+    // notification may call clinical: its audience names svc-clinical only
     var props =
-        new ShpAuthProperties(issuer, "shp-api", true, java.time.Duration.ofSeconds(30), "");
+        new ShpAuthProperties(issuer, "svc-clinical", true, java.time.Duration.ofSeconds(30), "");
     NimbusJwtDecoder decoder =
         NimbusJwtDecoder.withJwkSetUri(issuer + "/protocol/openid-connect/certs").build();
     decoder.setJwtValidator(ShpJwt.validator(props, Clock.systemUTC()));
@@ -99,6 +105,22 @@ class KeycloakServiceAccountTest {
     // endpoints refuse it.
     assertThat(ShpJwt.roles(jwt)).isEmpty();
     assertThat(jwt.getClaimAsStringList("roles")).contains("internal.clinical");
+  }
+
+  @Test
+  void aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience() throws Exception {
+    String token = serviceToken("svc-notification");
+    String issuer = KeycloakTestSupport.base(KEYCLOAK) + "/realms/shp";
+    for (String audience : List.of("svc-scheduling", "shp-api", "svc-notification")) {
+      var props =
+          new ShpAuthProperties(issuer, audience, true, java.time.Duration.ofSeconds(30), "");
+      NimbusJwtDecoder decoder =
+          NimbusJwtDecoder.withJwkSetUri(issuer + "/protocol/openid-connect/certs").build();
+      decoder.setJwtValidator(ShpJwt.validator(props, Clock.systemUTC()));
+      assertThatThrownBy(() -> decoder.decode(token))
+          .as("audience " + audience)
+          .isInstanceOf(org.springframework.security.oauth2.jwt.JwtValidationException.class);
+    }
   }
 
   @Test
