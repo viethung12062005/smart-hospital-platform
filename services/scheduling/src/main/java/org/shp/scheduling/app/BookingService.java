@@ -71,7 +71,7 @@ public class BookingService {
     if (claim.replay()) {
       AppointmentRecord first =
           appointments
-              .findById(claim.resourceId())
+              .findOriginalBooking(claim.resourceId())
               .orElseThrow(
                   () -> new IllegalStateException("idempotency claim without an appointment"));
       return new BookingResult(first, true);
@@ -99,14 +99,15 @@ public class BookingService {
             cmd.subject(),
             "{}");
     AppointmentRecord booked = draft.withContent(AppointmentFhir.booked(draft, cmd.comment()));
+    String storedContent;
     try {
-      appointments.insertWithHistory(booked);
+      storedContent = appointments.insertWithHistory(booked);
     } catch (DuplicateKeyException e) {
       // Final guard (unique index): cannot happen after a successful claim, but never double-book.
       throw new SlotUnavailableException(slot.id(), slot.practitionerId(), slot.specialty());
     }
     outbox.add(bookedEvent(booked, now), validateEvents);
-    return new BookingResult(booked, false);
+    return new BookingResult(booked.withContent(storedContent), false);
   }
 
   /** Step 4, zero rows: not found 404, outside the window 422, otherwise 409. */
