@@ -188,6 +188,44 @@ class WormAuditLogTest {
   }
 
   @Test
+  void aRestartedInstanceDoesNotUseAnIncompleteBlobAsTheChainHead() {
+    var container = freshContainer("t-orphan");
+    var first = new WormAuditLog(container, "audit-0", CLOCK).append(records("a", 1));
+
+    var failNext = new java.util.concurrent.atomic.AtomicBoolean(true);
+    var crashing =
+        new WormAuditLog(container, "audit-0", CLOCK) {
+          @Override
+          void writeBlock(
+              com.azure.storage.blob.specialized.AppendBlobClient blob,
+              byte[] c,
+              int from,
+              int to) {
+            if (failNext.getAndSet(false)) {
+              throw new IllegalStateException("simulated block write failure");
+            }
+            super.writeBlock(blob, c, from, to);
+          }
+        };
+    assertThatThrownBy(() -> crashing.append(records("b", 1)))
+        .isInstanceOf(IllegalStateException.class);
+    // The orphan was created with the hash metadata of the batch that was never filled.
+    var orphan = container.getBlobClient("v1/2026/11/18/10/audit-0-2.ndjson").getProperties();
+    assertThat(orphan.getBlobSize()).isZero();
+    assertThat(orphan.getMetadata()).containsKey("batchHash");
+
+    var restarted = new WormAuditLog(container, "audit-0", CLOCK);
+    assertThat(restarted.headHash()).isEqualTo(first.batchHash());
+
+    // The next batch chains to the last complete batch, and the burnt sequence is not reused.
+    var next = restarted.append(records("c", 1));
+    assertThat(next.blobName()).endsWith("audit-0-3.ndjson");
+    assertThat(lines(restarted, next.blobName())[0])
+        .contains("\"prevBatch\":\"" + first.blobName() + "\"")
+        .contains("\"prevHash\":\"" + first.batchHash() + "\"");
+  }
+
+  @Test
   void aFailedBlockWriteLeavesTheHeadAndTheRetryUsesAFreshBlob() {
     var container = freshContainer("t-retry");
     var failNext = new java.util.concurrent.atomic.AtomicBoolean();

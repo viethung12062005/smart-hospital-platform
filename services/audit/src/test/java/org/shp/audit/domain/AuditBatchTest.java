@@ -69,6 +69,22 @@ class AuditBatchTest {
   }
 
   @Test
+  void storedContentIsCompleteOnlyWhenItMatchesTheHash() {
+    var batch = AuditBatch.of(null, AuditBatch.GENESIS_HASH, RECORDS);
+    String content = new String(batch.content(), StandardCharsets.UTF_8);
+
+    assertThat(AuditBatch.isComplete(content, batch.batchHash())).isTrue();
+    // A blob created but not filled, or cut in the middle of a record, is not a valid link.
+    assertThat(AuditBatch.isComplete("", batch.batchHash())).isFalse();
+    assertThat(AuditBatch.isComplete(content.substring(0, content.length() - 5), batch.batchHash()))
+        .isFalse();
+    assertThat(
+            AuditBatch.isComplete(content, AuditBatch.hash(AuditBatch.GENESIS_HASH, List.of("x"))))
+        .isFalse();
+    assertThat(AuditBatch.isComplete(content, null)).isFalse();
+  }
+
+  @Test
   void rejectsInvalidInput() {
     assertThatThrownBy(() -> AuditBatch.of(null, AuditBatch.GENESIS_HASH, List.of()))
         .isInstanceOf(IllegalArgumentException.class);
