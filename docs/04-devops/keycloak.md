@@ -116,6 +116,18 @@ it cannot be replayed against a user API.
 The endpoint side: `require_service(<target>, "svc-<caller>")` (Python `Authenticator.require_service`, Java
 `ShpJwt.requireService`) checks `azp` against the allow-list and requires the role `internal.<target>`. Use the guard on
 every `/internal` endpoint; the gateway additionally never routes `/internal/**` from outside.
+
+Callers today, straight from `services.json`: `scheduling`, `notification`, `document`, `ai` and `audit` call `clinical`
+(identity lookup, 09 section 4); `clinical` calls `document`, `scheduling` and `notification`; `ml` calls `scheduling`;
+`ai` may also exchange a user token for `clinical` and `scheduling`. A service that resolves identities must be a caller
+in `services.json`; otherwise its token request is refused and every request it serves fails (SHR-32 added `audit`).
+
+What a Java service sets to use its client (`ServiceTokenInterceptor`, library `shp-web`; the Helm values live in
+`shp-platform-templates` and `shp-gitops`): `OIDC_CLIENT_SECRET` from a Secret (`secretEnv`) in the secret mode, or
+`OIDC_CLIENT_ASSERTION_FILE` (path of the projected ServiceAccount token) in the cluster mode; `OIDC_TOKEN_ENDPOINT` and
+`OIDC_CLIENT_ID` (`svc-<service>`) only when they cannot be derived from `OIDC_JWK_SET_URI` / `OIDC_AUTHORITY` and the
+application name.
+
 The OTP endpoints of `notification` require `internal.notification`, the same convention as every other target
 (detailed-design 11 was aligned in IAM-10).
 
