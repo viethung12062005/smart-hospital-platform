@@ -4,6 +4,7 @@ import {
   IconClipboardHeart,
   IconHome,
   IconListCheck,
+  IconMessageChatbot,
   IconStethoscope,
   IconUserSearch,
   IconUsers,
@@ -53,6 +54,10 @@ export const MENU: readonly MenuGroup[] = [
       { href: '/patients', label: 'patients', icon: <IconUsers />, roles: ['doctor', 'nurse'] },
       { href: '/encounters', label: 'encounters', icon: <IconStethoscope />, roles: ['doctor', 'nurse'] },
     ],
+  },
+  {
+    title: 'groupAi',
+    links: [{ href: '/assistant', label: 'assistant', icon: <IconMessageChatbot />, roles: ['doctor', 'nurse'] }],
   },
 ];
 

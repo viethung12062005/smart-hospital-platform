@@ -9,8 +9,8 @@ describe('menu by role', () => {
     expect(hrefs(['patient'])).toEqual(['/', '/doctors', '/book', '/appointments']);
   });
 
-  it('a doctor sees the queue, schedule, patients and encounters', () => {
-    expect(hrefs(['doctor'])).toEqual(['/', '/queue', '/schedule', '/patients', '/encounters']);
+  it('a doctor sees the queue, schedule, patients, encounters and the assistant', () => {
+    expect(hrefs(['doctor'])).toEqual(['/', '/queue', '/schedule', '/patients', '/encounters', '/assistant']);
   });
 
   it('the DPO has no business menu besides the home page', () => {

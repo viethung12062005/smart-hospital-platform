@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { http, HttpResponse, type HttpResponseResolver } from 'msw';
 import { decodeJwtPayload, rolesFromClaims, type Role } from '@/auth/roles';
 import { MOCK_USERS } from '@/auth/session';
+import { aiHandlers, resetAiMock } from './ai';
 import { createDb, type MockDb } from './data';
 
 /**
@@ -16,6 +17,7 @@ const idempotency = new Map<string, { body: string; appointmentId: string }>();
 export function resetMockDb(): void {
   db = createDb();
   idempotency.clear();
+  resetAiMock();
 }
 
 export function mockDb(): MockDb {
@@ -129,6 +131,8 @@ function isFutureBooked(a: Appointment): boolean {
 }
 
 export const handlers = [
+  ...aiHandlers,
+
   http.get(
     '/api/v1/me',
     authed(({ me }) => HttpResponse.json({ sub: me.sub, roles: me.roles, fhirUser: me.fhirUser })),
