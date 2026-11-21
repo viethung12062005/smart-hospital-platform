@@ -69,6 +69,13 @@ automation:
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::parallelRequestsWithOneKeyProduceExactlyOneNewClaim
     gap: "Only contention on the same key is checked; need 50 concurrent requests to one slot against real PostgreSQL (SCH-xx, Testcontainers)."
+  TC-AC-03.4:
+    status: partial
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::thirdFutureAppointmentIsTheLimit
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::onlyFutureBookedAppointmentsOfThePatientCount
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::sameCustomerSerializes
+    gap: "BR-03 is checked on real PostgreSQL at service level (BookingGuard, SCH-12); the 422 through the $book endpoint awaits SCH-14."
   TC-AC-07.2:
     status: partial
     refs:
