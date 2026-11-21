@@ -276,6 +276,28 @@ class BookingApiTest {
   }
 
   @Test
+  void replayReturnsVersionOneAfterTheAppointmentChanges() throws Exception {
+    String body = params(freeSlot(3), null, null, null);
+    String key = "key-api-edit";
+    var created = book(patientAToken, key, body);
+    assertThat(created.statusCode()).isEqualTo(201);
+
+    jdbc.sql(
+            """
+            UPDATE scheduling.appointment SET version_id = 2, status = 'cancelled',
+              content = jsonb_set(jsonb_set(content, '{meta,versionId}', '"2"'), '{status}', '"cancelled"')
+            """)
+        .update();
+
+    var replay = book(patientAToken, key, body);
+    assertThat(replay.statusCode()).isEqualTo(200);
+    assertThat(replay.body()).isEqualTo(created.body());
+    assertThat(replay.headers().firstValue(HttpHeaders.ETAG)).contains("W/\"1\"");
+    assertThat(replay.headers().firstValue(HttpHeaders.LOCATION))
+        .isEqualTo(created.headers().firstValue(HttpHeaders.LOCATION));
+  }
+
+  @Test
   @DisplayName("AC-03.3: the same key with another body is 422 idempotency-key-reused")
   void sameKeyDifferentBodyIsRejected() throws Exception {
     assertThat(
@@ -312,6 +334,10 @@ class BookingApiTest {
             "{\"resourceType\":\"Parameters\",\"parameter\":[{\"name\":\"slot\",\"valueReference\":{\"reference\":\"Slot/not-a-uuid\"}}]}",
             "{\"resourceType\":\"Parameters\",\"parameter\":[{\"name\":\"slot\",\"valueString\":\"x\"}]}",
             "{\"resourceType\":\"Parameters\",\"parameter\":[{\"name\":\"other\",\"valueString\":\"x\"}]}",
+            params(slot, null, null, null)
+                .replace(
+                    "\"valueReference\"",
+                    "\"part\":[{\"name\":\"extra\",\"valueString\":\"x\"}],\"valueReference\""),
             params(slot, null, "carrier-pigeon", null),
             params(slot, null, null, "x".repeat(501)),
             params(slot, null, "staff", null));
@@ -430,6 +456,18 @@ class BookingApiTest {
     assertThat(ids).containsExactly("Slot/" + soonest, "Slot/" + soon, "Slot/" + later);
     assertThat(ids).doesNotContain("Slot/" + otherDoctorSlot, "Slot/" + evenLater);
     assertThat(count("SELECT count(*) FROM scheduling.appointment")).isEqualTo(1);
+  }
+
+  @Test
+  void conflictWithoutAlternativesDoesNotEmitAnEmptyFhirExtension() throws Exception {
+    UUID taken = freeSlot(3);
+    assertThat(book(nurseToken, "key-api-taken", params(taken, PATIENT_B, null, null)).statusCode())
+        .isEqualTo(201);
+
+    var res = book(patientAToken, "key-api-no-alt", params(taken, null, null, null));
+    assertThat(res.statusCode()).isEqualTo(409);
+    assertThat(errorCode(res)).isEqualTo("slot-unavailable");
+    assertThat(JSON.readTree(res.body()).has("extension")).isFalse();
   }
 
   @Test

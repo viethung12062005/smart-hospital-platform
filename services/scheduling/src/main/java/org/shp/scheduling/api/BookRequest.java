@@ -55,7 +55,11 @@ record BookRequest(UUID slotId, UUID patientId, String comment, String channel, 
     Set<String> seen = new HashSet<>();
     for (ParametersParameterComponent p : params.getParameter()) {
       String name = p.getName();
-      if (name == null || !NAMES.contains(name) || !seen.add(name)) {
+      if (name == null
+          || !NAMES.contains(name)
+          || !seen.add(name)
+          || p.hasPart()
+          || p.hasResource()) {
         throw new ShpException("validation-failed");
       }
       switch (name) {

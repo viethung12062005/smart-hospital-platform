@@ -104,8 +104,8 @@ public class BookingController {
 
   /**
    * 409 {@code slot-unavailable} as an OperationOutcome carrying the 3 nearest free slots, so the
-   * patient can pick another one at once (AC-03.6 flow, 14-sequences). The lookup runs after the
-   * booking transaction has rolled back.
+   * patient can pick another one at once (14-sequences). The lookup runs after the booking
+   * transaction has rolled back.
    */
   @ExceptionHandler(SlotUnavailableException.class)
   void slotUnavailable(SlotUnavailableException ex, HttpServletRequest req, HttpServletResponse res)
@@ -131,7 +131,9 @@ public class BookingController {
     issue.put("diagnostics", wantsEnglish(req) ? ex.info().messageEn() : ex.info().messageVi());
     var outcome = new LinkedHashMap<String, Object>();
     outcome.put("resourceType", "OperationOutcome");
-    outcome.put("extension", suggestedSlots(nearest));
+    if (!nearest.isEmpty()) {
+      outcome.put("extension", suggestedSlots(nearest));
+    }
     outcome.put("issue", List.of(issue));
     res.setStatus(ex.info().status());
     res.setHeader("X-Request-Id", traceId);
