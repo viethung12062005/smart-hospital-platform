@@ -297,3 +297,31 @@ of `shp.css` is at least 4.5:1, WCAG 2.1 AA). An axe-core scan (WCAG 2.1 A/AA ru
   The CI image job waits for a decision: Keycloak 26.8.2 itself bundles `guava` 33.6.0 (CVE-2026-102554, HIGH, fixed in 33.7.2), which the
   container scan of the platform templates blocks; no Keycloak release ships the fix yet.
 - Accounts created with a phone number (IAM-08) have no email; resetting their password by an OTP code belongs to the OTP work (IAM-04, IAM-09).
+
+## 12. Patient sign-up (IAM-08)
+
+The custom `shp registration` flow asks for one Vietnamese mobile number or email address and requires an unchecked Terms of use
+checkbox. It then sends a six-digit ownership code through the `shp-otp` provider contract. Only after a valid code does it look
+up the identifier: an owner of an existing account is offered sign-in and password reset; a new owner chooses a password and gets
+the `patient` role. Phone numbers are normalized to `+84` and stored as the username, which is also what sign-in asks for; email
+addresses are stored lower-case. The verified phone/email and the acceptance timestamp are stored on the Keycloak user; passwords
+remain only in Keycloak. Vietnamese is the realm default and English remains selectable.
+
+The order is the account-enumeration control: the identifier and invalid-code pages have the same status and visible answer for
+existing and new identifiers. No user lookup occurs before ownership verification. Logs and events do not include the identifier
+or code.
+
+The realm deliberately keeps `registrationAllowed=false` until IAM-04 supplies the production `shp-otp` provider backed by
+notification N8/N9. Enabling registration before that provider is installed would expose a flow that can only fail closed. IAM-08
+tests enable it only in a disposable Keycloak container and install a test-only provider JAR; that JAR is built with the Maven test
+classifier and is not copied by `identity/keycloak/Dockerfile`.
+
+`SignUpIT` proves the Vietnamese and English pages, required terms, phone and email account creation, verified attributes and the
+patient role, signing in with the stored `+84` username, password policy, code error/lock/rate-limit messages, restart with another
+identifier, and no account disclosure before a valid ownership code. IAM-04 remains responsible for the real N8/N9 client,
+five-minute expiry, single use and Zalo-to-SMS delivery behavior; IAM-09 owns destination/IP rate limits and the development fake
+provider.
+
+The realm keeps the stock username-and-password form, so it still works on the stock image (the shp-security tests import it
+there). Signing in with a number written in national form (`0901 234 567`) would need a custom form and therefore the SHP image
+everywhere; it is left out of IAM-08 and should be decided with the image rollout (IAM-04) if patients need it.
