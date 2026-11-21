@@ -3,6 +3,19 @@
 spring:
   application:
     name: audit
+  cloud:
+    function:
+      definition: auditEvents
+    stream:
+      bindings:
+        auditEvents-in-0:
+          destination: shp-events
+          group: audit
+      rabbit:
+        bindings:
+          auditEvents-in-0:
+            consumer:
+              binding-routing-key: shp.audit.recorded.v1
   mongodb:
     uri: ${SPRING_MONGODB_URI:mongodb://localhost:27117/?directConnection=true}
     database: audit
@@ -23,5 +36,10 @@ shp:
     container: ${SHP_AUDIT_BLOB_CONTAINER:audit}
     instance: ${SHP_AUDIT_BLOB_INSTANCE:${HOSTNAME:audit-0}}
     create-container-if-missing: ${SHP_AUDIT_BLOB_CREATE_CONTAINER:false}
+  audit-batch:
+    # A batch is written at max-records waiting records or when the oldest has waited max-age.
+    max-records: 5000
+    max-age: 60s
+    poll-interval: 1s
 server:
   port: 8080
