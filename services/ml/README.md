@@ -60,5 +60,20 @@ Job       retrain: lock ─► Parquet snapshot 24 months (hash) ─► pipeline
 | `python -m shp_ml.monitor` | run monitoring once (CronJob) |
 | `python -m shp_ml.retrain --datasets /data/datasets` | process retraining requests (Kubernetes Job, training image) |
 
+### Canary and shadow metrics (ML-25)
+Every series carries `model_version`, so the canary AnalysisTemplate (MLO-03) and the shadow step (16-mlops §6) can compare versions.
+
+| Metric | Use |
+|---|---|
+| `shp_ml_predict_seconds{model_version}` (histogram) | p95 latency (≤ 100 ms); `_count` = successful predictions |
+| `shp_ml_predict_errors_total{model_version}` | error rate = errors / (errors + `shp_ml_predict_seconds_count`) |
+| `shp_ml_score{model_version}` (histogram) | score distribution per version |
+| `shp_ml_high_risk_total{model_version,high_risk}` | highRisk rate of served predictions (±5 points vs the old version) |
+| `shp_ml_shadow_agreement_total{model_version,agree}` | highRisk agreement of the candidate with production (≥ 90%) |
+| `shp_ml_shadow_score_psi{model_version}` | score PSI of the candidate against production on the same appointments, last `SHADOW_PSI_WINDOW` (1,000) pairs, exported from `SHADOW_PSI_MIN_PAIRS` (200) pairs on; gate < 0.1. Removed when the candidate changes |
+| `shp_ml_model_info{model_version,role}` | loaded production model |
+
+`shp_ml_score_psi` (no version label) is the daily drift of production scores against registration time (ML-10), not a canary metric.
+
 Integration tests use a real MongoDB replica set and RabbitMQ via testcontainers (needs Docker); if `SHP_TEST_MONGO_URI` is set
 the local cluster is used instead. Without Docker those tests are skipped.

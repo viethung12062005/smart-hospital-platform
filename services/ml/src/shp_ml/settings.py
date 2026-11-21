@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     mlflow_tracking_uri: str = ""  # cluster
     model_poll_seconds: float = 30.0  # production alias change → reload within ≤ 60 seconds (ML-09)
     shadow_enabled: bool = True  # candidate scores in parallel when it differs from production (ML-24)
+    # Score PSI between candidate (shadow) and production on the same appointments (ML-25, 16-mlops section 6)
+    shadow_psi_window: int = 1000  # last N paired scores
+    shadow_psi_min_pairs: int = 200  # fewer pairs give a noisy PSI: the metric is not exported until then
 
     predict_callers: str = "svc-scheduling,svc-ci"  # azp values allowed to call M3
 
