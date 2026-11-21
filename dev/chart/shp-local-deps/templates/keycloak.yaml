@@ -9,6 +9,16 @@ data:
   realm-shp.json: |
 {{ .Files.Get "files/realm-shp.json" | indent 4 }}
 ---
+# Password policy passwordBlacklist(breached-passwords.txt) reads this file from Keycloak's data directory (IAM-06).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-password-blacklist
+  labels: {{- include "shp.labels" . | nindent 4 }}
+data:
+  breached-passwords.txt: |
+{{ .Files.Get "files/breached-passwords.txt" | indent 4 }}
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -60,7 +70,10 @@ spec:
           resources: {{- toYaml .Values.resources.keycloak | nindent 12 }}
           volumeMounts:
             - { name: realm, mountPath: /opt/keycloak/data/import }
+            - { name: blacklist, mountPath: /opt/keycloak/data/password-blacklists }
       volumes:
         - name: realm
           configMap: { name: keycloak-realm }
+        - name: blacklist
+          configMap: { name: keycloak-password-blacklist }
 {{- end }}

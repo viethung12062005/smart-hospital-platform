@@ -30,6 +30,15 @@ TARGETS = {
     "prod": SRC / "dist" / "realm-shp-prod.json",
 }
 GITOPS_COPY = Path("platform") / "charts" / "shp-keycloak" / "files" / "realm-shp.json"
+# The password blacklist (policy passwordBlacklist) is a plain file Keycloak reads from its data directory.
+BLACKLIST = SRC / "breached-passwords.txt"
+BLACKLIST_TARGETS = [
+    ROOT / "dev" / "chart" / "shp-local-deps" / "files" / "breached-passwords.txt",
+    SRC / "dist" / "breached-passwords.txt",
+]
+GITOPS_BLACKLIST = (
+    Path("platform") / "charts" / "shp-keycloak" / "files" / "breached-passwords.txt"
+)
 # Content that must never reach a realm that runs in a cluster (checked by `forbidden`).
 FORBIDDEN_IN_PROD = ("localhost", "shp-test")
 LITERAL_CREDENTIAL = re.compile(
@@ -232,6 +241,28 @@ def main() -> int:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(want, encoding="utf-8", newline="\n")
             print(f"wrote {target.relative_to(ROOT)}")
+    wanted = BLACKLIST.read_text(encoding="utf-8")
+    for target in BLACKLIST_TARGETS:
+        if args.check:
+            if not target.exists() or target.read_text(encoding="utf-8") != wanted:
+                print(
+                    f"DRIFT: {target.relative_to(ROOT)} differs from identity/realm/breached-passwords.txt"
+                )
+                bad += 1
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(wanted, encoding="utf-8", newline="\n")
+            print(f"wrote {target.relative_to(ROOT)}")
+    if args.gitops:
+        blacklist_copy = args.gitops / GITOPS_BLACKLIST
+        if (
+            not blacklist_copy.exists()
+            or blacklist_copy.read_text(encoding="utf-8") != wanted
+        ):
+            print(
+                f"DRIFT: {blacklist_copy} differs from identity/realm/breached-passwords.txt"
+            )
+            bad += 1
     if args.gitops:
         copy_path = args.gitops / GITOPS_COPY
         if not copy_path.exists() or copy_path.read_text(encoding="utf-8") != render(
