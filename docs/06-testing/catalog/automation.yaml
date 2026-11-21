@@ -102,6 +102,10 @@ automation:
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s3FindSchedulesWithRoleRestrictions
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::s4UpdateSchedule
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleApiTest.java::deniedScheduleReadIsAudited
+  TC-AC-ST.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleTemplateApiTest.java::validTemplateSavesAndNonDivisibleRangeReturns400
 
   # ---- Clinical: version history ----
   TC-SEC-03:
