@@ -85,16 +85,6 @@ def service_accounts(realm: dict[str, Any]) -> None:
         for t in targets
     ]
     users: list[dict[str, Any]] = realm.setdefault("users", [])
-    for name in sorted({*spec["services"], *targets}):
-        # The audience of a service must exist as a client: token exchange (IAM-07) only accepts an `audience` that is one.
-        realm["clients"].append(
-            {
-                "clientId": name,
-                "name": f"Audience of {name} (resource, no login)",
-                "enabled": True,
-                "bearerOnly": True,
-            }
-        )
     for name, svc in spec["services"].items():
         client_id = f"svc-{name}"
         attributes: dict[str, str] = {}
@@ -106,6 +96,9 @@ def service_accounts(realm: dict[str, Any]) -> None:
         exchange = svc.get("exchange", [])
         if exchange:  # standard token exchange v2 (RFC 8693): this client may exchange a user token (IAM-07)
             attributes["standard.token.exchange.enabled"] = "true"
+        # Audience isolation (ADR-0017): the targets only, never shp-api. Keycloak only lets a client exchange into
+        # an audience that is already available to it ("Requested audience not available"), so the exchange targets
+        # are here too; that token can reach them but carries the internal role only for `calls`.
         audiences = list(dict.fromkeys(f"svc-{t}" for t in [*svc["calls"], *exchange]))
         realm["clients"].append(
             {

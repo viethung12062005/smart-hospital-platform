@@ -70,6 +70,8 @@ class KeycloakServiceAccountTest {
     assertThat(services).isNotEmpty();
     for (var entry : services.entrySet()) {
       List<String> calls = entry.getValue().get("calls");
+      // exchange targets are audiences too: Keycloak only exchanges into an available audience
+      List<String> exchange = entry.getValue().getOrDefault("exchange", java.util.List.of());
       var claims = KeycloakTestSupport.claims(serviceToken("svc-" + entry.getKey()));
       List<String> roles = claims.read("$.roles");
       List<String> internal = roles.stream().filter(r -> r.startsWith("internal.")).toList();
@@ -82,10 +84,13 @@ class KeycloakServiceAccountTest {
           aud instanceof List<?> l
               ? l.stream().map(String::valueOf).toList()
               : List.of(String.valueOf(aud));
-      // audience isolation: the token names the targets and nothing else (not shp-api, not another
-      // service)
+      // audience isolation: the token names the targets (and exchange targets) and nothing else
       assertThat(audiences)
-          .containsExactlyInAnyOrderElementsOf(calls.stream().map(c -> "svc-" + c).toList())
+          .containsExactlyInAnyOrderElementsOf(
+              java.util.stream.Stream.concat(calls.stream(), exchange.stream())
+                  .distinct()
+                  .map(c -> "svc-" + c)
+                  .toList())
           .doesNotContain("shp-api");
     }
   }

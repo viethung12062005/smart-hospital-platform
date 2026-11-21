@@ -116,42 +116,6 @@
       "protocolMappers": []
     },
     {
-      "clientId": "ai",
-      "name": "Audience of ai (resource, no login)",
-      "enabled": true,
-      "bearerOnly": true
-    },
-    {
-      "clientId": "clinical",
-      "name": "Audience of clinical (resource, no login)",
-      "enabled": true,
-      "bearerOnly": true
-    },
-    {
-      "clientId": "document",
-      "name": "Audience of document (resource, no login)",
-      "enabled": true,
-      "bearerOnly": true
-    },
-    {
-      "clientId": "ml",
-      "name": "Audience of ml (resource, no login)",
-      "enabled": true,
-      "bearerOnly": true
-    },
-    {
-      "clientId": "notification",
-      "name": "Audience of notification (resource, no login)",
-      "enabled": true,
-      "bearerOnly": true
-    },
-    {
-      "clientId": "scheduling",
-      "name": "Audience of scheduling (resource, no login)",
-      "enabled": true,
-      "bearerOnly": true
-    },
-    {
       "clientId": "svc-clinical",
       "name": "Service account of clinical (/internal)",
       "enabled": true,
@@ -406,11 +370,11 @@
           }
         },
         {
-          "name": "audience-scheduling",
+          "name": "audience-svc-scheduling",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "scheduling",
+            "included.custom.audience": "svc-scheduling",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }

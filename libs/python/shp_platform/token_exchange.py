@@ -1,8 +1,9 @@
 """Token exchange on behalf of the user (RFC 8693, Keycloak) for ai calling clinical/scheduling (PY-02, 15 §7).
 
-The resulting token keeps the user's `sub`, so the authorization matrix applies unchanged; `audience` is the target
-service.
-Results are cached by (original token, audience) until 30 seconds before expiry. Never log tokens.
+The resulting token keeps the user's `sub`, so the authorization matrix applies unchanged. Its `aud` is the target
+service's own audience `svc-<target>` and nothing else: `aud` is an isolation boundary, so the exchanged token is
+accepted by that service and by no other (ADR-0017).
+Results are cached by (original token, target) until 30 seconds before expiry. Never log tokens.
 """
 
 import hashlib
@@ -19,15 +20,17 @@ GRANT = "urn:ietf:params:oauth:grant-type:token-exchange"
 ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token"  # noqa: S105 - token type name, not a secret
 
 
+def service_audience(service: str) -> str:
+    """Audience of a service token: the service's client id `svc-<name>` (ADR-0017)."""
+    return service if service.startswith("svc-") else f"svc-{service}"
+
+
 @dataclass(frozen=True)
 class ExchangeSettings:
     token_endpoint: str  # <issuer>/protocol/openid-connect/token
     client_id: str
     client_secret: str = ""  # from Key Vault/Kubernetes secrets, never in the repo
     assertion_file: str = ""  # projected ServiceAccount token (preferred over the secret, IAM-02)
-    # Audience the services validate on every request (OIDC_AUDIENCE, `shp-api`). Requested together with the target
-    # so the exchanged token passes the shared JWT rules of the target and still names the target service (IAM-07).
-    also_audience: str = "shp-api"
 
 
 class TokenExchanger:
@@ -42,7 +45,9 @@ class TokenExchanger:
         self._clock = clock
         self._cache: dict[tuple[str, str], tuple[str, float]] = {}
 
-    def exchange(self, subject_token: str, audience: str) -> str:
+    def exchange(self, subject_token: str, target: str) -> str:
+        """Exchange the user's token for one accepted by `target` (a service name such as `clinical`)."""
+        audience = service_audience(target)
         key = (hashlib.sha256(subject_token.encode()).hexdigest(), audience)
         hit = self._cache.get(key)
         now = self._clock()
@@ -57,9 +62,7 @@ class TokenExchanger:
                     "subject_token": subject_token,
                     "subject_token_type": ACCESS_TOKEN_TYPE,
                     "requested_token_type": ACCESS_TOKEN_TYPE,
-                    "audience": [audience, self._settings.also_audience]
-                    if self._settings.also_audience and self._settings.also_audience != audience
-                    else audience,
+                    "audience": audience,
                 }
             )
             res = self._http.post(self._settings.token_endpoint, data=form, auth=basic or httpx.USE_CLIENT_DEFAULT)

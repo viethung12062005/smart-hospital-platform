@@ -95,10 +95,9 @@ def test_service_clients_follow_services_json_in_both_environments() -> None:
                 for m in client["protocolMappers"]
                 if "audience" in m["name"]
             }
-            # audience isolation (ADR-0017): the targets only, never shp-api
-            assert audiences == {
-                f"svc-{t}" for t in [*svc["calls"], *svc.get("exchange", [])]
-            }
+            # audience isolation (ADR-0017): the targets only, never shp-api. Exchange targets are audiences as well,
+            # because Keycloak only exchanges into an available audience.
+            assert audiences == {f"svc-{t}" for t in [*svc["calls"], *svc.get("exchange", [])]}
         roles = {r["name"] for r in realm.build(env)["roles"]["realm"]}
         assert {
             f"internal.{t}" for s in spec["services"].values() for t in s["calls"]
@@ -151,8 +150,9 @@ def test_token_exchange_only_for_callers_with_an_exchange_list() -> None:
             assert (enabled == "true") == bool(svc.get("exchange")), f"{env} svc-{name}"
             for target in svc.get("exchange", []):
                 assert (
-                    built[target]["bearerOnly"] is True
-                )  # the audience must exist as a client
+                    f"svc-{target}" in built
+                )  # the requested audience must exist as a client
+                assert target not in built  # no second, bare-name client per service
         for requester in (
             f"svc-{n}" for n, s in spec["services"].items() if s.get("exchange")
         ):

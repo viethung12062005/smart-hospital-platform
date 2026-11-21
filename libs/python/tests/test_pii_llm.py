@@ -9,7 +9,7 @@ from shp_platform.llm import ChainStep, ChatMessage, FakeProvider, Router, TaskC
 from shp_platform.llm.provider import LlmError, OpenAICompatibleProvider
 from shp_platform.llm.router import CircuitBreaker, TokenBudget
 from shp_platform.pii import contains_pii, redact
-from shp_platform.token_exchange import ExchangeSettings, TokenExchanger
+from shp_platform.token_exchange import ExchangeSettings, TokenExchanger, service_audience
 
 TEXT = (
     "Bệnh nhân Nguyễn Văn An, sinh 12/03/1980, SĐT 0912 345 678, email an.nguyen@example.com, "
@@ -163,12 +163,17 @@ def test_openai_adapter_parses_completion_and_timeout() -> None:
     assert e.value.kind == "timeout"
 
 
+def test_service_audience_is_the_client_id_of_the_target() -> None:
+    assert service_audience("clinical") == "svc-clinical"
+    assert service_audience("svc-clinical") == "svc-clinical"
+
+
 def test_token_exchange_caches_and_maps_errors() -> None:
     calls: list[bytes] = []
 
     def handler(req: httpx.Request) -> httpx.Response:
         calls.append(req.content)
-        if b"audience=bad" in req.content:
+        if b"audience=svc-bad" in req.content:
             return httpx.Response(403)
         return httpx.Response(200, json={"access_token": "exchanged", "expires_in": 300})
 
@@ -186,7 +191,7 @@ def test_token_exchange_caches_and_maps_errors() -> None:
     assert body["subject_token"] == ["user-token"]
     assert body["subject_token_type"] == ["urn:ietf:params:oauth:token-type:access_token"]
     assert body["requested_token_type"] == ["urn:ietf:params:oauth:token-type:access_token"]
-    assert body["audience"] == ["clinical", "shp-api"]  # target + the audience every service validates
+    assert body["audience"] == ["svc-clinical"]  # the target's own audience only (ADR-0017)
     # The exchange never sends the client secret as the subject; it goes in the basic auth header.
     assert "client_secret" not in body
     now[0] = 271
@@ -195,7 +200,7 @@ def test_token_exchange_caches_and_maps_errors() -> None:
     # A different audience is a different cache key.
     tx.exchange("user-token", "document")
     assert len(calls) == 3
-    assert parse_qs(calls[2].decode())["audience"] == ["document", "shp-api"]
+    assert parse_qs(calls[2].decode())["audience"] == ["svc-document"]
     with pytest.raises(ShpError) as e:
         tx.exchange("user-token", "bad")
     assert e.value.info.code == "forbidden"

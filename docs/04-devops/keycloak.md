@@ -143,13 +143,15 @@ How it is configured (`identity/realm/services.json`, generated into both realms
   exchange user tokens for. Every other client, and the public web client, has the switch off.
 - The user's access token must contain `svc-ai` in `aud`, so the web clients (`shp-web`, local `shp-test`) carry an audience
   mapper for every requester in `services.json`. The web app sends the user token to the gateway, which forwards `/api/v1/ai/*` to `ai`.
-- Each service exists as a `bearerOnly` client, because Keycloak rejects an `audience` that is not a client ("Audience not found").
-- The `ai` client requests `audience=<target>` and `audience=shp-api` (`ExchangeSettings.also_audience`). Reason: every service
-  validates `aud = OIDC_AUDIENCE = shp-api` (`envs/services-common.yaml`), so an exchanged token whose audience is only `clinical`
-  would be rejected by `clinical`. The result names the target and passes the shared rules.
+- The `ai` client requests `audience=svc-<target>` only (`TokenExchanger.exchange(token, target)`). Keycloak refuses an audience
+  that is not already available to the client ("Requested audience not available"), so `services.json` puts the exchange targets in
+  `svc-ai`'s audience mappers as well. That client-credentials token can name those services but still carries `internal.*` only for
+  its `calls`, so `require_service` refuses it where it has no role. `aud` is an isolation boundary: the exchanged token carries the
+  target's `svc-<target>` and never `shp-api`.
 
-What the exchanged token looks like (tested): `sub` = the user's `sub`, `azp` = `svc-ai`, `aud` = `[clinical, shp-api]`, `roles` = the
-user's roles (no `internal.*`), the user's lifetime limits. The matrix therefore applies to the user unchanged (15 section 7).
+What the exchanged token looks like (tested): `sub` = the user's `sub`, `azp` = `svc-ai`, `aud` = `[svc-clinical]` (the target
+only), `roles` = the user's roles (no `internal.*`), the user's lifetime limits. The matrix therefore applies to the user
+unchanged (15 section 7).
 
 Findings and limits:
 - A token for a target that is not in the caller's `exchange` list (for example `ml`) is refused: the audience cannot be widened.
@@ -158,6 +160,6 @@ Findings and limits:
 - Standard v2 does not add an `act` claim (delegation is the preview `token-exchange-delegation`); audit must record `ai` through `azp`.
 - Revoking or disabling the user stops new exchanges (the subject token is validated) but an already exchanged token lives until `exp`.
 
-Tested in `KeycloakTokenExchangeTest` (container, Keycloak 26.8.2): sub kept, audience of the target, shared JWT rules, five other service
-clients and the public client refused, target outside the exchange list refused, tampered subject token refused, and the client switch is
-what allows the exchange (off: refused, on: accepted).
+Tested in `KeycloakTokenExchangeTest` (container, Keycloak 26.8.2): sub kept, `aud` = `svc-<target>` only (an exchanged token for
+`scheduling` is refused by `clinical`), shared JWT rules, five other service clients and the public client refused, target outside the
+exchange list refused, tampered subject token refused, and the client switch is what allows the exchange (off: refused, on: accepted).
