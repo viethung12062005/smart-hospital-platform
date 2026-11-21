@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **226 tasks, 784 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **227 tasks, 786 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -92,7 +92,7 @@ Total: **226 tasks, 784 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | SHR-30 | Authz: linked, linked-records, guardian conditions; onBehalfOf in audit; generate tests from the matrix for linked records **[done, commit main: linked/guardian conditions + onBehalfOf audit (#539)]** | Every *-LINKED rule has Allow and Deny tests; audit records the acting account and the accessed record | 3 | SHR-24, SHR-21 | US-076, US-077 |
 | ◐ | WEB-01 | React/Vite web shell: OIDC (Keycloak), role-based router, layout frame, i18n vi/en **[partially done, commit branch WEB-01-frontend-base: web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), role-based routes/menu, vi/en i18n, ErrorBoundary, design system + AppShell ported from the portal PoC (Apache-2.0); 6 sample screens run with MSW; NOT YET real Keycloak login tested in a browser]** | Login, role-based menu, ErrorBoundary; build via pipeline | 4 | LOC-02, SHR-20 | US-066 |
 
-## Week 4 — 138 hours
+## Week 4 — 140 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -101,6 +101,7 @@ Total: **226 tasks, 784 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | AI-03 | Chunker: 600 tokens, 80 overlap, split by section heading **[done, commit 2b6a50c: 600/80 chunker does not cut mid-heading]** | Chunks do not cut across sections; length tests | 4 | AI-02 | US-052 |
 | ☑ | AI-04 | Local bge-m3 embedding (Ollama, 1024 dims) + index upsert/delete; version swap with no gap **[done, commit 2b6a50c: bge-m3 embeddings (Ollama) + upsert/delete; old chunks deleted after new chunks enter the index]** | New chunks indexed before old deleted; test | 4 | AI-03, PY-07 | US-052 |
 | ☑ | ARC-13 | Sprint review + planning S1 **[done, commit 701ddb7: Sprint S1 review and S2 planning minutes in docs/05-plan/sprint-reviews/S1.md (#619)]** | Demo, update backlog status and risks; short minutes | 2 |  | ENABLER |
+| ☐ | ARC-21 | Include the terminology catalogue in the Docker build context | Docker-built scheduling and clinical images contain BOOT-INF/classes/terminology/*.json; the SCH-08 job and S1 schedule creation work from the image | 2 | ARC-20 | ENABLER |
 | ☑ | CIT-02 | Reusable workflow Python CI **[done, commit gitops: reusable Python CI (python-ci.yml)]** | ruff lint+format, mypy, pytest + coverage, pip-audit | 3 | GOV-01 | US-070 |
 | ☑ | CIT-04 | Reusable workflow Helm validate **[done, commit gitops: reusable Helm validate (helm-validate.yml)]** | helm lint, render per environment, kubeconform strict, Trivy config | 3 | GOP-01 | US-070 |
 | ☑ | CIT-07 | Shared check workflow for every PR **[done, commit d590d93: CodeQL on PR/main/weekly (#601)]** | gitleaks, actionlint, dependency review, CodeQL (java-kotlin, python, actions) | 3 | GOV-01 | US-070 |

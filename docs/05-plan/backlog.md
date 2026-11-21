@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **353 tasks**, **1216 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **354 tasks**, **1218 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -11,7 +11,7 @@ Total: **353 tasks**, **1216 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W1 | 12 |  |  |  |
 | W2 | 21 |  |  | 4 |
 | W3 | 10 |  | 27 |  |
-| W4 | 3 | 22 | 27 | 27 |
+| W4 | 5 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
 | W7 | 40 | 30 | 30 | 30 |
@@ -20,7 +20,7 @@ Total: **353 tasks**, **1216 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **263** | **120** | **169** | **128** |
+| **Total** | **265** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -60,6 +60,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | ARC-07 | ENABLER | Event contracts (JSON Schema) | Schemas for AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; versioned | SA | 4 | ARC-05 | P2 | P2 |
 | ARC-20 | ENABLER | Reference data: ICD-10 (~300 codes), LOINC for vital signs/lab tests, CodeSystem for specialties and cancellation reasons | JSON files in contracts/terminology, loader script, used by CLN-16/CLN-18 | SA | 4 | ARC-03 | P2 | 01-domain-model §3 |
 | ARC-13 | ENABLER | Sprint review + planning S1 | Demo, update backlog status and risks; short minutes | SA | 2 |  | S1 | PM |
+| ARC-21 | ENABLER | Include the terminology catalogue in the Docker build context | Docker-built scheduling and clinical images contain BOOT-INF/classes/terminology/*.json; the SCH-08 job and S1 schedule creation work from the image | SA | 2 | ARC-20 | P3 | 01-domain-model §3 |
 | ARC-14 | ENABLER | Sprint review + planning S2 | Demo, update backlog status and risks; short minutes | SA | 2 |  | S2 | PM |
 | ARC-15 | ENABLER | Sprint review + planning S3 | Demo, update backlog status and risks; short minutes | SA | 2 |  | S3 | PM |
 | ARC-08 | ENABLER | STRIDE threat model | Threat table per data flow; mitigations trace back to NFR-SEC | SA | 6 | ARC-04 | S4 | P3 |
