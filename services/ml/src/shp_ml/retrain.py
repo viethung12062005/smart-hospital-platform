@@ -83,6 +83,11 @@ def _claim(db: Database[Doc], now: datetime) -> Doc | None:
         return None  # another run currently holds the lock
     if state is None:
         return None
+    # Requests left `running` by a job that died before the lease expired can never finish: close them.
+    db.retrain_requests.update_many(
+        {"status": "running", "startedAt": {"$lt": now - LEASE}},
+        {"$set": {"status": "failed", "error": "lease-expired", "finishedAt": now}},
+    )
     req = db.retrain_requests.find_one_and_update(
         {"status": "pending"},
         {"$set": {"status": "running", "startedAt": now}},

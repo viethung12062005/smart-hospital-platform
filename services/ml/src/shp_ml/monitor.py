@@ -11,13 +11,13 @@ Runs inside the service (thread, 02:00 Vietnam time) or as `python -m shp_ml.mon
 
 import logging
 import threading
-import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pandas as pd
 from pymongo.database import Database
+from pymongo.errors import DuplicateKeyError
 
 from shp_ml.consumer import labeled_since
 from shp_ml.drift import (
@@ -49,13 +49,20 @@ class MonitorResult:
     request_id: str | None
 
 
-def load_state(db: Database[Doc]) -> RetrainState:
+def load_state(db: Database[Doc], now: datetime | None = None) -> RetrainState:
+    now = now or datetime.now(UTC)
     doc = db.retrain_state.find_one({"_id": STATE_ID}) or {}
     last = doc.get("lastTrainedAt")
+    locked_until = doc.get("lockedUntil")
+    if locked_until is not None and locked_until.tzinfo is None:
+        locked_until = locked_until.replace(tzinfo=UTC)
+    # A lock whose lease has expired belongs to a job that died (OOM, node loss): it is not running any more.
+    # Without this, a crashed job would block every later retraining request ("already-running" forever).
+    lock_held = bool(doc.get("running")) and (locked_until is None or locked_until >= now)
     return RetrainState(
         last_trained_at=last.replace(tzinfo=UTC) if last and last.tzinfo is None else last,
         labeled_since_last_train=labeled_since(db, last),
-        running=bool(doc.get("running")) or db.retrain_requests.count_documents({"status": "pending"}) > 0,
+        running=lock_held or db.retrain_requests.count_documents({"status": "pending"}) > 0,
         auto_runs=[t if t.tzinfo else t.replace(tzinfo=UTC) for t in doc.get("autoRuns", [])],
     )
 
@@ -86,6 +93,30 @@ def _live_labels(db: Database[Doc], version: str, now: datetime) -> pd.DataFrame
     return pd.DataFrame([{"label": int(facts[p["appointmentId"]] == "noshow"), "score": p["score"]} for p in preds])
 
 
+def create_request(
+    db: Database[Doc], now: datetime, reason: str, model_version: str, drift: DriftReport | None, live_auc: float | None
+) -> str | None:
+    """Insert the retraining request, at most one per day. Every ml replica runs the daily job at the same moment and
+    `decide_retrain` reads the state before anyone has written, so the key is the date: the second insert fails with a
+    duplicate key and no second request (hence no second retraining) exists."""
+    request_id = f"retrain-{now:%Y-%m-%d}"
+    try:
+        db.retrain_requests.insert_one(
+            {
+                "_id": request_id,
+                "status": "pending",
+                "reason": reason,
+                "createdAt": now,
+                "modelVersion": model_version,
+                "drift": drift.feature_psi if drift else None,
+                "liveAuc": live_auc,
+            }
+        )
+    except DuplicateKeyError:
+        return None
+    return request_id
+
+
 def run_daily(db: Database[Doc], holder: ModelHolder, now: datetime | None = None) -> MonitorResult:
     now = now or datetime.now(UTC)
     prod = holder.production()
@@ -113,21 +144,12 @@ def run_daily(db: Database[Doc], holder: ModelHolder, now: datetime | None = Non
         LIVE_AUC.set(perf.auc)
     DRIFT_ALERT.labels(kind="auc-drop").set(int(perf.alert))
 
-    decision = decide_retrain(now, drift, perf, load_state(db))
+    decision = decide_retrain(now, drift, perf, load_state(db, now))
     request_id = None
     if decision.run:
-        request_id = str(uuid.uuid4())
-        db.retrain_requests.insert_one(
-            {
-                "_id": request_id,
-                "status": "pending",
-                "reason": decision.reason,
-                "createdAt": now,
-                "modelVersion": model.version,
-                "drift": drift.feature_psi if drift else None,
-                "liveAuc": perf.auc,
-            }
-        )
+        request_id = create_request(db, now, decision.reason, model.version, drift, perf.auc)
+        if request_id is None:
+            decision = RetrainDecision(False, "already-running")
     elif decision.needs_human:
         DRIFT_ALERT.labels(kind="needs-human").set(1)
     LOG.info("monitor: drift=%s auc=%s decision=%s", drift.alert if drift else None, perf.auc, decision.reason)
