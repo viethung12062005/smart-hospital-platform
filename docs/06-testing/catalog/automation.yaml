@@ -69,7 +69,8 @@ automation:
     status: partial
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::parallelRequestsWithOneKeyProduceExactlyOneNewClaim
-    gap: "Only contention on the same key is checked; need 50 concurrent requests to one slot against real PostgreSQL (SCH-xx, Testcontainers)."
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::oneWinnerOnARace
+    gap: "12 concurrent bookings of one slot on real PostgreSQL give exactly one appointment (BookingService, SCH-13); the 50-request test through the endpoint is SCH-16."
   TC-AC-03.4:
     status: partial
     refs:
@@ -77,6 +78,11 @@ automation:
       - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::onlyFutureBookedAppointmentsOfThePatientCount
       - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::sameCustomerSerializes
     gap: "BR-03 is checked on real PostgreSQL at service level (BookingGuard, SCH-12); the 422 through the $book endpoint awaits SCH-14."
+  TC-AC-BK.1:
+    status: partial
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::commitIncludesTheOutboxEvent
+    gap: "The appointment-booked event written by BookingService is schema-valid and carries only ids, codes and timestamps; the check through the $book endpoint awaits SCH-14."
   TC-AC-07.2:
     status: partial
     refs:
