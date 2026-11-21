@@ -14,5 +14,14 @@ shp:
     # Logs Ingestion API (Data Collection Rule) on top of these settings.
     workspace-id: ${SHP_AUDIT_SINK_WORKSPACE_ID:}
     endpoint: ${SHP_AUDIT_SINK_ENDPOINT:}
+  audit-blob:
+    # WORM audit container (05-storage-audit-blob §1.2). Local: connection string for Azurite.
+    # Cloud: leave the connection string empty and set the account URL; the pod's managed identity
+    # (Storage Blob Data Contributor) is used, so no secret is needed.
+    connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+    account-url: ${SHP_AUDIT_BLOB_ACCOUNT_URL:}
+    container: ${SHP_AUDIT_BLOB_CONTAINER:audit}
+    instance: ${SHP_AUDIT_BLOB_INSTANCE:${HOSTNAME:audit-0}}
+    create-container-if-missing: ${SHP_AUDIT_BLOB_CREATE_CONTAINER:false}
 server:
   port: 8080

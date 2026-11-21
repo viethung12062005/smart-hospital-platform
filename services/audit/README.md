@@ -21,3 +21,10 @@ Receive and query audits, immutable hash chain. Owner: **D2**. Storage: MongoDB 
 - Platform beans are already configured in `config/PlatformConfig.java` — no need to change.
 
 Docs: `docs/03-architecture/detailed-design/` (the service's API, DB, events) and `docs/05-plan/by-person/D2.md` (tasks).
+
+## Blob WORM audit log (AUD-02)
+`WormAuditLog` appends one NDJSON append blob per batch to the `audit` container and chains batches with `prevHash` / `batchHash`
+(`docs/03-architecture/detailed-design/05-storage-audit-blob.md` §1.2). Settings (`shp.audit-blob.*`): `AZURE_STORAGE_CONNECTION_STRING`
+(local Azurite) **or** `SHP_AUDIT_BLOB_ACCOUNT_URL` (cloud, managed identity, no secret); `SHP_AUDIT_BLOB_CONTAINER` (default `audit`);
+`SHP_AUDIT_BLOB_INSTANCE` (chain key, default `$HOSTNAME`). Azurite has no immutability policy, so locally the container is a plain
+container; the lock is created by IAC-12 in the cloud.
