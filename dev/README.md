@@ -21,7 +21,7 @@ To write code (outside the cluster) you also need: **JDK 21** + **Maven 3.9** (6
 git clone <repo> && cd <repo>
 make -C dev quickstart
 ```
-This command does the following in order: install tools → create the kind cluster `shp-local` → install PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak →
+This command does the following in order: install tools → create the kind cluster `shp-local` → install PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak (image with the SHP login theme, built from `identity/keycloak`), Mailpit →
 create test users → build images and deploy **all 8 services** (gateway, scheduling, notification, clinical, document, audit, ai, ml).
 The first run takes 10–15 minutes (pulling images); later runs take a few minutes.
 
@@ -61,6 +61,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | RabbitMQ 4 (AMQP / management) | `localhost:35672` / http://localhost:25672 | `SPRING_RABBITMQ_HOST/PORT/USERNAME/PASSWORD` · `RABBITMQ_URL` (Python) |
 | Azurite (Blob/Queue emulator, account `shp`) | `AZURE_STORAGE_CONNECTION_STRING` in `connection.env` | `AZURE_STORAGE_CONNECTION_STRING` |
 | Keycloak 26, realm `shp` | http://localhost:18080/realms/shp | `OIDC_AUTHORITY` (= localhost issuer), `OIDC_JWK_SET_URI` (keys fetched via in-cluster DNS), `OIDC_AUDIENCE` |
+| Mailpit (mail catcher for Keycloak's forgot-password mail) | `kubectl -n shp-deps port-forward svc/mailpit 18025:8025`, then http://localhost:18025 | none |
 | 8 application services (namespace `shp-apps`) | via the gateway: `make port-forward` → `localhost:18000` | `http://<service name>` (port 80) |
 
 - **Passwords and the Azurite key** are randomly generated per machine and stored in `dev/.local/` (mode 600, gitignored). The repo contains no passwords.

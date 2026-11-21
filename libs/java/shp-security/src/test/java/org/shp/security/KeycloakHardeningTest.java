@@ -63,7 +63,8 @@ class KeycloakHardeningTest {
     // one policy for patients and staff (IAM-10): staff are protected by MFA, not a longer password
     var tooShort = createUser("pol.short", "Abcdefghij1"); // 11 characters
     assertThat(tooShort.statusCode()).isEqualTo(400);
-    assertThat(tooShort.body()).contains("Invalid password");
+    // the message key, not its text: the text follows the realm default locale (vi since IAM-03)
+    assertThat(tooShort.body()).contains("invalidPasswordMinLengthMessage");
     var containsUsername =
         createUser("pol.username.long", "pol.username.long"); // equal to the username
     assertThat(containsUsername.statusCode()).isEqualTo(400);
