@@ -28,7 +28,14 @@ Parquet dataset (hash) ─► data validation (pandera) ─► shared feature pa
 - **Data versioning:** `ML-13`. Each MLflow run records the dataset hash; the same hash + seed + image must produce the same model.
 - **Data validation (`ML-14`):** schema, types, value ranges, missing rate < 2%, labels with no temporal leakage (features only use information available before `booked_at`), positive rate within [10%, 30%]. Failure → stop the pipeline, do not train.
 - **Shared features (`ML-15`, `ML-16`):** one package for both training and serving; a test compares outputs on the reference sample set and they must match exactly.
-- **Environment (`MLO-02`):** a version-pinned, signed, vulnerability-scanned training image.
+- **Environment (`MLO-02`):** `services/ml/Dockerfile.train`, a training image separate from the serving image. The base image is pinned
+  by digest; every Python dependency is pinned with hashes (`requirements-train.lock`, installed with `--require-hashes`);
+  one thread (`OMP/OPENBLAS/MKL_NUM_THREADS=1`), `PYTHONHASHSEED=0`, UTC; LightGBM runs with `deterministic` and a fixed seed.
+  Same image + dataset hash + seed gives the same `model.txt` byte for byte: the job `reproducible-image` of `ml-train`
+  (`services/ml/scripts/reproduce.sh`) trains twice in two fresh containers without network and fails unless the dataset
+  hash and the model hash are equal. The image goes through the same reusable `container` workflow as every service
+  (hadolint, Trivy that blocks fixable HIGH/CRITICAL, SPDX SBOM); on `main`, once ACR is configured, it is pushed as `ml-train`
+  and signed with cosign. Before ACR exists the image is built and scanned but neither pushed nor signed.
 
 ### 2.1 Training pipeline in CI (`MLO-01`)
 
