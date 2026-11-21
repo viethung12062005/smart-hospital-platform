@@ -179,14 +179,14 @@ class KeycloakTokenExchangeTest {
                     + "&totp="
                     + KeycloakTestSupport.totp(KeycloakTestSupport.TEST_TOTP_SEED)),
             "$.access_token");
-    var res = exchange("svc-ai", staffToken, "clinical", "shp-api");
+    var res = exchange("svc-ai", staffToken, "svc-clinical");
     assertThat(res.statusCode()).as(res.body()).isEqualTo(200);
     String exchanged = JsonPath.read(res.body(), "$.access_token");
     DocumentContext claims = KeycloakTestSupport.claims(exchanged);
-    // audience rule (15 section 7): the target and shp-api
-    assertThat(audiences(claims)).containsExactlyInAnyOrder("clinical", "shp-api");
+    // audience rule (15 section 7): the target only
+    assertThat(audiences(claims)).containsExactly("svc-clinical");
     assertThat(claims.<List<String>>read("$.amr")).contains("mfa");
-    var props = new ShpAuthProperties(issuer, "shp-api", true, Duration.ofSeconds(30), "");
+    var props = new ShpAuthProperties(issuer, "svc-clinical", true, Duration.ofSeconds(30), "");
     NimbusJwtDecoder d =
         NimbusJwtDecoder.withJwkSetUri(issuer + "/protocol/openid-connect/certs").build();
     d.setJwtValidator(ShpJwt.validator(props, Clock.systemUTC()));

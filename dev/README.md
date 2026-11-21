@@ -137,10 +137,14 @@ Variables for services running outside the cluster are in `dev/.local/connection
 ## Realm scope (LOC-02)
 
 The local realm ships the five roles (`patient`, `doctor`, `nurse`, `admin`, `dpo`), the `roles` and `audience`
-mappers, and a TOTP policy for MFA. Two deliberate differences from UAT/prod:
+mappers, and a TOTP policy (which only users who enrol an authenticator are asked for). Two deliberate differences
+from UAT/prod:
 
-- **MFA is off locally.** The chart sets `SHP_REQUIRE_MFA_FOR_STAFF=false` so the seeded staff users can sign in
-  without enrolling an authenticator; UAT/prod keep the default (`true`) and staff must enrol TOTP/WebAuthn.
+- **No staff MFA locally.** The realm built from `identity/realm/` for the local cluster keeps Keycloak's stock
+  flows: the staff-MFA sub-flows exist only in the cluster realm (decision N3), so the seeded staff users sign in with
+  their password, and `make token USER=doctor.demo` needs no code. The services read
+  `SHP_REQUIRE_MFA_FOR_STAFF` (same variable in Java and Python) and the local chart sets it to `false`; UAT/prod
+  leave the default (`true`), where the realm demands a TOTP code from every staff role.
 - **No `fhir_user` token claim.** The FHIR identity is resolved server-side from `identity_links` (60-second cache,
   `detailed-design/15-authorization.md` §2, ADR-0018), so the token does not carry it and a stale claim cannot grant
   access to the wrong record.

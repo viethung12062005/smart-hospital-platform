@@ -132,6 +132,18 @@ def test_unknown_role_in_require_roles_fails_fast() -> None:
         Authenticator(SETTINGS, resolver).require_roles("root")
 
 
+def test_from_env_reads_the_shared_mfa_switch(monkeypatch: pytest.MonkeyPatch) -> None:
+    # same variable name as Java (shp.auth.require-mfa-for-staff): N3
+    monkeypatch.setenv("OIDC_AUTHORITY", ISS)
+    monkeypatch.setenv("OIDC_AUDIENCE", "svc-clinical")
+    monkeypatch.setenv("SHP_REQUIRE_MFA_FOR_STAFF", "false")
+    settings = AuthSettings.from_env()
+    assert settings.require_mfa_for_staff is False
+    assert settings.accepted_audiences() == ("svc-clinical", "shp-api")
+    monkeypatch.delenv("SHP_REQUIRE_MFA_FOR_STAFF")
+    assert AuthSettings.from_env().require_mfa_for_staff is True
+
+
 def test_require_service_checks_azp_and_the_internal_role() -> None:
     auth = Authenticator(CLINICAL, resolver)
     app = FastAPI()

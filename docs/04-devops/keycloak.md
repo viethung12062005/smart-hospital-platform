@@ -215,17 +215,17 @@ follow-up, not a property of the current setup.
 ### Recorded decisions (SA)
 1. **Staff MFA is TOTP, enforced by the realm and visible in the token.** Patients are not forced. WebAuthn is optional and not enabled.
 2. **One password policy for everyone: minimum 12 characters** (`length(12)`). The earlier "14 for staff" in ADR-0017 is withdrawn; staff are protected by the second factor.
-3. **Audience.** Services keep validating `aud = shp-api` (`libs/java` unchanged). Exchanged tokens (IAM-07) and `/internal` service tokens (IAM-02) carry **both** the target service and `shp-api`.
+3. **Audience.** `aud` is an isolation boundary (IAM-02): a user token carries `shp-api`, a service token carries only the target's `svc-<target>`, and a service accepts its own audience or `shp-api`. Exchanged tokens (IAM-07) name the target only (section 7).
 4. **Naming.** The role for the OTP endpoints of `notification` is `internal.notification` (the code and realm convention), not `internal.otp`.
 
 ### How staff MFA is built (supported mechanism, no script, no custom code)
 Researched on Keycloak 26.8.2 through `/admin/serverinfo` and by experiment: the protocol mapper `oidc-amr-mapper` (*Authentication Method Reference (AMR)*) exists and is supported. It
 emits the reference values configured on the authentication steps that ran: an authenticator execution carries `default.reference.value` (and a max age) in its config, and the mapper writes those
 values into `amr`. Without that config the claim is an empty list. So the realm sets reference value `mfa` on the OTP step and adds the mapper to `shp-web` (and the local `shp-test`, and `svc-ai` for exchanged tokens).
-- `identity/realm/flows.json` holds the complete authentication flows of Keycloak 26.8.2 (a realm import that names any flow replaces the defaults) with these changes, merged by `tools/identity/realm.py`:
+- `identity/realm/flows.json` holds the complete authentication flows of Keycloak 26.8.2 (a realm import that names any flow replaces the defaults) with these changes, merged by `tools/identity/realm.py` **into the cluster realm only**: the local realm keeps the stock flows (decision N3), because a developer's seeded staff user must sign in with a password on their own machine. `SHP_REQUIRE_MFA_FOR_STAFF` is the one switch both libraries read (the local chart sets `false`). The flows are:
   a conditional sub-flow **Browser - Staff MFA** in `forms` (condition: holds role `mfa-required`; step: OTP form REQUIRED, reference `mfa`). An OTP form step with no enrolled factor makes
   Keycloak start the *Configure OTP* required action, so staff without a factor are forced to enrol. The stock conditional OTP sub-flow now skips staff (they were just asked) and applies to patients who chose to enrol OTP.
-  The same pair exists in the direct-grant flow (only the local `shp-test` client uses it).
+  The same pair exists in the direct-grant flow (the `shp-test` client; the local realm has neither, and the MFA test creates a test-only client so it can run against the cluster realm).
 - Staff roles `doctor`, `nurse`, `admin`, `dpo` are composites that include the marker role `mfa-required`, so a user with any staff role (even next to `patient`) is caught by one condition.
   The marker appears in the `roles` claim and is ignored by `ShpJwt` (it keeps only SHP roles).
 - `ShpJwt`, shp-web and the Python library are **unchanged**: they already demand `amr` containing `mfa` for staff.
@@ -235,13 +235,13 @@ values into `amr`. Without that config the claim is an empty list. So the realm 
 - Each staff role: password alone gets no token; password plus a valid TOTP code gets a token with `amr` containing `mfa` that `ShpJwt` accepts as staff; a wrong code is refused.
 - A staff user with no factor cannot get a token by direct grant, and in the browser flow is sent to *Configure OTP* after the password page.
 - A patient signs in with the password only (no OTP page) and passes `ShpJwt` with the MFA rule on; a patient who enrolled OTP is asked for it.
-- The exchanged token of a staff user keeps `amr` containing `mfa` and names `clinical` and `shp-api`; internal service tokens name `shp-api` and their targets.
+- The exchanged token of a staff user keeps `amr` containing `mfa` and names only `svc-clinical`; internal service tokens name only their targets (`svc-<target>`).
 - A password of 11 characters is refused, 12 accepted.
 
 ### What is not proven or is limited
 - **First login:** the token issued in the same login that enrols the first TOTP has no `amr: mfa` (the factor was created in that session, not presented), so `ShpJwt` refuses it as a staff token; the user signs in again and is asked for the code. The web app must tell the user to sign in again after enrolling.
 - Only TOTP is covered; WebAuthn is not configured. Recovery codes and loss of the authenticator are not designed here (an admin resets the credential).
 - The `amr` claim states that an OTP step ran in the session. An existing single-sign-on session keeps its original `amr`; session lifetime is bounded by the realm's session settings.
-- Direct grant (local test client only) answers 500 `unknown_error` instead of a clean error for a staff user without a factor; no token is issued. It is not exposed in the cluster realm.
+- Direct grant: the cluster realm has no client with the password grant (`shp-test` is local only), so staff MFA is enforced there only through the browser flow; a test that needs the direct grant creates its own client (`KeycloakTestSupport.createTestClient`). The earlier observation that a staff user without a factor gets a 500 `unknown_error` from the direct grant came from the local realm while it still carried the staff-MFA flows; since decision N3 the local realm is stock and cannot reproduce it.
 - Not tested in a browser with a real authenticator app or on the cluster; the realm of a running environment is not changed by a merge (section 2).
-- Local dev users made by `make seed-users` that hold a staff role must enrol a TOTP at the first browser login; `TOTP=<code> make token USER=...` passes the code.
+- Local dev users made by `make seed-users` hold a staff role but need no second factor: the local realm has no staff-MFA flow (decision N3), and `make token USER=doctor.demo` needs no code. `TOTP=<code> make token ...` still works if you enrol an authenticator locally (the stock conditional OTP applies to any user who has one).

@@ -151,6 +151,39 @@ final class KeycloakTestSupport {
   }
 
   /**
+   * Creates a public test client with the password and browser flows plus the claims the services
+   * read ({@code roles}, {@code aud=shp-api}, {@code amr}). The prod realm has no {@code shp-test}
+   * (only the local one does), and its {@code shp-web} accepts only the public host as a redirect,
+   * so a test that needs a sign-in against the prod realm creates this client first. Test-only:
+   * nothing like it is in a committed realm.
+   */
+  static void createTestClient(String base, String admin, String clientId, String redirect)
+      throws Exception {
+    String body =
+        """
+        {"clientId":"%s","name":"Test only: password and browser login","enabled":true,
+         "publicClient":true,"standardFlowEnabled":true,"directAccessGrantsEnabled":true,
+         "implicitFlowEnabled":false,"redirectUris":["%s"],"webOrigins":["+"],
+         "attributes":{"pkce.code.challenge.method":"S256"},
+         "defaultClientScopes":["basic","profile","email"],
+         "protocolMappers":[
+           {"name":"roles-claim","protocol":"openid-connect",
+            "protocolMapper":"oidc-usermodel-realm-role-mapper",
+            "config":{"claim.name":"roles","jsonType.label":"String","multivalued":"true",
+                      "access.token.claim":"true","id.token.claim":"true","userinfo.token.claim":"true"}},
+           {"name":"audience-shp-api","protocol":"openid-connect",
+            "protocolMapper":"oidc-audience-mapper",
+            "config":{"included.client.audience":"shp-api","id.token.claim":"false",
+                      "access.token.claim":"true"}},
+           {"name":"amr-claim","protocol":"openid-connect","protocolMapper":"oidc-amr-mapper",
+            "config":{"id.token.claim":"true","access.token.claim":"true"}}]}
+        """
+            .formatted(clientId, redirect);
+    var created = admin("POST", base + "/admin/realms/shp/clients", admin, body);
+    assertThat(created.statusCode()).as(created.body()).isEqualTo(201);
+  }
+
+  /**
    * Creates a user with a role, a password and optionally an enrolled TOTP credential (the same
    * representation Keycloak writes when a user scans the QR code) and returns its id.
    */

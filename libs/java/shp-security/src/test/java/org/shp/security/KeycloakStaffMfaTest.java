@@ -22,21 +22,31 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * IAM-10 against a real Keycloak 26.8.2 with the local realm built from identity/realm: staff
- * (doctor, nurse, admin, dpo) must present a TOTP code, the access token then carries {@code amr}
- * containing {@code mfa} (Keycloak's own AMR mapper, reference value set on the OTP step), and
- * {@link ShpJwt} accepts it as staff. A staff user with no second factor is sent to enrol one and
- * the token of that first login is refused as staff. Patients are not forced. TOTP seeds are
- * synthetic and exist only here.
+ * IAM-10 against a real Keycloak 26.8.2 with the <b>cluster</b> realm (identity/realm/dist, built
+ * from the same source): staff (doctor, nurse, admin, dpo) must present a TOTP code, the access
+ * token then carries {@code amr} containing {@code mfa} (Keycloak's own AMR mapper, reference value
+ * set on the OTP step), and {@link ShpJwt} accepts it as staff. A staff user with no second factor
+ * is sent to enrol one and the token of that first login is refused as staff. Patients are not
+ * forced. The local realm deliberately has no staff-MFA flow (decision N3), so this test cannot run
+ * against it; the prod realm has no {@code shp-test} client, so a test-only client is created with
+ * the password and browser flows. TOTP seeds are synthetic and exist only here.
  */
 @Testcontainers
 class KeycloakStaffMfaTest {
   static final String PASSWORD = "Test-only-password-1";
   static final String SEED = KeycloakTestSupport.TEST_TOTP_SEED;
 
+  static final String CLIENT = "shp-test";
+  static final String REDIRECT = KeycloakBrowserLogin.REDIRECT;
+
   @Container
   static final GenericContainer<?> KEYCLOAK =
-      KeycloakTestSupport.container("dev/chart/shp-local-deps/files/realm-shp.json");
+      KeycloakTestSupport.container(
+          "identity/realm/dist/realm-shp-prod.json",
+          "SHP_PUBLIC_HOST",
+          "idp.example.test",
+          "SHP_K8S_OIDC_ISSUER",
+          "https://kubernetes.example.test");
 
   static String base;
   static String issuer;
@@ -47,12 +57,15 @@ class KeycloakStaffMfaTest {
     base = KeycloakTestSupport.base(KEYCLOAK);
     issuer = base + "/realms/shp";
     admin = KeycloakTestSupport.adminToken(base);
+    KeycloakTestSupport.createTestClient(base, admin, CLIENT, REDIRECT);
   }
 
   static HttpResponse<String> passwordGrant(String username, String totp) throws Exception {
     return KeycloakTestSupport.formResponse(
         issuer + "/protocol/openid-connect/token",
-        "grant_type=password&client_id=shp-test&username="
+        "grant_type=password&client_id="
+            + CLIENT
+            + "&username="
             + username
             + "&password="
             + URLEncoder.encode(PASSWORD, StandardCharsets.UTF_8)
@@ -113,7 +126,9 @@ class KeycloakStaffMfaTest {
   void browserLoginOfAStaffUserWithoutOtpForcesEnrolmentAndThatTokenIsNotStaffGrade()
       throws Exception {
     KeycloakTestSupport.createUser(base, admin, "mfa.enrol", "doctor", PASSWORD, null);
-    var result = new KeycloakBrowserLogin(issuer).signIn("mfa.enrol", PASSWORD, () -> "unused");
+    var result =
+        new KeycloakBrowserLogin(issuer, CLIENT, REDIRECT)
+            .signIn("mfa.enrol", PASSWORD, () -> "unused");
     // the realm asked for a second factor before issuing anything
     assertThat(result.pages()).containsExactly("username-password", "configure-otp");
     // the enrolment login did not present an existing factor: no mfa in amr, so ShpJwt refuses
@@ -133,7 +148,7 @@ class KeycloakStaffMfaTest {
   void browserLoginOfAStaffUserWithOtpAsksForTheCodeAndIssuesAnMfaToken() throws Exception {
     KeycloakTestSupport.createUser(base, admin, "mfa.browser", "nurse", PASSWORD, SEED);
     var result =
-        new KeycloakBrowserLogin(issuer)
+        new KeycloakBrowserLogin(issuer, CLIENT, REDIRECT)
             .signIn("mfa.browser", PASSWORD, KeycloakStaffMfaTest::code);
     assertThat(result.pages()).containsExactly("username-password", "otp");
     assertThat(KeycloakTestSupport.claims(result.accessToken()).<List<String>>read("$.amr"))
@@ -150,7 +165,9 @@ class KeycloakStaffMfaTest {
     assertThat(ShpJwt.roles(viaGrant)).containsExactly("patient");
 
     KeycloakTestSupport.createUser(base, admin, "mfa.patient2", "patient", PASSWORD, null);
-    var browser = new KeycloakBrowserLogin(issuer).signIn("mfa.patient2", PASSWORD, () -> "unused");
+    var browser =
+        new KeycloakBrowserLogin(issuer, CLIENT, REDIRECT)
+            .signIn("mfa.patient2", PASSWORD, () -> "unused");
     assertThat(browser.pages()).containsExactly("username-password");
     assertThat(decoder(true).decode(browser.accessToken())).isNotNull();
   }

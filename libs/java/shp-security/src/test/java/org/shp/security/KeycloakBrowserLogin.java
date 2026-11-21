@@ -36,12 +36,21 @@ final class KeycloakBrowserLogin {
       HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();
   private final Map<String, String> cookies = new LinkedHashMap<>();
   private final String issuer;
+  private final String clientId;
+  private final String redirect;
   private final List<String> pages = new ArrayList<>();
   private String lastBody = "";
   private String lastLocation;
 
   KeycloakBrowserLogin(String issuer) {
+    this(issuer, "shp-web", REDIRECT);
+  }
+
+  /** A browser login through another public client (the prod realm has no `shp-test`). */
+  KeycloakBrowserLogin(String issuer, String clientId, String redirect) {
     this.issuer = issuer;
+    this.clientId = clientId;
+    this.redirect = redirect;
   }
 
   private void send(HttpRequest.Builder b) throws Exception {
@@ -93,15 +102,17 @@ final class KeycloakBrowserLogin {
         HttpRequest.newBuilder(
                 URI.create(
                     issuer
-                        + "/protocol/openid-connect/auth?client_id=shp-web&response_type=code&scope=openid"
+                        + "/protocol/openid-connect/auth?client_id="
+                        + clientId
+                        + "&response_type=code&scope=openid"
                         + "&redirect_uri="
-                        + URLEncoder.encode(REDIRECT, StandardCharsets.UTF_8)
+                        + URLEncoder.encode(redirect, StandardCharsets.UTF_8)
                         + "&code_challenge="
                         + challenge
                         + "&code_challenge_method=S256"))
             .GET());
     for (int step = 0; step < 8; step++) {
-      if (lastLocation != null && lastLocation.startsWith(REDIRECT)) {
+      if (lastLocation != null && lastLocation.startsWith(redirect)) {
         String code =
             URLDecoder.decode(
                 lastLocation.replaceAll(".*[?&]code=([^&]+).*", "$1"), StandardCharsets.UTF_8);
@@ -111,9 +122,9 @@ final class KeycloakBrowserLogin {
                 form(
                     Map.of(
                         "grant_type", "authorization_code",
-                        "client_id", "shp-web",
+                        "client_id", clientId,
                         "code", code,
-                        "redirect_uri", REDIRECT,
+                        "redirect_uri", redirect,
                         "code_verifier", verifier)));
         return new Result(pages, JsonPath.read(body, "$.access_token"));
       }

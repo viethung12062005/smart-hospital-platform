@@ -4,7 +4,8 @@
 - Audience is an isolation boundary (ADR-0017): a user token carries `shp-api`, a service token carries only
   `svc-<target>`. A service accepts both: its own service audience and `shp-api`, nothing else.
 - `roles` claim: keep only valid roles, case-insensitive.
-- Staff (doctor, nurse, admin, dpo) must have `amr` containing "mfa" (NFR-SEC1); can be disabled locally.
+- Staff (doctor, nurse, admin, dpo) must have `amr` containing "mfa" (NFR-SEC1); `SHP_REQUIRE_MFA_FOR_STAFF=false`
+  disables the check, and the local chart sets it because the local realm has no staff-MFA flow (same variable as Java).
 Tokens are never logged.
 """
 
@@ -47,7 +48,7 @@ class AuthSettings:
         return AuthSettings(
             authority=os.environ.get("OIDC_AUTHORITY", ""),
             audience=os.environ.get("OIDC_AUDIENCE", ""),
-            require_mfa_for_staff=os.environ.get("SHP_AUTH_REQUIRE_MFA_FOR_STAFF", "true").lower() != "false",
+            require_mfa_for_staff=os.environ.get("SHP_REQUIRE_MFA_FOR_STAFF", "true").lower() != "false",
             clock_skew_seconds=int(os.environ.get("SHP_AUTH_CLOCK_SKEW_SECONDS", "30")),
             jwks_uri=os.environ.get("SHP_AUTH_JWK_SET_URI", ""),
         )

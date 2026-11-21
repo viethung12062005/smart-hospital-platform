@@ -211,8 +211,42 @@ def test_staff_roles_carry_the_mfa_marker_and_patient_does_not() -> None:
         assert "composites" not in roles["patient"]
 
 
-def test_browser_flow_demands_otp_from_staff_and_issues_amr() -> None:
-    for env in ("local", "prod"):
+def test_local_realm_keeps_the_stock_flows_without_staff_mfa() -> None:
+    # decision N3: the local realm has no staff-MFA flow, so the seeded staff users sign in with a password only
+    local = realm.build("local")
+    flows = {f["alias"]: f for f in local["authenticationFlows"]}
+    assert "Browser - Staff MFA" not in flows
+    assert "Direct Grant - Staff MFA" not in flows
+    configs = {c["alias"] for c in local["authenticatorConfig"]}
+    assert not any(alias.startswith("shp-") and "staff" in alias for alias in configs)
+    for flow in local["authenticationFlows"]:
+        assert not any(
+            e.get("flowAlias") in realm.STAFF_MFA_FLOWS
+            or e.get("authenticatorConfig") in realm.STAFF_MFA_CONFIGS
+            for e in flow.get("authenticationExecutions", [])
+        ), flow["alias"]
+    # a user who enrolled a TOTP locally is still asked for it (stock Keycloak), staff or not
+    sub = {
+        e["flowAlias"]
+        for e in flows["forms"]["authenticationExecutions"]
+        if "flowAlias" in e
+    }
+    assert "Browser - Conditional 2FA" in sub
+    # the stock flow bindings by name must all exist, because the import replaces the defaults
+    for name in (
+        "browser",
+        "direct grant",
+        "reset credentials",
+        "registration",
+        "clients",
+        "first broker login",
+        "docker auth",
+    ):
+        assert name in flows
+
+
+def test_prod_realm_demands_otp_from_staff_and_issues_amr() -> None:
+    for env in ("prod",):
         built = realm.build(env)
         flows = {f["alias"]: f for f in built["authenticationFlows"]}
         configs = {c["alias"]: c["config"] for c in built["authenticatorConfig"]}
