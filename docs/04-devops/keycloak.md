@@ -53,7 +53,8 @@ planned follow-up; it needs an admin service client that does not exist yet.
 - The `/idp` HTTPRoute (namespace `shp-apps`, attached to the `https` listener) routes only
   `/idp/realms/shp/{protocol/openid-connect,.well-known,login-actions,account}`, `/idp/realms/shp` and `/idp/resources`.
   The admin console and REST API (`/idp/admin`), the master realm, dynamic client registration, health and metrics are not
-  routed: a request for them reaches the web app, never Keycloak.
+  routed: a request for them reaches the web app, never Keycloak. The route is the only path control; pods in `shp-apps` can
+  still reach `keycloak:8080/idp/admin` directly (section 9).
 - NetworkPolicy in `shp-iam`: default-deny both ways; ingress 8080 only from `envoy-gateway-system` (public route) and
   `shp-apps` (token validators fetch the signing keys), 7800 only between Keycloak pods; egress only DNS, the other
   replicas, PostgreSQL (`database.egressCidr`) and HTTPS to public addresses for the service-account JWKS fetch (IAM-02).
@@ -185,13 +186,17 @@ Differences from ADR-0017 (stock Keycloak cannot do them; decisions for the SA):
 - **Staff MFA** (TOTP or WebAuthn at first login) is not part of this task and is not configured; the realm does not issue `amr`.
 
 ### Admin console not exposed to the Internet
-Three layers: the `/idp` route lists only the OIDC paths (section 3); NetworkPolicy lets only the Envoy proxy and `shp-apps` reach port 8080;
-administrators use `kubectl port-forward` (Kubernetes RBAC) with a named admin account that has MFA, and the bootstrap account is disabled
-(checklist step 4). `tools/validate.sh` fails when the rendered route would route `/idp/admin`, the master realm, client registration,
-health or metrics, or when a sign-in path is missing. It was also exercised through a real Envoy Gateway 1.9.3 on a private kind cluster:
-`/idp/realms/shp/...` answered 200 and `/idp/admin/...`, `/idp/realms/master`, `/idp/realms/shp/clients-registrations/...`, `/idp/health/ready`,
-`/idp/metrics` answered 404 without reaching Keycloak. A service pod in `shp-apps` can still reach `/idp/admin` on port 8080 (NetworkPolicy has no path
-rules); the admin API needs an admin token, and the services have none.
+The `/idp` HTTPRoute is the **only** path control from outside: it lists only the OIDC paths (section 3), so `/idp/admin`, the master
+realm, client registration, health and metrics answer 404 without reaching Keycloak, and `tools/validate.sh` fails when a rendered route
+would expose them. That was exercised through a real Envoy Gateway 1.9.3 on a private kind cluster: `/idp/realms/shp/...` answered 200
+and `/idp/admin/...`, `/idp/realms/master`, `/idp/realms/shp/clients-registrations/...`, `/idp/health/ready`, `/idp/metrics` answered 404.
+
+It is not a network boundary. NetworkPolicy lets the Envoy proxy **and every pod in `shp-apps`** reach port 8080 (the services fetch the
+signing keys), and NetworkPolicy has no path rules, so any pod in `shp-apps` can call `keycloak:8080/idp/admin` directly. What protects the
+admin API there is the admin credential itself: a named administrator account with MFA, no service has one, and the bootstrap account is
+disabled (checklist step 4). Human access is `kubectl -n shp-iam port-forward svc/keycloak 8080:8080`, which Kubernetes RBAC controls.
+A path-level policy (or a separate management port) that would keep `/idp/admin` away from `shp-apps` is not configured; that is a
+follow-up, not a property of the current setup.
 
 ### Backups and restore
 - **Cloud:** the managed PostgreSQL server of IAC-16 keeps automated backups and point-in-time restore (retention `backup_retention_days`,
