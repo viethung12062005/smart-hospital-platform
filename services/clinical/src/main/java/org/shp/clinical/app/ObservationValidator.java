@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.hl7.fhir.r4.model.Base;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Observation.ObservationComponentComponent;
 import org.hl7.fhir.r4.model.Observation.ObservationReferenceRangeComponent;
 import org.hl7.fhir.r4.model.Observation.ObservationStatus;
+import org.hl7.fhir.r4.model.PrimitiveType;
+import org.hl7.fhir.r4.model.Property;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.shp.clinical.app.VitalSigns.Vital;
@@ -49,6 +52,7 @@ public class ObservationValidator {
 
   /** Validates {@code o} and sets its {@code interpretation}. */
   public void validate(Observation o) {
+    structure(o);
     if (!o.hasStatus() || !STATUSES.contains(o.getStatus())) {
       throw invalid("Observation.status must be final, amended or entered-in-error.");
     }
@@ -151,6 +155,119 @@ public class ObservationValidator {
   }
 
   // ---------- helpers ----------
+
+  /** 01 §4.7 is a closed write profile: fields not listed there are rejected at every depth. */
+  private static void structure(Observation o) {
+    allowOnly(
+        o,
+        "Observation",
+        "id",
+        "meta",
+        "status",
+        "category",
+        "code",
+        "subject",
+        "encounter",
+        "effective[x]",
+        "performer",
+        "value[x]",
+        "component",
+        "interpretation",
+        "referenceRange",
+        "derivedFrom");
+    if (o.hasMeta()) {
+      allowOnly(o.getMeta(), "Observation.meta", "versionId", "lastUpdated");
+    }
+    for (CodeableConcept category : o.getCategory()) {
+      concept(category, "Observation.category");
+    }
+    if (o.hasCode()) {
+      concept(o.getCode(), "Observation.code");
+    }
+    if (o.hasSubject()) {
+      allowOnly(o.getSubject(), "Observation.subject", "reference");
+    }
+    if (o.hasEncounter()) {
+      allowOnly(o.getEncounter(), "Observation.encounter", "reference");
+    }
+    for (Reference performer : o.getPerformer()) {
+      allowOnly(performer, "Observation.performer", "reference");
+    }
+    for (Reference derived : o.getDerivedFrom()) {
+      allowOnly(derived, "Observation.derivedFrom", "reference");
+    }
+    if (o.hasValue()) {
+      quantityFields(o.getValue(), "Observation.valueQuantity");
+    }
+    for (CodeableConcept interpretation : o.getInterpretation()) {
+      concept(interpretation, "Observation.interpretation");
+    }
+    for (ObservationReferenceRangeComponent range : o.getReferenceRange()) {
+      rangeFields(range, "Observation.referenceRange");
+    }
+    for (ObservationComponentComponent component : o.getComponent()) {
+      allowOnly(
+          component,
+          "Observation.component",
+          "code",
+          "value[x]",
+          "interpretation",
+          "referenceRange");
+      if (component.hasCode()) {
+        concept(component.getCode(), "Observation.component.code");
+      }
+      if (component.hasValue()) {
+        quantityFields(component.getValue(), "Observation.component.valueQuantity");
+      }
+      for (CodeableConcept interpretation : component.getInterpretation()) {
+        concept(interpretation, "Observation.component.interpretation");
+      }
+      for (ObservationReferenceRangeComponent range : component.getReferenceRange()) {
+        rangeFields(range, "Observation.component.referenceRange");
+      }
+    }
+  }
+
+  private static void concept(CodeableConcept concept, String path) {
+    allowOnly(concept, path, "coding");
+    for (Coding coding : concept.getCoding()) {
+      allowOnly(coding, path + ".coding", "system", "code", "display");
+    }
+  }
+
+  private static void quantityFields(Object value, String path) {
+    if (value instanceof Quantity quantity) {
+      allowOnly(quantity, path, "value", "unit", "system", "code");
+    }
+  }
+
+  private static void rangeFields(ObservationReferenceRangeComponent range, String path) {
+    allowOnly(range, path, "low", "high");
+    if (range.hasLow()) {
+      quantityFields(range.getLow(), path + ".low");
+    }
+    if (range.hasHigh()) {
+      quantityFields(range.getHigh(), path + ".high");
+    }
+  }
+
+  private static void allowOnly(Base element, String path, String... allowed) {
+    Set<String> names = Set.of(allowed);
+    for (Property child : element.children()) {
+      if (!child.hasValues()) {
+        continue;
+      }
+      if (!names.contains(child.getName())) {
+        throw invalid(path + "." + child.getName() + " is not allowed.");
+      }
+      for (Base value : child.getValues()) {
+        if (value instanceof PrimitiveType<?> primitive
+            && (primitive.hasExtension() || primitive.hasId())) {
+          throw invalid(path + "." + child.getName() + ".extension is not allowed.");
+        }
+      }
+    }
+  }
 
   private static String category(Observation o) {
     if (o.getCategory().size() != 1 || o.getCategoryFirstRep().getCoding().size() != 1) {

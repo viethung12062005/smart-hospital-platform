@@ -141,6 +141,18 @@ class ObservationValidatorTest {
     assertOutOfRange(vital("59408-5", "120", "%"), "Observation.valueQuantity.value");
   }
 
+  @Test
+  void fieldsOutsideTheObservationProfileAreRejected() {
+    assertInvalid(
+        vital("8310-5", "37", "Cel")
+            .replace("\"status\"", "\"note\": [ { \"text\": \"synthetic\" } ], \"status\""),
+        "Observation.note is not allowed");
+    assertInvalid(
+        vital("8310-5", "37", "Cel")
+            .replace("\"value\": 37", "\"value\": 37, \"comparator\": \"<\""),
+        "Observation.valueQuantity.comparator is not allowed");
+  }
+
   /** The bounds of the SRS business rule BR vital-ranges (UC-04, authoritative). */
   @ParameterizedTest
   @CsvSource({
