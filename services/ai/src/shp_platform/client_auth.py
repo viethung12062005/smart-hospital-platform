@@ -5,6 +5,7 @@ client assertion; no secret exists to leak or rotate. Fallback: a client secret 
 assertion file is re-read on every request because the kubelet rotates it in place. Never log either value.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,7 +18,7 @@ class ClientAuth:
     client_secret: str = ""
     assertion_file: str = ""  # path of the projected ServiceAccount token; takes precedence over the secret
 
-    def apply(self, data: dict[str, str]) -> tuple[dict[str, str], tuple[str, str] | None]:
+    def apply(self, data: Mapping[str, str | list[str]]) -> tuple[dict[str, str | list[str]], tuple[str, str] | None]:
         """Return (form data, basic-auth credentials or None) for a token request."""
         if self.assertion_file:
             assertion = Path(self.assertion_file).read_text(encoding="utf-8").strip()
@@ -28,4 +29,4 @@ class ClientAuth:
                 "client_assertion": assertion,
             }
             return form, None
-        return data, (self.client_id, self.client_secret)
+        return dict(data), (self.client_id, self.client_secret)

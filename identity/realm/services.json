@@ -1,12 +1,44 @@
 {
-  "$comment": "Service accounts for /internal (IAM-02, 15 section 7). Key = caller service; calls = target services whose /internal API it may use. Each target gets a realm role internal.<target>; each caller gets the client svc-<caller> whose token carries those roles and aud = svc-<target> only (never shp-api, which belongs to user tokens; ADR-0017). Source: the endpoint tables in detailed-design 08-11.",
+  "$comment": "Service accounts for /internal (IAM-02, 15 section 7). Key = caller service; calls = target services whose /internal API it may use. Each target gets a realm role internal.<target>; each caller gets the client svc-<caller> whose token carries those roles and aud = svc-<target> only (never shp-api, which belongs to user tokens; ADR-0017). Source: the endpoint tables in detailed-design 08-11. exchange = services the caller may exchange a USER token for (RFC 8693, IAM-07): the user token gets aud svc-<caller>, the exchanged token gets aud = svc-<target> of the target. Only callers with an exchange list may exchange.",
   "namespace": "shp-apps",
   "services": {
-    "clinical": { "calls": ["document", "scheduling", "notification"] },
-    "scheduling": { "calls": ["clinical", "ml"] },
-    "notification": { "calls": ["clinical"] },
-    "document": { "calls": ["clinical"] },
-    "ai": { "calls": ["clinical", "document"] },
-    "ml": { "calls": ["scheduling"] }
+    "clinical": {
+      "calls": [
+        "document",
+        "scheduling",
+        "notification"
+      ]
+    },
+    "scheduling": {
+      "calls": [
+        "clinical",
+        "ml"
+      ]
+    },
+    "notification": {
+      "calls": [
+        "clinical"
+      ]
+    },
+    "document": {
+      "calls": [
+        "clinical"
+      ]
+    },
+    "ai": {
+      "calls": [
+        "clinical",
+        "document"
+      ],
+      "exchange": [
+        "clinical",
+        "scheduling"
+      ]
+    },
+    "ml": {
+      "calls": [
+        "scheduling"
+      ]
+    }
   }
 }

@@ -394,6 +394,7 @@ automation:
     refs:
       - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::aServiceCannotUseARoleOfAnotherServicesTarget
       - libs/java/shp-security/src/test/java/org/shp/security/KeycloakFederatedClientAuthTest.java::aTokenOfAnotherServiceAccountIsRefused
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenExchangeTest.java::otherClientsCannotExchange
     gap: "Identity side proven against real Keycloak (a service gets only its targets' roles; another pod's ServiceAccount token cannot obtain its identity). Calling /internal from outside the cluster and the NetworkPolicy side need the UAT AKS."
   TC-SEC-21:
     status: planned

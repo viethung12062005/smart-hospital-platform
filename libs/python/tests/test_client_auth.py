@@ -57,7 +57,9 @@ def test_token_exchange_can_use_the_assertion(tmp_path: Path) -> None:
         "u", "clinical"
     )
     body = parse_qs(calls[0].content.decode())
-    assert body["client_assertion"] == ["sa"] and body["subject_token"] == ["u"] and body["audience"] == ["clinical"]
+    assert (
+        body["client_assertion"] == ["sa"] and body["subject_token"] == ["u"] and body["audience"] == ["svc-clinical"]
+    )
 
 
 def test_missing_assertion_file_is_a_dependency_error(tmp_path: Path) -> None:
