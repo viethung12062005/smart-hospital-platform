@@ -58,7 +58,7 @@ Job       retrain: lock ─► Parquet snapshot 24 months (hash) ─► pipeline
 |---|---|
 | `uvicorn shp_ml.main:app --port 8090` (needs `MONGODB_URI`, `RABBITMQ_URL`, `REGISTRY_DIR` or `MLFLOW_TRACKING_URI`) | service: consumer, outbox relay, model loading, daily monitoring, `/metrics` |
 | `python -m shp_ml.monitor` | run monitoring once (CronJob) |
-| `python -m shp_ml.retrain --datasets /data/datasets` | process retraining requests (Kubernetes Job, training image) |
+| `python -m shp_ml.retrain --datasets /data/datasets` | process retraining requests (CronJob `ml-retrain` in shp-gitops, `concurrencyPolicy: Forbid`; training image) |
 
 ### Canary and shadow metrics (ML-25)
 Every series carries `model_version`, so the canary AnalysisTemplate (MLO-03) and the shadow step (16-mlops §6) can compare versions.
