@@ -8,6 +8,7 @@ on:
   push:
     branches: [main]
     paths: ["identity/**", "tools/identity/**", "dev/chart/shp-local-deps/files/**"]
+  workflow_dispatch: # run the checks by hand, e.g. to try the gitops comparison before enabling SHP_GITOPS_REALM_CHECK
 permissions:
   contents: read
 jobs:
