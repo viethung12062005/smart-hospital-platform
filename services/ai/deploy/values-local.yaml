@@ -4,4 +4,6 @@ image:
   tag: dev
 replicaCount: 1
 env:
+  # Audience isolation (ADR-0017): this service accepts tokens issued for svc-ai (service tokens) and shp-api (user tokens).
+  OIDC_AUDIENCE: svc-ai
   OTEL_SERVICE_NAME: ai

@@ -24,6 +24,8 @@ env:
   # → the signing keys (JWKS) are fetched via in-cluster DNS, while the issuer still validates against the localhost value.
   OIDC_AUTHORITY: http://localhost:18080/realms/shp
   OIDC_JWK_SET_URI: http://keycloak.shp-deps.svc.cluster.local:8080/realms/shp/protocol/openid-connect/certs
+  # Audience of user (interactive) tokens. Services that receive service tokens override it with their own svc-<name>
+  # in services/<svc>/deploy/values-local.yaml (audience isolation, ADR-0017); every service accepts shp-api as well.
   OIDC_AUDIENCE: shp-api
   SHP_REQUIRE_MFA_FOR_STAFF: "false"   # test users in the local Keycloak do not have MFA
   SHP_CLINICAL_URL: http://clinical
