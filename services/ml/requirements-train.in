@@ -7,4 +7,4 @@ lightgbm>=4.5,<5
 pandera>=0.20,<1
 pyarrow>=18,<27
 scikit-learn>=1.6,<2
-mlflow-skinny>=2.17,<3
+mlflow-skinny>=2.17,<4
