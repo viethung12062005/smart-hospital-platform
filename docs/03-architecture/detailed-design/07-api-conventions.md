@@ -70,7 +70,7 @@ Two API styles:
 | 412 | Wrong `If-Match` | `version-conflict` |
 | 413 | File too large | `file-too-large` |
 | 415 | File type not allowed | `invalid-file-type` |
-| 422 | Business rule violation | `max-future-appointments`, `outside-booking-window`, `cancellation-too-late`, `idempotency-key-reused`, `duplicate-patient-suspected`, `upload-incomplete`, `confirmation-expired` |
+| 422 | Business rule violation | `max-future-appointments`, `outside-booking-window`, `cancellation-too-late`, `idempotency-key-reused`, `duplicate-patient-suspected`, `value-out-of-range`, `upload-incomplete`, `confirmation-expired` |
 | 428 | Missing `If-Match` / `Idempotency-Key` | `precondition-required`, `idempotency-key-required` |
 | 429 | Rate limit exceeded | `rate-limited` |
 | 503 | Dependency failure, fallback exhausted | `dependency-unavailable`, `ai-unavailable`, `ai-budget-exceeded` |

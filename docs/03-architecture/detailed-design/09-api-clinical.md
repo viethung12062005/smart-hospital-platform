@@ -106,8 +106,9 @@ Only when `finished`; 409 if the visit has not ended.
 
 ### C16 Observation
 `POST /fhir/Observation` — validates against the profile ([01](01-domain-model.md) §4.7): vital signs require `encounter`; units
-match the table; values within plausible ranges (temperature 30–45 °C, pulse 20–250, SpO2 50–100, systolic blood pressure 40–300 / diastolic
-20–200). Outside the range → 422 `value-out-of-range`. `interpretation` is computed by the server. Vital signs: N or D (Care); manual
+match the table; values within the plausible ranges of the SRS business rule BR vital-ranges (UC-04): temperature 30–43 °C, pulse
+20–250 /min, SpO2 50–100 %, systolic blood pressure 50–260 / diastolic 30–160 mm[Hg], weight 0.5–300 kg, height 30–250 cm.
+Outside the range → 422 `value-out-of-range`. `interpretation` is computed by the server. Vital signs: N or D (Care); manual
 lab tests: D (Care). Search: `patient`, `encounter`, `category`, `code`, `date`; a Patient sees only observations belonging to their own `finished` Encounter.
 
 ### C17 Condition

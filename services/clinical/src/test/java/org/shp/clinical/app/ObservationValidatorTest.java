@@ -119,8 +119,13 @@ class ObservationValidatorTest {
 
   void assertOutOfRange(String json, String path) {
     assertThatThrownBy(() -> validated(json))
-        .isInstanceOf(ValueOutOfRangeException.class)
-        .hasMessage(path + " is outside the plausible range.");
+        .isInstanceOfSatisfying(
+            ShpException.class,
+            e -> {
+              assertThat(e.info().code()).isEqualTo("value-out-of-range");
+              assertThat(e.info().status()).isEqualTo(422);
+              assertThat(e.detail()).isEqualTo(path + " is outside the plausible range.");
+            });
   }
 
   // ---------- acceptance: temperature 50 °C, SpO2 120 ----------
@@ -128,8 +133,6 @@ class ObservationValidatorTest {
   @Test
   void temperature50IsValueOutOfRange() {
     assertOutOfRange(vital("8310-5", "50", "Cel"), "Observation.valueQuantity.value");
-    assertThat(ValueOutOfRangeException.INFO.code()).isEqualTo("value-out-of-range");
-    assertThat(ValueOutOfRangeException.INFO.status()).isEqualTo(422);
   }
 
   /** TC-AC-VT.1: SpO2 = 120 is rejected and names the field. */
@@ -138,15 +141,18 @@ class ObservationValidatorTest {
     assertOutOfRange(vital("59408-5", "120", "%"), "Observation.valueQuantity.value");
   }
 
+  /** The bounds of the SRS business rule BR vital-ranges (UC-04, authoritative). */
   @ParameterizedTest
   @CsvSource({
     "8310-5, 30, Cel",
-    "8310-5, 45, Cel",
+    "8310-5, 43, Cel",
     "8867-4, 20, /min",
     "8867-4, 250, /min",
     "59408-5, 50, %",
     "59408-5, 100, %",
     "29463-7, 0.5, kg",
+    "29463-7, 300, kg",
+    "8302-2, 30, cm",
     "8302-2, 250, cm",
   })
   void plausibleBoundsAreAccepted(String code, String value, String unit) {
@@ -156,17 +162,59 @@ class ObservationValidatorTest {
   @ParameterizedTest
   @CsvSource({
     "8310-5, 29.9, Cel",
-    "8310-5, 45.1, Cel",
+    "8310-5, 43.1, Cel",
     "8867-4, 19, /min",
     "8867-4, 251, /min",
     "59408-5, 49, %",
     "29463-7, 0.4, kg",
+    "29463-7, 300.1, kg",
+    "8302-2, 29, cm",
     "8302-2, 251, cm",
     "9279-1, 0, /min",
     "39156-5, 101, kg/m2",
   })
   void implausibleValuesAreRejected(String code, String value, String unit) {
     assertOutOfRange(vital(code, value, unit), "Observation.valueQuantity.value");
+  }
+
+  @ParameterizedTest
+  @CsvSource({"50, 30", "260, 160"})
+  void bloodPressureSrsBoundsAreAccepted(String sys, String dia) {
+    assertThatCode(() -> validated(bloodPressure(sys, dia))).doesNotThrowAnyException();
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "49, 80, systolic",
+    "261, 80, systolic",
+    "120, 29, diastolic",
+    "120, 161, diastolic",
+  })
+  void bloodPressureOutsideTheSrsRangeIsRejected(String sys, String dia, String component) {
+    assertOutOfRange(
+        bloodPressure(sys, dia), "Observation.component[" + component + "].valueQuantity.value");
+  }
+
+  /**
+   * The terminology catalogue and the table in {@link VitalSigns} must agree. A code the catalogue
+   * accepts but the table does not know is a request error (400), never a 500.
+   */
+  @Test
+  void aCatalogueCodeMissingFromTheTableIsAValidationError() {
+    TerminologyService onlyCatalogue = mock(TerminologyService.class);
+    when(onlyCatalogue.isKnown(eq("loinc-vital-signs"), anyString())).thenReturn(true);
+    var drifted = new ObservationValidator(new ObservationCodeValidator(onlyCatalogue));
+
+    Observation o = FhirJson.parse(vital("1234-5", "5", "/min"), Observation.class);
+    assertThatThrownBy(() -> drifted.validate(o))
+        .isInstanceOfSatisfying(
+            ShpException.class,
+            e -> {
+              assertThat(e.info().code()).isEqualTo("validation-failed");
+              assertThat(e.info().status()).isEqualTo(400);
+              assertThat(e.detail())
+                  .isEqualTo("Observation.code is not a vital sign of the profile.");
+            });
   }
 
   @Test
@@ -287,9 +335,9 @@ class ObservationValidatorTest {
   @Test
   void bloodPressureComponentRangesAreChecked() {
     assertOutOfRange(
-        bloodPressure("350", "80"), "Observation.component[systolic].valueQuantity.value");
+        bloodPressure("261", "80"), "Observation.component[systolic].valueQuantity.value");
     assertOutOfRange(
-        bloodPressure("120", "10"), "Observation.component[diastolic].valueQuantity.value");
+        bloodPressure("120", "29"), "Observation.component[diastolic].valueQuantity.value");
   }
 
   @Test

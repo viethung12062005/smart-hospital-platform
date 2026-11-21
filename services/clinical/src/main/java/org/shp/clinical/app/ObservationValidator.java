@@ -24,8 +24,8 @@ import org.springframework.stereotype.Component;
  * from the {@code referenceRange} of the resource, or the table's adult range for a vital sign;
  * whatever the client sent there is replaced.
  *
- * <p>Errors: {@code validation-failed} (400) for the structure, {@link ValueOutOfRangeException}
- * (422) for an implausible value. Details name the element path, never a value.
+ * <p>Errors: {@code validation-failed} (400) for the structure, {@code value-out-of-range} (422,
+ * catalog 07 §5) for an implausible value. Details name the element path, never a value.
  */
 @Component
 public class ObservationValidator {
@@ -91,7 +91,7 @@ public class ObservationValidator {
     if (o.hasComponent()) {
       throw invalid("Observation.component is allowed only for blood pressure.");
     }
-    Vital vital = VitalSigns.measure(code).orElseThrow();
+    Vital vital = vital(code, "Observation.code");
     BigDecimal value = quantity(o.getValue(), vital, "Observation.valueQuantity");
     o.setInterpretation(interpretation(value, rangeOf(o), vital));
   }
@@ -117,7 +117,7 @@ public class ObservationValidator {
       }
       seen.add(code);
       String name = VitalSigns.SYSTOLIC.equals(code) ? "systolic" : "diastolic";
-      Vital vital = VitalSigns.measure(code).orElseThrow();
+      Vital vital = vital(code, "Observation.component[" + name + "].code");
       BigDecimal value =
           quantity(c.getValue(), vital, "Observation.component[" + name + "].valueQuantity");
       List<CodeableConcept> flag =
@@ -190,6 +190,15 @@ public class ObservationValidator {
     }
   }
 
+  /**
+   * The table row of a vital sign. The terminology catalogue and {@link VitalSigns} must agree; if
+   * one drifts, this is a 400 {@code validation-failed} on the request, never a 500.
+   */
+  private static Vital vital(String code, String path) {
+    return VitalSigns.measure(code)
+        .orElseThrow(() -> invalid(path + " is not a vital sign of the profile."));
+  }
+
   /** The value of a vital sign: a UCUM quantity in the table's unit, within the plausible range. */
   private static BigDecimal quantity(Object value, Vital vital, String path) {
     if (!(value instanceof Quantity q) || q.getValue() == null) {
@@ -199,7 +208,7 @@ public class ObservationValidator {
       throw invalid(path + ".code must be the UCUM unit " + vital.unit() + ".");
     }
     if (!vital.plausible(q.getValue())) {
-      throw new ValueOutOfRangeException(path + ".value");
+      throw new ShpException("value-out-of-range", path + ".value is outside the plausible range.");
     }
     return q.getValue();
   }
