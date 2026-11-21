@@ -101,6 +101,12 @@ drift alert / AUC drop ─► ML-22 checks the conditions ─► MLO-04 runs job
 | Canary 50% | Increase to 50% | AnalysisTemplate passes within 30 minutes |
 | 100% | Move the `production` alias to the new model; keep the old model as the rollback point | — |
 
+**How a model reaches the canary (`MLO-03`):** the served version is pinned in the pod template (`SERVING_MODEL_VERSION` in
+`shp-gitops/envs/<env>/ml/values.yaml`). Changing it to the candidate version starts an Argo Rollouts canary: canary pods serve the
+candidate, stable pods keep the old version and keep shadowing the candidate, which gives the paired score PSI and agreement
+(`shp_ml_shadow_score_psi`, `shp_ml_shadow_agreement_total`, ML-25). Aborting the Rollout leaves only the stable pods, so the old model
+serves again with no registry change; the `production` alias is moved only after the 100% step (promotion step, `MLO-01`).
+
 **AnalysisTemplate (`MLO-03`)** reads Prometheus metrics by `model_version` (`ML-25`): error rate ≤ the old version + 0.5%, p95 latency ≤ 100 ms, score PSI < 0.1, `highRisk` rate within ±5 percentage points of the old version. **Violation of any metric → automatic rollback** to the old `production` alias and an alert.
 
 `autoPromote` is configured per environment: `true` in local/UAT (runs through all steps); in prod the default is `true` because the data is synthetic and the risk is low, set `false` if you want to stop and wait for approval (GitHub Environment) before the 100% step.
