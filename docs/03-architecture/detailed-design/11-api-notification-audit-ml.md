@@ -109,5 +109,8 @@ ML works mainly through events (see [04](04-db-notification-ml.md) §2.4). The p
 Body: feature vector (per [04](04-db-notification-ml.md) §2.3) → `{ "score", "highRisk", "modelVersion" }`; p95 ≤ 100 ms.
 The model is loaded from the MLflow registry by the `production` alias; changing the alias (after passing the quality gate AUC ≥ 0.75 and better than baseline,
 NFR-AI6) → the pod reloads within ≤ 60 seconds without redeploying.
+In the cluster the pod template pins the version instead (`SERVING_MODEL_VERSION`, MLO-03): a model change is then a Rollout
+with the canary analysis of [16](16-mlops.md) §6, and the `production` alias records the version that passed it. Without the pin
+(local, tests) the alias behavior above applies.
 
 The `threshold` is configuration (default 0.60), chosen on the validation set to achieve precision ≥ 0.5 at maximum recall; it is stored with the model version.

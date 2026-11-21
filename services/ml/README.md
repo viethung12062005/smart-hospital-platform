@@ -89,6 +89,9 @@ Every series carries `model_version`, so the canary AnalysisTemplate (MLO-03) an
 | `shp_ml_shadow_score_psi{model_version}` | score PSI of the candidate against production on the same appointments, last `SHADOW_PSI_WINDOW` (1,000) pairs, exported from `SHADOW_PSI_MIN_PAIRS` (200) pairs on; gate < 0.1. Removed when the candidate changes |
 | `shp_ml_model_info{model_version,role}` | loaded production model |
 
+`SERVING_MODEL_VERSION` (MLO-03) pins the served version in the pod template so Argo Rollouts can canary a model change; the pod is
+not ready until that version is loaded. Empty (default) = follow the `production` alias.
+
 `shp_ml_score_psi` (no version label) is the daily drift of production scores against registration time (ML-10), not a canary metric.
 
 Integration tests use a real MongoDB replica set and RabbitMQ via testcontainers (needs Docker); if `SHP_TEST_MONGO_URI` is set

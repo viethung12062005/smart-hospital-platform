@@ -6,6 +6,9 @@
   Candidate errors have no effect.
 - Polls the registry every 30 seconds; a new model replaces the old one only once fully loaded (atomic reference
   swap), no redeploy needed.
+- Pinned version (MLO-03): with `serving_version` set, the pod serves that registry version and ignores the
+  `production` alias. The cluster pins it in the pod template, so changing the served model is a Rollout that the
+  canary analysis can abort; the stable pods keep the old version. `candidate` is still shadowed when it differs.
 - Shadow score PSI (ML-25): the last `psi_window` (production, candidate) score pairs of the same appointments give
   `shp_ml_shadow_score_psi{model_version=<candidate>}`, the "score PSI vs the running version" that the shadow step
   and the canary analysis read (16-mlops section 6). Exported only once `psi_min_pairs` pairs exist.
@@ -55,11 +58,13 @@ class ModelHolder:
         shadow_enabled: bool = True,
         psi_window: int = 1000,
         psi_min_pairs: int = 200,
+        serving_version: str | None = None,
     ) -> None:
         if not 0 < psi_min_pairs <= psi_window:
             raise ValueError("need 0 < psi_min_pairs <= psi_window")
         self._registry = registry
         self._shadow_enabled = shadow_enabled
+        self._serving_version = serving_version or None
         self._lock = threading.Lock()
         self._production: tuple[NoShowModel, dict[str, Any]] | None = None
         self._candidate: NoShowModel | None = None
@@ -75,7 +80,7 @@ class ModelHolder:
         if self._registry is None:
             return False
         try:
-            prod_v = self._registry.alias_version("production")
+            prod_v = self._serving_version or self._registry.alias_version("production")
             cand_v = self._registry.alias_version("candidate")
             changed = False
             cur = self._production
@@ -101,6 +106,10 @@ class ModelHolder:
         except Exception as exc:  # noqa: BLE001 - registry error: keep the running model
             LOG.warning("cannot read registry: %s", type(exc).__name__)
             return False
+
+    @property
+    def pinned_version(self) -> str | None:
+        return self._serving_version
 
     def production(self) -> tuple[NoShowModel, dict[str, Any]] | None:
         with self._lock:
