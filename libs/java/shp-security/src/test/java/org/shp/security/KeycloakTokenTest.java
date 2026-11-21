@@ -185,6 +185,17 @@ class KeycloakTokenTest {
   }
 
   @Test
+  void aUserTokenIsAcceptedByAServiceThatSetsItsOwnServiceAudience() throws Exception {
+    String t = token("patient.it");
+    // ADR-0017: clinical deploys with OIDC_AUDIENCE=svc-clinical, but user tokens carry shp-api,
+    // which every service accepts as well. A service token for another service is refused (see
+    // KeycloakServiceAccountTest.aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience).
+    Jwt jwt = decoder("svc-clinical", true, Clock.systemUTC()).decode(t);
+    assertThat(jwt.getAudience()).contains("shp-api");
+    assertThat(ShpJwt.roles(jwt)).containsExactly("patient");
+  }
+
+  @Test
   void tamperedSignatureIsRejected() throws Exception {
     String t = token("patient.it");
     String sig = t.substring(t.lastIndexOf('.') + 1);
@@ -204,10 +215,10 @@ class KeycloakTokenTest {
   }
 
   @Test
-  void wrongAudienceOrIssuerIsRejected() throws Exception {
+  void wrongIssuerIsRejected() throws Exception {
     String t = token("patient.it");
-    assertThatThrownBy(() -> decoder("other-api", true, Clock.systemUTC()).decode(t))
-        .isInstanceOf(JwtValidationException.class);
+    // The audience rule has its own tests: ShpJwtTest (no container) and KeycloakServiceAccountTest
+    // (a service token refused by another service and by shp-api). Here: the issuer must match.
     var otherIssuer =
         new ShpAuthProperties(
             "https://idp.example.test/realms/shp", "shp-api", true, Duration.ofSeconds(30), "");

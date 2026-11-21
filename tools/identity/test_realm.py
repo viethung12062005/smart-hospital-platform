@@ -26,7 +26,10 @@ def test_prod_has_no_dev_content() -> None:
     text = realm.render("prod")
     assert realm.forbidden(text) == []
     assert "shp-test" not in clients("prod")
-    assert "users" not in json.loads(text)
+    users = json.loads(text)["users"]
+    assert users and all(
+        "serviceAccountClientId" in u and "credentials" not in u for u in users
+    )
 
 
 def test_local_keeps_the_dev_client_and_localhost_redirects() -> None:
@@ -46,25 +49,90 @@ def test_prod_redirect_uri_is_a_placeholder_not_a_host() -> None:
 def test_environments_share_roles_and_every_common_client() -> None:
     local, prod = realm.build("local"), realm.build("prod")
     assert local["roles"] == prod["roles"]
-    assert (
-        local["accessTokenLifespan"] == prod["accessTokenLifespan"] <= 900
-    )  # ADR-0017: 15 minutes at most
+    # ADR-0017: 15 minutes at most
+    assert local["accessTokenLifespan"] == prod["accessTokenLifespan"] <= 900
     shared = set(clients("local")) & set(clients("prod"))
     assert {"shp-web", "shp-api"} <= shared
     for client_id in shared:
         a, b = dict(clients("local")[client_id]), dict(clients("prod")[client_id])
-        for key in (
-            "redirectUris",
-            "webOrigins",
-        ):  # the only fields an environment may change
+        per_environment = ["redirectUris", "webOrigins"]
+        if client_id.startswith("svc-"):  # how a service proves who it is (IAM-02)
+            per_environment += ["clientAuthenticatorType", "attributes"]
+        for key in per_environment:
             a.pop(key, None)
             b.pop(key, None)
         assert a == b, (
-            f"{client_id} differs between local and prod beyond redirect URIs"
+            f"{client_id} differs between local and prod beyond {per_environment}"
         )
 
 
 def test_forbidden_detects_literal_credentials() -> None:
     assert realm.forbidden('{"secret": "abc"}')
     assert not realm.forbidden('{"secret": "${SVC_SECRET}"}')
-    assert realm.forbidden('{"users": []}') == ['"users"']
+    assert realm.forbidden('{"users": [{"username": "doctor.demo"}]}')
+    assert realm.forbidden(
+        '{"users": [{"serviceAccountClientId": "svc-x", "credentials": []}]}'
+    )
+    assert not realm.forbidden('{"users": [{"serviceAccountClientId": "svc-x"}]}')
+
+
+def test_service_clients_follow_services_json_in_both_environments() -> None:
+    spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
+    for env in ("local", "prod"):
+        built = clients(env)
+        for name, svc in spec["services"].items():
+            client = built[f"svc-{name}"]
+            assert (
+                client["serviceAccountsEnabled"] is True
+                and client["publicClient"] is False
+            )
+            assert (
+                client["standardFlowEnabled"] is False
+                and client["directAccessGrantsEnabled"] is False
+            )
+            audiences = {
+                m["config"]["included.custom.audience"]
+                for m in client["protocolMappers"]
+                if "audience" in m["name"]
+            }
+            # audience isolation (ADR-0017): the target services only, never shp-api
+            assert audiences == {f"svc-{t}" for t in svc["calls"]}
+        roles = {r["name"] for r in realm.build(env)["roles"]["realm"]}
+        assert {
+            f"internal.{t}" for s in spec["services"].values() for t in s["calls"]
+        } <= roles
+
+
+def test_service_tokens_never_carry_the_user_audience() -> None:
+    # ADR-0017: shp-api is the audience of user (interactive) tokens; a service token names only
+    # its targets, so a leaked service token cannot be replayed against a user-facing API.
+    for env in ("local", "prod"):
+        built = clients(env)
+        for client_id, client in built.items():
+            audiences = {
+                m["config"].get("included.custom.audience")
+                or m["config"].get("included.client.audience")
+                for m in client.get("protocolMappers", [])
+                if "audience" in m["name"]
+            }
+            if client_id.startswith("svc-"):
+                assert "shp-api" not in audiences, client_id
+                assert audiences, client_id
+                assert all(a.startswith("svc-") for a in audiences), client_id
+            elif client_id in ("shp-web", "shp-test"):
+                assert "shp-api" in audiences, client_id
+
+
+def test_client_authentication_differs_by_environment_only_in_the_method() -> None:
+    assert clients("local")["svc-ai"]["clientAuthenticatorType"] == "client-secret"
+    prod = clients("prod")["svc-ai"]
+    assert prod["clientAuthenticatorType"] == "federated-jwt"
+    assert (
+        prod["attributes"]["jwt.credential.sub"] == "system:serviceaccount:shp-apps:ai"
+    )
+    assert "secret" not in prod
+    assert (
+        realm.build("prod")["identityProviders"][0]["config"]["issuer"]
+        == "${SHP_K8S_OIDC_ISSUER}"
+    )
+    assert "identityProviders" not in realm.build("local")

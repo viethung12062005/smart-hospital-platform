@@ -57,3 +57,5 @@ testcases:
      spec: "Given the medical record was viewed and the user logs out, When pressing Back, Then no data is displayed; sessionStorage/localStorage contains no token or patient data."}
   - {id: TC-SEC-28, title: "No tokens stored in localStorage; session expires after idle time", covers: [NFR-SEC14, NFR-SEC1], module: security, level: e2e, priority: P0,
      spec: "Given login, Then localStorage contains no token; Given 15 minutes idle (staff), Then the user is automatically logged out."}
+  - {id: TC-SEC-29, title: "Service token audience isolation: aud names only the target service, never shp-api", covers: [NFR-SEC1, NFR-SEC2], module: security, level: unit, priority: P0, owasp: "API2",
+     spec: "Given a service-account token of svc-A, Then aud contains only the services svc-A may call (svc-<target>), not shp-api; When it is presented to a service it may not call or to a user endpoint, Then it is refused before any role is read; Given a user token, Then shp-api is accepted by every service."}
