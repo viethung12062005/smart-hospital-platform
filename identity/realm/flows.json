@@ -666,6 +666,36 @@
           "authenticatorConfig": "shp-otp-reference-mfa-staff-direct-grant"
         }
       ]
+    },
+    {
+      "alias": "shp registration",
+      "description": "SHP sign-up (IAM-08): phone number or email and terms, ownership code, then the account. Nothing reveals whether an account exists before the code is verified.",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "shp-registration-identifier",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "shp-ownership-code",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 20,
+          "userSetupAllowed": false
+        },
+        {
+          "authenticator": "shp-registration-account",
+          "authenticatorFlow": false,
+          "requirement": "REQUIRED",
+          "priority": 30,
+          "userSetupAllowed": false
+        }
+      ]
     }
   ],
   "authenticatorConfig": [

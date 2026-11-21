@@ -328,6 +328,30 @@ def test_login_theme_is_vietnamese_first_in_both_realms() -> None:
         assert r["resetPasswordAllowed"] is True, env
 
 
+def test_patient_signup_flow_is_present_but_closed_until_the_otp_provider() -> None:
+    expected_steps = [
+        "shp-registration-identifier",
+        "shp-ownership-code",
+        "shp-registration-account",
+    ]
+    for env in ("local", "prod"):
+        built = realm.build(env)
+        assert built["registrationAllowed"] is False
+        assert built["registrationFlow"] == "shp registration"
+        flows = {flow["alias"]: flow for flow in built["authenticationFlows"]}
+        signup = flows["shp registration"]
+        assert [step["authenticator"] for step in signup["authenticationExecutions"]] == (
+            expected_steps
+        )
+        profile = built["components"][
+            "org.keycloak.userprofile.UserProfileProvider"
+        ][0]["config"]["kc.user.profile.config"][0]
+        attributes = {item["name"] for item in json.loads(profile)["attributes"]}
+        assert {"phoneNumber", "phoneNumberVerified", "terms_and_conditions"} <= (
+            attributes
+        )
+
+
 def test_mail_server_is_the_local_catcher_or_placeholders() -> None:
     # Forgot password needs a working mail server: without one Keycloak answers an existing account with an error and an
     # unknown one with "email sent", which reveals who has an account (IAM-03).
