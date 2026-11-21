@@ -13,6 +13,12 @@ shp:
     # Connection string comes from the chart secret in the cloud (dev/chart/app-values-local.yaml
     # for local Azurite). Container names follow 05-storage-audit-blob §2.
     connection-string: ${AZURE_STORAGE_CONNECTION_STRING:}
+    # Cloud: account URL + DefaultAzureCredential (managed identity). The connection string wins when both are set.
+    account-url: ${AZURE_STORAGE_ACCOUNT_URL:}
+    # AUTO = account key with a connection string, user delegation with an account URL.
+    sas-mode: ${SHP_BLOB_SAS_MODE:AUTO}
+    # Create a missing container on first use: local Azurite only (cloud containers come from Terraform).
+    create-containers: ${SHP_BLOB_CREATE_CONTAINERS:false}
     documents-container: ${SHP_BLOB_DOCUMENTS_CONTAINER:documents}
     quarantine-container: ${SHP_BLOB_QUARANTINE_CONTAINER:quarantine}
     kb-container: ${SHP_BLOB_KB_CONTAINER:kb}
