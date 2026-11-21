@@ -3,6 +3,8 @@ image:
   repository: localhost/shp-scheduling
   tag: dev
 env:
+  # Audience isolation (ADR-0017): this service accepts tokens issued for svc-scheduling (service tokens) and shp-api (user tokens).
+  OIDC_AUDIENCE: svc-scheduling
   OTEL_SERVICE_NAME: scheduling
   SPRING_DATASOURCE_URL: jdbc:postgresql://postgres.shp-deps.svc.cluster.local:5432/scheduling
   SPRING_DATASOURCE_USERNAME: shp

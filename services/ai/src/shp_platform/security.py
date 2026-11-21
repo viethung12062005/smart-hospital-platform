@@ -1,8 +1,11 @@
 """Keycloak JWT authentication for FastAPI (PY-01). Rules match org.shp.security.ShpJwt.
 
 - Verify the signature (JWKS), token expiry (allowed clock skew), issuer, audience.
+- Audience is an isolation boundary (ADR-0017): a user token carries `shp-api`, a service token carries only
+  `svc-<target>`. A service accepts both: its own service audience and `shp-api`, nothing else.
 - `roles` claim: keep only valid roles, case-insensitive.
-- Staff (doctor, nurse, admin, dpo) must have `amr` containing "mfa" (NFR-SEC1); can be disabled locally.
+- Staff (doctor, nurse, admin, dpo) must have `amr` containing "mfa" (NFR-SEC1); `SHP_REQUIRE_MFA_FOR_STAFF=false`
+  disables the check, and the local chart sets it because the local realm has no staff-MFA flow (same variable as Java).
 Tokens are never logged.
 """
 
@@ -19,11 +22,17 @@ from shp_platform.errors import ShpError
 ALL_ROLES = frozenset({"patient", "doctor", "nurse", "admin", "dpo"})
 STAFF_ROLES = frozenset({"doctor", "nurse", "admin", "dpo"})
 ALGORITHMS = ["RS256", "PS256", "ES256"]
+# Audience of user (interactive) tokens; every service accepts it in addition to its own service audience.
+SHARED_AUDIENCE = "shp-api"
 
 
 @dataclass(frozen=True)
 class AuthSettings:
-    """authority = Keycloak issuer (cloud: https://<domain>/idp/realms/shp); reads env like the Java version."""
+    """authority = Keycloak issuer (cloud: https://<domain>/idp/realms/shp); reads env like the Java version.
+
+    `audience` is this service's own audience, `svc-<name>` (OIDC_AUDIENCE); `shp-api` is always accepted too, because
+    user tokens carry it (ADR-0017).
+    """
 
     authority: str
     audience: str
@@ -31,12 +40,15 @@ class AuthSettings:
     clock_skew_seconds: int = 30
     jwks_uri: str = ""
 
+    def accepted_audiences(self) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(a for a in (self.audience, SHARED_AUDIENCE) if a))
+
     @staticmethod
     def from_env() -> "AuthSettings":
         return AuthSettings(
             authority=os.environ.get("OIDC_AUTHORITY", ""),
             audience=os.environ.get("OIDC_AUDIENCE", ""),
-            require_mfa_for_staff=os.environ.get("SHP_AUTH_REQUIRE_MFA_FOR_STAFF", "true").lower() != "false",
+            require_mfa_for_staff=os.environ.get("SHP_REQUIRE_MFA_FOR_STAFF", "true").lower() != "false",
             clock_skew_seconds=int(os.environ.get("SHP_AUTH_CLOCK_SKEW_SECONDS", "30")),
             jwks_uri=os.environ.get("SHP_AUTH_JWK_SET_URI", ""),
         )
@@ -83,14 +95,14 @@ def roles_of(claims: dict[str, Any]) -> frozenset[str]:
 def verify_token(token: str, settings: AuthSettings, key_resolver: KeyResolver) -> Principal:
     """Return a Principal or raise ShpError("unauthenticated"). Do not distinguish the reason to the client (one
     error code only)."""
-    if not settings.authority or not settings.audience:
+    if not settings.authority or not settings.accepted_audiences():
         raise ShpError("unauthenticated")
     try:
         claims: dict[str, Any] = jwt.decode(
             token,
             key=key_resolver(token),
             algorithms=ALGORITHMS,
-            audience=settings.audience,
+            audience=list(settings.accepted_audiences()),
             issuer=settings.authority,
             leeway=settings.clock_skew_seconds,
             options={"require": ["exp", "iat", "iss", "sub"]},

@@ -21,7 +21,7 @@ Common conventions (same as [03](03-db-clinical-document.md)): `_id` is a UUIDv7
 
 | Collection | Document | Index |
 |---|---|---|
-| `preferences` | `_id` = patientId; `channels` (ordered array ⊂ `push`,`sms`,`email`, ≥ 1); `locale` `vi`\|`en`; `quietStart`, `quietEnd` (`HH:mm` strings, optional); `updatedAt` | `_id` |
+| `preferences` | `_id` = patientId; `version` (integer, optimistic concurrency); `channels` (ordered array ⊂ `push`,`sms`,`email`, ≥ 1); `locale` `vi`\|`en`; `quietStart`, `quietEnd` (`HH:mm` strings, optional); `updatedAt` | `_id` |
 | `device_tokens` | `_id`; `ownerRef` (`Patient/{id}`\|`Practitioner/{id}`); `platform` `ios`\|`android`\|`web`; `token`; `createdAt`, `lastSeenAt` | unique `{token:1}`; `{ownerRef:1}` |
 | `reminders` | see below | see below |
 | `inbox`, `outbox` | as in [03](03-db-clinical-document.md) §2.7 (no `idempotency_keys`: no API requires a key) | as in 03 §2.7 |
@@ -35,11 +35,15 @@ Common conventions (same as [03](03-db-clinical-document.md)): `_id` is a UUIDv7
   "dueAt": ISODate("2026-12-02T01:15:00Z"),
   "status": "scheduled",                 // scheduled | sending | sent | cancelled | dead-lettered
   "attempts": 0, "lockedUntil": null,
-  "deliveries": [ { "attemptNo": 1, "channel": "push", "provider": "fcm", "outcome": "accepted",
+  "deliveries": [ { "attemptNo": 1, "channel": "push", "provider": "push", "outcome": "accepted",
                     "providerMessageId": "...", "errorCode": null, "latencyMs": 120, "attemptedAt": ISODate("...") } ],
   "createdAt": ISODate("..."), "updatedAt": ISODate("..."), "completedAt": null
 }
 ```
+
+`deliveries[].provider` currently stores the **channel name** (`push`, `sms`, `email`): the sender fills `channel` and
+`provider` from the same channel adapter, because real provider adapters and their provider-specific identifiers arrive with
+NTF-12. The field stays separate so a later adapter can record the concrete provider without a schema change.
 
 | Index | Purpose |
 |---|---|
@@ -60,11 +64,11 @@ The validator (`$jsonSchema`) requires `subjectRef`, `patientId`, `kind` ∈ lis
 | `appointment-cancelled` | `updateMany({subjectRef, status:"scheduled"}, {$set:{status:"cancelled", completedAt:now}})` + add a `cancellation` reminder (AC-07.1) |
 | `appointment-rescheduled` | cancel reminders for the old appointment, create reminders for the new appointment (one event, one combined notification) |
 | `document-released` | add a `result-available` reminder |
-| **Fetch work** (loop, multiple replicas) | `findOneAndUpdate({status:"scheduled", dueAt:{$lte:now}}, {$set:{status:"sending", lockedUntil:now+2m}, $inc:{attempts:1}}, {sort:{dueAt:1}, returnDocument:"after"})`; repeat until no work remains or a batch of 100 is reached |
-| Reclaim stuck reminders | `updateMany({status:"sending", lockedUntil:{$lt:now}}, {$set:{status:"scheduled", lockedUntil:null}})` every minute |
-| Send succeeded | `$push deliveries`, `status:"sent"`, `completedAt:now` (condition `status:"sending"` so a just-cancelled reminder is not overwritten) |
-| Transient failure | try the next channel in `channels`; out of channels → `status:"scheduled"`, `dueAt = now + backoff` (1 → 5 → 15 → 60 minutes) |
-| Exhausted 5 attempts | `status:"dead-lettered"`, `completedAt:now`, metric + alert (OBS-03) |
+| **Fetch work** (loop, multiple replicas) | `findOneAndUpdate({status:"scheduled", dueAt:{$lte:now}, attempts:{$lt:5}}, {$set:{status:"sending", lockedUntil:now+2m}, $inc:{attempts:1}}, {sort:{dueAt:1}, returnDocument:"after"})`; repeat until no work remains or a batch of 100 is reached. A reminder whose `attempts` already reached 5 is never claimed again |
+| Reclaim stuck reminders (every minute) | Two phases: `updateMany({status:"sending", lockedUntil:{$lt:now}, attempts:{$lt:5}}, {$set:{status:"scheduled", lockedUntil:null}})` puts interrupted attempts back in the queue; `updateMany({status:"sending", lockedUntil:{$lt:now}, attempts:{$gte:5}}, {$set:{status:"dead-lettered", lockedUntil:null, completedAt:now}})` dead-letters a claim whose worker died on the last attempt |
+| Send succeeded | `$push deliveries`, `status:"sent"`, `completedAt:now` (condition `status:"sending"`, same `attempts` and `lockedUntil` so a just-cancelled reminder is not overwritten and a stale worker cannot persist over a reclaim) |
+| Transient failure | try the next channel in `channels`; no channel accepted → `status:"scheduled"`, `dueAt = now + backoff` (`attempts` 1 → 1 min, 2 → 5 min, 3 → 15 min, 4 → 60 min) |
+| Exhausted 5 attempts, or a permanent error with no channel left | `status:"dead-lettered"`, `completedAt:now`, metric + alert (OBS-03). Permanent errors are `invalid-number`, `invalid-recipient` and `unregistered-token`; any other error code is retryable |
 
 ## 2. ML
 

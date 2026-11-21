@@ -9,6 +9,7 @@ from collections.abc import Callable
 
 import httpx
 
+from shp_platform.client_auth import ClientAuth
 from shp_platform.errors import ShpError
 
 
@@ -20,9 +21,10 @@ class ServiceTokenProvider:
         client_secret: str,
         http: httpx.Client | None = None,
         clock: Callable[[], float] = time.monotonic,
+        assertion_file: str = "",
     ) -> None:
         self._endpoint = token_endpoint
-        self._auth = (client_id, client_secret)
+        self._auth = ClientAuth(client_id, client_secret, assertion_file)
         self._http = http or httpx.Client(timeout=5.0)
         self._clock = clock
         self._lock = threading.Lock()
@@ -34,8 +36,9 @@ class ServiceTokenProvider:
             if self._token and self._token[1] > now:
                 return self._token[0]
             try:
-                res = self._http.post(self._endpoint, data={"grant_type": "client_credentials"}, auth=self._auth)
-            except httpx.HTTPError as exc:
+                form, basic = self._auth.apply({"grant_type": "client_credentials"})
+                res = self._http.post(self._endpoint, data=form, auth=basic or httpx.USE_CLIENT_DEFAULT)
+            except (httpx.HTTPError, OSError) as exc:
                 raise ShpError("dependency-unavailable") from exc
             if res.status_code != 200:
                 raise ShpError("dependency-unavailable")

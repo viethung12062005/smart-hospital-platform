@@ -66,7 +66,7 @@ Two API styles:
 | 401 | Missing/invalid token | `unauthenticated` |
 | 403 | No permission | `forbidden`, `no-care-relationship`, `break-glass-required` |
 | 404 | Does not exist or the caller is not allowed to know it exists | `not-found` |
-| 409 | State conflict | `slot-unavailable`, `slot-has-appointment`, `invalid-state-transition` |
+| 409 | State conflict | `slot-unavailable`, `slot-has-appointment`, `invalid-state-transition`, `already-registered` |
 | 412 | Wrong `If-Match` | `version-conflict` |
 | 413 | File too large | `file-too-large` |
 | 415 | File type not allowed | `invalid-file-type` |
@@ -116,8 +116,10 @@ When slots open (07:00) and load exceeds the threshold, the gateway enables a **
 
 - Paths `/internal/v1/...`, on the service's own port; NetworkPolicy allows only the exact services listed in each
   API document to call.
-- Authentication uses the **workload identity** token (client credentials, `aud` = target service app ID) with app role
-  `internal.<name>`; do not use user tokens.
+- Authentication uses a **Keycloak service-account token** (client credentials, client `svc-<caller>`, authenticated by
+  the caller's Kubernetes ServiceAccount token) with realm role `internal.<target>` and `aud` = the target only
+  (`svc-<target>`); do not use user tokens. A service accepts its own `svc-<name>` and `shp-api`; the guard is
+  `require_service` (Python) / `ShpJwt.requireService` (Java), checked on `azp` + `internal.<target>` (ADR-0017).
 - When AI needs to read patient data **on behalf of the user**, AI uses RFC 8693 token exchange
   (Keycloak) to call public APIs, so all of the user's permission checks still apply.
 

@@ -30,6 +30,27 @@ Parquet dataset (hash) ─► data validation (pandera) ─► shared feature pa
 - **Shared features (`ML-15`, `ML-16`):** one package for both training and serving; a test compares outputs on the reference sample set and they must match exactly.
 - **Environment (`MLO-02`):** a version-pinned, signed, vulnerability-scanned training image.
 
+### 2.1 Training pipeline in CI (`MLO-01`)
+
+Workflow `.github/workflows/ml-train.yml` in the application repository runs the chain above on every pull request and
+every push to `main` that touches the data generator, the checks, the feature package, the training or evaluation code
+or `services/ml/pyproject.toml`, and on manual dispatch (input `seed`, default 42).
+
+| Job | Runs | What it does |
+|---|---|---|
+| `train` | always | Generates the synthetic dataset with the fixed seed, runs the data checks, trains the baseline and LightGBM, applies the gates of §3 against an empty directory registry. A failed check or gate fails the job. Publishes the workflow artifact `no-show-model-<git sha>` (`model.txt`, `meta.json`, `card.md`, the run log, the dataset description) and writes the dataset hash, the model hash and the gate table to the job summary |
+| `register` | `main` or manual dispatch on `main`, and only when the repository variable `MLFLOW_TRACKING_URI` is set | Regenerates the dataset, checks its hash equals the one of `train`, runs the same pipeline against the cluster MLflow (same hash + seed, so the same model; here the "no regression" gate compares with the real `production`), and sets the alias `candidate`. Never moves `production` |
+| `not-registered` | same trigger, variable not set | Writes a note to the summary; `main` stays green (same pattern as `not-pushed` in `svc-*`) |
+
+Hand-off to deployment: the workflow ends at the `candidate` alias. The serving pods poll the registry
+(`MODEL_POLL_SECONDS`), shadow the candidate and the model canary of §6 (alias-driven, `ML-24`) promotes it or rolls
+back. The Argo Rollouts steps and AnalysisTemplate metrics of the `ml` service (a canary of the serving image, which
+guards the same traffic) are defined in `shp-gitops` (`envs/<env>/ml/values.yaml`, `MLO-03`) and are not repeated in
+the workflow.
+`MLFLOW_TRACKING_URI` must be reachable from the runner; optional basic-auth comes from the secrets
+`MLFLOW_TRACKING_USERNAME` / `MLFLOW_TRACKING_PASSWORD`. Until the UAT environment exists the variable is unset, so
+`register` and the canary have not run from CI yet.
+
 ## 3. Quality gate and model card
 
 A candidate model is registered (alias `candidate`) only when **all** of the following conditions hold:
@@ -79,6 +100,12 @@ drift alert / AUC drop ─► ML-22 checks the conditions ─► MLO-04 runs job
 | Canary 10% | Argo Rollouts shifts 10% of prediction traffic to `candidate` | AnalysisTemplate passes within 30 minutes |
 | Canary 50% | Increase to 50% | AnalysisTemplate passes within 30 minutes |
 | 100% | Move the `production` alias to the new model; keep the old model as the rollback point | — |
+
+**How a model reaches the canary (`MLO-03`):** the served version is pinned in the pod template (`SERVING_MODEL_VERSION` in
+`shp-gitops/envs/<env>/ml/values.yaml`). Changing it to the candidate version starts an Argo Rollouts canary: canary pods serve the
+candidate, stable pods keep the old version and keep shadowing the candidate, which gives the paired score PSI and agreement
+(`shp_ml_shadow_score_psi`, `shp_ml_shadow_agreement_total`, ML-25). Aborting the Rollout leaves only the stable pods, so the old model
+serves again with no registry change; the `production` alias is moved only after the 100% step (promotion step, `MLO-01`).
 
 **AnalysisTemplate (`MLO-03`)** reads Prometheus metrics by `model_version` (`ML-25`): error rate ≤ the old version + 0.5%, p95 latency ≤ 100 ms, score PSI < 0.1, `highRisk` rate within ±5 percentage points of the old version. **Violation of any metric → automatic rollback** to the old `production` alias and an alert.
 

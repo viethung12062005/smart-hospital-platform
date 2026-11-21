@@ -7,7 +7,7 @@ Combines **RBAC** (roles in the token) and **ABAC** (the relationship between th
 
 | Layer | What it does | Where |
 |---|---|---|
-| 1. Authentication | Verify signature, `iss`, `aud`, `exp`; staff must have `amr` containing `mfa` (NFR-SEC1) | Gateway **and** each service |
+| 1. Authentication | Verify signature, `iss`, `aud`, `exp`; staff must have `amr` containing `mfa` (NFR-SEC1; Keycloak emits it after the staff TOTP step, IAM-10) | Gateway **and** each service |
 | 2. Role | `roles` ∈ {`patient`,`doctor`,`nurse`,`admin`,`dpo`} from the claim; missing → 403 | Service (common library) |
 | 3. FHIR identity | `sub` → `identity_links` → `fhirUser` (60-second cache) and valid `profile_links` → `linkedProfiles[]` (profile, scope); not linked or `disabled` → 403 `forbidden` | Service, calls clinical |
 | 4. Resource policy | Decision function by (role, action, resource type, relationship) — section 3 | Owning service |
@@ -15,6 +15,11 @@ Combines **RBAC** (roles in the token) and **ABAC** (the relationship between th
 | 6. Audit | Every decision (both allow and deny) emits `audit-recorded` | Common library |
 
 The gateway **does not** decide business permissions (only layer 1 and rate limiting). Services do not trust headers added by the gateway.
+
+`aud` inside layer 1 is an **isolation boundary** (ADR-0017): a user (interactive) token carries `shp-api`, a service token
+carries only the target's `svc-<name>`. A service sets `OIDC_AUDIENCE=svc-<name>` and accepts that value or `shp-api`
+(`ShpJwt.acceptedAudiences`, Python `AuthSettings.accepted_audiences`), so a token minted for another service never reaches
+layer 2 — and `/internal` endpoints additionally require `azp` + `internal.<target>` (section 7).
 
 ## 2. Decision model
 
@@ -60,6 +65,8 @@ rules:
   - { id: APPT-CANCEL-PAT,resource: Appointment, action: cancel, role: patient, when: [own, before-2h] }
   - { id: APPT-CANCEL-NUR,resource: Appointment, action: cancel, role: nurse,   when: [] }
   - { id: APPT-READ-DOC,  resource: Appointment, action: read,   role: doctor,  when: [self-practitioner] }
+  - { id: APPT-HIST-NUR, resource: AppointmentHistory, action: read, role: nurse, when: [] }
+  - { id: APPT-HIST-ADM, resource: AppointmentHistory, action: read, role: admin, when: [] }
   - { id: ENC-READ-PAT,   resource: Encounter,   action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
   - { id: ENC-WRITE-DOC,  resource: Encounter,   action: update, role: doctor,  when: [care, unfinished-encounter] }
   - { id: COND-WRITE-DOC, resource: Condition,   action: create, role: doctor,  when: [care] }
@@ -70,7 +77,17 @@ rules:
   - { id: AUDIT-READ-ADM, resource: Audit,       action: read,   role: admin,   when: [], hide: [reason] }
   - { id: BG-START-DOC,   resource: BreakGlass,  action: start,  role: doctor,  when: [not-care] }
 ```
-Beyond the rows above: **admin has no row for clinical data**, `dpo` only has rows for `Audit`.
+Beyond the rows above: **admin has no row for clinical data** (`AppointmentHistory` is declared `clinical: false`, see
+below), `dpo` only has rows for `Audit`.
+
+**Appointment history and admin (SA decision, SCH-21).** `Appointment` is `clinical: true`, so there is no `admin` rule for
+`Appointment/read`: an admin cannot read an appointment directly. The change history is a **separate resource**,
+`AppointmentHistory` (`clinical: false`, action `read`), with `APPT-HIST-NUR` and `APPT-HIST-ADM`: Nurse and Admin may call
+`GET /fhir/Appointment/{id}/_history` (S17), which returns every stored version of that appointment from
+`scheduling.resource_history` (`meta.versionId`, `meta.lastUpdated`, `meta.source` = the user who changed it), newest first.
+Patient, Doctor and DPO have no rule and receive `403` without learning whether the appointment exists. Modelling the
+decision as its own resource instead of widening `Appointment/read` for admin keeps it deny-by-default, gives it its own
+allow/deny test grid from `AuthzTestGenerator`, and audits it like every other decision.
 
 **Test generation (SHR-26):** `AuthzTestGenerator` in `libs/java/shp-authz` derives the test grid from the matrix itself: every
 declared `(resource, action)` × each of the 5 roles × every combination of conditions that pair's rules use (honouring the
@@ -119,8 +136,8 @@ A doctor has `care` with a patient when **a valid source** exists in `care_relat
 
 | Case | Mechanism |
 |---|---|
-| Call to `/internal/*` | Workload identity token, `aud` = target service, app role `internal.<service>`; each internal endpoint has a **list of allowed services** (checked by role, and NetworkPolicy blocks at the network layer) |
-| AI reads patient data | **RFC 8693 token exchange** (Keycloak) → a token carrying the user's identity, `aud` = clinical/scheduling; the matrix rules apply unchanged to that user |
+| Call to `/internal/*` | Keycloak service-account token (client credentials, client `svc-<caller>`): realm role `internal.<target>` in `roles`, `aud` = the targets only (`svc-<target>`; never `shp-api`), `azp` = the caller. The client proves itself with its Kubernetes ServiceAccount token (IAM-02, [keycloak.md](../../04-devops/keycloak.md)). Each internal endpoint has a **list of allowed callers** (`azp`) and requires `internal.<target>` (`require_service`; Java `ShpJwt.requireService`); NetworkPolicy blocks at the network layer. The table of who may call whom is `identity/realm/services.json` |
+| AI reads patient data | **RFC 8693 token exchange** (Keycloak) → a token carrying the user's identity and `aud` = `svc-clinical` or `svc-scheduling` only (no `shp-api`, ADR-0017), `azp` = `svc-ai`, `amr` kept (a staff user's exchanged token still has `mfa`); the matrix rules apply unchanged to that user |
 | AI writes (creates `Observation` from extraction, books via chatbot) | Same mechanism, **only after the user confirms** (AI6, AI8) |
 | Background jobs (slot generation, no-show, cleanup) | Service identity; audit `actor.role = system`, `purposeOfUse = HOPERAT` |
 

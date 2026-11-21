@@ -16,6 +16,8 @@ automation:
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::generatedCaseMatchesTheEngine
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyDeclaredActionAndRoleGetsEveryFeasibleConditionCell
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyRuleHasAnAllowCaseAndADenyCasePerCondition
+      - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentHistoryApiTest.java::historyAuthorizationMatrix
+      - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
     gap: "Only at the decision-library and interface level; no test calls each real endpoint yet (SCH-/CLN-/DOC-). Owner: D1, D2."
   TC-NFR-SEC1:
     status: partial
@@ -68,13 +70,35 @@ automation:
     status: partial
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::parallelRequestsWithOneKeyProduceExactlyOneNewClaim
-    gap: "Only contention on the same key is checked; need 50 concurrent requests to one slot against real PostgreSQL (SCH-xx, Testcontainers)."
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::oneWinnerOnARace
+    gap: "12 concurrent bookings of one slot on real PostgreSQL give exactly one appointment (BookingService, SCH-13); the 50-request test through the endpoint is SCH-16."
+  TC-AC-03.4:
+    status: partial
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::thirdFutureAppointmentIsTheLimit
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::onlyFutureBookedAppointmentsOfThePatientCount
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingGuardTest.java::sameCustomerSerializes
+    gap: "BR-03 is checked on real PostgreSQL at service level (BookingGuard, SCH-12); the 422 through the $book endpoint awaits SCH-14."
+  TC-AC-BK.1:
+    status: partial
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::commitIncludesTheOutboxEvent
+    gap: "The appointment-booked event written by BookingService is schema-valid and carries only ids, codes and timestamps; the check through the $book endpoint awaits SCH-14."
+  TC-AC-MA.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::patientFilterIsAlwaysForcedToSelf
   TC-AC-07.2:
     status: partial
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
-    gap: "Duplicate-processing protection exists; missing simulation of the provider temporarily failing to send (NTF-xx)."
+      - services/notification/src/test/java/org/shp/notification/app/ReminderSenderTest.java::primaryFailureFallsBackAndStopsAfterSuccess
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::providerFailsTwiceThenSucceedsExactlyOnce
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::workLoopDispatchesAndRetriesUntilSuccess
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::sameClaimCannotPersistDeliveryTwice
+      - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::staleWorkerCannotOverwriteReclaimedAttempt
+    gap: "NTF-07 tests cover transient provider failures, fallback, retry and conditional delivery persistence. Provider-level deduplication after a successful send followed by worker crash still awaits NTF-12 adapters."
   TC-AC-SN.1:
     status: partial
     refs:
@@ -87,6 +111,10 @@ automation:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::replayedBookedCreatesNoDuplicates
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::bookedEventThroughConsumerCreatesThreeReminders
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::duplicateBookedEventThroughConsumerCreatesNoDuplicates
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::pastMilestonesAreSkippedByConsumer
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::appointmentWithinTwoHoursGetsOnlyConfirmation
   TC-AC-15.1:
     status: automated
     refs:
@@ -110,6 +138,19 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/app/SlotGeneratorTest.java::template0800To1130With15MinSlotsGenerates14FreeSlots
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotGenerationApiTest.java::generatesFourteenSlotsPerDayAndRerunSkipsExisting
+  TC-AC-FS.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchApiTest.java::fourteenFreeSlotsTomorrowAreReturnedInTimeOrder
+  TC-AC-FS.2:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchApiTest.java::patientGetsNothingBeyondTheBookingWindow
+  TC-AC-FS.3:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchApiTest.java::patientSeesOnlyFreeFutureSlots
   TC-AC-GS.1:
     status: automated
     refs:
@@ -124,12 +165,18 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::roleViolationIsRejected
       - services/clinical/src/test/java/org/shp/clinical/app/PractitionerServiceTest.java::massAssignmentIsRejectedBeforeAnyWrite
       - services/clinical/src/test/java/org/shp/clinical/app/PractitionerServiceTest.java::clientMetaIsDiscardedBeforeValidation
-    gap: "The Practitioner/PractitionerRole writes (CLN-10, C10) reject out-of-profile elements and ignore a client meta; the Patient endpoints (CLN-03) do not call the validator yet, the other resources (Appointment, Encounter, ...) have no write validator, and no API-level test sends the request over HTTP. Owner: D2."
+    gap: "The Practitioner/PractitionerRole writes (CLN-10, C10) reject out-of-profile elements and ignore a client meta, in the service and over HTTP (PractitionerApiTest); registration (C1, CLN-05) calls the same validator. The other resources (Appointment, Encounter, ...) have no write validator. Owner: D2."
   TC-AC-01.3:
     status: partial
     refs:
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
     gap: "The Mongo store records every version and its history is queryable; the patient update endpoint and the version-view API are not implemented yet (CLN-xx)."
+  TC-AC-01.2:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/DuplicatePatientCheckTest.java::samePhoneAndBirthDateIsASuspectedDuplicate
+      - services/clinical/src/test/java/org/shp/clinical/app/DuplicatePatientCheckTest.java::theRefusalDisclosesNothingFromTheExistingRecord
+      - services/clinical/src/test/java/org/shp/clinical/api/RegistrationApiTest.java::samePhoneAndBirthDateIsRefusedWithoutLeakingTheExistingRecord
   TC-NFR-SEC5:
     status: partial
     refs:
@@ -231,6 +278,13 @@ automation:
     status: planned
     blocked_by: "The UI has no logout that clears data and blocks Back (WEB-xx)."
     owner: SA
+  TC-SEC-29:
+    status: automated
+    refs:
+      - tools/identity/test_realm.py::test_service_tokens_never_carry_the_user_audience
+      - libs/java/shp-security/src/test/java/org/shp/security/ShpJwtTest.java::refusesATokenIssuedForAnotherService
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience
+      - libs/python/tests/test_security.py::test_service_audience_accepts_its_own_and_the_user_audience_only
 
   # ---- Performance (k6) ----
   TC-NFR-P1: {status: partial, refs: ["tests/performance/k6/slots-search.js::p(95)<300"], gap: "The script exists and its syntax is checked in CI; run on a production-sized UAT when Azure is available (PRD-10, PRD-01)."}
@@ -325,6 +379,7 @@ automation:
       - services/ml/tests/test_training_pipeline.py::test_gate_rules
       - services/ml/tests/test_training_pipeline.py::test_candidate_worse_than_production_is_rejected
       - services/ml/tests/test_training_pipeline.py::test_ece_and_threshold
+      - services/ml/tests/test_training_pipeline.py::test_ci_commands_generate_train_and_exit_2_when_the_gate_fails
   TC-NFR-C2:
     status: automated
     refs:
@@ -343,9 +398,12 @@ automation:
     blocked_by: "UAT AKS with NetworkPolicy enabled"
     owner: viethung12062005
   TC-SEC-20:
-    status: planned
-    blocked_by: "UAT AKS with NetworkPolicy enabled"
-    owner: viethung12062005
+    status: partial
+    refs:
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::aServiceCannotUseARoleOfAnotherServicesTarget
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakFederatedClientAuthTest.java::aTokenOfAnotherServiceAccountIsRefused
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenExchangeTest.java::otherClientsCannotExchange
+    gap: "Identity side proven against real Keycloak (a service gets only its targets' roles; another pod's ServiceAccount token cannot obtain its identity). Calling /internal from outside the cluster and the NetworkPolicy side need the UAT AKS."
   TC-SEC-21:
     status: planned
     blocked_by: "UAT AKS with NetworkPolicy enabled"
