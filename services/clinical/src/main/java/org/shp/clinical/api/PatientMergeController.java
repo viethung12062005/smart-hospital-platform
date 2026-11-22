@@ -22,9 +22,8 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * 09 C8 {@code POST /fhir/Patient/{id}/$merge} with {@code { "target": { "reference": "Patient/..."
- * } }}: nurses only. The matrix has no merge action, so it is authorized as the nurse's {@code
- * Patient: update} ({@code PAT-UPD-NUR}) and the controller refuses other roles (a patient may
- * update their own record but never merge).
+ * } }}: nurses only, authorized by the matrix rule {@code PAT-MERGE-NUR} ({@code Patient: merge});
+ * a patient may update their own record but never merge.
  */
 @RestController
 public class PatientMergeController {
@@ -39,13 +38,10 @@ public class PatientMergeController {
   @PostMapping(
       path = "/fhir/Patient/{id}/$merge",
       consumes = {"application/json", FhirJson.MEDIA_TYPE})
-  @RequireShpAuthz(resource = "Patient", action = "update", context = "patientFacts")
+  @RequireShpAuthz(resource = "Patient", action = "merge", context = "patientFacts")
   public ResponseEntity<String> merge(
       @PathVariable String id, @RequestBody String body, HttpServletRequest req) {
     Principal p = IdentityInterceptor.principal(req);
-    if (!p.roles().contains("nurse")) {
-      throw new ShpException("forbidden", "Only a nurse merges records.");
-    }
     Entry merged = service.merge(id, target(body), "User/" + p.subject());
     return ResponseEntity.ok()
         .contentType(FHIR)

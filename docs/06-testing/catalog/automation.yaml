@@ -218,6 +218,12 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
+  # ---- Clinical: patient merge ----
+  TC-AC-MG.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::aNurseMergesTheSourceIntoTheTarget
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::mergingAnAlreadyMergedRecordIs409
   # ---- Clinical: vital signs ----
   TC-AC-VT.1:
     status: partial
