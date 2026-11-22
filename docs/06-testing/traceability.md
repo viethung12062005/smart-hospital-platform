@@ -7,8 +7,8 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 72 (35%) |
-| Fully automated | 37 |
+| Automated or partially automated | 71 (34%) |
+| Fully automated | 35 |
 | P0 (security, patient data, patient safety) | 123, automated at least partially: 40 |
 
 ## By module and status
@@ -16,7 +16,7 @@
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 2 | 1 | 41 | 0 |
+| clinical | 44 | 0 | 2 | 42 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 5 | 9 | 15 | 0 |
-| api | 90 | 10 | 11 | 69 | 0 |
+| api | 90 | 8 | 12 | 70 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -133,7 +133,7 @@
 | Requirement | Test case | Status |
 |---|---|---|
 | AC-01.1 | TC-AC-01.1 (api, P0) | planned |
-| AC-01.2 | TC-AC-01.2 (api, P0) | automated |
+| AC-01.2 | TC-AC-01.2 (api, P0) | partial |
 | AC-01.3 | TC-AC-01.3 (api, P0) | partial |
 | AC-02.1 | TC-AC-02.1 (api, P1) | automated |
 | AC-02.2 | TC-AC-02.2 (api, P1) | planned |
@@ -152,7 +152,7 @@
 | AC-05.2 | TC-SEC-14 (integration, P0) | planned |
 | AC-05.3 | TC-AC-05.3 (api, P0) | planned |
 | AC-05.3 | TC-AC-05.3-download-document (api, P0) | planned |
-| AC-06.1 | TC-AC-06.1 (api, P1) | automated |
+| AC-06.1 | TC-AC-06.1 (api, P1) | planned |
 | AC-06.2 | TC-AC-06.2 (api, P0) | planned |
 | AC-07.1 | TC-AC-07.1 (api, P1) | planned |
 | AC-07.1 | TC-AC-07.1-cancel-reminders (integration, P1) | planned |
