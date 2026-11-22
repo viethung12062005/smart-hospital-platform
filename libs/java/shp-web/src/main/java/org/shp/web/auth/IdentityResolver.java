@@ -14,11 +14,16 @@ import org.slf4j.LoggerFactory;
  * effect within ≤ 60 seconds, AC-08.1); "not linked" is kept for only 5 seconds so a newly
  * registered user (C1) can use it right away.
  *
+ * <p>The linked profiles travel with the link, so they share its 60 seconds (a revoked link is seen
+ * elsewhere within ≤ 60 seconds, CLN-33). A profile whose {@code expiresAt} passes while the link
+ * is cached is dropped on the next call without waiting for the refresh.
+ *
  * <p>When the identity service (clinical) fails, a link seen in the last {@link #STALE_MAX} is
- * served from the cache instead (SHR-21: "on clinical failure use the cache"); with nothing usable
- * in the cache the request fails with 503 {@code dependency-unavailable}, never with a 500. {@code
- * STALE_MAX} equals the maximum access-token lifetime (NFR-SEC1), so an outage of clinical does not
- * keep a caller in for longer than their token would.
+ * served from the cache instead without delegated profiles, whose 60-second revocation bound must
+ * still hold (SHR-21: "on clinical failure use the cache"); with nothing usable in the cache the
+ * request fails with 503 {@code dependency-unavailable}, never with a 500. {@code STALE_MAX} equals
+ * the maximum access-token lifetime (NFR-SEC1), so an outage of clinical does not keep a caller in
+ * for longer than their token would.
  */
 public final class IdentityResolver {
   public static final Duration LINK_TTL = Duration.ofSeconds(60);
@@ -45,7 +50,7 @@ public final class IdentityResolver {
     Instant now = clock.instant();
     Entry hit = cache.get(subject);
     if (hit != null && hit.expires().isAfter(now)) {
-      return hit.link();
+      return hit.link().map(l -> l.activeAt(now));
     }
     Optional<IdentityLink> link;
     try {
@@ -54,7 +59,8 @@ public final class IdentityResolver {
       if (hit != null && hit.link().isPresent() && hit.fetched().plus(STALE_MAX).isAfter(now)) {
         // No subject or identifier in the log: the cause is enough to diagnose the outage.
         log.warn("Identity service unavailable, serving a cached link: {}", e.toString());
-        return hit.link();
+        return hit.link()
+            .map(l -> new IdentityLink(l.fhirUserType(), l.fhirUserId(), l.disabled()));
       }
       log.warn("Identity service unavailable and no cached link: {}", e.toString());
       throw new ShpException("dependency-unavailable");

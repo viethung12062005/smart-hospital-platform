@@ -320,4 +320,22 @@ class WebTest {
     assertThat(audit.records()).hasSize(1);
     return audit.records().getFirst();
   }
+
+  @Test
+  void principalCarriesTheLinkedProfilesOfTheIdentityLink() throws Exception {
+    var child = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e0a";
+    links.links.put(
+        "guardian-sub", // own subject: the resolver caches links for 60 s across tests
+        new IdentityLink(
+            "Patient",
+            PATIENT,
+            false,
+            java.util.List.of(new org.shp.authz.LinkedProfile(child, "guardian", "full", null))));
+    var res =
+        get(
+            "/api/v1/me",
+            TestApp.token(java.util.List.of("patient"), "guardian-sub", java.util.List.of("pwd")));
+    assertThat(res.statusCode()).isEqualTo(200);
+    assertThat(json(res).get("linkedPatientIds").get(0).asString()).isEqualTo(child);
+  }
 }

@@ -3,6 +3,7 @@ package org.shp.web.auth;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.shp.authz.Principal;
 import org.shp.security.ShpJwt;
@@ -46,7 +47,12 @@ public final class IdentityInterceptor implements HandlerInterceptor {
       throw new ShpException("forbidden");
     }
     req.setAttribute(
-        ATTR, new Principal(subject, roles, link.map(IdentityLink::fhirUserId).orElse(null)));
+        ATTR,
+        new Principal(
+            subject,
+            roles,
+            link.map(IdentityLink::fhirUserId).orElse(null),
+            link.map(IdentityLink::linkedProfiles).orElse(List.of())));
     return true;
   }
 

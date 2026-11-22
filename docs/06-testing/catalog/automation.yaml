@@ -57,6 +57,12 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
       - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
+  TC-AC-RV.1:
+    status: partial
+    refs:
+      - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkedProfilesAreCachedForSixtySecondsAndAnExpiredOneIsDropped
+      - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::staleIdentityDuringOutageDoesNotExtendDelegatedAccess
+    gap: "Only the consumer side is checked (callers hold linkedProfiles for at most 60 seconds, including during a clinical outage, and an expired link is dropped at once); no API test of the revoke endpoint and its audit record yet."
   TC-SEC-15:
     status: partial
     refs:
