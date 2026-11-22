@@ -27,7 +27,7 @@ Python services (`ai`, `ml`): packages `src/shp_ai`, `src/shp_ml` split by featu
 (edit in `libs/python` then run `tools/pylib/sync.py`); tests in `tests/`.
 
 ## 2. Errors
-- Throw `ShpException` with a code from `ErrorCatalog` (27 codes, matching [07 §5](03-architecture/detailed-design/07-api-conventions.md)). **Do not invent new codes**: open an issue for the SA.
+- Throw `ShpException` with a code from `ErrorCatalog` (30 codes, matching [07 §5](03-architecture/detailed-design/07-api-conventions.md)). **Do not invent new codes**: open an issue for the SA.
 - `ShpExceptionHandler` turns it into a FHIR `OperationOutcome` (clinical APIs) or `application/problem+json` (other APIs). Messages have vi and en variants.
 - Never return stack traces, table names, SQL statements or input values in a response. 5xx returns only a generic code and the `traceId`.
 
