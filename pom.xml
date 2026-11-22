@@ -63,7 +63,7 @@
          published to GitHub Packages instead (docs/04-devops/github-setup.md section 10). -->
     <shp.libs.version>${project.version}</shp.libs.version>
     <!-- Checked on Maven Central on 2026-11-03 (06/10 build): JDBC plugin that obtains Entra tokens for PostgreSQL on Azure (02-db-scheduling §5) -->
-    <azure-identity-extensions.version>1.2.10</azure-identity-extensions.version>
+    <azure-identity-extensions.version>1.3.1</azure-identity-extensions.version>
     <!-- HAPI FHIR pulls guava 33.2.1-jre, which has CVE-2026-102554 (HIGH, DoS during deserialization; fixed in
          33.7.2). The image scan blocks every HIGH with a fix available, so pin the patched version. -->
     <guava.version>33.8.0-jre</guava.version>
