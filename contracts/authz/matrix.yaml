@@ -50,6 +50,8 @@ resources:
   Backup:          { clinical: false, actions: [run, restore] }
   Device:          { clinical: false, actions: [create, delete] }
   NotificationPreference: { clinical: false, actions: [read, update] }
+  NotificationReminder: { clinical: false, actions: [read] }
+  NotificationDeadLetter: { clinical: false, actions: [read, retry] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -177,3 +179,8 @@ rules:
   - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
   - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
   - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }
+  # Reminder management: reminders of one appointment, and permanently failed reminders (11 section 1, N5-N7)
+  - { id: NREM-READ-NUR,   resource: NotificationReminder, action: read, role: nurse, when: [] }
+  - { id: NREM-READ-ADM,   resource: NotificationReminder, action: read, role: admin, when: [] }
+  - { id: NDL-READ-ADM,    resource: NotificationDeadLetter, action: read,  role: admin, when: [] }
+  - { id: NDL-RETRY-ADM,   resource: NotificationDeadLetter, action: retry, role: admin, when: [] }

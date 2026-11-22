@@ -7,7 +7,7 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 83 (40%) |
+| Automated or partially automated | 84 (41%) |
 | Fully automated | 49 |
 | P0 (security, patient data, patient safety) | 123, automated at least partially: 49 |
 
@@ -19,7 +19,7 @@
 | clinical | 44 | 5 | 4 | 35 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
-| privacy-admin | 15 | 3 | 0 | 12 | 0 |
+| privacy-admin | 15 | 3 | 1 | 11 | 0 |
 | scheduling | 21 | 14 | 3 | 4 | 0 |
 | security | 29 | 8 | 9 | 12 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 21 | 10 | 59 | 0 |
+| api | 90 | 21 | 11 | 58 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -191,7 +191,7 @@
 | AC-CN.1 | TC-AC-CN.1 (api, P1) | partial |
 | AC-CP.1 | TC-AC-CP.1 (e2e, P0) | planned |
 | AC-CS.1 | TC-AC-CS.1 (api, P0) | planned |
-| AC-DL.1 | TC-AC-DL.1 (api, P1) | planned |
+| AC-DL.1 | TC-AC-DL.1 (api, P1) | partial |
 | AC-DP.1 | TC-AC-DP.1 (api, P1) | planned |
 | AC-DP.2 | TC-AC-DP.2 (api, P1) | planned |
 | AC-DP.3 | TC-AC-DP.3 (api, P1) | planned |
