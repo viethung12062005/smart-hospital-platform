@@ -10,6 +10,7 @@
 | Resource / Action | Patient | Doctor | Nurse | Admin | DPO |
 |---|---|---|---|---|---|
 | Patient: read | Own | Care / BG | Yes | No | No |
+| Record claim with an OTP (request, verify) | Yes | No | No | No | No |
 | Patient: create / update | Own (administrative information) | No | Yes | No | No |
 | Patient: search (name, year of birth) | No | Yes | Yes | No | No |
 | Schedule / Slot: view free slots | Yes | Yes | Yes | Yes | No |

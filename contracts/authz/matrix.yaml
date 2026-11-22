@@ -50,6 +50,7 @@ resources:
   Backup:          { clinical: false, actions: [run, restore] }
   Device:          { clinical: false, actions: [create, delete] }
   NotificationPreference: { clinical: false, actions: [read, update] }
+  RecordClaim:     { clinical: true,  actions: [create, update] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -177,3 +178,6 @@ rules:
   - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
   - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
   - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }
+  # Claim of an existing record with an OTP (C27 request, C28 verify); the account always comes from the token
+  - { id: RCLAIM-CREATE-PAT, resource: RecordClaim, action: create, role: patient, when: [] }
+  - { id: RCLAIM-UPD-PAT,  resource: RecordClaim, action: update, role: patient, when: [] }

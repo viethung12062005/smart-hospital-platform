@@ -138,6 +138,30 @@ public final class ErrorCatalog {
                 "Vai trò không khớp với hồ sơ liên kết.",
                 "The role does not match the linked profile."),
             e(
+                "otp-invalid",
+                422,
+                "business-rule",
+                "Mã xác thực không đúng hoặc đã hết hạn.",
+                "The code is wrong or has expired."),
+            e(
+                "record-already-linked",
+                409,
+                "conflict",
+                "Hồ sơ đã được liên kết với tài khoản khác. Vui lòng đến quầy tiếp đón.",
+                "The record is linked to another account. Please go to the counter."),
+            e(
+                "otp-rate-limited",
+                429,
+                "throttled",
+                "Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.",
+                "Too many requests for a code."),
+            e(
+                "otp-locked",
+                429,
+                "throttled",
+                "Nhập sai quá nhiều lần. Vui lòng thử lại sau.",
+                "Too many wrong codes. Try again later."),
+            e(
                 "precondition-required",
                 428,
                 "invalid",

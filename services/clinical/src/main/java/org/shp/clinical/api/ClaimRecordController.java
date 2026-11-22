@@ -9,9 +9,8 @@ import org.shp.clinical.app.RecordClaims;
 import org.shp.clinical.app.RecordClaims.ClaimRequest;
 import org.shp.web.auth.AllowUnlinkedIdentity;
 import org.shp.web.auth.IdentityInterceptor;
-import org.shp.web.authz.ShpPublicEndpoint;
+import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.errors.ErrorWriter;
-import org.shp.web.errors.ShpException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,7 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 09 §9 C27 {@code POST /api/v1/me/claim-record} and C28 {@code POST
  * /api/v1/me/claim-record/verify}. The caller is a patient account that has no record yet, so, like
- * C1, the account does not have to be linked; the record is only named after the code is right.
+ * C1, the account does not have to be linked; the record is only named after the code is right. The
+ * matrix rules {@code RCLAIM-CREATE-PAT} (C27) and {@code RCLAIM-UPD-PAT} (C28) allow the patient
+ * role only, and every decision is audited.
  */
 @RestController
 public class ClaimRecordController {
@@ -44,7 +45,7 @@ public class ClaimRecordController {
 
   @PostMapping(path = "/api/v1/me/claim-record", consumes = "application/json")
   @AllowUnlinkedIdentity
-  @ShpPublicEndpoint
+  @RequireShpAuthz(resource = "RecordClaim", action = "create")
   public Status claim(@RequestBody ClaimBody body, HttpServletRequest req) {
     Principal p = patient(req);
     ClaimRequest r =
@@ -61,7 +62,7 @@ public class ClaimRecordController {
 
   @PostMapping(path = "/api/v1/me/claim-record/verify", consumes = "application/json")
   @AllowUnlinkedIdentity
-  @ShpPublicEndpoint
+  @RequireShpAuthz(resource = "RecordClaim", action = "update")
   public Linked verify(
       @RequestBody VerifyBody body, @AuthenticationPrincipal Jwt jwt, HttpServletRequest req) {
     Principal p = patient(req);
@@ -81,10 +82,6 @@ public class ClaimRecordController {
   }
 
   private static Principal patient(HttpServletRequest req) {
-    Principal p = IdentityInterceptor.principal(req);
-    if (!p.roles().contains("patient")) {
-      throw new ShpException("forbidden", "Records are claimed by patient accounts.");
-    }
-    return p;
+    return IdentityInterceptor.principal(req);
   }
 }

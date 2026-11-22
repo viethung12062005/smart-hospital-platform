@@ -14,6 +14,7 @@ import org.shp.events.audit.AuditActions;
 import org.shp.events.audit.AuditRecord;
 import org.shp.events.audit.AuditRecordBuilder;
 import org.shp.events.audit.AuditSink;
+import org.shp.web.errors.ErrorCatalog;
 import org.shp.web.errors.ErrorInfo;
 import org.shp.web.errors.ShpException;
 import org.slf4j.Logger;
@@ -45,37 +46,13 @@ public class RecordClaims {
   static final Pattern CODE = Pattern.compile("\\d{6}");
 
   /** 09 §9 codes not yet in the shared catalog (07 §5). */
-  public static final ErrorInfo OTP_RATE_LIMITED =
-      new ErrorInfo(
-          "otp-rate-limited",
-          429,
-          "throttled",
-          "Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.",
-          "Too many requests for a code.");
+  public static final ErrorInfo OTP_RATE_LIMITED = ErrorCatalog.get("otp-rate-limited");
 
-  public static final ErrorInfo OTP_INVALID =
-      new ErrorInfo(
-          "otp-invalid",
-          422,
-          "business-rule",
-          "Mã xác thực không đúng hoặc đã hết hạn.",
-          "The code is wrong or has expired.");
+  public static final ErrorInfo OTP_INVALID = ErrorCatalog.get("otp-invalid");
 
-  public static final ErrorInfo OTP_LOCKED =
-      new ErrorInfo(
-          "otp-locked",
-          429,
-          "throttled",
-          "Nhập sai quá nhiều lần. Vui lòng thử lại sau.",
-          "Too many wrong codes. Try again later.");
+  public static final ErrorInfo OTP_LOCKED = ErrorCatalog.get("otp-locked");
 
-  public static final ErrorInfo RECORD_ALREADY_LINKED =
-      new ErrorInfo(
-          "record-already-linked",
-          409,
-          "conflict",
-          "Hồ sơ đã được liên kết với tài khoản khác. Vui lòng đến quầy tiếp đón.",
-          "The record is linked to another account. Please go to the counter.");
+  public static final ErrorInfo RECORD_ALREADY_LINKED = ErrorCatalog.get("record-already-linked");
 
   /** A 09 §9 refusal with its local catalog entry. */
   public static class RuleException extends RuntimeException {
