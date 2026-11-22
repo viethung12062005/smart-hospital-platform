@@ -129,7 +129,7 @@ Result:
 | 400 | Missing parameter / structurally invalid Parameters | `validation-failed` |
 | 403 | Booking for someone else | `forbidden` |
 | 404 | Slot or patient does not exist | `not-found` |
-| **409** | Slot already booked, blocked, or in the past | `slot-unavailable` — with an `OperationOutcome` containing `extension[suggested-slots]`: the 3 nearest free slots for the same doctor/specialty |
+| **409** | Slot already booked, blocked, or in the past | `slot-unavailable` — with an `OperationOutcome` containing `extension[suggested-slots]`: up to 3 nearest free slots for the same doctor/specialty (the same doctor's slots first, then other doctors of the specialty). Omit the extension if there are no alternatives. Each item is a nested `extension` `slot` with `reference` (`valueReference` `Slot/{id}`), `practitioner` (`valueReference`), `start` and `end` (`valueInstant`) |
 | 422 | Patient already has 3 future appointments (BR-03) | `max-future-appointments` |
 | 422 | Slot outside the 30-day window (BR-04) | `outside-booking-window` |
 | 422 | Same key, different body (AC-03.3) | `idempotency-key-reused` |
