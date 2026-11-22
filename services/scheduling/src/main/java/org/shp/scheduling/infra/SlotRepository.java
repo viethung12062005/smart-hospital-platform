@@ -132,6 +132,60 @@ public class SlotRepository {
         .optional();
   }
 
+  /**
+   * Return {@code true} if the slot currently has an active (booked/arrived/fulfilled) appointment.
+   */
+  @Transactional(readOnly = true)
+  public boolean hasActiveAppointment(UUID slotId) {
+    Objects.requireNonNull(slotId, "slotId must not be null");
+    return Boolean.TRUE.equals(
+        jdbc.sql(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM scheduling.appointment
+                    WHERE slot_id = ? AND status IN ('booked', 'arrived', 'fulfilled')
+                )
+                """)
+            .param(slotId)
+            .query(Boolean.class)
+            .single());
+  }
+
+  /**
+   * Compare-and-set slot status and JSON content guarded by expected {@code version_id} and {@code
+   * status}.
+   */
+  @Transactional
+  public Optional<SlotRecord> updateStatusWithCas(
+      UUID id,
+      int expectedVersion,
+      String expectedStatus,
+      String targetStatus,
+      Instant lastUpdated,
+      String content) {
+    Objects.requireNonNull(id, "id must not be null");
+    Objects.requireNonNull(expectedStatus, "expectedStatus must not be null");
+    Objects.requireNonNull(targetStatus, "targetStatus must not be null");
+    Objects.requireNonNull(lastUpdated, "lastUpdated must not be null");
+    Objects.requireNonNull(content, "content must not be null");
+    return jdbc.sql(
+            """
+            UPDATE scheduling.slot
+               SET status = ?,
+                   version_id = version_id + 1,
+                   last_updated = ?,
+                   content = ?::jsonb
+             WHERE id = ? AND version_id = ? AND status = ?
+            RETURNING id, version_id, last_updated, schedule_id, practitioner_id,
+                      specialty, status, start_at, end_at, content
+            """)
+        .params(
+            targetStatus, Timestamp.from(lastUpdated), content, id, expectedVersion, expectedStatus)
+        .query(SLOT_MAPPER)
+        .optional();
+  }
+
   /** Read a slot, to tell why a claim failed. */
   public Optional<SlotFacts> find(UUID slotId) {
     return jdbc.sql(
