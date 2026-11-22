@@ -1,9 +1,12 @@
 package org.shp.clinical.config;
 
+import java.time.Clock;
 import java.util.Set;
 import org.shp.clinical.api.InternalIdentityFilter;
 import org.shp.clinical.app.IdentityAccounts;
+import org.shp.clinical.app.ProfileLinks;
 import org.shp.clinical.infra.MongoIdentityAccounts;
+import org.shp.clinical.infra.MongoProfileLinks;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -28,11 +31,14 @@ class InternalApiConfig {
   @Bean
   FilterRegistrationBean<InternalIdentityFilter> internalIdentityFilter(
       IdentityAccounts accounts,
+      ProfileLinks links,
+      Clock clock,
       @Value(
               "${shp.clinical.internal-identity.allowed-clients:svc-scheduling,svc-document,svc-notification,svc-ai}")
           Set<String> allowedClients) {
     var registration =
-        new FilterRegistrationBean<>(new InternalIdentityFilter(accounts, allowedClients));
+        new FilterRegistrationBean<>(
+            new InternalIdentityFilter(accounts, links, clock, allowedClients));
     registration.addUrlPatterns("/internal/v1/identity/*");
     // After the Spring Security filter chain (order -100) so the validated token is available.
     registration.setOrder(Ordered.LOWEST_PRECEDENCE - 100);
@@ -50,6 +56,33 @@ class InternalApiConfig {
           .indexOps(MongoIdentityAccounts.COLLECTION)
           .createIndex(
               new Index().on("fhirUser", Sort.Direction.ASC).unique().named("ux_fhir_user"));
+    };
+  }
+
+  /** Indexes of {@code profile_links} (03 §2.2): one link per account and profile. */
+  @Bean
+  ApplicationRunner profileLinksIndexes(MongoTemplate mongo) {
+    return args -> {
+      if (!mongo.collectionExists(MongoProfileLinks.COLLECTION)) {
+        mongo.createCollection(MongoProfileLinks.COLLECTION);
+      }
+      var ops = mongo.indexOps(MongoProfileLinks.COLLECTION);
+      ops.createIndex(
+          new Index()
+              .on("accountSub", Sort.Direction.ASC)
+              .on("patientId", Sort.Direction.ASC)
+              .unique()
+              .named("ux_account_patient"));
+      ops.createIndex(
+          new Index()
+              .on("accountSub", Sort.Direction.ASC)
+              .on("status", Sort.Direction.ASC)
+              .named("ix_account_status"));
+      ops.createIndex(
+          new Index()
+              .on("patientId", Sort.Direction.ASC)
+              .on("status", Sort.Direction.ASC)
+              .named("ix_patient_status"));
     };
   }
 }
