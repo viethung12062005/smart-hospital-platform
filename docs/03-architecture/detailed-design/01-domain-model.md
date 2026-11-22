@@ -177,7 +177,7 @@ effective from/to. Details in [02-db-scheduling.md](02-db-scheduling.md).
 | `encounter` | 0..1 | required for vital signs |
 | `effectiveDateTime` | 1..1 | |
 | `performer` | 1..1 | `Practitioner/{id}` |
-| `valueQuantity` | 0..1 | UCUM units per the value set table; includes plausibility range checks (for example temperature 30–45 °C) |
+| `valueQuantity` | 0..1 | UCUM units per the value set table; includes plausibility range checks (for example temperature 30–43 °C) |
 | `component[]` | 0..\* | only for blood pressure (systolic, diastolic) |
 | `interpretation` | 0..1 | `H` · `L` · `N`, computed by the server from `referenceRange` |
 | `referenceRange` | 0..1 | |

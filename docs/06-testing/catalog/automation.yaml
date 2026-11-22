@@ -203,11 +203,27 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
-  TC-AC-01.3:
+  # ---- Clinical: vital signs ----
+  TC-AC-VT.1:
     status: partial
     refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::spo2Of120IsValueOutOfRange
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::implausibleValuesAreRejected
+    gap: "The Observation validator (CLN-16) rejects SpO2 = 120 with value-out-of-range and names the field; the POST /fhir/Observation endpoint (C16) that returns the 422 and saves nothing is not built yet. Owner: D2."
+  TC-AC-01.3:
+    status: automated
+    refs:
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
-    gap: "The Mongo store records every version and its history is queryable; the patient update endpoint and the version-view API are not implemented yet (CLN-xx)."
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aRecordEditedTwiceHasThreeVersionsInTheHistory
+  TC-AC-01.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientReadsOwnRecordWithItsVersion
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::anotherPatientsRecordIsA404ThatLooksLikeAMissingOne
+  TC-AC-UP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientEditingTheirNameOrOtherFixedFieldsIsRefused
   TC-AC-01.2:
     status: automated
     refs:
