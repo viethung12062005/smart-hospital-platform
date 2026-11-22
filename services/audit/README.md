@@ -28,3 +28,9 @@ Docs: `docs/03-architecture/detailed-design/` (the service's API, DB, events) an
 (local Azurite) **or** `SHP_AUDIT_BLOB_ACCOUNT_URL` (cloud, managed identity, no secret); `SHP_AUDIT_BLOB_CONTAINER` (default `audit`);
 `SHP_AUDIT_BLOB_INSTANCE` (chain key, default `$HOSTNAME`). Azurite has no immutability policy, so locally the container is a plain
 container; the lock is created by IAC-12 in the cloud.
+
+## Consuming `audit.recorded` (AUD-01)
+`auditEvents` (binding `auditEvents-in-0`, queue `shp-events.audit`) validates each `shp.audit.recorded.v1` event, deduplicates by
+`eventId` through the inbox and spools the record in the same transaction (collection `audit_spool`); a 1-second timer writes a
+batch to `WormAuditLog` when `shp.audit-batch.max-records` (5000) records wait or the oldest is `max-age` (60 s) old. Without blob
+settings the service starts, warns once and keeps the records in the spool. Design: `05-storage-audit-blob.md` §1.2.

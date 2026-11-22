@@ -41,6 +41,49 @@ p95 prediction latency 6.7 ms, every subgroup passes; the auto-selected high-ris
 The model is stored as LightGBM text (no pickle) with sha256, re-verified on load. The training job only sets the `candidate` alias;
 `production` changes only through shadow/canary (ML-24) or an authorized person. Gate failure: nothing is registered, but the run is still logged with the reason.
 
+### Training in CI (MLO-01)
+
+`.github/workflows/ml-train.yml` runs the commands a reviewer would run by hand, on every change to the
+training code or the data generator (and on manual dispatch):
+
+```
+python -m shp_ml.synth --out data/noshow.parquet --seed 42          # dataset + noshow.json (hash)
+python -m shp_ml.pipeline --data data/noshow.parquet --registry runs/registry --seed 42   # exit code 2 = gate failed
+```
+
+The job fails when a data check or a gate fails. The model (`model.txt`), `meta.json`, the model card and the run log
+are published as the workflow artifact `no-show-model-<git sha>`; the dataset hash, the model hash and the gate table are
+in the job summary. On `main`, when the repository variable `MLFLOW_TRACKING_URI` is set, the `register` job runs the
+same pipeline against the cluster MLflow and sets `candidate`; without the variable it is skipped with a note. What
+happens after `candidate` (shadow, canary, rollback) is [16-mlops §6](../../docs/03-architecture/detailed-design/16-mlops.md).
+
+### Training image (MLO-02)
+
+`Dockerfile.train` builds the environment for training, so that the same image, dataset hash and seed give the same model.
+The base image is pinned by digest, the Python dependencies by hash (`requirements-train.lock`, installed with
+`--require-hashes`), and the image sets one thread, `PYTHONHASHSEED=0` and UTC. The serving `Dockerfile` is unchanged.
+
+```
+docker build -f Dockerfile.train -t shp-ml-train:local .
+scripts/reproduce.sh shp-ml-train:local 42        # two fresh containers, no network; exit 1 unless the hashes are equal
+# one run by hand (output goes to the mounted directory):
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work" shp-ml-train:local shp_ml.synth --out data/noshow.parquet --seed 42
+docker run --rm --user "$(id -u):$(id -g)" -v "$PWD/out:/work" shp-ml-train:local shp_ml.pipeline --data data/noshow.parquet --registry runs/registry --seed 42
+```
+
+Regenerate the lock after changing `requirements-train.in` or the base image (inside the same base image, so the markers and
+wheels match its Python):
+
+```
+docker run --rm -v "$PWD":/w -w /w mirror.gcr.io/library/python@sha256:<digest of the base image> sh -c \
+  'pip install -q uv && uv pip compile --generate-hashes --no-header --annotation-style=line --universal -o requirements-train.lock requirements-train.in'
+```
+
+Hashes are only comparable inside one environment: the `train` job of `ml-train` installs from `pyproject.toml` on the
+runner's Python and may produce a different parquet or model than the image, which is the reference. CI builds and scans
+the image on every change (`svc-ml` job `container-train`); pushing to ACR and the cosign signature only happen on
+`main` when `ACR_NAME` is set.
+
 **Limitations:** the model only relearns self-written group rules; the numbers demonstrate the MLOps process, not real predictive ability.
 
 `shp_platform` in `src/` is a copy of `libs/python`: do not edit it here; edit the source and run `python tools/pylib/sync.py`.
@@ -72,6 +115,9 @@ Every series carries `model_version`, so the canary AnalysisTemplate (MLO-03) an
 | `shp_ml_shadow_agreement_total{model_version,agree}` | highRisk agreement of the candidate with production (≥ 90%) |
 | `shp_ml_shadow_score_psi{model_version}` | score PSI of the candidate against production on the same appointments, last `SHADOW_PSI_WINDOW` (1,000) pairs, exported from `SHADOW_PSI_MIN_PAIRS` (200) pairs on; gate < 0.1. Removed when the candidate changes |
 | `shp_ml_model_info{model_version,role}` | loaded production model |
+
+`SERVING_MODEL_VERSION` (MLO-03) pins the served version in the pod template so Argo Rollouts can canary a model change; the pod is
+not ready until that version is loaded. Empty (default) = follow the `production` alias.
 
 `shp_ml_score_psi` (no version label) is the daily drift of production scores against registration time (ML-10), not a canary metric.
 

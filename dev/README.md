@@ -21,7 +21,7 @@ To write code (outside the cluster) you also need: **JDK 21** + **Maven 3.9** (6
 git clone <repo> && cd <repo>
 make -C dev quickstart
 ```
-This command does the following in order: install tools → create the kind cluster `shp-local` → install PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak →
+This command does the following in order: install tools → create the kind cluster `shp-local` → install PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak (image with the SHP login theme, built from `identity/keycloak`), Mailpit →
 create test users → build images and deploy **all 8 services** (gateway, scheduling, notification, clinical, document, audit, ai, ml).
 The first run takes 10–15 minutes (pulling images); later runs take a few minutes.
 
@@ -42,6 +42,7 @@ curl -i http://localhost:18000/fhir/Appointment  # goes through the gateway to s
 | Redeploy everything | `make -C dev deploy SVC=all` |
 | View logs / status | `make -C dev app-logs SVC=scheduling` · `make -C dev apps` · `make -C dev status` (dependencies) |
 | Remove a service | `make -C dev undeploy SVC=scheduling` |
+| Give services their workload client secret | `make -C dev service-clients` (also run by every `deploy`): creates the `svc-*` clients in a running Keycloak if missing and stores each secret, read from the Keycloak admin API, in the Secret `svc-<name>-client` (shp-apps); `deploy` injects it as `OIDC_CLIENT_SECRET` |
 | Get an API token | `make -C dev token USER=doctor.demo` (patient.demo, doctor.demo, nurse.demo, admin.demo, dpo.demo) |
 | Access the DB | `make -C dev psql DB=scheduling` · `make -C dev mongosh` · `make -C dev redis-cli` |
 | Shut down / free RAM | `make -C dev down` (deletes the cluster, in-cluster data is lost; passwords are kept) |
@@ -61,6 +62,8 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:18000/fhir/Appointment
 | RabbitMQ 4 (AMQP / management) | `localhost:35672` / http://localhost:25672 | `SPRING_RABBITMQ_HOST/PORT/USERNAME/PASSWORD` · `RABBITMQ_URL` (Python) |
 | Azurite (Blob/Queue emulator, account `shp`) | `AZURE_STORAGE_CONNECTION_STRING` in `connection.env` | `AZURE_STORAGE_CONNECTION_STRING` |
 | Keycloak 26, realm `shp` | http://localhost:18080/realms/shp | `OIDC_AUTHORITY` (= localhost issuer), `OIDC_JWK_SET_URI` (keys fetched via in-cluster DNS), `OIDC_AUDIENCE` |
+| Mailpit (mail catcher for Keycloak's forgot-password mail) | `kubectl -n shp-deps port-forward svc/mailpit 18025:8025`, then http://localhost:18025 | none |
+| Keycloak workload clients `svc-<service>` (SHR-32) | `OIDC_TOKEN_ENDPOINT` (in-cluster URL), `OIDC_CLIENT_SECRET` from Secret `svc-<name>-client`; client id defaults to `svc-<service>`. Keycloak runs with a fixed frontend hostname (`http://localhost:18080`), so a token fetched by a pod has the same issuer as one fetched from your machine |
 | 8 application services (namespace `shp-apps`) | via the gateway: `make port-forward` → `localhost:18000` | `http://<service name>` (port 80) |
 
 - **Passwords and the Azurite key** are randomly generated per machine and stored in `dev/.local/` (mode 600, gitignored). The repo contains no passwords.
@@ -137,10 +140,14 @@ Variables for services running outside the cluster are in `dev/.local/connection
 ## Realm scope (LOC-02)
 
 The local realm ships the five roles (`patient`, `doctor`, `nurse`, `admin`, `dpo`), the `roles` and `audience`
-mappers, and a TOTP policy for MFA. Two deliberate differences from UAT/prod:
+mappers, and a TOTP policy (which only users who enrol an authenticator are asked for). Two deliberate differences
+from UAT/prod:
 
-- **MFA is off locally.** The chart sets `SHP_REQUIRE_MFA_FOR_STAFF=false` so the seeded staff users can sign in
-  without enrolling an authenticator; UAT/prod keep the default (`true`) and staff must enrol TOTP/WebAuthn.
+- **No staff MFA locally.** The realm built from `identity/realm/` for the local cluster keeps Keycloak's stock
+  flows: the staff-MFA sub-flows exist only in the cluster realm (decision N3), so the seeded staff users sign in with
+  their password, and `make token USER=doctor.demo` needs no code. The services read
+  `SHP_REQUIRE_MFA_FOR_STAFF` (same variable in Java and Python) and the local chart sets it to `false`; UAT/prod
+  leave the default (`true`), where the realm demands a TOTP code from every staff role.
 - **No `fhir_user` token claim.** The FHIR identity is resolved server-side from `identity_links` (60-second cache,
   `detailed-design/15-authorization.md` §2, ADR-0018), so the token does not carry it and a stale claim cannot grant
   access to the wrong record.

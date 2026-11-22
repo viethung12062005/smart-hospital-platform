@@ -6,32 +6,32 @@
 
 | Metric | Value |
 |---|---|
-| Test case | 203 |
-| Automated or partially automated | 68 (33%) |
-| Fully automated | 33 |
-| P0 (security, patient data, patient safety) | 122, automated at least partially: 37 |
+| Test case | 204 |
+| Automated or partially automated | 76 (37%) |
+| Fully automated | 41 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 43 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 0 | 2 | 42 | 0 |
+| clinical | 44 | 2 | 2 | 40 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 1 | 1 | 13 | 0 |
-| scheduling | 21 | 6 | 8 | 7 | 0 |
-| security | 28 | 7 | 7 | 14 | 0 |
+| scheduling | 21 | 11 | 6 | 4 | 0 |
+| security | 29 | 8 | 9 | 12 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
 
 ## By test level
 
 | Level | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
-| unit | 4 | 1 | 2 | 1 | 0 |
+| unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
-| integration | 29 | 5 | 7 | 17 | 0 |
-| api | 90 | 7 | 13 | 70 | 0 |
+| integration | 29 | 6 | 8 | 15 | 0 |
+| api | 90 | 13 | 12 | 65 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -46,8 +46,6 @@
 | Test case | Blocked by | Owner |
 |---|---|---|
 | TC-AC-01.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-01.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-03.6 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-03.7 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-04.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-04.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -64,7 +62,6 @@
 | TC-AC-BG.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-BG.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-BG.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-BK.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-CI.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -121,9 +118,7 @@
 | TC-SEC-12 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-13 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-14 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
-| TC-SEC-15 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-16 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
-| TC-SEC-20 | UAT AKS with NetworkPolicy enabled | viethung12062005 |
 | TC-SEC-21 | UAT AKS with NetworkPolicy enabled | viethung12062005 |
 | TC-SEC-22 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-SEC-25 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
@@ -135,17 +130,17 @@
 | Requirement | Test case | Status |
 |---|---|---|
 | AC-01.1 | TC-AC-01.1 (api, P0) | planned |
-| AC-01.2 | TC-AC-01.2 (api, P0) | planned |
+| AC-01.2 | TC-AC-01.2 (api, P0) | automated |
 | AC-01.3 | TC-AC-01.3 (api, P0) | partial |
 | AC-02.1 | TC-AC-02.1 (api, P1) | automated |
-| AC-02.2 | TC-AC-02.2 (api, P1) | planned |
+| AC-02.2 | TC-AC-02.2 (api, P1) | automated |
 | AC-02.3 | TC-AC-02.3 (api, P0) | partial |
 | AC-03.1 | TC-AC-03.1 (api, P1) | partial |
 | AC-03.2 | TC-AC-03.2 (api, P0) | partial |
 | AC-03.3 | TC-AC-03.3 (api, P0) | partial |
-| AC-03.4 | TC-AC-03.4 (api, P0) | partial |
+| AC-03.4 | TC-AC-03.4 (api, P0) | automated |
 | AC-03.5 | TC-AC-03.5 (api, P0) | partial |
-| AC-03.6 | TC-AC-03.6 (api, P0) | planned |
+| AC-03.6 | TC-AC-03.6 (api, P0) | automated |
 | AC-03.7 | TC-AC-03.7 (api, P0) | planned |
 | AC-04.1 | TC-AC-04.1 (api, P0) | planned |
 | AC-04.2 | TC-AC-04.2 (api, P0) | planned |
@@ -154,7 +149,7 @@
 | AC-05.2 | TC-SEC-14 (integration, P0) | planned |
 | AC-05.3 | TC-AC-05.3 (api, P0) | planned |
 | AC-05.3 | TC-AC-05.3-download-document (api, P0) | planned |
-| AC-06.1 | TC-AC-06.1 (api, P1) | planned |
+| AC-06.1 | TC-AC-06.1 (api, P1) | automated |
 | AC-06.2 | TC-AC-06.2 (api, P0) | planned |
 | AC-07.1 | TC-AC-07.1 (api, P1) | planned |
 | AC-07.1 | TC-AC-07.1-cancel-reminders (integration, P1) | planned |
@@ -193,7 +188,7 @@
 | AC-BG.2 | TC-AC-BG.2 (api, P0) | planned |
 | AC-BG.3 | TC-AC-BG.3 (api, P0) | planned |
 | AC-BG.3 | TC-SEC-25 (api, P0) | planned |
-| AC-BK.1 | TC-AC-BK.1 (integration, P0) | planned |
+| AC-BK.1 | TC-AC-BK.1 (integration, P0) | automated |
 | AC-CI.1 | TC-AC-CI.1 (api, P0) | planned |
 | AC-CL.1 | TC-AC-CL.1 (api, P0) | planned |
 | AC-CL.2 | TC-AC-CL.2 (security, P0) | planned |
@@ -226,7 +221,7 @@
 | AC-LK.3 | TC-AC-LK.3 (api, P0) | planned |
 | AC-LK.4 | TC-AC-LK.4 (api, P0) | planned |
 | AC-LP.1 | TC-AC-LP.1 (api, P0) | planned |
-| AC-MA.1 | TC-AC-MA.1 (api, P0) | partial |
+| AC-MA.1 | TC-AC-MA.1 (api, P0) | automated |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | planned |
 | AC-NP.1 | TC-AC-NP.1 (api, P1) | planned |
 | AC-NS.1 | TC-AC-NS.1 (integration, P1) | planned |
@@ -303,6 +298,7 @@
 | NFR-SEC1 | TC-SEC-05 (api, P0) | planned |
 | NFR-SEC1 | TC-SEC-06 (unit, P0) | automated |
 | NFR-SEC1 | TC-SEC-28 (e2e, P0) | partial |
+| NFR-SEC1 | TC-SEC-29 (unit, P0) | automated |
 | NFR-SEC10 | TC-NFR-SEC10 (api, P0) | planned |
 | NFR-SEC10 | TC-SEC-03 (api, P0) | partial |
 | NFR-SEC10 | TC-SEC-16 (api, P0) | planned |
@@ -320,7 +316,7 @@
 | NFR-SEC15 | TC-SEC-09 (security, P0) | automated |
 | NFR-SEC15 | TC-SEC-10 (security, P0) | automated |
 | NFR-SEC16 | TC-NFR-SEC16 (api, P0) | planned |
-| NFR-SEC16 | TC-SEC-15 (api, P0) | planned |
+| NFR-SEC16 | TC-SEC-15 (api, P0) | partial |
 | NFR-SEC17 | TC-NFR-SEC17 (integration, P0) | planned |
 | NFR-SEC17 | TC-SEC-13 (integration, P0) | planned |
 | NFR-SEC17 | TC-SEC-14 (integration, P0) | planned |
@@ -332,7 +328,8 @@
 | NFR-SEC2 | TC-SEC-03 (api, P0) | partial |
 | NFR-SEC2 | TC-SEC-05 (api, P0) | planned |
 | NFR-SEC2 | TC-SEC-07 (api, P0) | planned |
-| NFR-SEC2 | TC-SEC-20 (integration, P0) | planned |
+| NFR-SEC2 | TC-SEC-20 (integration, P0) | partial |
+| NFR-SEC2 | TC-SEC-29 (unit, P0) | automated |
 | NFR-SEC20 | TC-NFR-SEC20 (unit, P0) | planned |
 | NFR-SEC21 | TC-NFR-SEC21 (review, P0) | manual |
 | NFR-SEC3 | TC-NFR-SEC3 (security, P0) | planned |
@@ -344,7 +341,7 @@
 | NFR-SEC6 | TC-NFR-SEC6 (ci, P0) | partial |
 | NFR-SEC6 | TC-SEC-24 (ci, P0) | partial |
 | NFR-SEC7 | TC-NFR-SEC7 (security, P0) | planned |
-| NFR-SEC7 | TC-SEC-20 (integration, P0) | planned |
+| NFR-SEC7 | TC-SEC-20 (integration, P0) | partial |
 | NFR-SEC7 | TC-SEC-21 (security, P0) | planned |
 | NFR-SEC8 | TC-NFR-SEC8 (ai-eval, P0) | automated |
 | NFR-SEC8 | TC-SEC-17 (ai-eval, P0) | automated |

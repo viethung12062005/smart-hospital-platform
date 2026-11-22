@@ -1,6 +1,7 @@
 package org.shp.scheduling.infra;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,7 +12,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Repository for {@code scheduling.slot} (FHIR Slot) rows. */
+/** Repository for {@code scheduling.slot} (FHIR Slot) rows and the booking compare-and-set. */
 @Repository
 public class SlotRepository {
 
@@ -28,6 +29,10 @@ public class SlotRepository {
               rs.getTimestamp("start_at").toInstant(),
               rs.getTimestamp("end_at").toInstant(),
               rs.getString("content"));
+
+  /** The slot data booking needs, as returned by the claim or by a re-read. */
+  public record SlotFacts(
+      UUID id, UUID practitionerId, String specialty, String status, Instant start, Instant end) {}
 
   private final JdbcClient jdbc;
 
@@ -98,6 +103,102 @@ public class SlotRepository {
             """)
         .param(id)
         .query(SLOT_MAPPER)
+        .optional();
+  }
+
+  /**
+   * Compare-and-set {@code free -> busy} for a slot that starts after {@code now} and before {@code
+   * windowEnd} (BR-04). No row lock is held beyond the statement; the caller's transaction keeps
+   * the change until commit. Empty means the slot was not claimed (use {@link #find}).
+   */
+  public Optional<SlotFacts> claimFree(UUID slotId, Instant now, Instant windowEnd) {
+    return jdbc.sql(
+            """
+            UPDATE scheduling.slot
+               SET status = 'busy', version_id = version_id + 1, last_updated = ?,
+                   content = jsonb_set(content, '{status}', '"busy"')
+             WHERE id = ? AND status = 'free' AND start_at > ? AND start_at < ?
+            RETURNING id, practitioner_id, specialty, status, start_at, end_at
+            """)
+        .params(Timestamp.from(now), slotId, Timestamp.from(now), Timestamp.from(windowEnd))
+        .query((rs, i) ->
+            new SlotFacts(
+                rs.getObject("id", UUID.class),
+                rs.getObject("practitioner_id", UUID.class),
+                rs.getString("specialty"),
+                rs.getString("status"),
+                rs.getTimestamp("start_at").toInstant(),
+                rs.getTimestamp("end_at").toInstant()))
+        .optional();
+  }
+
+  /**
+   * Return {@code true} if the slot currently has an active (booked/arrived/fulfilled) appointment.
+   */
+  @Transactional(readOnly = true)
+  public boolean hasActiveAppointment(UUID slotId) {
+    Objects.requireNonNull(slotId, "slotId must not be null");
+    return Boolean.TRUE.equals(
+        jdbc.sql(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM scheduling.appointment
+                    WHERE slot_id = ? AND status IN ('booked', 'arrived', 'fulfilled')
+                )
+                """)
+            .param(slotId)
+            .query(Boolean.class)
+            .single());
+  }
+
+  /**
+   * Compare-and-set slot status and JSON content guarded by expected {@code version_id} and {@code
+   * status}.
+   */
+  @Transactional
+  public Optional<SlotRecord> updateStatusWithCas(
+      UUID id,
+      int expectedVersion,
+      String expectedStatus,
+      String targetStatus,
+      Instant lastUpdated,
+      String content) {
+    Objects.requireNonNull(id, "id must not be null");
+    Objects.requireNonNull(expectedStatus, "expectedStatus must not be null");
+    Objects.requireNonNull(targetStatus, "targetStatus must not be null");
+    Objects.requireNonNull(lastUpdated, "lastUpdated must not be null");
+    Objects.requireNonNull(content, "content must not be null");
+    return jdbc.sql(
+            """
+            UPDATE scheduling.slot
+               SET status = ?,
+                   version_id = version_id + 1,
+                   last_updated = ?,
+                   content = ?::jsonb
+             WHERE id = ? AND version_id = ? AND status = ?
+            RETURNING id, version_id, last_updated, schedule_id, practitioner_id,
+                      specialty, status, start_at, end_at, content
+            """)
+        .params(
+            targetStatus, Timestamp.from(lastUpdated), content, id, expectedVersion, expectedStatus)
+        .query(SLOT_MAPPER)
+        .optional();
+  }
+
+  /** Read a slot, to tell why a claim failed. */
+  public Optional<SlotFacts> find(UUID slotId) {
+    return jdbc.sql(
+            "SELECT id, practitioner_id, specialty, status, start_at, end_at FROM scheduling.slot WHERE id = ?")
+        .param(slotId)
+        .query((rs, i) ->
+            new SlotFacts(
+                rs.getObject("id", UUID.class),
+                rs.getObject("practitioner_id", UUID.class),
+                rs.getString("specialty"),
+                rs.getString("status"),
+                rs.getTimestamp("start_at").toInstant(),
+                rs.getTimestamp("end_at").toInstant()))
         .optional();
   }
 }

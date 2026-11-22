@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **231 tasks, 800 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -92,7 +92,7 @@ Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | SHR-30 | Authz: linked, linked-records, guardian conditions; onBehalfOf in audit; generate tests from the matrix for linked records **[done, commit main: linked/guardian conditions + onBehalfOf audit (#539)]** | Every *-LINKED rule has Allow and Deny tests; audit records the acting account and the accessed record | 3 | SHR-24, SHR-21 | US-076, US-077 |
 | ◐ | WEB-01 | React/Vite web shell: OIDC (Keycloak), role-based router, layout frame, i18n vi/en **[partially done, commit branch WEB-01-frontend-base: web/: React 18 + TS + Vite + Mantine 7, OIDC PKCE (shp-web), role-based routes/menu, vi/en i18n, ErrorBoundary, design system + AppShell ported from the portal PoC (Apache-2.0); 6 sample screens run with MSW; NOT YET real Keycloak login tested in a browser]** | Login, role-based menu, ErrorBoundary; build via pipeline | 4 | LOC-02, SHR-20 | US-066 |
 
-## Week 4 — 140 hours
+## Week 4 — 143 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -119,6 +119,7 @@ Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | IAC-08 | Module key vault **[done, commit infra: module key vault]** | RBAC mode, private endpoint, purge protection only in prod, name with random suffix | 2 | IAC-05 | ENABLER |
 | ☑ | LOC-05 | Run services on the local cluster with the shared microservice chart (make deploy SVC=...) **[done, commit 6f6ec89: make deploy verified on kind (gateway end to end, scheduling with the shared chart) + debug guide (#621)]** | Sample service builds, loads into kind and runs with the same chart used for UAT/prod; debug guide included | 3 | GOP-01, LOC-03, LOC-01 | ENABLER |
 | ☑ | LOC-07 | Developer onboarding guide **[done, commit c909d5b: developer onboarding guide (docs/onboarding.md)]** | From cloning the repo to running locally and opening a first PR in < 1 hour | 2 | LOC-01, LOC-03 | ENABLER |
+| ☐ | LOC-09 | Give local services their svc-* client secret and a stable Keycloak issuer (make deploy) | `make -C dev deploy` gives each Java service its svc-* client secret (read from the Keycloak admin API, never stored in git) and the token endpoint, and Keycloak issues one stable issuer, so a workload token from a pod passes clinical GET /internal/v1/identity/{subject} (200; 401 without a token, 403 with a user token) on the local cluster | 3 | LOC-05 | ENABLER |
 | ☑ | ML-05 | Quality gate and model registry: AUC ≥ 0,75 and above baseline before production alias registration **[done, commit main: quality gate + registry verified (MLflow live tests)]** | Weak model blocked; gate has tests | 3 | ML-04, LOC-08 | US-063 |
 | ☑ | ML-18 | Auto-generate model card on model registration **[done, commit 34b171e: card.md generated on registration, includes a synthetic-data warning]** | Model card stored with artifact in MLflow; all sections per 16-mlops §3 | 3 | ML-17, ML-05 | US-072 |
 | ☑ | OBS-04 | Standard observability library (OTel, logs with trace-id, PII redaction) **[done, commit 541: structured log with trace-id + PII masking (#541)]** | OTel traces/metrics/logs, logs with trace-id, PII-redacting enricher; test asserts logs contain no PII | 4 | LOC-03 | ENABLER |
@@ -193,7 +194,7 @@ Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done
 | ◐ | ML-25 | Export metrics for canary analysis: error rate, p95, score distribution, agreement, version label **[partially done, commit d5d63c1: Per-model_version metrics: latency, errors, score distribution, highRisk, agreement; AnalysisTemplate (MLO-03) NOT YET]** | Prometheus has metrics per model_version for AnalysisTemplate | 3 | ML-08 | US-073 |
 | ◐ | WEB-10 | Pipeline + chart for the web app **[partially done, commit branch WEB-01-frontend-base; shp-gitops branch WEB-10-web-app; templates v0.1.5: Non-root nginx Dockerfile (Trivy 0 HIGH/CRITICAL), svc-web.yml + node-ci, chart pathPrefixes/configFiles, uat/prod values; NOT YET real pipeline run and not yet deployed to the cluster]** | Non-root nginx container using the shared chart | 2 | WEB-01 | US-066 |
 
-## Week 7 — 90 hours
+## Week 7 — 94 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -223,10 +224,11 @@ Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | OBS-01 | Standard RED dashboard for every service **[done, commit gitops 85550ad: RED dashboard by service label + kube-prometheus-stack scrape jobs (gitops #13)]** | Grafana dashboard by service label: rate, errors, duration p50/p95/p99 | 3 | GOP-06 | ENABLER |
 | ☑ | OBS-02 | SLOs + burn-rate alerts **[done, commit gitops 68fe8da: SLOs for NFR-A1, P1, P2 with multi-window burn-rate alerts and an error-budget dashboard (gitops #14)]** | SLOs for NFR-A1, P1, P2; multi-window burn-rate alerts | 3 | OBS-01 | ENABLER |
 | ☐ | PY-10 | Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0) | A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests | 1 | PY-03 | ENABLER |
+| ☐ | SHR-32 | Service token interceptor for /internal calls: client credentials, cache, wiring in four services | Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak | 4 | SHR-21, IAM-02 | US-007 |
 | ☐ | SHR-33 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | HttpIdentityLinkClient and IdentityLink carry linkedProfiles (absent field tolerated, entries past expiresAt dropped); Principal exposes them so linked, linked-records and guardian can be set from them; cached 60 seconds, expired entries dropped; tests | 3 | SHR-21, SHR-30, CLN-33 | US-076, US-077 |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
-## Week 8 — 69 hours
+## Week 8 — 73 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -241,6 +243,7 @@ Total: **228 tasks, 789 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | IAM-04 | OTP authenticator (Keycloak SPI) calling notification N8, N9 on sign-up | Verify phone (Zalo first, SMS later) or email ownership with a code; code expires in 5 minutes, single use | 4 | IAM-01 | US-001 |
 | ☐ | IAM-05 | Identity events to audit | Successful/failed login, sign-up, account lock, password/phone change emit audit.recorded; no passwords or OTP codes recorded | 4 | IAM-01, SHR-09 | US-008, US-031 |
 | ☐ | IAM-09 | OTP for phone/email changes, rate limits per phone and IP, fake provider for dev and tests | Over-limit requests rejected; no codes or phone numbers in logs; tested with fake notification | 4 | IAM-04, NTF-16 | US-001 |
+| ☐ | IAM-10 | Staff MFA and design fixes for the realm | Staff roles need TOTP and tokens carry amr mfa; one 12-character password policy; audience rule documented and tested | 4 | IAM-06 | US-008, US-066 |
 | ☐ | MLO-01 | ML training pipeline in CI + model canary deploy | Runs when data/code changes; model artifact; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Reproducible training image: pinned library versions, seeds, fixed image, vulnerability scan | Same image + dataset hash + seed produce the same model; image signed | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary for ml-service + AnalysisTemplate (Prometheus), auto-promote or rollback | 10%, 50%, 100% steps with analysis; bad model rolls back automatically; autoPromote configured per environment | 6 | GOP-04, SCF-07, ML-25 | US-073 |

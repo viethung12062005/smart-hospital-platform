@@ -47,8 +47,26 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "amr-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-amr-mapper",
+          "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
         }
       ]
     }
-  ]
+  ],
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@shp.local",
+    "fromDisplayName": "Smart Hospital (local)",
+    "auth": "false",
+    "starttls": "false",
+    "ssl": "false"
+  }
 }

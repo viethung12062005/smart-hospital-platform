@@ -3,8 +3,10 @@ package org.shp.audit.domain;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -27,6 +29,10 @@ public final class AuditBatch {
 
   private static final Pattern SAFE_PATH = Pattern.compile("[A-Za-z0-9_./-]+");
   private static final Pattern HASH = Pattern.compile("[0-9a-f]{64}");
+  private static final Pattern HEADER =
+      Pattern.compile(
+          "^\\{\"type\":\"batch-header\",\"prevBatch\":(null|\"[A-Za-z0-9_./-]+\"),"
+              + "\"prevHash\":\"([0-9a-f]{64})\",\"count\":(\\d+)\\}$");
 
   private final String prevBatch;
   private final String prevHash;
@@ -81,6 +87,38 @@ public final class AuditBatch {
       digest.update((byte) '\n');
     }
     return HexFormat.of().formatHex(digest.digest());
+  }
+
+  /**
+   * Tells whether stored NDJSON is a whole batch with the given hash: the header is readable, its
+   * {@code count} equals the number of record lines and the hash recomputed from those lines equals
+   * {@code expectedBatchHash}. Content cut by an interrupted append block is not complete.
+   */
+  public static boolean isComplete(String ndjson, String expectedBatchHash) {
+    if (ndjson == null || expectedBatchHash == null || !ndjson.endsWith("\n")) {
+      return false;
+    }
+    String[] lines = ndjson.split("\n", -1);
+    if (lines.length < 3) { // header, at least one record, and the empty tail after the last \n
+      return false;
+    }
+    Matcher header = HEADER.matcher(lines[0]);
+    if (!header.matches()) {
+      return false;
+    }
+    List<String> records = Arrays.asList(lines).subList(1, lines.length - 1);
+    int count;
+    try {
+      count = Integer.parseInt(header.group(3));
+    } catch (NumberFormatException e) {
+      return false;
+    }
+    boolean genesis = "null".equals(header.group(1));
+    String prevHash = header.group(2);
+    return records.size() == count
+        && records.stream().noneMatch(String::isEmpty)
+        && genesis == GENESIS_HASH.equals(prevHash)
+        && hash(prevHash, records).equals(expectedBatchHash);
   }
 
   /** The header line (no trailing newline). */
