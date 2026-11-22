@@ -366,6 +366,36 @@ class InternalAppointmentApiTest {
   }
 
   @Test
+  @DisplayName("S18: An authorized non-GET request remains 400 and emits a system audit")
+  void authorizedNonGetRequestReturns400AndEmitsSystemAudit() throws Exception {
+    String clinicalToken =
+        serviceToken("svc-clinical-sa", "svc-clinical", List.of("internal.scheduling"));
+
+    var response = call("POST", appointmentId.toString(), clinicalToken);
+
+    assertThat(response.statusCode()).isEqualTo(400);
+    assertThat(response.headers().firstValue(HttpHeaders.CONTENT_TYPE).orElse(""))
+        .contains("application/problem+json");
+    assertThat(JSON.readTree(response.body()).path("code").asString())
+        .isEqualTo("validation-failed");
+
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          List<JsonNode> events = auditEvents();
+          assertThat(events).hasSize(1);
+          JsonNode data = events.getFirst().path("data");
+          assertThat(data.path("action").asString()).isEqualTo("read");
+          assertThat(data.path("outcome").asString()).isEqualTo("success");
+          assertThat(data.path("actor").path("role").asString()).isEqualTo("system");
+          assertThat(data.path("actor").path("subject").asString()).isEqualTo("svc-clinical-sa");
+          assertThat(data.path("purposeOfUse").asString()).isEqualTo("HOPERAT");
+          assertThat(data.hasNonNull("patientId")).isFalse();
+          assertThat(data.path("resource").asString()).isEqualTo("Appointment/" + appointmentId);
+        });
+  }
+
+  @Test
   @DisplayName(
       "S18: Unauthenticated returns 401; missing/malformed ID returns 404; POST returns 400")
   void unauthenticatedMissingAndInvalidMethodRequests() throws Exception {

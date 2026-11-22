@@ -107,6 +107,15 @@ public final class InternalAppointmentFilter extends OncePerRequestFilter {
     }
 
     if (!"GET".equals(req.getMethod())) {
+      emitAudit(
+          req,
+          subject,
+          client,
+          AuditActions.SUCCESS,
+          auditResourceName(rawId),
+          null,
+          "HOPERAT",
+          null);
       ErrorWriter.write(req, res, ErrorCatalog.get("validation-failed"), null, null);
       return;
     }
