@@ -4,7 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import java.util.UUID;
 import org.hl7.fhir.r4.model.Patient;
+import org.shp.authz.AuthorizationEngine;
+import org.shp.authz.AuthzDecision;
 import org.shp.authz.Principal;
+import org.shp.authz.ResourceContext;
 import org.shp.clinical.app.NationalIdRules;
 import org.shp.clinical.app.PatientService;
 import org.shp.clinical.infra.NationalIdVault;
@@ -14,6 +17,7 @@ import org.shp.events.audit.AuditActions;
 import org.shp.events.audit.AuditRecord;
 import org.shp.events.audit.AuditRecordBuilder;
 import org.shp.events.audit.AuditSink;
+import org.shp.events.audit.AuthzAudit;
 import org.shp.fhir.FhirJson;
 import org.shp.web.auth.IdentityInterceptor;
 import org.shp.web.authz.AuthzInterceptor;
@@ -45,8 +49,15 @@ class PatientController {
   private final NationalIdVault vault;
   private final AuditSink audit;
   private final Clock clock;
+  private final AuthorizationEngine engine;
 
-  PatientController(PatientService service, NationalIdVault vault, AuditSink audit, Clock clock) {
+  PatientController(
+      PatientService service,
+      NationalIdVault vault,
+      AuditSink audit,
+      Clock clock,
+      AuthorizationEngine engine) {
+    this.engine = engine;
     this.service = service;
     this.vault = vault;
     this.audit = audit;
@@ -66,7 +77,9 @@ class PatientController {
       if (!REVEAL.equals(reveal)) {
         throw new ShpException("validation-failed", "reveal must be national-id.");
       }
-      if (!p.roles().contains("nurse")) {
+      AuthzDecision revealDecision = engine.decide(p, "Patient", "reveal", ResourceContext.empty());
+      if (!revealDecision.allowed()) {
+        auditRevealDenied(p, id, revealDecision, req);
         throw new ShpException("forbidden", "Only a nurse may reveal the national ID number.");
       }
       if (entry.search().getString("nationalIdEnc") != null) {
@@ -140,5 +153,30 @@ class PatientController {
             null,
             req.getRemoteAddr(),
             req.getHeader("User-Agent")));
+  }
+
+  /** A refused reveal leaves a trace as well (matrix action {@code Patient: reveal}). */
+  private void auditRevealDenied(
+      Principal p, String id, AuthzDecision decision, HttpServletRequest req) {
+    UUID patientId;
+    try {
+      patientId = UUID.fromString(id);
+    } catch (IllegalArgumentException e) {
+      patientId = null;
+    }
+    audit.emit(
+        AuthzAudit.fromDecision(
+            clock,
+            "clinical",
+            p,
+            "Practitioner",
+            "reveal",
+            "Patient/" + id,
+            decision,
+            patientId,
+            null,
+            req.getRemoteAddr(),
+            req.getHeader("User-Agent"),
+            null));
   }
 }

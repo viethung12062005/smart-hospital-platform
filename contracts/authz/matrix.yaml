@@ -29,7 +29,7 @@ predicates:
 
 # Each resource declares its valid actions; `clinical: true` means clinical data (admin/dpo may never touch it).
 resources:
-  Patient:         { clinical: true,  actions: [read, create, update, search] }
+  Patient:         { clinical: true,  actions: [read, create, update, search, reveal] }
   Schedule:        { clinical: false, actions: [read, create, update, search] }
   Slot:            { clinical: false, actions: [read, create, update, block] }
   Appointment:     { clinical: true,  actions: [book, cancel, read] }
@@ -68,6 +68,7 @@ rules:
   - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-GUARDIAN, resource: Patient, action: update, role: patient, when: [guardian], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
+  - { id: PAT-REVEAL-NUR,  resource: Patient, action: reveal, role: nurse,   when: [], note: "national ID number in clear (?reveal=national-id), audited every time" }
   - { id: PAT-SEARCH-DOC,  resource: Patient, action: search, role: doctor,  when: [] }
   - { id: PAT-SEARCH-NUR,  resource: Patient, action: search, role: nurse,   when: [] }
   # Schedule

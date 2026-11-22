@@ -33,6 +33,7 @@ public final class AuthzAudit {
           Map.entry("ask", AuditActions.AI_QUERY),
           Map.entry("use", AuditActions.AI_QUERY),
           Map.entry("export", AuditActions.EXPORT),
+          Map.entry("reveal", AuditActions.READ),
           Map.entry("start", AuditActions.BREAK_GLASS_START));
 
   /** Representative role when the caller has several: prefer the more privileged one. */

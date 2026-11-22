@@ -13,6 +13,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,10 +23,11 @@ import org.springframework.stereotype.Component;
  * four digits for display. The clear number is never stored, logged or put in an event.
  *
  * <p>Keys: {@code shp.clinical.national-id.enc-key} and {@code hash-key} (base64, 32 bytes each;
- * environment {@code SHP_CLINICAL_NATIONAL_ID_ENC_KEY} / {@code ..._HASH_KEY}, Key Vault in the
- * cloud). Without them a random key is generated at startup with a warning, as {@code PagingConfig}
- * does: nothing secret is in the code, but stored numbers cannot be decrypted after a restart, so
- * every real deployment must set them.
+ * environment {@code SHP_CLINICAL_NATIONAL_ID_ENC_KEY} / {@code SHP_CLINICAL_NATIONAL_ID_HASH_KEY},
+ * Key Vault in the cloud). Outside the {@code dev} and {@code test} Spring profiles a missing key
+ * fails the startup, because a random key would make every stored number unreadable after a restart
+ * or on another replica. In those two profiles a random per-process key is generated with a
+ * warning.
  */
 @Component
 public class NationalIdVault {
@@ -39,13 +42,23 @@ public class NationalIdVault {
 
   public NationalIdVault(
       @Value("${shp.clinical.national-id.enc-key:}") String encKey,
-      @Value("${shp.clinical.national-id.hash-key:}") String hashKey) {
-    this.encKey = new SecretKeySpec(key(encKey, "enc-key"), "AES");
-    this.hashKey = new SecretKeySpec(key(hashKey, "hash-key"), "HmacSHA256");
+      @Value("${shp.clinical.national-id.hash-key:}") String hashKey,
+      Environment env) {
+    boolean randomAllowed = env.acceptsProfiles(Profiles.of("dev", "test"));
+    this.encKey = new SecretKeySpec(key(encKey, "enc-key", randomAllowed), "AES");
+    this.hashKey = new SecretKeySpec(key(hashKey, "hash-key", randomAllowed), "HmacSHA256");
   }
 
-  private byte[] key(String configured, String name) {
+  private byte[] key(String configured, String name, boolean randomAllowed) {
     if (configured == null || configured.isBlank()) {
+      if (!randomAllowed) {
+        throw new IllegalStateException(
+            "shp.clinical.national-id."
+                + name
+                + " is not set (SHP_CLINICAL_NATIONAL_ID_"
+                + name.replace('-', '_').toUpperCase(java.util.Locale.ROOT)
+                + "): it is required outside the dev and test profiles");
+      }
       LOG.warn(
           "shp.clinical.national-id.{} is not set: using a random per-process key; stored national"
               + " ID numbers cannot be read after a restart",
