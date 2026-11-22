@@ -47,13 +47,19 @@ def from_settings(s: Settings) -> Deps:  # pragma: no cover - real infrastructur
         if s.ollama_url
         else HashingEmbedder(s.embedding_dimensions)
     )
-    tokens = ServiceTokenProvider(s.token_endpoint, s.client_id, s.client_secret) if s.token_endpoint else StaticToken()
+    tokens = (
+        ServiceTokenProvider(s.token_endpoint, s.client_id, s.client_secret, assertion_file=s.client_assertion_file)
+        if s.token_endpoint
+        else StaticToken()
+    )
     directory: Directory = ClinicalDirectory(s.clinical_url, tokens) if s.token_endpoint else StaticDirectory()
     config = load_config(s.llm_config_path)
     client: MongoClient[dict[str, Any]] = MongoClient(s.mongodb_uri, tz_aware=True)
     budget = MongoTokenBudget(client[s.mongodb_db], s.daily_token_limit)  # shared by every replica
     router = build_router(config, providers_from(s), budget, usage.on_call, usage.on_first_delta)
-    exchanger = TokenExchanger(ExchangeSettings(s.token_endpoint, s.client_id, s.client_secret))
+    exchanger = TokenExchanger(
+        ExchangeSettings(s.token_endpoint, s.client_id, s.client_secret, s.client_assertion_file)
+    )
     extras = {"llm_config": config, "service_tokens": tokens, "exchanger": exchanger}
     return Deps(s, client, blobs, index, embedder, directory, router, extras)
 

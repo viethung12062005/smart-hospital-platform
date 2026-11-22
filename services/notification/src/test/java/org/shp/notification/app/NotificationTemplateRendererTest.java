@@ -23,7 +23,9 @@ class NotificationTemplateRendererTest {
       Map.of(
           "doctorName", "Dr. Nguyen",
           "startTime", "09:30 20/11/2026",
-          "place", "Room 301");
+          "place", "Room 301",
+          "specialty", "Cardiology",
+          "manageLink", "https://app.example.org/appointments/0192f8a4");
 
   @Test
   void rendersAllAppointmentTemplatesInVietnameseAndEnglish() {
@@ -38,6 +40,10 @@ class NotificationTemplateRendererTest {
             .contains("Dr. Nguyen")
             .contains("09:30 20/11/2026")
             .contains("Room 301")
+            .contains("Cardiology")
+            .contains("https://app.example.org/appointments/0192f8a4")
+            .doesNotContain("{specialty}")
+            .doesNotContain("{manageLink}")
             .doesNotContain("{doctorName}")
             .doesNotContain("{startTime}")
             .doesNotContain("{place}");
@@ -71,7 +77,9 @@ class NotificationTemplateRendererTest {
     Map<String, String> incompleteVariables =
         Map.of(
             "doctorName", "Dr. Nguyen",
-            "startTime", "09:30 20/11/2026");
+            "startTime", "09:30 20/11/2026",
+            "specialty", "Cardiology",
+            "manageLink", "https://app.example.org/appointments/0192f8a4");
 
     assertThatThrownBy(
             () -> renderer.render(ReminderKind.BOOKING_CONFIRMATION, "vi", incompleteVariables))
@@ -92,7 +100,9 @@ class NotificationTemplateRendererTest {
         Map.of(
             "doctorName", "Dr. {place} $1 \\",
             "startTime", "09:30 20/11/2026",
-            "place", "Room 301");
+            "place", "Room 301",
+            "specialty", "Cardiology",
+            "manageLink", "https://app.example.org/appointments/0192f8a4");
 
     String content = renderer.render(ReminderKind.T_2H, "en", tricky);
 
@@ -102,7 +112,12 @@ class NotificationTemplateRendererTest {
   @Test
   void rejectsABlankTemplateVariable() {
     Map<String, String> blank =
-        Map.of("doctorName", "Dr. Nguyen", "startTime", "09:30 20/11/2026", "place", " ");
+        Map.of(
+            "doctorName", "Dr. Nguyen",
+            "startTime", "09:30 20/11/2026",
+            "place", " ",
+            "specialty", "Cardiology",
+            "manageLink", "https://app.example.org/appointments/0192f8a4");
 
     assertThatThrownBy(() -> renderer.render(ReminderKind.T_24H, "vi", blank))
         .isInstanceOf(NotificationTemplateException.class)
@@ -123,7 +138,7 @@ class NotificationTemplateRendererTest {
   @Test
   void everyAppointmentTemplateUsesOnlyTheDesignedPlaceholdersAndNoClinicalWording()
       throws IOException {
-    Set<String> designed = Set.of("doctorName", "startTime", "place");
+    Set<String> designed = Set.of("doctorName", "startTime", "place", "specialty", "manageLink");
     Pattern placeholder = Pattern.compile("\\{([a-zA-Z][a-zA-Z0-9]*)}");
     // 11-api-notification-audit-ml section 1: no diagnosis, visit reason or results in the content.
     Set<String> forbidden =

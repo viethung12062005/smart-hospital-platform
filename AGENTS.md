@@ -57,7 +57,7 @@ earlier session: the documents change.
 | Commit, branch, open or update a PR | `docs/00-git-github.md` (§2 commits, §3 branches, §4 pull requests, §8 several repos) and `.github/pull_request_template.md` |
 | Write or change service code | `docs/00-conventions.md`; `CONTRIBUTING.md` ("Java code conventions"); `docs/03-architecture/overview.md` §4 |
 | Implement or change an endpoint | `docs/03-architecture/detailed-design/07-api-conventions.md` and the API document of the service (`08`–`12`); `contracts/openapi/<service>.yaml` |
-| Touch authorization, identity or audit | `detailed-design/15-authorization.md`, `05-storage-audit-blob.md`; `contracts/authz/matrix.yaml` |
+| Touch authorization, identity or audit | `detailed-design/15-authorization.md`, `05-storage-audit-blob.md`; `contracts/authz/matrix.yaml`; for Keycloak and the realm `docs/04-devops/keycloak.md` |
 | Threat-model a change or prepare the security review | `docs/03-architecture/threat-model.md`; NFR-SEC in `docs/02-requirements/non-functional-requirements.md` §4 and the SRS source |
 | Publish or consume an event | `detailed-design/13-events.md`; `contracts/events/` |
 | Change a database, collection or index | `detailed-design/01-domain-model.md` and the database document (`02`–`06`); `contracts/db/` |
@@ -116,6 +116,8 @@ faster than finding out from CI.
 | `docs/06-testing/traceability.md`, `docs/06-testing/dist/*` | `docs/06-testing/catalog/*.yaml` | `python3 -I tools/qa/trace.py` |
 | `contracts/openapi/*.yaml` (paths and operations) | the endpoint tables in `detailed-design/08`–`12` | `python3 -I tools/contracts/gen_openapi.py` |
 | `contracts/events/**` | `tools/contracts/gen_events.py` (and `detailed-design/13-events.md`) | `python3 -I tools/contracts/gen_events.py` |
+| `contracts/terminology/dist/*.json` | `contracts/terminology/code-systems.yaml` | `python3 -I tools/contracts/export_terminology.py` |
+| `dev/chart/shp-local-deps/files/realm-shp.json`, `identity/realm/dist/*` | `identity/realm/base.json`, `overlay-<env>.json` | `python3 -I tools/identity/realm.py` |
 | `services/ai/src/shp_platform`, `services/ml/src/shp_platform` | `libs/python/shp_platform`, `contracts/events` | `python3 tools/pylib/sync.py` |
 
 Because of these generators, a change to a design document can require regenerated contracts, and a change to

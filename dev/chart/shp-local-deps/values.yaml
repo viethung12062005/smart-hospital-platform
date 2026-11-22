@@ -7,7 +7,11 @@ images:
   redis: redis:7-alpine
   rabbitmq: rabbitmq:4-management
   azurite: mcr.microsoft.com/azure-storage/azurite:3.37.0
-  keycloak: quay.io/keycloak/keycloak:26.0
+  # Keycloak 26.8.2 plus the SHP theme and extensions (identity/keycloak/Dockerfile); scripts/up.sh builds it and loads it into kind.
+  keycloak: localhost/shp-keycloak:dev
+  mailpit: axllent/mailpit:v1.33.1
+# Set by scripts/up.sh to the id of the image it built, so that a rebuilt localhost/shp-keycloak:dev rolls the Keycloak pod.
+keycloakImageId: ""
 
 # Profile: core = enough for most tasks. (Full profile: LOC-08.)
 components:
@@ -17,6 +21,7 @@ components:
   rabbitmq: true
   azurite: true
   keycloak: true
+  mailpit: true
 
 storage:
   postgres: 2Gi
@@ -37,6 +42,7 @@ resources:            # small limits so it runs on a 16 GB machine
   azurite:  { requests: { cpu: 50m,  memory: 64Mi  }, limits: { memory: 256Mi } }
   # The Keycloak start-dev mode rebuilds Quarkus at startup, so RAM spikes during the first seconds; 1Gi gets OOMKilled on many-core machines.
   keycloak: { requests: { cpu: 200m, memory: 768Mi }, limits: { memory: 1536Mi } }
+  mailpit:  { requests: { cpu: 20m,  memory: 32Mi  }, limits: { memory: 128Mi } }
 
 # The Keycloak JVM defaults to a heap of 70% of the limit, and the GC/JIT thread count follows the MACHINE core count (not the cluster),
 # so the same chart runs out of memory on many-core machines. A 50% heap (768Mi) + a fixed 2 CPUs keeps memory stable on any machine.

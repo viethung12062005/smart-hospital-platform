@@ -1,0 +1,36 @@
+{{- if .Values.components.mailpit }}
+# Local mail catcher (IAM-03): the local realm sends its email (forgot password) here over SMTP; nothing leaves the machine.
+# Read the messages at http://localhost:18025 after `kubectl -n shp-deps port-forward svc/mailpit 18025:8025`.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mailpit
+  labels: {{- include "shp.labels" . | nindent 4 }}
+spec:
+  selector: { app: mailpit }
+  ports:
+    - { name: smtp, port: 1025 }
+    - { name: http, port: 8025 }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailpit
+  labels: {{- include "shp.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mailpit }
+  template:
+    metadata:
+      labels: { app: mailpit }
+    spec:
+      containers:
+        - name: mailpit
+          image: {{ .Values.images.mailpit }}
+          ports: [{ containerPort: 1025 }, { containerPort: 8025 }]
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8025 }
+            periodSeconds: 10
+          resources: {{- toYaml .Values.resources.mailpit | nindent 12 }}
+{{- end }}

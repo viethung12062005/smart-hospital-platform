@@ -9,6 +9,16 @@ data:
   realm-shp.json: |
 {{ .Files.Get "files/realm-shp.json" | indent 4 }}
 ---
+# Password policy passwordBlacklist(breached-passwords.txt) reads this file from Keycloak's data directory (IAM-06).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-password-blacklist
+  labels: {{- include "shp.labels" . | nindent 4 }}
+data:
+  breached-passwords.txt: |
+{{ .Files.Get "files/breached-passwords.txt" | indent 4 }}
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -40,11 +50,16 @@ spec:
   template:
     metadata:
       labels: { app: keycloak }
+      annotations:
+        shp.local/image-id: {{ .Values.keycloakImageId | default "" | quote }}
     spec:
       containers:
         - name: keycloak
           image: {{ .Values.images.keycloak }}
-          args: ["start-dev", "--import-realm", "--http-port=8080", "--hostname-strict=false"]
+          # The issuer must be the same for every client: browsers and `make token` use localhost:18080, a pod uses the in-cluster
+          # service name. A fixed frontend hostname keeps iss=http://localhost:18080/realms/shp for both (services validate it as
+          # OIDC_AUTHORITY); the back channel (token and JWKS URLs seen from a pod) stays dynamic, so pods still reach Keycloak by DNS.
+          args: ["start-dev", "--import-realm", "--http-port=8080", "--hostname=http://localhost:18080", "--hostname-backchannel-dynamic=true"]
           env:
             - { name: KC_BOOTSTRAP_ADMIN_USERNAME, value: admin }
             - { name: JAVA_OPTS_KC_HEAP, value: {{ .Values.keycloakJvm.heap | quote }} }
@@ -60,7 +75,10 @@ spec:
           resources: {{- toYaml .Values.resources.keycloak | nindent 12 }}
           volumeMounts:
             - { name: realm, mountPath: /opt/keycloak/data/import }
+            - { name: blacklist, mountPath: /opt/keycloak/data/password-blacklists }
       volumes:
         - name: realm
           configMap: { name: keycloak-realm }
+        - name: blacklist
+          configMap: { name: keycloak-password-blacklist }
 {{- end }}
