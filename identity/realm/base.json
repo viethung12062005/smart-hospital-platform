@@ -3,7 +3,18 @@
   "enabled": true,
   "displayName": "Smart Hospital",
   "registrationAllowed": false,
+  "registrationFlow": "shp registration",
+  "editUsernameAllowed": false,
   "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "loginTheme": "shp",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "vi",
+    "en"
+  ],
+  "defaultLocale": "vi",
   "accessTokenLifespan": 900,
   "roles": {
     "realm": [

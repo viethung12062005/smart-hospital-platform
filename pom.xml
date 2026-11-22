@@ -28,6 +28,7 @@
     <module>libs/java/shp-data-mongo</module>
     <module>libs/java/shp-messaging</module>
     <module>libs/java/shp-fhir</module>
+    <module>identity/keycloak</module>
     <module>services/gateway</module>
     <module>services/scheduling</module>
     <module>services/notification</module>
@@ -66,6 +67,8 @@
     <!-- HAPI FHIR pulls guava 33.2.1-jre, which has CVE-2026-102554 (HIGH, DoS during deserialization; fixed in
          33.7.2). The image scan blocks every HIGH with a fix available, so pin the patched version. -->
     <guava.version>33.7.2-jre</guava.version>
+    <!-- Keycloak SPI of identity/keycloak: the version every environment runs (docs/04-devops/keycloak.md), provided by Keycloak at runtime -->
+    <keycloak.version>26.8.2</keycloak.version>
     <!-- Minimum line coverage threshold for each module that has code (CI blocks below it) -->
     <shp.coverage.minimum>0.70</shp.coverage.minimum>
   </properties>
@@ -146,6 +149,24 @@
         <groupId>org.shp</groupId>
         <artifactId>shp-messaging</artifactId>
         <version>${shp.libs.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-server-spi</artifactId>
+        <version>${keycloak.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-server-spi-private</artifactId>
+        <version>${keycloak.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-services</artifactId>
+        <version>${keycloak.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.springframework.cloud</groupId>

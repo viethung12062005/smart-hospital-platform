@@ -59,5 +59,14 @@
         }
       ]
     }
-  ]
+  ],
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@shp.local",
+    "fromDisplayName": "Smart Hospital (local)",
+    "auth": "false",
+    "starttls": "false",
+    "ssl": "false"
+  }
 }

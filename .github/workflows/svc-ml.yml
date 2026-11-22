@@ -27,6 +27,23 @@ jobs:
       azure-client-id: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
       azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
       azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  # Training image (MLO-02, 16-mlops §2): same scan, SBOM and signature steps as the serving image. It is built and scanned
+  # on every change; pushed and signed only on main once ACR is configured. It is not promoted: no environment runs it.
+  container-train:
+    needs: ci
+    uses: viethung12062005/shp-platform-templates/.github/workflows/container.yml@v0.1.7
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      context: services/ml
+      dockerfile: Dockerfile.train
+      image-name: ml-train
+      push: ${{ github.ref == 'refs/heads/main' && vars.ACR_NAME != '' }}
+      acr-name: ${{ vars.ACR_NAME }}
+      azure-client-id: ${{ vars.AZURE_CLIENT_ID_ACR_PUSH }}
+      azure-tenant-id: ${{ vars.AZURE_TENANT_ID }}
+      azure-subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
   promote-uat:
     if: github.ref == 'refs/heads/main' && needs.container.outputs.digest != ''
     needs: container
@@ -43,7 +60,7 @@ jobs:
       gitops-app-private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
   not-pushed:
     if: github.ref == 'refs/heads/main' && vars.ACR_NAME == ''
-    needs: container
+    needs: [container, container-train]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

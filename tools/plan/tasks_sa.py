@@ -119,6 +119,7 @@ SA_TASKS = [
     ('ARC-20', 'ENABLER', 'Reference data: ICD-10 (~300 codes), LOINC for vital signs/lab tests, CodeSystem for specialties and cancellation reasons', 'JSON files in contracts/terminology, loader script, used by CLN-16/CLN-18', 'SA', 4, 'ARC-03', 'P2', '01-domain-model §3'),
     ('ARC-21', 'ENABLER', 'Include the terminology catalogue in the Docker build context', 'Docker-built scheduling and clinical images contain BOOT-INF/classes/terminology/*.json; the SCH-08 job and S1 schedule creation work from the image', 'SA', 2, 'ARC-20', 'P3', '01-domain-model §3'),
     ('LOC-08', 'ENABLER', 'Full local dev profile: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed synthetic data into the cluster', '`make up PROFILE=full` provisions infrastructure for every service; healthchecks; resource requirements documented', 'SA', 3, 'LOC-01', 'P1', 'ADR-0011, NFR-I3'),
+    ('LOC-09', 'ENABLER', 'Give local services their svc-* client secret and a stable Keycloak issuer (make deploy)', '`make -C dev deploy` gives each Java service its svc-* client secret (read from the Keycloak admin API, never stored in git) and the token endpoint, and Keycloak issues one stable issuer, so a workload token from a pod passes clinical GET /internal/v1/identity/{subject} (200; 401 without a token, 403 with a user token) on the local cluster', 'SA', 3, 'LOC-05', 'P1', 'ADR-0011, docs/04-devops/keycloak.md'),
     ('IAC-18', 'US-036', 'Module Defender for Storage + Event Grid → queue for scan results', 'New blobs are scanned; results go to a queue for the document service to process', 'SA', 3, 'IAC-12', 'S4', '05-storage §2'),
     ('IAC-19', 'US-055', 'ai node pool running Ollama (bge-m3, qwen2.5) + DeepSeek/Gemini API key secret in Key Vault', 'Ollama has a model cache PVC; keys only in Key Vault, loaded via CSI, never in the repo/values', 'SA', 4, 'IAC-05', 'S4', 'ADR-0006'),
     ('GOP-10', 'US-063', 'MLflow chart (tracking + registry) for cluster environments', 'MLflow runs with durable storage backend, accessed via Workload Identity', 'SA', 3, 'GOP-03', 'S3', 'ADR-0007'),
@@ -161,6 +162,8 @@ SA_TASKS = [
      "Everything is still published after the bus dies and recovers; multiple replicas do not duplicate", "SA", 4, "SHR-06", "P2", "13 §1"),
     ("SHR-08", "ENABLER", "Platform consumer: idempotent inbox + Spring Cloud Stream (RabbitMQ local, Service Bus cloud), retry/DLQ",
      "Duplicate events are processed once; 5 delivery attempts then DLQ", "SA", 4, "SHR-06", "P2", "13 §1"),
+    ("SHR-32", "US-007", "Service token interceptor for /internal calls: client credentials, cache, wiring in four services",
+     "Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak", "SA", 4, "SHR-21, IAM-02", "S4", "15 §7, 07 §5"),
     ("SHR-28", "US-015", "Idempotency-Key middleware for PostgreSQL (claim, request hash, replay)",
      "Same key+body → return the previous result; different body → 422; missing key → 428; concurrency tests", "SA", 4, "SHR-05", "P2", "02 §3.1, 07 §3"),
 

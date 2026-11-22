@@ -4,7 +4,7 @@ S := scripts
 export PATH := $(CURDIR)/.local/bin:$(PATH)
 APPS := shp-apps
 
-.PHONY: pull-models help tools quickstart doctor up down status env seed-users token deploy undeploy apps app-logs port-forward psql mongosh redis-cli logs
+.PHONY: pull-models help tools quickstart doctor up down status env seed-users service-clients token deploy undeploy apps app-logs port-forward psql mongosh redis-cli logs
 
 help: ## List commands
 	@awk -F':.*## ' '/^[a-z-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -38,6 +38,9 @@ seed-users: ## Create test users (fake data) in Keycloak
 
 token: ## Print an access token: make token USER=doctor.demo
 	@$(S)/token.sh $(USER)
+
+service-clients: ## Create the svc-* workload clients if missing and store their secrets for the services (run by deploy)
+	@$(S)/service-clients.sh
 
 deploy: ## Build + deploy a service to kind: make deploy SVC=scheduling (or SVC=all)
 	@$(S)/deploy.sh $(SVC)

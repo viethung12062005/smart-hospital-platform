@@ -250,6 +250,27 @@ def without_staff_mfa(flows: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def user_profile(realm: dict[str, Any]) -> None:
+    """Add the realm's user profile (IAM-08) from identity/realm/user-profile.json.
+
+    Keycloak keeps it as a component whose config holds the profile as one JSON string. Sign-up asks for a phone number
+    or an email only, so no name or email is required; username and email are read-only for users (changing them needs
+    a new code, IAM-09); phoneNumber and phoneNumberVerified are the attributes the stock `phone` client scope maps.
+    """
+    profile = json.loads((SRC / "user-profile.json").read_text(encoding="utf-8"))
+    realm.setdefault("components", {})["org.keycloak.userprofile.UserProfileProvider"] = [
+        {
+            "providerId": "declarative-user-profile",
+            "subComponents": {},
+            "config": {
+                "kc.user.profile.config": [
+                    json.dumps(profile, ensure_ascii=False, separators=(",", ":"))
+                ]
+            },
+        }
+    ]
+
+
 def build(env: str) -> dict[str, Any]:
     base = json.loads((SRC / "base.json").read_text(encoding="utf-8"))
     overlay = json.loads((SRC / f"overlay-{env}.json").read_text(encoding="utf-8"))
@@ -257,6 +278,7 @@ def build(env: str) -> dict[str, Any]:
     service_accounts(realm)
     exchange_audience(realm)
     authentication_flows(realm, env)
+    user_profile(realm)
     return realm
 
 
