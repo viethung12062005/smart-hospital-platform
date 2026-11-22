@@ -20,6 +20,7 @@ import copy
 import json
 import re
 import sys
+from itertools import combinations
 from pathlib import Path
 from typing import Any
 
@@ -75,99 +76,191 @@ def merge_clients(
     return out
 
 
+TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"
+
+
+def audience_scope(name: str, target: str) -> dict[str, Any]:
+    return {
+        "name": name,
+        "protocol": "openid-connect",
+        "attributes": {"include.in.token.scope": "true"},
+        "protocolMappers": [
+            {
+                "name": f"audience-svc-{target}",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-audience-mapper",
+                "config": {
+                    "included.custom.audience": f"svc-{target}",
+                    "access.token.claim": "true",
+                    "id.token.claim": "false",
+                },
+            }
+        ],
+    }
+
+
+def single_target_policies(
+    realm: dict[str, Any], grants: dict[str, list[list[str]]]
+) -> None:
+    """Reject missing or combined target scopes using Keycloak's built-in client policies."""
+    profile = "shp-reject-target-request"
+    realm["clientProfiles"] = {
+        "profiles": [
+            {
+                "name": profile,
+                "executors": [{"executor": "reject-request", "configuration": {}}],
+            }
+        ]
+    }
+    policies: list[dict[str, Any]] = []
+
+    def scope_condition(names: list[str], *, negative: bool = False) -> dict[str, Any]:
+        return {
+            "condition": "client-scopes",
+            "configuration": {
+                "type": "Optional",
+                "scopes": names,
+                "is-negative-logic": negative,
+            },
+        }
+
+    def reject(name: str, grant: str, *conditions: dict[str, Any]) -> None:
+        policies.append(
+            {
+                "name": name,
+                "enabled": True,
+                # Unrelated events (notably authorization-code redemption) may make
+                # the grant condition abstain. Do not apply these policies on abstentions.
+                "mode": "STRICT",
+                "conditions": [
+                    {
+                        "condition": "grant-type",
+                        "configuration": {"grant_types": [grant]},
+                    },
+                    *conditions,
+                ],
+                "profiles": [profile],
+            }
+        )
+
+    for grant, assignments in grants.items():
+        label = "exchange" if grant == TOKEN_EXCHANGE else "call"
+        names = sorted({name for scopes in assignments for name in scopes})
+        reject(
+            f"shp-{label}-target-required", grant, scope_condition(names, negative=True)
+        )
+        # Only pairs attached to the same client can pass Keycloak's OAuth scope validation.
+        for first, second in sorted(
+            {pair for scopes in assignments for pair in combinations(sorted(scopes), 2)}
+        ):
+            reject(
+                f"shp-reject-{first}-plus-{second}",
+                grant,
+                scope_condition([first]),
+                scope_condition([second]),
+            )
+    realm["clientPolicies"] = {"policies": policies}
+
+
 def service_accounts(realm: dict[str, Any]) -> None:
-    """Expand identity/realm/services.json into roles, confidential clients and their service-account users.
-
-    `serviceClientAuth` (an overlay key, removed here) selects how a client proves who it is: `client-secret` (Keycloak
-    generates the secret on import; it is never in git) or `federated-jwt` (a Kubernetes service-account token, IAM-02).
-
-    Audience is an isolation boundary (ADR-0017, 15 section 1): a service token names **only** the services it is
-    allowed to call (`svc-<target>`), never `shp-api`, which is the audience of user tokens. A leaked service token
-    therefore opens nothing beyond its own callers, and a user endpoint cannot be reached with it even before the
-    role check.
-    """
+    """Generate disjoint workload and delegated clients/scopes from services.json."""
     spec = json.loads((SRC / "services.json").read_text(encoding="utf-8"))
     auth = realm.pop("serviceClientAuth", {"type": "client-secret"})
-    targets = sorted({t for svc in spec["services"].values() for t in svc["calls"]})
+    services = spec["services"]
+    targets = sorted({target for svc in services.values() for target in svc["calls"]})
     realm["roles"]["realm"] += [
         {"name": f"internal.{t}", "description": f"May call /internal of {t}"}
         for t in targets
     ]
-    users: list[dict[str, Any]] = realm.setdefault("users", [])
-    for name, svc in spec["services"].items():
-        client_id = f"svc-{name}"
-        attributes: dict[str, str] = {}
+
+    def attributes(name: str) -> dict[str, str]:
         if auth["type"] == "federated-jwt":
-            attributes = {
+            return {
                 "jwt.credential.issuer": auth["identityProvider"],
                 "jwt.credential.sub": f"system:serviceaccount:{spec['namespace']}:{name}",
             }
-        exchange = svc.get("exchange", [])
-        if exchange:  # standard token exchange v2 (RFC 8693): this client may exchange a user token (IAM-07)
-            attributes["standard.token.exchange.enabled"] = "true"
-        # Audience isolation (ADR-0017): the targets only, never shp-api. Keycloak only lets a client exchange into
-        # an audience that is already available to it ("Requested audience not available"), so the exchange targets
-        # are here too; that token can reach them but carries the internal role only for `calls`.
-        audiences = list(dict.fromkeys(f"svc-{t}" for t in [*svc["calls"], *exchange]))
-        realm["clients"].append(
-            {
-                "clientId": client_id,
-                "name": f"Service account of {name} (/internal)",
-                "enabled": True,
-                "publicClient": False,
-                "clientAuthenticatorType": auth["type"],
-                "serviceAccountsEnabled": True,
-                "standardFlowEnabled": False,
-                "implicitFlowEnabled": False,
-                "directAccessGrantsEnabled": False,
-                "attributes": attributes,
-                "defaultClientScopes": ["basic"],
-                "protocolMappers": [
-                    {
-                        "name": "roles-claim",
-                        "protocol": "openid-connect",
-                        "protocolMapper": "oidc-usermodel-realm-role-mapper",
-                        "config": {
-                            "claim.name": "roles",
-                            "jsonType.label": "String",
-                            "multivalued": "true",
-                            "access.token.claim": "true",
-                            "id.token.claim": "false",
-                            "userinfo.token.claim": "false",
-                        },
+        return {}
+
+    def client(
+        client_id: str, name: str, scopes: list[str], *, exchange: bool = False
+    ) -> dict[str, Any]:
+        return {
+            "clientId": client_id,
+            "name": name,
+            "enabled": True,
+            "publicClient": False,
+            "bearerOnly": False,
+            "clientAuthenticatorType": auth["type"],
+            "serviceAccountsEnabled": not exchange,
+            "standardFlowEnabled": False,
+            "implicitFlowEnabled": False,
+            "directAccessGrantsEnabled": False,
+            "defaultClientScopes": ["basic"],
+            "optionalClientScopes": scopes,
+            "protocolMappers": [
+                {
+                    "name": "roles-claim",
+                    "protocol": "openid-connect",
+                    "protocolMapper": "oidc-usermodel-realm-role-mapper",
+                    "config": {
+                        "claim.name": "roles",
+                        "jsonType.label": "String",
+                        "multivalued": "true",
+                        "access.token.claim": "true",
+                        "id.token.claim": "false",
+                        "userinfo.token.claim": "false",
                     },
-                    *(
-                        # the exchanged token of a user keeps the authentication methods of the user's session (IAM-10)
-                        [
-                            {
-                                "name": "amr-claim",
-                                "protocol": "openid-connect",
-                                "protocolMapper": "oidc-amr-mapper",
-                                "config": {
-                                    "id.token.claim": "false",
-                                    "access.token.claim": "true",
-                                },
-                            }
-                        ]
-                        if exchange
-                        else []
-                    ),
-                    *[
-                        {
-                            "name": f"audience-{a}",
-                            "protocol": "openid-connect",
-                            "protocolMapper": "oidc-audience-mapper",
-                            "config": {
-                                "included.custom.audience": a,
-                                "access.token.claim": "true",
-                                "id.token.claim": "false",
-                            },
-                        }
-                        for a in audiences
-                    ],
-                ],
-            }
+                }
+            ],
+        }
+
+    exchange_callers = [
+        (name, svc["exchange"]) for name, svc in services.items() if svc.get("exchange")
+    ]
+    if len(exchange_callers) != 1:
+        raise ValueError(
+            "the shp-api exchange-only client must be bound to one workload"
         )
+    exchange_caller, exchange_targets = exchange_callers[0]
+    exchange_scopes = [f"exchange-{t}" for t in exchange_targets]
+    # Importing custom scopes would otherwise suppress Keycloak's stock scopes.
+    realm.setdefault("attributes", {})["CreateDefaultClientScopes"] = "true"
+    realm.setdefault("clientScopes", []).extend(
+        [audience_scope(f"call-{t}", t) for t in targets]
+        + [audience_scope(f"exchange-{t}", t) for t in exchange_targets]
+    )
+    # Standard v2 requires the requester in the user token's aud. Use its existing
+    # audience, without including any svc-* audience or relaxing Keycloak's check.
+    exchanger = client(
+        "shp-api",
+        f"Delegated exchange for {exchange_caller}",
+        exchange_scopes,
+        exchange=True,
+    )
+    exchanger["attributes"] = {
+        **attributes(f"{exchange_caller}-exchange"),
+        "standard.token.exchange.enabled": "true",
+        "use.refresh.tokens": "false",
+    }
+    exchanger["protocolMappers"].append(
+        {
+            "name": "amr-claim",
+            "protocol": "openid-connect",
+            "protocolMapper": "oidc-amr-mapper",
+            "config": {"id.token.claim": "false", "access.token.claim": "true"},
+        }
+    )
+    realm["clients"] = merge_clients(realm["clients"], [exchanger])
+
+    users: list[dict[str, Any]] = realm.setdefault("users", [])
+    call_assignments: list[list[str]] = []
+    for name, svc in services.items():
+        client_id = f"svc-{name}"
+        scopes = [f"call-{t}" for t in svc["calls"]]
+        call_assignments.append(scopes)
+        caller = client(client_id, f"Service account of {name} (/internal)", scopes)
+        caller["attributes"] = {**attributes(name), "use.refresh.tokens": "false"}
+        realm["clients"].append(caller)
         users.append(
             {
                 "username": f"service-account-{client_id}",
@@ -176,31 +269,10 @@ def service_accounts(realm: dict[str, Any]) -> None:
                 "realmRoles": [f"internal.{t}" for t in svc["calls"]],
             }
         )
-
-
-def exchange_audience(realm: dict[str, Any]) -> None:
-    """User-facing clients put `svc-<name>` in the audience of the user's token for every service that exchanges it.
-
-    Standard token exchange only accepts a subject token whose audience contains the requesting client (Keycloak docs,
-    "Standard token exchange"), so without this mapper the exchange of a user token is refused.
-    """
-    spec = json.loads((SRC / "services.json").read_text(encoding="utf-8"))
-    requesters = [f"svc-{n}" for n, s in spec["services"].items() if s.get("exchange")]
-    for client in realm["clients"]:
-        if client["clientId"] in ("shp-web", "shp-test"):
-            for requester in requesters:
-                client.setdefault("protocolMappers", []).append(
-                    {
-                        "name": f"audience-{requester}",
-                        "protocol": "openid-connect",
-                        "protocolMapper": "oidc-audience-mapper",
-                        "config": {
-                            "included.client.audience": requester,
-                            "id.token.claim": "false",
-                            "access.token.claim": "true",
-                        },
-                    }
-                )
+    single_target_policies(
+        realm,
+        {"client_credentials": call_assignments, TOKEN_EXCHANGE: [exchange_scopes]},
+    )
 
 
 def authentication_flows(realm: dict[str, Any], env: str) -> None:
@@ -240,7 +312,9 @@ def without_staff_mfa(flows: dict[str, Any]) -> dict[str, Any]:
             and execution.get("authenticatorConfig") not in STAFF_MFA_CONFIGS
         ]
     out["authenticationFlows"] = [
-        flow for flow in out["authenticationFlows"] if flow["alias"] not in STAFF_MFA_FLOWS
+        flow
+        for flow in out["authenticationFlows"]
+        if flow["alias"] not in STAFF_MFA_FLOWS
     ]
     out["authenticatorConfig"] = [
         config
@@ -258,7 +332,9 @@ def user_profile(realm: dict[str, Any]) -> None:
     a new code, IAM-09); phoneNumber and phoneNumberVerified are the attributes the stock `phone` client scope maps.
     """
     profile = json.loads((SRC / "user-profile.json").read_text(encoding="utf-8"))
-    realm.setdefault("components", {})["org.keycloak.userprofile.UserProfileProvider"] = [
+    realm.setdefault("components", {})[
+        "org.keycloak.userprofile.UserProfileProvider"
+    ] = [
         {
             "providerId": "declarative-user-profile",
             "subComponents": {},
@@ -276,7 +352,6 @@ def build(env: str) -> dict[str, Any]:
     overlay = json.loads((SRC / f"overlay-{env}.json").read_text(encoding="utf-8"))
     realm: dict[str, Any] = merge(base, overlay)
     service_accounts(realm)
-    exchange_audience(realm)
     authentication_flows(realm, env)
     user_profile(realm)
     return realm
