@@ -14,8 +14,8 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-003](#us-003) | Nurse registers a patient at the front desk | Nurse | Must | UC-01 | 3 | 9 |
 | [US-004](#us-004) | Nurse merges duplicate profiles | Nurse | Should | UC-01 | 4 | 12 |
 | [US-075](#us-075) | Nurse adds the citizen ID number when the patient arrives for a visit | Nurse | Should | UC-01 | 4 | 14 |
-| [US-076](#us-076) | Parent creates and manages profiles for children under 16 | Patient | Should | UC-01 | 5 | 18 |
-| [US-077](#us-077) | User links and revokes an adult relative's profile | Patient | Should | UC-01 | 6 | 21 |
+| [US-076](#us-076) | Parent creates and manages profiles for children under 16 | Patient | Should | UC-01 | 6 | 21 |
+| [US-077](#us-077) | User links and revokes an adult relative's profile | Patient | Should | UC-01 | 7 | 24 |
 | [US-078](#us-078) | Returning patient claims an existing hospital profile | Patient | Must | UC-01 | 4 | 14 |
 | [US-079](#us-079) | OTP code sent via Zalo first, SMS after | Patient | Must | UC-07 | 3 | 11 |
 | [US-005](#us-005) | Patient chooses notification channels and devices | Patient | Should | UC-07 | 3 | 10 |
@@ -277,6 +277,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | SHR-30 | Authz: linked, linked-records, guardian conditions; onBehalfOf in audit; generate tests from the matrix for linked records | SA | 3 | W3 |
 | CLN-33 | profile_links: link model (guardian, proxy, scope, expiry), linkedProfiles in internal resolver and /me | D2 | 4 | W4 |
 | CLN-34 | API C22, C23: profile list and create profile under 16 (max 10, duplicate prevention, attestation) | D2 | 4 | W6 |
+| SHR-33 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | SA | 3 | W7 |
 | WEB-35 | Relative profiles screen: list, add child, add relative, revoke; choose patient when booking | D2 | 4 | W7 |
 | CLN-37 | Authorization and linked-profile probing tests: linked, guardian, scope, expiry, revoke ≤ 60 seconds | D2 | 3 | W8 |
 
@@ -302,6 +303,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | SHR-30 | Authz: linked, linked-records, guardian conditions; onBehalfOf in audit; generate tests from the matrix for linked records | SA | 3 | W3 |
 | CLN-33 | profile_links: link model (guardian, proxy, scope, expiry), linkedProfiles in internal resolver and /me | D2 | 4 | W4 |
 | CLN-35 | API C24, C25: link adult relative via OTP, scope, 12-month expiry and renewal reminder | D2 | 4 | W7 |
+| SHR-33 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | SA | 3 | W7 |
 | WEB-35 | Relative profiles screen: list, add child, add relative, revoke; choose patient when booking | D2 | 4 | W7 |
 | CLN-37 | Authorization and linked-profile probing tests: linked, guardian, scope, expiry, revoke ≤ 60 seconds | D2 | 3 | W8 |
 | CLN-38 | API C26, C29: revoke link (effective ≤ 60 seconds, notify) and record authorization at front desk | D2 | 3 | W8 |

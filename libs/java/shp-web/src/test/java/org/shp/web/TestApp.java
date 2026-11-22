@@ -152,7 +152,9 @@ public class TestApp {
           "roles",
           new HashSet<>(p.roles()),
           "fhirUserId",
-          String.valueOf(p.fhirUserId()));
+          String.valueOf(p.fhirUserId()),
+          "linkedPatientIds",
+          p.linkedProfiles().stream().map(l -> l.patientId()).toList());
     }
 
     @GetMapping("/api/v1/registration")

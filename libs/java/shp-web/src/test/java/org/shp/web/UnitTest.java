@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import org.shp.authz.LinkedProfile;
 import org.shp.security.ShpAuthProperties;
 import org.shp.security.ShpJwt;
 import org.shp.web.auth.HttpIdentityLinkClient;
@@ -245,5 +246,101 @@ class UnitTest {
                 .filter(c -> !c.equals("internal-error"))
                 .sorted())
         .containsExactlyElementsOf(documented.stream().map(Map.Entry::getKey).sorted().toList());
+  }
+
+  private static final Instant T0 = Instant.parse("2026-11-20T08:00:00Z");
+
+  private static LinkedProfile profile(String id, String scope, Instant expiresAt) {
+    return new LinkedProfile(id, "guardian", scope, expiresAt);
+  }
+
+  @Test
+  void linkedProfilesAreCachedForSixtySecondsAndAnExpiredOneIsDropped() {
+    var links = new TestApp.FakeLinks();
+    var expiring = profile("c1", "booking", T0.plusSeconds(30));
+    var open = profile("c2", "full", null);
+    links.links.put("s", new IdentityLink("Patient", "p1", false, List.of(expiring, open)));
+    var clock = new MutableClock();
+    var resolver = new IdentityResolver(links, clock);
+
+    assertThat(resolver.resolve("s").orElseThrow().linkedProfiles())
+        .containsExactly(expiring, open);
+    clock.now = T0.plusSeconds(29);
+    assertThat(resolver.resolve("s").orElseThrow().linkedProfiles())
+        .containsExactly(expiring, open);
+    assertThat(links.calls).isEqualTo(1); // held from the cache, no second lookup
+
+    clock.now = T0.plusSeconds(31); // still inside the 60 seconds, but c1 has expired
+    assertThat(resolver.resolve("s").orElseThrow().linkedProfiles()).containsExactly(open);
+    assertThat(links.calls).isEqualTo(1);
+
+    links.links.put("s", new IdentityLink("Patient", "p1", false, List.of())); // link revoked
+    clock.now = T0.plusSeconds(61);
+    assertThat(resolver.resolve("s").orElseThrow().linkedProfiles()).isEmpty();
+    assertThat(links.calls).isEqualTo(2);
+  }
+
+  @Test
+  void staleIdentityDuringOutageDoesNotExtendDelegatedAccess() {
+    var links = new FlakyLinks();
+    var delegated = profile("c1", "booking", null);
+    var identity = new IdentityLink("Patient", "p1", false, List.of(delegated));
+    links.links.put("s", identity);
+    var clock = new MutableClock();
+    var resolver = new IdentityResolver(links, clock);
+    assertThat(resolver.resolve("s")).hasValue(identity);
+
+    // A revocation cannot be observed while clinical is down.
+    links.links.put("s", new IdentityLink("Patient", "p1", false));
+    links.down = true;
+    clock.now = T0.plusSeconds(59);
+    assertThat(resolver.resolve("s")).hasValue(identity);
+    clock.now = T0.plusSeconds(60);
+    assertThat(resolver.resolve("s")).hasValue(new IdentityLink("Patient", "p1", false));
+    clock.now = T0.plusSeconds(180);
+    assertThat(resolver.resolve("s")).hasValue(new IdentityLink("Patient", "p1", false));
+
+    links.down = false;
+    assertThat(resolver.resolve("s")).hasValue(new IdentityLink("Patient", "p1", false));
+  }
+
+  @Test
+  void httpClientParsesLinkedProfilesAndDropsExpiredOrInvalidOnes() {
+    var body =
+        "{\"fhirUser\":\"Patient/p1\",\"roles\":[\"patient\"],\"disabled\":false,"
+            + "\"linkedProfiles\":["
+            + "{\"patientId\":\"c1\",\"relationship\":\"guardian\",\"scope\":\"full\",\"expiresAt\":null},"
+            + "{\"patientId\":\"c2\",\"relationship\":\"proxy\",\"scope\":\"booking\","
+            + "\"expiresAt\":\"2026-11-21T08:00:00Z\"},"
+            + "{\"patientId\":\"c3\",\"relationship\":\"proxy\",\"scope\":\"records\","
+            + "\"expiresAt\":\"2026-11-20T07:59:59Z\"},"
+            + "{\"patientId\":\"c4\",\"relationship\":\"owner\",\"scope\":\"full\",\"expiresAt\":null},"
+            + "{\"patientId\":\"c5\",\"relationship\":\"proxy\",\"scope\":\"all\",\"expiresAt\":null},"
+            + "{\"patientId\":\"c6\",\"relationship\":\"proxy\",\"scope\":\"full\",\"expiresAt\":\"soon\"},"
+            + "{\"relationship\":\"proxy\",\"scope\":\"full\",\"expiresAt\":null}]}";
+    var builder = RestClient.builder().baseUrl("http://clinical");
+    MockRestServiceServer.bindTo(builder)
+        .build()
+        .expect(requestTo("http://clinical/internal/v1/identity/s"))
+        .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(body));
+    var client = new HttpIdentityLinkClient(builder.build(), new MutableClock());
+
+    assertThat(client.find("s").orElseThrow().linkedProfiles())
+        .containsExactly(
+            new LinkedProfile("c1", "guardian", "full", null),
+            new LinkedProfile("c2", "proxy", "booking", Instant.parse("2026-11-21T08:00:00Z")));
+  }
+
+  @Test
+  void httpClientToleratesAResponseWithoutLinkedProfiles() {
+    assertThat(
+            clientReturning(
+                    "s",
+                    HttpStatus.OK,
+                    "{\"fhirUser\":\"Patient/p1\",\"roles\":[],\"disabled\":false}")
+                .find("s")
+                .orElseThrow()
+                .linkedProfiles())
+        .isEmpty();
   }
 }

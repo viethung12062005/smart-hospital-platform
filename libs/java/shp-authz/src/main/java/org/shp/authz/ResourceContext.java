@@ -1,6 +1,7 @@
 package org.shp.authz;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * Facts about the resource being accessed. The service looks them up first (care relationship,
@@ -50,6 +51,11 @@ public record ResourceContext(
     private Builder() {}
 
     public Builder patientId(String v) {
+      if (!Objects.equals(patientId, v)) {
+        linkedProfile = false;
+        linkedRecords = false;
+        guardianLink = false;
+      }
       patientId = v;
       return this;
     }
@@ -96,6 +102,20 @@ public record ResourceContext(
 
     public Builder guardianLink(boolean v) {
       guardianLink = v;
+      return this;
+    }
+
+    /**
+     * Set {@code linkedProfile}, {@code linkedRecords} and {@code guardianLink} from the caller's
+     * unexpired link to {@code patientId} (15 §3), and set the resource patient to that ID. No link
+     * means all three stay false. Changing the patient ID clears these facts.
+     */
+    public Builder linkedFrom(Principal principal, String patientId, Instant now) {
+      patientId(patientId);
+      var link = principal.linkTo(patientId, now);
+      linkedProfile = link.isPresent();
+      linkedRecords = link.map(LinkedProfile::coversRecords).orElse(false);
+      guardianLink = link.map(LinkedProfile::isGuardian).orElse(false);
       return this;
     }
 
