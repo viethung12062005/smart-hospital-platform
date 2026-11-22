@@ -8,7 +8,7 @@ The reverse map lives only in request memory; it is not logged or stored in a DB
 """
 
 import re
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 # Order matters: longer/specific patterns first so shorter ones do not cut them off.
@@ -34,6 +34,42 @@ class Redaction:
         for token in sorted(self.reverse, key=len, reverse=True):
             output = output.replace(token, self.reverse[token])
         return output
+
+
+class StreamRestorer:
+    """Restore tokens in an answer that arrives in chunks (provider streaming).
+
+    A token such as ``[PHONE_1]`` can be split across chunks (``"[PHO"`` + ``"NE_1]"``), so the tail of the text
+    that could still grow into a known token is held back until the next chunk decides it. `feed` returns only
+    text that is safe to show; `flush` returns whatever is still held when the stream ends.
+    The redactions are applied in the same order as the non-streaming path, so both paths restore identically.
+    """
+
+    def __init__(self, redactions: Sequence[Redaction]) -> None:
+        self._redactions = list(redactions)
+        self._tokens = sorted({t for r in self._redactions for t in r.reverse})
+        self._max = max((len(t) for t in self._tokens), default=0)
+        self._held = ""
+
+    def _restore(self, text: str) -> str:
+        for r in self._redactions:
+            text = r.restore(text)
+        return text
+
+    def feed(self, chunk: str) -> str:
+        buf = self._held + chunk
+        hold = 0
+        for k in range(min(len(buf), self._max - 1), 0, -1):  # longest tail that is a proper prefix of a token
+            tail = buf[-k:]
+            if any(t.startswith(tail) for t in self._tokens):
+                hold = k
+                break
+        self._held = buf[len(buf) - hold :] if hold else ""
+        return self._restore(buf[: len(buf) - hold])
+
+    def flush(self) -> str:
+        out, self._held = self._restore(self._held), ""
+        return out
 
 
 def redact(text: str, known: Mapping[str, Iterable[str]] | None = None) -> Redaction:
