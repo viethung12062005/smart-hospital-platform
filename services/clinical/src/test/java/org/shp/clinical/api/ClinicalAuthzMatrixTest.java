@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.bson.Document;
 import org.hl7.fhir.r4.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
@@ -26,6 +27,8 @@ import org.shp.authz.AuthzRule;
 import org.shp.authz.AuthzTestCase;
 import org.shp.authz.AuthzTestGenerator;
 import org.shp.clinical.ClinicalApiTestBase;
+import org.shp.clinical.app.Conditions;
+import org.shp.clinical.app.Encounters;
 import org.shp.clinical.infra.PatientRepository;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.authz.UnprotectedEndpoints;
@@ -56,7 +59,12 @@ class ClinicalAuthzMatrixTest extends ClinicalApiTestBase {
   @Autowired Clock clock;
   @Autowired PatientRepository patients;
 
+  @Autowired Encounters encounters;
+  @Autowired Conditions conditions;
+
   String patientId;
+  String encounterId;
+  String conditionId;
   final Map<String, String> accounts = new HashMap<>();
 
   /** One guarded endpoint as Spring maps it. */
@@ -85,6 +93,35 @@ class ClinicalAuthzMatrixTest extends ClinicalApiTestBase {
     p.setGender(AdministrativeGender.MALE);
     p.setBirthDateElement(new DateType("1975-04-04"));
     patientId = patients.create(p, "User/test", null).id();
+    encounterId = null;
+    conditionId = null;
+  }
+
+  /**
+   * Endpoints whose facts come from a stored resource need one to exist, or they are 404 before
+   * authorization is asked: an Encounter and a Condition of the fixture Patient, made once per
+   * test.
+   */
+  void storedResources() {
+    if (encounterId != null) {
+      return;
+    }
+    encounterId = UUID.randomUUID().toString();
+    encounters.create(
+        encounterId,
+        patientId,
+        new Document("resourceType", "Encounter").append("id", encounterId),
+        new Document("status", "in-progress")
+            .append("practitionerId", "prac-cln26-attending")
+            .append("appointmentId", UUID.randomUUID().toString()),
+        "User/test");
+    conditionId = UUID.randomUUID().toString();
+    conditions.create(
+        conditionId,
+        patientId,
+        new Document("resourceType", "Condition").append("id", conditionId),
+        new Document("encounterId", encounterId),
+        "User/test");
   }
 
   @ParameterizedTest(name = "{0}")
@@ -199,19 +236,36 @@ class ClinicalAuthzMatrixTest extends ClinicalApiTestBase {
   }
 
   /**
-   * Call {@code g} as a linked account with {@code role}; every path variable is the fixture
-   * Patient's id. A minimal body and the precondition headers are sent so that only authorization
-   * can refuse the call before the handler.
+   * Call {@code g} as a linked account with {@code role}. Path variables name the fixture of the
+   * resource in the path (the Encounter, the Condition, else the Patient); a search gets {@code
+   * patient}; a FHIR create gets a body whose {@code subject} is the fixture Patient; and the
+   * precondition headers are sent, so that only authorization can refuse the call before the
+   * handler.
    */
   int callAs(String role, Guarded g) throws Exception {
+    storedResources();
     String sub = accounts.computeIfAbsent(role, this::linkedAccount);
-    String path = g.pattern().replaceAll("\\{[^}]+}", patientId);
-    boolean hasBody = Set.of("POST", "PUT", "PATCH").contains(g.method());
+    String fixture =
+        g.pattern().startsWith("/fhir/Encounter")
+            ? encounterId
+            : g.pattern().startsWith("/fhir/Condition") ? conditionId : patientId;
+    String path = g.pattern().replaceAll("\\{[^}]+}", fixture);
+    if ("GET".equals(g.method()) && !g.pattern().contains("{")) {
+      path += "?patient=" + patientId;
+    }
+    String body = null;
+    if (Set.of("POST", "PUT", "PATCH").contains(g.method())) {
+      body =
+          g.pattern().startsWith("/fhir/")
+              ? "{\"resourceType\":\"%s\",\"subject\":{\"reference\":\"Patient/%s\"}}"
+                  .formatted(g.pattern().split("/")[2], patientId)
+              : "{}";
+    }
     return call(
             g.method(),
             path,
             token(sub, role),
-            hasBody ? "{}" : null,
+            body,
             "Content-Type",
             g.consumes(),
             "If-Match",
