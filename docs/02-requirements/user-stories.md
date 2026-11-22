@@ -47,7 +47,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-031](#us-031) | Search for a patient | Doctor | Must | UC-06 | 4 | 16 |
 | [US-032](#us-032) | Doctor views the patient timeline | Doctor | Must | UC-06 | 4 | 15 |
 | [US-033](#us-033) | System maintains care relationships | System | Must | UC-06, UC-10 | 3 | 11 |
-| [US-034](#us-034) | Doctor emergency access (break-glass) | Doctor | Should | UC-10 | 3 | 10 |
+| [US-034](#us-034) | Doctor emergency access (break-glass) | Doctor | Should | UC-10 | 4 | 13 |
 | [US-035](#us-035) | Staff uploads a clinical document | Nurse | Must | UC-05 | 8 | 26 |
 | [US-036](#us-036) | System scans documents for malware | System | Must | UC-05 | 2 | 7 |
 | [US-037](#us-037) | Authorized user downloads a document via a short-lived link | Doctor | Must | UC-05 | 5 | 18 |
@@ -60,7 +60,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-044](#us-044) | Administrator handles failed reminders | Administrator | Should | UC-07 | 2 | 6 |
 | [US-045](#us-045) | Patient is notified of a new result | Patient | Should | UC-07 | 1 | 3 |
 | [US-046](#us-046) | High-risk appointments get an extra reminder | System | Should | UC-15, UC-07 | 3 | 9 |
-| [US-047](#us-047) | Every access to patient data is audited | DPO officer | Must | UC-09 | 4 | 12 |
+| [US-047](#us-047) | Every access to patient data is audited | DPO officer | Must | UC-09 | 5 | 15 |
 | [US-048](#us-048) | Immutable audit | DPO officer | Must | UC-09 | 3 | 11 |
 | [US-049](#us-049) | DPO looks up who viewed a profile | DPO officer | Must | UC-09 | 3 | 12 |
 | [US-050](#us-050) | DPO exports an audit report and checks integrity | DPO officer | Should | UC-09 | 3 | 12 |
@@ -991,6 +991,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | Task | Work | Owner | Hours | Week |
 |---|---|---|---|---|
 | CLN-24 | Break-glass API (C20): 60-minute session TTL, reason 20-500 characters, ETREAT audit, read only | D2 | 4 | W5 |
+| SHR-34 | Audit context: a handler can attach a reason and the real outcome to the audit record of its request; reason limit 500 | SA | 3 | W5 |
 | CLN-26 | Run authz matrix test suite for all clinical endpoints | D2 | 4 | W6 |
 | WEB-24 | Break-glass flow: reason dialog, 60-minute countdown banner | D2 | 2 | W6 |
 
@@ -1266,6 +1267,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | SHR-09 | Audit emitter library: builds audit.recorded (schema 05), redacts IPs, blocks PII, FHIR middleware | SA | 4 | W4 |
 | SHR-27 | Authz: emit audit for every decision (allow and deny) | SA | 2 | W4 |
 | AUD-01 | Consumer audit.recorded: validate schema, inbox by eventId, batch 60s/5.000 records | D3 | 4 | W5 |
+| SHR-34 | Audit context: a handler can attach a reason and the real outcome to the audit record of its request; reason limit 500 | SA | 3 | W5 |
 
 ## US-048
 ### Immutable audit — Must
