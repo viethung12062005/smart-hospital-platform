@@ -78,18 +78,20 @@ automation:
 
   # ---- Audit, events, idempotency, inbox ----
   TC-AC-03.2:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::firstRequestClaimsAndSameRequestReplaysTheSameResource
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::replayReturnsTheSameAppointment
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::replayReturnsVersionOneAfterTheAppointmentChanges
-    gap: "The $book endpoint replays with 200 and the same appointment (SCH-14); the end-to-end idempotency test is SCH-15. UI: E2E TC-AC-03.2."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::replayReturnsTheFirstResultAndLeavesNoSecondBooking
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::parallelRequestsWithOneKeyCreateOneAppointment
   TC-AC-03.3:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::sameKeyWithADifferentBodyOrOperationIs422
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::sameKeyDifferentBodyIsRejected
-    gap: "The $book endpoint answers 422 idempotency-key-reused (SCH-14); the end-to-end idempotency test is SCH-15."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::sameKeyWithAnotherBodyIsRejectedWithoutSideEffects
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::aKeyBelongsToTheCallerThatClaimedIt
   TC-AC-03.1:
     status: partial
     refs:
@@ -369,6 +371,10 @@ automation:
     refs:
       - services/ai/tests/test_assistant.py::test_all_models_fail_returns_retrieval_only
       - services/ai/tests/test_assistant.py::test_bad_citation_retries_next_model_once
+      - services/ai/tests/test_assistant_stream.py::test_retrieval_only_when_all_models_fail_in_stream_mode
+      - services/ai/tests/test_assistant_stream.py::test_reset_when_the_model_fails_mid_stream_then_next_model_restreams
+      - services/ai/tests/test_assistant_stream.py::test_reset_when_the_output_guardrail_rejects_what_was_streamed
+      - libs/python/tests/test_llm_streaming.py::test_reset_on_model_switch_mid_stream_and_usage_of_last_step_only
   TC-AC-12.1:
     status: automated
     refs:
@@ -417,6 +423,13 @@ automation:
       - services/ai/tests/test_summary.py::test_summary_keeps_only_sourced_items_and_uses_obo
 
   # ---- AI/ML quality NFRs (linked after the 2026-11-11 audit) ----
+  TC-NFR-P5:
+    status: partial
+    refs:
+      - services/ai/tests/test_assistant_stream.py::test_first_token_is_emitted_before_the_provider_finishes_and_is_measured
+      - services/ai/tests/test_assistant_stream.py::test_tokens_stream_in_order_then_citations_then_done
+      - libs/python/tests/test_llm_streaming.py::test_first_token_metric_uses_injected_clock_and_fires_before_provider_finishes
+    gap: "The stream, its ordering and the per-model first-token histogram (shp_ai_assistant_first_token_seconds) are tested with fake models on an injected clock; the p95 <= 3 s on real DeepSeek/Gemini needs API keys and the 100-question run on UAT."
   TC-NFR-AI1:
     status: partial
     refs:
