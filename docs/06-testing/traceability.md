@@ -7,16 +7,16 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 83 (40%) |
-| Fully automated | 49 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 49 |
+| Automated or partially automated | 87 (42%) |
+| Fully automated | 53 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 53 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 5 | 4 | 35 | 0 |
+| clinical | 44 | 9 | 4 | 31 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
 | privacy-admin | 15 | 3 | 0 | 12 | 0 |
@@ -31,9 +31,9 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 21 | 10 | 59 | 0 |
+| api | 90 | 23 | 10 | 57 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
-| security | 12 | 4 | 0 | 8 | 0 |
+| security | 12 | 6 | 0 | 6 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
 | resilience | 10 | 0 | 0 | 10 | 0 |
 | ai-eval | 24 | 13 | 3 | 8 | 0 |
@@ -62,10 +62,6 @@
 | TC-AC-BG.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-BG.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CI.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-CL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-CL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-CL.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-CL.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-EA.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -184,10 +180,10 @@
 | AC-BG.3 | TC-SEC-25 (api, P0) | planned |
 | AC-BK.1 | TC-AC-BK.1 (integration, P0) | automated |
 | AC-CI.1 | TC-AC-CI.1 (api, P0) | planned |
-| AC-CL.1 | TC-AC-CL.1 (api, P0) | planned |
-| AC-CL.2 | TC-AC-CL.2 (security, P0) | planned |
-| AC-CL.3 | TC-AC-CL.3 (security, P0) | planned |
-| AC-CL.4 | TC-AC-CL.4 (api, P0) | planned |
+| AC-CL.1 | TC-AC-CL.1 (api, P0) | automated |
+| AC-CL.2 | TC-AC-CL.2 (security, P0) | automated |
+| AC-CL.3 | TC-AC-CL.3 (security, P0) | automated |
+| AC-CL.4 | TC-AC-CL.4 (api, P0) | automated |
 | AC-CN.1 | TC-AC-CN.1 (api, P1) | partial |
 | AC-CP.1 | TC-AC-CP.1 (e2e, P0) | planned |
 | AC-CS.1 | TC-AC-CS.1 (api, P0) | planned |
