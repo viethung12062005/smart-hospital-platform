@@ -7,19 +7,19 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 75 (36%) |
-| Fully automated | 41 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 42 |
+| Automated or partially automated | 82 (40%) |
+| Fully automated | 49 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 48 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 2 | 1 | 41 | 0 |
+| clinical | 44 | 8 | 1 | 35 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
-| privacy-admin | 15 | 1 | 1 | 13 | 0 |
+| privacy-admin | 15 | 3 | 0 | 12 | 0 |
 | scheduling | 21 | 11 | 6 | 4 | 0 |
 | security | 29 | 8 | 9 | 12 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 13 | 11 | 66 | 0 |
+| api | 90 | 21 | 10 | 59 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -45,7 +45,6 @@
 
 | Test case | Blocked by | Owner |
 |---|---|---|
-| TC-AC-01.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-03.7 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-04.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-04.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -71,15 +70,12 @@
 | TC-AC-CS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-EA.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-FB.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
-| TC-AC-ID.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-ID.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-ID.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-IS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-LP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-PG.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-PX.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-RE.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
@@ -95,9 +91,7 @@
 | TC-AC-TL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-UD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-UD.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-UP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-VD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-VT.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-VT.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-NFR-A4 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-NFR-A5 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
@@ -130,9 +124,9 @@
 
 | Requirement | Test case | Status |
 |---|---|---|
-| AC-01.1 | TC-AC-01.1 (api, P0) | planned |
+| AC-01.1 | TC-AC-01.1 (api, P0) | automated |
 | AC-01.2 | TC-AC-01.2 (api, P0) | automated |
-| AC-01.3 | TC-AC-01.3 (api, P0) | partial |
+| AC-01.3 | TC-AC-01.3 (api, P0) | automated |
 | AC-02.1 | TC-AC-02.1 (api, P1) | automated |
 | AC-02.2 | TC-AC-02.2 (api, P1) | automated |
 | AC-02.3 | TC-AC-02.3 (api, P0) | partial |
@@ -155,7 +149,7 @@
 | AC-07.1 | TC-AC-07.1 (api, P1) | planned |
 | AC-07.1 | TC-AC-07.1-cancel-reminders (integration, P1) | planned |
 | AC-07.2 | TC-AC-07.2 (integration, P1) | partial |
-| AC-08.1 | TC-AC-08.1 (api, P0) | partial |
+| AC-08.1 | TC-AC-08.1 (api, P0) | automated |
 | AC-08.2 | TC-AC-08.2 (api, P0) | automated |
 | AC-08.2 | TC-SEC-06 (unit, P0) | automated |
 | AC-09.1 | TC-AC-09.1 (api, P0) | planned |
@@ -211,9 +205,9 @@
 | AC-FS.2 | TC-AC-FS.2 (api, P1) | automated |
 | AC-FS.3 | TC-AC-FS.3 (api, P0) | automated |
 | AC-GS.1 | TC-AC-GS.1 (api, P1) | automated |
-| AC-ID.1 | TC-AC-ID.1 (api, P0) | planned |
-| AC-ID.2 | TC-AC-ID.2 (api, P0) | planned |
-| AC-ID.3 | TC-AC-ID.3 (api, P1) | planned |
+| AC-ID.1 | TC-AC-ID.1 (api, P0) | automated |
+| AC-ID.2 | TC-AC-ID.2 (api, P0) | automated |
+| AC-ID.3 | TC-AC-ID.3 (api, P1) | automated |
 | AC-ID.4 | TC-AC-ID.4 (security, P0) | planned |
 | AC-IS.1 | TC-AC-IS.1 (api, P0) | planned |
 | AC-KB.1 | TC-AC-KB.1 (ai-eval, P1) | planned |
@@ -221,7 +215,7 @@
 | AC-LK.2 | TC-AC-LK.2 (api, P0) | planned |
 | AC-LK.3 | TC-AC-LK.3 (api, P0) | planned |
 | AC-LK.4 | TC-AC-LK.4 (api, P0) | planned |
-| AC-LP.1 | TC-AC-LP.1 (api, P0) | planned |
+| AC-LP.1 | TC-AC-LP.1 (api, P0) | automated |
 | AC-MA.1 | TC-AC-MA.1 (api, P0) | automated |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | planned |
 | AC-NP.1 | TC-AC-NP.1 (api, P1) | planned |
@@ -248,9 +242,9 @@
 | AC-TL.2 | TC-AC-TL.2 (api, P0) | planned |
 | AC-UD.1 | TC-AC-UD.1 (api, P0) | planned |
 | AC-UD.2 | TC-AC-UD.2 (integration, P0) | planned |
-| AC-UP.1 | TC-AC-UP.1 (api, P0) | planned |
+| AC-UP.1 | TC-AC-UP.1 (api, P0) | automated |
 | AC-VD.1 | TC-AC-VD.1 (api, P0) | planned |
-| AC-VT.1 | TC-AC-VT.1 (api, P0) | planned |
+| AC-VT.1 | TC-AC-VT.1 (api, P0) | partial |
 | AC-VT.2 | TC-AC-VT.2 (api, P0) | planned |
 | NFR-A1 | TC-NFR-A1 (monitoring, P1) | manual |
 | NFR-A2 | TC-NFR-A2 (resilience, P1) | planned |

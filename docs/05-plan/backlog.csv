@@ -325,6 +325,7 @@ MLO-04,MLO,US-074,"Retraining orchestration on the cluster: CronJob/KEDA receive
 OBS-03,OBS,ENABLER,DLQ and pipeline failure alerts,"Alerts when a dead-letter queue has messages, a cert is expiring, or an Argo CD app is degraded",SA,2,OBS-01,S5,8,NFR-O3
 PRD-10,PRD,US-068,k6 script: find slot + book (1x/5x/10x scenarios),1x/5x/10x scenarios per workload analysis; runs on UAT (prod-sized),SA,4,SCH-14,S5,8,"NFR-P1, P2"
 PRD-11,PRD,US-068,KEDA cron scale before 07:00 + HPA for scheduling,prod/uat values scale before the slot-opening window,SA,1,"SCF-01, GOP-04",S5,8,NFR-S1
+SHR-31,SHR,ENABLER,"Service Bus binder wiring in shp-messaging: session consumer, broker-owned 5 deliveries, namespace config, binder tests","With SHP_MESSAGING_BINDER=servicebus the context starts and bindings resolve to topic shp-events, session-enabled, 1 in-process attempt; a send/receive/DLQ check on the emulator or a real namespace is recorded",SA,4,SHR-08,S5,8,"ADR-0019, 13 §1.1"
 WEB-08,WEB,"US-019, US-021","Front desk screen: book on behalf, cancel/reschedule on behalf, check-in",Nurse only; check-in outside window shows clear error,D1,4,"WEB-05, SCH-20",S5,8,S16
 WEB-21,WEB,US-032,"Patient timeline screen: type/range filter, pagination, show partial",Shows warning when document parts missing,D2,4,"WEB-20, CLN-23",S5,8,C19
 WEB-22,WEB,"US-024, US-025","Encounter form: start, reason, history, vital signs (Nurse)",Per-field errors (value-out-of-range),D2,4,"WEB-21, CLN-17",S6,8,"C11, C13, C16"
