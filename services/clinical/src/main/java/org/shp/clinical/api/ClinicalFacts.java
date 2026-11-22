@@ -33,13 +33,21 @@ class ClinicalFacts {
 
   @Bean
   ResourceContextResolver encounterFacts(Encounters encounters, ClinicalReads reads, Clock clock) {
-    return (req, vars, principal) -> encounter(vars, principal, encounters, reads, clock, true);
+    return (req, vars, principal) ->
+        encounter(vars, principal, encounters, reads, clock, true, false);
   }
 
   @Bean
   ResourceContextResolver encounterEditFacts(
       Encounters encounters, ClinicalReads reads, Clock clock) {
-    return (req, vars, principal) -> encounter(vars, principal, encounters, reads, clock, false);
+    return (req, vars, principal) ->
+        encounter(vars, principal, encounters, reads, clock, false, false);
+  }
+
+  @Bean
+  ResourceContextResolver addendumFacts(Encounters encounters, ClinicalReads reads, Clock clock) {
+    return (req, vars, principal) ->
+        encounter(vars, principal, encounters, reads, clock, false, true);
   }
 
   @Bean
@@ -75,7 +83,8 @@ class ClinicalFacts {
       Encounters encounters,
       ClinicalReads reads,
       Clock clock,
-      boolean realState) {
+      boolean realState,
+      boolean addendum) {
     String id = vars.get("id");
     var stored =
         (id == null || !ID.matcher(id).matches() ? null : encounters.find(id).orElse(null));
@@ -87,7 +96,7 @@ class ClinicalFacts {
         ResourceContext.builder()
             .patientId(stored.patientId())
             .practitionerId(stored.search().getString("practitionerId"))
-            .encounterFinished(realState && "finished".equals(status));
+            .encounterFinished(addendum || (realState && "finished".equals(status)));
     return care(b, stored.patientId(), principal, reads, clock).build();
   }
 
