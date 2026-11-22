@@ -212,7 +212,13 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::spo2Of120IsValueOutOfRange
       - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::implausibleValuesAreRejected
-    gap: "The Observation validator (CLN-16) rejects SpO2 = 120 with value-out-of-range and names the field; the POST /fhir/Observation endpoint (C16) that returns the 422 and saves nothing is not built yet. Owner: D2."
+      - services/clinical/src/test/java/org/shp/clinical/app/ObservationServiceTest.java::temperature50IsRejectedAndNothingIsSaved
+    gap: "The validator (CLN-16) and the service behind POST /fhir/Observation (CLN-17) reject an implausible value with value-out-of-range, name the field and save nothing; no test sends the request over HTTP yet. Owner: D2."
+  TC-AC-VT.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
+    gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
   TC-AC-01.3:
     status: automated
     refs:
@@ -366,6 +372,10 @@ automation:
     refs:
       - services/ai/tests/test_assistant.py::test_all_models_fail_returns_retrieval_only
       - services/ai/tests/test_assistant.py::test_bad_citation_retries_next_model_once
+      - services/ai/tests/test_assistant_stream.py::test_retrieval_only_when_all_models_fail_in_stream_mode
+      - services/ai/tests/test_assistant_stream.py::test_reset_when_the_model_fails_mid_stream_then_next_model_restreams
+      - services/ai/tests/test_assistant_stream.py::test_reset_when_the_output_guardrail_rejects_what_was_streamed
+      - libs/python/tests/test_llm_streaming.py::test_reset_on_model_switch_mid_stream_and_usage_of_last_step_only
   TC-AC-12.1:
     status: automated
     refs:
@@ -414,6 +424,13 @@ automation:
       - services/ai/tests/test_summary.py::test_summary_keeps_only_sourced_items_and_uses_obo
 
   # ---- AI/ML quality NFRs (linked after the 2026-11-11 audit) ----
+  TC-NFR-P5:
+    status: partial
+    refs:
+      - services/ai/tests/test_assistant_stream.py::test_first_token_is_emitted_before_the_provider_finishes_and_is_measured
+      - services/ai/tests/test_assistant_stream.py::test_tokens_stream_in_order_then_citations_then_done
+      - libs/python/tests/test_llm_streaming.py::test_first_token_metric_uses_injected_clock_and_fires_before_provider_finishes
+    gap: "The stream, its ordering and the per-model first-token histogram (shp_ai_assistant_first_token_seconds) are tested with fake models on an injected clock; the p95 <= 3 s on real DeepSeek/Gemini needs API keys and the 100-question run on UAT."
   TC-NFR-AI1:
     status: partial
     refs:
