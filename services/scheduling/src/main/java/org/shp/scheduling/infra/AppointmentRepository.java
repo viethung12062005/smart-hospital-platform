@@ -40,7 +40,7 @@ public class AppointmentRepository {
    * ux_appointment_one_active_per_slot} is the final guard against double-booking: a violation
    * surfaces as {@link org.springframework.dao.DuplicateKeyException}.
    */
-  public void insertWithHistory(AppointmentRecord a) {
+  public String insertWithHistory(AppointmentRecord a) {
     jdbc.sql(
             """
             INSERT INTO scheduling.appointment (
@@ -63,14 +63,33 @@ public class AppointmentRepository {
             a.bookedBy(),
             a.content())
         .update();
-    jdbc.sql(
+    return jdbc.sql(
             """
             INSERT INTO scheduling.resource_history (
                 resource_type, id, version_id, last_updated, operation, changed_by, content
             ) VALUES ('Appointment', ?, ?, ?, 'create', ?, ?::jsonb)
+            RETURNING content::text
             """)
         .params(a.id(), a.versionId(), Timestamp.from(a.lastUpdated()), a.bookedBy(), a.content())
-        .update();
+        .query(String.class)
+        .single();
+  }
+
+  /** The original booked version, even if the appointment has since changed. */
+  public Optional<AppointmentRecord> findOriginalBooking(UUID id) {
+    return jdbc.sql(
+            """
+            SELECT a.id, h.version_id, h.last_updated, 'booked' AS status, a.slot_id,
+                   a.patient_id, a.practitioner_id, a.specialty, a.start_at, a.end_at,
+                   a.channel, a.booked_by, h.content
+              FROM scheduling.appointment a
+              JOIN scheduling.resource_history h ON h.id = a.id
+             WHERE a.id = ? AND h.resource_type = 'Appointment' AND h.version_id = 1
+               AND h.operation = 'create'
+            """)
+        .param(id)
+        .query(MAPPER)
+        .optional();
   }
 
   public Optional<AppointmentRecord> findById(UUID id) {

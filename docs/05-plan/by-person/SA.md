@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **231 tasks, 803 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **232 tasks, 807 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -227,7 +227,7 @@ Total: **231 tasks, 803 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | SHR-32 | Service token interceptor for /internal calls: client credentials, cache, wiring in four services | Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak | 4 | SHR-21, IAM-02 | US-007 |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
-## Week 8 — 79 hours
+## Week 8 — 83 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -251,6 +251,7 @@ Total: **231 tasks, 803 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | OBS-03 | DLQ and pipeline failure alerts **[done, commit gitops ecb9906: alerts for dead-letter queues, certificate expiry and degraded Argo CD apps (gitops #15)]** | Alerts when a dead-letter queue has messages, a cert is expiring, or an Argo CD app is degraded | 2 | OBS-01 | ENABLER |
 | ☐ | PRD-10 | k6 script: find slot + book (1x/5x/10x scenarios) | 1x/5x/10x scenarios per workload analysis; runs on UAT (prod-sized) | 4 | SCH-14 | US-068 |
 | ☐ | PRD-11 | KEDA cron scale before 07:00 + HPA for scheduling | prod/uat values scale before the slot-opening window | 1 | SCF-01, GOP-04 | US-068 |
+| ☐ | SHR-31 | Service Bus binder wiring in shp-messaging: session consumer, broker-owned 5 deliveries, namespace config, binder tests | With SHP_MESSAGING_BINDER=servicebus the context starts and bindings resolve to topic shp-events, session-enabled, 1 in-process attempt; a send/receive/DLQ check on the emulator or a real namespace is recorded | 4 | SHR-08 | ENABLER |
 | ☐ | WEB-31 | Knowledge base management and AI cost UI (Admin) | Upload, approve, remove; usage table | 4 | WEB-30, AI-13 | US-053, US-052 |
 | ☐ | WEB-32 | Summary panel for record: AI label, clickable sources to records | Shows structured-timeline mode when LLM fails | 3 | WEB-21, AI-21 | US-058 |
 

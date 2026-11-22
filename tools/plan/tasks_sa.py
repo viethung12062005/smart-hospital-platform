@@ -163,6 +163,8 @@ SA_TASKS = [
      "Everything is still published after the bus dies and recovers; multiple replicas do not duplicate", "SA", 4, "SHR-06", "P2", "13 §1"),
     ("SHR-08", "ENABLER", "Platform consumer: idempotent inbox + Spring Cloud Stream (RabbitMQ local, Service Bus cloud), retry/DLQ",
      "Duplicate events are processed once; 5 delivery attempts then DLQ", "SA", 4, "SHR-06", "P2", "13 §1"),
+    ("SHR-31", "ENABLER", "Service Bus binder wiring in shp-messaging: session consumer, broker-owned 5 deliveries, namespace config, binder tests",
+     "With SHP_MESSAGING_BINDER=servicebus the context starts and bindings resolve to topic shp-events, session-enabled, 1 in-process attempt; a send/receive/DLQ check on the emulator or a real namespace is recorded", "SA", 4, "SHR-08", "S5", "ADR-0019, 13 §1.1"),
     ("SHR-32", "US-007", "Service token interceptor for /internal calls: client credentials, cache, wiring in four services",
      "Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak", "SA", 4, "SHR-21, IAM-02", "S4", "15 §7, 07 §5"),
     ("SHR-28", "US-015", "Idempotency-Key middleware for PostgreSQL (claim, request hash, replay)",

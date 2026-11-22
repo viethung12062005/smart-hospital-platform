@@ -22,12 +22,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.shp.clinical.app.ProfileValidator;
 import org.shp.data.mongo.MongoResourceStore.Entry;
+import org.shp.data.mongo.search.SearchIndexes;
 import org.shp.web.errors.ShpException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.data.mongodb.core.index.IndexInfo;
+import org.springframework.data.mongodb.core.index.IndexOperations;
 import org.springframework.data.mongodb.core.query.Query;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -198,5 +203,29 @@ class PatientRepositoryTest {
     assertThatThrownBy(() -> patients.update(changed, 1, "sub", null))
         .isInstanceOfSatisfying(
             ShpException.class, ex -> assertThat(ex.info().code()).isEqualTo("version-conflict"));
+  }
+
+  @Test
+  void aDatabaseWithTheDefaultIndexNamesStillStarts() {
+    var indexes = mongo.indexOps("patients");
+    indexes.dropIndex(SearchIndexes.IX_PATIENTS_MRN);
+    indexes.createIndex(new Index().on("search.mrn", Sort.Direction.ASC).unique());
+    assertThat(names(indexes))
+        .contains("search.mrn_1") // the name MongoDB gives an unnamed index (CLN-03..05)
+        .doesNotContain(SearchIndexes.IX_PATIENTS_MRN);
+
+    // Error 85 on the local cluster: the same key under another name stopped the new build.
+    PatientStoreConfig.ensurePatientIndexes(mongo);
+
+    assertThat(names(indexes))
+        .contains(SearchIndexes.IX_PATIENTS_MRN)
+        .doesNotContain("search.mrn_1");
+    // Idempotent: a second start on the migrated database changes nothing.
+    PatientStoreConfig.ensurePatientIndexes(mongo);
+    assertThat(names(indexes)).contains(SearchIndexes.IX_PATIENTS_MRN);
+  }
+
+  private static List<String> names(IndexOperations indexes) {
+    return indexes.getIndexInfo().stream().map(IndexInfo::getName).toList();
   }
 }
