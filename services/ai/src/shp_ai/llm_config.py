@@ -80,7 +80,11 @@ def providers_from(settings: Settings) -> list[Provider]:
 
 
 def build_router(
-    config: dict[str, Any], providers: list[Provider], budget: TokenBudget | None, on_call: Any = None
+    config: dict[str, Any],
+    providers: list[Provider],
+    budget: TokenBudget | None,
+    on_call: Any = None,
+    on_first_token: Any = None,
 ) -> Router:
     names = {p.name for p in providers}
     tasks = {}
@@ -97,7 +101,7 @@ def build_router(
     breaker = CircuitBreaker(
         int(cb.get("failureThreshold", 5)), float(cb.get("windowSeconds", 60)), float(cb.get("openSeconds", 30))
     )
-    return Router(providers, tasks, breaker, budget, on_call)
+    return Router(providers, tasks, breaker, budget, on_call, on_first_token)
 
 
 def cost_usd(config: dict[str, Any], provider: str, tokens_in: int, tokens_out: int) -> float:

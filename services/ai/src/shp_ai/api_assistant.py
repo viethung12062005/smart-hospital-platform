@@ -1,6 +1,8 @@
 """AI1 (ask the assistant, JSON or SSE), AI2 (feedback), AI3 (history), AI10 (usage) — 12 §2, §6."""
 
 import json
+import logging
+import time
 from collections.abc import Callable, Iterator
 from datetime import date
 from typing import Annotated, Any, Literal
@@ -11,13 +13,26 @@ from pydantic import BaseModel, Field
 
 from shp_ai import main, usage
 from shp_ai.assistant import conversations as conv
-from shp_ai.assistant.service import DISCLAIMER, TASK, AskResult, ask
+from shp_ai.assistant.service import (
+    DISCLAIMER,
+    NO_ANSWER,
+    TASK,
+    AskEvent,
+    AskResult,
+    FinalEvent,
+    ResetEvent,
+    TokenEvent,
+    ask,
+    ask_stream,
+)
 from shp_ai.deps import Deps, record_audit
 from shp_ai.kb.index import HOSPITAL_WIDE, Scope
 from shp_ai.llm_config import cost_usd
 from shp_platform.errors import ShpError, error_info, problem_response
 from shp_platform.pii import redact
 from shp_platform.security import Authenticator, Principal
+
+LOG = logging.getLogger("shp.ai.assistant")
 
 
 class AskBody(BaseModel):
@@ -52,15 +67,14 @@ def _payload(res: AskResult, conversation_id: str, message_id: str, cost: float)
     return out
 
 
-def _sse(payload: dict[str, Any]) -> Iterator[bytes]:
-    def ev(name: str, data: Any) -> bytes:
-        return f"event: {name}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n".encode()
+def _ev(name: str, data: Any) -> bytes:
+    return f"event: {name}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n".encode()
 
-    text = payload["answer"]
-    for i in range(0, len(text), 24):  # split the checked answer into token chunks
-        yield ev("token", {"text": text[i : i + 24]})
-    yield ev("citations", payload["citations"])
-    yield ev("done", {k: v for k, v in payload.items() if k not in ("answer", "citations")})
+
+def _tail(payload: dict[str, Any]) -> Iterator[bytes]:
+    """The events that close a stream: the citations, then `done` with everything except answer and citations."""
+    yield _ev("citations", payload["citations"])
+    yield _ev("done", {k: v for k, v in payload.items() if k not in ("answer", "citations")})
 
 
 def register(app: FastAPI, deps: Callable[[], Deps], auth: Authenticator) -> None:
@@ -68,18 +82,10 @@ def register(app: FastAPI, deps: Callable[[], Deps], auth: Authenticator) -> Non
     staff = auth.require_roles("doctor", "nurse")
     owner = auth.require_roles("doctor", "nurse", "patient")
 
-    @r.post("/assistant/ask", response_model=None)
-    def ask_endpoint(
-        request: Request, body: AskBody, p: Annotated[Principal, Depends(staff)]
-    ) -> Response | dict[str, Any]:
-        d = deps()
-        own = d.directory.departments(p)
-        if body.department and body.department != HOSPITAL_WIDE and body.department not in own:
-            raise ShpError("forbidden")
-        departments = (body.department,) if body.department else own
-        role = "doctor" if "doctor" in p.roles else "nurse"
-        cid = conv.open_conversation(d.db, p.subject, body.conversationId, "assistant")
-        res = ask(d.router, d.index, d.embedder, body.question, Scope(role, departments))
+    def settle(
+        d: Deps, p: Principal, request: Request, body: AskBody, cid: str, res: AskResult, role: str, outcome: str = ""
+    ) -> dict[str, Any]:
+        """Usage rows, stored messages and the audit record of one ask, whatever the transport. Returns the payload."""
         cfg = d.extras["llm_config"]
         cost = 0.0
         for attempt in res.attempts:
@@ -114,18 +120,98 @@ def register(app: FastAPI, deps: Callable[[], Deps], auth: Authenticator) -> Non
             request,
             action="ai-query",
             resource=f"Conversation/{cid}",
-            outcome="denied" if res.guardrail.startswith("blocked") else "success",
+            outcome=outcome or ("denied" if res.guardrail.startswith("blocked") else "success"),
             reason=reason[:200],
         )
-        payload = _payload(res, cid, mid, round(cost, 6))
-        if res.budget_exceeded:
-            resp = problem_response(request, error_info("ai-budget-exceeded"))
-            body_ = json.loads(bytes(resp.body))
-            body_.update({"mode": "retrieval-only", "citations": res.citations})
-            keep = {k: v for k, v in resp.headers.items() if k.lower() in ("x-request-id", "retry-after")}
-            return JSONResponse(body_, status_code=503, headers=keep, media_type="application/problem+json")
+        return _payload(res, cid, mid, round(cost, 6))
+
+    def budget_response(request: Request, res: AskResult) -> JSONResponse:
+        resp = problem_response(request, error_info("ai-budget-exceeded"))
+        body_ = json.loads(bytes(resp.body))
+        body_.update({"mode": "retrieval-only", "citations": res.citations})
+        keep = {k: v for k, v in resp.headers.items() if k.lower() in ("x-request-id", "retry-after")}
+        return JSONResponse(body_, status_code=503, headers=keep, media_type="application/problem+json")
+
+    def sse_response(
+        d: Deps, p: Principal, request: Request, body: AskBody, cid: str, scope: Scope, role: str
+    ) -> Response:
+        res = AskResult(False, NO_ANSWER, [])
+        clock = d.extras.get("clock", time.monotonic)
+        events = ask_stream(
+            d.router,
+            d.index,
+            d.embedder,
+            body.question,
+            scope,
+            res,
+            clock,
+            d.extras.get("on_first_token", usage.on_first_token),
+        )
+        try:
+            first = next(events)  # blocks until the first token (or the end), so a 503 can still be a status code
+        except BaseException:
+            events.close()
+            raise
+        if isinstance(first, FinalEvent) and res.budget_exceeded:
+            settle(d, p, request, body, cid, res, role)
+            return budget_response(request, res)
+
+        def body_iter() -> Iterator[bytes]:
+            finished = False
+            shown = False
+            try:
+                ev: AskEvent | None = first
+                while ev is not None:
+                    if isinstance(ev, TokenEvent):
+                        shown = True
+                        yield _ev("token", {"text": ev.text})
+                    elif isinstance(ev, ResetEvent):
+                        shown = False
+                        usage.STREAM_RESETS.labels(reason=ev.reason).inc()
+                        yield _ev("reset", {})
+                    else:
+                        if not shown and res.answer and res.mode in ("no-context", "guardrail"):
+                            yield _ev("token", {"text": res.answer})  # no model ran: the fixed notice
+                        payload = settle(d, p, request, body, cid, res, role)
+                        finished = True
+                        yield from _tail(payload)
+                        return
+                    ev = next(events, None)
+            except Exception as exc:  # noqa: BLE001 - the stream has started, the status code is already 200
+                LOG.warning("assistant stream failed: %s", type(exc).__name__)
+                yield _ev("error", {"code": "ai-unavailable"})
+            finally:
+                events.close()
+                if not finished:  # client left or the stream broke: the tokens already spent are still accounted
+                    try:
+                        settle(d, p, request, body, cid, res, role, outcome="error")
+                    except Exception as exc:  # noqa: BLE001
+                        LOG.warning("could not settle aborted stream: %s", type(exc).__name__)
+
+        return StreamingResponse(
+            body_iter(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    @r.post("/assistant/ask", response_model=None)
+    def ask_endpoint(
+        request: Request, body: AskBody, p: Annotated[Principal, Depends(staff)]
+    ) -> Response | dict[str, Any]:
+        d = deps()
+        own = d.directory.departments(p)
+        if body.department and body.department != HOSPITAL_WIDE and body.department not in own:
+            raise ShpError("forbidden")
+        departments = (body.department,) if body.department else own
+        role = "doctor" if "doctor" in p.roles else "nurse"
+        cid = conv.open_conversation(d.db, p.subject, body.conversationId, "assistant")
+        scope = Scope(role, departments)
         if "text/event-stream" in request.headers.get("accept", ""):
-            return StreamingResponse(_sse(payload), media_type="text/event-stream")
+            return sse_response(d, p, request, body, cid, scope, role)
+        res = ask(d.router, d.index, d.embedder, body.question, scope)
+        payload = settle(d, p, request, body, cid, res, role)
+        if res.budget_exceeded:
+            return budget_response(request, res)
         return payload
 
     def _feedback(message_id: str, body: FeedbackBody, p: Principal, replace: bool) -> Response:
