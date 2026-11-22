@@ -9,7 +9,7 @@ from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from prometheus_client import Counter, Gauge
+from prometheus_client import Counter, Gauge, Histogram
 from pymongo import ASCENDING
 from pymongo.database import Database
 
@@ -18,6 +18,22 @@ from shp_platform.llm.router import RouterResult, TokenBudget
 LLM_CALLS = Counter("shp_ai_llm_calls_total", "LLM calls by provider/model/outcome", ["provider", "model", "outcome"])
 LLM_TOKENS = Counter(
     "shp_ai_llm_tokens_total", "Tokens by provider/model/direction", ["provider", "model", "direction"]
+)
+FIRST_TOKEN_BUCKETS = (0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 8.0, 12.0)
+LLM_FIRST_DELTA = Histogram(
+    "shp_ai_llm_first_delta_seconds",
+    "Seconds from sending a streamed request to the provider's first text delta, per model",
+    ["provider", "model"],
+    buckets=FIRST_TOKEN_BUCKETS,
+)
+ASSISTANT_FIRST_TOKEN = Histogram(
+    "shp_ai_assistant_first_token_seconds",
+    "Assistant stream: seconds from the request to the first answer token shown, per model (NFR-P5: p95 <= 3 s)",
+    ["provider", "model"],
+    buckets=FIRST_TOKEN_BUCKETS,
+)
+STREAM_RESETS = Counter(
+    "shp_ai_assistant_stream_resets_total", "Assistant streams that discarded shown text", ["reason"]
 )
 BUDGET_USED = Gauge("shp_ai_budget_used_ratio", "Fraction of the daily token budget used")
 BUDGET_ALERT = Gauge("shp_ai_budget_alert", "1 when ≥ 80% of the daily budget is used")
@@ -30,6 +46,14 @@ def on_call(provider: str, model: str, outcome: str, tokens_in: int, tokens_out:
     if tokens_in or tokens_out:
         LLM_TOKENS.labels(provider=provider, model=model, direction="in").inc(tokens_in)
         LLM_TOKENS.labels(provider=provider, model=model, direction="out").inc(tokens_out)
+
+
+def on_first_delta(provider: str, model: str, seconds: float) -> None:
+    LLM_FIRST_DELTA.labels(provider=provider, model=model).observe(seconds)
+
+
+def on_first_token(provider: str, model: str, seconds: float) -> None:
+    ASSISTANT_FIRST_TOKEN.labels(provider=provider, model=model).observe(seconds)
 
 
 class MongoTokenBudget(TokenBudget):
