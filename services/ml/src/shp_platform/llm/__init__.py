@@ -5,7 +5,16 @@ supplied by Key Vault.
 """
 
 from shp_platform.llm.provider import ChatMessage, Completion, FakeProvider, LlmError, Provider, ToolCall
-from shp_platform.llm.router import ChainStep, Router, RouterResult, TaskConfig
+from shp_platform.llm.router import (
+    ChainStep,
+    Router,
+    RouterResult,
+    RouterStream,
+    StreamDelta,
+    StreamEnd,
+    StreamReset,
+    TaskConfig,
+)
 
 __all__ = [
     "ChainStep",
@@ -16,6 +25,10 @@ __all__ = [
     "Provider",
     "Router",
     "RouterResult",
+    "RouterStream",
+    "StreamDelta",
+    "StreamEnd",
+    "StreamReset",
     "TaskConfig",
     "ToolCall",
 ]
