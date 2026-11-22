@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **355 tasks**, **1222 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **358 tasks**, **1233 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -11,16 +11,16 @@ Total: **355 tasks**, **1222 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W1 | 12 |  |  |  |
 | W2 | 21 |  |  | 4 |
 | W3 | 10 |  | 27 |  |
-| W4 | 5 | 22 | 27 | 27 |
+| W4 | 8 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
-| W7 | 40 | 30 | 30 | 30 |
-| W8 | **67** | 4 | 25 | 8 |
+| W7 | 44 | 30 | 30 | 30 |
+| W8 | **71** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **269** | **120** | **169** | **128** |
+| **Total** | **280** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -175,6 +175,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | LOC-08 | ENABLER | Full local dev profile: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed synthetic data into the cluster | `make up PROFILE=full` provisions infrastructure for every service; healthchecks; resource requirements documented | SA | 3 | LOC-01 | P1 | ADR-0011, NFR-I3 |
 | LOC-05 | ENABLER | Run services on the local cluster with the shared microservice chart (make deploy SVC=...) | Sample service builds, loads into kind and runs with the same chart used for UAT/prod; debug guide included | SA | 3 | GOP-01, LOC-03, LOC-01 | P3 | ADR-0011, NFR-I3 |
 | LOC-07 | ENABLER | Developer onboarding guide | From cloning the repo to running locally and opening a first PR in < 1 hour | SA | 2 | LOC-01, LOC-03 | P3 | PM |
+| LOC-09 | ENABLER | Give local services their svc-* client secret and a stable Keycloak issuer (make deploy) | `make -C dev deploy` gives each Java service its svc-* client secret (read from the Keycloak admin API, never stored in git) and the token endpoint, and Keycloak issues one stable issuer, so a workload token from a pod passes clinical GET /internal/v1/identity/{subject} (200; 401 without a token, 403 with a user token) on the local cluster | SA | 3 | LOC-05 | P1 | ADR-0011, docs/04-devops/keycloak.md |
 
 ## SCF — Scaffold service (SA)
 
@@ -246,6 +247,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | SHR-11 | ENABLER | Mongo search executor: compile search criteria to query + use index | Query plan uses IXSCAN for main queries | SA | 3 | SHR-10 | S1 | 03 §2.6 |
 | SHR-12 | US-035 | Idempotency-Key for MongoDB (document service) | Same key → same result; different body 422 | SA | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
 | SHR-27 | US-047 | Authz: emit audit for every decision (allow and deny) | Every Deny emits audit outcome=denied with a reason code; tests | SA | 2 | SHR-24, SHR-09 | S1 | 05 §1, E11(pub) |
+| SHR-32 | US-007 | Service token interceptor for /internal calls: client credentials, cache, wiring in four services | Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak | SA | 4 | SHR-21, IAM-02 | S4 | 15 §7, 07 §5 |
 | SHR-31 | ENABLER | Service Bus binder wiring in shp-messaging: session consumer, broker-owned 5 deliveries, namespace config, binder tests | With SHP_MESSAGING_BINDER=servicebus the context starts and bindings resolve to topic shp-events, session-enabled, 1 in-process attempt; a send/receive/DLQ check on the emulator or a real namespace is recorded | SA | 4 | SHR-08 | S5 | ADR-0019, 13 §1.1 |
 
 ## PY — Shared libraries (Python, for ai/ml, SA)

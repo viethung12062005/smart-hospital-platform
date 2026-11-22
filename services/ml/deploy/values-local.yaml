@@ -4,6 +4,8 @@ image:
   tag: dev
 replicaCount: 1
 env:
+  # Audience isolation (ADR-0017): this service accepts tokens issued for svc-ml (service tokens) and shp-api (user tokens).
+  OIDC_AUDIENCE: svc-ml
   OTEL_SERVICE_NAME: ml
   # MONGODB_URI, RABBITMQ_URL: the local chart passes them from the shp-local-conn secret (dev/chart/app-values-local.yaml)
   MONGODB_DB: ml

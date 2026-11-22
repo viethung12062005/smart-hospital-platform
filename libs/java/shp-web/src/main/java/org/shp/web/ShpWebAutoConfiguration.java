@@ -4,18 +4,23 @@ import java.time.Clock;
 import org.shp.authz.AuthorizationEngine;
 import org.shp.authz.AuthzMatrix;
 import org.shp.events.audit.AuditSink;
+import org.shp.security.ClientCredentialsTokenProvider;
+import org.shp.security.ServiceTokenProperties;
+import org.shp.security.ServiceTokenProvider;
 import org.shp.security.ShpAuthProperties;
 import org.shp.security.ShpJwt;
 import org.shp.servicedefaults.ServiceInfo;
 import org.shp.web.auth.IdentityInterceptor;
 import org.shp.web.auth.IdentityLinkClient;
 import org.shp.web.auth.IdentityResolver;
+import org.shp.web.auth.ServiceTokenInterceptor;
 import org.shp.web.authz.AuthzInterceptor;
 import org.shp.web.errors.ErrorCatalog;
 import org.shp.web.errors.ErrorWriter;
 import org.shp.web.errors.ShpExceptionHandler;
 import org.shp.web.precondition.ETagAdvice;
 import org.shp.web.precondition.PreconditionInterceptor;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -40,7 +45,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * beans.
  */
 @AutoConfiguration
-@EnableConfigurationProperties(ShpAuthProperties.class)
+@EnableConfigurationProperties({ShpAuthProperties.class, ServiceTokenProperties.class})
 @Import({ShpExceptionHandler.class, ETagAdvice.class})
 public class ShpWebAutoConfiguration {
 
@@ -60,6 +65,49 @@ public class ShpWebAutoConfiguration {
   @ConditionalOnMissingBean
   IdentityResolver shpIdentityResolver(IdentityLinkClient client, Clock clock) {
     return new IdentityResolver(client, clock);
+  }
+
+  /**
+   * Token source for {@code /internal/*} calls to other services (15 §7). Never fails at startup: a
+   * missing secret is reported on the first call, so a service without a configured client still
+   * boots (tests, local runs without Keycloak).
+   */
+  @Bean
+  @ConditionalOnMissingBean
+  ServiceTokenProvider shpServiceTokenProvider(
+      ServiceTokenProperties props, ShpAuthProperties auth, ServiceInfo info, Clock clock) {
+    String endpoint = props.tokenEndpoint();
+    if (endpoint.isBlank()) {
+      endpoint =
+          !auth.jwkSetUri().isBlank()
+              ? auth.jwkSetUri().replaceFirst("/certs$", "/token")
+              : auth.authority().replaceFirst("/+$", "") + "/protocol/openid-connect/token";
+    }
+    String clientId = props.clientId().isBlank() ? "svc-" + info.name() : props.clientId();
+    var resolved =
+        new ServiceTokenProperties(
+            endpoint,
+            clientId,
+            props.clientSecret(),
+            props.assertionFile(),
+            props.refreshBefore(),
+            props.timeout());
+    var provider = new ClientCredentialsTokenProvider(resolved, clock);
+    if (!provider.hasCredentials()) {
+      LoggerFactory.getLogger(ShpWebAutoConfiguration.class)
+          .warn(
+              "No shp.auth.client.client-secret or assertion-file: calls to other services will"
+                  + " fail until one is set (client {})",
+              clientId);
+    }
+    return provider;
+  }
+
+  /** Add to the {@code RestClient} of every service client that calls an {@code /internal} API. */
+  @Bean
+  @ConditionalOnMissingBean
+  ServiceTokenInterceptor shpServiceTokenInterceptor(ServiceTokenProvider tokens) {
+    return new ServiceTokenInterceptor(tokens);
   }
 
   /**

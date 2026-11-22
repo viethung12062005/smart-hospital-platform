@@ -26,7 +26,7 @@ Permission notation: **P** Patient, **D** Doctor, **N** Nurse, **A** Admin. `own
 | S17 | `GET /fhir/Appointment/{id}/_history` | Version history | N, A | UC-03 |
 | S18 | `GET /internal/v1/appointments/{id}` | Read an appointment (other service) | service `clinical`, `ml` | — |
 
-A doctor **must not** book, cancel, or reschedule; Admin does not view patient appointments (per the [access control matrix](../../02-requirements/access-control-matrix.md)).
+A doctor **must not** book, cancel, or reschedule; Admin does not read a patient appointment directly (S1–S16) but may read its version history (S17), per the [access control matrix](../../02-requirements/access-control-matrix.md).
 
 ## 2. Work schedule
 
@@ -90,7 +90,7 @@ Replaces the Schedule's **entire** weekly template (`If-Match` required on the S
 | `_count`, `_page_token` | | keyset by (`start_at`, `id`) |
 
 Response: `Bundle searchset` sorted by ascending `start`; each `Slot` is a shortened form (no `comment`). Patients are always forced to
-`status=free` and `start ≥ now`. Redis cache for 5 seconds keyed by the normalized query; invalidated when an `appointment-*` event
+`status=free` and `start ≥ now`. A missing lower bound of `start` defaults to now and a missing upper bound to the lower bound + 31 days; for a Patient the upper bound is also capped at now + 30 days (BR-04), so a range entirely beyond that returns an empty Bundle. Redis cache for 5 seconds keyed by the normalized query; invalidated when an `appointment-*` event
 occurs for the same doctor/day (SCH-15). 400 if the date range is > 31 days or the specialty/doctor/schedule filter is missing.
 
 ### S9 `POST /fhir/Slot/{id}/$block`
@@ -129,7 +129,7 @@ Result:
 | 400 | Missing parameter / structurally invalid Parameters | `validation-failed` |
 | 403 | Booking for someone else | `forbidden` |
 | 404 | Slot or patient does not exist | `not-found` |
-| **409** | Slot already booked, blocked, or in the past | `slot-unavailable` — with an `OperationOutcome` containing `extension[suggested-slots]`: the 3 nearest free slots for the same doctor/specialty |
+| **409** | Slot already booked, blocked, or in the past | `slot-unavailable` — with an `OperationOutcome` containing `extension[suggested-slots]`: up to 3 nearest free slots for the same doctor/specialty (the same doctor's slots first, then other doctors of the specialty). Omit the extension if there are no alternatives. Each item is a nested `extension` `slot` with `reference` (`valueReference` `Slot/{id}`), `practitioner` (`valueReference`), `start` and `end` (`valueInstant`) |
 | 422 | Patient already has 3 future appointments (BR-03) | `max-future-appointments` |
 | 422 | Slot outside the 30-day window (BR-04) | `outside-booking-window` |
 | 422 | Same key, different body (AC-03.3) | `idempotency-key-reused` |

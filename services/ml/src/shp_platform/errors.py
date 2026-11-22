@@ -69,6 +69,13 @@ _CATALOG: dict[str, ErrorInfo] = {
             "The current state does not allow this.",
         ),
         ErrorInfo(
+            "already-registered",
+            409,
+            "conflict",
+            "Tài khoản này đã có hồ sơ bệnh nhân.",
+            "This account already has a patient record.",
+        ),
+        ErrorInfo(
             "slot-unavailable",
             409,
             "conflict",

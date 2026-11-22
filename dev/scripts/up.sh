@@ -21,9 +21,16 @@ k create namespace "$NAMESPACE" --dry-run=client -o yaml | k apply -f - >/dev/nu
 ensure_credentials
 apply_credentials_secret
 
-log "Installing dependencies (PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak) — the first run takes a few minutes to pull images"
+# Keycloak runs the image that carries the SHP login theme and extensions (identity/keycloak, IAM-03); it is built here and
+# loaded straight into the kind node like the service images. Its image id is a pod annotation, so a rebuilt image restarts Keycloak.
+log "Building the Keycloak image localhost/shp-keycloak:dev (identity/keycloak/Dockerfile)"
+DOCKER_BUILDKIT=1 docker build -q -t localhost/shp-keycloak:dev -f "$DEV_DIR/../identity/keycloak/Dockerfile" "$DEV_DIR/.." >/dev/null
+kind load docker-image localhost/shp-keycloak:dev --name "$CLUSTER_NAME" >/dev/null
+
+log "Installing dependencies (PostgreSQL, MongoDB, Redis, RabbitMQ, Azurite, Keycloak, Mailpit) — the first run takes a few minutes to pull images"
 helm --kube-context "$CTX" upgrade --install shp-deps "$DEV_DIR/chart/shp-local-deps" \
-  --namespace "$NAMESPACE" --wait --timeout 10m
+  --namespace "$NAMESPACE" --set-string keycloakImageId="$(docker image inspect -f '{{.Id}}' localhost/shp-keycloak:dev)" \
+  --wait --timeout 10m
 
 log "Initializing notification and ml collections/indexes/validators (contracts/db/mongo-notification-ml.js, idempotent)"
 k -n "$NAMESPACE" wait --for=condition=complete job/mongodb-rs-init --timeout 5m >/dev/null

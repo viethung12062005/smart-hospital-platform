@@ -9,3 +9,7 @@ env:
   # cloud. Empty values keep the sink off so the worker still starts against a bare cluster.
   SHP_AUDIT_SINK_WORKSPACE_ID: ""
   SHP_AUDIT_SINK_ENDPOINT: ""
+  # WORM audit container (05-storage-audit-blob §1.2). Azurite starts empty, so create the container;
+  # the connection string comes from dev/chart/app-values-local.yaml. Azurite has no immutability.
+  SHP_AUDIT_BLOB_CONTAINER: audit
+  SHP_AUDIT_BLOB_CREATE_CONTAINER: "true"

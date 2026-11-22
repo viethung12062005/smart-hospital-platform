@@ -3,3 +3,5 @@ Lịch hẹn của bạn đã được xác nhận.
 Bác sĩ: {doctorName}
 Thời gian: {startTime}
 Địa điểm: {place}
+Chuyên khoa: {specialty}
+Quản lý lịch hẹn: {manageLink}

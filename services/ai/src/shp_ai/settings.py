@@ -43,5 +43,6 @@ class Settings(BaseSettings):
     token_endpoint: str = ""  # <issuer>/protocol/openid-connect/token
     client_id: str = "svc-ai"
     client_secret: str = ""
+    client_assertion_file: str = ""  # projected ServiceAccount token; preferred over client_secret (IAM-02)
 
     daily_token_limit: int = 2_000_000
