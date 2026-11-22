@@ -114,6 +114,12 @@ public final class ErrorCatalog {
                 "Nghi ngờ trùng hồ sơ bệnh nhân.",
                 "A duplicate patient is suspected."),
             e(
+                "value-out-of-range",
+                422,
+                "business-rule",
+                "Giá trị nằm ngoài khoảng hợp lý.",
+                "The value is outside the plausible range."),
+            e(
                 "upload-incomplete",
                 422,
                 "business-rule",
