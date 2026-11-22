@@ -116,7 +116,13 @@ class IdentityApiTest {
   @BeforeEach
   void seed() {
     for (String c :
-        List.of("identity_links", "patients", "practitioners", "practitioner_roles", "outbox")) {
+        List.of(
+            "identity_links",
+            "patients",
+            "practitioners",
+            "practitioner_roles",
+            "profile_links",
+            "outbox")) {
       mongo.remove(new org.springframework.data.mongodb.core.query.Query(), c);
     }
     mongo.insert(
@@ -153,6 +159,19 @@ class IdentityApiTest {
             .append("roles", roles)
             .append("disabled", disabled),
         "identity_links");
+  }
+
+  private void profileLink(
+      String sub, String patientId, String relationship, String scope, String status, Instant exp) {
+    var d =
+        new Document("accountSub", sub)
+            .append("patientId", patientId)
+            .append("relationship", relationship)
+            .append("scope", scope)
+            .append("status", status)
+            .append("createdAt", Date.from(clock.instant()));
+    d.append("expiresAt", exp == null ? null : Date.from(exp));
+    mongo.insert(d, "profile_links");
   }
 
   // ---------------------------------------------------------------- helpers
@@ -457,6 +476,89 @@ class IdentityApiTest {
   void lockRejectsAMissingFlagAndAnUnknownSubject() throws Exception {
     assertThat(put("pat-sub", admin(), "{}").statusCode()).isEqualTo(400);
     assertThat(put("nobody", admin(), "{\"disabled\":true}").statusCode()).isEqualTo(404);
+  }
+
+  // ---------------------------------------------------------------- CLN-33 linkedProfiles
+
+  @Test
+  void meAndTheInternalLookupListOnlyActiveUnexpiredLinks() throws Exception {
+    Instant now = clock.instant();
+    profileLink("pat-sub", "child-1", "guardian", "full", "active", now.plus(Duration.ofDays(300)));
+    profileLink("pat-sub", "parent-1", "proxy", "booking", "active", null);
+    profileLink(
+        "pat-sub", "revoked-1", "proxy", "booking", "revoked", now.plus(Duration.ofDays(9)));
+    profileLink(
+        "pat-sub", "pending-1", "proxy", "records", "pending", now.plus(Duration.ofDays(9)));
+    profileLink("pat-sub", "expired-1", "proxy", "booking", "expired", now.minusSeconds(5));
+    // still marked active, but past expiresAt: ignored without waiting for a job
+    profileLink("pat-sub", "stale-1", "proxy", "booking", "active", now.minusSeconds(1));
+    profileLink("other-sub", "other-1", "proxy", "booking", "active", null);
+
+    var me = json(call("GET", "/api/v1/me", token("pat-sub", "patient"), null));
+    assertThat(me.get("fhirUser").asString()).isEqualTo("Patient/" + PATIENT_ID);
+    var items = me.get("linkedProfiles");
+    assertThat(items.size()).isEqualTo(2);
+    assertThat(items.get(0).get("patientId").asString()).isEqualTo("child-1");
+    assertThat(items.get(0).get("relationship").asString()).isEqualTo("guardian");
+    assertThat(items.get(0).get("scope").asString()).isEqualTo("full");
+    assertThat(items.get(0).get("expiresAt").isNull()).isFalse();
+    assertThat(items.get(1).get("patientId").asString()).isEqualTo("parent-1");
+    assertThat(items.get(1).get("scope").asString()).isEqualTo("booking");
+    assertThat(items.get(1).get("expiresAt").isNull()).isTrue();
+
+    String svc = serviceToken("svc-scheduling-sa", "svc-scheduling", "internal.clinical");
+    var internal = json(call("GET", "/internal/v1/identity/pat-sub", svc, null));
+    assertThat(internal.get("linkedProfiles").size()).isEqualTo(2);
+    assertThat(internal.get("linkedProfiles").get(0).get("patientId").asString())
+        .isEqualTo("child-1");
+    assertThat(internal.get("fhirUser").asString()).isEqualTo("Patient/" + PATIENT_ID);
+  }
+
+  @Test
+  void aRevokedLinkDisappearsAtOnceAndALinkThatReachesItsExpiryIsIgnored() throws Exception {
+    String svc = serviceToken("svc-scheduling-sa", "svc-scheduling", "internal.clinical");
+    profileLink("pat-sub", "rel-1", "proxy", "booking", "active", clock.instant().plusSeconds(120));
+    assertThat(
+            json(call("GET", "/internal/v1/identity/pat-sub", svc, null))
+                .get("linkedProfiles")
+                .size())
+        .isEqualTo(1);
+
+    clock.advance(Duration.ofSeconds(121));
+    assertThat(
+            json(call("GET", "/internal/v1/identity/pat-sub", svc, null))
+                .get("linkedProfiles")
+                .size())
+        .isZero();
+
+    profileLink("pat-sub", "rel-2", "proxy", "booking", "active", null);
+    assertThat(
+            json(call("GET", "/api/v1/me", token("pat-sub", "patient"), null))
+                .get("linkedProfiles")
+                .size())
+        .isEqualTo(1);
+    mongo.updateMulti(
+        new org.springframework.data.mongodb.core.query.Query(),
+        new org.springframework.data.mongodb.core.query.Update().set("status", "revoked"),
+        "profile_links");
+    assertThat(
+            json(call("GET", "/api/v1/me", token("pat-sub", "patient"), null))
+                .get("linkedProfiles")
+                .size())
+        .isZero();
+    assertThat(
+            json(call("GET", "/internal/v1/identity/pat-sub", svc, null))
+                .get("linkedProfiles")
+                .size())
+        .isZero();
+  }
+
+  @Test
+  void anAccountCannotBeLinkedTwiceToTheSameProfile() {
+    profileLink("pat-sub", "rel-1", "proxy", "booking", "active", null);
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+            () -> profileLink("pat-sub", "rel-1", "guardian", "full", "active", null))
+        .isInstanceOf(org.springframework.dao.DuplicateKeyException.class);
   }
 
   // ---------------------------------------------------------------- internal identity API
