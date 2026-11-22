@@ -210,6 +210,19 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
+  # ---- Clinical: dependent profiles ----
+  TC-AC-DP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/DependentProfilesApiTest.java::sixteenOrOlderIsNotADependent
+  TC-AC-DP.2:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/DependentProfilesApiTest.java::aChildUnder16IsCreatedAndLinkedToTheGuardian
+  TC-AC-DP.3:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/DependentProfilesApiTest.java::anEleventhProfileIsRejected
   TC-AC-01.3:
     status: partial
     refs:
