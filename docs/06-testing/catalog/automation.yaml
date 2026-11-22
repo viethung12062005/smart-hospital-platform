@@ -84,18 +84,20 @@ automation:
 
   # ---- Audit, events, idempotency, inbox ----
   TC-AC-03.2:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::firstRequestClaimsAndSameRequestReplaysTheSameResource
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::replayReturnsTheSameAppointment
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::replayReturnsVersionOneAfterTheAppointmentChanges
-    gap: "The $book endpoint replays with 200 and the same appointment (SCH-14); the end-to-end idempotency test is SCH-15. UI: E2E TC-AC-03.2."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::replayReturnsTheFirstResultAndLeavesNoSecondBooking
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::parallelRequestsWithOneKeyCreateOneAppointment
   TC-AC-03.3:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/IdempotencyTest.java::sameKeyWithADifferentBodyOrOperationIs422
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::sameKeyDifferentBodyIsRejected
-    gap: "The $book endpoint answers 422 idempotency-key-reused (SCH-14); the end-to-end idempotency test is SCH-15."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::sameKeyWithAnotherBodyIsRejectedWithoutSideEffects
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingIdempotencyApiTest.java::aKeyBelongsToTheCallerThatClaimedIt
   TC-AC-03.1:
     status: partial
     refs:
@@ -217,10 +219,19 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/app/ObservationValidatorTest.java::implausibleValuesAreRejected
     gap: "The Observation validator (CLN-16) rejects SpO2 = 120 with value-out-of-range and names the field; the POST /fhir/Observation endpoint (C16) that returns the 422 and saves nothing is not built yet. Owner: D2."
   TC-AC-01.3:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
-    gap: "The Mongo store records every version and its history is queryable; the patient update endpoint and the version-view API are not implemented yet (CLN-xx)."
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aRecordEditedTwiceHasThreeVersionsInTheHistory
+  TC-AC-01.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientReadsOwnRecordWithItsVersion
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::anotherPatientsRecordIsA404ThatLooksLikeAMissingOne
+  TC-AC-UP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientEditingTheirNameOrOtherFixedFieldsIsRefused
   TC-AC-01.2:
     status: automated
     refs:
