@@ -19,7 +19,7 @@ Default branch `main`. Enable for all 4 repos: **Secret scanning + Push protecti
 | Rule | Value |
 |---|---|
 | Require Pull Request | yes; minimum **1 review**; dismiss approval when new commits are pushed; require review from Code Owners |
-| Required status checks | app repo: only `pr-gate` (workflow `pr-gate.yml` aggregates the results of `pr-checks`, `contracts`, `libs-java`, every `svc-*`; these workflows are path-filtered so they cannot be required individually); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
+| Required status checks | app repo: only `pr-gate` (workflow `pr-gate.yml` aggregates the results of `pr-checks`, `contracts`, `libs-java`, `ml-train`, every `svc-*`; these workflows are path-filtered so they cannot be required individually); infra: `terraform / checks` + `pr-checks / *`; gitops: `validate` + `checks / *`; templates: `chart / validate` + `checks / *` |
 | Block force-push and deletion of branch `main` | yes |
 | Require linear history | yes (squash merge) |
 | Bypass | only the **GitOps bot GitHub App** on `shp-gitops` for path `envs/uat/**` |
@@ -117,6 +117,7 @@ Applied to all 4 repos: ruleset `protect-main` (section 2), squash-only, delete 
 | Secret scanning + push protection | Not available on private repos on the standard plan | `gitleaks` in `pr-checks` replaces it; re-enable when upgrading the plan |
 | Required reviewers / wait timer for Environments | Not supported on private repos on the standard plan | Approval gate = PR review (CODEOWNERS); `envs/prod/` approved by SA. The infrastructure workflows (`env-provision`, `env-destroy`) check that `github.triggering_actor` is the repo owner |
 | Push images before Azure exists | `svc-*` on `main` only push when the `ACR_NAME` variable has a value | No variable yet: the `not-pushed` job writes a note to the Summary, `promote-uat` is skipped, `main` stays green |
+| Register the model before the cluster exists | `ml-train` on `main` only registers in MLflow when the `MLFLOW_TRACKING_URI` variable has a value (optional secrets `MLFLOW_TRACKING_USERNAME`, `MLFLOW_TRACKING_PASSWORD`) | No variable yet: the `not-registered` job writes a note to the Summary, the model stays a workflow artifact, `main` stays green |
 | GitOps bot committing directly to `envs/uat/**` | The `protect-main` ruleset of `shp-gitops` does not yet list the App in its bypass list | When creating the GitOps App: add the App to the bypass list of the `shp-gitops` ruleset, otherwise `promote-uat` (mode `commit`) is blocked |
 | `dependency-review`, CodeQL | Require GitHub Advanced Security | Skipped on private repos (templates PR #2) |
 | GitHub Project (GOV-07) | The `gh` token lacks the `project` scope | `gh auth refresh -s project,read:project` then import `docs/05-plan/backlog.csv` |
@@ -135,7 +136,16 @@ The `validate` workflow of `shp-gitops` already uses this secret (`ssh-key`).
 
 The nine `libs/java/*` modules plus the `org.shp:shp-parent` POM are published to GitHub Packages at
 `https://maven.pkg.github.com/viethung12062005/smart-hospital-platform`. The root `pom.xml` declares this URL in
-`distributionManagement` (publishing) and in `repositories` (consuming), both under the server id `github`.
+`distributionManagement` (publishing) and, for consuming, in the profile `published-shp-libs`, both under the server id
+`github`. The profile is active only when `-Dshp.libs.version=...` is set (see "Consume a published version" below).
+It is not a top-level `<repositories>` entry on purpose: Maven asks every declared repository for every artifact,
+GitHub Packages answers an unauthenticated read with `401` (not `404`), and that failed unrelated builds and Docker
+builds, which have no credentials, intermittently (CIT-12). A second source of the same 401 is outside our POM: the POMs of
+HAPI FHIR (`hapi-fhir`, `org.hl7.fhir.*`) declare a repository `github-releases` at
+`maven.pkg.github.com/FHIR/fhir-test-cases/`, and Maven adds the repositories of every POM it reads. `.mvn/maven.config`
+loads `.mvn/settings.xml` (`-gs`, merged with your own `~/.m2/settings.xml`), whose mirror sends `github-releases` to
+Maven Central. A default build therefore only contacts Maven Central. Check with `mvn -X ... | grep pkg.github`: the
+only match is the line that says the mirror is used.
 
 GitHub Packages requires authentication for **reads as well as writes**. Each developer and each build needs a
 `~/.m2/settings.xml` entry with the id `github`; use a personal token with `read:packages` (add `write:packages` only
@@ -179,7 +189,8 @@ mvn -B -Dshp.libs.version=0.1.0 -pl services/scheduling test
 ```
 
 `shp.libs.version` defaults to `${project.version}` in the root `pom.xml`, which keeps local development on the
-reactor.
+reactor. Passing `-Dshp.libs.version` on the command line also activates the profile `published-shp-libs`, which adds
+the GitHub Packages repository; that build needs the `github` server entry above.
 
 No release tag has been published yet: the first `vX.Y.Z` tag on `main` creates the packages. Until then the
 `publish-maven` workflow has only been validated by the local commands recorded in its PR.

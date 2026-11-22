@@ -135,8 +135,11 @@ class IdentityApiTest {
   }
 
   private void practitioner(String id, String roleCode) {
+    String staffCode = "NV-" + id.substring(id.length() - 4);
     mongo.insert(
-        new Document("_id", id).append("search", new Document("active", true)), "practitioners");
+        new Document("_id", id)
+            .append("search", new Document("staffCode", staffCode).append("active", true)),
+        "practitioners");
     if (roleCode != null) {
       mongo.insert(
           new Document("_id", "role-" + id)
@@ -619,11 +622,20 @@ class IdentityApiTest {
                     null)
                 .statusCode())
         .isEqualTo(403);
+    // no svc-audit client exists in identity/realm/services.json (IAM-02): it is not a caller
+    assertThat(
+            call(
+                    "GET",
+                    "/internal/v1/identity/pat-sub",
+                    serviceToken("s", "svc-audit", "internal.clinical"),
+                    null)
+                .statusCode())
+        .isEqualTo(403);
     assertThat(
             call(
                     "POST",
                     "/internal/v1/identity/pat-sub",
-                    serviceToken("s", "svc-audit", "internal.clinical"),
+                    serviceToken("s", "svc-notification", "internal.clinical"),
                     "{}")
                 .statusCode())
         .isEqualTo(400);

@@ -16,6 +16,9 @@ class BlobStorePropertiesTest {
     runner.run(ctx -> {
       var props = ctx.getBean(BlobStoreProperties.class);
       assertThat(props.connectionString()).isEmpty();
+      assertThat(props.accountUrl()).isEmpty();
+      assertThat(props.configured()).isFalse();
+      assertThat(props.createContainers()).isFalse();
       assertThat(props.documentsContainer()).isEqualTo("documents");
       assertThat(props.quarantineContainer()).isEqualTo("quarantine");
       assertThat(props.kbContainer()).isEqualTo("kb");

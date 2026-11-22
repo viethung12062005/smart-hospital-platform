@@ -9,7 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param authority Keycloak issuer (cloud: https://<domain>/idp/realms/shp; local:
  *     http://.../realms/shp)
- * @param audience audience the token must target (local: shp-api)
+ * @param audience the service's own audience, {@code svc-<name>} (OIDC_AUDIENCE). {@code shp-api}
+ *     is always accepted too, because user tokens carry it (ADR-0017); a token issued for another
+ *     service is refused
  * @param requireMfaForStaff staff must have amr containing "mfa"; disabled locally because the
  *     local realm does not simulate MFA yet (LOC-02)
  * @param clockSkew allowed clock skew when validating token expiry

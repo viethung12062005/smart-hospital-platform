@@ -107,8 +107,9 @@ Only when `finished`; 409 if the visit has not ended.
 
 ### C16 Observation
 `POST /fhir/Observation` — validates against the profile ([01](01-domain-model.md) §4.7): vital signs require `encounter`; units
-match the table; values within plausible ranges (temperature 30–45 °C, pulse 20–250, SpO2 50–100, systolic blood pressure 40–300 / diastolic
-20–200). Outside the range → 422 `value-out-of-range`. `interpretation` is computed by the server. Vital signs: N or D (Care); manual
+match the table; values within the plausible ranges of the SRS business rule BR vital-ranges (UC-04): temperature 30–43 °C, pulse
+20–250 /min, SpO2 50–100 %, systolic blood pressure 50–260 / diastolic 30–160 mm[Hg], weight 0.5–300 kg, height 30–250 cm.
+Outside the range → 422 `value-out-of-range`. `interpretation` is computed by the server. Vital signs: N or D (Care); manual
 lab tests: D (Care). Search: `patient`, `encounter`, `category`, `code`, `date`; a Patient sees only observations belonging to their own `finished` Encounter.
 
 ### C17 Condition
@@ -146,7 +147,7 @@ Only D **without** Care. Creates a 60-minute session (`break_glass_sessions`); 2
 
 | Endpoint | Called by | Returns |
 |---|---|---|
-| `GET /internal/v1/identity/{subject}` (C30) | every service | `{ "fhirUser": "Patient/...", "roles": [...], "disabled": false, "linkedProfiles": [...] }` (`linkedProfiles` as in [§5 C2](#c2-get-apiv1me)); 404 if not linked. Requires a workload-identity token whose `roles` claim holds `internal.clinical` (the role of the target service, 15 §7) and whose `azp` is a known caller client (`svc-scheduling`, `svc-document`, `svc-notification`, `svc-audit`, `svc-ai`; configurable); a user token, even an Admin's, gets 403, a missing token 401. Always reads the current database row (no cache in clinical): the 60-second cache is on the caller's side. `roles` is empty for a link written before roles were stored |
+| `GET /internal/v1/identity/{subject}` (C30) | every service | `{ "fhirUser": "Patient/...", "roles": [...], "disabled": false, "linkedProfiles": [...] }` (`linkedProfiles` as in [§5 C2](#c2-get-apiv1me)); 404 if not linked. Requires a workload-identity token whose `roles` claim holds `internal.clinical` (the role of the target service, 15 §7) and whose `azp` is a known caller client (`svc-scheduling`, `svc-document`, `svc-notification`, `svc-ai`; the same list as `identity/realm/services.json`, configurable). Both are checked by the shared guard `ShpJwt.requireService(jwt, "clinical", callers...)`, the Java twin of `require_service`; a user token, even an Admin's, gets 403, a missing token 401. Always reads the current database row (no cache in clinical): the 60-second cache is on the caller's side. `roles` is empty for a link written before roles were stored |
 | `GET /internal/v1/care-relationships/check?practitioner={id}&patient={id}` | document, ai, notification | `{ "care": true, "via": "appointment|encounter|break-glass", "validUntil": "..." }` |
 | `GET /internal/v1/practitioners/{id}/roles` | scheduling | list of `PractitionerRole` (specialty, active) |
 | `GET /internal/v1/patients/{id}/contact` | notification | `{ "phone", "email", "locale" }` — **the only endpoint that returns contact information**; only the `internal.notification` role, every call has a `read` audit record |
@@ -175,12 +176,13 @@ A locked account gets 403 (`forbidden`) like on every other endpoint; no token g
 Role rules (15 §8): a `Patient` link carries exactly `["patient"]`. A `Practitioner` link never carries `patient`; for each of `doctor` and `nurse` the
 Practitioner must have an **active** `PractitionerRole` with the same `code`, otherwise 422 `role-mismatch`. `admin` and `dpo` need no `PractitionerRole`.
 Writes go to `identity_links` ([03 §2.2](03-db-clinical-document.md)): one account per profile (unique `fhirUser`).
+An inactive Practitioner or a merged-away Patient is also reported as 404 `not-found`.
 
 Locking takes effect within <= 60 seconds (AC-08.1): the write is immediate, and every service that resolves identities holds a link for at most 60 seconds
 (`IdentityResolver`). Layer 3 checks `disabled` on every request, so an unexpired token (<= 15 minutes) is rejected too. Both calls write audit through the
 matrix decision (`update` on `User`, actor = the Admin, allow and deny). Admin **cannot** read clinical data.
 
-`role-mismatch` is a clinical business rule; it is not yet in the shared error catalog (07 §5), which belongs to the Solution Architect.
+`role-mismatch` is listed in the 422 row of the error catalog (07 §5); its shared `ErrorCatalog` entry arrives with SHR-32 (#665).
 
 ## 9. Profile links: relatives and claiming a record (C22 to C29)
 

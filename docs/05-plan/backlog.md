@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **351 tasks**, **1213 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **358 tasks**, **1233 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -11,16 +11,16 @@ Total: **351 tasks**, **1213 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W1 | 12 |  |  |  |
 | W2 | 21 |  |  | 4 |
 | W3 | 10 |  | 27 |  |
-| W4 | 3 | 22 | 27 | 27 |
+| W4 | 8 | 22 | 27 | 27 |
 | W5 | 17 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
-| W7 | 37 | 30 | 30 | 30 |
-| W8 | **63** | 4 | 25 | 8 |
+| W7 | 44 | 30 | 30 | 30 |
+| W8 | **71** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **260** | **120** | **169** | **128** |
+| **Total** | **280** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -60,6 +60,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | ARC-07 | ENABLER | Event contracts (JSON Schema) | Schemas for AppointmentBooked/Cancelled, DocumentUploaded, AuditRecorded, NoShowScored; versioned | SA | 4 | ARC-05 | P2 | P2 |
 | ARC-20 | ENABLER | Reference data: ICD-10 (~300 codes), LOINC for vital signs/lab tests, CodeSystem for specialties and cancellation reasons | JSON files in contracts/terminology, loader script, used by CLN-16/CLN-18 | SA | 4 | ARC-03 | P2 | 01-domain-model §3 |
 | ARC-13 | ENABLER | Sprint review + planning S1 | Demo, update backlog status and risks; short minutes | SA | 2 |  | S1 | PM |
+| ARC-21 | ENABLER | Include the terminology catalogue in the Docker build context | Docker-built scheduling and clinical images contain BOOT-INF/classes/terminology/*.json; the SCH-08 job and S1 schedule creation work from the image | SA | 2 | ARC-20 | P3 | 01-domain-model §3 |
 | ARC-14 | ENABLER | Sprint review + planning S2 | Demo, update backlog status and risks; short minutes | SA | 2 |  | S2 | PM |
 | ARC-15 | ENABLER | Sprint review + planning S3 | Demo, update backlog status and risks; short minutes | SA | 2 |  | S3 | PM |
 | ARC-08 | ENABLER | STRIDE threat model | Threat table per data flow; mitigations trace back to NFR-SEC | SA | 6 | ARC-04 | S4 | P3 |
@@ -126,6 +127,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | CIT-09 | US-070 | Versioned template releases | vX.Y.Z tags on shp-platform-templates; charts pushed as OCI to ACR; CHANGELOG | SA | 2 | CIT-01, GOP-01 | S4 | ADR-0010 |
 | CIT-10 | US-070 | Internal Maven packaging for shared libraries | Libraries published to GitHub Packages (Maven) with versions; services reference by version | SA | 3 | SHR-01 | S4 | ADR-0010 |
 | CIT-11 | US-070 | Dependency-Check suppression file support and a dated suppression for dev-only picomatch | pr-checks passes dependency-check-suppressions.xml to Dependency-Check when it exists (--failOnCVSS 7 kept); the app repo suppresses only npm picomatch 4.0.7 (GHSA-fc5q-39xc-vjpf, no fixed version, dev-only) with notes, review date and an until expiry; policy documented in docs/04-devops; pin bumped to the templates tag that has the feature; checks / dependency-check green | SA | 3 | CIT-07 | S4 | ADR-0009, NFR-SEC6 |
+| CIT-12 | US-070 | Stop intermittent Maven 401 from GitHub Packages in CI and Docker builds | Default Maven builds, with no credentials, never request maven.pkg.github.com (GitHub Packages is declared only in distributionManagement and in a profile active when shp.libs.version is set; the HAPI FHIR github-releases repository is mirrored to Central in .mvn/settings.xml); a clean-repository build of services/scheduling and libs/java/shp-messaging and a Docker build show zero requests to it; ci / verify and container / build green | SA | 2 | CIT-10 | S4 | ADR-0010 |
 
 ## GOP — Helm & GitOps (Argo CD)
 
@@ -173,6 +175,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | LOC-08 | ENABLER | Full local dev profile: ClamAV, OpenSearch, Ollama, MLflow, Loki/Grafana/OTel; seed synthetic data into the cluster | `make up PROFILE=full` provisions infrastructure for every service; healthchecks; resource requirements documented | SA | 3 | LOC-01 | P1 | ADR-0011, NFR-I3 |
 | LOC-05 | ENABLER | Run services on the local cluster with the shared microservice chart (make deploy SVC=...) | Sample service builds, loads into kind and runs with the same chart used for UAT/prod; debug guide included | SA | 3 | GOP-01, LOC-03, LOC-01 | P3 | ADR-0011, NFR-I3 |
 | LOC-07 | ENABLER | Developer onboarding guide | From cloning the repo to running locally and opening a first PR in < 1 hour | SA | 2 | LOC-01, LOC-03 | P3 | PM |
+| LOC-09 | ENABLER | Give local services their svc-* client secret and a stable Keycloak issuer (make deploy) | `make -C dev deploy` gives each Java service its svc-* client secret (read from the Keycloak admin API, never stored in git) and the token endpoint, and Keycloak issues one stable issuer, so a workload token from a pod passes clinical GET /internal/v1/identity/{subject} (200; 401 without a token, 403 with a user token) on the local cluster | SA | 3 | LOC-05 | P1 | ADR-0011, docs/04-devops/keycloak.md |
 
 ## SCF — Scaffold service (SA)
 
@@ -244,6 +247,8 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | SHR-11 | ENABLER | Mongo search executor: compile search criteria to query + use index | Query plan uses IXSCAN for main queries | SA | 3 | SHR-10 | S1 | 03 §2.6 |
 | SHR-12 | US-035 | Idempotency-Key for MongoDB (document service) | Same key → same result; different body 422 | SA | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
 | SHR-27 | US-047 | Authz: emit audit for every decision (allow and deny) | Every Deny emits audit outcome=denied with a reason code; tests | SA | 2 | SHR-24, SHR-09 | S1 | 05 §1, E11(pub) |
+| SHR-32 | US-007 | Service token interceptor for /internal calls: client credentials, cache, wiring in four services | Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak | SA | 4 | SHR-21, IAM-02 | S4 | 15 §7, 07 §5 |
+| SHR-31 | ENABLER | Service Bus binder wiring in shp-messaging: session consumer, broker-owned 5 deliveries, namespace config, binder tests | With SHP_MESSAGING_BINDER=servicebus the context starts and bindings resolve to topic shp-events, session-enabled, 1 in-process attempt; a send/receive/DLQ check on the emulator or a real namespace is recorded | SA | 4 | SHR-08 | S5 | ADR-0019, 13 §1.1 |
 
 ## PY — Shared libraries (Python, for ai/ml, SA)
 
@@ -258,6 +263,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | PY-08 | US-055 | Router: model chain per task, timeout, failover to next model, final result when chain exhausted | Record fallbackLevel; test all error branches | SA | 4 | PY-07 | P2 | 06 §4 |
 | PY-04 | US-047 | Audit emitter Python (E11) for AI/ML | Does not log question content or PII; test | SA | 2 | PY-03 | S1 | E11(pub), 12 §0 |
 | PY-09 | US-055 | Circuit breaker + token/day quota + per-model metrics | Circuit opens after 5 failures/60s; over budget → ai-budget-exceeded | SA | 3 | PY-08 | S1 | 06 §4, NFR-C2 |
+| PY-10 | ENABLER | Python library: type-safe pika consumer loop (mypy 2.4.1 with pika 1.5.0) | A message with no method, delivery tag or body is skipped; mypy passes on libs/python and on the synced copies in services/ai and services/ml; tests | SA | 1 | PY-03 | S4 | 13 §1 |
 
 ## DAT — Synthetic data
 

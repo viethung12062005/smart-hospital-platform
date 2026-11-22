@@ -3,6 +3,8 @@ image:
   repository: localhost/shp-document
   tag: dev
 env:
+  # Audience isolation (ADR-0017): this service accepts tokens issued for svc-document (service tokens) and shp-api (user tokens).
+  OIDC_AUDIENCE: svc-document
   OTEL_SERVICE_NAME: document
   SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true
   # Blob container names (05-storage-audit-blob §2). The connection string itself comes from
@@ -10,3 +12,5 @@ env:
   SHP_BLOB_DOCUMENTS_CONTAINER: documents
   SHP_BLOB_QUARANTINE_CONTAINER: quarantine
   SHP_BLOB_KB_CONTAINER: kb
+  # Azurite starts with no containers; create them on first use (never set in the cloud).
+  SHP_BLOB_CREATE_CONTAINERS: "true"

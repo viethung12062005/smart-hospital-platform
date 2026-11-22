@@ -65,6 +65,12 @@ public final class ErrorCatalog {
                 "Trạng thái hiện tại không cho phép thao tác này.",
                 "The current state does not allow this."),
             e(
+                "already-registered",
+                409,
+                "conflict",
+                "Tài khoản này đã có hồ sơ bệnh nhân.",
+                "This account already has a patient record."),
+            e(
                 "version-conflict",
                 412,
                 "conflict",
@@ -108,6 +114,12 @@ public final class ErrorCatalog {
                 "Nghi ngờ trùng hồ sơ bệnh nhân.",
                 "A duplicate patient is suspected."),
             e(
+                "value-out-of-range",
+                422,
+                "business-rule",
+                "Giá trị nằm ngoài khoảng hợp lý.",
+                "The value is outside the plausible range."),
+            e(
                 "upload-incomplete",
                 422,
                 "business-rule",
@@ -119,6 +131,12 @@ public final class ErrorCatalog {
                 "business-rule",
                 "Yêu cầu xác nhận đã hết hạn.",
                 "The confirmation has expired."),
+            e(
+                "role-mismatch",
+                422,
+                "business-rule",
+                "Vai trò không khớp với hồ sơ liên kết.",
+                "The role does not match the linked profile."),
             e(
                 "precondition-required",
                 428,

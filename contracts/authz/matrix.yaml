@@ -3,6 +3,9 @@
 #   - the generated test suite (SHR-09): each (resource, action) × 5 roles × condition combinations
 # Docs: docs/02-requirements/access-control-matrix.md, docs/03-architecture/detailed-design/15-authorization.md
 # Rule: DENY by default. An action is allowed only when a rule matches and every `when` condition holds.
+# Service-to-service calls are not matrix rows: /internal endpoints require a service token whose `aud` is the target
+# only (`svc-<target>`, never the user audience `shp-api`) plus the role internal.<target> and an allowed `azp`
+# (require_service / ShpJwt.requireService; ADR-0017 section 1 and 7 of the detailed design).
 # Changing this file requires a PR approved by the SA (CODEOWNERS) and `python3 -I tools/contracts/validate.py` must be green.
 version: 1
 
@@ -27,8 +30,10 @@ predicates:
 # Each resource declares its valid actions; `clinical: true` means clinical data (admin/dpo may never touch it).
 resources:
   Patient:         { clinical: true,  actions: [read, create, update, search] }
+  Schedule:        { clinical: false, actions: [read, create, update, search] }
   Slot:            { clinical: false, actions: [read, create, update, block] }
   Appointment:     { clinical: true,  actions: [book, cancel, read] }
+  AppointmentHistory: { clinical: false, actions: [read] }
   Encounter:       { clinical: true,  actions: [read, create, update] }
   Observation:     { clinical: true,  actions: [read, create] }
   Condition:       { clinical: true,  actions: [create] }
@@ -42,6 +47,8 @@ resources:
   Audit:           { clinical: false, actions: [read, export, update, delete] }
   BreakGlass:      { clinical: false, actions: [start] }
   Backup:          { clinical: false, actions: [run, restore] }
+  Device:          { clinical: false, actions: [create, delete] }
+  NotificationPreference: { clinical: false, actions: [read, update] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -56,12 +63,24 @@ rules:
   - { id: PAT-READ-DOC-BG, resource: Patient, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
   - { id: PAT-READ-NUR,    resource: Patient, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: PAT-CREATE-NUR,  resource: Patient, action: create, role: nurse,   when: [] }
+  - { id: PAT-CREATE-PAT,  resource: Patient, action: create, role: patient, when: [] }
   - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-GUARDIAN, resource: Patient, action: update, role: patient, when: [guardian], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
   - { id: PAT-SEARCH-DOC,  resource: Patient, action: search, role: doctor,  when: [] }
   - { id: PAT-SEARCH-NUR,  resource: Patient, action: search, role: nurse,   when: [] }
-  # Schedule / Slot
+  # Schedule
+  - { id: SCHED-CREATE-NUR, resource: Schedule, action: create, role: nurse,  when: [] }
+  - { id: SCHED-CREATE-ADM, resource: Schedule, action: create, role: admin,  when: [] }
+  - { id: SCHED-READ-NUR,   resource: Schedule, action: read,   role: nurse,  when: [] }
+  - { id: SCHED-READ-ADM,   resource: Schedule, action: read,   role: admin,  when: [] }
+  - { id: SCHED-READ-DOC,   resource: Schedule, action: read,   role: doctor, when: [self-practitioner] }
+  - { id: SCHED-SEARCH-NUR, resource: Schedule, action: search, role: nurse,  when: [] }
+  - { id: SCHED-SEARCH-ADM, resource: Schedule, action: search, role: admin,  when: [] }
+  - { id: SCHED-SEARCH-DOC, resource: Schedule, action: search, role: doctor, when: [] }
+  - { id: SCHED-UPD-NUR,    resource: Schedule, action: update, role: nurse,  when: [] }
+  - { id: SCHED-UPD-ADM,    resource: Schedule, action: update, role: admin,  when: [] }
+  # Slot
   - { id: SLOT-READ-PAT,   resource: Slot, action: read,   role: patient, when: [] }
   - { id: SLOT-READ-DOC,   resource: Slot, action: read,   role: doctor,  when: [] }
   - { id: SLOT-READ-NUR,   resource: Slot, action: read,   role: nurse,   when: [] }
@@ -83,6 +102,8 @@ rules:
   - { id: APPT-READ-LINKED, resource: Appointment, action: read,   role: patient, when: [linked] }
   - { id: APPT-READ-DOC,   resource: Appointment, action: read,   role: doctor,  when: [self-practitioner] }
   - { id: APPT-READ-NUR,   resource: Appointment, action: read,   role: nurse,   when: [] }
+  - { id: APPT-HIST-NUR,   resource: AppointmentHistory, action: read,   role: nurse,   when: [] }
+  - { id: APPT-HIST-ADM,   resource: AppointmentHistory, action: read,   role: admin,   when: [] }
   # Encounter
   - { id: ENC-READ-PAT,    resource: Encounter, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
   - { id: ENC-READ-LINKED, resource: Encounter, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
@@ -130,3 +151,12 @@ rules:
   - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
   - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "via the operations pipeline, with approval" }
   - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "via the operations pipeline, with approval" }
+  # Notification devices and preferences (the owner always comes from the identity, 11 §1)
+  - { id: DEV-REG-PAT,     resource: Device, action: create,     role: patient, when: [] }
+  - { id: DEV-REG-DOC,     resource: Device, action: create,     role: doctor,  when: [] }
+  - { id: DEV-REG-NUR,     resource: Device, action: create,     role: nurse,   when: [] }
+  - { id: DEV-UNREG-PAT,   resource: Device, action: delete,     role: patient, when: [own] }
+  - { id: DEV-UNREG-DOC,   resource: Device, action: delete,     role: doctor,  when: [self-practitioner] }
+  - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
+  - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
+  - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }

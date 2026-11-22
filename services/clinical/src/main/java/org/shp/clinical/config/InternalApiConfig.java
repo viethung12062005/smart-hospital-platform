@@ -23,21 +23,22 @@ class InternalApiConfig {
   /**
    * Callers of {@code /internal/v1/identity/*} (09 §4): every service that resolves identities.
    * Their workload token carries the role of the target, {@code internal.clinical}, and {@code azp
-   * = svc-<caller>} (15 §7).
+   * = svc-<caller>} (15 §7); the two are checked by the shared guard {@code ShpJwt.requireService}.
+   * The default matches {@code identity/realm/services.json}, the table of who may call whom
+   * (IAM-02): all four services that read clinical, and no {@code svc-audit} because that caller
+   * does not exist.
    */
   @Bean
   FilterRegistrationBean<InternalIdentityFilter> internalIdentityFilter(
       IdentityAccounts accounts,
       ProfileLinks links,
       Clock clock,
-      @Value("${shp.clinical.internal-identity.required-role:internal.clinical}")
-          String requiredRole,
       @Value(
-              "${shp.clinical.internal-identity.allowed-clients:svc-scheduling,svc-document,svc-notification,svc-audit,svc-ai}")
+              "${shp.clinical.internal-identity.allowed-clients:svc-scheduling,svc-document,svc-notification,svc-ai}")
           Set<String> allowedClients) {
     var registration =
         new FilterRegistrationBean<>(
-            new InternalIdentityFilter(accounts, links, clock, requiredRole, allowedClients));
+            new InternalIdentityFilter(accounts, links, clock, allowedClients));
     registration.addUrlPatterns("/internal/v1/identity/*");
     // After the Spring Security filter chain (order -100) so the validated token is available.
     registration.setOrder(Ordered.LOWEST_PRECEDENCE - 100);

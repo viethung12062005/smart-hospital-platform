@@ -12,6 +12,10 @@ import org.springframework.stereotype.Repository;
 /**
  * Reads {@code patients}, {@code practitioners} and {@code practitioner_roles} (03 §2.2; the
  * administrative fields {@code _id} and {@code search.*}).
+ *
+ * <p>Depends on CLN-10 (#697) for {@code practitioners} and {@code practitioner_roles}: until that
+ * task merges, linking a Practitioner profile finds neither collection and every staff link is
+ * refused as an unknown profile. Patient linking does not depend on it.
  */
 @Repository
 public class MongoProfileDirectory implements ProfileDirectory {

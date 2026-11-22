@@ -89,7 +89,7 @@ class RabbitBus:
         try:
             while not stop.is_set():
                 method, props, body = ch.basic_get(consumer, auto_ack=False)
-                if method is None:
+                if method is None or method.delivery_tag is None or body is None:
                     conn.sleep(0.5)
                     continue
                 headers = (props.headers or {}) if props else {}
