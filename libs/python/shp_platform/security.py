@@ -109,6 +109,8 @@ def verify_token(token: str, settings: AuthSettings, key_resolver: KeyResolver) 
         )
     except (jwt.PyJWTError, ValueError) as exc:
         raise ShpError("unauthenticated") from exc
+    if claims.get("typ") == "ID":  # An OIDC ID token is not an API access token.
+        raise ShpError("unauthenticated")
     roles = roles_of(claims)
     if settings.require_mfa_for_staff and roles & STAFF_ROLES:
         amr = claims.get("amr")
