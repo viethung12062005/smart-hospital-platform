@@ -7,20 +7,20 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 82 (40%) |
-| Fully automated | 48 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 48 |
+| Automated or partially automated | 83 (40%) |
+| Fully automated | 49 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 49 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 5 | 3 | 36 | 0 |
+| clinical | 44 | 5 | 4 | 35 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
 | privacy-admin | 15 | 3 | 0 | 12 | 0 |
-| scheduling | 21 | 13 | 4 | 4 | 0 |
+| scheduling | 21 | 14 | 3 | 4 | 0 |
 | security | 29 | 8 | 9 | 12 | 0 |
 | system | 10 | 3 | 2 | 5 | 0 |
 
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 20 | 10 | 60 | 0 |
+| api | 90 | 21 | 10 | 59 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -77,7 +77,6 @@
 | TC-AC-LK.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-LK.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-PG.1 | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-PX.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-RE.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
@@ -130,7 +129,7 @@
 | AC-02.1 | TC-AC-02.1 (api, P1) | automated |
 | AC-02.2 | TC-AC-02.2 (api, P1) | automated |
 | AC-02.3 | TC-AC-02.3 (api, P0) | partial |
-| AC-03.1 | TC-AC-03.1 (api, P1) | partial |
+| AC-03.1 | TC-AC-03.1 (api, P1) | automated |
 | AC-03.2 | TC-AC-03.2 (api, P0) | automated |
 | AC-03.3 | TC-AC-03.3 (api, P0) | automated |
 | AC-03.4 | TC-AC-03.4 (api, P0) | automated |
@@ -214,7 +213,7 @@
 | AC-LK.1 | TC-AC-LK.1 (api, P0) | planned |
 | AC-LK.2 | TC-AC-LK.2 (api, P0) | planned |
 | AC-LK.3 | TC-AC-LK.3 (api, P0) | planned |
-| AC-LK.4 | TC-AC-LK.4 (api, P0) | planned |
+| AC-LK.4 | TC-AC-LK.4 (api, P0) | partial |
 | AC-LP.1 | TC-AC-LP.1 (api, P0) | automated |
 | AC-MA.1 | TC-AC-MA.1 (api, P0) | automated |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | planned |
