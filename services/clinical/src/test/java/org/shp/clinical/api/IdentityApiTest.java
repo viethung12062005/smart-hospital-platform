@@ -135,8 +135,11 @@ class IdentityApiTest {
   }
 
   private void practitioner(String id, String roleCode) {
+    // A real Practitioner always has a staff code (01 §4.2), and CLN-10 made it unique.
     mongo.insert(
-        new Document("_id", id).append("search", new Document("active", true)), "practitioners");
+        new Document("_id", id)
+            .append("search", new Document("active", true).append("staffCode", "NV-T-" + id)),
+        "practitioners");
     if (roleCode != null) {
       mongo.insert(
           new Document("_id", "role-" + id)
