@@ -5,9 +5,9 @@ package org.shp.security;
  * /internal/*} API (15 §7, 07 §8).
  */
 public interface ServiceTokenProvider {
-  /** A currently valid access token. Never log it. */
-  String token();
+  /** A currently valid access token for the named target service. Never log it. */
+  String token(String target);
 
-  /** Forget the cached token, for example after the callee answered 401. */
-  void invalidate();
+  /** Forget the cached token for the named target, for example after the callee answered 401. */
+  void invalidate(String target);
 }

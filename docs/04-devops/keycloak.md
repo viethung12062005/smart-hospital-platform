@@ -97,23 +97,26 @@ finds the client by (issuer, `sub` = `system:serviceaccount:shp-apps:<service>`)
 - The fallback (client secret) stays available: set `serviceClientAuth` to `client-secret` in an overlay. Locally this is the
   mode used: Keycloak generates the secret at import, nothing is stored in git; read it with the admin API.
 
-How it is built: `identity/realm/services.json` lists each caller and the services it may call. The generator creates, per
-caller, the confidential client `svc-<caller>` (service account only, no browser or password flow) with roles
-`internal.<target>` on its service-account user, a `roles` claim, and `aud` = **only** the target services
-(`svc-<target>`). In the cluster realm the identity provider `kubernetes` takes its issuer from
-`${SHP_K8S_OIDC_ISSUER}` (chart value `kubernetesClientAuth.issuer`).
+How it is built: `identity/realm/services.json` lists each caller and the services it may call. The generator creates
+the confidential client `svc-<caller>` with roles `internal.<target>` for its `calls` list. The caller sends exactly one
+of its optional OAuth scopes, `scope=call-<target>`; that scope maps only `svc-<target>` into the access token.
+Keycloak validates the scope assignment, and built-in client policies reject missing or combined target scopes.
+These policies use strict matching: if the grant or scope condition cannot evaluate an event, the policy does not
+apply. This keeps the policies off unrelated flows such as browser authorization-code redemption.
+An `audience` parameter does not select a target for client credentials. In the cluster realm the identity provider
+`kubernetes` takes its issuer from `${SHP_K8S_OIDC_ISSUER}` (chart value `kubernetesClientAuth.issuer`).
 
-**Audience is an isolation boundary (ADR-0017).** Two audience classes exist:
+**Audience is an isolation boundary (ADR-0017).**
 
-| Token | `aud` | Accepted by |
+| Access token | `aud` | Accepted by |
 |---|---|---|
-| User (interactive, `shp-web`/`shp-test`) | `shp-api` | every service |
-| Service (client credentials, `svc-<caller>`) | the target services only (`svc-<target>`), never `shp-api` | the target only |
+| Interactive (`shp-web`; `shp-test` is local only) | `shp-api` only | every service |
+| Workload (client credentials, `svc-<caller>`) | one selected `svc-<target>` | that target only |
+| Delegated (exchange-only client `shp-api`) | one selected `svc-<target>` | that target only |
 
 A service sets `OIDC_AUDIENCE=svc-<name>` and its validator accepts that value or `shp-api` (Java
-`ShpJwt.acceptedAudiences`, Python `AuthSettings.accepted_audiences`); a token issued for another service is refused
-before any role is read. A leaked service token therefore opens nothing beyond the services that caller may call, and
-it cannot be replayed against a user API.
+`ShpJwt.acceptedAudiences`, Python `AuthSettings.accepted_audiences`). Java and Python cache workload tokens
+separately by target. Do not reuse a target-bound interceptor or token for another service.
 
 The endpoint side: `require_service(<target>, "svc-<caller>")` (Python `Authenticator.require_service`, Java
 `ShpJwt.requireService`) checks `azp` against the allow-list and requires the role `internal.<target>`. Use the guard on
@@ -154,30 +157,31 @@ the "Standard token exchange" switch on, that the subject token must name the re
 must be a client id, and how `audience` filters the `aud` claim.
 
 How it is configured (`identity/realm/services.json`, generated into both realms):
-- Only `svc-ai` has `standard.token.exchange.enabled=true`; its `exchange` list (`clinical`, `scheduling`) names the services it may
-  exchange user tokens for. Every other client, and the public web client, has the switch off.
-- The user's access token must contain `svc-ai` in `aud`, so the web clients (`shp-web`, local `shp-test`) carry an audience
-  mapper for every requester in `services.json`. The web app sends the user token to the gateway, which forwards `/api/v1/ai/*` to `ai`.
-- The `ai` client requests `audience=svc-<target>` only (`TokenExchanger.exchange(token, target)`). Keycloak refuses an audience
-  that is not already available to the client ("Requested audience not available"), so `services.json` puts the exchange targets in
-  `svc-ai`'s audience mappers as well. That client-credentials token can name those services but still carries `internal.*` only for
-  its `calls`, so `require_service` refuses it where it has no role. `aud` is an isolation boundary: the exchanged token carries the
-  target's `svc-<target>` and never `shp-api`.
 
-What the exchanged token looks like (tested): `sub` = the user's `sub`, `azp` = `svc-ai`, `aud` = `[svc-clinical]` (the target
-only), `roles` = the user's roles (no `internal.*`), the user's lifetime limits. The matrix therefore applies to the user
-unchanged (15 section 7).
+- Only the confidential `shp-api` client enables standard exchange. It has no service account, browser or password grant.
+  Keycloak's existing requester-audience check succeeds because `shp-api` is already the sole interactive access-token
+  audience. There is no `svc-ai` audience mapper on either web client. Workload client `svc-ai` cannot exchange.
+- AI requests `scope=exchange-<target>` and RFC 8693 `audience=svc-<target>`. The exchange-only client has optional
+  scopes for its `exchange` list only. Keycloak rejects an absent or combined target selection, a mismatched audience,
+  or a target not granted for exchange, even if AI is allowed to call it via client credentials.
+- The returned access token keeps the user's `sub`, roles and `amr` (including MFA), is capped by the subject token's
+  lifetime, and has `azp=shp-api` and only the selected target audience. It has no `internal.*` role. Standard v2
+  does not add `act`: audit can identify AI's dedicated requester by `azp=shp-api`. A revoked or disabled user cannot
+  obtain another exchange, but an existing token remains valid until expiry. Keycloak also supports an explicit OIDC
+  ID-token response; that is not an access token, and Java/Python reject Keycloak ID tokens even with `aud=shp-api`.
 
-Findings and limits:
-- A token for a target that is not in the caller's `exchange` list (for example `ml`) is refused: the audience cannot be widened.
-- `amr` (IAM-10): the exchanged token of a staff user keeps `amr` containing `mfa` and passes the shared rules as staff
-  (`KeycloakTokenExchangeTest`); `svc-ai` carries the AMR mapper for this. It was not testable before IAM-10 because no staff token carried `amr`.
-- Standard v2 does not add an `act` claim (delegation is the preview `token-exchange-delegation`); audit must record `ai` through `azp`.
-- Revoking or disabling the user stops new exchanges (the subject token is validated) but an already exchanged token lives until `exp`.
+Provisioning is separate from the workload client's: set AI's `EXCHANGE_CLIENT_SECRET` locally via the secret
+injection path, or `EXCHANGE_CLIENT_ASSERTION_FILE` in the cluster. The assertion must be issued for
+`system:serviceaccount:shp-apps:ai-exchange` with the realm issuer audience. Keycloak resolves federated clients by issuer
+and subject, so the ordinary AI pod's `ai` ServiceAccount token cannot authenticate as `shp-api`; do not reuse the
+ordinary AI credential or grant broad token-minting permissions. Provisioning and rotation of the separate assertion
+through a dedicated identity are rollout prerequisites; this repository does not provision it. Apply the new client,
+client scopes and client policies together and remove the obsolete direct audience mappers from existing realms
+(section 2). Previously issued access tokens are unaffected until they expire or are revoked.
 
-Tested in `KeycloakTokenExchangeTest` (container, Keycloak 26.8.2): sub kept, `aud` = `svc-<target>` only (an exchanged token for
-`scheduling` is refused by `clinical`), shared JWT rules, five other service clients and the public client refused, target outside the
-exchange list refused, tampered subject token refused, and the client switch is what allows the exchange (off: refused, on: accepted).
+`KeycloakTokenExchangeTest` uses a real browser authorization-code flow and live token endpoint. It also checks
+target isolation, MFA retention, disabled exchange, other clients, tampering, the workload-only destination and
+missing/combined targets. `KeycloakFederatedClientAuthTest` exercises the cluster realm with an isolated test issuer.
 
 ## 9. Hardening (IAM-06)
 

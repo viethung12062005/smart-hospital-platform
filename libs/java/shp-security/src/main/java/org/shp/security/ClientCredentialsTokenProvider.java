@@ -15,7 +15,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +41,9 @@ public final class ClientCredentialsTokenProvider implements ServiceTokenProvide
   private final Duration timeout;
   private final HttpClient http;
   private final Clock clock;
+  private static final Pattern SERVICE = Pattern.compile("[a-z][a-z0-9-]*");
   private final ReentrantLock lock = new ReentrantLock();
-  private volatile Cached cached;
+  private final Map<String, Cached> cached = new ConcurrentHashMap<>();
 
   private record Cached(String token, Instant refreshAt, Instant expiresAt) {}
 
@@ -71,22 +74,25 @@ public final class ClientCredentialsTokenProvider implements ServiceTokenProvide
   }
 
   @Override
-  public String token() {
-    Cached c = cached;
+  public String token(String target) {
+    if (!SERVICE.matcher(target).matches()) {
+      throw new IllegalArgumentException("Expected one target service name");
+    }
+    Cached c = cached.get(target);
     Instant now = clock.instant();
     if (c != null && now.isBefore(c.refreshAt())) {
       return c.token();
     }
     lock.lock();
     try {
-      c = cached;
+      c = cached.get(target);
       now = clock.instant();
       if (c != null && now.isBefore(c.refreshAt())) {
         return c.token();
       }
       try {
-        c = fetch(now);
-        cached = c;
+        c = fetch(now, target);
+        cached.put(target, c);
         return c.token();
       } catch (ServiceTokenException e) {
         if (c != null && now.isBefore(c.expiresAt())) {
@@ -101,16 +107,16 @@ public final class ClientCredentialsTokenProvider implements ServiceTokenProvide
   }
 
   @Override
-  public void invalidate() {
-    cached = null;
+  public void invalidate(String target) {
+    cached.remove(target);
   }
 
-  private Cached fetch(Instant now) {
+  private Cached fetch(Instant now, String target) {
     if (!hasCredentials()) {
       throw new ServiceTokenException(
           "No client secret or assertion file is configured for client " + clientId);
     }
-    var form = new StringBuilder("grant_type=client_credentials");
+    var form = new StringBuilder("grant_type=client_credentials&scope=call-").append(enc(target));
     var request = HttpRequest.newBuilder(endpoint).timeout(timeout);
     request.header("Content-Type", "application/x-www-form-urlencoded");
     request.header("Accept", "application/json");
