@@ -79,7 +79,9 @@ public class PatientSearchService {
     SearchQuery query = parser.parse("Patient", params);
     List<Document> found;
     if (birth == null) {
-      found = executor.search(query).items();
+      Query q = executor.plan(query, null).query();
+      q.addCriteria(Criteria.where("deleted").ne(true));
+      found = mongo.find(q, Document.class, "patients").stream().limit(query.count()).toList();
     } else {
       // CLN-03 stores search.birthDate as the FHIR string yyyy-MM-dd (the CLN-04 duplicate check
       // compares strings), while the executor compares dates: match the day as a string here.
@@ -88,11 +90,11 @@ public class PatientSearchService {
               ? executor.plan(query, null).query()
               : new Query().limit(query.count());
       q.addCriteria(Criteria.where("search.birthDate").is(birth));
+      q.addCriteria(Criteria.where("deleted").ne(true));
       found = mongo.find(q, Document.class, "patients").stream().limit(query.count()).toList();
     }
     Set<String> careFor = doctorId == null ? Set.of() : careWith(doctorId, found);
     return found.stream()
-        .filter(d -> !Boolean.TRUE.equals(d.getBoolean("deleted")))
         .map(d -> shorten(d, doctorId != null && !careFor.contains(d.getString("_id"))))
         .toList();
   }

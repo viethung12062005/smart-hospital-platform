@@ -22,6 +22,9 @@ import org.shp.clinical.infra.PatientRepository;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.fhir.FhirJson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 /**
  * CLN-08 / C6 (US-031; AC-06.1, AC-06.2) on real HTTP, real authorization and a real MongoDB. Fake
@@ -32,6 +35,7 @@ class PatientSearchApiTest extends ClinicalApiTestBase {
 
   String an;
   String anMrn;
+  String van;
   String nurse;
   String doctor;
   String patient;
@@ -41,7 +45,7 @@ class PatientSearchApiTest extends ClinicalApiTestBase {
     Entry e = newPatient("Nguyễn", "Văn An", "+84901000021", "1985-03-14");
     an = e.id();
     anMrn = e.search().getString("mrn");
-    newPatient("Nguyễn", "Thị Vân", "+84901000022", "1990-07-21");
+    van = newPatient("Nguyễn", "Thị Vân", "+84901000022", "1990-07-21").id();
     newPatient("Trần", "Văn Bình", "+84901000023", "1975-11-02");
     long n = System.nanoTime();
     nurse = "nurse-c6-" + n;
@@ -115,6 +119,16 @@ class PatientSearchApiTest extends ClinicalApiTestBase {
         .containsExactly(an);
     assertThat(results(search(token(nurse, "nurse"), "birthdate", "1985-03-14"))).hasSize(1);
     assertThat(results(search(token(nurse, "nurse"), "phone", "not-a-phone"))).isEmpty();
+  }
+
+  @Test
+  void deletedRecordsAreExcludedBeforeTheResultLimitIsApplied() throws Exception {
+    mongo.updateFirst(
+        Query.query(Criteria.where("_id").is(an)), Update.update("deleted", true), "patients");
+
+    assertThat(results(search(token(nurse, "nurse"), "name", "nguyen", "_count", "1")))
+        .extracting(p -> p.getIdElement().getIdPart())
+        .containsExactly(van);
   }
 
   @Test
