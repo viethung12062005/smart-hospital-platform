@@ -431,4 +431,25 @@ class NotificationApiTest {
     call("GET", "/api/v1/notifications/preferences", token("doctor", "doc"), null);
     assertThat(mongo.getCollection("outbox").countDocuments()).isGreaterThan(before);
   }
+
+  // ---------- NTF-10: N5/N6 authentication ----------
+
+  @Test
+  void n5RejectsUnauthenticatedRequestsWith401() throws Exception {
+    var response =
+        call(
+            "GET",
+            "/api/v1/notifications/reminders" + "?appointment=0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01",
+            null,
+            null);
+
+    assertThat(response.statusCode()).isEqualTo(401);
+  }
+
+  @Test
+  void n6RejectsUnauthenticatedRequestsWith401() throws Exception {
+    var response = call("GET", "/api/v1/notifications/dead-letters", null, null);
+
+    assertThat(response.statusCode()).isEqualTo(401);
+  }
 }
