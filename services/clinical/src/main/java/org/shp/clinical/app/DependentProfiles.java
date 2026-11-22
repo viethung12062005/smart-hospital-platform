@@ -24,6 +24,7 @@ import org.shp.clinical.infra.MongoProfileLinks;
 import org.shp.clinical.infra.PatientRepository;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.events.Uuids;
+import org.shp.web.errors.ErrorCatalog;
 import org.shp.web.errors.ErrorInfo;
 import org.shp.web.errors.ShpException;
 import org.springframework.data.domain.Sort;
@@ -45,22 +46,10 @@ public class DependentProfiles {
   static final Set<String> GENDERS = Set.of("male", "female", "other", "unknown");
   static final Set<String> COUNTED = Set.of("pending", "active");
 
-  /** 09 §9 codes not yet in the shared catalog (07 §5). */
-  public static final ErrorInfo NOT_A_DEPENDENT =
-      new ErrorInfo(
-          "not-a-dependent",
-          422,
-          "business-rule",
-          "Chỉ tạo hồ sơ cho người dưới 16 tuổi.",
-          "Only a person under 16 can be added.");
+  /** 09 §9 codes of the shared catalog (07 §5). */
+  public static final ErrorInfo NOT_A_DEPENDENT = ErrorCatalog.get("not-a-dependent");
 
-  public static final ErrorInfo PROFILE_LIMIT =
-      new ErrorInfo(
-          "profile-limit",
-          422,
-          "business-rule",
-          "Tài khoản đã quản lý số hồ sơ tối đa.",
-          "The account manages the maximum number of profiles.");
+  public static final ErrorInfo PROFILE_LIMIT = ErrorCatalog.get("profile-limit");
 
   /** A 09 §9 business rule refusal with its local catalog entry. */
   public static class RuleException extends RuntimeException {

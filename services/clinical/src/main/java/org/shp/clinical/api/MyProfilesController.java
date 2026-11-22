@@ -9,9 +9,8 @@ import org.shp.clinical.app.DependentProfiles;
 import org.shp.clinical.app.DependentProfiles.DependentRequest;
 import org.shp.clinical.app.DependentProfiles.Profile;
 import org.shp.web.auth.IdentityInterceptor;
-import org.shp.web.authz.ShpPublicEndpoint;
+import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.errors.ErrorWriter;
-import org.shp.web.errors.ShpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,8 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 09 §9 C22 {@code GET /api/v1/me/profiles} and C23 {@code POST /api/v1/me/profiles/dependents}
- * (patients). The caller's own account is the subject: no other account's profiles can be named,
- * so, like C2 {@code /me}, these are authenticated-only endpoints with a patient role check.
+ * (patients). The caller's own account is the subject: no other account's profiles can be named, so
+ * the matrix rules {@code PROF-READ-PAT} and {@code PROF-CREATE-PAT} (patient role, no other
+ * condition) are enough and every decision is audited.
  */
 @RestController
 public class MyProfilesController {
@@ -34,7 +34,7 @@ public class MyProfilesController {
   }
 
   @GetMapping("/api/v1/me/profiles")
-  @ShpPublicEndpoint
+  @RequireShpAuthz(resource = "PatientProfile", action = "read")
   public List<Profile> list(HttpServletRequest req) {
     Principal p = patient(req);
     return profiles.list(p.subject(), p.fhirUserId());
@@ -46,7 +46,7 @@ public class MyProfilesController {
   public record CreateDependent(Name name, String birthDate, String gender, Boolean declaration) {}
 
   @PostMapping(path = "/api/v1/me/profiles/dependents", consumes = "application/json")
-  @ShpPublicEndpoint
+  @RequireShpAuthz(resource = "PatientProfile", action = "create")
   public ResponseEntity<Profile> create(@RequestBody CreateDependent body, HttpServletRequest req) {
     Principal p = patient(req);
     DependentRequest r =
@@ -69,10 +69,6 @@ public class MyProfilesController {
   }
 
   private static Principal patient(HttpServletRequest req) {
-    Principal p = IdentityInterceptor.principal(req);
-    if (!p.roles().contains("patient")) {
-      throw new ShpException("forbidden", "Profiles are managed by patient accounts.");
-    }
-    return p;
+    return IdentityInterceptor.principal(req);
   }
 }

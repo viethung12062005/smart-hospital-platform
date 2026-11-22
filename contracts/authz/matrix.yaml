@@ -50,6 +50,7 @@ resources:
   Backup:          { clinical: false, actions: [run, restore] }
   Device:          { clinical: false, actions: [create, delete] }
   NotificationPreference: { clinical: false, actions: [read, update] }
+  PatientProfile:  { clinical: true,  actions: [read, create] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -177,3 +178,6 @@ rules:
   - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
   - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
   - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }
+  # Managed profiles of the caller's own account (C22, C23); the account always comes from the token
+  - { id: PROF-READ-PAT,   resource: PatientProfile, action: read,   role: patient, when: [] }
+  - { id: PROF-CREATE-PAT, resource: PatientProfile, action: create, role: patient, when: [] }
