@@ -170,12 +170,13 @@ A locked account gets 403 (`forbidden`) like on every other endpoint; no token g
 Role rules (15 §8): a `Patient` link carries exactly `["patient"]`. A `Practitioner` link never carries `patient`; for each of `doctor` and `nurse` the
 Practitioner must have an **active** `PractitionerRole` with the same `code`, otherwise 422 `role-mismatch`. `admin` and `dpo` need no `PractitionerRole`.
 Writes go to `identity_links` ([03 §2.2](03-db-clinical-document.md)): one account per profile (unique `fhirUser`).
+An inactive Practitioner or a merged-away Patient is also reported as 404 `not-found`.
 
 Locking takes effect within <= 60 seconds (AC-08.1): the write is immediate, and every service that resolves identities holds a link for at most 60 seconds
 (`IdentityResolver`). Layer 3 checks `disabled` on every request, so an unexpired token (<= 15 minutes) is rejected too. Both calls write audit through the
 matrix decision (`update` on `User`, actor = the Admin, allow and deny). Admin **cannot** read clinical data.
 
-`role-mismatch` is a clinical business rule; it is not yet in the shared error catalog (07 §5), which belongs to the Solution Architect.
+`role-mismatch` is listed in the 422 row of the error catalog (07 §5); its shared `ErrorCatalog` entry arrives with SHR-32 (#665).
 
 ## 9. Profile links: relatives and claiming a record (C22 to C29)
 
