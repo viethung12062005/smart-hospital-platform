@@ -47,10 +47,16 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
   TC-AC-08.1:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
-    gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aLockIsRejectedAtTheLatestWhenTheSixtySecondIdentityCacheExpires
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::internalLookupReturnsTheLinkAndTheLockStateImmediately
+  TC-AC-LP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
   TC-AC-RV.1:
     status: partial
     refs:
