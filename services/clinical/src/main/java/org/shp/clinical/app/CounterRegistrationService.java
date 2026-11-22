@@ -8,6 +8,7 @@ import org.hl7.fhir.r4.model.Patient;
 import org.shp.authz.AuthzDecision;
 import org.shp.authz.Principal;
 import org.shp.clinical.infra.PatientRepository;
+import org.shp.data.mongo.MongoOutbox;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.events.audit.AuditActions;
 import org.shp.events.audit.AuditRecord;
@@ -39,13 +40,19 @@ public class CounterRegistrationService {
 
   private final PatientRepository patients;
   private final DuplicatePatientCheck duplicates;
+  private final MongoOutbox outbox;
   private final AuditSink audit;
   private final Clock clock;
 
   public CounterRegistrationService(
-      PatientRepository patients, DuplicatePatientCheck duplicates, AuditSink audit, Clock clock) {
+      PatientRepository patients,
+      DuplicatePatientCheck duplicates,
+      MongoOutbox outbox,
+      AuditSink audit,
+      Clock clock) {
     this.patients = patients;
     this.duplicates = duplicates;
+    this.outbox = outbox;
     this.audit = audit;
     this.clock = clock;
   }
@@ -71,11 +78,15 @@ public class CounterRegistrationService {
     if (suspected && !forceCreate) {
       throw new ShpException("duplicate-patient-suspected");
     }
-    Entry created = patients.create(draft, "User/" + nurse.subject(), null);
-    if (suspected) {
-      auditOverride(created.id(), reason, nurse);
-    }
-    return created;
+    return patients.create(
+        draft,
+        "User/" + nurse.subject(),
+        null,
+        created -> {
+          if (suspected) {
+            outbox.add(auditOverride(created.id(), reason, nurse).toCloudEvent(clock));
+          }
+        });
   }
 
   /**
@@ -103,30 +114,29 @@ public class CounterRegistrationService {
   }
 
   /** The override of a suspected duplicate, with its reason (C3: "audited"). */
-  private void auditOverride(String patientId, String reason, Nurse nurse) {
+  private AuditRecord auditOverride(String patientId, String reason, Nurse nurse) {
     UUID uuid = null;
     try {
       uuid = UUID.fromString(patientId);
     } catch (IllegalArgumentException e) {
       uuid = null;
     }
-    audit.emit(
-        AuditRecordBuilder.build(
-            clock,
-            SERVICE,
-            AuditActions.CREATE,
-            AuditActions.SUCCESS,
-            new AuditRecord.Actor(
-                nurse.subject(),
-                "nurse",
-                nurse.practitionerId() == null ? null : "Practitioner/" + nurse.practitionerId()),
-            "Patient/" + patientId,
-            uuid,
-            null,
-            AUDIT_PREFIX + reason,
-            null,
-            null,
-            null));
+    return AuditRecordBuilder.build(
+        clock,
+        SERVICE,
+        AuditActions.CREATE,
+        AuditActions.SUCCESS,
+        new AuditRecord.Actor(
+            nurse.subject(),
+            "nurse",
+            nurse.practitionerId() == null ? null : "Practitioner/" + nurse.practitionerId()),
+        "Patient/" + patientId,
+        uuid,
+        null,
+        AUDIT_PREFIX + reason,
+        null,
+        null,
+        null);
   }
 
   private static String phone(Patient p) {
