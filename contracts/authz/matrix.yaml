@@ -36,7 +36,7 @@ resources:
   AppointmentHistory: { clinical: false, actions: [read] }
   Encounter:       { clinical: true,  actions: [read, create, update] }
   Observation:     { clinical: true,  actions: [read, create] }
-  Condition:       { clinical: true,  actions: [create] }
+  Condition:       { clinical: true,  actions: [read, create, update] }
   AllergyIntolerance: { clinical: true, actions: [read, create, update] }
   Document:        { clinical: true,  actions: [upload, download, release] }
   Assistant:       { clinical: true,  actions: [ask] }
@@ -123,8 +123,14 @@ rules:
   - { id: OBS-READ-NUR,    resource: Observation, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: OBS-CREATE-DOC,  resource: Observation, action: create, role: doctor,  when: [care] }
   - { id: OBS-CREATE-NUR,  resource: Observation, action: create, role: nurse,   when: [] }
-  # Condition (diagnosis): doctors only
+  # Condition (diagnosis): written by doctors with care only (09 C17); read like Observation
+  - { id: COND-READ-PAT,    resource: Condition, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
+  - { id: COND-READ-LINKED, resource: Condition, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
+  - { id: COND-READ-DOC,    resource: Condition, action: read,   role: doctor,  when: [care], purpose: TREAT }
+  - { id: COND-READ-DOC-BG, resource: Condition, action: read,   role: doctor,  when: [breakglass], purpose: ETREAT }
+  - { id: COND-READ-NUR,    resource: Condition, action: read,   role: nurse,   when: [], purpose: TREAT }
   - { id: COND-WRITE-DOC,  resource: Condition, action: create, role: doctor, when: [care] }
+  - { id: COND-UPDATE-DOC, resource: Condition, action: update, role: doctor, when: [care] }
   # AllergyIntolerance (09 C18): written by a doctor with care or a nurse; the patient reads their own
   - { id: ALG-READ-PAT,     resource: AllergyIntolerance, action: read,   role: patient, when: [own], purpose: PATRQT }
   - { id: ALG-READ-LINKED,  resource: AllergyIntolerance, action: read,   role: patient, when: [linked-records], purpose: PATRQT }
