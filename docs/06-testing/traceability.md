@@ -7,16 +7,16 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 76 (37%) |
+| Automated or partially automated | 77 (37%) |
 | Fully automated | 43 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 43 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 44 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 2 | 1 | 41 | 0 |
+| clinical | 44 | 2 | 2 | 40 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 15 | 36 | 4 |
 | privacy-admin | 15 | 3 | 0 | 12 | 0 |
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 15 | 10 | 65 | 0 |
+| api | 90 | 15 | 11 | 64 | 0 |
 | e2e | 10 | 0 | 3 | 7 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -96,7 +96,6 @@
 | TC-AC-UD.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-UP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-VD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-VT.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-VT.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-NFR-A4 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
 | TC-NFR-A5 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
@@ -249,7 +248,7 @@
 | AC-UD.2 | TC-AC-UD.2 (integration, P0) | planned |
 | AC-UP.1 | TC-AC-UP.1 (api, P0) | planned |
 | AC-VD.1 | TC-AC-VD.1 (api, P0) | planned |
-| AC-VT.1 | TC-AC-VT.1 (api, P0) | planned |
+| AC-VT.1 | TC-AC-VT.1 (api, P0) | partial |
 | AC-VT.2 | TC-AC-VT.2 (api, P0) | planned |
 | NFR-A1 | TC-NFR-A1 (monitoring, P1) | manual |
 | NFR-A2 | TC-NFR-A2 (resilience, P1) | planned |
