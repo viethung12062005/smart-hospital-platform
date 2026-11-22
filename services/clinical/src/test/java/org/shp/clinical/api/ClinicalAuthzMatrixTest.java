@@ -27,8 +27,10 @@ import org.shp.authz.AuthzRule;
 import org.shp.authz.AuthzTestCase;
 import org.shp.authz.AuthzTestGenerator;
 import org.shp.clinical.ClinicalApiTestBase;
+import org.shp.clinical.app.Allergies;
 import org.shp.clinical.app.Conditions;
 import org.shp.clinical.app.Encounters;
+import org.shp.clinical.app.Observations;
 import org.shp.clinical.infra.PatientRepository;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.authz.UnprotectedEndpoints;
@@ -61,10 +63,14 @@ class ClinicalAuthzMatrixTest extends ClinicalApiTestBase {
 
   @Autowired Encounters encounters;
   @Autowired Conditions conditions;
+  @Autowired Observations observations;
+  @Autowired Allergies allergies;
 
   String patientId;
-  String encounterId;
-  String conditionId;
+
+  /** The stored fixture of each resource type, by type ({@link #storedResources}). */
+  final Map<String, String> stored = new HashMap<>();
+
   final Map<String, String> accounts = new HashMap<>();
 
   /** One guarded endpoint as Spring maps it. */
@@ -93,35 +99,47 @@ class ClinicalAuthzMatrixTest extends ClinicalApiTestBase {
     p.setGender(AdministrativeGender.MALE);
     p.setBirthDateElement(new DateType("1975-04-04"));
     patientId = patients.create(p, "User/test", null).id();
-    encounterId = null;
-    conditionId = null;
+    stored.clear();
   }
 
   /**
    * Endpoints whose facts come from a stored resource need one to exist, or they are 404 before
-   * authorization is asked: an Encounter and a Condition of the fixture Patient, made once per
-   * test.
+   * authorization is asked: one Encounter, Condition, Observation and AllergyIntolerance of the
+   * fixture Patient, made once per test.
    */
   void storedResources() {
-    if (encounterId != null) {
+    if (!stored.isEmpty()) {
       return;
     }
-    encounterId = UUID.randomUUID().toString();
+    String encounterId = UUID.randomUUID().toString();
     encounters.create(
         encounterId,
         patientId,
-        new Document("resourceType", "Encounter").append("id", encounterId),
+        fhir("Encounter", encounterId),
         new Document("status", "in-progress")
             .append("practitionerId", "prac-cln26-attending")
             .append("appointmentId", UUID.randomUUID().toString()),
         "User/test");
-    conditionId = UUID.randomUUID().toString();
-    conditions.create(
-        conditionId,
-        patientId,
-        new Document("resourceType", "Condition").append("id", conditionId),
-        new Document("encounterId", encounterId),
-        "User/test");
+    stored.put("Encounter", encounterId);
+    Document ofTheVisit = new Document("encounterId", encounterId);
+    String id = UUID.randomUUID().toString();
+    stored.put(
+        "Condition",
+        conditions.create(id, patientId, fhir("Condition", id), ofTheVisit, "User/test").id());
+    id = UUID.randomUUID().toString();
+    stored.put(
+        "Observation",
+        observations.create(id, patientId, fhir("Observation", id), ofTheVisit, "User/test").id());
+    id = UUID.randomUUID().toString();
+    stored.put(
+        "AllergyIntolerance",
+        allergies
+            .create(id, patientId, fhir("AllergyIntolerance", id), new Document(), "User/test")
+            .id());
+  }
+
+  static Document fhir(String type, String id) {
+    return new Document("resourceType", type).append("id", id);
   }
 
   @ParameterizedTest(name = "{0}")
@@ -236,30 +254,29 @@ class ClinicalAuthzMatrixTest extends ClinicalApiTestBase {
   }
 
   /**
-   * Call {@code g} as a linked account with {@code role}. Path variables name the fixture of the
-   * resource in the path (the Encounter, the Condition, else the Patient); a search gets {@code
-   * patient}; a FHIR create gets a body whose {@code subject} is the fixture Patient; and the
-   * precondition headers are sent, so that only authorization can refuse the call before the
-   * handler.
+   * Call {@code g} as a linked account with {@code role}. Path variables name the stored fixture of
+   * the FHIR type in the path, else the Patient; a search gets {@code patient}; a FHIR create gets
+   * a body that references the fixture Patient; and the precondition headers are sent, so that only
+   * authorization can refuse the call before the handler.
    */
   int callAs(String role, Guarded g) throws Exception {
     storedResources();
     String sub = accounts.computeIfAbsent(role, this::linkedAccount);
-    String fixture =
-        g.pattern().startsWith("/fhir/Encounter")
-            ? encounterId
-            : g.pattern().startsWith("/fhir/Condition") ? conditionId : patientId;
-    String path = g.pattern().replaceAll("\\{[^}]+}", fixture);
+    String[] segments = g.pattern().split("/");
+    String type = g.pattern().startsWith("/fhir/") ? segments[2] : null;
+    String path = g.pattern().replaceAll("\\{[^}]+}", stored.getOrDefault(type, patientId));
     if ("GET".equals(g.method()) && !g.pattern().contains("{")) {
       path += "?patient=" + patientId;
     }
     String body = null;
     if (Set.of("POST", "PUT", "PATCH").contains(g.method())) {
+      // AllergyIntolerance names its patient in "patient", the others in "subject".
+      String field = "AllergyIntolerance".equals(type) ? "patient" : "subject";
       body =
-          g.pattern().startsWith("/fhir/")
-              ? "{\"resourceType\":\"%s\",\"subject\":{\"reference\":\"Patient/%s\"}}"
-                  .formatted(g.pattern().split("/")[2], patientId)
-              : "{}";
+          type == null
+              ? "{}"
+              : "{\"resourceType\":\"%s\",\"%s\":{\"reference\":\"Patient/%s\"}}"
+                  .formatted(type, field, patientId);
     }
     return call(
             g.method(),
