@@ -30,6 +30,7 @@ public final class AuthzAudit {
           Map.entry("review", AuditActions.UPDATE),
           Map.entry("run", AuditActions.UPDATE),
           Map.entry("restore", AuditActions.UPDATE),
+          Map.entry("retry", AuditActions.UPDATE),
           Map.entry("ask", AuditActions.AI_QUERY),
           Map.entry("use", AuditActions.AI_QUERY),
           Map.entry("export", AuditActions.EXPORT),
