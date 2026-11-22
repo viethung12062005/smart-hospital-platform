@@ -129,8 +129,11 @@ class IdentityApiTest {
   }
 
   private void practitioner(String id, String roleCode) {
+    String staffCode = "NV-" + id.substring(id.length() - 4);
     mongo.insert(
-        new Document("_id", id).append("search", new Document("active", true)), "practitioners");
+        new Document("_id", id)
+            .append("search", new Document("staffCode", staffCode).append("active", true)),
+        "practitioners");
     if (roleCode != null) {
       mongo.insert(
           new Document("_id", "role-" + id)
