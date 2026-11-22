@@ -96,6 +96,17 @@ class KeycloakTokenExchangeTest {
 
   static HttpResponse<String> exchange(String clientId, String subjectToken, String... audiences)
       throws Exception {
+    String scope =
+        String.join(
+            " ",
+            java.util.Arrays.stream(audiences)
+                .map(a -> "exchange-" + a.substring("svc-".length()))
+                .toList());
+    return exchangeWithScope(clientId, subjectToken, scope, audiences);
+  }
+
+  static HttpResponse<String> exchangeWithScope(
+      String clientId, String subjectToken, String scope, String... audiences) throws Exception {
     StringBuilder body =
         new StringBuilder("grant_type=" + enc(GRANT))
             .append("&client_id=")
@@ -108,6 +119,9 @@ class KeycloakTokenExchangeTest {
             .append(enc(ACCESS))
             .append("&requested_token_type=")
             .append(enc(ACCESS));
+    if (scope != null) {
+      body.append("&scope=").append(enc(scope));
+    }
     for (String a : audiences) {
       body.append("&audience=").append(a);
     }
@@ -122,20 +136,33 @@ class KeycloakTokenExchangeTest {
   }
 
   @Test
-  void userTokenNamesTheAiServiceSoItCanBeExchanged() {
-    assertThat(audiences(KeycloakTestSupport.claims(userToken))).contains("shp-api", "svc-ai");
+  void userTokenHasOnlyTheSharedAudience() {
+    assertThat(audiences(KeycloakTestSupport.claims(userToken))).containsExactly("shp-api");
+  }
+
+  @Test
+  void browserTokenHasOnlyTheUserAudienceAndSupportsStandardExchange() throws Exception {
+    var login = new KeycloakBrowserLogin(issuer).signIn("patient.ex", USER_PASSWORD, () -> "");
+    String token = login.accessToken();
+    assertThat(token != null && !token.isBlank()).as("browser received access token").isTrue();
+    assertThat(audiences(KeycloakTestSupport.claims(token))).containsExactly("shp-api");
+    var response = exchange("shp-api", token, "svc-clinical");
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(
+            audiences(KeycloakTestSupport.claims(JsonPath.read(response.body(), "$.access_token"))))
+        .containsExactly("svc-clinical");
   }
 
   @Test
   void exchangedTokenKeepsTheUserSubAndNamesTheTargetService() throws Exception {
-    var res = exchange("svc-ai", userToken, "svc-clinical");
-    assertThat(res.statusCode()).as(res.body()).isEqualTo(200);
+    var res = exchange("shp-api", userToken, "svc-clinical");
+    assertThat(res.statusCode()).isEqualTo(200);
     assertThat(JsonPath.<String>read(res.body(), "$.issued_token_type")).isEqualTo(ACCESS);
     DocumentContext claims =
         KeycloakTestSupport.claims(JsonPath.read(res.body(), "$.access_token"));
     assertThat(claims.<String>read("$.sub"))
         .isEqualTo(userSub); // the user, not the service account
-    assertThat(claims.<String>read("$.azp")).isEqualTo("svc-ai");
+    assertThat(claims.<String>read("$.azp")).isEqualTo("shp-api");
     // audience isolation: the target's own audience only, no shp-api, no other service
     assertThat(audiences(claims)).containsExactly("svc-clinical");
     // The user's own roles apply unchanged, so the authorization matrix decides (15 section 7); no
@@ -147,7 +174,7 @@ class KeycloakTokenExchangeTest {
   @Test
   void exchangedTokenPassesTheTargetServicesJwtRules() throws Exception {
     String token =
-        JsonPath.read(exchange("svc-ai", userToken, "svc-scheduling").body(), "$.access_token");
+        JsonPath.read(exchange("shp-api", userToken, "svc-scheduling").body(), "$.access_token");
     // scheduling accepts its own svc-scheduling (and shp-api for user tokens)
     var scheduling =
         new ShpAuthProperties(issuer, "svc-scheduling", true, Duration.ofSeconds(30), "");
@@ -179,8 +206,8 @@ class KeycloakTokenExchangeTest {
                     + "&totp="
                     + KeycloakTestSupport.totp(KeycloakTestSupport.TEST_TOTP_SEED)),
             "$.access_token");
-    var res = exchange("svc-ai", staffToken, "svc-clinical");
-    assertThat(res.statusCode()).as(res.body()).isEqualTo(200);
+    var res = exchange("shp-api", staffToken, "svc-clinical");
+    assertThat(res.statusCode()).isEqualTo(200);
     String exchanged = JsonPath.read(res.body(), "$.access_token");
     DocumentContext claims = KeycloakTestSupport.claims(exchanged);
     // audience rule (15 section 7): the target only
@@ -197,18 +224,25 @@ class KeycloakTokenExchangeTest {
   void onlyTheTargetsOfTheCallerCanBeRequested() throws Exception {
     // ml is a service but not an exchange target of ai: the token cannot be widened by asking for
     // it.
-    var res = exchange("svc-ai", userToken, "svc-ml");
+    var res = exchange("shp-api", userToken, "svc-ml");
     assertThat(res.statusCode()).isIn(400, 403);
-    assertThat(res.body()).doesNotContain("access_token");
+    assertNoAccessToken(res);
   }
 
   @Test
   void otherClientsCannotExchange() throws Exception {
     for (String client :
-        List.of("svc-scheduling", "svc-clinical", "svc-notification", "svc-document", "svc-ml")) {
+        List.of(
+            "svc-ai",
+            "svc-scheduling",
+            "svc-clinical",
+            "svc-notification",
+            "svc-document",
+            "svc-ml",
+            "svc-audit")) {
       var res = exchange(client, userToken, "svc-clinical");
-      assertThat(res.statusCode()).as(client + " " + res.body()).isIn(400, 401, 403);
-      assertThat(res.body()).as(client).doesNotContain("access_token");
+      assertThat(res.statusCode()).as(client).isIn(400, 401, 403);
+      assertNoAccessToken(res);
     }
     // A public client (the web app) cannot exchange either.
     var pub =
@@ -222,26 +256,69 @@ class KeycloakTokenExchangeTest {
                 + enc(ACCESS)
                 + "&audience=svc-clinical");
     assertThat(pub.statusCode()).isIn(400, 401, 403);
-    assertThat(pub.body()).doesNotContain("access_token");
+    assertNoAccessToken(pub);
   }
 
   @Test
   void aServiceAccountTokenCannotBeExchangedIntoAUser() throws Exception {
-    // svc-ai's own token has no user: exchanging it must not produce a user token for anyone.
     String serviceToken =
         JsonPath.read(
             KeycloakTestSupport.form(
                 tokenUrl,
-                "grant_type=client_credentials&client_id=svc-ai&client_secret="
+                "grant_type=client_credentials&scope=call-clinical&client_id=svc-ai&client_secret="
                     + enc(secretOf("svc-ai"))),
             "$.access_token");
-    var res = exchange("svc-ai", serviceToken, "svc-clinical");
-    if (res.statusCode() == 200) {
-      assertThat(
-              KeycloakTestSupport.claims(JsonPath.read(res.body(), "$.access_token"))
-                  .<String>read("$.sub"))
-          .isNotEqualTo(userSub);
-    }
+    assertRejected(exchange("shp-api", serviceToken, "svc-clinical"));
+  }
+
+  @Test
+  void callingPermissionDoesNotPermitExchangeAndMultipleOrDefaultTargetsAreRejected()
+      throws Exception {
+    assertRejected(exchange("shp-api", userToken, "svc-document"));
+    assertRejected(exchangeWithScope("shp-api", userToken, "call-document", "svc-document"));
+    assertRejected(exchangeWithScope("shp-api", userToken, "exchange-clinical", "svc-document"));
+    assertRejected(exchangeWithScope("shp-api", userToken, null, "svc-clinical"));
+    assertRejected(exchangeWithScope("shp-api", userToken, null));
+    assertRejected(exchange("shp-api", userToken, "svc-clinical", "svc-scheduling"));
+    assertRejected(
+        exchangeWithScope("shp-api", userToken, "exchange-clinical exchange-scheduling"));
+    assertRejected(
+        exchangeWithScope(
+            "shp-api", userToken, "exchange-clinical", "svc-clinical", "svc-scheduling"));
+  }
+
+  @Test
+  void aKeycloakIdTokenCannotBeUsedAsAnApiAccessToken() throws Exception {
+    String body =
+        "grant_type="
+            + enc(GRANT)
+            + "&client_id=shp-api&client_secret="
+            + enc(secretOf("shp-api"))
+            + "&subject_token="
+            + userToken
+            + "&subject_token_type="
+            + enc(ACCESS)
+            + "&scope=exchange-clinical&audience=svc-clinical"
+            + "&requested_token_type="
+            + enc("urn:ietf:params:oauth:token-type:id_token");
+    var response = KeycloakTestSupport.formResponse(tokenUrl, body);
+    assertThat(response.statusCode()).isEqualTo(200);
+    String idToken = JsonPath.read(response.body(), "$.access_token");
+    assertThat(KeycloakTestSupport.claims(idToken).<String>read("$.typ")).isEqualTo("ID");
+    assertThat(audiences(KeycloakTestSupport.claims(idToken))).containsExactly("shp-api");
+    var props = new ShpAuthProperties(issuer, "svc-clinical", true, Duration.ofSeconds(30), "");
+    var decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/protocol/openid-connect/certs").build();
+    decoder.setJwtValidator(ShpJwt.validator(props, Clock.systemUTC()));
+    assertThatThrownBy(() -> decoder.decode(idToken)).isInstanceOf(JwtValidationException.class);
+  }
+
+  static void assertRejected(HttpResponse<String> response) {
+    assertThat(response.statusCode()).isIn(400, 401, 403);
+    assertNoAccessToken(response);
+  }
+
+  private static void assertNoAccessToken(HttpResponse<String> response) {
+    assertThat(response.body().contains("\"access_token\"")).as("includes access token").isFalse();
   }
 
   @Test
@@ -249,9 +326,9 @@ class KeycloakTokenExchangeTest {
     String sig = userToken.substring(userToken.lastIndexOf('.') + 1);
     String flipped = (sig.charAt(0) == 'A' ? 'B' : 'A') + sig.substring(1);
     String tampered = userToken.substring(0, userToken.lastIndexOf('.') + 1) + flipped;
-    var res = exchange("svc-ai", tampered, "svc-clinical");
+    var res = exchange("shp-api", tampered, "svc-clinical");
     assertThat(res.statusCode()).isIn(400, 401, 403);
-    assertThat(res.body()).doesNotContain("access_token");
+    assertNoAccessToken(res);
   }
 
   /** Switch standard token exchange of a client on or off through the admin API. */
@@ -273,14 +350,14 @@ class KeycloakTokenExchangeTest {
 
   @Test
   void theClientSwitchIsWhatAllowsTheExchange() throws Exception {
-    setExchange("svc-ai", false);
+    setExchange("shp-api", false);
     try {
-      var res = exchange("svc-ai", userToken, "svc-clinical");
+      var res = exchange("shp-api", userToken, "svc-clinical");
       assertThat(res.statusCode()).isIn(400, 401, 403);
-      assertThat(res.body()).doesNotContain("access_token");
+      assertNoAccessToken(res);
     } finally {
-      setExchange("svc-ai", true);
+      setExchange("shp-api", true);
     }
-    assertThat(exchange("svc-ai", userToken, "svc-clinical").statusCode()).isEqualTo(200);
+    assertThat(exchange("shp-api", userToken, "svc-clinical").statusCode()).isEqualTo(200);
   }
 }

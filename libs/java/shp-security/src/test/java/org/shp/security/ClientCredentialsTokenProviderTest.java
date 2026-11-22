@@ -101,12 +101,23 @@ class ClientCredentialsTokenProviderTest {
   }
 
   @Test
+  void cacheAndInvalidationAreBoundToTheTarget() {
+    var p = provider(SECRET, "");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
+    assertThat(p.token("ml")).isEqualTo("token-2");
+    p.invalidate("ml");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
+    assertThat(p.token("ml")).isEqualTo("token-3");
+    assertThat(bodies).allMatch(b -> b.contains("scope=call-"));
+  }
+
+  @Test
   void sendsClientCredentialsWithBasicAuthAndCachesTheToken() {
     var p = provider(SECRET, "");
-    assertThat(p.token()).isEqualTo("token-1");
-    assertThat(p.token()).isEqualTo("token-1");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
     assertThat(calls).hasValue(1);
-    assertThat(bodies.get(0)).isEqualTo("grant_type=client_credentials");
+    assertThat(bodies.get(0)).isEqualTo("grant_type=client_credentials&scope=call-clinical");
     String basic =
         new String(
             Base64.getDecoder().decode(authHeaders.get(0).substring("Basic ".length())),
@@ -117,12 +128,12 @@ class ClientCredentialsTokenProviderTest {
   @Test
   void refreshesBeforeTheTokenExpires() {
     var p = provider(SECRET, "");
-    assertThat(p.token()).isEqualTo("token-1");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
     // lifetime 300 s, refresh 30 s early: still cached at +269 s, replaced at +271 s
     clock.now = clock.now.plusSeconds(269);
-    assertThat(p.token()).isEqualTo("token-1");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
     clock.now = clock.now.plusSeconds(2);
-    assertThat(p.token()).isEqualTo("token-2");
+    assertThat(p.token("clinical")).isEqualTo("token-2");
     assertThat(calls).hasValue(2);
   }
 
@@ -130,32 +141,32 @@ class ClientCredentialsTokenProviderTest {
   void veryShortLifetimeIsRefreshedAtHalfItsLifeNotOnEveryCall() {
     expiresIn = 10;
     var p = provider(SECRET, "");
-    p.token();
+    p.token("clinical");
     clock.now = clock.now.plusSeconds(4);
-    p.token();
+    p.token("clinical");
     assertThat(calls).hasValue(1);
     clock.now = clock.now.plusSeconds(2);
-    p.token();
+    p.token("clinical");
     assertThat(calls).hasValue(2);
   }
 
   @Test
   void invalidateForcesANewToken() {
     var p = provider(SECRET, "");
-    p.token();
-    p.invalidate();
-    assertThat(p.token()).isEqualTo("token-2");
+    p.token("clinical");
+    p.invalidate("clinical");
+    assertThat(p.token("clinical")).isEqualTo("token-2");
   }
 
   @Test
   void keepsUsingTheCachedTokenWhenARefreshFailsBeforeRealExpiry() {
     var p = provider(SECRET, "");
-    p.token();
+    p.token("clinical");
     status = 503;
     clock.now = clock.now.plusSeconds(280);
-    assertThat(p.token()).isEqualTo("token-1");
+    assertThat(p.token("clinical")).isEqualTo("token-1");
     clock.now = clock.now.plusSeconds(21);
-    assertThatThrownBy(p::token).isInstanceOf(ServiceTokenException.class);
+    assertThatThrownBy(() -> p.token("clinical")).isInstanceOf(ServiceTokenException.class);
   }
 
   @Test
@@ -163,15 +174,15 @@ class ClientCredentialsTokenProviderTest {
     status = 401;
     responseBody = "{\"error\":\"unauthorized_client\",\"echo\":\"" + SECRET + "\"}";
     var p = provider(SECRET, "");
-    assertThatThrownBy(p::token)
+    assertThatThrownBy(() -> p.token("clinical"))
         .isInstanceOf(ServiceTokenException.class)
         .hasMessageContaining("401")
         .hasMessageNotContaining(SECRET);
     status = 200;
     responseBody = null;
-    String token = p.token();
-    p.invalidate();
-    p.token();
+    String token = p.token("clinical");
+    p.invalidate("clinical");
+    p.token("clinical");
     assertThat(logs.list)
         .allSatisfy(e -> {
           assertThat(e.getFormattedMessage()).doesNotContain(SECRET).doesNotContain(token);
@@ -183,10 +194,10 @@ class ClientCredentialsTokenProviderTest {
   @Test
   void rejectsAnAnswerWithoutAnAccessToken() {
     responseBody = "{\"expires_in\":300}";
-    assertThatThrownBy(() -> provider(SECRET, "").token())
+    assertThatThrownBy(() -> provider(SECRET, "").token("clinical"))
         .isInstanceOf(ServiceTokenException.class);
     responseBody = "not json";
-    assertThatThrownBy(() -> provider(SECRET, "").token())
+    assertThatThrownBy(() -> provider(SECRET, "").token("clinical"))
         .isInstanceOf(ServiceTokenException.class);
   }
 
@@ -194,7 +205,7 @@ class ClientCredentialsTokenProviderTest {
   void withoutCredentialsTheCallFailsClearlyAndSendsNothing() {
     var p = provider("", "");
     assertThat(p.hasCredentials()).isFalse();
-    assertThatThrownBy(p::token)
+    assertThatThrownBy(() -> p.token("clinical"))
         .isInstanceOf(ServiceTokenException.class)
         .hasMessageContaining("svc-scheduling");
     assertThat(calls).hasValue(0);
@@ -203,7 +214,7 @@ class ClientCredentialsTokenProviderTest {
   @Test
   void unreachableEndpointIsAServiceTokenException() {
     server.stop(0);
-    assertThatThrownBy(() -> provider(SECRET, "").token())
+    assertThatThrownBy(() -> provider(SECRET, "").token("clinical"))
         .isInstanceOf(ServiceTokenException.class);
   }
 
@@ -213,10 +224,10 @@ class ClientCredentialsTokenProviderTest {
     Path file = dir.resolve("token");
     Files.writeString(file, "assertion-one\n");
     var p = provider("", file.toString());
-    p.token();
+    p.token("clinical");
     Files.writeString(file, "assertion-two");
-    p.invalidate();
-    p.token();
+    p.invalidate("clinical");
+    p.token("clinical");
     assertThat(authHeaders).containsOnlyNulls();
     assertThat(bodies.get(0))
         .contains("grant_type=client_credentials", "client_id=svc-scheduling")
@@ -231,13 +242,13 @@ class ClientCredentialsTokenProviderTest {
   void assertionTakesPrecedenceOverTheSecret(@TempDir Path dir) throws Exception {
     Path file = dir.resolve("token");
     Files.writeString(file, "assertion-one");
-    provider(SECRET, file.toString()).token();
+    provider(SECRET, file.toString()).token("clinical");
     assertThat(authHeaders).containsOnlyNulls();
   }
 
   @Test
   void missingAssertionFileIsAServiceTokenException(@TempDir Path dir) {
-    assertThatThrownBy(() -> provider("", dir.resolve("absent").toString()).token())
+    assertThatThrownBy(() -> provider("", dir.resolve("absent").toString()).token("clinical"))
         .isInstanceOf(ServiceTokenException.class);
   }
 

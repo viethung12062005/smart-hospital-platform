@@ -18,7 +18,7 @@ CACHE_SECONDS = 300
 
 
 class TokenSource(Protocol):
-    def token(self) -> str: ...
+    def token(self, target: str) -> str: ...
 
 
 class Directory(Protocol):
@@ -51,7 +51,8 @@ class ClinicalDirectory:
         if cache and hit and hit[0] > now:
             return hit[1]
         try:
-            res = self._http.get(self._base + path, headers={"Authorization": f"Bearer {self._tokens.token()}"})
+            token = self._tokens.token("clinical")
+            res = self._http.get(self._base + path, headers={"Authorization": f"Bearer {token}"})
         except httpx.HTTPError as exc:
             raise ShpError("dependency-unavailable") from exc
         if res.status_code == 404:

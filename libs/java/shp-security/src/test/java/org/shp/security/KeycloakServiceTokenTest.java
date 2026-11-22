@@ -3,57 +3,44 @@ package org.shp.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import com.jayway.jsonpath.JsonPath;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 /**
  * SHR-32 with real Keycloak: {@link ClientCredentialsTokenProvider} gets a service token for a
  * confidential client and the token passes the shared JWT rules ({@code aud=svc-clinical}, the
- * target only) and carries the {@code internal.<service>} role. The realm is a minimal one
- * (identity/realm builds the real {@code svc-*} clients, IAM-02; its own tests check them).
+ * target only) and carries the {@code internal.<service>} role. Runs against the generated local
+ * realm so the application client and Keycloak's target-selection configuration are tested
+ * together.
  */
 @Testcontainers
 class KeycloakServiceTokenTest {
-  static final String SECRET = "test-only-service-secret";
-
   @Container
   static final GenericContainer<?> KEYCLOAK =
-      new GenericContainer<>(
-              DockerImageName.parse(
-                  System.getenv()
-                      .getOrDefault("SHP_TEST_KEYCLOAK_IMAGE", "quay.io/keycloak/keycloak:26.0")))
-          .withCommand("start-dev", "--import-realm", "--http-port=8080")
-          .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
-          .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", "test-only-admin")
-          .withEnv("JAVA_OPTS_KC_HEAP", "-XX:MaxRAMPercentage=50")
-          .withCopyFileToContainer(
-              MountableFile.forHostPath(realmFile()), "/opt/keycloak/data/import/realm-shp.json")
-          .withExposedPorts(8080)
-          .waitingFor(
-              Wait.forHttp("/realms/shp").forPort(8080).withStartupTimeout(Duration.ofMinutes(4)));
+      KeycloakTestSupport.container("dev/chart/shp-local-deps/files/realm-shp.json");
 
-  static Path realmFile() {
-    Path dir = Path.of("").toAbsolutePath();
-    while (dir != null
-        && !Files.exists(dir.resolve("src/test/resources/realm-service-token-test.json"))) {
-      dir = dir.getParent();
-    }
-    if (dir == null) {
-      throw new IllegalStateException("realm-service-token-test.json not found");
-    }
-    return dir.resolve("src/test/resources/realm-service-token-test.json");
+  static String clientSecret;
+
+  @BeforeAll
+  static void readClientSecret() throws Exception {
+    String base = KeycloakTestSupport.base(KEYCLOAK);
+    String admin = KeycloakTestSupport.adminToken(base);
+    String clients = base + "/admin/realms/shp/clients";
+    String id =
+        JsonPath.read(
+            KeycloakTestSupport.adminGet(clients + "?clientId=svc-scheduling", admin), "$[0].id");
+    clientSecret =
+        JsonPath.read(
+            KeycloakTestSupport.adminGet(clients + "/" + id + "/client-secret", admin), "$.value");
   }
 
   static String issuer() {
@@ -69,15 +56,15 @@ class KeycloakServiceTokenTest {
 
   @Test
   void serviceTokenPassesTheSharedJwtRulesAndCarriesTheInternalRole() {
-    String token = provider(SECRET, Clock.systemUTC()).token();
+    String token = provider(clientSecret, Clock.systemUTC()).token("clinical");
     // The target service (clinical) accepts its own service audience, svc-clinical.
     var props = new ShpAuthProperties(issuer(), "svc-clinical", true, Duration.ofSeconds(30), "");
     NimbusJwtDecoder decoder =
         NimbusJwtDecoder.withJwkSetUri(issuer() + "/protocol/openid-connect/certs").build();
     decoder.setJwtValidator(ShpJwt.validator(props, Clock.systemUTC()));
     Jwt jwt = decoder.decode(token);
-    assertThat(jwt.getClaimAsStringList("roles")).containsExactly("internal.clinical");
-    assertThat(jwt.getAudience()).contains("svc-clinical");
+    assertThat(jwt.getClaimAsStringList("roles")).contains("internal.clinical");
+    assertThat(jwt.getAudience()).containsExactly("svc-clinical");
     // A service token never carries shp-api: that audience belongs to user tokens (ADR-0017).
     assertThat(jwt.getAudience()).doesNotContain(ShpJwt.SHARED_AUDIENCE);
     assertThat(jwt.getClaimAsString("azp")).isEqualTo("svc-scheduling");
@@ -93,19 +80,19 @@ class KeycloakServiceTokenTest {
   void tokenIsCachedThenRefreshedBeforeItExpires() {
     var movable = new ClientCredentialsTokenProviderTest.MovableClock();
     movable.now = Instant.now();
-    var p = provider(SECRET, movable);
-    String first = p.token();
-    assertThat(p.token()).isEqualTo(first);
-    // realm lifespan 60 s, refresh 30 s early
-    movable.now = movable.now.plusSeconds(31);
-    String second = p.token();
+    var p = provider(clientSecret, movable);
+    String first = p.token("clinical");
+    assertThat(p.token("clinical")).isEqualTo(first);
+    // realm lifespan 900 s, refresh 30 s early
+    movable.now = movable.now.plusSeconds(875);
+    String second = p.token("clinical");
     assertThat(second).isNotEqualTo(first);
-    assertThat(p.token()).isEqualTo(second);
+    assertThat(p.token("clinical")).isEqualTo(second);
   }
 
   @Test
   void wrongSecretIsRefusedWithoutLeakingIt() {
-    assertThatThrownBy(() -> provider("not-the-secret", Clock.systemUTC()).token())
+    assertThatThrownBy(() -> provider("not-the-secret", Clock.systemUTC()).token("clinical"))
         .isInstanceOf(ServiceTokenException.class)
         .hasMessageContaining("401")
         .hasMessageNotContaining("not-the-secret");

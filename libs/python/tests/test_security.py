@@ -49,6 +49,7 @@ def test_valid_token_maps_roles_case_insensitive_and_drops_unknown() -> None:
         {"key": OTHER},
         {"exp": int(time.time()) - 120},
         {"aud": "other"},
+        {"typ": "ID"},
         {"iss": "http://evil/realms/shp"},
         {"sub": None},
     ],
