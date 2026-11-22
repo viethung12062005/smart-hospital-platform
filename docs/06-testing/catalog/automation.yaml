@@ -347,6 +347,7 @@ automation:
     status: automated
     refs:
       - tools/identity/test_realm.py::test_service_tokens_never_carry_the_user_audience
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenExchangeTest.java::aKeycloakIdTokenCannotBeUsedAsAnApiAccessToken
       - libs/java/shp-security/src/test/java/org/shp/security/ShpJwtTest.java::refusesATokenIssuedForAnotherService
       - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience
       - libs/python/tests/test_security.py::test_service_audience_accepts_its_own_and_the_user_audience_only
@@ -480,6 +481,11 @@ automation:
   TC-SEC-20:
     status: partial
     refs:
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::everyServiceGetsExactlyOneRequestedAudienceAndOnlyItsInternalRoles
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::missingMultipleUnknownAndExchangeOnlyTargetsAreRejected
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenExchangeTest.java::browserTokenHasOnlyTheUserAudienceAndSupportsStandardExchange
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenExchangeTest.java::callingPermissionDoesNotPermitExchangeAndMultipleOrDefaultTargetsAreRejected
+      - libs/java/shp-security/src/test/java/org/shp/security/KeycloakFederatedClientAuthTest.java::delegatedClientRequiresItsOwnFederatedIdentity
       - libs/java/shp-security/src/test/java/org/shp/security/KeycloakServiceAccountTest.java::aServiceCannotUseARoleOfAnotherServicesTarget
       - libs/java/shp-security/src/test/java/org/shp/security/KeycloakFederatedClientAuthTest.java::aTokenOfAnotherServiceAccountIsRefused
       - libs/java/shp-security/src/test/java/org/shp/security/KeycloakTokenExchangeTest.java::otherClientsCannotExchange

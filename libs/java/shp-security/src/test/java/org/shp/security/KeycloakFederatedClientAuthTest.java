@@ -132,7 +132,7 @@ class KeycloakFederatedClientAuthTest {
       throws Exception {
     return KeycloakTestSupport.formResponse(
         tokenUrl,
-        "grant_type=client_credentials&client_id="
+        "grant_type=client_credentials&scope=call-clinical&client_id="
             + clientId
             + "&client_assertion_type="
             + URLEncoder.encode(
@@ -144,7 +144,7 @@ class KeycloakFederatedClientAuthTest {
   @Test
   void serviceAccountTokenOfTheRightServiceGetsAnInternalToken() throws Exception {
     var res = exchange("svc-notification", good("notification"));
-    assertThat(res.statusCode()).as(res.body()).isEqualTo(200);
+    assertThat(res.statusCode()).isEqualTo(200);
     var claims = KeycloakTestSupport.claims(JsonPath.read(res.body(), "$.access_token"));
     assertThat(claims.<String>read("$.azp")).isEqualTo("svc-notification");
     assertThat(claims.<List<String>>read("$.roles")).contains("internal.clinical");
@@ -199,6 +199,45 @@ class KeycloakFederatedClientAuthTest {
                     assertion(stranger, "ai", realmIssuer, Instant.now().plusSeconds(300)))
                 .statusCode())
         .isIn(400, 401);
+  }
+
+  @Test
+  void delegatedClientRequiresItsOwnFederatedIdentity() throws Exception {
+    String base = KeycloakTestSupport.base(keycloak);
+    String admin = KeycloakTestSupport.adminToken(base);
+    KeycloakTestSupport.createUser(
+        base, admin, "patient.fed", "patient", KeycloakTokenExchangeTest.USER_PASSWORD, null);
+    var login =
+        new KeycloakBrowserLogin(realmIssuer, "shp-web", "https://idp.example.test/cb")
+            .signIn("patient.fed", KeycloakTokenExchangeTest.USER_PASSWORD, () -> "");
+    assertThat(login.accessToken()).isNotBlank();
+    assertThat(KeycloakTokenExchangeTest.audiences(KeycloakTestSupport.claims(login.accessToken())))
+        .containsExactly("shp-api");
+    String body =
+        "grant_type="
+            + encode(KeycloakTokenExchangeTest.GRANT)
+            + "&subject_token_type="
+            + encode(KeycloakTokenExchangeTest.ACCESS)
+            + "&subject_token="
+            + login.accessToken()
+            + "&audience=svc-scheduling&scope=exchange-scheduling&client_id=shp-api"
+            + "&client_assertion_type="
+            + encode(ClientCredentialsTokenProvider.ASSERTION_TYPE)
+            + "&client_assertion=";
+    var denied = KeycloakTestSupport.formResponse(tokenUrl, body + good("ai"));
+    KeycloakTokenExchangeTest.assertRejected(denied);
+    var allowed = KeycloakTestSupport.formResponse(tokenUrl, body + good("ai-exchange"));
+    assertThat(allowed.statusCode()).isEqualTo(200);
+    assertThat(
+            KeycloakTokenExchangeTest.audiences(
+                KeycloakTestSupport.claims(JsonPath.read(allowed.body(), "$.access_token"))))
+        .containsExactly("svc-scheduling");
+    assertThat(exchange("svc-ai", good("ai")).statusCode()).isEqualTo(200);
+    KeycloakTokenExchangeTest.assertRejected(exchange("svc-ai", good("ai-exchange")));
+  }
+
+  static String encode(String value) {
+    return URLEncoder.encode(value, StandardCharsets.UTF_8);
   }
 
   @Test

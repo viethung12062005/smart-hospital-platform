@@ -103,11 +103,11 @@ public class ShpWebAutoConfiguration {
     return provider;
   }
 
-  /** Add to the {@code RestClient} of every service client that calls an {@code /internal} API. */
+  /** The interceptor injected into the current clinical identity REST clients. */
   @Bean
   @ConditionalOnMissingBean
   ServiceTokenInterceptor shpServiceTokenInterceptor(ServiceTokenProvider tokens) {
-    return new ServiceTokenInterceptor(tokens);
+    return new ServiceTokenInterceptor(tokens, "clinical");
   }
 
   /**
