@@ -112,7 +112,45 @@ public class PatientRepository {
    * stored MRN is kept by the caller.
    */
   public Entry update(Patient patient, int expectedVersion, String changedBy, CloudEvent event) {
-    return store.update(input(patient, expectedVersion + 1), expectedVersion, changedBy, event);
+    return update(patient, expectedVersion, changedBy, event, null);
+  }
+
+  /** The CCCD fields of {@code search} (CLN-30); never part of the stored FHIR resource. */
+  public static final List<String> NATIONAL_ID_FIELDS =
+      List.of("nationalIdEnc", "nationalIdLast4", "nationalIdHash");
+
+  /**
+   * Like {@link #update(Patient, int, String, CloudEvent)} with new CCCD search fields ({@link
+   * #NATIONAL_ID_FIELDS}); {@code null} keeps the stored ones, so an edit that does not touch the
+   * number (or a merge) never loses it.
+   */
+  public Entry update(
+      Patient patient,
+      int expectedVersion,
+      String changedBy,
+      CloudEvent event,
+      Document nationalId) {
+    ResourceInput input = input(patient, expectedVersion + 1);
+    Document keep = nationalId;
+    if (keep == null) {
+      keep = new Document();
+      Document stored =
+          find(patient.getIdElement().getIdPart()).map(Entry::search).orElse(new Document());
+      for (String f : NATIONAL_ID_FIELDS) {
+        if (stored.containsKey(f)) {
+          keep.append(f, stored.get(f));
+        }
+      }
+    }
+    input.search().putAll(keep);
+    return store.update(input, expectedVersion, changedBy, event);
+  }
+
+  /** True when another patient already holds this CCCD hash (03 §2.2; unique partial index). */
+  public boolean nationalIdHeldByAnother(String hash, String exceptId) {
+    return mongo.exists(
+        Query.query(Criteria.where("search.nationalIdHash").is(hash).and("_id").ne(exceptId)),
+        "patients");
   }
 
   public Optional<Entry> find(String id) {

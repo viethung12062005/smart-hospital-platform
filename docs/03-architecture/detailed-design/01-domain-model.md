@@ -82,6 +82,8 @@ on write (reduce the data surface, minimize personal data).
 | `telecom[phone]` | 1..1 | `system=phone`, E.164 (`+84...`); used for reminders and deduplication |
 | `telecom[email]` | 0..1 | `system=email` |
 | `identifier[cccd]` | 0..1 | system `urn:shp:cccd`; 12-digit citizen identity number, **not required**, only recorded by a nurse when the patient arrives and consents; stored encrypted, returned only masked (last 4 digits) |
+| `extension[national-id-consent]` (on `identifier[cccd]`) | 1..1 when `identifier[cccd]` is written | `valueBoolean` = true; written only by a nurse (C5) |
+| `extension[national-id-reason]` (on `identifier[cccd]`) | 0..1 | `valueString` 10–200 characters; required when the number's gender/century digit or birth-year digits do not match the record |
 | `gender` | 1..1 | `male` · `female` · `other` · `unknown` |
 | `birthDate` | 1..1 | not in the future, age ≤ 120 |
 | `address` | 0..1 | `text`, `city`, `district` (do not store detailed street address) |

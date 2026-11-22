@@ -526,3 +526,11 @@ extensions:
     url: https://shp.example.org/fhir/StructureDefinition/released-to-patient
     context: DocumentReference
     value: "complex: releasedAt (valueDateTime), releasedBy (valueReference Practitioner)"
+  national-id-consent:
+    url: https://shp.example.org/fhir/StructureDefinition/national-id-consent
+    context: Patient.identifier (system urn:shp:cccd)
+    value: "valueBoolean (true: the patient consented at the counter)"
+  national-id-reason:
+    url: https://shp.example.org/fhir/StructureDefinition/national-id-reason
+    context: Patient.identifier (system urn:shp:cccd)
+    value: "valueString (10-200 characters, when the number does not match gender or birth year)"

@@ -197,6 +197,19 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
+  # ---- Clinical: national ID number (CCCD) ----
+  TC-AC-ID.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aNurseStoresTheNumberEncryptedAndItIsShownMasked
+  TC-AC-ID.2:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aNumberHeldByAnotherRecordIs422
+  TC-AC-ID.3:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aMalformedNumberOrNoConsentIsRejected
   TC-AC-01.3:
     status: automated
     refs:
