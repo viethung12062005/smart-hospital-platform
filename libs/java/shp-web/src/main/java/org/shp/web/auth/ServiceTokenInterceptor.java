@@ -19,8 +19,11 @@ import org.springframework.http.client.ClientHttpResponse;
 public final class ServiceTokenInterceptor implements ClientHttpRequestInterceptor {
   private final ServiceTokenProvider tokens;
 
-  public ServiceTokenInterceptor(ServiceTokenProvider tokens) {
+  private final String target;
+
+  public ServiceTokenInterceptor(ServiceTokenProvider tokens, String target) {
     this.tokens = tokens;
+    this.target = target;
   }
 
   @Override
@@ -29,14 +32,14 @@ public final class ServiceTokenInterceptor implements ClientHttpRequestIntercept
     if (request.getHeaders().containsHeader(HttpHeaders.AUTHORIZATION)) {
       return execution.execute(request, body);
     }
-    request.getHeaders().setBearerAuth(tokens.token());
+    request.getHeaders().setBearerAuth(tokens.token(target));
     ClientHttpResponse response = execution.execute(request, body);
     if (!response.getStatusCode().isSameCodeAs(HttpStatus.UNAUTHORIZED)) {
       return response;
     }
     response.close();
-    tokens.invalidate();
-    request.getHeaders().setBearerAuth(tokens.token());
+    tokens.invalidate(target);
+    request.getHeaders().setBearerAuth(tokens.token(target));
     return execution.execute(request, body);
   }
 }

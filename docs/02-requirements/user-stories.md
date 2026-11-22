@@ -66,7 +66,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-050](#us-050) | DPO exports an audit report and checks integrity | DPO officer | Should | UC-09 | 3 | 12 |
 | [US-051](#us-051) | DPO reviews break-glass sessions | DPO officer | Should | UC-10 | 2 | 8 |
 | [US-052](#us-052) | Administrator manages the knowledge base | Administrator | Must | UC-11 | 7 | 26 |
-| [US-053](#us-053) | Doctor/nurse asks the assistant and gets an answer with citations | Doctor | Must | UC-11 | 10 | 36 |
+| [US-053](#us-053) | Doctor/nurse asks the assistant and gets an answer with citations | Doctor | Must | UC-11 | 11 | 42 |
 | [US-054](#us-054) | Assistant resists prompt injection | Doctor | Must | UC-11 | 3 | 10 |
 | [US-055](#us-055) | Assistant keeps working when a model fails | Doctor | Must | UC-11 | 9 | 32 |
 | [US-056](#us-056) | User rates assistant answers | Doctor | Could | UC-11 | 2 | 7 |
@@ -83,7 +83,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-072](#us-072) | Evaluate the model by subgroup and produce a model card | Project team | Should | UC-15 | 2 | 7 |
 | [US-073](#us-073) | Deploy a new model with automatic canary | DevOps | Should | UC-15 | 3 | 12 |
 | [US-074](#us-074) | Automatic retraining on drift | System | Should | UC-15 | 3 | 12 |
-| [US-066](#us-066) | User signs in and sees a role-based interface | User | Must | UC-08 | 12 | 40 |
+| [US-066](#us-066) | User signs in and sees a role-based interface | User | Must | UC-08 | 13 | 46 |
 | [US-067](#us-067) | Restore data to a point in time | Administrator | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | System handles slot-opening load at 07:00 | Project team | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | System tolerates dependency failures | Project team | Must |  | 2 | 9 |
@@ -1399,6 +1399,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | IAM-02 | Service accounts: client credentials for /internal per service | SA | 3 | W7 |
 | IAM-07 | RFC 8693 token exchange for ai (on behalf of the user) | SA | 3 | W7 |
 | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | SA | 4 | W7 |
+| IAM-11 | Enforce target-bound service token issuance | SA | 6 | W8 |
 | WEB-31 | Knowledge base management and AI cost UI (Admin) | SA | 4 | W8 |
 | AI-32 | Authz matrix and event contract tests for ai-service | SA | 4 | W9 |
 
@@ -1792,6 +1793,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | IAM-06 | Hardened Keycloak: Argon2id, password policy, brute-force lockout, internal admin console, backups | SA | 4 | W7 |
 | IAM-07 | RFC 8693 token exchange for ai (on behalf of the user) | SA | 3 | W7 |
 | IAM-10 | Staff MFA and design fixes for the realm | SA | 4 | W8 |
+| IAM-11 | Enforce target-bound service token issuance | SA | 6 | W8 |
 
 ## US-067
 ### Restore data to a point in time — Must

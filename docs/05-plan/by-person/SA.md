@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **232 tasks, 804 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **233 tasks, 810 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -228,7 +228,7 @@ Total: **232 tasks, 804 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | SHR-33 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | HttpIdentityLinkClient and IdentityLink carry linkedProfiles (absent field tolerated, entries past expiresAt dropped); Principal exposes them so linked, linked-records and guardian can be set from them; cached 60 seconds, expired entries dropped; tests | 3 | SHR-21, SHR-30, CLN-33 | US-076, US-077 |
 | ☐ | WEB-30 | Assistant UI: ask, stream, clickable citations, rating | Shows retrieval-only mode; citations open correct section | 4 | WEB-02, AI-09 | US-053, US-056 |
 
-## Week 8 — 77 hours
+## Week 8 — 83 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -244,6 +244,7 @@ Total: **232 tasks, 804 hours**. Done: **150**, partially done: **11** (☑ done
 | ☐ | IAM-05 | Identity events to audit | Successful/failed login, sign-up, account lock, password/phone change emit audit.recorded; no passwords or OTP codes recorded | 4 | IAM-01, SHR-09 | US-008, US-031 |
 | ☐ | IAM-09 | OTP for phone/email changes, rate limits per phone and IP, fake provider for dev and tests | Over-limit requests rejected; no codes or phone numbers in logs; tested with fake notification | 4 | IAM-04, NTF-16 | US-001 |
 | ☐ | IAM-10 | Staff MFA and design fixes for the realm | Staff roles need TOTP and tokens carry amr mfa; one 12-character password policy; audience rule documented and tested | 4 | IAM-06 | US-008, US-066 |
+| ☐ | IAM-11 | Enforce target-bound service token issuance | Live Keycloak proves singleton permitted targets for both grants, user-only browser audience, and unchanged resource-server and internal checks | 6 | IAM-02, IAM-07 | US-053, US-066 |
 | ☐ | MLO-01 | ML training pipeline in CI + model canary deploy | Runs when data/code changes; model artifact; canary deploy | 4 | ML-05 | US-063 |
 | ☐ | MLO-02 | Reproducible training image: pinned library versions, seeds, fixed image, vulnerability scan | Same image + dataset hash + seed produce the same model; image signed | 3 | MLO-01 | US-071 |
 | ☐ | MLO-03 | Argo Rollouts canary for ml-service + AnalysisTemplate (Prometheus), auto-promote or rollback | 10%, 50%, 100% steps with analysis; bad model rolls back automatically; autoPromote configured per environment | 6 | GOP-04, SCF-07, ML-25 | US-073 |

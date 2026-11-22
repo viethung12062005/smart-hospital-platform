@@ -20,10 +20,18 @@ The previous design used two identity providers (IdPs): Keycloak locally and Mic
 | Patient passwords | Minimum 12 characters, no special-character requirement, reject passwords on breached lists, no forced periodic change (per NIST SP 800-63B-4). Brute-force protection: temporary lock after 5 consecutive failures, IP-based blocking |
 | Staff | Admin invites by email; password minimum **12 characters, the same policy as patients** (a realm has one password policy; the staff guarantee comes from the second factor, recorded in IAM-10); **a TOTP code (authenticator app, never SMS) is required at every sign-in**: the realm's browser flow demands it from every holder of a staff role and sends a user who has none to enrol one. WebAuthn is not enabled yet. No MFA bypass path |
 | Tokens | Unchanged: Authorization Code + PKCE, access token ≤ 15 minutes, `roles`, `amr` claims to check MFA (Keycloak's own *Authentication Method Reference* mapper emits `amr: ["mfa"]` when the OTP step ran; IAM-10). `fhirUser` still not in the token but looked up via `identity_links` (ADR C7) |
-| Audience | `aud` is an **isolation boundary**: a user (interactive) token carries `shp-api`; a service token carries only the target service's `svc-<name>`, never `shp-api`. Each service validates `OIDC_AUDIENCE=svc-<name>` or `shp-api` (settled in IAM-02, tested in `ShpJwtTest` and `libs/python/tests/test_security.py`) |
+| Audience | `aud` is an **isolation boundary**: a user (interactive) token carries `shp-api`; a service or exchanged token carries only the explicitly selected target service's `svc-<name>`, never `shp-api`. Each service validates `OIDC_AUDIENCE=svc-<name>` or `shp-api` (settled in IAM-02, tested in `ShpJwtTest` and `libs/python/tests/test_security.py`) |
 | Service-to-service (`/internal`) and AI on behalf of a user | Service accounts in Keycloak with client credentials; AI uses RFC 8693 token exchange. Client authentication: prefer a signature using the Kubernetes ServiceAccount token if the Keycloak version supports it, otherwise a client secret in Key Vault rotated every 90 days (settled in IAM-02: **ServiceAccount token**, supported and enabled by default in Keycloak 26.8; no secret exists, see `docs/04-devops/keycloak.md`) |
 | Password storage | **Only Keycloak stores them**, as salted slow hashes (Argon2id, the default in recent Keycloak). Business applications and other services never see passwords |
 | Keycloak database | Dedicated PostgreSQL for IAM, not shared with scheduling (isolation and independent recovery). DB authentication settled in IAM-01 |
+
+### Target selection
+
+Workloads use an optional Keycloak scope `call-<target>` and retain their `svc-<caller>` identity.
+The AI workload separately authenticates to the exchange-only `shp-api` client, which is already in the audience
+of browser tokens. Standard exchange therefore needs no service audience in the original token. Exchange selects
+`exchange-<target>` and requests RFC 8693 `audience=svc-<target>`. The two grants use separate allow-lists;
+Keycloak rejects requests without a single granted target scope.
 
 ### Scope: where Entra ID is still used
 Entra ID **does not** disappear from the project; it is simply no longer where patients and hospital staff log in to the application:
