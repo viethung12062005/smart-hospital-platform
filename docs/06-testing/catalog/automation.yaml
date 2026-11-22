@@ -47,9 +47,11 @@ automation:
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/WebTest.java::staffWithoutMfaIsRejectedAndWithMfaAccepted
   TC-AC-08.1:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aLockIsRejectedAtTheLatestWhenTheSixtySecondIdentityCacheExpires
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::internalLookupReturnsTheLinkAndTheLockStateImmediately
     gap: "Only the 60-second identity cache is checked; no end-to-end account-lock test within <= 5 minutes."
   TC-SEC-15:
     status: partial
@@ -64,6 +66,17 @@ automation:
       - identity/keycloak/src/test/java/org/shp/identity/keycloak/LoginThemeIT.java::loginPageIsEnglishWhenTheBrowserAsksForIt
       - identity/keycloak/src/test/java/org/shp/identity/keycloak/ThemeContrastTest.java::textMeetsWcagAa
     gap: "Web screens: axe-core in the E2E tests (web/e2e/quality.spec.ts). Keycloak sign-in pages (IAM-03): language and colour contrast are automated; the axe-core scan of those pages was run by hand against a Keycloak container (0 violations, vi and en) and is not in CI."
+  TC-AC-LP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aPractitionerAlreadyLinkedToOneAccountCannotBeLinkedToAnother
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRoleThatDoesNotMatchThePractitionerRoleIs422
+  TC-AC-LK.4:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aRevokedLinkDisappearsAtOnceAndALinkThatReachesItsExpiryIsIgnored
+      - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::meAndTheInternalLookupListOnlyActiveUnexpiredLinks
+    gap: "Only the clinical side is tested: an expired or revoked profile link is dropped from linkedProfiles. Rejection at the booking service and renewal (CLN-35) are not built yet."
   TC-SEC-02:
     status: partial
     refs:
