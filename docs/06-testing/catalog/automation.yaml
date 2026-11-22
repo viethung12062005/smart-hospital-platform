@@ -217,10 +217,19 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
     gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
   TC-AC-01.3:
-    status: partial
+    status: automated
     refs:
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
-    gap: "The Mongo store records every version and its history is queryable; the patient update endpoint and the version-view API are not implemented yet (CLN-xx)."
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aRecordEditedTwiceHasThreeVersionsInTheHistory
+  TC-AC-01.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientReadsOwnRecordWithItsVersion
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::anotherPatientsRecordIsA404ThatLooksLikeAMissingOne
+  TC-AC-UP.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientEditingTheirNameOrOtherFixedFieldsIsRefused
   TC-AC-01.2:
     status: automated
     refs:
