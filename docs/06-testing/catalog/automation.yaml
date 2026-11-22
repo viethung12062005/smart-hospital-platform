@@ -178,6 +178,11 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::practitionerViolationIsRejected
       - services/clinical/src/test/java/org/shp/clinical/app/ProfileValidatorTest.java::roleViolationIsRejected
     gap: "Only the Patient, Practitioner and PractitionerRole profile validator (CLN-02) rejects out-of-profile elements; registration (C1, CLN-05) calls it, the staff endpoints (CLN-10) do not yet and the other resources (Appointment, Encounter, ...) have no write validator. Owner: D2."
+  # ---- Clinical: patient search ----
+  TC-AC-06.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
   TC-AC-01.3:
     status: partial
     refs:
