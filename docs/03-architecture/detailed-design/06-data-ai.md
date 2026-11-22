@@ -121,6 +121,16 @@ Model names are configuration values, fixed when the environment is built accord
 time; API keys come from Key Vault (not in the ConfigMap). The chain is specified by [ADR-0013](../adr/0013-llm-deepseek-gemini-local-embedding.md).
 Every model in the chain must pass the eval suite (NFR-AI7) before being added to the chain.
 
+**Streaming (AI1 SSE, AI-09).** The router has a streaming call with the same rules as the plain one: PII is redacted before the
+request leaves, placeholders are restored in the streamed text (a placeholder split across two chunks is held back until it is
+complete), tokens and cost are accounted from the usage the provider reports (estimated at 4 characters per token when it reports
+none), and the circuit breaker, daily budget and `fallbackLevel` behave as before. A model that fails after it already produced
+text makes the router start the next chain step from scratch and tells the caller to discard what it showed; the assistant turns
+that into `event: reset`, and also sends `reset` when the finished answer fails the output check (citations, directives, doses).
+The assistant streams only the `answer` string of the model's JSON reply. Metrics: `shp_ai_assistant_first_token_seconds{provider,model}`
+(request to first token shown, the NFR-P5 first-token measure), `shp_ai_llm_first_delta_seconds{provider,model}` (provider only) and
+`shp_ai_assistant_stream_resets_total{reason}`.
+
 Prompt templates are versioned in the repo (`prompts/<task>/v<N>.md`); the prompt version ID is recorded in `messages` for traceability.
 
 ## 5. Messaging and idempotency
