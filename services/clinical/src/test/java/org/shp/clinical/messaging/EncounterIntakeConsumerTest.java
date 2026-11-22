@@ -57,6 +57,28 @@ class EncounterIntakeConsumerTest {
       }
       rows.add(new Created(id, patientId, resource, search, changedBy));
     }
+
+    // The intake only creates; the read and update paths are covered by EncounterServiceTest.
+    @Override
+    public java.util.Optional<Stored> find(String id) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Stored update(
+        Stored current,
+        Document resource,
+        Document search,
+        int expectedVersion,
+        String changedBy,
+        CloudEvent event) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Stored> byPatient(String patientId, String status, int limit) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   final MemoryEncounters encounters = new MemoryEncounters();
