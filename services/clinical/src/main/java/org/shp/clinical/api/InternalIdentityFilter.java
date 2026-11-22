@@ -5,11 +5,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.shp.clinical.app.IdentityAccounts;
+import org.shp.clinical.app.ProfileLinks;
 import org.shp.clinical.domain.IdentityAccount;
+import org.shp.clinical.domain.LinkedProfile;
 import org.shp.events.CloudEvents;
 import org.shp.security.ShpJwt;
 import org.shp.web.errors.ErrorCatalog;
@@ -23,8 +27,8 @@ import org.springframework.web.util.UriUtils;
 
 /**
  * {@code GET /internal/v1/identity/{subject}} (09 §4): the lookup every other service makes through
- * {@code HttpIdentityLinkClient}. Returns {@code {fhirUser, roles, disabled}}, 404 when the subject
- * is not linked.
+ * {@code HttpIdentityLinkClient}. Returns {@code {fhirUser, roles, disabled, linkedProfiles}}, 404
+ * when the subject is not linked.
  *
  * <p>The caller is a service, not a user: it presents a workload-identity token whose {@code roles}
  * claim holds the role of the TARGET service, {@code internal.clinical}, and whose {@code azp} is a
@@ -44,12 +48,17 @@ public final class InternalIdentityFilter extends OncePerRequestFilter {
 
   private final IdentityAccounts accounts;
   private final String[] callers;
+  private final ProfileLinks links;
+  private final Clock clock;
 
   /**
    * @param allowedClients {@code azp} values of the caller clients ({@code svc-<caller>})
    */
-  public InternalIdentityFilter(IdentityAccounts accounts, Set<String> allowedClients) {
+  public InternalIdentityFilter(
+      IdentityAccounts accounts, ProfileLinks links, Clock clock, Set<String> allowedClients) {
     this.accounts = accounts;
+    this.links = links;
+    this.clock = clock;
     this.callers = allowedClients.toArray(String[]::new);
   }
 
@@ -83,14 +92,16 @@ public final class InternalIdentityFilter extends OncePerRequestFilter {
       ErrorWriter.write(req, res, ErrorCatalog.get("not-found"), null, null);
       return;
     }
-    write(res, account.get());
+    write(res, account.get(), links.activeFor(subject, clock.instant()));
   }
 
-  private static void write(HttpServletResponse res, IdentityAccount a) throws IOException {
+  private static void write(HttpServletResponse res, IdentityAccount a, List<LinkedProfile> linked)
+      throws IOException {
     Map<String, Object> body = new LinkedHashMap<>();
     body.put("fhirUser", a.fhirUser());
     body.put("roles", a.roles());
     body.put("disabled", a.disabled());
+    body.put("linkedProfiles", linked);
     res.setStatus(200);
     res.setContentType("application/json");
     res.setCharacterEncoding("UTF-8");
