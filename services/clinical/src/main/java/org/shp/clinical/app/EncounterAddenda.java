@@ -1,7 +1,9 @@
 package org.shp.clinical.app;
 
+import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import java.time.Clock;
 import java.util.Date;
+import java.util.TimeZone;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Extension;
@@ -51,7 +53,12 @@ public class EncounterAddenda {
     Extension addendum = new Extension(EncounterService.ADDENDUM);
     addendum.addExtension(new Extension("author", new Reference("Practitioner/" + practitionerId)));
     addendum.addExtension(
-        new Extension("recordedAt", new DateTimeType(Date.from(clock.instant()))));
+        new Extension(
+            "recordedAt",
+            new DateTimeType(
+                Date.from(clock.instant()),
+                TemporalPrecisionEnum.SECOND,
+                TimeZone.getTimeZone("UTC"))));
     addendum.addExtension(new Extension("text", new MarkdownType(text)));
     e.addExtension(addendum);
     return EncounterService.view(
