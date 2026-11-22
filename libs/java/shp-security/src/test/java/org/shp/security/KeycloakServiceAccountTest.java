@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * IAM-02: service accounts for {@code /internal} against a real Keycloak (local realm: client
  * secret). Every service client in identity/realm/services.json gets exactly the roles of the
  * services it may call, an audience made of its targets only ({@code svc-<target>}, never {@code
- * shp-api}; ADR-0017), and can do nothing else.
+ * shp-api}; ADR-0017), selected explicitly, and can do nothing else.
  */
 @Testcontainers
 class KeycloakServiceAccountTest {
@@ -50,19 +50,25 @@ class KeycloakServiceAccountTest {
     return KeycloakTestSupport.base(KEYCLOAK) + "/realms/shp/protocol/openid-connect/token";
   }
 
-  static String serviceToken(String clientId) throws Exception {
-    return JsonPath.read(
-        KeycloakTestSupport.form(
-            tokenUrl(),
-            "grant_type=client_credentials&client_id="
-                + clientId
-                + "&client_secret="
-                + enc(secretOf(clientId))),
-        "$.access_token");
+  static java.net.http.HttpResponse<String> request(String clientId, String params)
+      throws Exception {
+    return KeycloakTestSupport.formResponse(
+        tokenUrl(),
+        "grant_type=client_credentials&client_id="
+            + clientId
+            + "&client_secret="
+            + enc(secretOf(clientId))
+            + params);
+  }
+
+  static String serviceToken(String clientId, String target) throws Exception {
+    var response = request(clientId, "&scope=call-" + target);
+    assertThat(response.statusCode()).as(clientId + " selecting " + target).isEqualTo(200);
+    return JsonPath.read(response.body(), "$.access_token");
   }
 
   @Test
-  void everyServiceGetsExactlyTheRolesAndAudiencesOfItsTargets() throws Exception {
+  void everyServiceGetsExactlyOneRequestedAudienceAndOnlyItsInternalRoles() throws Exception {
     String spec =
         java.nio.file.Files.readString(
             KeycloakTestSupport.repoFile("identity/realm/services.json"));
@@ -70,34 +76,43 @@ class KeycloakServiceAccountTest {
     assertThat(services).isNotEmpty();
     for (var entry : services.entrySet()) {
       List<String> calls = entry.getValue().get("calls");
-      // exchange targets are audiences too: Keycloak only exchanges into an available audience
-      List<String> exchange = entry.getValue().getOrDefault("exchange", java.util.List.of());
-      var claims = KeycloakTestSupport.claims(serviceToken("svc-" + entry.getKey()));
-      List<String> roles = claims.read("$.roles");
-      List<String> internal = roles.stream().filter(r -> r.startsWith("internal.")).toList();
-      assertThat(internal)
-          .as("internal roles of " + entry.getKey())
-          .containsExactlyInAnyOrderElementsOf(calls.stream().map(c -> "internal." + c).toList());
-      assertThat(claims.<String>read("$.azp")).isEqualTo("svc-" + entry.getKey());
-      Object aud = claims.read("$.aud");
-      List<String> audiences =
-          aud instanceof List<?> l
-              ? l.stream().map(String::valueOf).toList()
-              : List.of(String.valueOf(aud));
-      // audience isolation: the token names the targets (and exchange targets) and nothing else
-      assertThat(audiences)
-          .containsExactlyInAnyOrderElementsOf(
-              java.util.stream.Stream.concat(calls.stream(), exchange.stream())
-                  .distinct()
-                  .map(c -> "svc-" + c)
-                  .toList())
-          .doesNotContain("shp-api");
+      String caller = "svc-" + entry.getKey();
+      for (String target : calls) {
+        var claims = KeycloakTestSupport.claims(serviceToken(caller, target));
+        List<String> roles = claims.read("$.roles");
+        assertThat(roles.stream().filter(r -> r.startsWith("internal.")))
+            .containsExactlyInAnyOrderElementsOf(calls.stream().map(c -> "internal." + c).toList());
+        assertThat(claims.<String>read("$.azp")).isEqualTo(caller);
+        assertThat(KeycloakTokenExchangeTest.audiences(claims)).containsExactly("svc-" + target);
+      }
     }
   }
 
   @Test
+  void missingMultipleUnknownAndExchangeOnlyTargetsAreRejected() throws Exception {
+    for (String params :
+        List.of(
+            "",
+            "&audience=svc-clinical",
+            "&scope=call-clinical+call-ml",
+            "&scope=call-document",
+            "&scope=call-clinical+call-document",
+            "&scope=call-clinical&scope=call-ml")) {
+      assertRejected(request("svc-scheduling", params));
+    }
+    assertRejected(request("svc-ai", "&scope=call-scheduling"));
+    assertRejected(request("svc-ai", "&scope=exchange-scheduling"));
+    assertRejected(request("shp-api", "&scope=exchange-scheduling"));
+  }
+
+  private static void assertRejected(java.net.http.HttpResponse<String> response) {
+    assertThat(response.statusCode()).isIn(400, 401, 403);
+    assertThat(response.body().contains("\"access_token\"")).as("includes access token").isFalse();
+  }
+
+  @Test
   void serviceTokenPassesTheSharedJwtRulesButCarriesNoUserRole() throws Exception {
-    String token = serviceToken("svc-notification");
+    String token = serviceToken("svc-notification", "clinical");
     String issuer = KeycloakTestSupport.base(KEYCLOAK) + "/realms/shp";
     // notification may call clinical: its audience names svc-clinical only
     var props =
@@ -114,9 +129,11 @@ class KeycloakServiceAccountTest {
 
   @Test
   void aServiceTokenIsRefusedByAnotherServiceAndByTheUserAudience() throws Exception {
-    String token = serviceToken("svc-notification");
+    // The caller can request both clinical and ml, and this token carries both internal roles.
+    // Its clinical audience must still prevent it from being used at ml.
+    String token = serviceToken("svc-scheduling", "clinical");
     String issuer = KeycloakTestSupport.base(KEYCLOAK) + "/realms/shp";
-    for (String audience : List.of("svc-scheduling", "shp-api", "svc-notification")) {
+    for (String audience : List.of("svc-ml", "shp-api", "svc-scheduling")) {
       var props =
           new ShpAuthProperties(issuer, audience, true, java.time.Duration.ofSeconds(30), "");
       NimbusJwtDecoder decoder =
@@ -131,7 +148,7 @@ class KeycloakServiceAccountTest {
   @Test
   void aServiceCannotUseARoleOfAnotherServicesTarget() throws Exception {
     List<String> roles =
-        KeycloakTestSupport.claims(serviceToken("svc-notification")).read("$.roles");
+        KeycloakTestSupport.claims(serviceToken("svc-notification", "clinical")).read("$.roles");
     assertThat(roles).doesNotContain("internal.ml", "internal.document", "internal.scheduling");
   }
 

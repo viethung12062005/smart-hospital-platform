@@ -3,6 +3,7 @@
 Cached until 30 seconds before expiry. The client secret comes from Key Vault/Kubernetes secrets; never log the token.
 """
 
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -28,15 +29,18 @@ class ServiceTokenProvider:
         self._http = http or httpx.Client(timeout=5.0)
         self._clock = clock
         self._lock = threading.Lock()
-        self._token: tuple[str, float] | None = None
+        self._tokens: dict[str, tuple[str, float]] = {}
 
-    def token(self) -> str:
+    def token(self, target: str) -> str:
+        if not re.fullmatch(r"[a-z][a-z0-9-]*", target):
+            raise ValueError("Expected one target service name")
         with self._lock:
             now = self._clock()
-            if self._token and self._token[1] > now:
-                return self._token[0]
+            cached = self._tokens.get(target)
+            if cached and cached[1] > now:
+                return cached[0]
             try:
-                form, basic = self._auth.apply({"grant_type": "client_credentials"})
+                form, basic = self._auth.apply({"grant_type": "client_credentials", "scope": f"call-{target}"})
                 res = self._http.post(self._endpoint, data=form, auth=basic or httpx.USE_CLIENT_DEFAULT)
             except (httpx.HTTPError, OSError) as exc:
                 raise ShpError("dependency-unavailable") from exc
@@ -46,7 +50,7 @@ class ServiceTokenProvider:
             token = body.get("access_token")
             if not isinstance(token, str) or not token:
                 raise ShpError("dependency-unavailable")
-            self._token = (token, now + max(int(body.get("expires_in", 60)) - 30, 0))
+            self._tokens[target] = (token, now + max(int(body.get("expires_in", 60)) - 30, 0))
             return token
 
 
@@ -56,5 +60,5 @@ class StaticToken:
     def __init__(self, value: str = "test-service-token") -> None:  # noqa: S107 - fake value for tests
         self.value = value
 
-    def token(self) -> str:
+    def token(self, target: str) -> str:
         return self.value
