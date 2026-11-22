@@ -56,7 +56,7 @@ def test_environments_share_roles_and_every_common_client() -> None:
     for client_id in shared:
         a, b = dict(clients("local")[client_id]), dict(clients("prod")[client_id])
         per_environment = ["redirectUris", "webOrigins"]
-        if client_id.startswith("svc-"):  # how a service proves who it is (IAM-02)
+        if client_id.startswith("svc-") or client_id == "shp-api":
             per_environment += ["clientAuthenticatorType", "attributes"]
         for key in per_environment:
             a.pop(key, None)
@@ -90,14 +90,14 @@ def test_service_clients_follow_services_json_in_both_environments() -> None:
                 client["standardFlowEnabled"] is False
                 and client["directAccessGrantsEnabled"] is False
             )
-            audiences = {
-                m["config"]["included.custom.audience"]
-                for m in client["protocolMappers"]
-                if "audience" in m["name"]
+            assert set(client["optionalClientScopes"]) == {
+                f"call-{t}" for t in svc["calls"]
             }
-            # audience isolation (ADR-0017): the targets only, never shp-api. Exchange targets are audiences as well,
-            # because Keycloak only exchanges into an available audience.
-            assert audiences == {f"svc-{t}" for t in [*svc["calls"], *svc.get("exchange", [])]}
+            assert client["defaultClientScopes"] == ["basic"]
+            assert all(
+                m["protocolMapper"] != "oidc-audience-mapper"
+                for m in client["protocolMappers"]
+            )
         roles = {r["name"] for r in realm.build(env)["roles"]["realm"]}
         assert {
             f"internal.{t}" for s in spec["services"].values() for t in s["calls"]
@@ -105,23 +105,29 @@ def test_service_clients_follow_services_json_in_both_environments() -> None:
 
 
 def test_service_tokens_never_carry_the_user_audience() -> None:
-    # ADR-0017: shp-api is the audience of user (interactive) tokens; a service token names only
-    # its targets, so a leaked service token cannot be replayed against a user-facing API.
     for env in ("local", "prod"):
-        built = clients(env)
-        for client_id, client in built.items():
-            audiences = {
-                m["config"].get("included.custom.audience")
-                or m["config"].get("included.client.audience")
-                for m in client.get("protocolMappers", [])
-                if "audience" in m["name"]
-            }
-            if client_id.startswith("svc-"):
-                assert "shp-api" not in audiences, client_id
-                assert audiences, client_id
-                assert all(a.startswith("svc-") for a in audiences), client_id
-            elif client_id in ("shp-web", "shp-test"):
-                assert "shp-api" in audiences, client_id
+        for scope in realm.build(env)["clientScopes"]:
+            target = scope["name"].split("-", 1)[1]
+            [mapper] = scope["protocolMappers"]
+            assert mapper["protocolMapper"] == "oidc-audience-mapper"
+            assert mapper["config"]["included.custom.audience"] == f"svc-{target}"
+        for client_id in ("shp-web", "shp-test"):
+            client = clients(env).get(client_id)
+            if client is not None:
+                assert {
+                    m["config"]["included.client.audience"]
+                    for m in client["protocolMappers"]
+                    if m["protocolMapper"] == "oidc-audience-mapper"
+                } == {"shp-api"}
+
+
+def test_target_policies_require_all_conditions_to_match() -> None:
+    for env in ("local", "prod"):
+        policies = realm.build(env)["clientPolicies"]["policies"]
+        assert policies
+        for policy in policies:
+            assert policy["mode"] == "STRICT"
+            assert policy["conditions"][0]["condition"] == "grant-type"
 
 
 def test_every_java_service_that_resolves_identities_may_call_clinical() -> None:
@@ -152,39 +158,29 @@ def test_client_authentication_differs_by_environment_only_in_the_method() -> No
     assert "identityProviders" not in realm.build("local")
 
 
-def test_token_exchange_only_for_callers_with_an_exchange_list() -> None:
+def test_token_exchange_uses_the_existing_user_audience_as_a_separate_client() -> None:
     spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
     for env in ("local", "prod"):
         built = clients(env)
-        for name, svc in spec["services"].items():
-            enabled = built[f"svc-{name}"]["attributes"].get(
-                "standard.token.exchange.enabled"
-            )
-            assert (enabled == "true") == bool(svc.get("exchange")), f"{env} svc-{name}"
-            for target in svc.get("exchange", []):
-                assert (
-                    f"svc-{target}" in built
-                )  # the requested audience must exist as a client
-                assert target not in built  # no second, bare-name client per service
-        for requester in (
-            f"svc-{n}" for n, s in spec["services"].items() if s.get("exchange")
-        ):
-            mappers = {
-                m["config"].get("included.client.audience")
-                for m in built["shp-web"]["protocolMappers"]
-            }
-            assert (
-                requester in mappers
-            )  # the user's token must name the requester or the exchange is refused
-        for client_id, client in built.items():
-            if client_id.startswith("svc-") and not spec["services"][client_id[4:]].get(
-                "exchange"
-            ):
-                assert "standard.token.exchange.enabled" not in client["attributes"]
-        assert built["shp-web"]["publicClient"] is True
-        assert "standard.token.exchange.enabled" not in built["shp-web"].get(
-            "attributes", {}
-        )
+        enabled = {
+            name
+            for name, client in built.items()
+            if client.get("attributes", {}).get("standard.token.exchange.enabled")
+            == "true"
+        }
+        assert enabled == {"shp-api"}
+        exchanger = built["shp-api"]
+        assert not exchanger["serviceAccountsEnabled"]
+        assert not exchanger["standardFlowEnabled"]
+        assert not exchanger["directAccessGrantsEnabled"]
+        assert set(exchanger["optionalClientScopes"]) == {
+            f"exchange-{t}" for t in spec["services"]["ai"]["exchange"]
+        }
+    prod = clients("prod")
+    assert prod["shp-api"]["attributes"]["jwt.credential.sub"] == (
+        "system:serviceaccount:shp-apps:ai-exchange"
+    )
+    assert prod["shp-api"]["clientAuthenticatorType"] == "federated-jwt"
 
 
 def test_hardening_is_in_both_realms() -> None:
@@ -309,14 +305,12 @@ def test_one_password_policy_of_twelve_for_everyone() -> None:
 
 
 def test_exchanging_client_carries_the_amr_mapper_and_others_do_not() -> None:
-    spec = json.loads((realm.SRC / "services.json").read_text(encoding="utf-8"))
     for env in ("local", "prod"):
-        built = clients(env)
-        for name, svc in spec["services"].items():
-            has = "oidc-amr-mapper" in {
-                m["protocolMapper"] for m in built[f"svc-{name}"]["protocolMappers"]
+        for name, client in clients(env).items():
+            has_amr = "oidc-amr-mapper" in {
+                mapper["protocolMapper"] for mapper in client.get("protocolMappers", [])
             }
-            assert has == bool(svc.get("exchange")), f"{env} svc-{name}"
+            assert has_amr == (name in {"shp-api", "shp-web", "shp-test"})
 
 
 def test_login_theme_is_vietnamese_first_in_both_realms() -> None:
@@ -340,12 +334,12 @@ def test_patient_signup_flow_is_present_but_closed_until_the_otp_provider() -> N
         assert built["registrationFlow"] == "shp registration"
         flows = {flow["alias"]: flow for flow in built["authenticationFlows"]}
         signup = flows["shp registration"]
-        assert [step["authenticator"] for step in signup["authenticationExecutions"]] == (
-            expected_steps
-        )
-        profile = built["components"][
-            "org.keycloak.userprofile.UserProfileProvider"
-        ][0]["config"]["kc.user.profile.config"][0]
+        assert [
+            step["authenticator"] for step in signup["authenticationExecutions"]
+        ] == (expected_steps)
+        profile = built["components"]["org.keycloak.userprofile.UserProfileProvider"][
+            0
+        ]["config"]["kc.user.profile.config"][0]
         attributes = {item["name"] for item in json.loads(profile)["attributes"]}
         assert {"phoneNumber", "phoneNumberVerified", "terms_and_conditions"} <= (
             attributes

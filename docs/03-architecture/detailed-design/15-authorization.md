@@ -136,10 +136,13 @@ A doctor has `care` with a patient when **a valid source** exists in `care_relat
 
 | Case | Mechanism |
 |---|---|
-| Call to `/internal/*` | Keycloak service-account token (client credentials, client `svc-<caller>`): realm role `internal.<target>` in `roles`, `aud` = the targets only (`svc-<target>`; never `shp-api`), `azp` = the caller. The client proves itself with its Kubernetes ServiceAccount token (IAM-02, [keycloak.md](../../04-devops/keycloak.md)). Each internal endpoint has a **list of allowed callers** (`azp`) and requires `internal.<target>` (`require_service`; Java `ShpJwt.requireService`); NetworkPolicy blocks at the network layer. The table of who may call whom is `identity/realm/services.json` |
-| AI reads patient data | **RFC 8693 token exchange** (Keycloak) → a token carrying the user's identity and `aud` = `svc-clinical` or `svc-scheduling` only (no `shp-api`, ADR-0017), `azp` = `svc-ai`, `amr` kept (a staff user's exchanged token still has `mfa`); the matrix rules apply unchanged to that user |
+| Call to `/internal/*` | Keycloak service-account token (client credentials, client `svc-<caller>`): realm role `internal.<target>` in `roles`, requests scope `call-<target>`, `aud` = that target only (`svc-<target>`; never `shp-api`), `azp` = the caller. The client proves itself with its Kubernetes ServiceAccount token (IAM-02, [keycloak.md](../../04-devops/keycloak.md)). Each internal endpoint has a **list of allowed callers** (`azp`) and requires `internal.<target>` (`require_service`; Java `ShpJwt.requireService`); NetworkPolicy blocks at the network layer. The table of who may call whom is `identity/realm/services.json` |
+| AI reads patient data | **RFC 8693 token exchange** (Keycloak) → a token carrying the user's identity and `aud` = `svc-clinical` or `svc-scheduling` only (no `shp-api`, ADR-0017), `azp` = `shp-api` (exchange-only client bound to AI), `amr` kept (a staff user's exchanged token still has `mfa`); the matrix rules apply unchanged to that user |
 | AI writes (creates `Observation` from extraction, books via chatbot) | Same mechanism, **only after the user confirms** (AI6, AI8) |
 | Background jobs (slot generation, no-show, cleanup) | Service identity; audit `actor.role = system`, `purposeOfUse = HOPERAT` |
+
+Keycloak separates the `calls` and `exchange` lists into disjoint client scopes. For exchange, AI selects
+`exchange-<target>` with `audience=svc-<target>`. Neither grant can mint a token for multiple targets.
 
 ## 8. Identity management
 

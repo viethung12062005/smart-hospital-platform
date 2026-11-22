@@ -63,6 +63,7 @@ class TokenExchanger:
                     "subject_token_type": ACCESS_TOKEN_TYPE,
                     "requested_token_type": ACCESS_TOKEN_TYPE,
                     "audience": audience,
+                    "scope": f"exchange-{audience.removeprefix('svc-')}",
                 }
             )
             res = self._http.post(self._settings.token_endpoint, data=form, auth=basic or httpx.USE_CLIENT_DEFAULT)

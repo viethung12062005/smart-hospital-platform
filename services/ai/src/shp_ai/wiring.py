@@ -58,7 +58,7 @@ def from_settings(s: Settings) -> Deps:  # pragma: no cover - real infrastructur
     budget = MongoTokenBudget(client[s.mongodb_db], s.daily_token_limit)  # shared by every replica
     router = build_router(config, providers_from(s), budget, usage.on_call, usage.on_first_delta)
     exchanger = TokenExchanger(
-        ExchangeSettings(s.token_endpoint, s.client_id, s.client_secret, s.client_assertion_file)
+        ExchangeSettings(s.token_endpoint, "shp-api", s.exchange_client_secret, s.exchange_client_assertion_file)
     )
     extras = {"llm_config": config, "service_tokens": tokens, "exchanger": exchanger}
     return Deps(s, client, blobs, index, embedder, directory, router, extras)
