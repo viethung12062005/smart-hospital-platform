@@ -16,7 +16,7 @@ import org.shp.events.Uuids;
  * resource and reason.
  */
 public final class AuditRecordBuilder {
-  public static final int MAX_REASON_LENGTH = 200;
+  public static final int MAX_REASON_LENGTH = 500;
   public static final int MAX_USER_AGENT_LENGTH = 120;
   private static final java.util.regex.Pattern ON_BEHALF_OF =
       java.util.regex.Pattern.compile("^(Patient|Practitioner)/[A-Za-z0-9-]+$");

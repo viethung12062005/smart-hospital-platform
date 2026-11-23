@@ -30,8 +30,8 @@ public class CounterRegistrationService {
   public static final int MIN_REASON = 10;
   static final String AUDIT_PREFIX = "duplicate-override: ";
 
-  /** The audit reason is at most 200 characters ({@link AuditRecordBuilder}), prefix included. */
-  public static final int MAX_REASON = AuditRecordBuilder.MAX_REASON_LENGTH - AUDIT_PREFIX.length();
+  /** The override reason keeps its own 200-character limit, audit prefix included (C3). */
+  public static final int MAX_REASON = 200 - AUDIT_PREFIX.length();
 
   static final String SERVICE = "clinical";
 

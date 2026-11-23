@@ -24,7 +24,8 @@ import org.springframework.web.servlet.HandlerMapping;
 /**
  * Enforce {@link RequireShpAuthz}. Deny → audit {@code denied} + reason → 403 {@code
  * forbidden}/{@code no-care-relationship} (or 404). Allow → run the handler; then audit {@code
- * success} (including predictable 4xx business errors) or {@code error} (5xx).
+ * success} (including predictable 4xx business errors, unless the handler states another outcome
+ * through {@link AuditContext}) or {@code error} (5xx).
  */
 public final class AuthzInterceptor implements HandlerInterceptor {
   static final String ATTR_DECISION = "shp.authz.decision";
@@ -92,7 +93,12 @@ public final class AuthzInterceptor implements HandlerInterceptor {
     if (req.getAttribute(ATTR_PENDING) instanceof Pending pending) {
       // A 4xx after an allow is a predictable business error: access happened → success. 5xx →
       // error.
-      emit(req, pending, ex != null || res.getStatus() >= 500 ? AuditActions.ERROR : null);
+      // A handler can state the real outcome and a reason through AuditContext.
+      String outcome = AuditContext.outcome(req);
+      if (outcome == null && (ex != null || res.getStatus() >= 500)) {
+        outcome = AuditActions.ERROR;
+      }
+      emit(req, pending, outcome);
     }
   }
 
@@ -112,7 +118,8 @@ public final class AuthzInterceptor implements HandlerInterceptor {
             ctx.isValid() ? ctx.getTraceId() : null,
             req.getRemoteAddr(),
             req.getHeader("User-Agent"),
-            errorOutcome));
+            errorOutcome,
+            p.decision().allowed() ? AuditContext.reason(req) : null));
   }
 
   /** Decision for the current request (so the handler can apply {@code fields}/{@code hide}). */
