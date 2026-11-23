@@ -181,6 +181,10 @@ public final class AuthzTestGenerator {
     if (holding.contains(Predicates.UNFINISHED_ENCOUNTER)) {
       return Boolean.FALSE;
     }
+    if (failing.contains(Predicates.ENCOUNTER_FINISHED)
+        && failing.contains(Predicates.UNFINISHED_ENCOUNTER)) {
+      return null; // both fail only when the encounter state is unknown
+    }
     if (failing.contains(Predicates.ENCOUNTER_FINISHED)) {
       return Boolean.FALSE;
     }

@@ -229,6 +229,12 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::aNurseMergesTheSourceIntoTheTarget
       - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::mergingAnAlreadyMergedRecordIs409
+  # ---- Clinical: encounter addendum ----
+  TC-AC-AD.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/EncounterAddendumApiTest.java::finishedEncounterKeepsOriginalAndRecordsAuthorTimeAndAllowedAudit
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterAddendaTest.java::anAddendumIsAddedAndTheOriginalIsUnchanged
   # ---- Clinical: vital signs ----
   TC-AC-VT.1:
     status: partial

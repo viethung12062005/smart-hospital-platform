@@ -7,8 +7,8 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 84 (41%) |
-| Fully automated | 50 |
+| Automated or partially automated | 85 (41%) |
+| Fully automated | 51 |
 | P0 (security, patient data, patient safety) | 123, automated at least partially: 49 |
 
 ## By module and status
@@ -16,7 +16,7 @@
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 6 | 4 | 34 | 0 |
+| clinical | 44 | 7 | 4 | 33 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
 | privacy-admin | 15 | 3 | 0 | 12 | 0 |
@@ -32,7 +32,7 @@
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
 | api | 90 | 22 | 10 | 58 | 0 |
-| e2e | 10 | 0 | 3 | 7 | 0 |
+| e2e | 10 | 1 | 3 | 6 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
 | resilience | 10 | 0 | 0 | 10 | 0 |
@@ -174,7 +174,7 @@
 | AC-15.2 | TC-AC-15.2 (integration, P1) | automated |
 | AC-16.1 | TC-AC-16.1 (resilience, P1) | planned |
 | AC-16.2 | TC-AC-16.2 (resilience, P1) | planned |
-| AC-AD.1 | TC-AC-AD.1 (e2e, P1) | planned |
+| AC-AD.1 | TC-AC-AD.1 (e2e, P1) | automated |
 | AC-AL.1 | TC-AC-AL.1 (api, P0) | planned |
 | AC-AS.1 | TC-AC-AS.1 (ai-eval, P1) | planned |
 | AC-BG.1 | TC-AC-BG.1 (api, P0) | planned |
