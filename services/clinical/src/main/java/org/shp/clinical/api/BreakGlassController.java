@@ -47,13 +47,13 @@ public class BreakGlassController {
   public ResponseEntity<Map<String, String>> start(HttpServletRequest req) {
     Principal p = IdentityInterceptor.principal(req);
     String doctor = p.roles().contains("doctor") ? p.fhirUserId() : null;
-    JsonNode body = body(req);
-    String reason = text(body, "reason");
-    if (reason != null && reason.strip().length() <= BreakGlassService.MAX_REASON) {
-      AuditContext.reason(req, reason.strip()); // the DPO reviews it on the audit record
-    }
     Instant expiresAt;
     try {
+      JsonNode body = body(req);
+      String reason = text(body, "reason");
+      if (reason != null && reason.strip().length() <= BreakGlassService.MAX_REASON) {
+        AuditContext.reason(req, reason.strip()); // the DPO reviews it on the audit record
+      }
       expiresAt = service.start(doctor, text(body, "patientId"), reason);
     } catch (ShpException e) {
       AuditContext.outcome(req, AuditActions.ERROR); // a handled 400/404/409: no session was opened
@@ -94,9 +94,17 @@ public class BreakGlassController {
     @Bean
     ResourceContextResolver breakGlassFacts() {
       return (req, vars, principal) -> {
-        String patientId = text(body(req), "patientId");
-        if (patientId == null || !patientId.matches("^[A-Za-z0-9-]{1,64}$")) {
-          throw new ShpException("validation-failed", "patientId must be a Patient id.");
+        // Fail closed: an unreadable or incomplete body yields no patient, never a 400 ahead of
+        // the decision, so a role without a rule is refused with 403 whatever it sends. An
+        // authorized doctor gets the handler's own 400 for such a body.
+        String patientId = null;
+        try {
+          patientId = text(body(req), "patientId");
+        } catch (ShpException e) {
+          // no patient: the handler answers 400 if the caller turns out to be authorized
+        }
+        if (patientId != null && !patientId.matches("^[A-Za-z0-9-]{1,64}$")) {
+          patientId = null;
         }
         return ResourceContext.builder().patientId(patientId).build();
       };

@@ -120,4 +120,29 @@ class BreakGlassApiTest extends ClinicalApiTestBase {
         .atMost(Duration.ofSeconds(10))
         .untilAsserted(() -> assertThat(startRecords("error")).hasSize(1));
   }
+
+  @Test
+  void rolesWithoutARuleAreRefusedWith403WhateverTheBody() throws Exception {
+    for (String role : new String[] {"patient", "nurse", "admin", "dpo"}) {
+      String sub = "bg-" + role + "-" + patientId;
+      link(sub, "patient".equals(role) ? "Patient/" + patientId : "Practitioner/prac-" + sub);
+      for (String bad : new String[] {"{}", "[]", "not json", body(REASON)}) {
+        var r = call("POST", PATH, token(sub, role), bad);
+        assertThat(r.statusCode()).as(role + " " + bad).isEqualTo(403);
+      }
+    }
+  }
+
+  @Test
+  void anAuthorizedDoctorWithABadBodyGets400AuditedAsAnError() throws Exception {
+    for (String bad : new String[] {"{}", "[]", "not json", "{\"patientId\":\"a b\"}"}) {
+      assertThat(call("POST", PATH, token(doctor, "doctor"), bad).statusCode())
+          .as(bad)
+          .isEqualTo(400);
+    }
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> assertThat(startRecords("error")).hasSize(4));
+    assertThat(startRecords("success")).isEmpty();
+  }
 }
