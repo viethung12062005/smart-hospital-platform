@@ -90,7 +90,8 @@ public class AllergyController {
   public ResponseEntity<String> search(HttpServletRequest req) {
     Map<String, List<String>> params = SearchParser.fromServlet(req.getParameterMap());
     int count = EncounterController.count(params, SEARCH_PARAMS);
-    List<AllergyIntolerance> page = service.byPatient(ClinicalFacts.patientParam(req), count);
+    String patientId = ClinicalFacts.searchPatient(req, IdentityInterceptor.principal(req));
+    List<AllergyIntolerance> page = service.byPatient(patientId, count);
     return EncounterController.bundle(req, params, page);
   }
 

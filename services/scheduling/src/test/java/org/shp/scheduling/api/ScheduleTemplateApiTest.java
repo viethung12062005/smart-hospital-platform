@@ -112,6 +112,12 @@ class ScheduleTemplateApiTest {
       return new FakeIdentityLinkClient();
     }
 
+    @Bean
+    @Primary
+    FakePractitionerRoleClient fakePractitionerRoleClient() {
+      return new FakePractitionerRoleClient();
+    }
+
     static class FakeIdentityLinkClient implements IdentityLinkClient {
       final Map<String, IdentityLink> links = new ConcurrentHashMap<>();
 
