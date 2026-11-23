@@ -185,6 +185,63 @@ class AuditTest {
   }
 
   @Test
+  void anAllowedDecisionCarriesAReasonUpToTheLimitAndADenialKeepsItsCode() {
+    var p = new Principal("kc-doctor", Set.of("doctor"), "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02");
+    var allow = new AuthzDecision(true, "BG-START-DOC", "ETREAT", List.of(), List.of(), null);
+    String reason = "r".repeat(500);
+    var allowed =
+        AuthzAudit.fromDecision(
+            CLOCK,
+            "clinical",
+            p,
+            "Practitioner",
+            "start",
+            "BreakGlass",
+            allow,
+            PATIENT,
+            null,
+            "10.0.0.5",
+            "ua",
+            "error",
+            reason);
+    assertThat(allowed.outcome()).isEqualTo("error");
+    assertThat(allowed.reason()).isEqualTo(reason);
+    assertThat(EventSchemas.validate(allowed.toCloudEvent(CLOCK))).isEmpty();
+    var denied =
+        AuthzAudit.fromDecision(
+            CLOCK,
+            "clinical",
+            p,
+            "Practitioner",
+            "start",
+            "BreakGlass",
+            AuthzDecision.deny("forbidden"),
+            PATIENT,
+            null,
+            "10.0.0.5",
+            "ua",
+            null,
+            reason);
+    assertThat(denied.reason()).isEqualTo("forbidden");
+    assertThatThrownBy(() ->
+            AuthzAudit.fromDecision(
+                CLOCK,
+                "clinical",
+                p,
+                "Practitioner",
+                "start",
+                "BreakGlass",
+                allow,
+                PATIENT,
+                null,
+                "10.0.0.5",
+                "ua",
+                null,
+                "r".repeat(501)))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void actorRolePrefersTheMostPrivileged() {
     var r =
         AuthzAudit.fromDecision(

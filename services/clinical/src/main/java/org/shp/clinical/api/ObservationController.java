@@ -84,7 +84,7 @@ public class ObservationController {
     Map<String, List<String>> params =
         org.shp.fhir.search.SearchParser.fromServlet(req.getParameterMap());
     int count = EncounterController.count(params, SEARCH_PARAMS);
-    String patientId = ClinicalFacts.patientParam(req);
+    String patientId = ClinicalFacts.searchPatient(req, IdentityInterceptor.principal(req));
     boolean patientCaller = IdentityInterceptor.principal(req).roles().contains("patient");
     List<Observation> page =
         service.byPatient(

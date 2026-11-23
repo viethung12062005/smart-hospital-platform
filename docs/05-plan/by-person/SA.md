@@ -4,7 +4,7 @@
 
 **Definition of Done for every task:** unit tests green, lint clean, no secrets, PR reviewed and merged through the pipeline.
 
-Total: **233 tasks, 810 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
+Total: **234 tasks, 813 hours**. Done: **150**, partially done: **11** (☑ done, ◐ partial, ☐ not started; recorded in `tools/plan/status.py`).
 
 ## Week 1 — 42 hours
 
@@ -140,7 +140,7 @@ Total: **233 tasks, 810 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | TST-05 | Automated API and contract test framework in CI (Testcontainers, OpenAPI, event schema) **[done, commit 0f14a8e: every service runs API tests in its svc-* workflow; consumer contract tests for the implemented consumers (notification E1/E10, ml E1/E2/E3/E5/E7) (#620); contracts workflow checks OpenAPI and event schemas]** | Every service has API tests running in CI; producer/consumer contract tests | 8 |  | ENABLER |
 | ☑ | WEB-02 | API client: attach token, Idempotency-Key, If-Match/ETag, map OperationOutcome/Problem Details to messages **[done, commit branch WEB-01-frontend-base: web/src/api/client.ts: token, Accept-Language, Idempotency-Key, If-Match/ETag, OperationOutcome/Problem Details + 409 slot suggestions; tests]** | Show errors per Accept-Language; auto retry login when session expires | 3 | WEB-01 | US-066 |
 
-## Week 5 — 76 hours
+## Week 5 — 79 hours
 
 | ✓ | ID | Work | Done when | Hours | Depends on | Story |
 |---|---|---|---|---|---|---|
@@ -166,6 +166,7 @@ Total: **233 tasks, 810 hours**. Done: **150**, partially done: **11** (☑ done
 | ☑ | ML-16 | Train/serve skew test: same sample produces matching output on both paths **[done, commit e391985: test_training_features_equal_serving_features: replaying events matches training_frame]** | Test green in CI; skew fails | 3 | ML-15, ML-07 | US-071 |
 | ☑ | ML-19 | Drift detector: per-feature PSI and prediction score vs training data **[done, commit 490481e: drift.feature_drift: PSI for main features and prediction score, threshold 0.2 on ≥ 2 features; tests: normal set quiet, shifted set alerts]** | PSI > 0,2 threshold on ≥ 2 main features; test with shifted dataset | 4 | ML-07, ML-21 | US-065 |
 | ☑ | ML-20 | Actual performance monitoring: join predictions with real outcomes, 14-day rolling AUC **[done, commit 3a39c95: Joins production predictions with actual outcomes for 14 days, needs ≥ 500 labels]** | Alert when AUC drops > 0,05 and ≥ 500 labelled samples | 4 | ML-06, ML-07 | US-065 |
+| ☐ | SHR-34 | Audit context: a handler can attach a reason and the real outcome to the audit record of its request; reason limit 500 | A handler of a @RequireShpAuthz endpoint can set a reason (up to 500 characters, matching C20) and a success/error outcome that the interceptor records on an allowed decision; a denial keeps its deny reason code; the default 4xx behavior is unchanged; tests in shp-events and shp-web | 3 | SHR-09, SHR-27 | US-034, US-047 |
 
 ## Week 6 — 66 hours
 
