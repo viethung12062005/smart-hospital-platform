@@ -25,7 +25,7 @@ public class BreakGlassService {
   public static final String COLLECTION = "break_glass_sessions";
   public static final Duration TTL = Duration.ofMinutes(60);
   static final int MIN_REASON = 20;
-  static final int MAX_REASON = 500;
+  public static final int MAX_REASON = 500;
 
   private final MongoTemplate mongo;
   private final ClinicalReads reads;

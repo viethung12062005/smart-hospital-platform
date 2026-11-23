@@ -21,7 +21,7 @@ a document link, every AI query on patient data, and **every denial (403)**. The
 | `patientId` | uuid \| null | the patient being accessed (null if not patient-related) |
 | `resource` | string | `Encounter/0192...` or `Patient?name=...` (for search, record only the parameter name, **not the value**) |
 | `purposeOfUse` | enum | `TREAT` (treatment) · `ETREAT` (emergency, break-glass) · `HOPERAT` (operations) · `PATRQT` (patient self-view) |
-| `reason` | string \| null | break-glass reason or denial reason (`no-care-relationship`) |
+| `reason` | string \| null | break-glass reason (up to 500 characters, C20) or denial reason (`no-care-relationship`) |
 | `traceId` | string | W3C trace id, linked to the trace in observability |
 | `client.ip` | string | IP with the last octet masked |
 | `client.userAgent` | string | shortened |

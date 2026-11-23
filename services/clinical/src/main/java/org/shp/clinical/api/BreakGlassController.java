@@ -8,7 +8,9 @@ import org.shp.authz.Principal;
 import org.shp.authz.ResourceContext;
 import org.shp.clinical.app.BreakGlassService;
 import org.shp.events.CloudEvents;
+import org.shp.events.audit.AuditActions;
 import org.shp.web.auth.IdentityInterceptor;
+import org.shp.web.authz.AuditContext;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.authz.ResourceContextResolver;
 import org.shp.web.errors.ShpException;
@@ -28,8 +30,9 @@ import tools.jackson.databind.JsonNode;
 /**
  * 09 C20 {@code POST /api/v1/clinical/break-glass} {@code { "patientId", "reason" }} → 201 {@code {
  * "expiresAt" }}. Authorized by {@code BG-START-DOC}; the shared interceptor writes the {@code
- * break-glass-start} audit record (purpose ETREAT) naming the patient, which the audit service uses
- * to notify the DPO.
+ * break-glass-start} audit record (purpose ETREAT) naming the patient and carrying the reason (via
+ * {@link AuditContext}), which the audit service uses to notify the DPO. A refused start (400, 404,
+ * 409) is audited with outcome {@code error}.
  */
 @RestController
 public class BreakGlassController {
@@ -45,7 +48,17 @@ public class BreakGlassController {
     Principal p = IdentityInterceptor.principal(req);
     String doctor = p.roles().contains("doctor") ? p.fhirUserId() : null;
     JsonNode body = body(req);
-    Instant expiresAt = service.start(doctor, text(body, "patientId"), text(body, "reason"));
+    String reason = text(body, "reason");
+    if (reason != null && reason.strip().length() <= BreakGlassService.MAX_REASON) {
+      AuditContext.reason(req, reason.strip()); // the DPO reviews it on the audit record
+    }
+    Instant expiresAt;
+    try {
+      expiresAt = service.start(doctor, text(body, "patientId"), reason);
+    } catch (ShpException e) {
+      AuditContext.outcome(req, AuditActions.ERROR); // a handled 400/404/409: no session was opened
+      throw e;
+    }
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("expiresAt", expiresAt.toString()));
   }

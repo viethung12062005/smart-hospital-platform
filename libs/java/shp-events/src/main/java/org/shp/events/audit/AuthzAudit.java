@@ -58,6 +58,41 @@ public final class AuthzAudit {
       String clientIp,
       String userAgent,
       String errorOutcome) {
+    return fromDecision(
+        clock,
+        service,
+        principal,
+        fhirUserType,
+        action,
+        resource,
+        decision,
+        patientId,
+        traceId,
+        clientIp,
+        userAgent,
+        errorOutcome,
+        null);
+  }
+
+  /**
+   * As above; {@code allowedReason} (at most {@link AuditRecordBuilder#MAX_REASON_LENGTH}
+   * characters) is recorded on an allowed decision, for example a break-glass reason. A denial
+   * always carries its deny reason code instead.
+   */
+  public static AuditRecord fromDecision(
+      Clock clock,
+      String service,
+      Principal principal,
+      String fhirUserType,
+      String action,
+      String resource,
+      AuthzDecision decision,
+      UUID patientId,
+      String traceId,
+      String clientIp,
+      String userAgent,
+      String errorOutcome,
+      String allowedReason) {
     String mapped = ACTION_MAP.get(action);
     if (mapped == null) {
       throw new IllegalArgumentException("Action has no audit mapping: " + action);
@@ -80,7 +115,7 @@ public final class AuthzAudit {
         resource,
         patientId,
         decision.purpose(),
-        decision.allowed() ? null : decision.denyReason(),
+        decision.allowed() ? allowedReason : decision.denyReason(),
         traceId,
         clientIp,
         userAgent);
