@@ -16,6 +16,10 @@ automation:
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::generatedCaseMatchesTheEngine
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyDeclaredActionAndRoleGetsEveryFeasibleConditionCell
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyRuleHasAnAllowCaseAndADenyCasePerCondition
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::everyClinicalCellDecidesAsTheMatrixSays
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::adminIsRefusedOnEveryClinicalDataEndpoint
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::everyEndpointDeclaresItsAuthorizationRule
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentHistoryApiTest.java::historyAuthorizationMatrix
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotBlockApiTest.java::blockAndUnblockAuthorizationMatrix
@@ -177,6 +181,7 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/ScheduleTemplateApiTest.java::validTemplateSavesAndNonDivisibleRangeReturns400
+      - web/src/pages/staff/SchedulePage.test.tsx::TC-AC-ST.1
   TC-AC-02.1:
     status: automated
     refs:
@@ -300,7 +305,10 @@ automation:
       - services/ml/tests/test_event_contracts.py::test_rescheduled_example_creates_the_new_appointment_fact
       - services/ml/tests/test_event_contracts.py::test_patient_merged_example_moves_the_stats
       - services/ml/tests/test_event_contracts.py::test_consumer_ignores_forward_compatible_extra_fields
-    gap: "OpenAPI schemas validate and the notification/ml consumers read the producer examples; FHIR resources are not yet validated with the FHIR validator, and the clinical, scheduling and ai consumers are still scaffolds with no consumer contract test."
+      - services/clinical/src/test/java/org/shp/clinical/messaging/ClinicalEventContractTest.java::everyProducerExampleIsValidAndAccepted
+      - services/clinical/src/test/java/org/shp/clinical/messaging/ClinicalEventContractTest.java::anUnknownOptionalFieldIsTolerated
+      - services/clinical/src/test/java/org/shp/clinical/messaging/ClinicalEventContractTest.java::theE6ClinicalEmitsMatchesTheSchemaAndTheExample
+    gap: "OpenAPI schemas validate; the notification, ml and clinical consumers read the producer examples and clinical's E6 matches its schema; FHIR resources are not yet validated with the FHIR validator, clinical does not produce E7 yet (CLN-09), and the scheduling and ai consumers have no consumer contract test."
   TC-NFR-SEC9:
     status: automated
     refs:

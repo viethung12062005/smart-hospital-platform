@@ -27,6 +27,7 @@ import org.shp.web.auth.AllowUnlinkedIdentity;
 import org.shp.web.auth.IdentityInterceptor;
 import org.shp.web.auth.IdentityLink;
 import org.shp.web.auth.IdentityLinkClient;
+import org.shp.web.authz.AuditContext;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.authz.ResourceContextResolver;
 import org.shp.web.authz.ShpPublicEndpoint;
@@ -220,6 +221,21 @@ public class TestApp {
     @RequireShpAuthz(resource = "Slot", action = "read")
     void auditedConflict() {
       throw new ShpException("slot-unavailable");
+    }
+
+    @GetMapping("/api/v1/audited-context-error")
+    @RequireShpAuthz(resource = "Slot", action = "read")
+    void auditedContextError(HttpServletRequest req) {
+      AuditContext.reason(req, "r".repeat(500));
+      AuditContext.outcome(req, "error");
+      throw new ShpException("slot-unavailable");
+    }
+
+    @GetMapping("/api/v1/audited-context-reason")
+    @RequireShpAuthz(resource = "Slot", action = "read")
+    String auditedContextReason(HttpServletRequest req) {
+      AuditContext.reason(req, "Emergency, patient unconscious (test)");
+      return "ok";
     }
 
     @GetMapping("/api/v1/unprotected")
