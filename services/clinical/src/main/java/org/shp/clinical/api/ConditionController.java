@@ -99,7 +99,7 @@ public class ConditionController {
   public ResponseEntity<String> search(HttpServletRequest req) {
     Map<String, List<String>> params = SearchParser.fromServlet(req.getParameterMap());
     int count = EncounterController.count(params, SEARCH_PARAMS);
-    String patientId = ClinicalFacts.patientParam(req);
+    String patientId = ClinicalFacts.searchPatient(req, IdentityInterceptor.principal(req));
     boolean patientCaller = IdentityInterceptor.principal(req).roles().contains("patient");
     List<Condition> page = service.byPatient(patientId, patientCaller, count);
     return EncounterController.bundle(req, params, page);
