@@ -237,6 +237,23 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
+  # ---- Clinical: claim an existing record ----
+  TC-AC-CL.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ClaimRecordApiTest.java::theRightCodeLinksTheAccountToTheMatchingRecord
+  TC-AC-CL.2:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ClaimRecordApiTest.java::noMatchOrSeveralCandidatesAnswerTheSameAndSendNothing
+  TC-AC-CL.3:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ClaimRecordApiTest.java::wrongCodesAndRepeatedClaimsAreLockedWithAnAudit
+  TC-AC-CL.4:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/ClaimRecordApiTest.java::aRecordLinkedToAnotherAccountIsNotLinkedAgain
   # ---- Clinical: dependent profiles ----
   TC-AC-DP.1:
     status: automated
