@@ -127,10 +127,14 @@ class ClinicalFactsTest {
   void editFactsLetTheServiceAnswer409ForAFinishedVisit() {
     stored("finished");
     care(DOC);
-    assertThat(allowed(DOCTOR, "update", facts(encounterFacts, DOCTOR))).isFalse();
+    // the real state of a finished visit matches only the addendum rule; $start, $finish and the
+    // edit endpoint then answer 409 from the service
+    assertThat(engine.decide(DOCTOR, "Encounter", "update", facts(encounterFacts, DOCTOR)).ruleId())
+        .isEqualTo("ENC-ADDENDUM-DOC");
     ResourceContext edit = facts(editFacts, DOCTOR);
     assertThat(edit.encounterFinished()).isFalse();
-    assertThat(allowed(DOCTOR, "update", edit)).isTrue();
+    assertThat(engine.decide(DOCTOR, "Encounter", "update", edit).ruleId())
+        .isEqualTo("ENC-WRITE-DOC");
     // care is still required
     when(reads.careRelationship(anyString(), any(), any())).thenReturn(Optional.empty());
     assertThat(allowed(OTHER_DOCTOR, "update", facts(editFacts, OTHER_DOCTOR))).isFalse();

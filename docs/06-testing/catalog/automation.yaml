@@ -207,6 +207,20 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/app/SlotGeneratorTest.java::regeneratingSameDayCreatesNoDuplicates
+  # ---- Clinical: break-glass ----
+  TC-AC-BG.1:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::aSixtyMinuteSessionIsStored
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::aSessionAllowsReadingButNotWriting
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassConcurrencyTest.java::competingStartsAllowOnlyOneAndExpiredSessionCanBeReplaced
+      - services/clinical/src/test/java/org/shp/clinical/api/BreakGlassApiTest.java::aStartedSessionIsAuditedWithTheReasonAndEtreat
+    gap: "Sessions end at startedAt + 60 minutes and only unexpired ones count (CLN-24; a TTL index removes them); no test reopens the timeline after 60 minutes over HTTP (the timeline is CLN-23). Owner: D2."
+  TC-AC-BG.2:
+    status: partial
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/app/BreakGlassServiceTest.java::theReasonIs20To500Characters
+    gap: "A reason under 20 characters is rejected and no session is stored (CLN-24); the screen error is WEB work. Owner: D2."
 
   # ---- Clinical: version history ----
   TC-SEC-03:
@@ -236,6 +250,18 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/DependentProfilesApiTest.java::anEleventhProfileIsRejected
+  # ---- Clinical: patient merge ----
+  TC-AC-MG.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::aNurseMergesTheSourceIntoTheTarget
+      - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::mergingAnAlreadyMergedRecordIs409
+  # ---- Clinical: encounter addendum ----
+  TC-AC-AD.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/EncounterAddendumApiTest.java::finishedEncounterKeepsOriginalAndRecordsAuthorTimeAndAllowedAudit
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterAddendaTest.java::anAddendumIsAddedAndTheOriginalIsUnchanged
   # ---- Clinical: vital signs ----
   TC-AC-VT.1:
     status: partial
@@ -249,6 +275,19 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
     gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
+  # ---- Clinical: national ID number (CCCD) ----
+  TC-AC-ID.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aNurseStoresTheNumberEncryptedAndItIsShownMasked
+  TC-AC-ID.2:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aNumberHeldByAnotherRecordIs422
+  TC-AC-ID.3:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aMalformedNumberOrNoConsentIsRejected
   TC-AC-01.3:
     status: automated
     refs:

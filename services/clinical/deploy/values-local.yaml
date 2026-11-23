@@ -7,3 +7,7 @@ env:
   OIDC_AUDIENCE: svc-clinical
   OTEL_SERVICE_NAME: clinical
   SPRING_MONGODB_URI: mongodb://mongodb.shp-deps.svc.cluster.local:27017/?directConnection=true
+  # The national ID vault (CLN-30) fails fast without its keys outside the dev/test profiles. The dev profile lets the
+  # local pod use a random per-process key (stored numbers are lost on restart). uat/prod set SHP_CLINICAL_NATIONAL_ID_ENC_KEY
+  # and SHP_CLINICAL_NATIONAL_ID_HASH_KEY (base64, 32 bytes each) from Key Vault.
+  SPRING_PROFILES_ACTIVE: dev

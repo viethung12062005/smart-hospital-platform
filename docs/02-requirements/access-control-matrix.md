@@ -11,7 +11,9 @@
 |---|---|---|---|---|---|
 | Patient: read | Own | Care / BG | Yes | No | No |
 | Patient profiles: list own, add a dependent | Yes | No | No | No | No |
+| Patient: reveal national ID number | No | No | Yes | No | No |
 | Patient: create / update | Own (administrative information) | No | Yes | No | No |
+| Patient: merge duplicate records | No | No | Yes | No | No |
 | Patient: search (name, year of birth) | No | Yes | Yes | No | No |
 | Schedule / Slot: view free slots | Yes | Yes | Yes | Yes | No |
 | Schedule / Slot: create / update / block | No | No | Yes | Yes | No |
