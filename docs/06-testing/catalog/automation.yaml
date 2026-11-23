@@ -16,6 +16,10 @@ automation:
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::generatedCaseMatchesTheEngine
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyDeclaredActionAndRoleGetsEveryFeasibleConditionCell
       - libs/java/shp-authz/src/test/java/org/shp/authz/AuthzTestGeneratorTest.java::everyRuleHasAnAllowCaseAndADenyCasePerCondition
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::everyClinicalCellDecidesAsTheMatrixSays
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::adminIsRefusedOnEveryClinicalDataEndpoint
+      - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::everyEndpointDeclaresItsAuthorizationRule
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentHistoryApiTest.java::historyAuthorizationMatrix
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotBlockApiTest.java::blockAndUnblockAuthorizationMatrix
@@ -233,6 +237,12 @@ automation:
     status: automated
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientSearchApiTest.java::nameWithoutDiacriticsMatchesTheLastTokenByPrefix
+  # ---- Clinical: encounter addendum ----
+  TC-AC-AD.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/EncounterAddendumApiTest.java::finishedEncounterKeepsOriginalAndRecordsAuthorTimeAndAllowedAudit
+      - services/clinical/src/test/java/org/shp/clinical/app/EncounterAddendaTest.java::anAddendumIsAddedAndTheOriginalIsUnchanged
   # ---- Clinical: vital signs ----
   TC-AC-VT.1:
     status: partial
