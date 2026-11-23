@@ -165,10 +165,10 @@ class ClinicalFactsTest {
     assertThat(allowed(DOCTOR, "read", ctx)).isTrue();
     assertThat(allowed(PATIENT, "read", queryFacts.resolve(search(PAT), Map.of(), PATIENT)))
         .isTrue();
-    assertThat(
-            allowed(
-                OTHER_PATIENT, "read", queryFacts.resolve(search(PAT), Map.of(), OTHER_PATIENT)))
-        .isFalse();
+    // CLN-22 (15 §6): another patient's id is replaced by the caller's own, not refused
+    ResourceContext forced = queryFacts.resolve(search(PAT), Map.of(), OTHER_PATIENT);
+    assertThat(forced.patientId()).isEqualTo(OTHER_PATIENT.fhirUserId());
+    assertThat(allowed(OTHER_PATIENT, "read", forced)).isTrue();
     assertThat(allowed(NURSE, "read", queryFacts.resolve(search(PAT), Map.of(), NURSE))).isTrue();
   }
 
