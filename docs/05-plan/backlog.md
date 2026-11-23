@@ -2,7 +2,7 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **360 tasks**, **1242 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **361 tasks**, **1245 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
@@ -12,7 +12,7 @@ Total: **360 tasks**, **1242 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W2 | 21 |  |  | 4 |
 | W3 | 10 |  | 27 |  |
 | W4 | 8 | 22 | 27 | 27 |
-| W5 | 17 | 30 | 30 | 29 |
+| W5 | 20 | 30 | 30 | 29 |
 | W6 | 26 | 30 | 30 | 30 |
 | W7 | **47** | 30 | 30 | 30 |
 | W8 | **77** | 4 | 25 | 8 |
@@ -20,7 +20,7 @@ Total: **360 tasks**, **1242 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 ho
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **289** | **120** | **169** | **128** |
+| **Total** | **292** | **120** | **169** | **128** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -247,6 +247,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | SHR-11 | ENABLER | Mongo search executor: compile search criteria to query + use index | Query plan uses IXSCAN for main queries | SA | 3 | SHR-10 | S1 | 03 §2.6 |
 | SHR-12 | US-035 | Idempotency-Key for MongoDB (document service) | Same key → same result; different body 422 | SA | 2 | SHR-05, SHR-10 | S1 | 07 §3 |
 | SHR-27 | US-047 | Authz: emit audit for every decision (allow and deny) | Every Deny emits audit outcome=denied with a reason code; tests | SA | 2 | SHR-24, SHR-09 | S1 | 05 §1, E11(pub) |
+| SHR-34 | US-034, US-047 | Audit context: a handler can attach a reason and the real outcome to the audit record of its request; reason limit 500 | A handler of a @RequireShpAuthz endpoint can set a reason (up to 500 characters, matching C20) and a success/error outcome that the interceptor records on an allowed decision; a denial keeps its deny reason code; the default 4xx behavior is unchanged; tests in shp-events and shp-web | SA | 3 | SHR-09, SHR-27 | S2 | 05 §1.1, 09 C20, 15 §5 |
 | SHR-32 | US-007 | Service token interceptor for /internal calls: client credentials, cache, wiring in four services | Calls to /internal/* carry a cached Keycloak service token (refreshed before expiry, never logged) in scheduling, notification, audit, document; role-mismatch and already-registered are in ErrorCatalog and 07 §5; tested against real Keycloak | SA | 4 | SHR-21, IAM-02 | S4 | 15 §7, 07 §5 |
 | SHR-33 | US-076, US-077 | Identity resolver: parse linkedProfiles from the internal identity lookup and expose them to the authz facts | HttpIdentityLinkClient and IdentityLink carry linkedProfiles (absent field tolerated, entries past expiresAt dropped); Principal exposes them so linked, linked-records and guardian can be set from them; cached 60 seconds, expired entries dropped; tests | SA | 3 | SHR-21, SHR-30, CLN-33 | S4 | 15 §3, §8, ADR-0018 |
 | SHR-31 | ENABLER | Service Bus binder wiring in shp-messaging: session consumer, broker-owned 5 deliveries, namespace config, binder tests | With SHP_MESSAGING_BINDER=servicebus the context starts and bindings resolve to topic shp-events, session-enabled, 1 in-process attempt; a send/receive/DLQ check on the emulator or a real namespace is recorded | SA | 4 | SHR-08 | S5 | ADR-0019, 13 §1.1 |

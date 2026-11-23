@@ -142,8 +142,32 @@ final class KeycloakTestSupport {
    */
   static final String TEST_TOTP_SEED = "synthetic-totp-seed-0001";
 
-  /** RFC 6238 code (HMAC-SHA1, 6 digits, 30 s) for the given seed at the current time. */
+  static final long TOTP_STEP_MS = 30_000;
+
+  /** A code must still be valid this long after it is computed (hashing, network, retries). */
+  static final long TOTP_SAFE_MS = 10_000;
+
+  /**
+   * Milliseconds to wait before a code computed at {@code nowMs} is safe to submit. The realm
+   * accepts only the code of the current 30-second step (no look-behind or look-ahead window), so a
+   * code computed shortly before a step boundary is rejected by the server as {@code
+   * invalid_grant}. Returns 0 when at least {@link #TOTP_SAFE_MS} of the step remain, otherwise the
+   * time to the start of the next step.
+   */
+  static long totpWaitMillis(long nowMs) {
+    long remaining = TOTP_STEP_MS - (nowMs % TOTP_STEP_MS);
+    return remaining >= TOTP_SAFE_MS ? 0 : remaining;
+  }
+
+  /**
+   * RFC 6238 code (HMAC-SHA1, 6 digits, 30 s) for the given seed, computed in a step that has
+   * enough time left to be submitted (see {@link #totpWaitMillis}).
+   */
   static String totp(String seed) throws Exception {
+    long wait = totpWaitMillis(System.currentTimeMillis());
+    if (wait > 0) {
+      Thread.sleep(wait);
+    }
     long counter = System.currentTimeMillis() / 1000 / 30;
     var mac = javax.crypto.Mac.getInstance("HmacSHA1");
     mac.init(
