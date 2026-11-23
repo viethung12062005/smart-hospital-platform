@@ -53,7 +53,7 @@ class ClinicalFacts {
   @Bean
   ResourceContextResolver patientQueryFacts(ClinicalReads reads, Clock clock) {
     return (req, vars, principal) -> {
-      String patientId = patientParam(req);
+      String patientId = searchPatient(req, principal);
       // A Patient caller's search is restricted to finished Encounters by the service, so every
       // result satisfies the encounter-finished condition of the patient read rules.
       var b =
@@ -62,6 +62,23 @@ class ClinicalFacts {
               .encounterFinished(principal.roles().contains("patient"));
       return care(b, patientId, principal, reads, clock).build();
     };
+  }
+
+  /**
+   * The patient a search is about (15 §6). A Patient caller always searches their own record: the
+   * {@code patient} parameter is overridden with their {@code fhirUser} and never trusted, without
+   * an error when it names someone else (the search itself is audited by the matrix decision); a
+   * Patient account with no record gets 404. Staff give the {@code patient} parameter.
+   */
+  static String searchPatient(HttpServletRequest req, Principal principal) {
+    if (principal.roles().contains("patient")) {
+      String own = principal.fhirUserId();
+      if (own == null || !ID.matcher(own).matches()) {
+        throw new ShpException("not-found");
+      }
+      return own;
+    }
+    return patientParam(req);
   }
 
   /** The required {@code patient} parameter of a search, as a bare id (400 otherwise). */
