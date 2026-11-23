@@ -292,6 +292,22 @@ class WebTest {
   }
 
   @Test
+  void aHandlerCanRecordTheRealOutcomeAndA500CharacterReason() throws Exception {
+    assertThat(get("/api/v1/audited-context-error", nurse()).statusCode()).isEqualTo(409);
+    var rec = single();
+    assertThat(rec.outcome()).isEqualTo("error");
+    assertThat(rec.reason()).hasSize(500);
+  }
+
+  @Test
+  void aHandlerCanAttachAReasonToAnAllowedRecord() throws Exception {
+    assertThat(get("/api/v1/audited-context-reason", nurse()).statusCode()).isEqualTo(200);
+    var rec = single();
+    assertThat(rec.outcome()).isEqualTo("success");
+    assertThat(rec.reason()).isEqualTo("Emergency, patient unconscious (test)");
+  }
+
+  @Test
   void businessErrorAfterAuthorizationIsStillASuccessAccessRecord() throws Exception {
     assertThat(get("/api/v1/audited-conflict", nurse()).statusCode()).isEqualTo(409);
     assertThat(single().outcome()).isEqualTo("success");

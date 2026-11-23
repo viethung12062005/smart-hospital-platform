@@ -7,9 +7,11 @@ import type {
   Patient,
   Practitioner,
   PractitionerRole,
+  Schedule,
   Slot,
 } from '@medplum/fhirtypes';
 import dayjs, { type Dayjs } from 'dayjs';
+import type { ScheduleTemplate } from '@/api/scheduling';
 import { SPECIALTIES, systemUrl } from '@/api/terminology';
 
 /**
@@ -17,9 +19,13 @@ import { SPECIALTIES, systemUrl } from '@/api/terminology';
  * made-up Vietnamese names, phone numbers in the reserved 09000xxxxx range, MR numbers prefixed BN-2026, not real people.
  * Recreated on every createDb() call relative to the current date, so schedules always sit around "today".
  */
+export type MockScheduleTemplate = ScheduleTemplate;
+
 export interface MockDb {
   practitioners: Practitioner[];
   roles: PractitionerRole[];
+  schedules: Schedule[];
+  templates: Record<string, MockScheduleTemplate[]>;
   patients: Patient[];
   slots: Slot[];
   appointments: Appointment[];
@@ -124,6 +130,57 @@ export function createDb(now: Dayjs = dayjs()): MockDb {
       },
     ],
   }));
+
+  // Seed active schedules for pr-001..pr-011; leave pr-012 (gastroenterology) without a schedule for create-schedule demos/tests.
+  const todayDate = now.startOf('day');
+  const todayIso = todayDate.format('YYYY-MM-DD');
+  const horizonStart = todayDate.toISOString();
+  const horizonEnd = todayDate.add(30, 'day').hour(23).minute(59).second(59).toISOString();
+  const schedules: Schedule[] = DOCTORS.slice(0, 11).map(([pid, , , specialty], i) => ({
+    resourceType: 'Schedule',
+    id: `sch-${pid}`,
+    meta: { versionId: '1', lastUpdated: horizonStart },
+    active: true,
+    actor: [practitionerRef(pid)],
+    specialty: [
+      {
+        coding: [
+          {
+            system: specialtySystem,
+            code: specialty,
+            display: SPECIALTIES.find((s) => s.code === specialty)?.display,
+          },
+        ],
+      },
+    ],
+    planningHorizon: { start: horizonStart, end: horizonEnd },
+    comment: `Phòng khám ${201 + i}`,
+  }));
+
+  const templates: Record<string, MockScheduleTemplate[]> = {};
+  for (const sch of schedules) {
+    const id = sch.id!;
+    templates[id] = [1, 3, 5].flatMap((weekday) => [
+      {
+        id: `tpl-${id}-${weekday}-am`,
+        weekday,
+        startTime: '08:00',
+        endTime: '11:30',
+        slotMinutes: 15,
+        validFrom: todayIso,
+        validTo: null,
+      },
+      {
+        id: `tpl-${id}-${weekday}-pm`,
+        weekday,
+        startTime: '13:30',
+        endTime: '16:30',
+        slotMinutes: 15,
+        validFrom: todayIso,
+        validTo: null,
+      },
+    ]);
+  }
 
   const patients: Patient[] = PATIENTS.map(([id, family, given, gender, birthDate], i) => ({
     resourceType: 'Patient',
@@ -248,7 +305,19 @@ export function createDb(now: Dayjs = dayjs()): MockDb {
     vital('o-006', 'p-004', '59408-5', 'SpO₂', 95, '%', workday.hour(8).minute(45)),
   ];
 
-  return { practitioners, roles, patients, slots, appointments, encounters, conditions, allergies, observations };
+  return {
+    practitioners,
+    roles,
+    schedules,
+    templates,
+    patients,
+    slots,
+    appointments,
+    encounters,
+    conditions,
+    allergies,
+    observations,
+  };
 }
 
 function enc(
