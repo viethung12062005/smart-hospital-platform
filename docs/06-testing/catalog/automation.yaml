@@ -377,6 +377,13 @@ automation:
     refs:
       - docs/00-synthetic-data.md::synthetic data
 
+  # ---- Notification: reminder management ----
+  TC-AC-DL.1:
+    status: automated
+    refs:
+      - services/notification/src/test/java/org/shp/notification/api/NotificationApiTest.java::n7AdminRetriesADeadLetterBeforeTheExamTime
+      - services/notification/src/test/java/org/shp/notification/api/NotificationApiTest.java::n7IsRefusedWith409AfterTheExamTimeAndForANonDeadLetter
+      - services/notification/src/test/java/org/shp/notification/api/NotificationApiTest.java::n5AndN6ReturnNoContactInfoAndOnlyAllowedRolesRead
   # ---- Supply chain, CI ----
   TC-NFR-SEC4:
     status: automated

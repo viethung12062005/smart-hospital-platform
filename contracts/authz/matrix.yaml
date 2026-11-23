@@ -52,6 +52,8 @@ resources:
   NotificationPreference: { clinical: false, actions: [read, update] }
   RecordClaim:     { clinical: true,  actions: [create, update] }
   PatientProfile:  { clinical: true,  actions: [read, create] }
+  NotificationReminder: { clinical: false, actions: [read] }
+  NotificationDeadLetter: { clinical: false, actions: [read, retry] }
 
 # Actions strictly forbidden for every role (no rule for them may exist).
 denyAll:
@@ -188,3 +190,8 @@ rules:
   # Managed profiles of the caller's own account (C22, C23); the account always comes from the token
   - { id: PROF-READ-PAT,   resource: PatientProfile, action: read,   role: patient, when: [] }
   - { id: PROF-CREATE-PAT, resource: PatientProfile, action: create, role: patient, when: [] }
+  # Reminder management: reminders of one appointment, and permanently failed reminders (11 section 1, N5-N7)
+  - { id: NREM-READ-NUR,   resource: NotificationReminder, action: read, role: nurse, when: [] }
+  - { id: NREM-READ-ADM,   resource: NotificationReminder, action: read, role: admin, when: [] }
+  - { id: NDL-READ-ADM,    resource: NotificationDeadLetter, action: read,  role: admin, when: [] }
+  - { id: NDL-RETRY-ADM,   resource: NotificationDeadLetter, action: retry, role: admin, when: [] }
