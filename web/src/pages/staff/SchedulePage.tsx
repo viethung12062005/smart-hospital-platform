@@ -1,4 +1,4 @@
-import { Button, Group, Select, Tooltip } from '@mantine/core';
+import { Button, Group, Select, Tabs, Tooltip } from '@mantine/core';
 import type { Slot } from '@medplum/fhirtypes';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
@@ -10,17 +10,20 @@ import { formatName, formatTime, refId } from '@/api/fhir';
 import { searchSlots } from '@/api/scheduling';
 import { useAuth } from '@/auth/useAuth';
 import { Card, Loading, PageHeader, ProblemAlert } from '@/components/ui';
+import { ScheduleManagementPanel } from './ScheduleManagementPanel';
 
 const COLOR: Record<string, string> = { free: 'teal', busy: 'info', 'busy-unavailable': 'muted' };
 
 /**
- * Weekly doctor schedule (following the previous PoC portal's DoctorSchedule layout): columns are days, rows are hours, cells are slots.
- * Doctors only see their own schedule; nurses and administrators pick a doctor.
+ * Weekly doctor schedule and schedule/template configuration (WEB-06 S1–S6 + weekly slot calendar).
+ * Doctors view their own slots and template; nurses and administrators manage schedules and templates.
  */
 export function SchedulePage() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const isDoctor = user?.roles.includes('doctor') && !user.roles.includes('admin');
+  const canManage = !!user?.roles.some((r) => r === 'nurse' || r === 'admin');
+  const isDoctor = user?.roles.includes('doctor') && !canManage;
+  const [tab, setTab] = useState<string>('calendar');
   const [week, setWeek] = useState(() =>
     dayjs()
       .startOf('day')
@@ -41,7 +44,7 @@ export function SchedulePage() {
         to: week.add(7, 'day').format('YYYY-MM-DD'),
         status: 'free,busy,busy-unavailable',
       }),
-    enabled: !!practitioner,
+    enabled: tab === 'calendar' && !!practitioner,
   });
 
   const days = Array.from({ length: 7 }, (_, i) => week.add(i, 'day'));
@@ -49,93 +52,106 @@ export function SchedulePage() {
   for (const s of slots.data ?? []) byKey.set(dayjs(s.start).format('YYYY-MM-DD HH:mm'), s);
   const times = [...new Set((slots.data ?? []).map((s) => formatTime(s.start)))].sort();
 
+  const calendarActions =
+    tab === 'calendar' ? (
+      <Group gap="xs">
+        {!isDoctor && (
+          <Select
+            size="sm"
+            w={240}
+            aria-label={t('schedule.practitioner')}
+            data={(practitioners.data ?? []).map((p) => ({
+              value: p.id!,
+              label: formatName(p.name),
+            }))}
+            value={practitioner}
+            onChange={setChosen}
+            searchable
+          />
+        )}
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => setWeek(week.subtract(7, 'day'))}
+          aria-label={t('schedule.prevWeek')}
+        >
+          <IconChevronLeft size={16} />
+        </Button>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() =>
+            setWeek(
+              dayjs()
+                .startOf('day')
+                .subtract((dayjs().day() + 6) % 7, 'day'),
+            )
+          }
+        >
+          {t('schedule.thisWeek')}
+        </Button>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => setWeek(week.add(7, 'day'))}
+          aria-label={t('schedule.nextWeek')}
+        >
+          <IconChevronRight size={16} />
+        </Button>
+      </Group>
+    ) : undefined;
+
   return (
     <div className="shp-page">
-      <PageHeader
-        title={t('schedule.title')}
-        sub={t('schedule.sub')}
-        actions={
-          <Group gap="xs">
-            {!isDoctor && (
-              <Select
-                size="sm"
-                w={240}
-                aria-label={t('schedule.practitioner')}
-                data={(practitioners.data ?? []).map((p) => ({
-                  value: p.id!,
-                  label: formatName(p.name),
-                }))}
-                value={practitioner}
-                onChange={setChosen}
-                searchable
-              />
-            )}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setWeek(week.subtract(7, 'day'))}
-              aria-label={t('schedule.prevWeek')}
-            >
-              <IconChevronLeft size={16} />
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() =>
-                setWeek(
-                  dayjs()
-                    .startOf('day')
-                    .subtract((dayjs().day() + 6) % 7, 'day'),
-                )
-              }
-            >
-              {t('schedule.thisWeek')}
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setWeek(week.add(7, 'day'))}
-              aria-label={t('schedule.nextWeek')}
-            >
-              <IconChevronRight size={16} />
-            </Button>
-          </Group>
-        }
-      />
-      <ProblemAlert error={slots.error ?? practitioners.error ?? me.error} />
-      <Card
-        title={`${week.format('DD/MM')} – ${week.add(6, 'day').format('DD/MM/YYYY')}`}
-        flush
-        actions={
-          <Group gap={6}>
-            <span className="shp-chip shp-chip--teal">{t('schedule.legendFree')}</span>
-            <span className="shp-chip shp-chip--info">{t('schedule.legendBusy')}</span>
-            <span className="shp-chip shp-chip--muted">{t('schedule.legendBlocked')}</span>
-          </Group>
-        }
-      >
-        {slots.isLoading ? (
-          <Loading />
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <div className="shp-week" style={{ minWidth: 760 }}>
-              <div className="h" />
-              {days.map((d) => (
-                <div
-                  key={d.format()}
-                  className="h"
-                  style={d.isSame(dayjs(), 'day') ? { background: 'var(--shp-teal-d)' } : undefined}
-                >
-                  {d.format('ddd DD/MM')}
+      <PageHeader title={t('schedule.title')} sub={t('schedule.sub')} actions={calendarActions} />
+
+      <Tabs value={tab} onChange={(v) => setTab(v ?? 'calendar')} keepMounted={false}>
+        <Tabs.List mb="md">
+          <Tabs.Tab value="calendar">{t('schedule.tabCalendar')}</Tabs.Tab>
+          <Tabs.Tab value="manage">{t('schedule.tabManage')}</Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="calendar">
+          <ProblemAlert error={slots.error ?? practitioners.error ?? me.error} />
+          <Card
+            title={`${week.format('DD/MM')} – ${week.add(6, 'day').format('DD/MM/YYYY')}`}
+            flush
+            actions={
+              <Group gap={6}>
+                <span className="shp-chip shp-chip--teal">{t('schedule.legendFree')}</span>
+                <span className="shp-chip shp-chip--info">{t('schedule.legendBusy')}</span>
+                <span className="shp-chip shp-chip--muted">{t('schedule.legendBlocked')}</span>
+              </Group>
+            }
+          >
+            {slots.isLoading ? (
+              <Loading />
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <div className="shp-week" style={{ minWidth: 760 }}>
+                  <div className="h" />
+                  {days.map((d) => (
+                    <div
+                      key={d.format()}
+                      className="h"
+                      style={d.isSame(dayjs(), 'day') ? { background: 'var(--shp-teal-d)' } : undefined}
+                    >
+                      {d.format('ddd DD/MM')}
+                    </div>
+                  ))}
+                  {times.map((time) => (
+                    <Row key={time} time={time} days={days} byKey={byKey} />
+                  ))}
                 </div>
-              ))}
-              {times.map((time) => (
-                <Row key={time} time={time} days={days} byKey={byKey} />
-              ))}
-            </div>
-          </div>
-        )}
-      </Card>
+              </div>
+            )}
+          </Card>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="manage">
+          <ScheduleManagementPanel canManage={canManage} />
+        </Tabs.Panel>
+      </Tabs>
     </div>
   );
 }
