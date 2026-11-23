@@ -29,7 +29,7 @@ predicates:
 
 # Each resource declares its valid actions; `clinical: true` means clinical data (admin/dpo may never touch it).
 resources:
-  Patient:         { clinical: true,  actions: [read, create, update, search] }
+  Patient:         { clinical: true,  actions: [read, create, update, search, merge, reveal] }
   Schedule:        { clinical: false, actions: [read, create, update, search] }
   Slot:            { clinical: false, actions: [read, create, update, block] }
   Appointment:     { clinical: true,  actions: [book, cancel, read] }
@@ -50,6 +50,8 @@ resources:
   Backup:          { clinical: false, actions: [run, restore] }
   Device:          { clinical: false, actions: [create, delete] }
   NotificationPreference: { clinical: false, actions: [read, update] }
+  RecordClaim:     { clinical: true,  actions: [create, update] }
+  PatientProfile:  { clinical: true,  actions: [read, create] }
   NotificationReminder: { clinical: false, actions: [read] }
   NotificationDeadLetter: { clinical: false, actions: [read, retry] }
 
@@ -70,6 +72,8 @@ rules:
   - { id: PAT-UPD-OWN,     resource: Patient, action: update, role: patient, when: [own], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-GUARDIAN, resource: Patient, action: update, role: patient, when: [guardian], fields: [telecom, address, contact, communication] }
   - { id: PAT-UPD-NUR,     resource: Patient, action: update, role: nurse,   when: [] }
+  - { id: PAT-MERGE-NUR,   resource: Patient, action: merge,  role: nurse,   when: [] }
+  - { id: PAT-REVEAL-NUR,  resource: Patient, action: reveal, role: nurse,   when: [], note: "national ID number in clear (?reveal=national-id), audited every time" }
   - { id: PAT-SEARCH-DOC,  resource: Patient, action: search, role: doctor,  when: [] }
   - { id: PAT-SEARCH-NUR,  resource: Patient, action: search, role: nurse,   when: [] }
   # Schedule
@@ -117,6 +121,7 @@ rules:
   - { id: ENC-CREATE-NUR,  resource: Encounter, action: create, role: nurse,   when: [] }
   - { id: ENC-WRITE-DOC,   resource: Encounter, action: update, role: doctor,  when: [care, unfinished-encounter] }
   - { id: ENC-WRITE-NUR,   resource: Encounter, action: update, role: nurse,   when: [unfinished-encounter] }
+  - { id: ENC-ADDENDUM-DOC, resource: Encounter, action: update, role: doctor, when: [care, encounter-finished], purpose: TREAT }
   # Observation
   - { id: OBS-READ-PAT,    resource: Observation, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
   - { id: OBS-READ-LINKED, resource: Observation, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
@@ -167,7 +172,7 @@ rules:
   - { id: AUDIT-EXP-DPO,   resource: Audit, action: export, role: dpo,   when: [], purpose: HOPERAT }
   - { id: AUDIT-READ-ADM,  resource: Audit, action: read,   role: admin, when: [], hide: [reason] }
   - { id: AUDIT-EXP-ADM,   resource: Audit, action: export, role: admin, when: [], hide: [reason] }
-  - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care] }
+  - { id: BG-START-DOC,    resource: BreakGlass, action: start, role: doctor, when: [not-care], purpose: ETREAT }
   - { id: BACKUP-RUN-ADM,  resource: Backup, action: run,     role: admin, when: [], note: "via the operations pipeline, with approval" }
   - { id: BACKUP-REST-ADM, resource: Backup, action: restore, role: admin, when: [], note: "via the operations pipeline, with approval" }
   # Notification devices and preferences (the owner always comes from the identity, 11 §1)
@@ -179,6 +184,12 @@ rules:
   - { id: DEV-UNREG-NUR,   resource: Device, action: delete,     role: nurse,   when: [self-practitioner] }
   - { id: NPREF-READ-PAT,  resource: NotificationPreference, action: read,   role: patient, when: [] }
   - { id: NPREF-UPD-PAT,   resource: NotificationPreference, action: update, role: patient, when: [] }
+  # Claim of an existing record with an OTP (C27 request, C28 verify); the account always comes from the token
+  - { id: RCLAIM-CREATE-PAT, resource: RecordClaim, action: create, role: patient, when: [] }
+  - { id: RCLAIM-UPD-PAT,  resource: RecordClaim, action: update, role: patient, when: [] }
+  # Managed profiles of the caller's own account (C22, C23); the account always comes from the token
+  - { id: PROF-READ-PAT,   resource: PatientProfile, action: read,   role: patient, when: [] }
+  - { id: PROF-CREATE-PAT, resource: PatientProfile, action: create, role: patient, when: [] }
   # Reminder management: reminders of one appointment, and permanently failed reminders (11 section 1, N5-N7)
   - { id: NREM-READ-NUR,   resource: NotificationReminder, action: read, role: nurse, when: [] }
   - { id: NREM-READ-ADM,   resource: NotificationReminder, action: read, role: admin, when: [] }

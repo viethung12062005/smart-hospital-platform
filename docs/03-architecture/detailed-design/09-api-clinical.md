@@ -102,7 +102,7 @@ Condition: at least 1 `Condition` of type `encounter-diagnosis` (422 `diagnosis-
 `period.end`; emits `shp.clinical.encounter-finished.v1` (scheduling moves the Appointment to `fulfilled`; ml updates the outcome).
 
 ### C15 `POST /fhir/Encounter/{id}/$addendum`
-Body `{ "text": "..." }` (1–4,000 characters). Adds an `extension[addendum]` element (author, time); does not modify the original.
+Body `{ "text": "..." }` (1–4,000 characters). Requires `If-Match` (07 §3) and the `Encounter: update` authorization decision for a finished encounter: doctor with care. The addendum context selects this rule independently of the actual encounter state; the service checks that state and returns 409 when unfinished. Adds an `extension[addendum]` element (author, time); does not modify the original.
 Only when `finished`; 409 if the visit has not ended.
 
 ### C16 Observation

@@ -66,13 +66,13 @@ Two API styles:
 | 401 | Missing/invalid token | `unauthenticated` |
 | 403 | No permission | `forbidden`, `no-care-relationship`, `break-glass-required` |
 | 404 | Does not exist or the caller is not allowed to know it exists | `not-found` |
-| 409 | State conflict | `slot-unavailable`, `slot-has-appointment`, `invalid-state-transition`, `already-registered` |
+| 409 | State conflict | `slot-unavailable`, `slot-has-appointment`, `invalid-state-transition`, `already-registered`, `record-already-linked` |
 | 412 | Wrong `If-Match` | `version-conflict` |
 | 413 | File too large | `file-too-large` |
 | 415 | File type not allowed | `invalid-file-type` |
-| 422 | Business rule violation | `max-future-appointments`, `outside-booking-window`, `cancellation-too-late`, `idempotency-key-reused`, `duplicate-patient-suspected`, `value-out-of-range`, `upload-incomplete`, `confirmation-expired`, `role-mismatch` |
+| 422 | Business rule violation | `max-future-appointments`, `outside-booking-window`, `cancellation-too-late`, `idempotency-key-reused`, `duplicate-patient-suspected`, `not-a-dependent`, `profile-limit`, `value-out-of-range`, `upload-incomplete`, `confirmation-expired`, `role-mismatch`, `otp-invalid` |
 | 428 | Missing `If-Match` / `Idempotency-Key` | `precondition-required`, `idempotency-key-required` |
-| 429 | Rate limit exceeded | `rate-limited` |
+| 429 | Rate limit exceeded | `rate-limited`, `otp-rate-limited`, `otp-locked` |
 | 503 | Dependency failure, fallback exhausted | `dependency-unavailable`, `ai-unavailable`, `ai-budget-exceeded` |
 
 The `code` is in `OperationOutcome.issue[].details.coding` (system `https://shp.example.org/fhir/CodeSystem/error`) or in the

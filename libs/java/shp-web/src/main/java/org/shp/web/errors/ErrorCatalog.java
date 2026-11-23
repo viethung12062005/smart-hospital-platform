@@ -114,6 +114,18 @@ public final class ErrorCatalog {
                 "Nghi ngờ trùng hồ sơ bệnh nhân.",
                 "A duplicate patient is suspected."),
             e(
+                "not-a-dependent",
+                422,
+                "business-rule",
+                "Chỉ tạo hồ sơ cho người dưới 16 tuổi.",
+                "Only a person under 16 can be added."),
+            e(
+                "profile-limit",
+                422,
+                "business-rule",
+                "Tài khoản đã quản lý số hồ sơ tối đa.",
+                "The account manages the maximum number of profiles."),
+            e(
                 "value-out-of-range",
                 422,
                 "business-rule",
@@ -137,6 +149,30 @@ public final class ErrorCatalog {
                 "business-rule",
                 "Vai trò không khớp với hồ sơ liên kết.",
                 "The role does not match the linked profile."),
+            e(
+                "otp-invalid",
+                422,
+                "business-rule",
+                "Mã xác thực không đúng hoặc đã hết hạn.",
+                "The code is wrong or has expired."),
+            e(
+                "record-already-linked",
+                409,
+                "conflict",
+                "Hồ sơ đã được liên kết với tài khoản khác. Vui lòng đến quầy tiếp đón.",
+                "The record is linked to another account. Please go to the counter."),
+            e(
+                "otp-rate-limited",
+                429,
+                "throttled",
+                "Bạn đã yêu cầu quá nhiều lần. Vui lòng thử lại sau.",
+                "Too many requests for a code."),
+            e(
+                "otp-locked",
+                429,
+                "throttled",
+                "Nhập sai quá nhiều lần. Vui lòng thử lại sau.",
+                "Too many wrong codes. Try again later."),
             e(
                 "precondition-required",
                 428,
