@@ -115,6 +115,7 @@ rules:
   - { id: ENC-CREATE-NUR,  resource: Encounter, action: create, role: nurse,   when: [] }
   - { id: ENC-WRITE-DOC,   resource: Encounter, action: update, role: doctor,  when: [care, unfinished-encounter] }
   - { id: ENC-WRITE-NUR,   resource: Encounter, action: update, role: nurse,   when: [unfinished-encounter] }
+  - { id: ENC-ADDENDUM-DOC, resource: Encounter, action: update, role: doctor, when: [care, encounter-finished], purpose: TREAT }
   # Observation
   - { id: OBS-READ-PAT,    resource: Observation, action: read,   role: patient, when: [own, encounter-finished], purpose: PATRQT }
   - { id: OBS-READ-LINKED, resource: Observation, action: read,   role: patient, when: [linked-records, encounter-finished], purpose: PATRQT }
