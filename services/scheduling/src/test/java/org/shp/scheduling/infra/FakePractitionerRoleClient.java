@@ -6,12 +6,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.shp.scheduling.domain.PractitionerRoleClient;
-import org.springframework.stereotype.Component;
 
 /**
- * In-memory fake implementation of {@link PractitionerRoleClient} for tests and local development.
+ * In-memory test double for {@link PractitionerRoleClient} used by scheduling API integration tests
+ * that do not exercise the clinical HTTP contract directly.
  */
-@Component
 public class FakePractitionerRoleClient implements PractitionerRoleClient {
 
   private final Map<UUID, Set<String>> specialtiesByPractitioner = new ConcurrentHashMap<>();
