@@ -14,6 +14,7 @@ import org.bson.Document;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleType;
 import org.hl7.fhir.r4.model.Bundle.HTTPVerb;
+import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.shp.authz.AuthzDecision;
 import org.shp.authz.Principal;
@@ -41,11 +42,14 @@ public class PatientService {
   private final PatientRepository patients;
   private final AuditSink audit;
   private final Clock clock;
+  private final NationalIdRules nationalIds;
 
-  public PatientService(PatientRepository patients, AuditSink audit, Clock clock) {
+  public PatientService(
+      PatientRepository patients, AuditSink audit, Clock clock, NationalIdRules nationalIds) {
     this.patients = patients;
     this.audit = audit;
     this.clock = clock;
+    this.nationalIds = nationalIds;
   }
 
   public Entry read(String id) {
@@ -78,6 +82,23 @@ public class PatientService {
     }
     incoming.setId(id);
 
+    // CLN-30: the CCCD never stays in the resource. A masked value echoed back is "unchanged"; a
+    // clear one is checked and turned into encrypted search fields.
+    Document nationalId = null;
+    List<Identifier> cccd =
+        incoming.getIdentifier().stream()
+            .filter(i -> NationalIdRules.SYSTEM.equals(i.getSystem()))
+            .toList();
+    if (cccd.size() > 1) {
+      throw new ShpException(
+          "validation-failed", "Patient.identifier[cccd] is allowed at most once.");
+    }
+    incoming.getIdentifier().removeIf(i -> NationalIdRules.SYSTEM.equals(i.getSystem()));
+    if (cccd.size() == 1 && !NationalIdRules.isMasked(cccd.get(0))) {
+      nationalId =
+          nationalIds.accept(principal.roles().contains("nurse"), cccd.get(0), incoming, id);
+    }
+
     Set<String> changed = changedElements(current.resource(), incoming);
     if (!decision.fields().isEmpty() && !decision.fields().containsAll(changed)) {
       auditFieldDenial(principal, id, clientIp);
@@ -87,7 +108,7 @@ public class PatientService {
       throw new ShpException(
           "validation-failed", "Patient.identifier, active and link are managed by the server.");
     }
-    return patients.update(incoming, (int) expectedVersion, principal.subject(), null);
+    return patients.update(incoming, (int) expectedVersion, principal.subject(), null, nationalId);
   }
 
   /** Every version of a patient as a FHIR history Bundle, newest first (C7). */

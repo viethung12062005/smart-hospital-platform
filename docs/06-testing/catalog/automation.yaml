@@ -248,6 +248,19 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
     gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
+  # ---- Clinical: national ID number (CCCD) ----
+  TC-AC-ID.1:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aNurseStoresTheNumberEncryptedAndItIsShownMasked
+  TC-AC-ID.2:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aNumberHeldByAnotherRecordIs422
+  TC-AC-ID.3:
+    status: automated
+    refs:
+      - services/clinical/src/test/java/org/shp/clinical/api/NationalIdApiTest.java::aMalformedNumberOrNoConsentIsRejected
   TC-AC-01.3:
     status: automated
     refs:

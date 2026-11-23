@@ -77,6 +77,18 @@ class PatientStoreConfig {
             .on("search.nameTokens", Sort.Direction.ASC)
             .on("search.birthDate", Sort.Direction.ASC)
             .named(SearchIndexes.IX_PATIENTS_NAME_TOKENS_BIRTHDATE));
+    // CLN-30: one record per CCCD (03 §2.2), only where a number is stored.
+    createIndex(
+        indexes,
+        new Index()
+            .on("search.nationalIdHash", Sort.Direction.ASC)
+            .unique()
+            .partial(
+                org.springframework.data.mongodb.core.index.PartialIndexFilter.of(
+                    org.springframework.data.mongodb.core.query.Criteria.where(
+                            "search.nationalIdHash")
+                        .exists(true)))
+            .named(SearchIndexes.IX_PATIENTS_NATIONAL_ID_HASH));
   }
 
   /**

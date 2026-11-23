@@ -7,16 +7,16 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 85 (41%) |
-| Fully automated | 51 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 49 |
+| Automated or partially automated | 88 (43%) |
+| Fully automated | 54 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 51 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 7 | 4 | 33 | 0 |
+| clinical | 44 | 10 | 4 | 30 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
 | privacy-admin | 15 | 3 | 0 | 12 | 0 |
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 22 | 10 | 58 | 0 |
+| api | 90 | 25 | 10 | 55 | 0 |
 | e2e | 10 | 1 | 3 | 6 | 0 |
 | security | 12 | 4 | 0 | 8 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -70,8 +70,6 @@
 | TC-AC-CS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-EA.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-FB.1 | Waiting for the corresponding feature or environment to be implemented. | 24021501-hunglk |
-| TC-AC-ID.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-ID.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-ID.4 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-IS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-LK.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -204,9 +202,9 @@
 | AC-FS.2 | TC-AC-FS.2 (api, P1) | automated |
 | AC-FS.3 | TC-AC-FS.3 (api, P0) | automated |
 | AC-GS.1 | TC-AC-GS.1 (api, P1) | automated |
-| AC-ID.1 | TC-AC-ID.1 (api, P0) | planned |
-| AC-ID.2 | TC-AC-ID.2 (api, P0) | planned |
-| AC-ID.3 | TC-AC-ID.3 (api, P1) | planned |
+| AC-ID.1 | TC-AC-ID.1 (api, P0) | automated |
+| AC-ID.2 | TC-AC-ID.2 (api, P0) | automated |
+| AC-ID.3 | TC-AC-ID.3 (api, P1) | automated |
 | AC-ID.4 | TC-AC-ID.4 (security, P0) | planned |
 | AC-IS.1 | TC-AC-IS.1 (api, P0) | planned |
 | AC-KB.1 | TC-AC-KB.1 (ai-eval, P1) | planned |
