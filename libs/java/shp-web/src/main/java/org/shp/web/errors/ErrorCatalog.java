@@ -114,6 +114,18 @@ public final class ErrorCatalog {
                 "Nghi ngờ trùng hồ sơ bệnh nhân.",
                 "A duplicate patient is suspected."),
             e(
+                "not-a-dependent",
+                422,
+                "business-rule",
+                "Chỉ tạo hồ sơ cho người dưới 16 tuổi.",
+                "Only a person under 16 can be added."),
+            e(
+                "profile-limit",
+                422,
+                "business-rule",
+                "Tài khoản đã quản lý số hồ sơ tối đa.",
+                "The account manages the maximum number of profiles."),
+            e(
                 "value-out-of-range",
                 422,
                 "business-rule",

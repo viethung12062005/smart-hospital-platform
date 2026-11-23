@@ -26,6 +26,7 @@ public final class AuthzAudit {
           Map.entry("book", AuditActions.CREATE),
           Map.entry("cancel", AuditActions.UPDATE),
           Map.entry("block", AuditActions.UPDATE),
+          Map.entry("merge", AuditActions.UPDATE),
           Map.entry("manage", AuditActions.UPDATE),
           Map.entry("review", AuditActions.UPDATE),
           Map.entry("run", AuditActions.UPDATE),
@@ -33,6 +34,7 @@ public final class AuthzAudit {
           Map.entry("ask", AuditActions.AI_QUERY),
           Map.entry("use", AuditActions.AI_QUERY),
           Map.entry("export", AuditActions.EXPORT),
+          Map.entry("reveal", AuditActions.READ),
           Map.entry("start", AuditActions.BREAK_GLASS_START));
 
   /** Representative role when the caller has several: prefer the more privileged one. */
