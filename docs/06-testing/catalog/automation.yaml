@@ -379,12 +379,11 @@ automation:
 
   # ---- Notification: reminder management ----
   TC-AC-DL.1:
-    status: partial
+    status: automated
     refs:
-      - services/notification/src/test/java/org/shp/notification/app/ReminderManagementServiceTest.java::n7RetriesDeadLetterBeforeAppointmentStart
-      - services/notification/src/test/java/org/shp/notification/app/ReminderManagementServiceTest.java::n7RejectsRetryAfterAppointmentStart
-      - services/notification/src/test/java/org/shp/notification/app/ReminderManagementServiceTest.java::n7ConcurrentRetryOnlyOneRequestSucceeds
-    gap: "The service layer retries a dead-lettered reminder atomically only before the appointment start. N7 is not exposed over HTTP and does not yet reject a cancelled appointment, which needs an authoritative appointment status from scheduling. Follow-up task. Owner: D3."
+      - services/notification/src/test/java/org/shp/notification/api/NotificationApiTest.java::n7AdminRetriesADeadLetterBeforeTheExamTime
+      - services/notification/src/test/java/org/shp/notification/api/NotificationApiTest.java::n7IsRefusedWith409AfterTheExamTimeAndForANonDeadLetter
+      - services/notification/src/test/java/org/shp/notification/api/NotificationApiTest.java::n5AndN6ReturnNoContactInfoAndOnlyAllowedRolesRead
   # ---- Supply chain, CI ----
   TC-NFR-SEC4:
     status: automated

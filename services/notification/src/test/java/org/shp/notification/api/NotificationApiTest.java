@@ -65,6 +65,10 @@ class NotificationApiTest {
       "test-only-signing-key-32-bytes-minimum!!".getBytes(StandardCharsets.UTF_8);
   static final String PATIENT_A = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01";
   static final String PATIENT_B = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e04";
+  static final String NURSE = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e11";
+  static final String ADMIN = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e12";
+  static final String DPO = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e13";
+  static final String APPT = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e21";
   static final String DOCTOR = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02";
   static final ObjectMapper JSON = new ObjectMapper();
 
@@ -98,6 +102,10 @@ class NotificationApiTest {
     LINKS.put("pat-a", new IdentityLink("Patient", PATIENT_A, false));
     LINKS.put("pat-b", new IdentityLink("Patient", PATIENT_B, false));
     LINKS.put("doc", new IdentityLink("Practitioner", DOCTOR, false));
+    LINKS.put("nurse-1", new IdentityLink("Practitioner", NURSE, false));
+    LINKS.put("admin-1", new IdentityLink("Practitioner", ADMIN, false));
+    LINKS.put("dpo-1", new IdentityLink("Practitioner", DPO, false));
+    mongo.dropCollection("reminders");
     mongo.dropCollection("device_tokens");
     mongo.dropCollection("preferences");
   }
@@ -451,5 +459,120 @@ class NotificationApiTest {
     var response = call("GET", "/api/v1/notifications/dead-letters", null, null);
 
     assertThat(response.statusCode()).isEqualTo(401);
+  }
+
+  // ---------- NTF-10: N5/N6/N7 over HTTP (TC-AC-DL.1) ----------
+
+  private void reminder(String id, String status, Instant appointmentStart) {
+    var d =
+        new Document("_id", id)
+            .append("kind", "t-24h")
+            .append("subjectRef", "Appointment/" + APPT)
+            .append("status", status)
+            .append("attempts", 5)
+            .append("dueAt", Date.from(Instant.now().minusSeconds(3600)))
+            .append("completedAt", Date.from(Instant.now().minusSeconds(60)))
+            .append("appointmentStart", Date.from(appointmentStart))
+            .append("recipient", new Document("phone", "+84900000000").append("email", "a@b.c"))
+            .append(
+                "deliveries",
+                List.of(
+                    new Document("channel", "sms")
+                        .append("providerMessageId", "raw-1")
+                        .append("errorCode", "provider-timeout")));
+    mongo.insert(d, "reminders");
+  }
+
+  @Test
+  void n5AndN6ReturnNoContactInfoAndOnlyAllowedRolesRead() throws Exception {
+    reminder("r-dl", "dead-lettered", Instant.now().plusSeconds(86400));
+    String reminders = "/api/v1/notifications/reminders?appointment=" + APPT;
+
+    var nurse = call("GET", reminders, token("nurse", "nurse-1"), null);
+    assertThat(nurse.statusCode()).isEqualTo(200);
+    assertThat(json(nurse)).hasSize(1);
+    assertThat(call("GET", reminders, token("admin", "admin-1"), null).statusCode()).isEqualTo(200);
+    for (var who : List.of(new String[] {"doctor", "doc"}, new String[] {"patient", "pat-a"})) {
+      assertThat(call("GET", reminders, token(who[0], who[1]), null).statusCode()).isEqualTo(403);
+    }
+
+    var list = call("GET", "/api/v1/notifications/dead-letters", token("admin", "admin-1"), null);
+    assertThat(list.statusCode()).isEqualTo(200);
+    assertThat(json(list)).hasSize(1);
+    assertThat(json(list).get(0).get("lastError").asString()).isEqualTo("provider-timeout");
+    for (var body : List.of(nurse.body(), list.body())) {
+      assertThat(body).doesNotContain("+84900000000", "a@b.c", "raw-1", "recipient", "deliveries");
+    }
+    assertThat(
+            call("GET", "/api/v1/notifications/dead-letters", token("nurse", "nurse-1"), null)
+                .statusCode())
+        .isEqualTo(403);
+    assertThat(
+            call("GET", "/api/v1/notifications/dead-letters", token("dpo", "dpo-1"), null)
+                .statusCode())
+        .isEqualTo(403);
+  }
+
+  @Test
+  void n7AdminRetriesADeadLetterBeforeTheExamTime() throws Exception {
+    reminder("r-ok", "dead-lettered", Instant.now().plusSeconds(86400));
+    var r =
+        call(
+            "POST",
+            "/api/v1/notifications/dead-letters/r-ok/retry",
+            token("admin", "admin-1"),
+            null);
+    assertThat(r.statusCode()).isEqualTo(200);
+    assertThat(json(r).get("status").asString()).isEqualTo("scheduled");
+    var stored = mongo.findById("r-ok", Document.class, "reminders");
+    assertThat(stored.getString("status")).isEqualTo("scheduled");
+    assertThat(stored.getInteger("attempts")).isZero();
+    assertThat(stored.getList("deliveries", Document.class)).hasSize(1);
+    // a second retry: it is no longer a dead letter
+    assertThat(
+            call(
+                    "POST",
+                    "/api/v1/notifications/dead-letters/r-ok/retry",
+                    token("admin", "admin-1"),
+                    null)
+                .statusCode())
+        .isEqualTo(409);
+  }
+
+  @Test
+  void n7IsRefusedWith409AfterTheExamTimeAndForANonDeadLetter() throws Exception {
+    reminder("r-late", "dead-lettered", Instant.now().minusSeconds(60));
+    reminder("r-cancelled", "cancelled", Instant.now().plusSeconds(86400));
+    var admin = token("admin", "admin-1");
+    for (String id : List.of("r-late", "r-cancelled")) {
+      assertThat(
+              call("POST", "/api/v1/notifications/dead-letters/" + id + "/retry", admin, null)
+                  .statusCode())
+          .as(id)
+          .isEqualTo(409);
+    }
+    assertThat(mongo.findById("r-late", Document.class, "reminders").getString("status"))
+        .isEqualTo("dead-lettered");
+  }
+
+  @Test
+  void n7UnknownIdIs404AndOtherCallersAreRefused() throws Exception {
+    reminder("r-x", "dead-lettered", Instant.now().plusSeconds(86400));
+    String path = "/api/v1/notifications/dead-letters/";
+    assertThat(call("POST", path + "nope/retry", token("admin", "admin-1"), null).statusCode())
+        .isEqualTo(404);
+    assertThat(call("POST", path + "r-x/retry", null, null).statusCode()).isEqualTo(401);
+    for (var who :
+        List.of(
+            new String[] {"nurse", "nurse-1"},
+            new String[] {"doctor", "doc"},
+            new String[] {"patient", "pat-a"},
+            new String[] {"dpo", "dpo-1"})) {
+      assertThat(call("POST", path + "r-x/retry", token(who[0], who[1]), null).statusCode())
+          .as(who[0])
+          .isEqualTo(403);
+    }
+    assertThat(mongo.findById("r-x", Document.class, "reminders").getString("status"))
+        .isEqualTo("dead-lettered");
   }
 }

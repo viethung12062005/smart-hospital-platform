@@ -1,5 +1,6 @@
 package org.shp.notification.api;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
 import org.shp.notification.app.ReminderManagementService;
@@ -8,6 +9,8 @@ import org.shp.notification.app.ReminderManagementService.ReminderView;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.errors.ShpException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,9 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReminderManagementController {
 
   private final ReminderManagementService service;
+  private final Clock clock;
 
-  public ReminderManagementController(ReminderManagementService service) {
+  public ReminderManagementController(ReminderManagementService service, Clock clock) {
     this.service = service;
+    this.clock = clock;
   }
 
   /**
@@ -63,5 +68,21 @@ public class ReminderManagementController {
   @RequireShpAuthz(resource = "NotificationDeadLetter", action = "read")
   public List<DeadLetterView> deadLetters() {
     return service.deadLetters();
+  }
+
+  /** N7 result: the reminder is queued again. */
+  public record RetryResult(String reminderId, String status) {}
+
+  /**
+   * N7: put a dead-lettered reminder back in the queue.
+   *
+   * <p>Permitted role: Admin only. 404 unknown id; 409 when the reminder is no longer a dead letter
+   * or the appointment start time has passed.
+   */
+  @PostMapping("/dead-letters/{id}/retry")
+  @RequireShpAuthz(resource = "NotificationDeadLetter", action = "retry")
+  public RetryResult retry(@PathVariable("id") String id) {
+    service.retryDeadLetter(id, clock);
+    return new RetryResult(id, "scheduled");
   }
 }

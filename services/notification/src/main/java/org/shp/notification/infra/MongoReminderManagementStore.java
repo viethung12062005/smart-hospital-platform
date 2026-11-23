@@ -41,11 +41,13 @@ public class MongoReminderManagementStore {
     return mongo.find(query, Document.class, COLLECTION);
   }
 
+  public java.util.Optional<Document> findById(String reminderId) {
+    return java.util.Optional.ofNullable(mongo.findById(reminderId, Document.class, COLLECTION));
+  }
+
   /**
-   * Atomically requeues a dead-lettered reminder if its appointment has not started.
-   *
-   * <p>Callers must independently verify that the appointment has not been cancelled. This method
-   * must not be exposed directly as an HTTP retry endpoint.
+   * Atomically requeues a dead-lettered reminder if its appointment has not started. A reminder
+   * cancelled by the appointment.cancelled consumer is no longer dead-lettered, so it is refused.
    */
   public boolean retryDeadLetter(String reminderId, Instant now) {
     Query query =

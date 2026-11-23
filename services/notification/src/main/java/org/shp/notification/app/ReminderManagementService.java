@@ -80,17 +80,25 @@ public class ReminderManagementService {
   }
 
   /**
-   * Internal retry operation.
-   *
-   * <p>Must not be exposed via HTTP until appointment cancellation has been checked through an
-   * authoritative source.
+   * N7: put a dead-lettered reminder back in the queue ({@code status=scheduled, attempts=0}).
+   * Unknown id: 404. Not dead-lettered any more (already retried, cancelled) or the appointment
+   * start time has passed: 409 {@code invalid-state-transition}.
    */
   public void retryDeadLetter(String reminderId, Clock clock) {
     if (reminderId == null || reminderId.isBlank()) {
       throw new ShpException("not-found");
     }
 
-    if (!store.retryDeadLetter(reminderId, clock.instant())) {
+    Document reminder = store.findById(reminderId).orElseThrow(() -> new ShpException("not-found"));
+    Instant start = instant(reminder, "appointmentStart");
+    Instant now = clock.instant();
+    if (!"dead-lettered".equals(reminder.getString("status"))
+        || start == null
+        || !start.isAfter(now)) {
+      throw new ShpException("invalid-state-transition");
+    }
+
+    if (!store.retryDeadLetter(reminderId, now)) {
       throw new ShpException("invalid-state-transition");
     }
   }
