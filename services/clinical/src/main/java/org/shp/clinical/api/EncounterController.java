@@ -70,7 +70,7 @@ public class EncounterController {
   @RequireShpAuthz(resource = "Encounter", action = "read", context = "patientQueryFacts")
   public ResponseEntity<String> search(HttpServletRequest req) {
     Map<String, List<String>> params = SearchParser.fromServlet(req.getParameterMap());
-    String patientId = ClinicalFacts.patientParam(req);
+    String patientId = ClinicalFacts.searchPatient(req, IdentityInterceptor.principal(req));
     boolean finishedOnly = IdentityInterceptor.principal(req).roles().contains("patient");
     var page = service.byPatient(patientId, finishedOnly, count(params));
     return bundle(req, params, page);
