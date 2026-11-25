@@ -115,6 +115,11 @@ automation:
       - services/scheduling/src/test/java/org/shp/scheduling/app/BookingServiceTest.java::oneWinnerOnARace
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingConcurrencyApiTest.java::fiftyConcurrentBookingsOfOneSlotCreateOneAppointment
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingConcurrencyApiTest.java::fiftyRetriesOfOneRequestCreateOneAppointment
+  TC-AC-03.5:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/CancelApiTest.java::lateCancellation
+      - services/scheduling/src/test/java/org/shp/scheduling/api/CancelApiTest.java::patientCancelsEarlyEnough
   TC-AC-03.4:
     status: automated
     refs:

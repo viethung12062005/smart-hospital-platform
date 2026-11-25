@@ -133,6 +133,22 @@ public class SlotRepository {
   }
 
   /**
+   * Cancel return path (02-db §3.2): {@code busy -> free}, only while the slot is in the future.
+   */
+  public boolean releaseIfFuture(UUID slotId, Instant now) {
+    return jdbc.sql(
+                """
+                UPDATE scheduling.slot
+                   SET status = 'free', version_id = version_id + 1, last_updated = ?,
+                       content = jsonb_set(content, '{status}', '"free"')
+                 WHERE id = ? AND status = 'busy' AND start_at > ?
+                """)
+            .params(Timestamp.from(now), slotId, Timestamp.from(now))
+            .update()
+        > 0;
+  }
+
+  /**
    * Return {@code true} if the slot currently has an active (booked/arrived/fulfilled) appointment.
    */
   @Transactional(readOnly = true)

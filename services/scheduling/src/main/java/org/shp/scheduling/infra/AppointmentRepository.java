@@ -92,6 +92,68 @@ public class AppointmentRepository {
         .optional();
   }
 
+  /**
+   * Conditional status change to {@code cancelled} (02-db §3.2): only when the row still has {@code
+   * expectedVersion} and one of {@code fromStatuses}. Writes the {@code resource_history} row of
+   * the new version too. Empty means nothing changed.
+   */
+  public Optional<AppointmentRecord> cancel(
+      AppointmentRecord current,
+      java.util.Collection<String> fromStatuses,
+      String reason,
+      String changedBy,
+      java.time.Instant now,
+      String newContent) {
+    int newVersion = current.versionId() + 1;
+    String sql =
+        """
+        UPDATE scheduling.appointment
+           SET status = 'cancelled', cancel_reason = ?, version_id = ?, last_updated = ?,
+               content = ?::jsonb
+         WHERE id = ? AND version_id = ? AND status = ANY (?)
+        """;
+    int rows =
+        jdbc.sql(sql)
+            .params(
+                reason,
+                newVersion,
+                Timestamp.from(now),
+                newContent,
+                current.id(),
+                current.versionId(),
+                fromStatuses.toArray(new String[0]))
+            .update();
+    if (rows == 0) {
+      return Optional.empty();
+    }
+    String stored =
+        jdbc.sql(
+                """
+                INSERT INTO scheduling.resource_history (
+                    resource_type, id, version_id, last_updated, operation, changed_by, content
+                ) VALUES ('Appointment', ?, ?, ?, 'update', ?, ?::jsonb)
+                RETURNING content::text
+                """)
+            .params(current.id(), newVersion, Timestamp.from(now), changedBy, newContent)
+            .query(String.class)
+            .single();
+    return Optional.of(
+        new AppointmentRecord(
+            current.id(),
+            newVersion,
+            now,
+            "cancelled",
+            current.slotId(),
+            current.patientId(),
+            current.practitionerId(),
+            current.specialty(),
+            current.start(),
+            current.end(),
+            current.channel(),
+            current.bookedBy(),
+            stored));
+  }
+
   public Optional<AppointmentRecord> findById(UUID id) {
     return jdbc.sql(
             """
