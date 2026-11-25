@@ -87,10 +87,6 @@ public class BookingController {
     }
     UUID patient =
         body.patientId() != null ? body.patientId() : UUID.fromString(principal.fhirUserId());
-    if (!patients.exists(patient)) {
-      throw new ShpException("not-found");
-    }
-
     BookingResult result =
         service.book(
             new BookingCommand(
@@ -100,7 +96,12 @@ public class BookingController {
                 body.slotId(),
                 patient,
                 channel,
-                body.comment()));
+                body.comment()),
+            () -> {
+              if (!patients.exists(patient)) {
+                throw new ShpException("not-found");
+              }
+            });
 
     var a = result.appointment();
     String location = "/fhir/Appointment/" + a.id() + "/_history/" + a.versionId();

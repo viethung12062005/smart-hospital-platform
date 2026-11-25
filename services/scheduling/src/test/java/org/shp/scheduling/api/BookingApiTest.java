@@ -87,6 +87,7 @@ class BookingApiTest {
   @Autowired TestSecurityConfig.FakeIdentityLinkClient identityLinks;
   @Autowired JdbcClient jdbc;
   @Autowired FakePatientClient patients;
+  @Autowired Clock clock;
 
   @TestConfiguration
   static class TestSecurityConfig {
@@ -164,7 +165,7 @@ class BookingApiTest {
                     EXPIRED_CHILD.toString(),
                     "proxy",
                     "booking",
-                    Instant.now().minusSeconds(3600)))));
+                    clock.instant().minusSeconds(3600)))));
     identityLinks.links.put(
         "nurse-1", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
     identityLinks.links.put("doctor-1", new IdentityLink("Practitioner", doctor.toString(), false));
@@ -458,6 +459,36 @@ class BookingApiTest {
     assertThat(errorCode(res)).isEqualTo("not-found");
     assertThat(count("SELECT count(*) FROM scheduling.appointment")).isZero();
     assertThat(count("SELECT count(*) FROM scheduling.slot WHERE status = 'free'")).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("a patient naming an unknown, unlinked id gets 403, never 404 (no existence oracle)")
+  void unknownUnlinkedPatientIsForbiddenNotNotFound() throws Exception {
+    UUID ghost = UUID.fromString("0192f8a4-0000-7000-8000-0000000000ef");
+    patients.markMissing(ghost);
+
+    var res = book(patientAToken, "key-api-0020", params(freeSlot(3), ghost, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(403);
+    assertThat(patients.lookups()).isZero();
+  }
+
+  @Test
+  @DisplayName("AC-03.2: a retry with the same key still gets 200 while clinical is down")
+  void replayDoesNotNeedClinical() throws Exception {
+    String body = params(freeSlot(3), null, null, null);
+    var first = book(patientAToken, "key-api-0021", body);
+    assertThat(first.statusCode()).isEqualTo(201);
+
+    patients.setDown(true);
+    var replay = book(patientAToken, "key-api-0021", body);
+    assertThat(replay.statusCode()).isEqualTo(200);
+    assertThat(replay.body()).isEqualTo(first.body());
+
+    var fresh = book(patientAToken, "key-api-0022", params(freeSlot(4), null, null, null));
+    assertThat(fresh.statusCode()).isEqualTo(503);
+    assertThat(errorCode(fresh)).isEqualTo("dependency-unavailable");
+    assertThat(count("SELECT count(*) FROM scheduling.appointment")).isEqualTo(1);
   }
 
   @Test
