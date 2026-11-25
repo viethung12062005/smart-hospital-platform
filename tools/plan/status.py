@@ -11,7 +11,7 @@ STATUS = {
     "AI-06": ("done", "cf3ed23", "Hybrid BM25 + vector + RRF, query-time trimming; reranker not enabled (waiting for eval AI-16)"),
     "AI-07": ("done", "cf3ed23", "prompts/<task>/v<N>.md, ID recorded in messages; context ≤ 3,500 tokens"),
     "AI-08": ("done", "cf3ed23", "Verifies quotes match chunks, retries the next model once, no sources means no LLM call"),
-    "AI-09": ("partial", "f1e884d", "AI1 JSON and SSE; tokens streamed with a reset on model switch (#636); NOT YET an authenticated SSE run on the cluster with Ollama and the 100-question first-token p95 ≤ 3 seconds on UAT (NFR-P5)"),
+    "AI-09": ("partial", "f1e884d", "AI1 JSON and SSE with real token streaming from the provider, reset event on model switch, retrieval-only when the chain is exhausted; first-token latency is exported as shp_ai_assistant_first_token_seconds; p95 <= 3 s NOT YET measured: no model is reachable on the local cluster and there is no UAT"),
     "AI-10": ("done", "cf3ed23", "Input guardrail: length, vi/en injection patterns; blocks with audit denied"),
     "AI-11": ("done", "cf3ed23", "Output guardrail: schema, citations, no direct orders, dosage must exist in the source; prevents data block escape"),
     "AI-12": ("done", "cf3ed23", "conversations/messages TTL 30 days, feedback (409, PUT), AI3 only for the conversation owner"),
