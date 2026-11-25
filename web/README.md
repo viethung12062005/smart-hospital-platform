@@ -50,6 +50,27 @@ Port 5173 is fixed because that is the redirect URI declared for the `shp-web` c
 `.github/workflows/svc-web.yml`: `node-ci` (format, lint, types, test + coverage, build, `npm audit`) → `container` (hadolint, Trivy, SBOM, signing)
 → `gitops-promote` (uat). On the cluster, the HTTPRoute sends `/` to the web app, and `/fhir` and `/api` to the gateway.
 
+## Check the image the way the chart runs it (WEB-10)
+
+The image is non-root nginx (`USER 101`, port 8080). The shared chart runs it with a read-only root filesystem, all capabilities dropped,
+no privilege escalation and `runAsUser: 10001`, mounts an `emptyDir` on `/tmp` only, and probes `/healthz`. To check this on your machine
+(Docker only, no cluster). The build context is the **repository root**, because the build reads `contracts/terminology`:
+
+```bash
+docker build -f web/Dockerfile -t shp-web:local .
+for u in 101 10001; do
+  docker run -d --rm --name shp-web-check --read-only --user $u --cap-drop ALL --security-opt no-new-privileges \
+    -p 18089:8080 --tmpfs /tmp shp-web:local
+  sleep 3
+  curl -s -o /dev/null -w "uid $u: / %{http_code}\n" http://localhost:18089/
+  curl -s -o /dev/null -w "uid $u: /healthz %{http_code}\n" http://localhost:18089/healthz
+  docker rm -f shp-web-check
+done
+```
+
+Expected: `200` for both paths with both users. If the container exits instead, nginx is writing outside `/tmp`: `nginx.conf` keeps the pid file and
+every temp path under `/tmp` for exactly this reason. Run on 2026-11-25: UID 10001 with only `/tmp` writable answered 200 on `/` and `/healthz`.
+
 ## Provenance
 
 The design system and screen layouts inherit from the previous PoC portal (copied selectively). The `src/layout/` shell is adapted from Medplum (Apache-2.0): see [NOTICE](NOTICE).
