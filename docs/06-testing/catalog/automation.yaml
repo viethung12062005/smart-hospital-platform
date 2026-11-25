@@ -146,6 +146,7 @@ automation:
       - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::sameClaimCannotPersistDeliveryTwice
       - services/notification/src/test/java/org/shp/notification/infra/ReminderRetryIntegrationTest.java::staleWorkerCannotOverwriteReclaimedAttempt
       - services/notification/src/test/java/org/shp/notification/infra/HttpContactClientTest.java::failureIsDependencyUnavailableAndLogsNoContactData
+      - services/notification/src/test/java/org/shp/notification/config/ContactClientConfigTest.java::wiredClientSendsTheServiceTokenToClinical
     gap: "NTF-07 tests cover transient provider failures, fallback, retry and conditional delivery persistence. Provider-level deduplication after a successful send followed by worker crash still awaits NTF-12 adapters."
   TC-AC-SN.1:
     status: partial
