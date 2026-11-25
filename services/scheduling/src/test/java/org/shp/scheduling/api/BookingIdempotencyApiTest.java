@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.shp.scheduling.app.BookingTestSupport;
+import org.shp.scheduling.infra.FakePatientClient;
 import org.shp.security.ShpAuthProperties;
 import org.shp.security.ShpJwt;
 import org.shp.web.auth.IdentityLink;
@@ -106,6 +107,12 @@ class BookingIdempotencyApiTest {
               .build();
       d.setJwtValidator(ShpJwt.validator(props, clock));
       return d;
+    }
+
+    @Bean
+    @Primary
+    FakePatientClient fakePatientClient() {
+      return new FakePatientClient();
     }
 
     @Bean

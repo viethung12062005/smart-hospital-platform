@@ -20,6 +20,7 @@ import org.shp.fhir.FhirJson;
 import org.shp.scheduling.app.BookingService;
 import org.shp.scheduling.domain.BookingCommand;
 import org.shp.scheduling.domain.BookingResult;
+import org.shp.scheduling.domain.PatientClient;
 import org.shp.scheduling.domain.SlotUnavailableException;
 import org.shp.scheduling.domain.SuggestedSlot;
 import org.shp.scheduling.infra.SuggestedSlotRepository;
@@ -50,20 +51,25 @@ public class BookingController {
 
   private final BookingService service;
   private final SuggestedSlotRepository suggestions;
+  private final PatientClient patients;
   private final Clock clock;
 
   public BookingController(
-      BookingService service, SuggestedSlotRepository suggestions, Clock clock) {
+      BookingService service,
+      SuggestedSlotRepository suggestions,
+      PatientClient patients,
+      Clock clock) {
     this.service = Objects.requireNonNull(service, "service must not be null");
     this.suggestions = Objects.requireNonNull(suggestions, "suggestions must not be null");
+    this.patients = Objects.requireNonNull(patients, "patients must not be null");
     this.clock = Objects.requireNonNull(clock, "clock must not be null");
   }
 
   /**
    * 201 with the new Appointment, or 200 with the Appointment of an earlier request that used the
    * same Idempotency-Key and body (AC-03.2). A nurse books for any patient and the channel is
-   * forced to {@code staff}; a patient books for themselves with channel {@code web} or {@code
-   * chatbot} (default {@code web}).
+   * forced to {@code staff}; a patient books for themselves or a linked profile with channel {@code
+   * web} or {@code chatbot} (default {@code web}).
    */
   @PostMapping(
       value = "/fhir/Appointment/$book",
@@ -81,6 +87,9 @@ public class BookingController {
     }
     UUID patient =
         body.patientId() != null ? body.patientId() : UUID.fromString(principal.fhirUserId());
+    if (!patients.exists(patient)) {
+      throw new ShpException("not-found");
+    }
 
     BookingResult result =
         service.book(
