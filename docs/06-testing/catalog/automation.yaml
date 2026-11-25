@@ -175,6 +175,7 @@ automation:
       - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::rescheduledEventCreatesOnlyOneImmediateConfirmation
       - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::rescheduledEventCancelsOldAndCreatesNewMilestones
       - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::rescheduleConfirmationContainsPreviousAppointmentTime
+      - services/notification/src/test/java/org/shp/notification/app/ReminderSenderRescheduleTest.java::rescheduledConfirmationDeliversTheCombinedNoticeWithThePreviousTime
     gap: "Notification side only (NTF-03: cancel unsent reminders, one combined reschedule notice). The scheduling-side cancel API is covered by its own catalog entry."
   TC-AC-15.1:
     status: automated
