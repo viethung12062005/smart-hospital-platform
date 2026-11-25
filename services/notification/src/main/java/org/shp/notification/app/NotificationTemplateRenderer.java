@@ -46,6 +46,22 @@ public class NotificationTemplateRenderer {
     }
 
     String template = loadTemplate(kind, locale);
+    return renderTemplate(template, variables);
+  }
+
+  /** Render a single combined notice for a rescheduled appointment. */
+  public String renderReschedule(String locale, Map<String, String> variables) {
+    Objects.requireNonNull(variables, "Template variables are required");
+
+    if (locale == null || !SUPPORTED_LOCALES.contains(locale)) {
+      throw new IllegalArgumentException("Locale must be either vi or en");
+    }
+
+    String template = loadTemplatePath("templates/reschedule-confirmation." + locale + ".txt");
+    return renderTemplate(template, variables);
+  }
+
+  private String renderTemplate(String template, Map<String, String> variables) {
     Matcher matcher = PLACEHOLDER_PATTERN.matcher(template);
     StringBuilder rendered = new StringBuilder();
 
@@ -66,7 +82,10 @@ public class NotificationTemplateRenderer {
   }
 
   private String loadTemplate(ReminderKind kind, String locale) {
-    String resourcePath = "templates/" + kind.value() + "." + locale + ".txt";
+    return loadTemplatePath("templates/" + kind.value() + "." + locale + ".txt");
+  }
+
+  private String loadTemplatePath(String resourcePath) {
     String cached = templates.get(resourcePath);
     if (cached != null) {
       return cached;

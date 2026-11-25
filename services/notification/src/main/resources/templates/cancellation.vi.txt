@@ -1,0 +1,4 @@
+Lịch hẹn của bạn đã được hủy.
+
+Thời gian lịch hẹn: {startTime}
+Quản lý lịch hẹn: {manageLink}

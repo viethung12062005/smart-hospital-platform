@@ -1,0 +1,4 @@
+Your appointment has been cancelled.
+
+Appointment time: {startTime}
+Manage your appointment: {manageLink}
