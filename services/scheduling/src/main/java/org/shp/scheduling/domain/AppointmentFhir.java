@@ -1,8 +1,10 @@
 package org.shp.scheduling.domain;
 
+import java.time.Instant;
 import java.util.Date;
 import org.hl7.fhir.r4.model.Appointment;
 import org.hl7.fhir.r4.model.CodeType;
+import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Reference;
@@ -14,7 +16,24 @@ public final class AppointmentFhir {
   public static final String BOOKING_CHANNEL_URL =
       "https://shp.example.org/fhir/StructureDefinition/booking-channel";
 
+  public static final String CANCEL_REASON_SYSTEM =
+      "https://shp.example.org/fhir/CodeSystem/cancel-reason";
+
   private AppointmentFhir() {}
+
+  /**
+   * The stored resource {@code content} of a cancelled appointment: status {@code cancelled}, the
+   * reason, and the new version and time in {@code meta}.
+   */
+  public static String cancelled(String content, int versionId, Instant at, String reason) {
+    var resource = FhirJson.parse(content, Appointment.class);
+    resource.getMeta().setVersionId(Integer.toString(versionId));
+    resource.getMeta().setLastUpdated(Date.from(at));
+    resource.setStatus(Appointment.AppointmentStatus.CANCELLED);
+    resource.setCancelationReason(
+        new CodeableConcept(new Coding().setSystem(CANCEL_REASON_SYSTEM).setCode(reason)));
+    return FhirJson.serialize(resource);
+  }
 
   /**
    * The resource of a new booking: version 1 of {@code a}, created at {@code a.lastUpdated()}.
