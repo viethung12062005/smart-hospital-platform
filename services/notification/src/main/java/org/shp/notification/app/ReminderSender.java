@@ -3,7 +3,10 @@ package org.shp.notification.app;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import org.bson.Document;
+import org.shp.notification.domain.ReminderKind;
 import org.shp.notification.infra.MongoReminderWorkQueue;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +65,39 @@ public class ReminderSender {
     }
 
     this.channels = Map.copyOf(registered);
+  }
+
+  private static final ZoneId DISPLAY_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+  private static final DateTimeFormatter DISPLAY_TIME =
+      DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(DISPLAY_ZONE);
+
+  /**
+   * Renders the text of a claimed reminder. A booking confirmation created by a reschedule ({@code
+   * noticeType = reschedule}) uses the combined reschedule template with the previous start time;
+   * every other reminder uses its kind's template as before.
+   *
+   * @param variables template variables; {@code previousStart} is filled from the reminder document
+   *     when absent
+   */
+  public String renderContent(
+      Document claimed,
+      NotificationTemplateRenderer renderer,
+      String locale,
+      Map<String, String> variables) {
+    if ("reschedule".equals(claimed.getString("noticeType"))) {
+      Map<String, String> withPrevious = new HashMap<>(variables);
+      if (claimed.get("previousStart") instanceof Date date) {
+        withPrevious.putIfAbsent("previousStart", DISPLAY_TIME.format(date.toInstant()));
+      }
+      return renderer.renderReschedule(locale, withPrevious);
+    }
+    String kindValue = claimed.getString("kind");
+    for (ReminderKind kind : ReminderKind.values()) {
+      if (kind.value().equals(kindValue)) {
+        return renderer.render(kind, locale, variables);
+      }
+    }
+    throw new IllegalArgumentException("Unknown reminder kind");
   }
 
   /**

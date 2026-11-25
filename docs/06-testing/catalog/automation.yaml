@@ -162,6 +162,21 @@ automation:
       - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::duplicateBookedEventThroughConsumerCreatesNoDuplicates
       - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::pastMilestonesAreSkippedByConsumer
       - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::appointmentWithinTwoHoursGetsOnlyConfirmation
+  TC-AC-07.1-cancel-reminders:
+    status: automated
+    refs:
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::cancelledEventCancelsOutstandingRemindersAndCreatesNotice
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::cancelledEventIsIdempotent
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::cancellationDoesNotModifyAlreadySentReminder
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::lateBookedEventDoesNotRecreateCancelledAppointmentReminders
+  TC-AC-07.1:
+    status: partial
+    refs:
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::rescheduledEventCreatesOnlyOneImmediateConfirmation
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::rescheduledEventCancelsOldAndCreatesNewMilestones
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::rescheduleConfirmationContainsPreviousAppointmentTime
+      - services/notification/src/test/java/org/shp/notification/app/ReminderSenderRescheduleTest.java::rescheduledConfirmationDeliversTheCombinedNoticeWithThePreviousTime
+    gap: "Notification side only (NTF-03: cancel unsent reminders, one combined reschedule notice). The scheduling-side cancel API is covered by its own catalog entry."
   TC-AC-15.1:
     status: automated
     refs:
