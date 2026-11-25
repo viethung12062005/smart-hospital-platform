@@ -330,7 +330,10 @@ automation:
     refs:
       - libs/java/shp-events/src/test/java/org/shp/events/audit/AuditTest.java::deniedDecisionIsAuditedWithReasonAndAllowedWithPurpose
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/AuditSinkTest.java::auditSurvivesARolledBackBusinessTransaction
-    gap: "Allowed and denied audit is checked in the library; not yet cross-checked against 100% of operations in each service and a delay <= 1 minute (AUD-xx)."
+      - services/audit/src/test/java/org/shp/audit/app/AuditSinkShipperTest.java::aRecordReachesTheSinkOnTheFirstPollWithoutWaitingForTheBatch
+      - services/audit/src/test/java/org/shp/audit/app/AuditSinkShipperTest.java::aSinkErrorKeepsTheRecordsAndTheNextPollSendsThem
+      - services/audit/src/test/java/org/shp/audit/app/AuditSinkShipperTest.java::aSinkOutageNeverLetsTheBatchFlusherRemoveRecordsTheSinkHasNotAccepted
+    gap: "Allowed and denied audit is checked in the library; the audit service ships records to the query sink on the first poll and retries on a sink error (against a local Loki stand-in; Log Analytics not exercised). Not yet cross-checked against 100% of operations in each service."
   TC-AC-09.2:
     status: planned
     blocked_by: "No WORM audit store and query API yet (AUD-02, AUD-06)."

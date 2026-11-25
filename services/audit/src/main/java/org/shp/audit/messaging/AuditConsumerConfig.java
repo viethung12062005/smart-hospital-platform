@@ -5,8 +5,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 import org.shp.audit.app.AuditBatchFlusher;
 import org.shp.audit.app.AuditIntake;
+import org.shp.audit.app.AuditSinkShipper;
 import org.shp.audit.config.AuditBatchProperties;
 import org.shp.audit.config.AuditBlobProperties;
+import org.shp.audit.config.AuditSinkProperties;
+import org.shp.audit.infra.AuditSink;
 import org.shp.audit.infra.AuditSpool;
 import org.shp.audit.infra.WormAuditLog;
 import org.shp.data.mongo.MongoInbox;
@@ -68,32 +71,63 @@ class AuditConsumerConfig {
   AuditFlushJob auditFlushJob(
       AuditSpool spool,
       ObjectProvider<WormAuditLog> worm,
+      ObjectProvider<AuditSink> sink,
+      AuditSinkProperties sinkProps,
       AuditBlobProperties blob,
       AuditBatchProperties batch,
       Clock clock) {
-    return new AuditFlushJob(spool, worm, blob, batch, clock);
+    return new AuditFlushJob(spool, worm, sink, sinkProps, blob, batch, clock);
   }
 
   /** Checks every {@code poll-interval} whether a batch is due. */
   static class AuditFlushJob {
     private final AuditSpool spool;
     private final ObjectProvider<WormAuditLog> worm;
+    private final ObjectProvider<AuditSink> sink;
+    private final AuditSinkProperties sinkProps;
     private final AuditBlobProperties blob;
     private final AuditBatchProperties batch;
     private final Clock clock;
     private AuditBatchFlusher flusher;
+    private AuditSinkShipper shipper;
 
     AuditFlushJob(
         AuditSpool spool,
         ObjectProvider<WormAuditLog> worm,
+        ObjectProvider<AuditSink> sink,
+        AuditSinkProperties sinkProps,
         AuditBlobProperties blob,
         AuditBatchProperties batch,
         Clock clock) {
       this.spool = spool;
       this.worm = worm;
+      this.sink = sink;
+      this.sinkProps = sinkProps;
       this.blob = blob;
       this.batch = batch;
       this.clock = clock;
+    }
+
+    /** Ships new records to the query sink every poll interval (NFR-SEC5: queryable in 1 min). */
+    @Scheduled(fixedDelayString = "${shp.audit-batch.poll-interval:1s}")
+    void ship() {
+      if (!sinkProps.enabled()) {
+        return;
+      }
+      try {
+        sinkShipper().shipDue();
+      } catch (RuntimeException e) {
+        // Nothing is marked shipped and the records stay in the spool: the next run retries.
+        log.error("Audit sink shipping failed, will retry: {}", e.toString());
+      }
+    }
+
+    private AuditSinkShipper sinkShipper() {
+      if (shipper == null) {
+        shipper =
+            new AuditSinkShipper(spool, sink.getObject(), blob.instance(), batch.maxRecords());
+      }
+      return shipper;
     }
 
     @Scheduled(fixedDelayString = "${shp.audit-batch.poll-interval:1s}")
@@ -110,7 +144,8 @@ class AuditConsumerConfig {
                   blob.instance(),
                   batch.maxRecords(),
                   batch.maxAge(),
-                  clock);
+                  clock,
+                  sinkProps.enabled() ? sinkShipper() : null);
         }
         flusher
             .flushIfDue()

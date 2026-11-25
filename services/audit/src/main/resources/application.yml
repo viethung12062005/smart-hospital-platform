@@ -23,10 +23,14 @@ shp:
   clinical:
     url: ${SHP_CLINICAL_URL:http://clinical}
   audit-sink:
-    # Log Analytics query table (05-storage-audit-blob §1.3). Empty = disabled; AUD-02 wires the
-    # Logs Ingestion API (Data Collection Rule) on top of these settings.
+    # Log Analytics query table (05-storage-audit-blob §1.3). Empty = disabled; AUD-03 ships records
+    # through the Logs Ingestion API (Data Collection Rule), or to Loki locally.
     workspace-id: ${SHP_AUDIT_SINK_WORKSPACE_ID:}
     endpoint: ${SHP_AUDIT_SINK_ENDPOINT:}
+    dcr-id: ${SHP_AUDIT_SINK_DCR_ID:}
+    stream: ${SHP_AUDIT_SINK_STREAM:Custom-SHPAudit_CL}
+    # Local query copy: base URL of Loki (used only when Log Analytics is not configured).
+    loki-url: ${SHP_AUDIT_SINK_LOKI_URL:}
   audit-blob:
     # WORM audit container (05-storage-audit-blob §1.2). Local: connection string for Azurite.
     # Cloud: leave the connection string empty and set the account URL; the pod's managed identity
