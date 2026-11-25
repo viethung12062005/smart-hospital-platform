@@ -220,6 +220,7 @@ DOC-02,DOC,"US-035, US-037","IBlobStore on Azure Blob SDK (one code for local Az
 DOC-03,DOC,US-035,"Upload request API (D1): check type, size, Care, Idempotency-Key",415/413/403/400 correct; same key same documentId,D3,4,"DOC-02, SHR-12, SHR-25",S3,6,"D1, AC-05.1"
 ENV-05,ENV,US-070,G4 rehearsal,Sample service goes local -> uat -> prod (ephemeral) through the pipeline only; GitOps revert rollback < 5 minutes; unsigned image blocked; destroy; evidence captured,SA,4,"ENV-01, LOC-03, LOC-04, GOP-07",S3,6,Gate G4
 GOP-10,GOP,US-063,MLflow chart (tracking + registry) for cluster environments,"MLflow runs with durable storage backend, accessed via Workload Identity",SA,3,GOP-03,S3,6,ADR-0007
+GOV-14,GOV,US-070,Keep the tracker aligned with merged work,"tools/plan/status.py records every SA task whose PR is merged, as done or partial with what is missing; each entry is backed by a merged PR carrying the exact task ID",SA,2,GOV-13,S3,6,ARC-10
 IAC-13,IAC,ENABLER,Module service bus,Namespace with local auth disabled; RBAC for services,SA,2,IAC-05,S3,6,ADR-0001
 IAC-14,IAC,ENABLER,Module ai-search,"API key disabled (RBAC only), SKU from environment variable",SA,2,IAC-05,S3,6,ADR-0008
 IAC-15,IAC,ENABLER,Module workload identity for services,One UAMI per service + federated credential (namespace/serviceaccount) + role to the correct data store,SA,4,IAC-07,S3,6,NFR-SEC4

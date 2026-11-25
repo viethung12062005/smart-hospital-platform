@@ -2,25 +2,25 @@
 
 > Generated automatically by `python3 -I tools/plan/build.py` from `tools/plan/tasks_sa.py`, `tasks_dev.py`, `stories.py`. Do not edit by hand. Import into GitHub Projects with [backlog.csv](backlog.csv). Work per person: [by-person](by-person/).
 
-Total: **361 tasks**, **1245 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
+Total: **362 tasks**, **1247 hours** · dev: each task ≤ 4 hours, SA: ≤ 8 hours.
 
 ## Remaining load per person and per week (hours; completed tasks excluded)
 
 | Week | SA | D1 | D2 | D3 |
 |---|---|---|---|---|
 | W1 | 12 |  |  |  |
-| W2 | 18 |  |  |  |
+| W2 | 14 |  |  |  |
 | W3 | 10 |  |  |  |
 | W4 | 6 |  | 4 | 9 |
 | W5 | 17 | 4 |  | 18 |
-| W6 | 23 | 24 | 10 | 26 |
+| W6 | 25 | 24 | 10 | 26 |
 | W7 | 27 | 30 | 30 | 30 |
 | W8 | **67** | 4 | 25 | 8 |
 | W9 | 28 |  |  |  |
 | W10 | 26 | 4 |  |  |
 | W11 | 8 |  |  |  |
 | W12 | 9 |  |  |  |
-| **Total** | **251** | **66** | **69** | **91** |
+| **Total** | **249** | **66** | **69** | **91** |
 
 Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 
@@ -85,6 +85,7 @@ Bold = above the warning threshold (dev > 30h/week, SA > 45h/week).
 | GOV-11 | US-070 | Translate the infra, GitOps and templates repositories to English | Comments, descriptions, READMEs and templates in shp-infra, shp-gitops and shp-platform-templates contain no Vietnamese prose; terraform fmt/validate, the GitOps validate script and the chart checks are green | SA | 4 | GOV-10 | S1 | ARC-09 |
 | GOV-12 | US-070 | Definition of Done audit of every completed task | docs/05-plan/dod-audit.md gives a verdict with evidence for every task marked Done, lists each gap with a proposed fix, and traces the acceptance criteria to the test catalog | SA | 8 | GOV-11 | S1 | ARC-10 |
 | GOV-13 | US-070 | Instructions for AI agents (AGENTS.md, CLAUDE.md) in the four repositories | Each repo has an AGENTS.md that states the non-negotiable rules and routes to the convention documents, and a CLAUDE.md that imports it; every path it names exists; conventions stay defined in docs/ | SA | 4 | GOV-12 | S1 | ARC-10 |
+| GOV-14 | US-070 | Keep the tracker aligned with merged work | tools/plan/status.py records every SA task whose PR is merged, as done or partial with what is missing; each entry is backed by a merged PR carrying the exact task ID | SA | 2 | GOV-13 | S3 | ARC-10 |
 | GOV-06 | US-070 | Dependabot for actions, maven, pip, docker, terraform | dependabot.yml in every repo; actions pinned by commit SHA | SA | 2 | GOV-01 | S4 | NFR-SEC6 |
 
 ## IAC — Azure infrastructure with Terraform
