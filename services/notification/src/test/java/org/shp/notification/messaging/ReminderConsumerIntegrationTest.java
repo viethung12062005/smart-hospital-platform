@@ -34,6 +34,7 @@ class ReminderConsumerIntegrationTest {
 
   private static final Instant NOW = Instant.parse("2026-11-20T02:00:00Z");
   private static final String APPOINTMENT_ID = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01";
+  private static final String NEW_APPOINTMENT_ID = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e05";
   private static final String PATIENT_ID = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02";
 
   private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
@@ -61,6 +62,7 @@ class ReminderConsumerIntegrationTest {
     TransactionTemplate tx = new TransactionTemplate(new MongoTransactionManager(factory));
 
     DB.createCollection(ReminderService.COLLECTION);
+    DB.createCollection(ReminderService.APPOINTMENT_STATES);
     DB.createCollection(MongoMessaging.INBOX);
 
     DB.indexOps(ReminderService.COLLECTION)
@@ -82,6 +84,7 @@ class ReminderConsumerIntegrationTest {
   @BeforeEach
   void reset() {
     DB.getCollection(ReminderService.COLLECTION).deleteMany(new Document());
+    DB.getCollection(ReminderService.APPOINTMENT_STATES).deleteMany(new Document());
     DB.getCollection(MongoMessaging.INBOX).deleteMany(new Document());
   }
 
@@ -130,6 +133,253 @@ class ReminderConsumerIntegrationTest {
     assertThat(kinds()).containsExactly("booking-confirmation");
   }
 
+  // ---------- NTF-03: E2 appointment cancellation ----------
+
+  @Test
+  void cancelledEventCancelsOutstandingRemindersAndCreatesNotice() {
+    Instant start = NOW.plus(Duration.ofDays(3));
+
+    CONSUMER.accept(message(booked(start)));
+    assertThat(count()).isEqualTo(3);
+
+    CONSUMER.accept(message(cancelled(start)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "booking-confirmation")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "t-2h")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "cancellation")).isEqualTo("scheduled");
+    assertThat(count()).isEqualTo(4);
+  }
+
+  @Test
+  void cancelledEventIsIdempotent() {
+    Instant start = NOW.plus(Duration.ofDays(3));
+
+    CONSUMER.accept(message(booked(start)));
+
+    Message<byte[]> event = message(cancelled(start));
+    CONSUMER.accept(event);
+    CONSUMER.accept(event);
+    CONSUMER.accept(message(cancelled(start)));
+
+    assertThat(count()).isEqualTo(4);
+    assertThat(statusFor(APPOINTMENT_ID, "cancellation")).isEqualTo("scheduled");
+  }
+
+  @Test
+  void cancellationDoesNotModifyAlreadySentReminder() {
+    Instant start = NOW.plus(Duration.ofDays(3));
+
+    CONSUMER.accept(message(booked(start)));
+
+    DB.getCollection(ReminderService.COLLECTION)
+        .updateOne(
+            new Document("subjectRef", "Appointment/" + APPOINTMENT_ID)
+                .append("kind", "booking-confirmation"),
+            new Document("$set", new Document("status", "sent")));
+
+    CONSUMER.accept(message(cancelled(start)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "booking-confirmation")).isEqualTo("sent");
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "cancellation")).isEqualTo("scheduled");
+  }
+
+  // ---------- NTF-03: E3 appointment rescheduling ----------
+
+  @Test
+  void rescheduledEventCancelsOldAndCreatesNewMilestones() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(booked(oldStart)));
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "booking-confirmation")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "t-2h")).isEqualTo("cancelled");
+
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "booking-confirmation")).isEqualTo("scheduled");
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "t-24h")).isEqualTo("scheduled");
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "t-2h")).isEqualTo("scheduled");
+
+    assertThat(count()).isEqualTo(6);
+  }
+
+  @Test
+  void rescheduledEventCreatesOnlyOneImmediateConfirmation() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(booked(oldStart)));
+
+    Message<byte[]> event = message(rescheduled(oldStart, newStart));
+    CONSUMER.accept(event);
+    CONSUMER.accept(event);
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+
+    long confirmations =
+        DB.getCollection(ReminderService.COLLECTION)
+            .countDocuments(
+                new Document("subjectRef", "Appointment/" + NEW_APPOINTMENT_ID)
+                    .append("kind", "booking-confirmation"));
+
+    assertThat(confirmations).isEqualTo(1);
+    assertThat(count()).isEqualTo(6);
+    assertThat(statusFor(APPOINTMENT_ID, "cancellation")).isNull();
+  }
+
+  @Test
+  void lateBookedEventDoesNotRecreateCancelledAppointmentReminders() {
+    Instant start = NOW.plus(Duration.ofDays(3));
+
+    // Cancellation is delivered before the original booking event.
+    CONSUMER.accept(message(cancelled(start)));
+    CONSUMER.accept(message(booked(start)));
+
+    assertThat(count()).isEqualTo(1);
+    assertThat(statusFor(APPOINTMENT_ID, "cancellation")).isEqualTo("scheduled");
+    assertThat(statusFor(APPOINTMENT_ID, "booking-confirmation")).isNull();
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isNull();
+    assertThat(statusFor(APPOINTMENT_ID, "t-2h")).isNull();
+  }
+
+  @Test
+  void cancellationInvalidatesAlreadyClaimedReminder() {
+    Instant start = NOW.plus(Duration.ofDays(3));
+
+    CONSUMER.accept(message(booked(start)));
+
+    DB.getCollection(ReminderService.COLLECTION)
+        .updateOne(
+            new Document("subjectRef", "Appointment/" + APPOINTMENT_ID).append("kind", "t-24h"),
+            new Document("$set", new Document("status", "sending")));
+
+    CONSUMER.accept(message(cancelled(start)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isEqualTo("cancelled");
+    assertThat(statusFor(APPOINTMENT_ID, "cancellation")).isEqualTo("scheduled");
+  }
+
+  @Test
+  void rescheduleBeforeBookingDoesNotRestoreOldReminders() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+
+    // An older booking event arrives after rescheduling.
+    CONSUMER.accept(message(booked(oldStart)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "booking-confirmation")).isNull();
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isNull();
+    assertThat(statusFor(APPOINTMENT_ID, "t-2h")).isNull();
+
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "booking-confirmation")).isEqualTo("scheduled");
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "t-24h")).isEqualTo("scheduled");
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "t-2h")).isEqualTo("scheduled");
+  }
+
+  @Test
+  void rescheduleInvalidatesClaimedOldReminder() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(booked(oldStart)));
+
+    DB.getCollection(ReminderService.COLLECTION)
+        .updateOne(
+            new Document("subjectRef", "Appointment/" + APPOINTMENT_ID).append("kind", "t-24h"),
+            new Document("$set", new Document("status", "sending")));
+
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isEqualTo("cancelled");
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "t-24h")).isEqualTo("scheduled");
+  }
+
+  @Test
+  void reschedulePreservesAlreadySentReminder() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(booked(oldStart)));
+
+    DB.getCollection(ReminderService.COLLECTION)
+        .updateOne(
+            new Document("subjectRef", "Appointment/" + APPOINTMENT_ID)
+                .append("kind", "booking-confirmation"),
+            new Document("$set", new Document("status", "sent")));
+
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "booking-confirmation")).isEqualTo("sent");
+    assertThat(statusFor(APPOINTMENT_ID, "t-24h")).isEqualTo("cancelled");
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "booking-confirmation")).isEqualTo("scheduled");
+  }
+
+  @Test
+  void lateNoShowScoreDoesNotRecreateCancelledReminder() {
+    Instant start = NOW.plus(Duration.ofDays(3));
+
+    CONSUMER.accept(message(booked(start)));
+    CONSUMER.accept(message(cancelled(start)));
+    CONSUMER.accept(message(noShowScored(start)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "t-6h-risk")).isNull();
+  }
+
+  @Test
+  void lateNoShowScoreDoesNotRecreateRescheduledReminder() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(booked(oldStart)));
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+    CONSUMER.accept(message(noShowScored(oldStart)));
+
+    assertThat(statusFor(APPOINTMENT_ID, "t-6h-risk")).isNull();
+    assertThat(statusFor(NEW_APPOINTMENT_ID, "booking-confirmation")).isEqualTo("scheduled");
+  }
+
+  @Test
+  void rescheduleConfirmationContainsPreviousAppointmentTime() {
+    Instant oldStart = NOW.plus(Duration.ofDays(3));
+    Instant newStart = NOW.plus(Duration.ofDays(4));
+
+    CONSUMER.accept(message(booked(oldStart)));
+    CONSUMER.accept(message(rescheduled(oldStart, newStart)));
+
+    Document confirmation =
+        DB.getCollection(ReminderService.COLLECTION)
+            .find(
+                new Document("subjectRef", "Appointment/" + NEW_APPOINTMENT_ID)
+                    .append("kind", "booking-confirmation"))
+            .first();
+
+    assertThat(confirmation).isNotNull();
+    assertThat(confirmation.getString("noticeType")).isEqualTo("reschedule");
+    assertThat(confirmation.getDate("previousStart").toInstant()).isEqualTo(oldStart);
+    assertThat(confirmation.getDate("appointmentStart").toInstant()).isEqualTo(newStart);
+
+    long count =
+        DB.getCollection(ReminderService.COLLECTION)
+            .countDocuments(
+                new Document("subjectRef", "Appointment/" + NEW_APPOINTMENT_ID)
+                    .append("kind", "booking-confirmation"));
+
+    assertThat(count).isEqualTo(1);
+  }
+
+  private static String statusFor(String appointmentId, String kind) {
+    Document reminder =
+        DB.getCollection(ReminderService.COLLECTION)
+            .find(new Document("subjectRef", "Appointment/" + appointmentId).append("kind", kind))
+            .first();
+
+    return reminder == null ? null : reminder.getString("status");
+  }
+
   private static long count() {
     return DB.getCollection(ReminderService.COLLECTION).countDocuments();
   }
@@ -155,6 +405,90 @@ class ReminderConsumerIntegrationTest {
   private static Message<byte[]> message(CloudEvent event) {
     return MessageBuilder.withPayload(CloudEvents.toJson(event).getBytes(StandardCharsets.UTF_8))
         .build();
+  }
+
+  private static CloudEvent cancelled(Instant start) {
+    return CloudEvents.create(
+        "scheduling",
+        ReminderService.CANCELLED_TYPE,
+        "Appointment/" + APPOINTMENT_ID,
+        Map.of(
+            "appointmentId",
+            APPOINTMENT_ID,
+            "version",
+            2,
+            "patientId",
+            PATIENT_ID,
+            "practitionerId",
+            "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03",
+            "start",
+            start.toString(),
+            "cancelReason",
+            "patient-request",
+            "cancelledBy",
+            "patient",
+            "cancelledAt",
+            NOW.toString(),
+            "hoursBeforeStart",
+            72.0),
+        CLOCK,
+        Uuids.v7(CLOCK));
+  }
+
+  private static CloudEvent rescheduled(Instant oldStart, Instant newStart) {
+    return CloudEvents.create(
+        "scheduling",
+        ReminderService.RESCHEDULED_TYPE,
+        "Appointment/" + APPOINTMENT_ID,
+        Map.of(
+            "oldAppointmentId",
+            APPOINTMENT_ID,
+            "newAppointmentId",
+            NEW_APPOINTMENT_ID,
+            "version",
+            2,
+            "patientId",
+            PATIENT_ID,
+            "practitionerId",
+            "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e03",
+            "oldStart",
+            oldStart.toString(),
+            "newStart",
+            newStart.toString(),
+            "newEnd",
+            newStart.plus(Duration.ofMinutes(15)).toString(),
+            "specialty",
+            "cardiology"),
+        CLOCK,
+        Uuids.v7(CLOCK));
+  }
+
+  private static CloudEvent noShowScored(Instant start) {
+    return CloudEvents.create(
+        "ml",
+        ReminderService.NO_SHOW_SCORED_TYPE,
+        "Appointment/" + APPOINTMENT_ID,
+        Map.of(
+            "appointmentId",
+            APPOINTMENT_ID,
+            "patientId",
+            PATIENT_ID,
+            "start",
+            start.toString(),
+            "score",
+            0.42,
+            "threshold",
+            0.35,
+            "highRisk",
+            true,
+            "modelName",
+            "no-show",
+            "modelVersion",
+            "3",
+            "scoredAt",
+            NOW.toString()),
+        CLOCK,
+        Uuids.v7(CLOCK));
   }
 
   private static CloudEvent booked(Instant start) {

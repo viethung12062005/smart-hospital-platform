@@ -17,6 +17,7 @@ import org.shp.notification.domain.ReminderKind;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
 
@@ -29,9 +30,13 @@ public final class ReminderService {
   /** The {@code reminders} collection (04-db-notification-ml §1.2). */
   public static final String COLLECTION = "reminders";
 
+  public static final String APPOINTMENT_STATES = "reminder_appointment_states";
+
   public static final String CONSUMER = "notification";
   public static final String BOOKED_TYPE = "shp.scheduling.appointment-booked.v1";
   public static final String NO_SHOW_SCORED_TYPE = "shp.ml.no-show-scored.v1";
+  public static final String CANCELLED_TYPE = "shp.scheduling.appointment-cancelled.v1";
+  public static final String RESCHEDULED_TYPE = "shp.scheduling.appointment-rescheduled.v1";
 
   private static final Duration T_24H = Duration.ofHours(24);
   private static final Duration T_6H = Duration.ofHours(6);
@@ -53,15 +58,91 @@ public final class ReminderService {
    */
   public void onBooked(CloudEvent event) {
     JsonNode data = event.data();
+    Instant now = clock.instant();
+
+    saveNew(
+        bookingReminders(
+            subjectRef(text(data, "appointmentId")),
+            text(data, "patientId"),
+            instant(data, "start"),
+            now));
+  }
+
+  /** E2: Cancel outstanding reminders and schedule one cancellation notice. */
+  public void onCancelled(CloudEvent event) {
+    JsonNode data = event.data();
     String subjectRef = subjectRef(text(data, "appointmentId"));
     String patientId = text(data, "patientId");
     Instant appointmentStart = instant(data, "start");
     Instant now = clock.instant();
 
+    MongoMessaging.inTransaction(
+        tx,
+        () -> {
+          recordClosedAppointment(subjectRef, "cancelled", now);
+          cancelOutstanding(subjectRef, now, true);
+          saveNew(
+              List.of(
+                  reminder(
+                      subjectRef,
+                      patientId,
+                      ReminderKind.CANCELLATION,
+                      appointmentStart,
+                      now,
+                      now)));
+          return null;
+        });
+  }
+
+  /**
+   * E3: Retire old reminders and create the replacement appointment's confirmation and future
+   * milestones as one transactional operation.
+   */
+  public void onRescheduled(CloudEvent event) {
+    JsonNode data = event.data();
+    String oldSubject = subjectRef(text(data, "oldAppointmentId"));
+    String newSubject = subjectRef(text(data, "newAppointmentId"));
+    String patientId = text(data, "patientId");
+    Instant oldStart = instant(data, "oldStart");
+    Instant newStart = instant(data, "newStart");
+    Instant now = clock.instant();
+
+    if (oldSubject.equals(newSubject)) {
+      throw new IllegalArgumentException("Reschedule requires different appointment IDs");
+    }
+
+    MongoMessaging.inTransaction(
+        tx,
+        () -> {
+          recordClosedAppointment(oldSubject, "rescheduled", now);
+          cancelOutstanding(oldSubject, now, false);
+          saveNew(bookingReminders(newSubject, patientId, newStart, now));
+
+          mongo.updateFirst(
+              Query.query(
+                  Criteria.where("subjectRef")
+                      .is(newSubject)
+                      .and("kind")
+                      .is(ReminderKind.BOOKING_CONFIRMATION.value())
+                      .and("status")
+                      .is(Reminder.STATUS_SCHEDULED)),
+              new Update()
+                  .set("noticeType", "reschedule")
+                  .set("previousStart", Date.from(oldStart)),
+              COLLECTION);
+
+          return null;
+        });
+  }
+
+  private List<Reminder> bookingReminders(
+      String subjectRef, String patientId, Instant appointmentStart, Instant now) {
     List<Reminder> reminders = new ArrayList<>();
+
     reminders.add(
         reminder(
             subjectRef, patientId, ReminderKind.BOOKING_CONFIRMATION, appointmentStart, now, now));
+
     addIfFuture(
         reminders,
         subjectRef,
@@ -70,6 +151,7 @@ public final class ReminderService {
         appointmentStart,
         appointmentStart.minus(T_24H),
         now);
+
     addIfFuture(
         reminders,
         subjectRef,
@@ -78,7 +160,35 @@ public final class ReminderService {
         appointmentStart,
         appointmentStart.minus(T_2H),
         now);
-    saveNew(reminders);
+
+    return reminders;
+  }
+
+  private void recordClosedAppointment(String subjectRef, String state, Instant now) {
+    Query query = Query.query(Criteria.where("_id").is(subjectRef));
+    Update update = new Update().set("state", state).set("updatedAt", Date.from(now));
+
+    mongo.upsert(query, update, APPOINTMENT_STATES);
+  }
+
+  private void cancelOutstanding(
+      String subjectRef, Instant now, boolean preserveCancellationNotice) {
+    Query query =
+        Query.query(
+            Criteria.where("subjectRef").is(subjectRef).and("status").in("scheduled", "sending"));
+
+    if (preserveCancellationNotice) {
+      query.addCriteria(Criteria.where("kind").ne(ReminderKind.CANCELLATION.value()));
+    }
+
+    Update update =
+        new Update()
+            .set("status", "cancelled")
+            .set("lockedUntil", null)
+            .set("updatedAt", Date.from(now))
+            .set("completedAt", Date.from(now));
+
+    mongo.updateMulti(query, update, COLLECTION);
   }
 
   /**
@@ -156,13 +266,27 @@ public final class ReminderService {
     MongoMessaging.inTransaction(
         tx,
         () -> {
+          List<Document> stored =
+              mongo.find(
+                  Query.query(Criteria.where("subjectRef").is(subjectRef)),
+                  Document.class,
+                  COLLECTION);
+
+          boolean appointmentCancelled =
+              mongo.exists(Query.query(Criteria.where("_id").is(subjectRef)), APPOINTMENT_STATES)
+                  || stored.stream()
+                      .anyMatch(document ->
+                          ReminderKind.CANCELLATION.value().equals(document.getString("kind"))
+                              || "cancelled".equals(document.getString("status")));
+
+          if (appointmentCancelled
+              && candidates.stream()
+                  .noneMatch(reminder -> reminder.kind() == ReminderKind.CANCELLATION)) {
+            return null;
+          }
+
           Set<String> existing =
-              mongo
-                  .find(
-                      Query.query(Criteria.where("subjectRef").is(subjectRef)),
-                      Document.class,
-                      COLLECTION)
-                  .stream()
+              stored.stream()
                   .map(document -> document.getString("kind"))
                   .collect(Collectors.toSet());
           candidates.stream()

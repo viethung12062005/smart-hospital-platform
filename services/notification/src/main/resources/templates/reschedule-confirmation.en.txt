@@ -1,0 +1,8 @@
+Your appointment has been successfully rescheduled.
+
+Previous time: {previousStart}
+New time: {startTime}
+Doctor: {doctorName}
+Location: {place}
+Specialty: {specialty}
+Manage your appointment: {manageLink}

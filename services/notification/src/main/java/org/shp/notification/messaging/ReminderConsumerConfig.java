@@ -34,13 +34,21 @@ class ReminderConsumerConfig {
   Consumer<Message<byte[]>> appointmentEvents(MongoInbox inbox, ReminderService reminders) {
     return EventConsumers.idempotent(
         ReminderService.CONSUMER,
-        Set.of(ReminderService.BOOKED_TYPE, ReminderService.NO_SHOW_SCORED_TYPE),
+        Set.of(
+            ReminderService.BOOKED_TYPE,
+            ReminderService.NO_SHOW_SCORED_TYPE,
+            ReminderService.CANCELLED_TYPE,
+            ReminderService.RESCHEDULED_TYPE),
         inbox::handleOnce,
         event -> {
           if (ReminderService.BOOKED_TYPE.equals(event.type())) {
             reminders.onBooked(event);
           } else if (ReminderService.NO_SHOW_SCORED_TYPE.equals(event.type())) {
             reminders.onNoShowScored(event);
+          } else if (ReminderService.CANCELLED_TYPE.equals(event.type())) {
+            reminders.onCancelled(event);
+          } else if (ReminderService.RESCHEDULED_TYPE.equals(event.type())) {
+            reminders.onRescheduled(event);
           }
         });
   }
@@ -54,6 +62,9 @@ class ReminderConsumerConfig {
     return args -> {
       if (!mongo.collectionExists(ReminderService.COLLECTION)) {
         mongo.createCollection(ReminderService.COLLECTION);
+      }
+      if (!mongo.collectionExists(ReminderService.APPOINTMENT_STATES)) {
+        mongo.createCollection(ReminderService.APPOINTMENT_STATES);
       }
       mongo
           .indexOps(ReminderService.COLLECTION)

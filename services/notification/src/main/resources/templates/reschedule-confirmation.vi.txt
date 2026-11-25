@@ -1,0 +1,8 @@
+Lịch hẹn của bạn đã được thay đổi thành công.
+
+Thời gian cũ: {previousStart}
+Thời gian mới: {startTime}
+Bác sĩ: {doctorName}
+Địa điểm: {place}
+Chuyên khoa: {specialty}
+Quản lý lịch hẹn: {manageLink}
