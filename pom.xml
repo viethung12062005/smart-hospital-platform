@@ -71,10 +71,17 @@
     <keycloak.version>26.8.2</keycloak.version>
     <!-- Minimum line coverage threshold for each module that has code (CI blocks below it) -->
     <shp.coverage.minimum>0.70</shp.coverage.minimum>
+    <!-- Checked on Maven Central: Firebase Admin SDK for the FCM push adapter of services/notification -->
+    <firebase-admin.version>9.12.0</firebase-admin.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.google.firebase</groupId>
+        <artifactId>firebase-admin</artifactId>
+        <version>${firebase-admin.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.azure</groupId>
         <artifactId>azure-identity-extensions</artifactId>
