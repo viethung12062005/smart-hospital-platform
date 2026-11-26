@@ -54,6 +54,18 @@ Item: `{ "reminderId", "kind", "subject": "Appointment/...", "attempts": 5, "las
 Notification content (multilingual) comes from versioned templates in the repo `templates/<kind>.<locale>.txt`, with variables:
 `{doctorName}`, `{startTime}`, `{place}`, `{specialty}`, `{manageLink}` (the SRS, UC send-reminder, lists the visit time, doctor name, specialty, location and a link to manage the appointment); diagnosis or results are not included in the content (only "a new result is available, open the app to view").
 
+### Channel providers (NTF-12)
+Each channel is an adapter behind the `NotificationChannel` port. Providers (decided by the project owner):
+- **push** — Firebase Cloud Messaging through the Firebase Admin SDK, authenticated with a service account JSON.
+- **email** — Gmail SMTP with an app password through Spring Mail.
+- **sms** — fake (log only, no content) by default; a Twilio trial can be enabled later by configuration alone.
+
+Configuration: `shp.notification.channel.<push|email|sms>.mode=fake|real`, default `fake` (local and test never contact a provider).
+`real` requires its settings: push `...push.credentials-json` (service account JSON), email `...email.from` and the standard
+`spring.mail.*` properties. Secrets come only from environment variables or a Kubernetes Secret (Key Vault via CSI in the cloud),
+never from a file in the repository. Real adapters never log the recipient or the content and map provider failures to a
+failed `NotificationResult` with a stable error code (`provider-error`, `invalid-recipient`, `not-configured`).
+
 ## 2. Audit (`/api/v1/audit`)
 
 Permissions: **DPO** (read, export), **A** (read, **does not** see the break-glass `reason` field and does not query by patient when
