@@ -90,6 +90,22 @@ public class AuditSpool {
         SPOOL);
   }
 
+  /** The next records not yet accepted by the query sink, in arrival order. */
+  public List<Document> unshipped(String instance, int limit) {
+    return mongo.find(
+        Query.query(Criteria.where("instance").is(instance).and("shipped").ne(true))
+            .with(Sort.by("receivedAt", "_id"))
+            .limit(limit),
+        Document.class,
+        SPOOL);
+  }
+
+  /** Marks records as accepted by the query sink. */
+  public void markShipped(List<String> ids) {
+    mongo.updateMulti(
+        Query.query(Criteria.where("_id").in(ids)), new Update().set("shipped", true), SPOOL);
+  }
+
   public List<Document> byIds(List<String> ids) {
     List<Document> found =
         mongo.find(Query.query(Criteria.where("_id").in(ids)), Document.class, SPOOL);

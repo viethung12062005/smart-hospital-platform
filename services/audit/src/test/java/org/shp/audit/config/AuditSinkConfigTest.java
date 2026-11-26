@@ -26,7 +26,8 @@ class AuditSinkConfigTest {
         .withUserConfiguration(AuditSinkConfig.class)
         .withPropertyValues(
             "shp.audit-sink.workspace-id=workspace-1",
-            "shp.audit-sink.endpoint=https://logs.example")
+            "shp.audit-sink.endpoint=https://logs.example",
+            "shp.audit-sink.dcr-id=dcr-1")
         .run(ctx -> runStatusLine(ctx.getBean(ApplicationRunner.class)));
   }
 

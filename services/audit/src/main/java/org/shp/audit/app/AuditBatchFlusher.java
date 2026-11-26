@@ -30,6 +30,7 @@ public class AuditBatchFlusher {
   private final int maxRecords;
   private final Duration maxAge;
   private final Clock clock;
+  private final AuditSinkShipper shipper;
 
   public AuditBatchFlusher(
       AuditSpool spool,
@@ -38,12 +39,25 @@ public class AuditBatchFlusher {
       int maxRecords,
       Duration maxAge,
       Clock clock) {
+    this(spool, worm, instance, maxRecords, maxAge, clock, null);
+  }
+
+  /** With a shipper, no record leaves the spool before the query sink has accepted it. */
+  public AuditBatchFlusher(
+      AuditSpool spool,
+      WormAuditLog worm,
+      String instance,
+      int maxRecords,
+      Duration maxAge,
+      Clock clock,
+      AuditSinkShipper shipper) {
     this.spool = spool;
     this.worm = worm;
     this.instance = instance;
     this.maxRecords = maxRecords;
     this.maxAge = maxAge;
     this.clock = clock;
+    this.shipper = shipper;
   }
 
   /**
@@ -86,11 +100,20 @@ public class AuditBatchFlusher {
     // An earlier run may have written the blob and stopped before the clean-up: then the chain head
     // is exactly the hash of this batch on top of the head recorded in the plan.
     if (worm.headHash().equals(AuditBatch.hash(plan.headBefore(), lines))) {
+      shipBeforeRemoval(plan);
       spool.complete(instance, plan.ids());
       return Optional.empty();
     }
     WormAuditLog.Receipt receipt = worm.append(lines);
+    shipBeforeRemoval(plan);
     spool.complete(instance, plan.ids());
     return Optional.of(receipt);
+  }
+
+  /** A sink error throws here: the plan stays and the next call ships again, then cleans up. */
+  private void shipBeforeRemoval(AuditSpool.Plan plan) {
+    if (shipper != null) {
+      shipper.shipPending(plan.ids());
+    }
   }
 }
