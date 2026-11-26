@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.2</version>
+    <version>4.2.0</version>
     <relativePath/>
   </parent>
 
@@ -46,7 +46,7 @@
     <cloudevents.version>5.1.0</cloudevents.version>
     <!-- Messaging (13-events §1.1), checked on Maven Central on 2026-11-03: same Spring Cloud as the gateway (works with Boot 4.1);
          Spring Cloud Azure 7.4.0 released 07/2026 -->
-    <spring-cloud.version>2025.1.4</spring-cloud.version>
+    <spring-cloud.version>2026.0.0</spring-cloud.version>
     <spring-cloud-azure.version>7.4.0</spring-cloud-azure.version>
     <!-- The Spring Cloud BOM pulls amqp-client 5.30.0 (4 HIGH CVEs with available patches: 63337/69219/69220/75516); the image scan blocks
          HIGH CVEs that have patches, so pin the latest patched version -->
