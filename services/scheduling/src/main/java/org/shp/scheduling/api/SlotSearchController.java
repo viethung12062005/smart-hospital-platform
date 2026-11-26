@@ -25,7 +25,7 @@ import org.shp.fhir.search.SearchQuery;
 import org.shp.scheduling.domain.SlotRecord;
 import org.shp.scheduling.domain.SlotSearchCriteria;
 import org.shp.scheduling.domain.SpecialtyCatalog;
-import org.shp.scheduling.infra.SlotSearchRepository;
+import org.shp.scheduling.infra.SlotSearchCache;
 import org.shp.web.auth.IdentityInterceptor;
 import org.shp.web.authz.RequireShpAuthz;
 import org.shp.web.errors.ShpException;
@@ -51,12 +51,12 @@ public class SlotSearchController {
   private static final Duration BOOKING_WINDOW = Duration.ofDays(30);
   private static final SearchParser SEARCH_PARSER = SearchParser.standard();
 
-  private final SlotSearchRepository repository;
+  private final SlotSearchCache cache;
   private final PageTokens pageTokens;
   private final Clock clock;
 
-  public SlotSearchController(SlotSearchRepository repository, PageTokens pageTokens, Clock clock) {
-    this.repository = Objects.requireNonNull(repository, "repository must not be null");
+  public SlotSearchController(SlotSearchCache cache, PageTokens pageTokens, Clock clock) {
+    this.cache = Objects.requireNonNull(cache, "cache must not be null");
     this.pageTokens = Objects.requireNonNull(pageTokens, "pageTokens must not be null");
     this.clock = Objects.requireNonNull(clock, "clock must not be null");
   }
@@ -104,21 +104,28 @@ public class SlotSearchController {
         throw new ShpException("validation-failed");
       }
     }
+    boolean fromDefaultedNow = false;
+    boolean toDefaultedNow = false;
     if (patient && (from == null || from.isBefore(now))) {
       from = now;
+      fromDefaultedNow = true;
     }
     // A missing bound is filled so the scanned range is never open-ended.
     if (from != null && to == null) {
       to = from.plus(MAX_RANGE);
+      toDefaultedNow = fromDefaultedNow;
     } else if (from == null && to != null) {
       from = to.minus(MAX_RANGE);
     } else if (from == null) {
       from = now;
       to = now.plus(MAX_RANGE);
+      fromDefaultedNow = true;
+      toDefaultedNow = true;
     }
     // BR-04: a patient can only book up to 30 days ahead, so nothing later is offered.
     if (patient && to.isAfter(now.plus(BOOKING_WINDOW))) {
       to = now.plus(BOOKING_WINDOW);
+      toDefaultedNow = true;
     }
     boolean emptyRange = !to.isAfter(from);
 
@@ -143,7 +150,7 @@ public class SlotSearchController {
     List<SlotRecord> rows =
         emptyRange
             ? List.of()
-            : repository.search(
+            : cache.search(
                 new SlotSearchCriteria(
                     statuses,
                     specialty,
@@ -153,7 +160,10 @@ public class SlotSearchController {
                     to,
                     afterStart,
                     afterId,
-                    query.count() + 1));
+                    query.count() + 1),
+                fromDefaultedNow,
+                toDefaultedNow,
+                now);
     boolean hasNext = rows.size() > query.count();
     List<SlotRecord> page = hasNext ? rows.subList(0, query.count()) : rows;
     String nextToken = null;

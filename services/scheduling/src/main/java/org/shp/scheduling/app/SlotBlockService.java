@@ -7,10 +7,12 @@ import java.util.Objects;
 import java.util.UUID;
 import org.hl7.fhir.r4.model.Slot;
 import org.shp.fhir.FhirJson;
+import org.shp.scheduling.domain.SlotAvailabilityChangedEvent;
 import org.shp.scheduling.domain.SlotRecord;
 import org.shp.scheduling.infra.SlotRepository;
 import org.shp.web.errors.ShpException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +24,18 @@ public class SlotBlockService {
 
   private final SlotRepository slotRepository;
   private final Clock clock;
+  private final ApplicationEventPublisher events;
+
+  public SlotBlockService(SlotRepository slotRepository, Clock clock) {
+    this(slotRepository, clock, e -> {});
+  }
 
   @Autowired
-  public SlotBlockService(SlotRepository slotRepository, Clock clock) {
+  public SlotBlockService(
+      SlotRepository slotRepository, Clock clock, ApplicationEventPublisher events) {
     this.slotRepository = Objects.requireNonNull(slotRepository, "slotRepository must not be null");
     this.clock = Objects.requireNonNull(clock, "clock must not be null");
+    this.events = Objects.requireNonNull(events, "events must not be null");
   }
 
   /**
@@ -111,10 +120,23 @@ public class SlotBlockService {
     fhirSlot.setComment(comment);
     String updatedContent = FhirJson.serialize(fhirSlot);
 
-    return slotRepository
-        .updateStatusWithCas(
-            existing.id(), existing.versionId(), expectedStatus, targetStatus, now, updatedContent)
-        .orElseThrow(() -> conflictAfterCasMiss(existing.id(), expectedVersion, blocking));
+    SlotRecord updated =
+        slotRepository
+            .updateStatusWithCas(
+                existing.id(),
+                existing.versionId(),
+                expectedStatus,
+                targetStatus,
+                now,
+                updatedContent)
+            .orElseThrow(() -> conflictAfterCasMiss(existing.id(), expectedVersion, blocking));
+    events.publishEvent(
+        SlotAvailabilityChangedEvent.forSlot(
+            updated.practitionerId(),
+            updated.specialty(),
+            updated.scheduleId(),
+            updated.startAt()));
+    return updated;
   }
 
   private RuntimeException conflictAfterCasMiss(

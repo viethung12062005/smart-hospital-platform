@@ -14,12 +14,15 @@ import org.shp.scheduling.domain.AppointmentFhir;
 import org.shp.scheduling.domain.AppointmentRecord;
 import org.shp.scheduling.domain.BookingCommand;
 import org.shp.scheduling.domain.BookingResult;
+import org.shp.scheduling.domain.SlotAvailabilityChangedEvent;
 import org.shp.scheduling.domain.SlotUnavailableException;
 import org.shp.scheduling.infra.AppointmentRepository;
 import org.shp.scheduling.infra.SlotRepository;
 import org.shp.scheduling.infra.SlotRepository.SlotFacts;
 import org.shp.web.errors.ShpException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +46,7 @@ public class BookingService {
   private final PostgresOutbox outbox;
   private final Clock clock;
   private final boolean validateEvents;
+  private final ApplicationEventPublisher events;
 
   public BookingService(
       BookingGuard guard,
@@ -51,12 +55,25 @@ public class BookingService {
       PostgresOutbox outbox,
       Clock clock,
       @Value("${shp.events.validate-schema:false}") boolean validateEvents) {
+    this(guard, slots, appointments, outbox, clock, validateEvents, e -> {});
+  }
+
+  @Autowired
+  public BookingService(
+      BookingGuard guard,
+      SlotRepository slots,
+      AppointmentRepository appointments,
+      PostgresOutbox outbox,
+      Clock clock,
+      @Value("${shp.events.validate-schema:false}") boolean validateEvents,
+      ApplicationEventPublisher events) {
     this.guard = Objects.requireNonNull(guard, "guard must not be null");
     this.slots = Objects.requireNonNull(slots, "slots must not be null");
     this.appointments = Objects.requireNonNull(appointments, "appointments must not be null");
     this.outbox = Objects.requireNonNull(outbox, "outbox must not be null");
     this.clock = Objects.requireNonNull(clock, "clock must not be null");
     this.validateEvents = validateEvents;
+    this.events = Objects.requireNonNull(events, "events must not be null");
   }
 
   /**
@@ -107,6 +124,9 @@ public class BookingService {
       throw new SlotUnavailableException(slot.id(), slot.practitionerId(), slot.specialty());
     }
     outbox.add(bookedEvent(booked, now), validateEvents);
+    events.publishEvent(
+        SlotAvailabilityChangedEvent.forSlot(
+            slot.practitionerId(), slot.specialty(), null, slot.start()));
     return new BookingResult(booked.withContent(storedContent), false);
   }
 
