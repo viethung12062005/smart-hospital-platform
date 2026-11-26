@@ -8,8 +8,10 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
 import org.hl7.fhir.r4.model.InstantType;
@@ -18,6 +20,7 @@ import org.hl7.fhir.r4.model.Slot;
 import org.shp.fhir.FhirJson;
 import org.shp.scheduling.domain.ScheduleRecord;
 import org.shp.scheduling.domain.ScheduleTemplateRecord;
+import org.shp.scheduling.domain.SlotAvailabilityChangedEvent;
 import org.shp.scheduling.domain.SlotRecord;
 import org.shp.scheduling.domain.SpecialtyCatalog;
 import org.shp.scheduling.infra.ScheduleRepository;
@@ -25,6 +28,7 @@ import org.shp.scheduling.infra.ScheduleTemplateRepository;
 import org.shp.scheduling.infra.SlotRepository;
 import org.shp.web.errors.ShpException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,19 +44,30 @@ public class SlotGenerator {
   private final ScheduleTemplateRepository templateRepository;
   private final SlotRepository slotRepository;
   private final Clock clock;
+  private final ApplicationEventPublisher events;
+
+  public SlotGenerator(
+      ScheduleRepository scheduleRepository,
+      ScheduleTemplateRepository templateRepository,
+      SlotRepository slotRepository,
+      Clock clock) {
+    this(scheduleRepository, templateRepository, slotRepository, clock, e -> {});
+  }
 
   @Autowired
   public SlotGenerator(
       ScheduleRepository scheduleRepository,
       ScheduleTemplateRepository templateRepository,
       SlotRepository slotRepository,
-      Clock clock) {
+      Clock clock,
+      ApplicationEventPublisher events) {
     this.scheduleRepository =
         Objects.requireNonNull(scheduleRepository, "scheduleRepository must not be null");
     this.templateRepository =
         Objects.requireNonNull(templateRepository, "templateRepository must not be null");
     this.slotRepository = Objects.requireNonNull(slotRepository, "slotRepository must not be null");
     this.clock = Objects.requireNonNull(clock, "clock must not be null");
+    this.events = Objects.requireNonNull(events, "events must not be null");
   }
 
   public SlotGenerator(
@@ -89,6 +104,7 @@ public class SlotGenerator {
 
     int created = 0;
     int skippedExisting = 0;
+    Set<LocalDate> changedDays = new LinkedHashSet<>();
 
     for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
       int weekday = date.getDayOfWeek().getValue();
@@ -108,12 +124,19 @@ public class SlotGenerator {
           SlotRecord slotRecord = buildFreeSlot(schedule, startAt, endAt, now, vnTz);
           if (slotRepository.insertIfNotOverlapping(slotRecord)) {
             created++;
+            changedDays.add(date);
           } else {
             skippedExisting++;
           }
           cursor = slotEnd;
         }
       }
+    }
+
+    if (!changedDays.isEmpty()) {
+      events.publishEvent(
+          new SlotAvailabilityChangedEvent(
+              schedule.practitionerId(), schedule.specialty(), schedule.id(), changedDays));
     }
 
     return new SlotGenerationResult(created, skippedExisting);

@@ -448,7 +448,13 @@ automation:
   # ---- Performance (k6) ----
   TC-NFR-P1: {status: partial, refs: ["tests/performance/k6/slots-search.js::p(95)<300"], gap: "The script exists and its syntax is checked in CI; run on a production-sized UAT when Azure is available (PRD-10, PRD-01)."}
   TC-NFR-P2: {status: partial, refs: ["tests/performance/k6/booking.js::p(95)<800"], gap: "As above."}
-  TC-NFR-S2: {status: partial, refs: ["tests/performance/k6/slots-search.js::scenarios"], gap: "The 5x scenario is in the script; run when UAT is available."}
+  TC-NFR-S2:
+    status: partial
+    refs:
+      - tests/performance/k6/slots-search.js::scenarios
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchCacheIntegrationTest.java::repeatedSlotSearchHitsRedisCacheWith5sTtlAndMeasurableHitRatio
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SlotSearchCacheFallbackTest.java::redisDownFallsBackToDatabaseAndKeepsReadinessAndWritesWorking
+    gap: "The 5x scenario is in the script; run when UAT is available."
   TC-NFR-S3: {status: partial, refs: ["tests/performance/k6/slots-search.js::scenarios"], gap: "The 10x scenario; run when UAT is available."}
   TC-NFR-S1: {status: planned, blocked_by: "Requires KEDA/HPA on UAT (PRD-11).", owner: SA}
 
