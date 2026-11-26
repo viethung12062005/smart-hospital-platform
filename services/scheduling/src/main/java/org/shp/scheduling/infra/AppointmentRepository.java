@@ -1,6 +1,8 @@
 package org.shp.scheduling.infra;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,6 +92,73 @@ public class AppointmentRepository {
         .param(id)
         .query(MAPPER)
         .optional();
+  }
+
+  /**
+   * Selects and locks up to {@code limit} {@code booked} appointments whose {@code end_at} is
+   * strictly before {@code endBefore}, skipping rows locked by concurrent replicas (02 §3.3).
+   */
+  public List<AppointmentRecord> lockOverdueBooked(Instant endBefore, int limit) {
+    return jdbc.sql(
+            """
+            SELECT id, version_id, last_updated, status, slot_id, patient_id, practitioner_id,
+                   specialty, start_at, end_at, channel, booked_by, content
+              FROM scheduling.appointment
+             WHERE status = 'booked' AND end_at < ?
+             ORDER BY end_at, id
+             LIMIT ?
+               FOR UPDATE SKIP LOCKED
+            """)
+        .params(Timestamp.from(endBefore), limit)
+        .query(MAPPER)
+        .list();
+  }
+
+  /**
+   * Transitions a locked {@code booked} appointment to {@code noshow} and appends its {@code
+   * resource_history} row (02 §3.3).
+   */
+  public AppointmentRecord markNoShow(
+      AppointmentRecord current, String changedBy, Instant now, String newContent) {
+    int newVersion = current.versionId() + 1;
+    int rows =
+        jdbc.sql(
+                """
+                UPDATE scheduling.appointment
+                   SET status = 'noshow', version_id = ?, last_updated = ?, content = ?::jsonb
+                 WHERE id = ? AND version_id = ? AND status = 'booked'
+                """)
+            .params(newVersion, Timestamp.from(now), newContent, current.id(), current.versionId())
+            .update();
+    if (rows != 1) {
+      throw new IllegalStateException(
+          "Locked booked appointment could not be transitioned to noshow");
+    }
+    String stored =
+        jdbc.sql(
+                """
+                INSERT INTO scheduling.resource_history (
+                    resource_type, id, version_id, last_updated, operation, changed_by, content
+                ) VALUES ('Appointment', ?, ?, ?, 'update', ?, ?::jsonb)
+                RETURNING content::text
+                """)
+            .params(current.id(), newVersion, Timestamp.from(now), changedBy, newContent)
+            .query(String.class)
+            .single();
+    return new AppointmentRecord(
+        current.id(),
+        newVersion,
+        now,
+        "noshow",
+        current.slotId(),
+        current.patientId(),
+        current.practitionerId(),
+        current.specialty(),
+        current.start(),
+        current.end(),
+        current.channel(),
+        current.bookedBy(),
+        stored);
   }
 
   public Optional<AppointmentRecord> findById(UUID id) {
