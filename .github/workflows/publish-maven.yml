@@ -17,7 +17,7 @@ permissions:
 jobs:
   verify:
     # Same gate as every other Java change: format, compile -Werror, tests, coverage.
-    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@v0.1.7
+    uses: viethung12062005/shp-platform-templates/.github/workflows/java-ci.yml@v0.1.8
     with:
       modules: libs/java/shp-service-defaults,libs/java/shp-authz,libs/java/shp-events,libs/java/shp-security,libs/java/shp-web,libs/java/shp-data-postgres,libs/java/shp-data-mongo,libs/java/shp-messaging,libs/java/shp-fhir
   publish:
