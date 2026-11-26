@@ -1,6 +1,8 @@
 package org.shp.scheduling.infra;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -90,6 +92,82 @@ public class AppointmentRepository {
         .param(id)
         .query(MAPPER)
         .optional();
+  }
+
+  /**
+   * Locks and returns all appointments belonging to {@code patientId} in deterministic order so a
+   * {@code patient-merged} handler can reassign them atomically inside the inbox transaction.
+   */
+  public List<AppointmentRecord> lockByPatientId(UUID patientId) {
+    return jdbc.sql(
+            """
+            SELECT id, version_id, last_updated, status, slot_id, patient_id, practitioner_id,
+                   specialty, start_at, end_at, channel, booked_by, content
+              FROM scheduling.appointment
+             WHERE patient_id = ?
+             ORDER BY id
+               FOR UPDATE
+            """)
+        .param(patientId)
+        .query(MAPPER)
+        .list();
+  }
+
+  /**
+   * Updates a locked appointment's {@code patient_id}, version, and FHIR content to the target
+   * merged patient and appends a {@code resource_history} row.
+   */
+  public AppointmentRecord reassignPatient(
+      AppointmentRecord current,
+      UUID targetPatientId,
+      String changedBy,
+      Instant now,
+      String newContent) {
+    int newVersion = current.versionId() + 1;
+    int rows =
+        jdbc.sql(
+                """
+                UPDATE scheduling.appointment
+                   SET patient_id = ?, version_id = ?, last_updated = ?, content = ?::jsonb
+                 WHERE id = ? AND version_id = ?
+                """)
+            .params(
+                targetPatientId,
+                newVersion,
+                Timestamp.from(now),
+                newContent,
+                current.id(),
+                current.versionId())
+            .update();
+    if (rows != 1) {
+      throw new IllegalStateException(
+          "Locked appointment could not be reassigned to merged patient");
+    }
+    String stored =
+        jdbc.sql(
+                """
+                INSERT INTO scheduling.resource_history (
+                    resource_type, id, version_id, last_updated, operation, changed_by, content
+                ) VALUES ('Appointment', ?, ?, ?, 'update', ?, ?::jsonb)
+                RETURNING content::text
+                """)
+            .params(current.id(), newVersion, Timestamp.from(now), changedBy, newContent)
+            .query(String.class)
+            .single();
+    return new AppointmentRecord(
+        current.id(),
+        newVersion,
+        now,
+        current.status(),
+        current.slotId(),
+        targetPatientId,
+        current.practitionerId(),
+        current.specialty(),
+        current.start(),
+        current.end(),
+        current.channel(),
+        current.bookedBy(),
+        stored);
   }
 
   public Optional<AppointmentRecord> findById(UUID id) {

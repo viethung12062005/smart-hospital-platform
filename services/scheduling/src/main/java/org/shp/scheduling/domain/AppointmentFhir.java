@@ -1,6 +1,8 @@
 package org.shp.scheduling.domain;
 
+import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import org.hl7.fhir.r4.model.Appointment;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;
@@ -15,6 +17,25 @@ public final class AppointmentFhir {
       "https://shp.example.org/fhir/StructureDefinition/booking-channel";
 
   private AppointmentFhir() {}
+
+  /**
+   * Reassigns the patient participant reference in a stored FHIR {@code Appointment} and updates
+   * {@code meta.versionId} and {@code meta.lastUpdated}.
+   */
+  public static String reassignPatient(
+      String content, UUID sourcePatientId, UUID targetPatientId, int versionId, Instant at) {
+    var resource = FhirJson.parse(content, Appointment.class);
+    resource.getMeta().setVersionId(Integer.toString(versionId));
+    resource.getMeta().setLastUpdated(Date.from(at));
+    String sourceRef = "Patient/" + sourcePatientId;
+    String targetRef = "Patient/" + targetPatientId;
+    for (var participant : resource.getParticipant()) {
+      if (participant.hasActor() && sourceRef.equals(participant.getActor().getReference())) {
+        participant.getActor().setReference(targetRef);
+      }
+    }
+    return FhirJson.serialize(resource);
+  }
 
   /**
    * The resource of a new booking: version 1 of {@code a}, created at {@code a.lastUpdated()}.

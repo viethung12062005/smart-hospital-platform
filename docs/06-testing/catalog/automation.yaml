@@ -273,6 +273,7 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::aNurseMergesTheSourceIntoTheTarget
       - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::mergingAnAlreadyMergedRecordIs409
+      - services/scheduling/src/test/java/org/shp/scheduling/messaging/PatientMergedConsumerTest.java::patientMergedViaBusReassignsAllAppointmentsAndUpdatesFhirContentAndHistory
   # ---- Clinical: encounter addendum ----
   TC-AC-AD.1:
     status: automated
