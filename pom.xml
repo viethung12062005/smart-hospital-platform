@@ -57,7 +57,7 @@
     <spotless.version>3.11.0</spotless.version>
     <jacoco.version>0.8.16</jacoco.version>
     <!-- Pinned in pluginManagement; the release workflow uses it to stamp a tag version into the reactor -->
-    <versions-maven-plugin.version>2.25.2</versions-maven-plugin.version>
+    <versions-maven-plugin.version>2.25.3</versions-maven-plugin.version>
     <!-- Version of the org.shp shared libraries the services depend on. Defaults to the reactor version, so a normal
          build resolves libs/java from the reactor. Override with -Dshp.libs.version=<release> to consume the artifacts
          published to GitHub Packages instead (docs/04-devops/github-setup.md section 10). -->
