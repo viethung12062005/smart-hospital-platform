@@ -39,7 +39,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@eslint/js": "10.0.1",
-    "@medplum/fhirtypes": "5.2.13",
+    "@medplum/fhirtypes": "5.2.18",
     "@playwright/test": "1.65.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.3",
