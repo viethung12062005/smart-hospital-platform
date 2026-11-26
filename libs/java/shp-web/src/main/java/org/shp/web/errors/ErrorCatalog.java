@@ -102,6 +102,12 @@ public final class ErrorCatalog {
                 "Đã quá hạn hủy lịch (ít hơn 2 giờ trước giờ khám).",
                 "Too late to cancel."),
             e(
+                "checkin-out-of-window",
+                422,
+                "business-rule",
+                "Ngoài khung giờ cho phép làm thủ tục tiếp nhận (từ 60 phút trước đến 30 phút sau giờ hẹn).",
+                "Outside the check-in window (60 minutes before to 30 minutes after the appointment start)."),
+            e(
                 "idempotency-key-reused",
                 422,
                 "business-rule",

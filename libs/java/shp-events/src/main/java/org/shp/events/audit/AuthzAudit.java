@@ -25,6 +25,7 @@ public final class AuthzAudit {
           Map.entry("release", AuditActions.UPDATE),
           Map.entry("book", AuditActions.CREATE),
           Map.entry("cancel", AuditActions.UPDATE),
+          Map.entry("check-in", AuditActions.UPDATE),
           Map.entry("block", AuditActions.UPDATE),
           Map.entry("merge", AuditActions.UPDATE),
           Map.entry("manage", AuditActions.UPDATE),
