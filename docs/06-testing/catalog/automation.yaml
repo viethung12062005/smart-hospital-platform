@@ -292,6 +292,11 @@ automation:
     refs:
       - services/clinical/src/test/java/org/shp/clinical/api/ObservationAuthzTest.java::aDoctorWithoutCareIsDeniedWithNoCareRelationship
     gap: "The matrix denies a doctor without care (no-care-relationship) with the facts POST /fhir/Observation builds; the deny audit is written by the shared AuthzInterceptor, not asserted over HTTP here. Owner: D2."
+  TC-AC-UD.1:
+    status: partial
+    refs:
+      - services/document/src/test/java/org/shp/document/api/UploadRequestTest.java::tooLargeOrNonPositiveSizeIs413
+    gap: "The D1 request check answers a file over 20 MiB with file-too-large (413) before any link is signed; the HTTP test DocumentUploadApiTest (Testcontainers) is written but was not run, Docker was not available. Owner: D3."
   # ---- Clinical: national ID number (CCCD) ----
   TC-AC-ID.1:
     status: automated

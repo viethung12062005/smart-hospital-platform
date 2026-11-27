@@ -7,9 +7,9 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 98 (48%) |
+| Automated or partially automated | 99 (48%) |
 | Fully automated | 62 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 57 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 58 |
 
 ## By module and status
 
@@ -17,7 +17,7 @@
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
 | clinical | 44 | 17 | 6 | 21 | 0 |
-| documents | 7 | 0 | 0 | 7 | 0 |
+| documents | 7 | 0 | 1 | 6 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
 | privacy-admin | 15 | 4 | 0 | 11 | 0 |
 | scheduling | 21 | 14 | 3 | 4 | 0 |
@@ -31,7 +31,7 @@
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
 | integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 31 | 12 | 47 | 0 |
+| api | 90 | 31 | 13 | 46 | 0 |
 | e2e | 10 | 1 | 3 | 6 | 0 |
 | security | 12 | 6 | 0 | 6 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -81,7 +81,6 @@
 | TC-AC-SP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-TL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-TL.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-UD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-UD.2 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-VD.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-NFR-A4 | Waiting for the corresponding feature or environment to be implemented. | viethung12062005 |
@@ -231,7 +230,7 @@
 | AC-ST.1 | TC-AC-ST.1 (api, P1) | automated |
 | AC-TL.1 | TC-AC-TL.1 (api, P0) | planned |
 | AC-TL.2 | TC-AC-TL.2 (api, P0) | planned |
-| AC-UD.1 | TC-AC-UD.1 (api, P0) | planned |
+| AC-UD.1 | TC-AC-UD.1 (api, P0) | partial |
 | AC-UD.2 | TC-AC-UD.2 (integration, P0) | planned |
 | AC-UP.1 | TC-AC-UP.1 (api, P0) | automated |
 | AC-VD.1 | TC-AC-VD.1 (api, P0) | planned |
