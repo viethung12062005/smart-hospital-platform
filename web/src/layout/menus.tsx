@@ -1,5 +1,6 @@
 import {
   IconCalendarPlus,
+  IconCalendarSearch,
   IconCalendarTime,
   IconClipboardHeart,
   IconHome,
@@ -39,6 +40,7 @@ export const MENU: readonly MenuGroup[] = [
     title: 'groupBooking',
     links: [
       { href: '/doctors', label: 'findDoctor', icon: <IconUserSearch />, roles: ['patient', 'nurse'] },
+      { href: '/slots', label: 'findSlots', icon: <IconCalendarSearch />, roles: ['patient', 'nurse'] },
       { href: '/book', label: 'book', icon: <IconCalendarPlus />, roles: ['patient'] },
       { href: '/appointments', label: 'myAppointments', icon: <IconListCheck />, roles: ['patient'] },
     ],

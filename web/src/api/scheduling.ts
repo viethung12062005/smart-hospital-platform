@@ -7,6 +7,7 @@ import type {
   Schedule,
   Slot,
 } from '@medplum/fhirtypes';
+import dayjs from 'dayjs';
 import { apiRequest, bundleEntries, etagOf } from './client';
 import { specialtyName, systemUrl } from './terminology';
 
@@ -57,6 +58,43 @@ export async function searchSlots(q: SlotQuery): Promise<Slot[]> {
   qs.set('_count', '200');
   const { data } = await apiRequest<Bundle>(`/fhir/Slot?${qs}`);
   return bundleEntries<Slot>(data);
+}
+
+export interface SlotPageQuery {
+  readonly specialty?: string;
+  readonly practitioner?: string;
+  /** First day, `YYYY-MM-DD`; the server reads a date-only value in Vietnam time. */
+  readonly fromDate: string;
+  /** Last day included, `YYYY-MM-DD`; the request sends the day after it as an exclusive bound. */
+  readonly toDate: string;
+  readonly pageToken?: string;
+  readonly count?: number;
+}
+
+export interface SlotPage {
+  readonly slots: Slot[];
+  /** Opaque `_page_token` from `Bundle.link[next]`; absent on the last page. */
+  readonly nextPageToken?: string;
+}
+
+/** The `_page_token` carried by the `next` link of a search Bundle, if any. */
+export function nextPageToken(bundle: Bundle | undefined): string | undefined {
+  const url = bundle?.link?.find((l) => l.relation === 'next')?.url;
+  if (!url) return undefined;
+  const query = url.includes('?') ? url.slice(url.indexOf('?') + 1) : url;
+  return new URLSearchParams(query).get('_page_token') ?? undefined;
+}
+
+/** S8 with keyset pagination (07 section 4): one page of free slots sorted by start, plus the next page token. */
+export async function searchSlotPage(q: SlotPageQuery): Promise<SlotPage> {
+  const qs = new URLSearchParams({ status: 'free', _count: String(q.count ?? 20) });
+  if (q.specialty) qs.set('specialty', q.specialty);
+  if (q.practitioner) qs.set('practitioner', `Practitioner/${q.practitioner}`);
+  qs.append('start', `ge${q.fromDate}`);
+  qs.append('start', `lt${dayjs(q.toDate).add(1, 'day').format('YYYY-MM-DD')}`);
+  if (q.pageToken) qs.set('_page_token', q.pageToken);
+  const { data } = await apiRequest<Bundle>(`/fhir/Slot?${qs}`);
+  return { slots: bundleEntries<Slot>(data), nextPageToken: nextPageToken(data) };
 }
 
 /** S11: book an appointment. Same idempotencyKey + same content returns the already-created appointment (double click does not create 2 appointments). */
