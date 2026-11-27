@@ -56,6 +56,13 @@ automation:
       - libs/java/shp-web/src/test/java/org/shp/web/UnitTest.java::linkIsCachedForSixtySecondsThenRefreshed
       - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::aLockIsRejectedAtTheLatestWhenTheSixtySecondIdentityCacheExpires
       - services/clinical/src/test/java/org/shp/clinical/api/IdentityApiTest.java::internalLookupReturnsTheLinkAndTheLockStateImmediately
+  TC-AC-RG.4:
+    status: automated
+    refs:
+      - services/notification/src/test/java/org/shp/notification/app/OtpServiceIntegrationTest.java::aCorrectCodeVerifiesOnceAndOnlyOnce
+      - services/notification/src/test/java/org/shp/notification/app/OtpServiceIntegrationTest.java::aCodeExpiresAfterFiveMinutes
+      - services/notification/src/test/java/org/shp/notification/app/OtpServiceIntegrationTest.java::fiveWrongAttemptsLockTheChallengeForFifteenMinutes
+      - services/notification/src/test/java/org/shp/notification/app/OtpServiceIntegrationTest.java::aSixthCodeWithinAnHourForOneNumberIsRejected
   TC-AC-LP.1:
     status: automated
     refs:
