@@ -141,4 +141,63 @@ class ReminderSenderTest {
     assertEquals(0, providerCalls.get());
     verify(queue, never()).finishAttempt(any(), anyList(), any(), anyBoolean(), anyBoolean());
   }
+
+  @Test
+  void recordsLatencyFromDueAtToSentTaggedByChannelAndKind() {
+    MongoReminderWorkQueue queue = mock(MongoReminderWorkQueue.class);
+    when(queue.finishAttempt(any(), anyList(), any(), eq(true), eq(false))).thenReturn(true);
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+    ReminderSender sender =
+        new ReminderSender(
+            queue,
+            List.of(channel("push", NotificationResult.success("push-1"), new AtomicInteger())),
+            registry,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+
+    Document doc =
+        claimed(1).append("kind", "t-6h").append("dueAt", Date.from(NOW.minusSeconds(90)));
+
+    assertTrue(sender.sendClaimed(doc, List.of("push"), ReminderSenderTest::message));
+
+    io.micrometer.core.instrument.Timer timer =
+        registry
+            .get("shp.notification.send.latency")
+            .tags("channel", "push", "kind", "t-6h")
+            .timer();
+    assertEquals(1, timer.count());
+    assertEquals(90.0, timer.totalTime(java.util.concurrent.TimeUnit.SECONDS), 0.001);
+    assertEquals(
+        2,
+        registry
+            .get("shp.notification.send.latency")
+            .meters()
+            .iterator()
+            .next()
+            .getId()
+            .getTags()
+            .size());
+  }
+
+  @Test
+  void doesNotRecordLatencyWhenSendFails() {
+    MongoReminderWorkQueue queue = mock(MongoReminderWorkQueue.class);
+    when(queue.finishAttempt(any(), anyList(), any(), eq(false), anyBoolean())).thenReturn(true);
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+    ReminderSender sender =
+        new ReminderSender(
+            queue,
+            List.of(
+                channel(
+                    "push", NotificationResult.failure("provider-timeout"), new AtomicInteger())),
+            registry,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+
+    Document doc =
+        claimed(1).append("kind", "t-6h").append("dueAt", Date.from(NOW.minusSeconds(90)));
+    sender.sendClaimed(doc, List.of("push"), ReminderSenderTest::message);
+
+    assertTrue(registry.find("shp.notification.send.latency").timers().isEmpty());
+  }
 }

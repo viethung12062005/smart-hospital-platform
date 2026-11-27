@@ -1,6 +1,7 @@
 package org.shp.notification.app;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ public class ReminderSender {
 
   private static final Set<String> PERMANENT_ERRORS =
       Set.of("invalid-number", "invalid-recipient", "unregistered-token");
+
+  /** Histogram base name; exported as shp_notification_send_latency_seconds_bucket. */
+  static final String SEND_LATENCY_METRIC = "shp.notification.send.latency";
 
   private final MongoReminderWorkQueue queue;
   private final Map<String, NotificationChannel> channels;
@@ -166,9 +170,39 @@ public class ReminderSender {
 
       if (sent) {
         metrics.counter("shp.notification.sent.total").increment();
+        recordSendLatency(claimed, deliveries.get(deliveries.size() - 1));
       }
     }
 
     return persisted;
+  }
+
+  /**
+   * Records the time from the scheduled send time to the accepted send (NFR-P8). Tags are the
+   * channel and the reminder kind only; no patient or contact data.
+   */
+  private void recordSendLatency(Document claimed, Document delivery) {
+    Object dueAt = claimed.get("dueAt");
+    String kind = claimed.getString("kind");
+
+    if (!(dueAt instanceof java.util.Date due) || kind == null) {
+      return;
+    }
+
+    java.time.Duration latency = java.time.Duration.between(due.toInstant(), clock.instant());
+
+    Timer.builder(SEND_LATENCY_METRIC)
+        .description("Time from the reminder due_at to the accepted send")
+        .tags("channel", delivery.getString("channel"), "kind", kind)
+        .publishPercentileHistogram()
+        .serviceLevelObjectives(
+            java.time.Duration.ofSeconds(30),
+            java.time.Duration.ofMinutes(1),
+            java.time.Duration.ofMinutes(5),
+            java.time.Duration.ofMinutes(15))
+        .minimumExpectedValue(java.time.Duration.ofSeconds(1))
+        .maximumExpectedValue(java.time.Duration.ofHours(1))
+        .register(metrics)
+        .record(latency.isNegative() ? java.time.Duration.ZERO : latency);
   }
 }
