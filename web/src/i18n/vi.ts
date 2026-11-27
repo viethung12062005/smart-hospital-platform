@@ -232,7 +232,7 @@ export const vi = {
     unblock: 'Mở chặn slot',
     slotBlocked: 'Đã chặn slot',
     slotUnblocked: 'Đã mở chặn slot',
-    openSlot: 'Quản lý slot {{time}} ngày {{date}}',
+    openSlot: '{{status}}: quản lý slot {{time}} ngày {{date}}',
     schedulesTitle: 'Danh sách lịch làm việc',
     templatesTitle: 'Mẫu lịch tuần',
     templatesHint: 'Thay toàn bộ mẫu lịch tuần trong một lần lưu; chưa tự xóa các slot đã tạo.',

@@ -232,7 +232,7 @@ export const en: Messages = {
     unblock: 'Unblock slot',
     slotBlocked: 'Slot blocked',
     slotUnblocked: 'Slot unblocked',
-    openSlot: 'Manage slot {{time}} on {{date}}',
+    openSlot: '{{status}}: manage slot {{time}} on {{date}}',
     schedulesTitle: 'Work schedules',
     templatesTitle: 'Weekly template',
     templatesHint: 'Replaces the entire weekly template in one save; existing generated slots are kept.',

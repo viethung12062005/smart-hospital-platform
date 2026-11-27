@@ -227,7 +227,8 @@ describe('weekly slot calendar: generate, block, unblock (S7, S9, S10)', () => {
     blocked.comment = 'Hội nghị';
     return { free, booked, blocked };
   }
-  const cell = (time: string) => screen.findByRole('button', { name: `Quản lý slot ${time} ngày 04/11/2026` });
+  const cell = (time: string) =>
+    screen.findByRole('button', { name: new RegExp(`: quản lý slot ${time} ngày 04/11/2026$`) });
 
   it('nurse blocks a free slot with a reason (S9) and unblocks it again (S10)', async () => {
     const { free } = pinSlots();

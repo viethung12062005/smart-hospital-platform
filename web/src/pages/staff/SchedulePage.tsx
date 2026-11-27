@@ -201,6 +201,8 @@ function Row(props: { time: string; days: dayjs.Dayjs[]; byKey: Map<string, Slot
                   <UnstyledButton
                     w="100%"
                     aria-label={t('schedule.openSlot', {
+                      // The visible chip text starts the name (WCAG 2.5.3, Label in Name).
+                      status: t(`status.${s.status}`),
                       time: formatTime(s.start),
                       date: d.format('DD/MM/YYYY'),
                     })}
