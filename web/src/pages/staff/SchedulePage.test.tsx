@@ -211,3 +211,100 @@ describe('schedule management permissions (doctor / patient)', () => {
     expect(await screen.findByText('Bạn không có quyền xem trang này.')).toBeInTheDocument();
   });
 });
+
+describe('weekly slot calendar: generate, block, unblock (S7, S9, S10)', () => {
+  // The calendar defaults to the first practitioner; pin three known slots on Wednesday 04/11/2026.
+  function pinSlots() {
+    const db = mockDb();
+    const pid = db.practitioners[0]!.id!;
+    const at = (hhmm: string) => db.slots.find((s) => s.id === `s-${pid}-20261104${hhmm}`)!;
+    const free = at('0800');
+    const booked = at('0830');
+    const blocked = at('0900');
+    free.status = 'free';
+    booked.status = 'busy';
+    blocked.status = 'busy-unavailable';
+    blocked.comment = 'Hội nghị';
+    return { free, booked, blocked };
+  }
+  const cell = (time: string) => screen.findByRole('button', { name: `Quản lý slot ${time} ngày 04/11/2026` });
+
+  it('nurse blocks a free slot with a reason (S9) and unblocks it again (S10)', async () => {
+    const { free } = pinSlots();
+    const user = userEvent.setup();
+    renderApp('/schedule', 'nurse');
+
+    await user.click(await cell('08:00'));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Chặn slot' }));
+    expect(await within(dialog).findByText('Vui lòng nhập lý do (1–200 ký tự).')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText('Lý do chặn'), 'Bác sĩ nghỉ phép');
+    await user.click(within(dialog).getByRole('button', { name: 'Chặn slot' }));
+
+    expect(await screen.findByText('Đã chặn slot')).toBeInTheDocument();
+    expect(free.status).toBe('busy-unavailable');
+    expect(free.comment).toBe('Bác sĩ nghỉ phép');
+
+    await user.click(await cell('08:00'));
+    const second = await screen.findByRole('dialog');
+    await user.click(within(second).getByRole('button', { name: 'Mở chặn slot' }));
+    expect(await screen.findByText('Đã mở chặn slot')).toBeInTheDocument();
+    expect(free.status).toBe('free');
+  });
+
+  it('TC-AC-02.2 blocking a booked slot shows the 409 error and keeps the slot booked', async () => {
+    const { booked } = pinSlots();
+    const user = userEvent.setup();
+    renderApp('/schedule', 'admin');
+
+    await user.click(await cell('08:30'));
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByLabelText('Lý do chặn'), 'Nghỉ đột xuất');
+    await user.click(within(dialog).getByRole('button', { name: 'Chặn slot' }));
+
+    expect(
+      await within(dialog).findByText('Slot đã có lịch hẹn, hãy hủy hoặc đổi lịch hẹn trước.'),
+    ).toBeInTheDocument();
+    expect(booked.status).toBe('busy');
+  });
+
+  it('nurse generates slots for the selected doctor (S7) and the result is reported', async () => {
+    pinSlots();
+    const user = userEvent.setup();
+    renderApp('/schedule', 'nurse');
+
+    const generate = await screen.findByRole('button', { name: 'Sinh slot' });
+    await waitFor(() => expect(generate).toBeEnabled());
+    const before = mockDb().slots.length;
+    await user.click(generate);
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Từ ngày'), { target: { value: '2026-11-04' } });
+    fireEvent.change(within(dialog).getByLabelText('Đến ngày'), { target: { value: '2026-11-06' } });
+    await user.click(within(dialog).getByRole('button', { name: 'Sinh slot' }));
+
+    expect(await screen.findByText(/Đã sinh \d+ slot \(\d+ slot đã có\)/)).toBeInTheDocument();
+    expect(mockDb().slots.length).toBeGreaterThanOrEqual(before);
+  });
+
+  it('generation outside the allowed range shows the server error', async () => {
+    pinSlots();
+    const user = userEvent.setup();
+    renderApp('/schedule', 'nurse');
+
+    const generate = await screen.findByRole('button', { name: 'Sinh slot' });
+    await waitFor(() => expect(generate).toBeEnabled());
+    await user.click(generate);
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('Đến ngày'), { target: { value: '2027-03-01' } });
+    await user.click(within(dialog).getByRole('button', { name: 'Sinh slot' }));
+    expect(await within(dialog).findByText('Dữ liệu không hợp lệ.')).toBeInTheDocument();
+  });
+
+  it('doctor views the own calendar read-only: no slot buttons, no generate button', async () => {
+    pinSlots();
+    renderApp('/schedule', 'doctor');
+    await screen.findAllByText('Đã chặn');
+    expect(screen.queryByRole('button', { name: /Quản lý slot/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sinh slot' })).not.toBeInTheDocument();
+  });
+});

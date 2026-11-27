@@ -191,6 +191,7 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotBlockApiTest.java::blockingBusySlotReturns409SlotHasAppointment
+      - web/src/pages/staff/SchedulePage.test.tsx::TC-AC-02.2
   TC-AC-FS.1:
     status: automated
     refs:

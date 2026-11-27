@@ -277,3 +277,38 @@ export function schedulePractitionerId(schedule: Schedule): string | undefined {
 export function scheduleSpecialtyCode(schedule: Schedule): string | undefined {
   return schedule.specialty?.[0]?.coding?.[0]?.code;
 }
+
+export interface GenerateSlotsResult {
+  readonly created: number;
+  readonly skippedExisting: number;
+}
+
+/** S7: generate slots from the effective weekly template for a date range (Nurse, Admin). Safe to repeat. */
+export async function generateSlots(scheduleId: string, from: string, to: string): Promise<GenerateSlotsResult> {
+  const { data } = await apiRequest<GenerateSlotsResult>(`/api/v1/scheduling/schedules/${scheduleId}/slots:generate`, {
+    method: 'POST',
+    body: { from, to },
+  });
+  return data;
+}
+
+/** S9: block a free slot (Nurse, Admin). 409 slot-has-appointment when a valid appointment holds the slot. */
+export async function blockSlot(slot: Slot, reason: string, idempotencyKey: string): Promise<Slot> {
+  const { data } = await apiRequest<Slot>(`/fhir/Slot/${slot.id}/$block`, {
+    method: 'POST',
+    body: { reason },
+    idempotencyKey,
+    ifMatch: etagOf(slot),
+  });
+  return data;
+}
+
+/** S10: unblock a blocked slot (busy-unavailable → free). 409 invalid-state-transition otherwise. */
+export async function unblockSlot(slot: Slot, idempotencyKey: string): Promise<Slot> {
+  const { data } = await apiRequest<Slot>(`/fhir/Slot/${slot.id}/$unblock`, {
+    method: 'POST',
+    idempotencyKey,
+    ifMatch: etagOf(slot),
+  });
+  return data;
+}

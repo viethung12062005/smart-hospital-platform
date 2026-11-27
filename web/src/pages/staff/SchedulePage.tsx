@@ -1,16 +1,17 @@
-import { Button, Group, Select, Tabs, Tooltip } from '@mantine/core';
+import { Button, Group, Select, Tabs, Tooltip, UnstyledButton } from '@mantine/core';
 import type { Slot } from '@medplum/fhirtypes';
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconCalendarPlus, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMe, searchPractitioners } from '@/api/clinical';
 import { formatName, formatTime, refId } from '@/api/fhir';
-import { searchSlots } from '@/api/scheduling';
+import { searchSchedules, searchSlots } from '@/api/scheduling';
 import { useAuth } from '@/auth/useAuth';
 import { Card, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 import { ScheduleManagementPanel } from './ScheduleManagementPanel';
+import { GenerateSlotsModal, SlotModal } from './SlotDialogs';
 
 const COLOR: Record<string, string> = { free: 'teal', busy: 'info', 'busy-unavailable': 'muted' };
 
@@ -30,6 +31,8 @@ export function SchedulePage() {
       .subtract((dayjs().day() + 6) % 7, 'day'),
   );
   const [chosen, setChosen] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [selected, setSelected] = useState<Slot | null>(null);
 
   const me = useQuery({ queryKey: ['me'], queryFn: getMe, enabled: !!isDoctor });
   const practitioners = useQuery({ queryKey: ['practitioners'], queryFn: searchPractitioners, enabled: !isDoctor });
@@ -46,6 +49,13 @@ export function SchedulePage() {
       }),
     enabled: tab === 'calendar' && !!practitioner,
   });
+
+  const activeSchedules = useQuery({
+    queryKey: ['schedules', 'active', practitioner],
+    queryFn: () => searchSchedules({ actor: practitioner!, active: true }),
+    enabled: canManage && tab === 'calendar' && !!practitioner,
+  });
+  const scheduleId = activeSchedules.data?.[0]?.id;
 
   const days = Array.from({ length: 7 }, (_, i) => week.add(i, 'day'));
   const byKey = new Map<string, Slot>();
@@ -68,6 +78,18 @@ export function SchedulePage() {
             onChange={setChosen}
             searchable
           />
+        )}
+        {canManage && (
+          <Button
+            variant="light"
+            size="sm"
+            leftSection={<IconCalendarPlus size={16} />}
+            disabled={!scheduleId}
+            title={activeSchedules.isSuccess && !scheduleId ? t('schedule.noActiveSchedule') : undefined}
+            onClick={() => setGenerating(true)}
+          >
+            {t('schedule.generate')}
+          </Button>
         )}
         <Button
           variant="default"
@@ -112,7 +134,7 @@ export function SchedulePage() {
         </Tabs.List>
 
         <Tabs.Panel value="calendar">
-          <ProblemAlert error={slots.error ?? practitioners.error ?? me.error} />
+          <ProblemAlert error={slots.error ?? practitioners.error ?? me.error ?? activeSchedules.error} />
           <Card
             title={`${week.format('DD/MM')} – ${week.add(6, 'day').format('DD/MM/YYYY')}`}
             flush
@@ -140,7 +162,13 @@ export function SchedulePage() {
                     </div>
                   ))}
                   {times.map((time) => (
-                    <Row key={time} time={time} days={days} byKey={byKey} />
+                    <Row
+                      key={time}
+                      time={time}
+                      days={days}
+                      byKey={byKey}
+                      onPick={canManage ? setSelected : undefined}
+                    />
                   ))}
                 </div>
               </div>
@@ -152,11 +180,13 @@ export function SchedulePage() {
           <ScheduleManagementPanel canManage={canManage} />
         </Tabs.Panel>
       </Tabs>
+      {generating && scheduleId && <GenerateSlotsModal scheduleId={scheduleId} onClose={() => setGenerating(false)} />}
+      {selected && <SlotModal slot={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }
 
-function Row(props: { time: string; days: dayjs.Dayjs[]; byKey: Map<string, Slot> }) {
+function Row(props: { time: string; days: dayjs.Dayjs[]; byKey: Map<string, Slot>; onPick?: (slot: Slot) => void }) {
   const { t } = useTranslation();
   return (
     <>
@@ -167,12 +197,30 @@ function Row(props: { time: string; days: dayjs.Dayjs[]; byKey: Map<string, Slot
           <div key={d.format()} className="c">
             {s && (
               <Tooltip label={`${formatTime(s.start)}–${formatTime(s.end)} · ${t(`status.${s.status}`)}`}>
-                <span
-                  className={`shp-chip shp-chip--${COLOR[s.status] ?? 'muted'}`}
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  {t(`status.${s.status}`)}
-                </span>
+                {props.onPick ? (
+                  <UnstyledButton
+                    w="100%"
+                    aria-label={t('schedule.openSlot', {
+                      time: formatTime(s.start),
+                      date: d.format('DD/MM/YYYY'),
+                    })}
+                    onClick={() => props.onPick?.(s)}
+                  >
+                    <span
+                      className={`shp-chip shp-chip--${COLOR[s.status] ?? 'muted'}`}
+                      style={{ width: '100%', justifyContent: 'center' }}
+                    >
+                      {t(`status.${s.status}`)}
+                    </span>
+                  </UnstyledButton>
+                ) : (
+                  <span
+                    className={`shp-chip shp-chip--${COLOR[s.status] ?? 'muted'}`}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    {t(`status.${s.status}`)}
+                  </span>
+                )}
               </Tooltip>
             )}
           </div>
