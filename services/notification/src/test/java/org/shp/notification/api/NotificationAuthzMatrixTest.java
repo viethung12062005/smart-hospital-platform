@@ -117,6 +117,8 @@ class NotificationAuthzMatrixTest {
     }
   }
 
+  static final String DEVICE_ID = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e88";
+
   @Autowired ApplicationContext ctx;
   @Autowired Environment env;
   @Autowired MongoTemplate mongo;
@@ -132,6 +134,15 @@ class NotificationAuthzMatrixTest {
               : new IdentityLink("Practitioner", PRACTITIONER, false));
     }
     mongo.dropCollection("outbox");
+    // A device the authorization decision can load: it belongs to somebody else, so only a role
+    // with a rule for it reaches the handler.
+    mongo.dropCollection("device_tokens");
+    mongo.save(
+        new org.bson.Document("_id", DEVICE_ID)
+            .append("token", "synthetic-device-token")
+            .append("platform", "android")
+            .append("ownerRef", "Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e77"),
+        "device_tokens");
   }
 
   @Test
@@ -194,12 +205,13 @@ class NotificationAuthzMatrixTest {
   @Test
   void dpoIsRefusedEverywhereAndAdminOnlyReachesTheOperationsTheMatrixGivesIt() throws Exception {
     for (Guarded g : guarded()) {
-      assertThat(callAs("dpo", g)).as(g.toString()).isEqualTo(403);
+      int refused = g.meta().denyAsNotFound() ? 404 : 403;
+      assertThat(callAs("dpo", g)).as(g.toString()).isEqualTo(refused);
       boolean adminRule =
           MATRIX.rulesFor(g.meta().resource(), g.meta().action()).stream()
               .anyMatch(r -> "admin".equals(r.role()));
       if (!adminRule) {
-        assertThat(callAs("admin", g)).as(g.toString()).isEqualTo(403);
+        assertThat(callAs("admin", g)).as(g.toString()).isEqualTo(refused);
       }
     }
   }
@@ -229,7 +241,10 @@ class NotificationAuthzMatrixTest {
 
   /** Call {@code g} as the linked account of {@code role} (no token when role is null). */
   int callAs(String role, Guarded g) throws Exception {
-    String path = g.pattern().replaceAll("\\{[^}]+}", "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e99");
+    String path =
+        g.pattern()
+            .replaceAll("\\{tokenId}", DEVICE_ID)
+            .replaceAll("\\{[^}]+}", "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e99");
     if (path.endsWith("/reminders")) {
       path += "?appointment=0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e21";
     }
