@@ -313,7 +313,11 @@ class SchedulingAuthzMatrixTest {
    * are sent so that only authorization can refuse the call before the handler.
    */
   int callAs(String role, Guarded g) throws Exception {
-    String id = g.pattern().contains("/schedules/") ? scheduleId : UUID.randomUUID().toString();
+    String lower = g.pattern().toLowerCase(java.util.Locale.ROOT);
+    String id =
+        lower.contains("/schedules/") || lower.contains("/schedule/")
+            ? scheduleId
+            : UUID.randomUUID().toString();
     String path = g.pattern().replaceAll("\\{[^}]+}", id);
     var b =
         HttpRequest.newBuilder(url(path))
@@ -324,8 +328,27 @@ class SchedulingAuthzMatrixTest {
     boolean hasBody = Set.of("POST", "PUT", "PATCH").contains(g.method());
     b.method(
         g.method(),
-        hasBody ? HttpRequest.BodyPublishers.ofString("{}") : HttpRequest.BodyPublishers.noBody());
+        hasBody
+            ? HttpRequest.BodyPublishers.ofString(bodyFor(g))
+            : HttpRequest.BodyPublishers.noBody());
     return send(b.build()).statusCode();
+  }
+
+  /**
+   * The facts of an authorization decision come from the request, so a booking carries a slot and a
+   * patient reference; every other call sends an empty object.
+   */
+  String bodyFor(Guarded g) {
+    if (!g.pattern().contains("$book")) {
+      return "{}";
+    }
+    return "{\"resourceType\":\"Parameters\",\"parameter\":["
+        + "{\"name\":\"slot\",\"valueReference\":{\"reference\":\"Slot/"
+        + UUID.randomUUID()
+        + "\"}},"
+        + "{\"name\":\"patient\",\"valueReference\":{\"reference\":\"Patient/"
+        + UUID.randomUUID()
+        + "\"}}]}";
   }
 
   String tokenFor(String role) {
