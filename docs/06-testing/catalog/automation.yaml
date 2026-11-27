@@ -308,11 +308,13 @@ automation:
   TC-AC-01.3:
     status: automated
     refs:
+      - web/src/pages/patient/ProfilePage.test.tsx::saves a new phone number as a new version
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoResourceStoreTest.java::updateWithTheCurrentVersionWritesANewHistoryVersion
       - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aRecordEditedTwiceHasThreeVersionsInTheHistory
   TC-AC-01.1:
     status: automated
     refs:
+      - web/src/pages/patient/ProfilePage.test.tsx::shows the own record with the identity fields locked
       - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::aPatientReadsOwnRecordWithItsVersion
       - services/clinical/src/test/java/org/shp/clinical/api/PatientApiTest.java::anotherPatientsRecordIsA404ThatLooksLikeAMissingOne
   TC-AC-UP.1:
@@ -322,6 +324,7 @@ automation:
   TC-AC-01.2:
     status: automated
     refs:
+      - web/src/pages/patient/ProfilePage.test.tsx::shows the duplicate notice on 422 and creates nothing
       - services/clinical/src/test/java/org/shp/clinical/app/DuplicatePatientCheckTest.java::samePhoneAndBirthDateIsASuspectedDuplicate
       - services/clinical/src/test/java/org/shp/clinical/app/DuplicatePatientCheckTest.java::theRefusalDisclosesNothingFromTheExistingRecord
       - services/clinical/src/test/java/org/shp/clinical/api/RegistrationApiTest.java::samePhoneAndBirthDateIsRefusedWithoutLeakingTheExistingRecord
