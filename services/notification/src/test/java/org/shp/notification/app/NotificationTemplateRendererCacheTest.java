@@ -54,9 +54,9 @@ class NotificationTemplateRendererCacheTest {
   @Test
   void aMissingTemplateIsReportedOnEveryCallNotCached() {
     for (int i = 0; i < 3; i++) {
-      assertThatThrownBy(() -> renderer.render(ReminderKind.T_6H_RISK, "vi", VARIABLES))
+      assertThatThrownBy(() -> renderer.render(ReminderKind.CANCELLATION, "vi", VARIABLES))
           .isInstanceOf(NotificationTemplateException.class)
-          .hasMessageContaining("t-6h-risk.vi.txt");
+          .hasMessageContaining("cancellation.vi.txt");
     }
   }
 }
