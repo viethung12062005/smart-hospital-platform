@@ -30,8 +30,11 @@ toolkit (`dev/`) and all documentation (`docs/`). Three sibling repositories hol
    default of the tool you run in.
 5. **One task, one branch, one PR.** Branch `<TASK-ID>-short-description` from the latest `origin/main`; title
    `<story> (<task>): <description>`; squash merge. Never push to `main`, never force-push a shared branch.
-6. **You do not merge.** A person reviews and merges every PR. Do not use an admin bypass, do not approve your own PR,
-   do not weaken a ruleset, a required check, `gitleaks` or a coverage gate to get something through.
+6. **You merge only when the person you work for tells you to.** A person reviews every PR. You may squash-merge a PR
+   only after that person has asked for it in the session (that PR or a named list), every required check is green and
+   the ruleset allows the merge without a bypass. Never use an admin bypass, never approve your own PR, never weaken a
+   ruleset, a required check, `gitleaks` or a coverage gate to get something through. If a merge needs a review or a
+   bypass you cannot give, stop and say so.
 7. **A PR is not ready until its Definition of Done is proven.** Open it as Draft. Tick an item only after you ran the
    check and saw it pass; write the command and its real result under *Verification*. An item that does not apply is
    ticked with "(not applicable: reason)". Do not mark the PR ready, and do not tell the user the work is done, while
