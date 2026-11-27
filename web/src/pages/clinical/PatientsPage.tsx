@@ -5,7 +5,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { searchPatients } from '@/api/clinical';
-import { formatDate, formatName } from '@/api/fhir';
+import { formatBirthDate, formatName } from '@/api/fhir';
 import { Card, EmptyState, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 
 export function PatientsPage() {
@@ -67,7 +67,7 @@ export function PatientsPage() {
                     {p.identifier?.find((i) => i.system === 'urn:shp:mrn')?.value}
                   </td>
                   <td className="strong">{formatName(p.name)}</td>
-                  <td>{formatDate(p.birthDate)}</td>
+                  <td>{formatBirthDate(p.birthDate)}</td>
                   <td>{t(`gender.${p.gender ?? 'unknown'}`)}</td>
                   <td className="tight">
                     <Button component={Link} to={`/patients/${p.id}`} size="xs" variant="light">

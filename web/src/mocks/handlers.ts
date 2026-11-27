@@ -34,6 +34,9 @@ export function mockDb(): MockDb {
   return db;
 }
 
+/** Patients a mock doctor has no care relationship with (AC-06.2). */
+const NO_CARE_PATIENTS = ['p-003'];
+
 const MESSAGES: Record<string, [string, string]> = {
   'slot-unavailable': ['Giờ khám này không còn trống.', 'This time slot is no longer available.'],
   'max-future-appointments': ['Bạn đã có 3 lịch hẹn sắp tới.', 'You already have 3 upcoming appointments.'],
@@ -56,6 +59,10 @@ const MESSAGES: Record<string, [string, string]> = {
   'business-rule': [
     'Ngoài khung giờ check-in (60 phút trước đến 30 phút sau giờ hẹn).',
     'Outside the check-in window.',
+  ],
+  'no-care-relationship': [
+    'Bạn chưa có quan hệ điều trị với bệnh nhân này.',
+    'You have no care relationship with this patient.',
   ],
   forbidden: ['Bạn không có quyền thực hiện thao tác này.', 'You are not allowed to do this.'],
   'not-found': ['Không tìm thấy.', 'Not found.'],
@@ -543,7 +550,7 @@ export const handlers = [
 
   http.post(
     '/fhir/Patient/_search',
-    authed(async ({ request }) => {
+    authed(async ({ request, me }) => {
       const form = new URLSearchParams(await request.text());
       const name = form.get('name');
       const phone = form.get('phone');
@@ -554,13 +561,25 @@ export const handlers = [
         if (mrn) return p.identifier?.some((i) => i.value === mrn);
         return false;
       });
-      return HttpResponse.json(bundle(list));
+      // C6 answers an abbreviated Patient; a doctor without Care gets only the birth year.
+      const abbreviated = list.map((p) => ({
+        resourceType: 'Patient' as const,
+        id: p.id,
+        identifier: p.identifier?.filter((i) => i.system === 'urn:shp:mrn'),
+        name: p.name,
+        gender: p.gender,
+        birthDate: me.roles.includes('doctor') ? p.birthDate?.slice(0, 4) : p.birthDate,
+      }));
+      return HttpResponse.json(bundle(abbreviated));
     }),
   ),
 
   http.get(
     '/fhir/Patient/:id',
-    authed(({ request, params }) => {
+    authed(({ request, params, me }) => {
+      if (me.roles.includes('doctor') && NO_CARE_PATIENTS.includes(params['id'] ?? '')) {
+        return outcome(request, 403, 'no-care-relationship');
+      }
       const p = db.patients.find((x) => x.id === params['id']);
       return p ? withEtag(p) : outcome(request, 404, 'not-found');
     }),

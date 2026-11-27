@@ -295,6 +295,9 @@ export const vi = {
     encounters: 'Lần khám',
     none: 'Không có',
     startSearch: 'Nhập từ khóa để tìm bệnh nhân.',
+    noCareTitle: 'Bạn không điều trị bệnh nhân này',
+    noCareHint:
+      'Bạn chưa có quan hệ điều trị với bệnh nhân này nên không mở được hồ sơ. Trong tình huống cấp cứu, hãy dùng truy cập khẩn cấp (break-glass): hồ sơ mở ở chế độ chỉ đọc trong 60 phút và DPO được thông báo.',
   },
   gender: { male: 'Nam', female: 'Nữ', other: 'Khác', unknown: 'Không rõ' },
   encounter: {

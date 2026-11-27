@@ -175,6 +175,42 @@ describe('find a patient', () => {
   });
 });
 
+describe('find a patient (US-031)', () => {
+  it('a doctor finds a patient without diacritics and sees only the birth year', async () => {
+    const user = userEvent.setup();
+    renderApp('/patients', 'doctor');
+
+    await user.type(await screen.findByLabelText('Tìm kiếm'), 'le hoang');
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+
+    const row = (await screen.findByText('Lê Hoàng Yến')).closest('tr')!;
+    expect(within(row as HTMLElement).getByText('2015')).toBeInTheDocument();
+    expect(within(row as HTMLElement).queryByText('27/01/2015')).not.toBeInTheDocument();
+  });
+
+  it('finds a patient by phone and by MRN', async () => {
+    const user = userEvent.setup();
+    renderApp('/patients', 'nurse');
+    const phone = mockDb().patients[0]!.telecom![0]!.value!;
+    const box = await screen.findByLabelText('Tìm kiếm');
+
+    await user.type(box, phone);
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+    expect(await screen.findByText('Nguyễn Thị Lan')).toBeInTheDocument();
+
+    await user.clear(box);
+    await user.type(box, 'BN-2026-000001');
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+    expect(await screen.findByText('Nguyễn Thị Lan')).toBeInTheDocument();
+  });
+
+  it('a doctor without a care relationship is told about break-glass access', async () => {
+    renderApp('/patients/p-003', 'doctor');
+    expect(await screen.findByText('Bạn không điều trị bệnh nhân này')).toBeInTheDocument();
+    expect(screen.getByText(/break-glass/)).toBeInTheDocument();
+  });
+});
+
 // WEB-22 (US-024, US-025): encounter list.
 describe('encounter list', () => {
   it('shows the latest encounter, filtered by status', async () => {

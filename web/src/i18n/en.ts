@@ -295,6 +295,9 @@ export const en: Messages = {
     encounters: 'Encounters',
     none: 'None',
     startSearch: 'Type to search for a patient.',
+    noCareTitle: 'You are not treating this patient',
+    noCareHint:
+      'You have no care relationship with this patient, so the record is closed. In an emergency, use break-glass access: it opens the record read-only for 60 minutes and the DPO is notified.',
   },
   gender: { male: 'Male', female: 'Female', other: 'Other', unknown: 'Unknown' },
   encounter: {

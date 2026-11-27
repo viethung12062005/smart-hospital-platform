@@ -30,6 +30,11 @@ export function formatDate(value: string | undefined): string {
   return value ? dayjs(value).format('DD/MM/YYYY') : '';
 }
 
+/** C6 results carry only the birth year for a doctor without a care relationship ("1988"); show it as is. */
+export function formatBirthDate(value: string | undefined): string {
+  return value && /^\d{4}$/.test(value) ? value : formatDate(value);
+}
+
 export function formatTime(value: string | undefined): string {
   return value ? dayjs(value).format('HH:mm') : '';
 }
