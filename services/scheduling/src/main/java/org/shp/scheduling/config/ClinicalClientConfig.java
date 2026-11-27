@@ -31,9 +31,9 @@ class ClinicalClientConfig {
 
   private static RestClient clinicalClient(
       String clinicalUrl, ServiceTokenInterceptor serviceToken) {
-    HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+    HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
     var requestFactory = new JdkClientHttpRequestFactory(http);
-    requestFactory.setReadTimeout(Duration.ofSeconds(5));
+    requestFactory.setReadTimeout(Duration.ofSeconds(2));
     return RestClient.builder()
         .baseUrl(clinicalUrl)
         .requestFactory(requestFactory)

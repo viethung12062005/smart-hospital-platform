@@ -87,6 +87,10 @@ public class BookingController {
     }
     UUID patient =
         body.patientId() != null ? body.patientId() : UUID.fromString(principal.fhirUserId());
+    // Clinical is asked before the booking transaction opens, so a slow clinical never holds the
+    // transaction, the slot lock or a connection. The outcome is applied inside, after the replay
+    // check, so a replay still gets the stored answer while clinical is down.
+    Runnable patientCheck = lookUpPatient(patient);
     BookingResult result =
         service.book(
             new BookingCommand(
@@ -97,11 +101,7 @@ public class BookingController {
                 patient,
                 channel,
                 body.comment()),
-            () -> {
-              if (!patients.exists(patient)) {
-                throw new ShpException("not-found");
-              }
-            });
+            patientCheck);
 
     var a = result.appointment();
     String location = "/fhir/Appointment/" + a.id() + "/_history/" + a.versionId();
@@ -182,5 +182,20 @@ public class BookingController {
                   Map.of("url", "end", "valueInstant", s.end().toString()))));
     }
     return List.of(Map.of("url", SUGGESTED_SLOTS_URL, "extension", items));
+  }
+
+  private Runnable lookUpPatient(UUID patient) {
+    try {
+      if (patients.exists(patient)) {
+        return () -> {};
+      }
+      return () -> {
+        throw new ShpException("not-found");
+      };
+    } catch (ShpException e) {
+      return () -> {
+        throw e;
+      };
+    }
   }
 }

@@ -492,6 +492,29 @@ class BookingApiTest {
   }
 
   @Test
+  @DisplayName("clinical is asked before the booking transaction opens")
+  void clinicalLookupRunsOutsideTheTransaction() throws Exception {
+    var res = book(patientAToken, "key-api-0023", params(freeSlot(3), null, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(201);
+    assertThat(patients.lookups()).isEqualTo(1);
+    assertThat(patients.lookupsInTransaction()).isZero();
+  }
+
+  @Test
+  @DisplayName("a clinical failure gives 503 dependency-unavailable and books nothing")
+  void clinicalDownBooksNothing() throws Exception {
+    patients.setDown(true);
+
+    var res = book(nurseToken, "key-api-0024", params(freeSlot(3), PATIENT_A, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(503);
+    assertThat(errorCode(res)).isEqualTo("dependency-unavailable");
+    assertThat(count("SELECT count(*) FROM scheduling.appointment")).isZero();
+    assertThat(count("SELECT count(*) FROM scheduling.slot WHERE status = 'free'")).isEqualTo(1);
+  }
+
+  @Test
   @DisplayName("AC-03.6: a guardian books for a linked profile, an unlinked or expired one is 403")
   void linkedProfileBooking() throws Exception {
     String guardian = token("guardian-1", List.of("patient"));

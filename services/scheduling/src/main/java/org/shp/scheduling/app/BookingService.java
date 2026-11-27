@@ -71,8 +71,9 @@ public class BookingService {
 
   /**
    * Like {@link #book(BookingCommand)}, and runs {@code afterClaim} once the key is claimed and the
-   * request is not a replay, before the slot is taken. A replay never runs it, so a retry still
-   * gets the stored answer when a dependency checked there is down.
+   * request is not a replay, before the slot is taken. It must not call another service: do that
+   * before this method and pass the outcome in. A replay never runs it, so a retry still gets the
+   * stored answer when a dependency checked there is down.
    */
   @Transactional
   public BookingResult book(BookingCommand cmd, Runnable afterClaim) {
