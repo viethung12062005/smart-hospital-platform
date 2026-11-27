@@ -15,6 +15,15 @@ spring:
     # "Found non-empty schema 'scheduling' without schema history table" (verified workaround, LOC-05).
     default-schema: public
     locations: classpath:db/migration,classpath:db/shp-messaging/postgres
+  cloud:
+    function:
+      definition: encounterEvents
+    stream:
+      bindings:
+        # 13 §2: E6 encounter-finished -> Appointment arrived -> fulfilled (emits E5)
+        encounterEvents-in-0:
+          destination: shp-events
+          group: scheduling
 shp:
   clinical:
     url: ${SHP_CLINICAL_URL:http://clinical}
