@@ -1,0 +1,4 @@
+Bạn có lịch hẹn khoảng 6 giờ nữa.
+
+Thời gian: {startTime}
+Quản lý lịch hẹn: {manageLink}

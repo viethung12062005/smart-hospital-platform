@@ -155,6 +155,8 @@ automation:
     status: automated
     refs:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::highRiskScoreWithTimeLeftCreatesT6hRiskReminderOnce
+      - services/notification/src/test/java/org/shp/notification/messaging/ReminderConsumerIntegrationTest.java::lowRiskOrNoTimeLeftCreatesNoT6hRiskReminder
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::replayedBookedCreatesNoDuplicates
       - libs/java/shp-data-mongo/src/test/java/org/shp/data/mongo/MongoInboxIdempotencyTest.java::sameEventDeliveredTwiceIsHandledOnce
       - libs/java/shp-data-postgres/src/test/java/org/shp/data/postgres/InboxTest.java::sameEventDeliveredTwiceIsHandledOnce

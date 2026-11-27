@@ -17,6 +17,7 @@ import org.shp.notification.domain.ReminderKind;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
 
@@ -32,6 +33,13 @@ public final class ReminderService {
   public static final String CONSUMER = "notification";
   public static final String BOOKED_TYPE = "shp.scheduling.appointment-booked.v1";
   public static final String NO_SHOW_SCORED_TYPE = "shp.ml.no-show-scored.v1";
+  public static final String DOCUMENT_RELEASED_TYPE = "shp.document.document-released.v1";
+  public static final String PATIENT_MERGED_TYPE = "shp.clinical.patient-merged.v1";
+
+  /** Collections that hold a patient id owned by this service (04-db-notification-ml §1.2). */
+  public static final String PREFERENCES = "preferences";
+
+  public static final String DEVICE_TOKENS = "device_tokens";
 
   private static final Duration T_24H = Duration.ofHours(24);
   private static final Duration T_6H = Duration.ofHours(6);
@@ -106,6 +114,62 @@ public final class ReminderService {
                 appointmentStart,
                 dueAt,
                 now)));
+  }
+
+  /**
+   * E9 {@code document-released}: one {@code result-available} reminder due now. The reminder
+   * carries no document type and no result detail; the message text is generic (13-events E9).
+   */
+  public void onDocumentReleased(CloudEvent event) {
+    JsonNode data = event.data();
+    String documentId = text(data, "documentId");
+    Instant now = clock.instant();
+    saveNew(
+        List.of(
+            reminder(
+                "Document/" + documentId,
+                text(data, "patientId"),
+                ReminderKind.RESULT_AVAILABLE,
+                null,
+                now,
+                now)));
+  }
+
+  /**
+   * E7 {@code patient-merged}: replace the source patient id with the target id in this service's
+   * own data. Idempotent: a second run matches nothing. A preference document is keyed by the
+   * patient id, so the target keeps its own preferences when it has any; otherwise the source's
+   * move over.
+   */
+  public void onPatientMerged(CloudEvent event) {
+    JsonNode data = event.data();
+    String source = text(data, "sourcePatientId");
+    String target = text(data, "targetPatientId");
+    if (source.equals(target)) {
+      return;
+    }
+    Instant now = clock.instant();
+    MongoMessaging.inTransaction(
+        tx,
+        () -> {
+          mongo.updateMulti(
+              Query.query(Criteria.where("patientId").is(source)),
+              new Update().set("patientId", target).set("updatedAt", date(now)),
+              COLLECTION);
+          mongo.updateMulti(
+              Query.query(Criteria.where("ownerRef").is("Patient/" + source)),
+              new Update().set("ownerRef", "Patient/" + target),
+              DEVICE_TOKENS);
+          Document sourcePreferences = mongo.findById(source, Document.class, PREFERENCES);
+          if (sourcePreferences != null) {
+            if (mongo.findById(target, Document.class, PREFERENCES) == null) {
+              sourcePreferences.put("_id", target);
+              mongo.insert(sourcePreferences, PREFERENCES);
+            }
+            mongo.remove(Query.query(Criteria.where("_id").is(source)), PREFERENCES);
+          }
+          return null;
+        });
   }
 
   private void addIfFuture(

@@ -83,6 +83,144 @@ class ReminderConsumerIntegrationTest {
   void reset() {
     DB.getCollection(ReminderService.COLLECTION).deleteMany(new Document());
     DB.getCollection(MongoMessaging.INBOX).deleteMany(new Document());
+    DB.getCollection(ReminderService.PREFERENCES).deleteMany(new Document());
+    DB.getCollection(ReminderService.DEVICE_TOKENS).deleteMany(new Document());
+  }
+
+  @Test
+  void highRiskScoreWithTimeLeftCreatesT6hRiskReminderOnce() {
+    Instant start = NOW.plus(Duration.ofDays(1));
+    CloudEvent event = scored(start, true);
+
+    CONSUMER.accept(message(event));
+    CONSUMER.accept(message(event));
+
+    assertThat(kinds()).containsExactly("t-6h-risk");
+    assertThat(dueAt("t-6h-risk")).isEqualTo(start.minus(Duration.ofHours(6)));
+  }
+
+  @Test
+  void lowRiskOrNoTimeLeftCreatesNoT6hRiskReminder() {
+    CONSUMER.accept(message(scored(NOW.plus(Duration.ofDays(1)), false)));
+    CONSUMER.accept(message(scored(NOW.plus(Duration.ofHours(5)), true)));
+
+    assertThat(count()).isZero();
+  }
+
+  @Test
+  void documentReleasedCreatesOneGenericResultAvailableReminder() {
+    CloudEvent event = released("0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e08");
+
+    CONSUMER.accept(message(event));
+    CONSUMER.accept(message(event));
+
+    Document reminder = DB.getCollection(ReminderService.COLLECTION).find().first();
+    assertThat(count()).isEqualTo(1);
+    assertThat(reminder).isNotNull();
+    assertThat(reminder.getString("kind")).isEqualTo("result-available");
+    assertThat(reminder.getString("patientId")).isEqualTo(PATIENT_ID);
+    assertThat(reminder.getDate("dueAt").toInstant()).isEqualTo(NOW);
+    assertThat(reminder.get("appointmentStart")).isNull();
+    // Generic content: neither the document type nor any result detail is stored.
+    assertThat(reminder.toJson()).doesNotContain("11502-2");
+  }
+
+  @Test
+  void patientMergedMovesRemindersTokensAndPreferencesToTheTarget() {
+    String target = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e07";
+    CONSUMER.accept(message(booked(NOW.plus(Duration.ofDays(3)))));
+    DB.getCollection(ReminderService.DEVICE_TOKENS)
+        .insertOne(new Document("_id", "d1").append("ownerRef", "Patient/" + PATIENT_ID));
+    DB.getCollection(ReminderService.PREFERENCES)
+        .insertOne(new Document("_id", PATIENT_ID).append("locale", "en"));
+
+    CloudEvent event = merged(PATIENT_ID, target);
+    CONSUMER.accept(message(event));
+    CONSUMER.accept(message(event));
+
+    assertThat(
+            DB.getCollection(ReminderService.COLLECTION)
+                .countDocuments(new Document("patientId", target)))
+        .isEqualTo(3);
+    assertThat(
+            DB.getCollection(ReminderService.COLLECTION)
+                .countDocuments(new Document("patientId", PATIENT_ID)))
+        .isZero();
+    assertThat(DB.getCollection(ReminderService.DEVICE_TOKENS).find().first().getString("ownerRef"))
+        .isEqualTo("Patient/" + target);
+    assertThat(DB.getCollection(ReminderService.PREFERENCES).find().first().getString("_id"))
+        .isEqualTo(target);
+  }
+
+  @Test
+  void patientMergedKeepsTheTargetPreferencesWhenItHasSome() {
+    String target = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e07";
+    DB.getCollection(ReminderService.PREFERENCES)
+        .insertOne(new Document("_id", PATIENT_ID).append("locale", "en"));
+    DB.getCollection(ReminderService.PREFERENCES)
+        .insertOne(new Document("_id", target).append("locale", "vi"));
+
+    CONSUMER.accept(message(merged(PATIENT_ID, target)));
+
+    assertThat(DB.getCollection(ReminderService.PREFERENCES).countDocuments()).isEqualTo(1);
+    assertThat(DB.getCollection(ReminderService.PREFERENCES).find().first().getString("locale"))
+        .isEqualTo("vi");
+  }
+
+  private static CloudEvent scored(Instant start, boolean highRisk) {
+    return CloudEvents.create(
+        "ml",
+        ReminderService.NO_SHOW_SCORED_TYPE,
+        "Appointment/" + APPOINTMENT_ID,
+        Map.of(
+            "appointmentId",
+            APPOINTMENT_ID,
+            "patientId",
+            PATIENT_ID,
+            "start",
+            start.toString(),
+            "score",
+            0.8,
+            "threshold",
+            0.5,
+            "highRisk",
+            highRisk,
+            "modelName",
+            "no-show",
+            "modelVersion",
+            "1",
+            "scoredAt",
+            NOW.toString()),
+        CLOCK,
+        Uuids.v7(CLOCK));
+  }
+
+  private static CloudEvent released(String documentId) {
+    return CloudEvents.create(
+        "document",
+        ReminderService.DOCUMENT_RELEASED_TYPE,
+        "Document/" + documentId,
+        Map.of(
+            "documentId",
+            documentId,
+            "patientId",
+            PATIENT_ID,
+            "releasedAt",
+            NOW.toString(),
+            "type",
+            "11502-2"),
+        CLOCK,
+        Uuids.v7(CLOCK));
+  }
+
+  private static CloudEvent merged(String source, String target) {
+    return CloudEvents.create(
+        "clinical",
+        ReminderService.PATIENT_MERGED_TYPE,
+        "Patient/" + target,
+        Map.of("sourcePatientId", source, "targetPatientId", target, "mergedAt", NOW.toString()),
+        CLOCK,
+        Uuids.v7(CLOCK));
   }
 
   @Test
