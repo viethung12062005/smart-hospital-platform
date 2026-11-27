@@ -1,6 +1,7 @@
 package org.shp.scheduling.infra;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -102,5 +103,50 @@ public class AppointmentRepository {
         .param(id)
         .query(MAPPER)
         .optional();
+  }
+
+  /** Same as {@link #findById} but locks the row until the caller's transaction ends. */
+  public Optional<AppointmentRecord> findByIdForUpdate(UUID id) {
+    return jdbc.sql(
+            """
+            SELECT id, version_id, last_updated, status, slot_id, patient_id, practitioner_id,
+                   specialty, start_at, end_at, channel, booked_by, content
+              FROM scheduling.appointment WHERE id = ? FOR UPDATE
+            """)
+        .param(id)
+        .query(MAPPER)
+        .optional();
+  }
+
+  /**
+   * Move an {@code arrived} appointment to {@code fulfilled}: bump the version, store the new
+   * resource and append the {@code resource_history} row, in the caller's transaction. Returns
+   * false (nothing written) when the appointment is no longer {@code arrived} at {@code
+   * expectedVersion}.
+   */
+  public boolean markFulfilled(
+      UUID id, int expectedVersion, Instant now, String changedBy, String content) {
+    int updated =
+        jdbc.sql(
+                """
+                UPDATE scheduling.appointment
+                   SET status = 'fulfilled', version_id = version_id + 1, last_updated = ?,
+                       content = ?::jsonb
+                 WHERE id = ? AND status = 'arrived' AND version_id = ?
+                """)
+            .params(Timestamp.from(now), content, id, expectedVersion)
+            .update();
+    if (updated == 0) {
+      return false;
+    }
+    jdbc.sql(
+            """
+            INSERT INTO scheduling.resource_history (
+                resource_type, id, version_id, last_updated, operation, changed_by, content
+            ) VALUES ('Appointment', ?, ?, ?, 'update', ?, ?::jsonb)
+            """)
+        .params(id, expectedVersion + 1, Timestamp.from(now), changedBy, content)
+        .update();
+    return true;
   }
 }
