@@ -20,6 +20,10 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
       - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::adminIsRefusedOnEveryClinicalDataEndpoint
       - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::everyEndpointDeclaresItsAuthorizationRule
+      - services/notification/src/test/java/org/shp/notification/api/NotificationAuthzMatrixCellsTest.java::everyCellDecidesAsTheMatrixSays
+      - services/notification/src/test/java/org/shp/notification/api/NotificationAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
+      - services/notification/src/test/java/org/shp/notification/api/NotificationAuthzMatrixTest.java::dpoIsRefusedEverywhereAndAdminOnlyReachesTheOperationsTheMatrixGivesIt
+      - services/notification/src/test/java/org/shp/notification/api/NotificationAuthzMatrixTest.java::everyEndpointDeclaresItsAuthorizationRule
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentHistoryApiTest.java::historyAuthorizationMatrix
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotBlockApiTest.java::blockAndUnblockAuthorizationMatrix
@@ -361,6 +365,9 @@ automation:
       - "tools/contracts/test_validators.py::def test_"
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::contractBookedExampleCreatesTheReminderMilestones
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::contractNoShowScoredExampleAddsTheHighRiskReminder
+      - services/notification/src/test/java/org/shp/notification/messaging/NotificationEventContractTest.java::theProducerExampleIsValid
+      - services/notification/src/test/java/org/shp/notification/messaging/NotificationEventContractTest.java::anUnknownOptionalFieldWithinTheSameVersionStillValidates
+      - services/notification/src/test/java/org/shp/notification/messaging/NotificationEventContractTest.java::aMissingRequiredFieldIsRejectedByTheSchema
       - services/ml/tests/test_event_contracts.py::test_every_consumed_type_has_a_producer_example
       - services/ml/tests/test_event_contracts.py::test_consumer_accepts_every_producer_example
       - services/ml/tests/test_event_contracts.py::test_booked_then_cancelled_example_marks_the_fact_cancelled
