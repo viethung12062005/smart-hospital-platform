@@ -20,6 +20,9 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
       - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::adminIsRefusedOnEveryClinicalDataEndpoint
       - services/clinical/src/test/java/org/shp/clinical/api/ClinicalAuthzMatrixTest.java::everyEndpointDeclaresItsAuthorizationRule
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SchedulingAuthzMatrixTest.java::everySchedulingCellDecidesAsTheMatrixSays
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SchedulingAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SchedulingAuthzMatrixTest.java::everyEndpointDeclaresItsAuthorizationRule
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentHistoryApiTest.java::historyAuthorizationMatrix
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotBlockApiTest.java::blockAndUnblockAuthorizationMatrix
@@ -90,7 +93,8 @@ automation:
     status: partial
     refs:
       - libs/java/shp-authz/src/test/java/org/shp/authz/MatrixDrivenTest.java::unknownResourceOrActionIsDenied
-    gap: "Need tests generated from OpenAPI + the matrix calling every endpoint per role (once services have endpoints)."
+      - services/scheduling/src/test/java/org/shp/scheduling/api/SchedulingAuthzMatrixTest.java::rolesWithoutARuleAreRefusedOnEveryEndpointWithAnAudit
+    gap: "Scheduling and clinical call every real endpoint per role; the other services are not covered yet. Need tests generated from OpenAPI + the matrix calling every endpoint per role (once services have endpoints)."
 
   # ---- Audit, events, idempotency, inbox ----
   TC-AC-03.2:
