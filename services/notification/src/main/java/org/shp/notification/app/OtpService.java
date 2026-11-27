@@ -128,6 +128,10 @@ public class OtpService {
     if (lockedUntil != null && lockedUntil.toInstant().isAfter(now)) {
       throw new ShpException("otp-locked", null, LOCK);
     }
+    if (c.getInteger("attempts", 0) >= MAX_ATTEMPTS) {
+      // The attempt that reached the limit may have stopped before it stored the lock.
+      throw new ShpException("otp-locked", null, LOCK);
+    }
     if (Boolean.TRUE.equals(c.getBoolean("consumed"))
         || !c.getDate("expiresAt").toInstant().isAfter(now)) {
       throw new ShpException("otp-invalid");
@@ -137,7 +141,7 @@ public class OtpService {
             hmac(challengeId + ":" + code.strip()).getBytes(StandardCharsets.UTF_8),
             c.getString("codeHash").getBytes(StandardCharsets.UTF_8));
     if (match) {
-      if (!store.consume(challengeId, now)) {
+      if (!store.consume(challengeId, MAX_ATTEMPTS, now)) {
         throw new ShpException("otp-invalid");
       }
       return true;

@@ -66,11 +66,21 @@ public class MongoOtpStore {
         CHALLENGES);
   }
 
-  /** Marks the challenge used. Returns false when it was already used (single use, race-safe). */
-  public boolean consume(String id, Instant now) {
+  /**
+   * Marks the challenge used. Returns false when it was already used (single use, race-safe) or
+   * when it has reached {@code maxAttempts} wrong attempts, so a correct code that races with the
+   * attempt that locks the challenge cannot succeed after the lock.
+   */
+  public boolean consume(String id, int maxAttempts, Instant now) {
     Document updated =
         mongo.findAndModify(
-            Query.query(Criteria.where("_id").is(id).and("consumed").is(false)),
+            Query.query(
+                Criteria.where("_id")
+                    .is(id)
+                    .and("consumed")
+                    .is(false)
+                    .and("attempts")
+                    .lt(maxAttempts)),
             new Update().set("consumed", true).set("consumedAt", Date.from(now)),
             FindAndModifyOptions.options().returnNew(true),
             Document.class,
