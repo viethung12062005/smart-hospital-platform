@@ -24,6 +24,7 @@ automation:
       - services/scheduling/src/test/java/org/shp/scheduling/api/AppointmentApiTest.java::s12AndS13RolePermissions
       - services/scheduling/src/test/java/org/shp/scheduling/api/SlotBlockApiTest.java::blockAndUnblockAuthorizationMatrix
       - services/scheduling/src/test/java/org/shp/scheduling/api/InternalAppointmentApiTest.java::otherServicesAndAllUserRolesAreDeniedWith403AndSystemAudit
+      - services/scheduling/src/test/java/org/shp/scheduling/api/CheckInApiTest.java::nonNurseRolesAreDeniedWith403AndAudited
     gap: "Only at the decision-library and interface level; no test calls each real endpoint yet (SCH-/CLN-/DOC-). Owner: D1, D2."
   TC-NFR-SEC1:
     status: partial
@@ -275,6 +276,11 @@ automation:
       - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::aNurseMergesTheSourceIntoTheTarget
       - services/clinical/src/test/java/org/shp/clinical/api/PatientMergeApiTest.java::mergingAnAlreadyMergedRecordIs409
   # ---- Clinical: encounter addendum ----
+  TC-AC-CI.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/api/CheckInApiTest.java::checkingInTomorrowAppointmentReturns422
+      - services/scheduling/src/test/java/org/shp/scheduling/app/CheckInServiceTest.java::outsideCheckInWindowReturns422AndEmitsNothing
   TC-AC-AD.1:
     status: automated
     refs:

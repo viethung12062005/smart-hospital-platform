@@ -1,5 +1,6 @@
 package org.shp.scheduling.domain;
 
+import java.time.Instant;
 import java.util.Date;
 import org.hl7.fhir.r4.model.Appointment;
 import org.hl7.fhir.r4.model.CodeType;
@@ -15,6 +16,18 @@ public final class AppointmentFhir {
       "https://shp.example.org/fhir/StructureDefinition/booking-channel";
 
   private AppointmentFhir() {}
+
+  /**
+   * The stored resource {@code content} of a checked-in appointment: status {@code arrived}, and
+   * the new version and time in {@code meta}.
+   */
+  public static String arrived(String content, int versionId, Instant at) {
+    var resource = FhirJson.parse(content, Appointment.class);
+    resource.getMeta().setVersionId(Integer.toString(versionId));
+    resource.getMeta().setLastUpdated(Date.from(at));
+    resource.setStatus(Appointment.AppointmentStatus.ARRIVED);
+    return FhirJson.serialize(resource);
+  }
 
   /**
    * The resource of a new booking: version 1 of {@code a}, created at {@code a.lastUpdated()}.
