@@ -66,6 +66,17 @@ public class BookingService {
    */
   @Transactional
   public BookingResult book(BookingCommand cmd) {
+    return book(cmd, () -> {});
+  }
+
+  /**
+   * Like {@link #book(BookingCommand)}, and runs {@code afterClaim} once the key is claimed and the
+   * request is not a replay, before the slot is taken. It must not call another service: do that
+   * before this method and pass the outcome in. A replay never runs it, so a retry still gets the
+   * stored answer when a dependency checked there is down.
+   */
+  @Transactional
+  public BookingResult book(BookingCommand cmd, Runnable afterClaim) {
     IdempotencyClaim claim =
         guard.begin(cmd.subject(), cmd.idempotencyKey(), cmd.requestHash(), cmd.patientId());
     if (claim.replay()) {
@@ -76,6 +87,8 @@ public class BookingService {
                   () -> new IllegalStateException("idempotency claim without an appointment"));
       return new BookingResult(first, true);
     }
+
+    afterClaim.run();
 
     Instant now = clock.instant();
     SlotFacts slot =

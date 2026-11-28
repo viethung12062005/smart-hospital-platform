@@ -131,6 +131,7 @@ automation:
     status: automated
     refs:
       - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::bookingForSomeoneElseIsDeniedAndAudited
+      - services/scheduling/src/test/java/org/shp/scheduling/api/BookingApiTest.java::linkedProfileBooking
   TC-AC-MA.1:
     status: automated
     refs:

@@ -25,7 +25,9 @@ import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.shp.authz.LinkedProfile;
 import org.shp.scheduling.app.BookingTestSupport;
+import org.shp.scheduling.infra.FakePatientClient;
 import org.shp.security.ShpAuthProperties;
 import org.shp.security.ShpJwt;
 import org.shp.web.auth.IdentityLink;
@@ -84,6 +86,8 @@ class BookingApiTest {
   @Autowired Environment env;
   @Autowired TestSecurityConfig.FakeIdentityLinkClient identityLinks;
   @Autowired JdbcClient jdbc;
+  @Autowired FakePatientClient patients;
+  @Autowired Clock clock;
 
   @TestConfiguration
   static class TestSecurityConfig {
@@ -101,6 +105,12 @@ class BookingApiTest {
               .build();
       d.setJwtValidator(ShpJwt.validator(props, clock));
       return d;
+    }
+
+    @Bean
+    @Primary
+    FakePatientClient fakePatientClient() {
+      return new FakePatientClient();
     }
 
     @Bean
@@ -127,6 +137,8 @@ class BookingApiTest {
   // Fixed ids: the identity resolver caches links by subject for the life of the context.
   private static final UUID PATIENT_A = UUID.fromString("0192f8a4-0000-7000-8000-00000000000a");
   private static final UUID PATIENT_B = UUID.fromString("0192f8a4-0000-7000-8000-00000000000b");
+  private static final UUID CHILD = UUID.fromString("0192f8a4-0000-7000-8000-00000000000c");
+  private static final UUID EXPIRED_CHILD = UUID.fromString("0192f8a4-0000-7000-8000-00000000000d");
   private String patientAToken;
   private String nurseToken;
 
@@ -135,11 +147,25 @@ class BookingApiTest {
     data = new BookingTestSupport(jdbc);
     data.clean();
     identityLinks.links.clear();
+    patients.clear();
     doctor = UUID.randomUUID();
     schedule = data.schedule(doctor, "cardiology");
     counter = 0;
     identityLinks.links.put("patient-a", new IdentityLink("Patient", PATIENT_A.toString(), false));
     identityLinks.links.put("patient-b", new IdentityLink("Patient", PATIENT_B.toString(), false));
+    identityLinks.links.put(
+        "guardian-1",
+        new IdentityLink(
+            "Patient",
+            PATIENT_A.toString(),
+            false,
+            List.of(
+                new LinkedProfile(CHILD.toString(), "guardian", "booking", null),
+                new LinkedProfile(
+                    EXPIRED_CHILD.toString(),
+                    "proxy",
+                    "booking",
+                    clock.instant().minusSeconds(3600)))));
     identityLinks.links.put(
         "nurse-1", new IdentityLink("Practitioner", UUID.randomUUID().toString(), false));
     identityLinks.links.put("doctor-1", new IdentityLink("Practitioner", doctor.toString(), false));
@@ -418,6 +444,99 @@ class BookingApiTest {
     // A nurse must say who the patient is.
     assertThat(book(nurseToken, "key-api-0010", params(freeSlot(4), null, null, null)).statusCode())
         .isEqualTo(400);
+  }
+
+  @Test
+  @DisplayName("404 for a patient that does not exist, and no slot is taken")
+  void unknownPatientIsNotFound() throws Exception {
+    UUID ghost = UUID.fromString("0192f8a4-0000-7000-8000-0000000000ee");
+    patients.markMissing(ghost);
+    UUID slot = freeSlot(3);
+
+    var res = book(nurseToken, "key-api-0016", params(slot, ghost, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(404);
+    assertThat(errorCode(res)).isEqualTo("not-found");
+    assertThat(count("SELECT count(*) FROM scheduling.appointment")).isZero();
+    assertThat(count("SELECT count(*) FROM scheduling.slot WHERE status = 'free'")).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("a patient naming an unknown, unlinked id gets 403, never 404 (no existence oracle)")
+  void unknownUnlinkedPatientIsForbiddenNotNotFound() throws Exception {
+    UUID ghost = UUID.fromString("0192f8a4-0000-7000-8000-0000000000ef");
+    patients.markMissing(ghost);
+
+    var res = book(patientAToken, "key-api-0020", params(freeSlot(3), ghost, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(403);
+    assertThat(patients.lookups()).isZero();
+  }
+
+  @Test
+  @DisplayName("AC-03.2: a retry with the same key still gets 200 while clinical is down")
+  void replayDoesNotNeedClinical() throws Exception {
+    String body = params(freeSlot(3), null, null, null);
+    var first = book(patientAToken, "key-api-0021", body);
+    assertThat(first.statusCode()).isEqualTo(201);
+
+    patients.setDown(true);
+    var replay = book(patientAToken, "key-api-0021", body);
+    assertThat(replay.statusCode()).isEqualTo(200);
+    assertThat(replay.body()).isEqualTo(first.body());
+
+    var fresh = book(patientAToken, "key-api-0022", params(freeSlot(4), null, null, null));
+    assertThat(fresh.statusCode()).isEqualTo(503);
+    assertThat(errorCode(fresh)).isEqualTo("dependency-unavailable");
+    assertThat(count("SELECT count(*) FROM scheduling.appointment")).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("clinical is asked before the booking transaction opens")
+  void clinicalLookupRunsOutsideTheTransaction() throws Exception {
+    var res = book(patientAToken, "key-api-0023", params(freeSlot(3), null, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(201);
+    assertThat(patients.lookups()).isEqualTo(1);
+    assertThat(patients.lookupsInTransaction()).isZero();
+  }
+
+  @Test
+  @DisplayName("a clinical failure gives 503 dependency-unavailable and books nothing")
+  void clinicalDownBooksNothing() throws Exception {
+    patients.setDown(true);
+
+    var res = book(nurseToken, "key-api-0024", params(freeSlot(3), PATIENT_A, null, null));
+
+    assertThat(res.statusCode()).isEqualTo(503);
+    assertThat(errorCode(res)).isEqualTo("dependency-unavailable");
+    assertThat(count("SELECT count(*) FROM scheduling.appointment")).isZero();
+    assertThat(count("SELECT count(*) FROM scheduling.slot WHERE status = 'free'")).isEqualTo(1);
+  }
+
+  @Test
+  @DisplayName("AC-03.6: a guardian books for a linked profile, an unlinked or expired one is 403")
+  void linkedProfileBooking() throws Exception {
+    String guardian = token("guardian-1", List.of("patient"));
+    var linked = book(guardian, "key-api-0017", params(freeSlot(3), CHILD, null, null));
+    assertThat(linked.statusCode()).isEqualTo(201);
+    assertThat(
+            JSON.readTree(linked.body())
+                .path("participant")
+                .path(0)
+                .path("actor")
+                .path("reference")
+                .asString())
+        .isEqualTo("Patient/" + CHILD);
+
+    assertThat(
+            book(guardian, "key-api-0018", params(freeSlot(4), EXPIRED_CHILD, null, null))
+                .statusCode())
+        .isEqualTo(403);
+    assertThat(
+            book(guardian, "key-api-0019", params(freeSlot(5), PATIENT_B, null, null)).statusCode())
+        .isEqualTo(403);
+    assertThat(count("SELECT count(*) FROM scheduling.appointment")).isEqualTo(1);
   }
 
   @Test
