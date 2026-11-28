@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextPageToken } from '@/api/scheduling';
@@ -51,5 +51,39 @@ describe('slot search screen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Xem thêm' }));
     await waitFor(() => expect(screen.getAllByRole('listitem').length).toBeGreaterThan(20));
+  });
+
+  /** Opens the range picker, moves to December 2026 and returns the button of a December day. */
+  async function decemberDay(user: ReturnType<typeof userEvent.setup>, day: number) {
+    await user.click(await screen.findByRole('button', { name: 'Khoảng ngày' }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(dialog.querySelector<HTMLButtonElement>('[data-direction="next"]')!);
+    await within(dialog).findByText(/12\/2026|tháng 12|December/i);
+    const buttons = within(dialog)
+      .getAllByRole('button')
+      .filter((b) => b.textContent === String(day) && !b.hasAttribute('data-outside'));
+    expect(buttons).toHaveLength(1);
+    return buttons[0]!;
+  }
+
+  it('limits a patient to today + 30 days (the server cap)', async () => {
+    const user = userEvent.setup();
+    renderApp('/slots', 'patient');
+    // Today is 04/11/2026: 04/12 is the last day a patient can pick.
+    expect(await decemberDay(user, 4)).not.toHaveAttribute('data-disabled');
+    expect(await decemberDay(user, 5)).toHaveAttribute('data-disabled');
+  });
+
+  it('leaves the range open for staff', async () => {
+    const user = userEvent.setup();
+    renderApp('/slots', 'nurse');
+    expect(await decemberDay(user, 5)).not.toHaveAttribute('data-disabled');
+  });
+
+  it('starts the default range on the Vietnam day, not the browser day', async () => {
+    // 18:30 UTC on 04/11 is already 05/11 01:30 in Vietnam, so the range starts tomorrow in Vietnam: 06/11.
+    vi.setSystemTime(new Date('2026-11-04T18:30:00Z'));
+    renderApp('/slots', 'patient');
+    expect(await screen.findByRole('button', { name: 'Khoảng ngày' })).toHaveTextContent('06/11/2026 – 12/11/2026');
   });
 });

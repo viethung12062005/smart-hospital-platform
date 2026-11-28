@@ -168,7 +168,6 @@ export const vi = {
     pickSpecialty: 'Chọn chuyên khoa để tìm.',
     none: 'Không có giờ trống với bộ lọc này. Hãy thử ngày khác hoặc bác sĩ khác.',
     loadMore: 'Xem thêm',
-    book: 'Đặt giờ này',
     list: 'Giờ khám trống',
   },
   book: {

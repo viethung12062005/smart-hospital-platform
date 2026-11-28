@@ -8,11 +8,19 @@ import { useTranslation } from 'react-i18next';
 import { formatName } from '@/api/fhir';
 import { searchDoctors, searchSlotPage } from '@/api/scheduling';
 import { SPECIALTIES, specialtyName } from '@/api/terminology';
-import { vnDay, vnDayLabel, vnTime } from '@/api/vnTime';
+import { VN_TIMEZONE, vnDay, vnDayLabel, vnTime } from '@/api/vnTime';
+import { useAuth } from '@/auth/useAuth';
 import { Card, EmptyState, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 
 const MAX_RANGE_DAYS = 31;
 const PAGE_SIZE = 20;
+/** For a patient the server only returns slots up to now + 30 days. */
+const PATIENT_MAX_DAYS_AHEAD = 30;
+
+/** Today's Vietnam calendar day as a local midnight `Date`, the form the date picker works with. */
+function vnToday(): dayjs.Dayjs {
+  return dayjs(dayjs().tz(VN_TIMEZONE).format('YYYY-MM-DD'));
+}
 
 /** Groups slots (already sorted by start) by their day in Vietnam time. */
 function groupByDay(slots: readonly Slot[]): [string, Slot[]][] {
@@ -30,9 +38,15 @@ function groupByDay(slots: readonly Slot[]): [string, Slot[]][] {
  */
 export function SlotSearchPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isPatient = !!user?.roles.includes('patient');
+  const today = vnToday();
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [practitioner, setPractitioner] = useState<string | null>(null);
-  const [range, setRange] = useState<DatesRangeValue>([dayjs().add(1, 'day').toDate(), dayjs().add(7, 'day').toDate()]);
+  const [range, setRange] = useState<DatesRangeValue>(() => {
+    const start = vnToday();
+    return [start.add(1, 'day').toDate(), start.add(7, 'day').toDate()];
+  });
   const from = range[0] ? dayjs(range[0]).format('YYYY-MM-DD') : undefined;
   // A single picked day means that day only.
   const to = range[1] ? dayjs(range[1]).format('YYYY-MM-DD') : from;
@@ -96,7 +110,8 @@ export function SlotSearchPage() {
             label={t('slotSearch.dates')}
             value={range}
             onChange={setRange}
-            minDate={new Date()}
+            minDate={today.toDate()}
+            maxDate={isPatient ? today.add(PATIENT_MAX_DAYS_AHEAD, 'day').toDate() : undefined}
             valueFormat="DD/MM/YYYY"
             error={tooLong ? t('slotSearch.maxRange') : undefined}
           />

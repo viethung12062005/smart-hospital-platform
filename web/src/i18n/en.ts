@@ -168,7 +168,6 @@ export const en: Messages = {
     pickSpecialty: 'Pick a specialty to search.',
     none: 'No open slots for these filters. Try other dates or another doctor.',
     loadMore: 'Show more',
-    book: 'Book this time',
     list: 'Open slots',
   },
   book: {
