@@ -396,7 +396,16 @@ export const handlers = [
           inRange(s.start, qs.getAll('start')) &&
           (!isPatient || dayjs(s.start).isAfter(dayjs())),
       );
-      return HttpResponse.json(bundle(slots));
+      const sorted = [...slots].sort((a, b) => a.start.localeCompare(b.start));
+      const count = Math.min(Number(qs.get('_count') ?? 20), 100);
+      const offset = Number(qs.get('_page_token') ?? 0);
+      const result = bundle(sorted.slice(offset, offset + count));
+      if (offset + count < sorted.length) {
+        const next = new URL(request.url);
+        next.searchParams.set('_page_token', String(offset + count));
+        result.link = [{ relation: 'next', url: next.toString() }];
+      }
+      return HttpResponse.json(result);
     }),
   ),
 
