@@ -6,12 +6,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.shp.document.domain.BlobStore;
+import org.shp.document.domain.SignedUrl;
 import org.shp.web.authz.UnprotectedEndpoints;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -26,7 +34,40 @@ import org.testcontainers.utility.DockerImageName;
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {"shp.auth.authority=https://idp.test/realms/shp", "shp.auth.audience=shp-api"})
 @Testcontainers
+@Import(DocumentApplicationTest.Fakes.class)
 class DocumentApplicationTest {
+  /** No blob account in this test: the upload endpoint only needs a BlobStore to be injected. */
+  @TestConfiguration
+  static class Fakes {
+    @Bean
+    @Primary
+    BlobStore testBlobs() {
+      return new BlobStore() {
+        public void put(String c, String p, byte[] d, String t) {}
+
+        public byte[] get(String c, String p) {
+          throw new BlobNotFoundException(c, p);
+        }
+
+        public Optional<BlobInfo> stat(String c, String p) {
+          return Optional.empty();
+        }
+
+        public boolean delete(String c, String p) {
+          return false;
+        }
+
+        public SignedUrl uploadUrl(String c, String p) {
+          return new SignedUrl("https://blob.test/" + c + "/" + p, Instant.now().plusSeconds(600));
+        }
+
+        public SignedUrl downloadUrl(String c, String p, String f) {
+          throw new UnsupportedOperationException();
+        }
+      };
+    }
+  }
+
   @Container @ServiceConnection
   static final MongoDBContainer DB =
       new MongoDBContainer(
