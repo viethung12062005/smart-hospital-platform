@@ -96,6 +96,9 @@ class ReminderServiceTest {
     assertThat(saved.get("t-24h").getString("status")).isEqualTo("scheduled");
     assertThat(saved.get("t-24h").getInteger("attempts")).isZero();
     assertThat(saved.get("t-24h").getList("deliveries", Document.class)).isEmpty();
+    // The original send time is kept apart from dueAt, which retries move.
+    assertThat(saved.get("t-24h").getDate("scheduledAt"))
+        .isEqualTo(saved.get("t-24h").getDate("dueAt"));
   }
 
   @Test

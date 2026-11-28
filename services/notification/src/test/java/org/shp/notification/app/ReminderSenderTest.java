@@ -200,4 +200,100 @@ class ReminderSenderTest {
 
     assertTrue(registry.find("shp.notification.send.latency").timers().isEmpty());
   }
+
+  @Test
+  void aRetriedReminderIsMeasuredFromItsOriginalScheduledTime() {
+    MongoReminderWorkQueue queue = mock(MongoReminderWorkQueue.class);
+    when(queue.finishAttempt(any(), anyList(), any(), eq(true), eq(false))).thenReturn(true);
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+    ReminderSender sender =
+        new ReminderSender(
+            queue,
+            List.of(channel("push", NotificationResult.success("push-2"), new AtomicInteger())),
+            registry,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+
+    // Due at 11:44, failed twice; the backoff moved dueAt to just before the third attempt.
+    Document doc =
+        claimed(3)
+            .append("kind", "t-24h")
+            .append("scheduledAt", Date.from(NOW.minusSeconds(16 * 60)))
+            .append("dueAt", Date.from(NOW.minusSeconds(1)));
+
+    assertTrue(sender.sendClaimed(doc, List.of("push"), ReminderSenderTest::message));
+
+    io.micrometer.core.instrument.Timer timer =
+        registry
+            .get("shp.notification.send.latency")
+            .tags("channel", "push", "kind", "t-24h")
+            .timer();
+    assertEquals(1, timer.count());
+    assertEquals(960.0, timer.totalTime(java.util.concurrent.TimeUnit.SECONDS), 0.001);
+  }
+
+  @Test
+  void aDeadLetteredReminderIsCountedAsAFailedSend() {
+    MongoReminderWorkQueue queue = mock(MongoReminderWorkQueue.class);
+    when(queue.finishAttempt(any(), anyList(), any(), eq(false), anyBoolean())).thenReturn(true);
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+    ReminderSender sender =
+        new ReminderSender(
+            queue,
+            List.of(
+                channel(
+                    "sms", NotificationResult.failure("provider-timeout"), new AtomicInteger())),
+            registry,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+
+    Document doc =
+        claimed(5).append("kind", "t-2h").append("dueAt", Date.from(NOW.minusSeconds(90)));
+    assertTrue(sender.sendClaimed(doc, List.of("sms"), ReminderSenderTest::message));
+
+    var failed = registry.get("shp.notification.send.failed").counter();
+    assertEquals(1.0, failed.count(), 0.0);
+    assertEquals("sms", failed.getId().getTag("channel"));
+    assertEquals("t-2h", failed.getId().getTag("kind"));
+    assertEquals(2, failed.getId().getTags().size());
+    assertTrue(registry.find("shp.notification.send.latency").timers().isEmpty());
+  }
+
+  @Test
+  void aPermanentErrorIsCountedAsAFailedSendButATransientRetryIsNot() {
+    MongoReminderWorkQueue queue = mock(MongoReminderWorkQueue.class);
+    when(queue.finishAttempt(any(), anyList(), any(), eq(false), anyBoolean())).thenReturn(true);
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
+
+    ReminderSender transientSender =
+        new ReminderSender(
+            queue,
+            List.of(
+                channel(
+                    "push", NotificationResult.failure("provider-timeout"), new AtomicInteger())),
+            registry,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+    transientSender.sendClaimed(
+        claimed(1).append("kind", "t-24h"), List.of("push"), ReminderSenderTest::message);
+    assertTrue(registry.find("shp.notification.send.failed").counters().isEmpty());
+
+    ReminderSender permanentSender =
+        new ReminderSender(
+            queue,
+            List.of(
+                channel(
+                    "push", NotificationResult.failure("unregistered-token"), new AtomicInteger())),
+            registry,
+            Clock.fixed(NOW, ZoneOffset.UTC));
+    permanentSender.sendClaimed(
+        claimed(1).append("kind", "t-24h"), List.of("push"), ReminderSenderTest::message);
+    assertEquals(
+        1.0,
+        registry
+            .get("shp.notification.send.failed")
+            .tags("channel", "push", "kind", "t-24h")
+            .counter()
+            .count(),
+        0.0);
+  }
 }
