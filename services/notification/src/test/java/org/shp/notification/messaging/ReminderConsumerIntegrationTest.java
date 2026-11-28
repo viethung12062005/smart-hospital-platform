@@ -8,6 +8,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.bson.Document;
@@ -153,18 +155,70 @@ class ReminderConsumerIntegrationTest {
   }
 
   @Test
-  void patientMergedKeepsTheTargetPreferencesWhenItHasSome() {
+  void patientMergedKeepsTheTargetSettingsAndOnlyAddsTheSourceOptOuts() {
     String target = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e07";
     DB.getCollection(ReminderService.PREFERENCES)
-        .insertOne(new Document("_id", PATIENT_ID).append("locale", "en"));
+        .insertOne(
+            preferences(PATIENT_ID, List.of("push", "sms", "email"), "en")
+                .append("quietStart", "22:00")
+                .append("quietEnd", "06:00"));
     DB.getCollection(ReminderService.PREFERENCES)
-        .insertOne(new Document("_id", target).append("locale", "vi"));
+        .insertOne(preferences(target, List.of("push", "sms"), "vi"));
 
     CONSUMER.accept(message(merged(PATIENT_ID, target)));
 
+    // The source opts out of nothing the target allows: the target document stays as it was.
     assertThat(DB.getCollection(ReminderService.PREFERENCES).countDocuments()).isEqualTo(1);
-    assertThat(DB.getCollection(ReminderService.PREFERENCES).find().first().getString("locale"))
-        .isEqualTo("vi");
+    Document kept = DB.getCollection(ReminderService.PREFERENCES).find().first();
+    assertThat(kept).isNotNull();
+    assertThat(kept.getString("_id")).isEqualTo(target);
+    assertThat(kept.getList("channels", String.class)).containsExactly("push", "sms");
+    assertThat(kept.getString("locale")).isEqualTo("vi");
+    assertThat(kept.get("quietStart")).isNull();
+    assertThat(((Number) kept.get("version")).longValue()).isEqualTo(1L);
+  }
+
+  @Test
+  void patientMergedKeepsTheOptOutsOfBothProfilesAndIsIdempotent() {
+    String target = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e07";
+    // The source opted out of email, which the target allows; the target opted out of sms, which
+    // the source allows.
+    DB.getCollection(ReminderService.PREFERENCES)
+        .insertOne(preferences(PATIENT_ID, List.of("sms", "push"), "en"));
+    DB.getCollection(ReminderService.PREFERENCES)
+        .insertOne(
+            preferences(target, List.of("email", "push"), "vi")
+                .append("quietStart", "21:00")
+                .append("quietEnd", "07:00"));
+
+    CloudEvent event = merged(PATIENT_ID, target);
+    CONSUMER.accept(message(event));
+    Document first = DB.getCollection(ReminderService.PREFERENCES).find().first();
+
+    assertThat(DB.getCollection(ReminderService.PREFERENCES).countDocuments()).isEqualTo(1);
+    assertThat(first).isNotNull();
+    assertThat(first.getString("_id")).isEqualTo(target);
+    assertThat(first.getList("channels", String.class)).containsExactly("push");
+    assertThat(first.getString("locale")).isEqualTo("vi");
+    assertThat(first.getString("quietStart")).isEqualTo("21:00");
+    assertThat(first.getString("quietEnd")).isEqualTo("07:00");
+    assertThat(((Number) first.get("version")).longValue()).isEqualTo(2L);
+    assertThat(first.getDate("updatedAt").toInstant()).isEqualTo(NOW);
+
+    // A redelivery of the same event and a new event for the same merge change nothing.
+    CONSUMER.accept(message(event));
+    CONSUMER.accept(message(merged(PATIENT_ID, target)));
+
+    assertThat(DB.getCollection(ReminderService.PREFERENCES).countDocuments()).isEqualTo(1);
+    assertThat(DB.getCollection(ReminderService.PREFERENCES).find().first()).isEqualTo(first);
+  }
+
+  private static Document preferences(String patientId, List<String> channels, String locale) {
+    return new Document("_id", patientId)
+        .append("version", 1L)
+        .append("channels", channels)
+        .append("locale", locale)
+        .append("updatedAt", Date.from(NOW.minus(Duration.ofDays(1))));
   }
 
   private static CloudEvent scored(Instant start, boolean highRisk) {

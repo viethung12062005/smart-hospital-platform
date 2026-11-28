@@ -138,8 +138,10 @@ public final class ReminderService {
   /**
    * E7 {@code patient-merged}: replace the source patient id with the target id in this service's
    * own data. Idempotent: a second run matches nothing. A preference document is keyed by the
-   * patient id, so the target keeps its own preferences when it has any; otherwise the source's
-   * move over.
+   * patient id. When only the source has one, it moves to the target. When both have one, the more
+   * restrictive result is kept: a channel either profile left out stays out of the target, and the
+   * target keeps its other settings (locale, quiet hours, channel order). The source document is
+   * removed in the same transaction, so a later delivery finds nothing to merge.
    */
   public void onPatientMerged(CloudEvent event) {
     JsonNode data = event.data();
@@ -162,14 +164,45 @@ public final class ReminderService {
               DEVICE_TOKENS);
           Document sourcePreferences = mongo.findById(source, Document.class, PREFERENCES);
           if (sourcePreferences != null) {
-            if (mongo.findById(target, Document.class, PREFERENCES) == null) {
+            Document targetPreferences = mongo.findById(target, Document.class, PREFERENCES);
+            if (targetPreferences == null) {
               sourcePreferences.put("_id", target);
               mongo.insert(sourcePreferences, PREFERENCES);
+            } else {
+              keepRestrictiveChannels(target, sourcePreferences, targetPreferences, now);
             }
             mongo.remove(Query.query(Criteria.where("_id").is(source)), PREFERENCES);
           }
           return null;
         });
+  }
+
+  /**
+   * Narrow the target's channels to those the source also allows, in the target's order. The domain
+   * requires at least one channel, so when the two profiles share none the target keeps its own
+   * channels rather than storing an invalid document.
+   */
+  private void keepRestrictiveChannels(
+      String target, Document sourcePreferences, Document targetPreferences, Instant now) {
+    List<String> sourceChannels = sourcePreferences.getList("channels", String.class);
+    List<String> targetChannels = targetPreferences.getList("channels", String.class);
+    if (sourceChannels == null || targetChannels == null) {
+      if (sourceChannels != null) {
+        updatePreferenceChannels(target, sourceChannels, now);
+      }
+      return;
+    }
+    List<String> kept = targetChannels.stream().filter(sourceChannels::contains).toList();
+    if (!kept.isEmpty() && !kept.equals(targetChannels)) {
+      updatePreferenceChannels(target, kept, now);
+    }
+  }
+
+  private void updatePreferenceChannels(String target, List<String> channels, Instant now) {
+    mongo.updateFirst(
+        Query.query(Criteria.where("_id").is(target)),
+        new Update().set("channels", channels).set("updatedAt", date(now)).inc("version", 1),
+        PREFERENCES);
   }
 
   private void addIfFuture(
