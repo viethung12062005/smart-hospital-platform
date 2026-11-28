@@ -43,6 +43,8 @@ export interface RequestOptions {
   readonly idempotencyKey?: string;
   /** Required for PUT and status-changing operations: the ETag of the version that was read, for example W/"3". */
   readonly ifMatch?: string;
+  /** Extra request headers named by an endpoint, for example X-Duplicate-Override-Reason (C3). */
+  readonly headers?: Readonly<Record<string, string>>;
   readonly signal?: AbortSignal;
 }
 
@@ -54,6 +56,15 @@ export interface ApiResponse<T> {
 
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * True when the server answered with a 4xx: the request was processed and refused, so a new attempt is a new request
+ * and needs a new Idempotency-Key. After a network error or a 5xx the outcome is unknown: keep the key, so that a
+ * retry is recognised as the same request.
+ */
+export function isClientError(error: unknown): boolean {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500;
 }
 
 /** FHIR-style ETag from meta.versionId when the server does not return an ETag header. */
@@ -79,6 +90,7 @@ async function send(path: string, options: RequestOptions, token: string | undef
     Accept: path.startsWith('/fhir') ? 'application/fhir+json' : 'application/json',
     'Accept-Language': currentLang(),
   };
+  if (options.headers) Object.assign(headers, options.headers);
   if (token) headers['Authorization'] = `Bearer ${token}`;
   let body: string | undefined;
   if (options.form) {

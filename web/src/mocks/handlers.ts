@@ -245,14 +245,20 @@ export const handlers = [
     }),
   ),
 
-  // C3: a nurse creates a record for a patient who has no account.
+  // C3: a nurse creates a record for a patient who has no account. After an in-person check the nurse may override a
+  // suspected duplicate with ?forceCreate=true and an X-Duplicate-Override-Reason of 10 to 200 characters.
   http.post(
     '/fhir/Patient',
     authed(async ({ request, me }) => {
       if (!me.roles.includes('nurse')) return outcome(request, 403, 'forbidden');
+      const force = new URL(request.url).searchParams.get('forceCreate') === 'true';
+      const reason = request.headers.get('X-Duplicate-Override-Reason')?.trim() ?? '';
+      if (force && (reason.length < 10 || reason.length > 200)) return outcome(request, 400, 'validation-failed');
       const body = (await request.json()) as Patient;
       const phone = body.telecom?.find((t) => t.system === 'phone')?.value ?? '';
-      if (duplicateOf(phone, body.birthDate ?? '')) return outcome(request, 422, 'duplicate-patient-suspected');
+      if (!force && duplicateOf(phone, body.birthDate ?? '')) {
+        return outcome(request, 422, 'duplicate-patient-suspected');
+      }
       const email = body.telecom?.find((t) => t.system === 'email')?.value;
       const patient = newPatient(
         body.name?.[0]?.family ?? '',

@@ -86,8 +86,16 @@ export async function registerSelf(input: RegistrationInput, idempotencyKey: str
   return data;
 }
 
-/** C3: a nurse creates a record for a patient who has no account (same duplicate check as C1). */
-export async function createPatientAtDesk(input: RegistrationInput, idempotencyKey: string): Promise<Patient> {
+/**
+ * C3: a nurse creates a record for a patient who has no account (same duplicate check as C1). With `overrideReason`
+ * the request is sent with `?forceCreate=true` and `X-Duplicate-Override-Reason`, after the nurse has verified in
+ * person that a suspected duplicate is a different patient (the override is audited).
+ */
+export async function createPatientAtDesk(
+  input: RegistrationInput,
+  idempotencyKey: string,
+  overrideReason?: string,
+): Promise<Patient> {
   const patient: Patient = {
     resourceType: 'Patient',
     active: true,
@@ -101,18 +109,26 @@ export async function createPatientAtDesk(input: RegistrationInput, idempotencyK
     address: [{ city: input.city?.trim() || undefined, district: input.district?.trim() || undefined }],
     communication: [{ language: { coding: [{ code: input.language }] }, preferred: true }],
   };
-  const { data } = await apiRequest<Patient>('/fhir/Patient', { method: 'POST', idempotencyKey, body: patient });
+  const { data } = await apiRequest<Patient>(overrideReason ? '/fhir/Patient?forceCreate=true' : '/fhir/Patient', {
+    method: 'POST',
+    idempotencyKey,
+    body: patient,
+    ...(overrideReason ? { headers: { 'X-Duplicate-Override-Reason': overrideReason } } : {}),
+  });
   return data;
 }
 
 /** C5: edit the administrative fields; `If-Match` carries the version that was read (412 when it is old). */
-export async function updatePatient(patient: Patient, etag: string | undefined): Promise<Patient> {
-  const { data } = await apiRequest<Patient>(`/fhir/Patient/${patient.id}`, {
+export async function updatePatient(
+  patient: Patient,
+  etag: string | undefined,
+): Promise<{ patient: Patient; etag?: string }> {
+  const { data, etag: saved } = await apiRequest<Patient>(`/fhir/Patient/${patient.id}`, {
     method: 'PUT',
     body: patient,
     ifMatch: etag,
   });
-  return data;
+  return { patient: data, etag: saved ?? etagOf(data) };
 }
 
 export async function searchPractitioners(): Promise<Practitioner[]> {

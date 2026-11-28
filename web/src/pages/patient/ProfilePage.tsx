@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMe, getPatientWithVersion, registerSelf, updatePatient, type RegistrationInput } from '@/api/clinical';
-import { newIdempotencyKey } from '@/api/client';
+import { ApiError, isClientError, newIdempotencyKey } from '@/api/client';
 import { formatDate, formatName } from '@/api/fhir';
 import { currentLang } from '@/i18n';
 import { Card, Loading, PageHeader, ProblemAlert } from '@/components/ui';
@@ -62,8 +62,9 @@ function SelfRegister() {
       idemKey.current = undefined;
       void queryClient.invalidateQueries({ queryKey: ['me'] });
     },
-    onError: () => {
-      idemKey.current = undefined;
+    onError: (error) => {
+      // A 4xx was a definite answer; after a network error or a 5xx a retry must be the same request.
+      if (isClientError(error)) idemKey.current = undefined;
     },
   });
 
@@ -115,19 +116,23 @@ function draftOf(p: Patient): EditDraft {
 /** A patient may only change telecom and address; name, date of birth, gender and MRN are locked (C5). */
 function EditProfile({ patientId }: { readonly patientId: string }) {
   const record = useQuery({ queryKey: ['patient', patientId], queryFn: () => getPatientWithVersion(patientId) });
+  // Bumped after each successful save so the form restarts from the saved record. A refetch after a 412 does not
+  // restart it: the typed changes and the conflict message stay, and the next save uses the fresh version.
+  const [saves, setSaves] = useState(0);
   if (record.isLoading) return <Loading />;
   if (record.error) return <ProblemAlert error={record.error} />;
   if (!record.data) return null;
-  // Keyed by version so the form restarts from the saved record after each successful save.
-  return <EditForm key={record.data.etag} patientId={patientId} record={record.data} />;
+  return <EditForm key={saves} patientId={patientId} record={record.data} onSaved={() => setSaves((n) => n + 1)} />;
 }
 
 function EditForm({
   patientId,
   record,
+  onSaved,
 }: {
   readonly patientId: string;
   readonly record: { patient: Patient; etag?: string };
+  readonly onSaved: () => void;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -150,9 +155,18 @@ function EditForm({
       };
       return updatePatient(next, etag);
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       notifications.show({ color: 'teal', message: t('profile.saved') });
+      // The form restarts from the saved version at once; the refetch below only confirms it.
+      queryClient.setQueryData(['patient', patientId], saved);
       void queryClient.invalidateQueries({ queryKey: ['patient', patientId] });
+      onSaved();
+    },
+    onError: (error) => {
+      // 412: the record changed since it was read. Reload it so that a retry sends the current version as If-Match.
+      if (error instanceof ApiError && error.status === 412) {
+        void queryClient.invalidateQueries({ queryKey: ['patient', patientId] });
+      }
     },
   });
 

@@ -30,3 +30,18 @@ export function validateRegistration(d: RegistrationDraft, today: Date = new Dat
 export function isDuplicate(error: unknown): boolean {
   return error instanceof ApiError && error.code === 'duplicate-patient-suspected';
 }
+
+/** C3 accepts an override reason of 10 to 200 characters. */
+const OVERRIDE_REASON_MIN = 10;
+export const OVERRIDE_REASON_MAX = 200;
+/** An HTTP header carries printable ASCII only; a value with diacritics cannot be sent in X-Duplicate-Override-Reason. */
+const HEADER_SAFE = /^[\x20-\x7e]*$/;
+
+/** Returns the i18n key of the problem with an override reason, or undefined when it may be sent. */
+export function validateOverrideReason(reason: string): string | undefined {
+  const r = reason.trim();
+  if (!r) return 'profile.errRequired';
+  if (r.length < OVERRIDE_REASON_MIN || r.length > OVERRIDE_REASON_MAX) return 'profile.overrideReasonLength';
+  if (!HEADER_SAFE.test(r)) return 'profile.overrideReasonAscii';
+  return undefined;
+}

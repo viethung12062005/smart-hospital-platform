@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mockDb, resetMockDb } from '@/mocks/handlers';
 import { server } from '@/mocks/server';
 import { renderApp } from '@/test/render';
-import { validateRegistration } from './registrationForm';
+import { validateOverrideReason, validateRegistration } from './registrationForm';
 
 beforeEach(() => {
   resetMockDb();
@@ -72,6 +72,27 @@ describe('self-registration (patient)', () => {
     expect(mockDb().patients).toHaveLength(before);
   });
 
+  it('keeps the Idempotency-Key after a 5xx so that the retry is the same request', async () => {
+    unregistered();
+    const keys: (string | null)[] = [];
+    server.use(
+      http.post('/api/v1/registration', ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key'));
+        if (keys.length === 1) return HttpResponse.json({ code: 'unavailable' }, { status: 503 });
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/profile', 'patient');
+    await fillForm(user, '0911222333', '1990-05-20');
+    await user.click(screen.getByLabelText(/đồng ý với điều khoản/));
+    await user.click(screen.getByRole('button', { name: 'Đăng ký' }));
+    await waitFor(() => expect(keys).toHaveLength(1));
+    await user.click(await screen.findByRole('button', { name: 'Đăng ký' }));
+    await waitFor(() => expect(keys).toHaveLength(2));
+    expect(keys[1]).toBe(keys[0]);
+  });
+
   it('does not submit without the terms consent', async () => {
     unregistered();
     renderApp('/profile', 'patient');
@@ -116,7 +137,7 @@ describe('my profile (patient)', () => {
     expect(p.telecom?.find((t) => t.system === 'phone')?.value).toBe('0987654321');
   });
 
-  it('keeps the form and reports a stale version (412)', async () => {
+  it('reports a stale version (412), reloads it and saves on the retry', async () => {
     const user = userEvent.setup();
     renderApp('/profile', 'patient');
     const phone = await screen.findByLabelText(/^Điện thoại/);
@@ -125,6 +146,13 @@ describe('my profile (patient)', () => {
     await user.type(phone, '0987654321');
     await user.click(screen.getByRole('button', { name: 'Lưu' }));
     expect(await screen.findByText('Dữ liệu đã thay đổi, hãy tải lại.')).toBeInTheDocument();
+    // The typed change is kept and the retry is sent with the reloaded version.
+    expect(screen.getByLabelText(/^Điện thoại/)).toHaveValue('0987654321');
+    await user.click(screen.getByRole('button', { name: 'Lưu' }));
+    expect(await screen.findByText('Đã lưu hồ sơ')).toBeInTheDocument();
+    const p = mockDb().patients.find((x) => x.id === 'p-001')!;
+    expect(p.meta?.versionId).toBe('6');
+    expect(p.telecom?.find((t) => t.system === 'phone')?.value).toBe('0987654321');
   });
 });
 
@@ -139,15 +167,82 @@ describe('front-desk registration (nurse)', () => {
     expect(mockDb().patients).toHaveLength(before + 1);
   });
 
-  it('reports a duplicate on 422', async () => {
+  it('reports a duplicate on 422 and creates nothing without an override', async () => {
     const user = userEvent.setup();
     renderApp('/registration', 'nurse');
     const existing = mockDb().patients[0]!;
     const before = mockDb().patients.length;
     await fillForm(user, existing.telecom![0]!.value!, existing.birthDate!);
     await user.click(screen.getByRole('button', { name: 'Đăng ký' }));
-    expect(await screen.findByText('Có thể đã có hồ sơ')).toBeInTheDocument();
+    expect(await screen.findByText('Có thể trùng hồ sơ')).toBeInTheDocument();
+    // The patient-facing advice (link your record, ask at the counter) is not shown to the nurse.
+    expect(screen.queryByText('Có thể đã có hồ sơ')).not.toBeInTheDocument();
     expect(mockDb().patients).toHaveLength(before);
+  });
+
+  it('creates the record anyway with a reason, sent as forceCreate and X-Duplicate-Override-Reason', async () => {
+    const seen: { url: string; reason: string | null; key: string | null }[] = [];
+    server.use(
+      http.post('/fhir/Patient', ({ request }) => {
+        seen.push({
+          url: request.url,
+          reason: request.headers.get('X-Duplicate-Override-Reason'),
+          key: request.headers.get('Idempotency-Key'),
+        });
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/registration', 'nurse');
+    const existing = mockDb().patients[0]!;
+    const before = mockDb().patients.length;
+    await fillForm(user, existing.telecom![0]!.value!, existing.birthDate!);
+    await user.click(screen.getByRole('button', { name: 'Đăng ký' }));
+    const anyway = await screen.findByRole('button', { name: 'Vẫn tạo hồ sơ' });
+
+    await user.click(anyway);
+    expect(await screen.findByText('Vui lòng nhập thông tin này.')).toBeInTheDocument();
+    expect(seen).toHaveLength(1);
+
+    await user.type(screen.getByLabelText(/^Lý do vẫn tạo hồ sơ/), 'Checked ID card, different person');
+    await user.click(screen.getByRole('button', { name: 'Vẫn tạo hồ sơ' }));
+    expect(await screen.findByRole('link', { name: 'Mở hồ sơ' })).toBeInTheDocument();
+    expect(mockDb().patients).toHaveLength(before + 1);
+    expect(seen).toHaveLength(2);
+    expect(new URL(seen[1]!.url).searchParams.get('forceCreate')).toBe('true');
+    expect(new URL(seen[0]!.url).searchParams.has('forceCreate')).toBe(false);
+    expect(seen[1]!.reason).toBe('Checked ID card, different person');
+    // The 422 was a definite answer, so the override is a new request with a new key.
+    expect(seen[1]!.key).not.toBe(seen[0]!.key);
+  });
+
+  it('keeps the Idempotency-Key after a network error so that the retry is the same request', async () => {
+    const keys: (string | null)[] = [];
+    server.use(
+      http.post('/fhir/Patient', ({ request }) => {
+        keys.push(request.headers.get('Idempotency-Key'));
+        if (keys.length === 1) return HttpResponse.error();
+        return undefined;
+      }),
+    );
+    const user = userEvent.setup();
+    renderApp('/registration', 'nurse');
+    const before = mockDb().patients.length;
+    await fillForm(user, '0933444555', '1975-01-02');
+    await user.click(screen.getByRole('button', { name: 'Đăng ký' }));
+    await waitFor(() => expect(keys).toHaveLength(1));
+    await user.click(await screen.findByRole('button', { name: 'Đăng ký' }));
+    expect(await screen.findByRole('link', { name: 'Mở hồ sơ' })).toBeInTheDocument();
+    expect(keys[1]).toBe(keys[0]);
+    expect(mockDb().patients).toHaveLength(before + 1);
+  });
+
+  it('validates the override reason like C3 (10 to 200 printable ASCII characters)', () => {
+    expect(validateOverrideReason('   ')).toBe('profile.errRequired');
+    expect(validateOverrideReason('too short')).toBe('profile.overrideReasonLength');
+    expect(validateOverrideReason('x'.repeat(201))).toBe('profile.overrideReasonLength');
+    expect(validateOverrideReason('Đã kiểm tra CCCD')).toBe('profile.overrideReasonAscii');
+    expect(validateOverrideReason('Checked ID card in person')).toBeUndefined();
   });
 
   it('is not available to a patient', async () => {
