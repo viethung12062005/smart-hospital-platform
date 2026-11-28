@@ -144,6 +144,16 @@ class AuditTest {
   }
 
   @Test
+  void theActorsFhirUserTypeFollowsThePatientRole() {
+    assertThat(AuthzAudit.fhirUserType(new Principal("a", Set.of("patient"), "x")))
+        .isEqualTo("Patient");
+    assertThat(AuthzAudit.fhirUserType(new Principal("b", Set.of("doctor"), "x")))
+        .isEqualTo("Practitioner");
+    assertThat(AuthzAudit.fhirUserType(new Principal("c", Set.of("nurse"), "x")))
+        .isEqualTo("Practitioner");
+  }
+
+  @Test
   void deniedDecisionIsAuditedWithReasonAndAllowedWithPurpose() {
     var p = new Principal("kc-doctor", Set.of("doctor"), "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e02");
     var denied =

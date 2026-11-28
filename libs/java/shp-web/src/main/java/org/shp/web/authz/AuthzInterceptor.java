@@ -112,7 +112,7 @@ public final class AuthzInterceptor implements HandlerInterceptor {
             clock,
             service,
             p.principal(),
-            p.principal().roles().contains("patient") ? "Patient" : "Practitioner",
+            AuthzAudit.fhirUserType(p.principal()),
             p.meta().action(),
             p.resource(),
             p.decision(),

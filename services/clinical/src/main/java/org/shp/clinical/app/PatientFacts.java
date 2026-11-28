@@ -141,7 +141,7 @@ public final class PatientFacts implements ResourceContextResolver {
             clock,
             "clinical",
             principal,
-            "Patient",
+            AuthzAudit.fhirUserType(principal),
             action,
             resource,
             AuthzDecision.deny("not-own"),

@@ -296,6 +296,22 @@ class PatientApiTest extends ClinicalApiTestBase {
     Document revealRefused = deniedOf(subRel, an, "read");
     assertThat(revealRefused.getString("onBehalfOf")).isEqualTo("Patient/" + an);
     assertThat(revealRefused.getString("relationship")).isEqualTo("guardian");
+    assertThat(revealRefused.get("actor", Document.class).getString("fhirUser"))
+        .isEqualTo("Patient/" + cam);
+
+    // Staff keep their own type: a doctor may read with a care relationship but not reveal
+    // (PAT-REVEAL-NUR is the only reveal rule, so no nurse is ever refused here).
+    mongo.save(
+        new Document("_id", "prac-doc|" + an)
+            .append("validUntil", Date.from(Instant.now().plus(30, ChronoUnit.DAYS))),
+        "care_relationships");
+    var doctorReveal =
+        call("GET", "/fhir/Patient/" + an + "?reveal=national-id", token(subDoc, "doctor"), null);
+    assertThat(doctorReveal.statusCode()).isEqualTo(403);
+    Document staffRefused = deniedOf(subDoc, an, "read");
+    assertThat(staffRefused.get("actor", Document.class).getString("fhirUser"))
+        .isEqualTo("Practitioner/prac-doc");
+    assertThat(staffRefused).doesNotContainKey("onBehalfOf").doesNotContainKey("relationship");
 
     var own = put(an, token(subAn, "patient"), "W/\"1\"", edited(an, rename));
     assertThat(own.statusCode()).isEqualTo(403);

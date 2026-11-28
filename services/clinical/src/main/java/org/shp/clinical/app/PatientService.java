@@ -166,7 +166,7 @@ public class PatientService {
             clock,
             "clinical",
             principal,
-            "Patient",
+            AuthzAudit.fhirUserType(principal),
             "update",
             "Patient/" + id,
             AuthzDecision.deny("field-not-allowed"),

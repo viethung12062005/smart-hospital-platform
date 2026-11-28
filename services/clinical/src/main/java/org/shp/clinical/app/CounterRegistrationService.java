@@ -102,7 +102,7 @@ public class CounterRegistrationService {
             clock,
             SERVICE,
             principal,
-            "Patient",
+            AuthzAudit.fhirUserType(principal),
             "create",
             "Patient",
             AuthzDecision.deny("role-not-allowed"),

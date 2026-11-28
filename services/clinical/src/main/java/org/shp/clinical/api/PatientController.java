@@ -174,7 +174,7 @@ class PatientController {
             clock,
             "clinical",
             p,
-            "Practitioner",
+            AuthzAudit.fhirUserType(p),
             "reveal",
             "Patient/" + id,
             decision,

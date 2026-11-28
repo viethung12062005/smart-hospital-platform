@@ -46,6 +46,15 @@ public final class AuthzAudit {
   private AuthzAudit() {}
 
   /**
+   * The FHIR type of the signed-in account's own resource, for the actor's {@code fhirUser}: {@code
+   * Patient} for a patient account (also when it acts for a managed profile), otherwise {@code
+   * Practitioner}.
+   */
+  public static String fhirUserType(Principal principal) {
+    return principal.roles().contains("patient") ? "Patient" : "Practitioner";
+  }
+
+  /**
    * {@code errorOutcome} is non-null (usually {@code error}) when post-authorization processing
    * fails unexpectedly.
    */
