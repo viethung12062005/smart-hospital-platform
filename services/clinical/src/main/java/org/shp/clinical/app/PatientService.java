@@ -18,6 +18,7 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Patient;
 import org.shp.authz.AuthzDecision;
 import org.shp.authz.Principal;
+import org.shp.authz.ResourceContext;
 import org.shp.clinical.infra.PatientRepository;
 import org.shp.data.mongo.MongoResourceStore.Entry;
 import org.shp.data.mongo.MongoResourceStore.History;
@@ -59,7 +60,8 @@ public class PatientService {
   /**
    * Replace a patient (C5). {@code decision.fields()} lists the only top-level elements the caller
    * may change (a patient edits {@code telecom, address, contact, communication}); empty means the
-   * rule has no field limit (nurse).
+   * rule has no field limit (nurse). {@code delegation} (null when the caller does not act for a
+   * managed profile) goes on the audit record of a field-rule refusal.
    *
    * @throws ShpException {@code version-conflict} (412) when {@code expectedVersion} is stale;
    *     {@code forbidden} (403) when the change touches an element the caller may not modify;
@@ -71,6 +73,7 @@ public class PatientService {
       long expectedVersion,
       String body,
       AuthzDecision decision,
+      ResourceContext.Delegation delegation,
       String clientIp) {
     Entry current = read(id);
     if (current.versionId() != expectedVersion) {
@@ -101,7 +104,7 @@ public class PatientService {
 
     Set<String> changed = changedElements(current.resource(), incoming);
     if (!decision.fields().isEmpty() && !decision.fields().containsAll(changed)) {
-      auditFieldDenial(principal, id, clientIp);
+      auditFieldDenial(principal, id, clientIp, delegation);
       throw new ShpException("forbidden");
     }
     if (!Collections.disjoint(changed, SERVER_MANAGED)) {
@@ -156,7 +159,8 @@ public class PatientService {
    * A field-rule refusal happens after the matrix allowed the request, so the interceptor would log
    * it as a success; record the refusal as the denial it is.
    */
-  private void auditFieldDenial(Principal principal, String id, String clientIp) {
+  private void auditFieldDenial(
+      Principal principal, String id, String clientIp, ResourceContext.Delegation delegation) {
     audit.emit(
         AuthzAudit.fromDecision(
             clock,
@@ -170,6 +174,8 @@ public class PatientService {
             null,
             clientIp,
             null,
-            null));
+            null,
+            null,
+            delegation));
   }
 }

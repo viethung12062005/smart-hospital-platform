@@ -134,6 +134,20 @@ public final class AuthzInterceptor implements HandlerInterceptor {
   }
 
   /**
+   * The delegation behind the current request's allowed decision ({@link
+   * ResourceContext#delegation(Principal)} of the facts the interceptor resolved), or null when the
+   * caller does not act for a managed profile. A handler that writes its own audit record for a
+   * refusal after the matrix allowed the request (a field rule, a sub-action) passes it to {@code
+   * AuthzAudit.fromDecision} so the record keeps {@code onBehalfOf} and {@code relationship}.
+   */
+  public static ResourceContext.Delegation delegation(HttpServletRequest req) {
+    if (req.getAttribute(ATTR_PENDING) instanceof Pending p) {
+      return p.ctx().delegation(p.principal()).orElse(null);
+    }
+    throw new IllegalStateException("Endpoint does not use @RequireShpAuthz");
+  }
+
+  /**
    * {@code Type/id} when the route has {@code {id}}; plus the NAME of query parameters (never
    * values) for searches.
    */

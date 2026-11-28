@@ -261,6 +261,68 @@ class PatientApiTest extends ClinicalApiTestBase {
     assertThat(own).doesNotContainKey("onBehalfOf").doesNotContainKey("relationship");
   }
 
+  /**
+   * The matrix allows a guardian's PUT (PAT-UPD-GUARDIAN) but the field rule refuses a name change;
+   * the service writes that denial itself and it keeps the managed profile. So does a refused
+   * reveal on a read the link allowed. The owner's own refused edit carries neither key.
+   */
+  @Test
+  void refusalsAfterAnAllowedLinkedRequestAreAuditedOnBehalfOfTheManagedProfile() throws Exception {
+    mongo.save(
+        new Document("accountSub", subRel)
+            .append("patientId", an)
+            .append("status", "active")
+            .append("scope", "full")
+            .append("relationship", "guardian")
+            .append("expiresAt", Date.from(Instant.now().plus(30, ChronoUnit.DAYS))),
+        "profile_links");
+    String guardian = token(subRel, "patient");
+    Consumer<ObjectNode> rename = p -> ((ObjectNode) p.get("name").get(0)).put("family", "Changed");
+
+    var refused = put(an, guardian, "W/\"1\"", edited(an, rename));
+    assertThat(refused.statusCode()).isEqualTo(403);
+    assertThat(code(refused)).isEqualTo("forbidden");
+    Document field = deniedOf(subRel, an, "update");
+    assertThat(field.getString("reason")).isEqualTo("field-not-allowed");
+    assertThat(field.getString("onBehalfOf")).isEqualTo("Patient/" + an);
+    assertThat(field.getString("relationship")).isEqualTo("guardian");
+    assertThat(field.get("actor", Document.class).getString("subject")).isEqualTo(subRel);
+    assertThat(field.get("actor", Document.class).getString("fhirUser"))
+        .isEqualTo("Patient/" + cam);
+    assertThat(field.getString("patientId")).isEqualTo(an);
+
+    var reveal = call("GET", "/fhir/Patient/" + an + "?reveal=national-id", guardian, null);
+    assertThat(reveal.statusCode()).isEqualTo(403);
+    Document revealRefused = deniedOf(subRel, an, "read");
+    assertThat(revealRefused.getString("onBehalfOf")).isEqualTo("Patient/" + an);
+    assertThat(revealRefused.getString("relationship")).isEqualTo("guardian");
+
+    var own = put(an, token(subAn, "patient"), "W/\"1\"", edited(an, rename));
+    assertThat(own.statusCode()).isEqualTo(403);
+    Document ownRefused = deniedOf(subAn, an, "update");
+    assertThat(ownRefused.getString("reason")).isEqualTo("field-not-allowed");
+    assertThat(ownRefused).doesNotContainKey("onBehalfOf").doesNotContainKey("relationship");
+    assertThat(mongo.findById(an, Document.class, "patients").getInteger("versionId")).isEqualTo(1);
+  }
+
+  /** The single denied record of {@code subject} on {@code Patient/<id>} with this audit action. */
+  Document deniedOf(String subject, String id, String action) {
+    var found = new Document[1];
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          var matching =
+              denied().stream()
+                  .filter(a -> subject.equals(a.get("actor", Document.class).getString("subject")))
+                  .filter(a -> ("Patient/" + id).equals(a.getString("resource")))
+                  .filter(a -> action.equals(a.getString("action")))
+                  .toList();
+          assertThat(matching).hasSize(1);
+          found[0] = matching.getFirst();
+        });
+    return found[0];
+  }
+
   @Test
   void anExpiredOrRevokedLinkIsNotAccess() throws Exception {
     mongo.save(
