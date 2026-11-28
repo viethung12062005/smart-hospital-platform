@@ -59,7 +59,30 @@ public class MongoOtpStore {
         SEND_LOG);
   }
 
-  /** True when a challenge of this destination is locked at {@code now}. */
+  /**
+   * Marks every other unconsumed challenge of this destination and purpose as used, so only the
+   * newest code works. A lock on those challenges is kept ({@link #isLocked} ignores {@code
+   * consumed}).
+   */
+  public void consumeOthers(String destHash, String purpose, String keepId, Instant now) {
+    mongo.updateMulti(
+        Query.query(
+            Criteria.where("destHash")
+                .is(destHash)
+                .and("purpose")
+                .is(purpose)
+                .and("consumed")
+                .is(false)
+                .and("_id")
+                .ne(keepId)),
+        new Update().set("consumed", true).set("consumedAt", Date.from(now)),
+        CHALLENGES);
+  }
+
+  /**
+   * True when a challenge of this destination is locked at {@code now}, whatever its purpose and
+   * whether or not it was consumed: the lock set by {@link #failAttempt} covers the destination.
+   */
   public boolean isLocked(String destHash, Instant now) {
     return mongo.exists(
         Query.query(Criteria.where("destHash").is(destHash).and("lockedUntil").gt(Date.from(now))),

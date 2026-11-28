@@ -28,9 +28,10 @@ import tools.jackson.databind.JsonNode;
  * svc-<caller>} client (15 section 7); the check is {@link ShpJwt#requireService}. The route has no
  * gateway entry. Neither the code nor the destination is ever logged or echoed.
  *
- * <p>The IP counted against the per-IP limit is {@code context.clientIp} of the request body, else
- * the first {@code X-Forwarded-For} value; when neither is present only the per-number limit
- * applies.
+ * <p>The IP counted against the per-IP limit is {@code context.clientIp} of the request body, which
+ * the calling service must fill with the end user's address. {@code X-Forwarded-For} is not read:
+ * on a service-to-service call it names the caller pod, or nothing. Without {@code
+ * context.clientIp} only the per-number limit applies.
  */
 public final class InternalOtpFilter extends OncePerRequestFilter {
   static final String SEND = "/internal/v1/otp/send";
@@ -82,7 +83,7 @@ public final class InternalOtpFilter extends OncePerRequestFilter {
                 text(body, "channelHint"),
                 text(body, "destination"),
                 text(body, "locale"),
-                clientIp(req, body));
+                clientIp(body));
         out.put("challengeId", sent.challengeId());
         out.put("channel", sent.channel());
         out.put("expiresAt", sent.expiresAt().toString());
@@ -111,13 +112,9 @@ public final class InternalOtpFilter extends OncePerRequestFilter {
     return n == null || !n.isString() ? null : n.asString();
   }
 
-  private static String clientIp(HttpServletRequest req, JsonNode body) {
+  private static String clientIp(JsonNode body) {
     JsonNode ctx = body == null ? null : body.get("context");
     String fromBody = ctx == null ? null : text(ctx, "clientIp");
-    if (fromBody != null && !fromBody.isBlank()) {
-      return fromBody;
-    }
-    String forwarded = req.getHeader("X-Forwarded-For");
-    return forwarded == null ? null : forwarded.split(",")[0].strip();
+    return fromBody == null || fromBody.isBlank() ? null : fromBody;
   }
 }

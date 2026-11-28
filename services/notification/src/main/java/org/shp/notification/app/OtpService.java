@@ -22,9 +22,11 @@ import org.shp.web.errors.ShpException;
 
 /**
  * One-time codes (N8/N9, 11 N8/N9): 6 random digits, only an HMAC is stored, valid for 5 minutes,
- * single use; 5 wrong attempts lock the challenge (and its destination) for 15 minutes; at most 5
- * codes per hour per destination and 20 per hour per IP. The code and the destination are never
- * logged.
+ * single use; 5 wrong attempts lock the challenge and its destination for 15 minutes (every
+ * challenge of that destination is then refused); at most 5 codes per hour per destination and 20
+ * per hour per IP. Only one challenge per destination and purpose is live: a new code makes the
+ * earlier ones unusable. Phone numbers are normalized before hashing, so one handset has one
+ * destination hash. The code and the destination are never logged.
  */
 public class OtpService {
   public static final Duration TTL = Duration.ofMinutes(5);
@@ -66,10 +68,10 @@ public class OtpService {
     if (destination == null || destination.isBlank() || destination.length() > 254) {
       throw new ShpException("validation-failed", "destination is required");
     }
-    String dest = destination.strip();
-    if ("email".equals(channelHint)) {
-      dest = dest.toLowerCase(Locale.ROOT);
-    }
+    String dest =
+        "email".equals(channelHint)
+            ? destination.strip().toLowerCase(Locale.ROOT)
+            : normalizePhone(destination);
     String lang = "en".equals(locale) ? "en" : "vi";
     Instant now = clock.instant();
     String destHash = hmac("dest:" + dest);
@@ -107,6 +109,8 @@ public class OtpService {
       }
       try {
         channel.send(dest, code, purpose, lang);
+        // Single live challenge per destination and purpose: older codes stop working.
+        store.consumeOthers(destHash, purpose, id, now);
         return new Sent(id, channel.name(), expires);
       } catch (OtpDeliveryException e) {
         // Try the next adapter (Zalo, then SMS). The exception holds no code or number.
@@ -126,6 +130,12 @@ public class OtpService {
         store.findChallenge(challengeId).orElseThrow(() -> new ShpException("otp-invalid"));
     Date lockedUntil = c.getDate("lockedUntil");
     if (lockedUntil != null && lockedUntil.toInstant().isAfter(now)) {
+      throw new ShpException("otp-locked", null, LOCK);
+    }
+    // A lock on any challenge of the destination covers all of them, so several challenges for
+    // one number cannot multiply the attempt limit.
+    String destHash = c.getString("destHash");
+    if (destHash != null && store.isLocked(destHash, now)) {
       throw new ShpException("otp-locked", null, LOCK);
     }
     if (c.getInteger("attempts", 0) >= MAX_ATTEMPTS) {
@@ -150,6 +160,31 @@ public class OtpService {
       throw new ShpException("otp-locked", null, LOCK);
     }
     throw new ShpException("otp-invalid");
+  }
+
+  /**
+   * Normalizes a phone number to E.164 so that {@code +84912345678}, {@code 84912345678}, {@code
+   * 0912345678} and {@code 0912 345 678} give one destination: spaces, dots, dashes and parentheses
+   * are dropped; a leading {@code 0}, {@code 84} or {@code +84} becomes {@code +84}; any other
+   * number must already carry a {@code +} country code. The result is {@code +} and 8 to 15 digits,
+   * else validation-failed.
+   */
+  static String normalizePhone(String raw) {
+    String s = raw.strip().replaceAll("[\\s.\\-()]", "");
+    String digits;
+    if (s.startsWith("+")) {
+      digits = s.substring(1);
+    } else if (s.startsWith("0")) {
+      digits = "84" + s.substring(1);
+    } else if (s.startsWith("84")) {
+      digits = s;
+    } else {
+      throw new ShpException("validation-failed", "destination is not a valid phone number");
+    }
+    if (!digits.matches("\\d{8,15}")) {
+      throw new ShpException("validation-failed", "destination is not a valid phone number");
+    }
+    return "+" + digits;
   }
 
   private String hmac(String value) {

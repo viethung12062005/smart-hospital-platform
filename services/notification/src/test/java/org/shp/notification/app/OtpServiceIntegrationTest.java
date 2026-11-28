@@ -167,6 +167,110 @@ class OtpServiceIntegrationTest {
   }
 
   @Test
+  void aLockedDestinationRefusesEveryChallengeOfThatNumber() {
+    // Two challenges for one number (different purposes, so both stay live).
+    var first = otp.send("register", "phone", PHONE, "vi", null);
+    String firstCode = channel.lastCode(PHONE);
+    var second = otp.send("claim-record", "phone", PHONE, "vi", null);
+    for (int i = 0; i < OtpService.MAX_ATTEMPTS; i++) {
+      assertThatThrownBy(() -> otp.verify(second.challengeId(), wrong(channel.lastCode(PHONE))))
+          .isInstanceOf(ShpException.class);
+    }
+    // The lock reached on the second challenge covers the first one: no extra guesses.
+    assertThatThrownBy(() -> otp.verify(first.challengeId(), firstCode))
+        .isInstanceOfSatisfying(
+            ShpException.class, e -> assertThat(codeOf(e)).isEqualTo("otp-locked"));
+    assertThatThrownBy(() -> otp.verify(first.challengeId(), wrong(firstCode)))
+        .isInstanceOfSatisfying(
+            ShpException.class, e -> assertThat(codeOf(e)).isEqualTo("otp-locked"));
+  }
+
+  @Test
+  void aNewCodeMakesTheEarlierCodesOfTheSamePurposeUnusable() {
+    var first = send(PHONE, null);
+    String firstCode = channel.lastCode(PHONE);
+    var second = send(PHONE, null);
+    String secondCode = channel.lastCode(PHONE);
+
+    assertThatThrownBy(() -> otp.verify(first.challengeId(), firstCode))
+        .isInstanceOfSatisfying(
+            ShpException.class, e -> assertThat(codeOf(e)).isEqualTo("otp-invalid"));
+    assertThat(otp.verify(second.challengeId(), secondCode)).isTrue();
+  }
+
+  @Test
+  void fiveChallengesForOneNumberStillAllowOnlyFiveGuesses() {
+    // The attack: request the 5 codes the hourly limit allows and guess on each one.
+    List<OtpService.Sent> sent = new java.util.ArrayList<>();
+    for (int i = 0; i < OtpService.MAX_PER_DESTINATION; i++) {
+      sent.add(send(PHONE, null));
+    }
+    String last = channel.lastCode(PHONE);
+    int refusedAsLocked = 0;
+    int guesses = 0;
+    for (OtpService.Sent s : sent) {
+      for (int i = 0; i < OtpService.MAX_ATTEMPTS; i++) {
+        try {
+          otp.verify(s.challengeId(), wrong(last));
+          guesses++;
+        } catch (ShpException e) {
+          if ("otp-locked".equals(codeOf(e))) {
+            refusedAsLocked++;
+          }
+        }
+      }
+    }
+    assertThat(guesses).isZero();
+    // Only the live (last) challenge counts attempts; once it locks, every challenge is locked.
+    Document live =
+        mongo.findById(sent.get(4).challengeId(), Document.class, MongoOtpStore.CHALLENGES);
+    assertThat(live.getInteger("attempts")).isEqualTo(OtpService.MAX_ATTEMPTS);
+    long counted =
+        sent.subList(0, 4).stream()
+            .map(s -> mongo.findById(s.challengeId(), Document.class, MongoOtpStore.CHALLENGES))
+            .mapToInt(d -> d.getInteger("attempts", 0))
+            .sum();
+    assertThat(counted).isZero();
+    assertThat(refusedAsLocked).isGreaterThan(0);
+  }
+
+  @Test
+  void phoneNumbersAreNormalizedBeforeHashingAndDelivery() {
+    String[] spellings = {"+84912345678", "0912345678", "84912345678", "0912 345 678"};
+    for (String spelling : spellings) {
+      send(spelling, null);
+      assertThat(channel.lastCode("+84912345678")).matches("\\d{6}");
+    }
+    assertThat(channel.lastCode("0912345678")).isNull();
+    assertThat(
+            mongo.findAll(Document.class, MongoOtpStore.SEND_LOG).stream()
+                .map(d -> d.getString("destHash"))
+                .distinct()
+                .count())
+        .isEqualTo(1);
+    // The four spellings share one hourly quota of five.
+    send("(091) 234-5678", null);
+    assertThatThrownBy(() -> send("091.234.5678", null))
+        .isInstanceOfSatisfying(
+            ShpException.class, e -> assertThat(codeOf(e)).isEqualTo("otp-rate-limited"));
+  }
+
+  @Test
+  void normalizePhoneMapsTheVietnameseFormsAndRejectsTheRest() {
+    assertThat(OtpService.normalizePhone("0912345678")).isEqualTo("+84912345678");
+    assertThat(OtpService.normalizePhone("84912345678")).isEqualTo("+84912345678");
+    assertThat(OtpService.normalizePhone("+84 912.345-678")).isEqualTo("+84912345678");
+    assertThat(OtpService.normalizePhone("+12025550123")).isEqualTo("+12025550123");
+    for (String bad :
+        new String[] {"0912abc678", "+84", "0123", "+1234567890123456", "912345678", "++84912"}) {
+      assertThatThrownBy(() -> OtpService.normalizePhone(bad))
+          .as(bad)
+          .isInstanceOfSatisfying(
+              ShpException.class, e -> assertThat(codeOf(e)).isEqualTo("validation-failed"));
+    }
+  }
+
+  @Test
   void aSixthCodeWithinAnHourForOneNumberIsRejected() {
     for (int i = 0; i < OtpService.MAX_PER_DESTINATION; i++) {
       send(PHONE, null);

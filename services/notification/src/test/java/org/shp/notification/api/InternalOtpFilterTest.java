@@ -74,6 +74,28 @@ class InternalOtpFilterTest {
   }
 
   @Test
+  void xForwardedForIsNotUsedAsTheClientIp() throws Exception {
+    signIn("svc-clinical", "internal.notification");
+    var expires = Instant.parse("2026-11-17T03:05:00Z");
+    when(otp.send("register", "phone", "+84900000001", "vi", null))
+        .thenReturn(new OtpService.Sent("c-2", "sms", expires));
+
+    var req = new MockHttpServletRequest("POST", "/internal/v1/otp/send");
+    req.addHeader("X-Forwarded-For", "10.244.0.12, 198.51.100.4");
+    req.setContent(
+        ("{\"purpose\":\"register\",\"channelHint\":\"phone\","
+                + "\"destination\":\"+84900000001\",\"locale\":\"vi\"}")
+            .getBytes(StandardCharsets.UTF_8));
+    req.setContentType("application/json");
+    var res = new MockHttpServletResponse();
+    filter.doFilter(req, res, chain);
+
+    assertThat(res.getStatus()).isEqualTo(200);
+    // Without context.clientIp the service gets no IP, only the per-number limit applies.
+    verify(otp).send("register", "phone", "+84900000001", "vi", null);
+  }
+
+  @Test
   void verifyReturnsOk() throws Exception {
     signIn("svc-clinical", "internal.notification");
     when(otp.verify("c-1", "123456")).thenReturn(true);
