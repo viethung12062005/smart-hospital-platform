@@ -30,6 +30,18 @@ public final class AppointmentFhir {
   }
 
   /**
+   * The stored resource {@code content} of a no-show appointment: status {@code noshow}, and the
+   * new version and time in {@code meta}.
+   */
+  public static String noshow(String content, int versionId, Instant at) {
+    var resource = FhirJson.parse(content, Appointment.class);
+    resource.getMeta().setVersionId(Integer.toString(versionId));
+    resource.getMeta().setLastUpdated(Date.from(at));
+    resource.setStatus(Appointment.AppointmentStatus.NOSHOW);
+    return FhirJson.serialize(resource);
+  }
+
+  /**
    * The resource of a new booking: version 1 of {@code a}, created at {@code a.lastUpdated()}.
    *
    * @param comment optional patient note; left out of the resource when null or blank

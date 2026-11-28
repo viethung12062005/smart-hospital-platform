@@ -169,6 +169,11 @@ automation:
     refs:
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::withoutNoShowScoreT24hAndT2hAreStillCreated
       - services/notification/src/test/java/org/shp/notification/app/ReminderServiceTest.java::bookedCreatesConfirmationAndFutureMilestones
+  TC-AC-NS.1:
+    status: automated
+    refs:
+      - services/scheduling/src/test/java/org/shp/scheduling/app/NoShowMarkingJobTest.java::bookedPastEndPlus30MinutesBecomesNoshowWithHistoryAndSchemaValidEvent
+      - services/scheduling/src/test/java/org/shp/scheduling/app/NoShowMarkingJobTest.java::twoReplicasRunningConcurrentlyDoNotDoubleProcess
 
   # ---- Scheduling: doctor work schedule ----
   TC-AC-02.3:
