@@ -6,7 +6,7 @@ const hrefs = (roles: Parameters<typeof menusFor>[0]) => menusFor(roles).flatMap
 
 describe('menu by role', () => {
   it('a patient only sees booking, not the clinical screens', () => {
-    expect(hrefs(['patient'])).toEqual(['/', '/doctors', '/book', '/appointments']);
+    expect(hrefs(['patient'])).toEqual(['/', '/profile', '/doctors', '/book', '/appointments']);
   });
 
   it('a doctor sees the queue, schedule, patients, encounters and the assistant', () => {
@@ -19,6 +19,11 @@ describe('menu by role', () => {
       '/assistant',
       '/knowledge',
     ]);
+  });
+
+  it('a nurse sees front-desk registration', () => {
+    expect(hrefs(['nurse'])).toContain('/registration');
+    expect(hrefs(['patient'])).not.toContain('/registration');
   });
 
   it('an administrator sees the schedule, the knowledge base and AI cost', () => {

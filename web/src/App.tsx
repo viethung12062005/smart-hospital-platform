@@ -25,6 +25,10 @@ const PatientDetailPage = lazy(() =>
   import('@/pages/clinical/PatientDetailPage').then((m) => ({ default: m.PatientDetailPage })),
 );
 const PatientsPage = lazy(() => import('@/pages/clinical/PatientsPage').then((m) => ({ default: m.PatientsPage })));
+const ProfilePage = lazy(() => import('@/pages/patient/ProfilePage').then((m) => ({ default: m.ProfilePage })));
+const RegisterPatientPage = lazy(() =>
+  import('@/pages/staff/RegisterPatientPage').then((m) => ({ default: m.RegisterPatientPage })),
+);
 const BookAppointmentPage = lazy(() =>
   import('@/pages/patient/BookAppointmentPage').then((m) => ({ default: m.BookAppointmentPage })),
 );
@@ -77,6 +81,8 @@ export function AppRoutes() {
           <Protected>
             <Routes>
               <Route index element={<HomePage />} />
+              <Route path="profile" element={route(['patient'], <ProfilePage />)} />
+              <Route path="registration" element={route(['nurse'], <RegisterPatientPage />)} />
               <Route path="doctors" element={route(['patient', 'nurse'], <FindDoctorPage />)} />
               <Route path="book" element={route(['patient'], <BookAppointmentPage />)} />
               <Route path="appointments" element={route(['patient'], <MyAppointmentsPage />)} />

@@ -1,4 +1,12 @@
-import type { Appointment, Bundle, OperationOutcome, Parameters, Resource, Schedule } from '@medplum/fhirtypes';
+import type {
+  Appointment,
+  Bundle,
+  OperationOutcome,
+  Parameters,
+  Patient,
+  Resource,
+  Schedule,
+} from '@medplum/fhirtypes';
 import dayjs from 'dayjs';
 import { http, HttpResponse, type HttpResponseResolver } from 'msw';
 import type { ScheduleTemplateInput } from '@/api/scheduling';
@@ -22,9 +30,42 @@ import { createDb, type MockDb } from './data';
 let db: MockDb = createDb();
 const idempotency = new Map<string, { body: string; appointmentId: string }>();
 let scheduleSeq = 0;
+/** Accounts that registered themselves in this session (token sub -> Patient/<id>). */
+const registrations = new Map<string, string>();
+
+function duplicateOf(phone: string, birthDate: string): boolean {
+  return db.patients.some(
+    (p) => p.birthDate === birthDate && p.telecom?.some((t) => t.system === 'phone' && t.value === phone),
+  );
+}
+
+function newPatient(
+  family: string,
+  given: string[],
+  gender: Patient['gender'],
+  birthDate: string,
+  phone: string,
+  email?: string,
+): Patient {
+  const n = db.patients.length + 1;
+  const patient: Patient = {
+    resourceType: 'Patient',
+    id: `p-new-${n}`,
+    active: true,
+    meta: { versionId: '1' },
+    identifier: [{ system: 'urn:shp:mrn', value: `BN-2026-${String(n).padStart(6, '0')}` }],
+    name: [{ family, given }],
+    gender,
+    birthDate,
+    telecom: [{ system: 'phone', value: phone }, ...(email ? [{ system: 'email' as const, value: email }] : [])],
+  };
+  db.patients.push(patient);
+  return patient;
+}
 
 export function resetMockDb(): void {
   db = createDb();
+  registrations.clear();
   idempotency.clear();
   scheduleSeq = 0;
   resetAiMock();
@@ -61,6 +102,11 @@ const MESSAGES: Record<string, [string, string]> = {
   'not-found': ['Không tìm thấy.', 'Not found.'],
   unauthenticated: ['Chưa đăng nhập.', 'Not signed in.'],
   'validation-failed': ['Dữ liệu không hợp lệ.', 'Validation failed.'],
+  'already-registered': ['Tài khoản này đã có hồ sơ.', 'This account already has a record.'],
+  'duplicate-patient-suspected': [
+    'Đã có hồ sơ trùng số điện thoại và ngày sinh. Không tạo hồ sơ mới.',
+    'A record with the same phone number and date of birth already exists. No new record was created.',
+  ],
 };
 
 function problemJson(request: Request, status: number, code: string) {
@@ -164,7 +210,94 @@ export const handlers = [
 
   http.get(
     '/api/v1/me',
-    authed(({ me }) => HttpResponse.json({ sub: me.sub, roles: me.roles, fhirUser: me.fhirUser })),
+    authed(({ me }) =>
+      HttpResponse.json({ sub: me.sub, roles: me.roles, fhirUser: me.fhirUser ?? registrations.get(me.sub) }),
+    ),
+  ),
+
+  // C1: self-registration of an account that has no record yet (see 09-api-clinical §2).
+  http.post(
+    '/api/v1/registration',
+    authed(async ({ request, me }) => {
+      if (!request.headers.get('Idempotency-Key')) return problemJson(request, 400, 'idempotency-key-required');
+      if (registrations.has(me.sub)) return problemJson(request, 409, 'already-registered');
+      const body = (await request.json()) as {
+        name: { family: string; given: string[] };
+        phone: string;
+        email?: string;
+        gender: Patient['gender'];
+        birthDate: string;
+        address?: { city?: string; district?: string };
+      };
+      if (!/^(0|\+84)\d{9}$/.test(body.phone)) return problemJson(request, 400, 'validation-failed');
+      if (duplicateOf(body.phone, body.birthDate)) return problemJson(request, 422, 'duplicate-patient-suspected');
+      const patient = newPatient(
+        body.name.family,
+        body.name.given,
+        body.gender,
+        body.birthDate,
+        body.phone,
+        body.email,
+      );
+      patient.address = [{ city: body.address?.city, district: body.address?.district }];
+      registrations.set(me.sub, `Patient/${patient.id}`);
+      return HttpResponse.json({ patientId: patient.id, mrn: patient.identifier?.[0]?.value }, { status: 201 });
+    }),
+  ),
+
+  // C3: a nurse creates a record for a patient who has no account. After an in-person check the nurse may override a
+  // suspected duplicate with ?forceCreate=true and an X-Duplicate-Override-Reason of 10 to 200 characters.
+  http.post(
+    '/fhir/Patient',
+    authed(async ({ request, me }) => {
+      if (!me.roles.includes('nurse')) return outcome(request, 403, 'forbidden');
+      const force = new URL(request.url).searchParams.get('forceCreate') === 'true';
+      const reason = request.headers.get('X-Duplicate-Override-Reason')?.trim() ?? '';
+      if (force && (reason.length < 10 || reason.length > 200)) return outcome(request, 400, 'validation-failed');
+      const body = (await request.json()) as Patient;
+      const phone = body.telecom?.find((t) => t.system === 'phone')?.value ?? '';
+      if (!force && duplicateOf(phone, body.birthDate ?? '')) {
+        return outcome(request, 422, 'duplicate-patient-suspected');
+      }
+      const email = body.telecom?.find((t) => t.system === 'email')?.value;
+      const patient = newPatient(
+        body.name?.[0]?.family ?? '',
+        body.name?.[0]?.given ?? [],
+        body.gender,
+        body.birthDate ?? '',
+        phone,
+        email,
+      );
+      patient.address = body.address;
+      return withEtag(patient, 201);
+    }),
+  ),
+
+  // C5: a patient edits own telecom and address only; locked fields are 403, an old version is 412.
+  http.put(
+    '/fhir/Patient/:id',
+    authed(async ({ request, params, me }) => {
+      const current = db.patients.find((x) => x.id === params['id']);
+      if (!current) return outcome(request, 404, 'not-found');
+      const isNurse = me.roles.includes('nurse');
+      if (!isNurse && me.fhirUser !== `Patient/${current.id}` && registrations.get(me.sub) !== `Patient/${current.id}`)
+        return outcome(request, 404, 'not-found');
+      if (!request.headers.get('If-Match')) return outcome(request, 428, 'precondition-required');
+      if (request.headers.get('If-Match') !== `W/"${current.meta?.versionId}"`)
+        return outcome(request, 412, 'version-conflict');
+      const body = (await request.json()) as Patient;
+      const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+      if (
+        !isNurse &&
+        (!same(body.name, current.name) ||
+          body.birthDate !== current.birthDate ||
+          body.gender !== current.gender ||
+          !same(body.identifier, current.identifier))
+      )
+        return outcome(request, 403, 'forbidden');
+      Object.assign(current, body, { meta: { versionId: String(Number(current.meta?.versionId ?? '1') + 1) } });
+      return withEtag(current);
+    }),
   ),
 
   http.get(

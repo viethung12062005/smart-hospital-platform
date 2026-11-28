@@ -8,6 +8,8 @@ import {
   IconBooks,
   IconMessageChatbot,
   IconStethoscope,
+  IconUserEdit,
+  IconUserPlus,
   IconUserSearch,
   IconUsers,
 } from '@tabler/icons-react';
@@ -35,6 +37,13 @@ const ALL: readonly Role[] = ['patient', 'doctor', 'nurse', 'admin', 'dpo'];
  */
 export const MENU: readonly MenuGroup[] = [
   { title: 'groupMain', links: [{ href: '/', label: 'home', icon: <IconHome />, roles: ALL }] },
+  {
+    title: 'groupRecord',
+    links: [
+      { href: '/profile', label: 'profile', icon: <IconUserEdit />, roles: ['patient'] },
+      { href: '/registration', label: 'registerPatient', icon: <IconUserPlus />, roles: ['nurse'] },
+    ],
+  },
   {
     title: 'groupBooking',
     links: [

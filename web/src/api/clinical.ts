@@ -7,9 +7,9 @@ import type {
   Patient,
   Practitioner,
 } from '@medplum/fhirtypes';
-import { apiRequest, bundleEntries } from './client';
+import { apiRequest, bundleEntries, etagOf } from './client';
 
-// Endpoints per docs/03-architecture/detailed-design/09-api-clinical.md (C2, C4, C6, C9, C12).
+// Endpoints per docs/03-architecture/detailed-design/09-api-clinical.md (C1, C2, C3, C4, C5, C6, C9, C12).
 
 export interface Me {
   readonly sub: string;
@@ -42,6 +42,93 @@ export async function searchPatients(text: string): Promise<Patient[]> {
 export async function getPatient(id: string): Promise<Patient> {
   const { data } = await apiRequest<Patient>(`/fhir/Patient/${id}`);
   return data;
+}
+
+/** C4 with the version: the ETag is needed as If-Match when the record is edited (C5). */
+export async function getPatientWithVersion(id: string): Promise<{ patient: Patient; etag?: string }> {
+  const { data, etag } = await apiRequest<Patient>(`/fhir/Patient/${id}`);
+  return { patient: data, etag: etag ?? etagOf(data) };
+}
+
+/** Administrative fields entered on the registration forms (C1, C3). */
+export interface RegistrationInput {
+  readonly family: string;
+  readonly given: string;
+  readonly phone: string;
+  readonly email?: string;
+  readonly gender: 'male' | 'female' | 'other';
+  readonly birthDate: string;
+  readonly city?: string;
+  readonly district?: string;
+  readonly language: 'vi' | 'en';
+}
+
+export interface Registration {
+  readonly patientId: string;
+  readonly mrn: string;
+}
+
+/** C1: patient self-registration. 422 duplicate-patient-suspected when phone + date of birth match a record. */
+export async function registerSelf(input: RegistrationInput, idempotencyKey: string): Promise<Registration> {
+  const { data } = await apiRequest<Registration>('/api/v1/registration', {
+    method: 'POST',
+    idempotencyKey,
+    body: {
+      name: { family: input.family.trim(), given: input.given.trim().split(/\s+/).filter(Boolean) },
+      phone: input.phone.trim(),
+      ...(input.email?.trim() ? { email: input.email.trim() } : {}),
+      gender: input.gender,
+      birthDate: input.birthDate,
+      address: { city: input.city?.trim() ?? '', district: input.district?.trim() ?? '' },
+      language: input.language,
+    },
+  });
+  return data;
+}
+
+/**
+ * C3: a nurse creates a record for a patient who has no account (same duplicate check as C1). With `overrideReason`
+ * the request is sent with `?forceCreate=true` and `X-Duplicate-Override-Reason`, after the nurse has verified in
+ * person that a suspected duplicate is a different patient (the override is audited).
+ */
+export async function createPatientAtDesk(
+  input: RegistrationInput,
+  idempotencyKey: string,
+  overrideReason?: string,
+): Promise<Patient> {
+  const patient: Patient = {
+    resourceType: 'Patient',
+    active: true,
+    name: [{ family: input.family.trim(), given: input.given.trim().split(/\s+/).filter(Boolean) }],
+    gender: input.gender,
+    birthDate: input.birthDate,
+    telecom: [
+      { system: 'phone', value: input.phone.trim() },
+      ...(input.email?.trim() ? [{ system: 'email' as const, value: input.email.trim() }] : []),
+    ],
+    address: [{ city: input.city?.trim() || undefined, district: input.district?.trim() || undefined }],
+    communication: [{ language: { coding: [{ code: input.language }] }, preferred: true }],
+  };
+  const { data } = await apiRequest<Patient>(overrideReason ? '/fhir/Patient?forceCreate=true' : '/fhir/Patient', {
+    method: 'POST',
+    idempotencyKey,
+    body: patient,
+    ...(overrideReason ? { headers: { 'X-Duplicate-Override-Reason': overrideReason } } : {}),
+  });
+  return data;
+}
+
+/** C5: edit the administrative fields; `If-Match` carries the version that was read (412 when it is old). */
+export async function updatePatient(
+  patient: Patient,
+  etag: string | undefined,
+): Promise<{ patient: Patient; etag?: string }> {
+  const { data, etag: saved } = await apiRequest<Patient>(`/fhir/Patient/${patient.id}`, {
+    method: 'PUT',
+    body: patient,
+    ifMatch: etag,
+  });
+  return { patient: data, etag: saved ?? etagOf(data) };
 }
 
 export async function searchPractitioners(): Promise<Practitioner[]> {
