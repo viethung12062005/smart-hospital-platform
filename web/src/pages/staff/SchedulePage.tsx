@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getMe, searchPractitioners } from '@/api/clinical';
 import { formatName, formatTime, refId } from '@/api/fhir';
-import { searchSchedules, searchSlots } from '@/api/scheduling';
+import { scheduleSpecialtyCode, searchSchedules, searchSlots } from '@/api/scheduling';
+import { specialtyName } from '@/api/terminology';
 import { useAuth } from '@/auth/useAuth';
 import { Card, Loading, PageHeader, ProblemAlert } from '@/components/ui';
 import { ScheduleManagementPanel } from './ScheduleManagementPanel';
@@ -31,6 +32,7 @@ export function SchedulePage() {
       .subtract((dayjs().day() + 6) % 7, 'day'),
   );
   const [chosen, setChosen] = useState<string | null>(null);
+  const [chosenSchedule, setChosenSchedule] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [selected, setSelected] = useState<Slot | null>(null);
 
@@ -55,7 +57,9 @@ export function SchedulePage() {
     queryFn: () => searchSchedules({ actor: practitioner!, active: true }),
     enabled: canManage && tab === 'calendar' && !!practitioner,
   });
-  const scheduleId = activeSchedules.data?.[0]?.id;
+  // A doctor has at most one active schedule per specialty; with several, the user picks the one to generate for.
+  const schedules = activeSchedules.data ?? [];
+  const scheduleId = schedules.find((s) => s.id === chosenSchedule)?.id ?? schedules[0]?.id;
 
   const days = Array.from({ length: 7 }, (_, i) => week.add(i, 'day'));
   const byKey = new Map<string, Slot>();
@@ -75,8 +79,25 @@ export function SchedulePage() {
               label: formatName(p.name),
             }))}
             value={practitioner}
-            onChange={setChosen}
+            onChange={(v) => {
+              setChosen(v);
+              setChosenSchedule(null);
+            }}
             searchable
+          />
+        )}
+        {canManage && schedules.length > 1 && (
+          <Select
+            size="sm"
+            w={200}
+            aria-label={t('schedule.generateSchedule')}
+            data={schedules.map((s) => ({
+              value: s.id!,
+              label: specialtyName(scheduleSpecialtyCode(s)) || s.specialty?.[0]?.coding?.[0]?.display || s.id!,
+            }))}
+            value={scheduleId ?? null}
+            onChange={setChosenSchedule}
+            allowDeselect={false}
           />
         )}
         {canManage && (

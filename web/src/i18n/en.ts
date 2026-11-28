@@ -216,6 +216,7 @@ export const en: Messages = {
     tabCalendar: 'Weekly slot calendar',
     tabManage: 'Schedules & weekly templates',
     generate: 'Generate slots',
+    generateSchedule: 'Work schedule to generate slots for',
     generateTitle: 'Generate slots from the weekly template',
     generateHint: 'Up to 31 days per call, starting today and ending within 30 days. Existing slots are skipped.',
     generateFrom: 'From date',

@@ -216,6 +216,7 @@ export const vi = {
     tabCalendar: 'Lịch slot theo tuần',
     tabManage: 'Cấu hình lịch & mẫu tuần',
     generate: 'Sinh slot',
+    generateSchedule: 'Lịch làm việc để sinh slot',
     generateTitle: 'Sinh slot từ mẫu lịch tuần',
     generateHint: 'Tối đa 31 ngày mỗi lần, từ hôm nay và không quá 30 ngày tới. Slot đã có sẽ được bỏ qua.',
     generateFrom: 'Từ ngày',

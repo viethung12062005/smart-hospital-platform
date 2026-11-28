@@ -449,6 +449,7 @@ export const handlers = [
             status: 'free',
             start: start.format(),
             end: start.add(30, 'minute').format(),
+            meta: { versionId: '1' },
           });
           created++;
         }
@@ -464,7 +465,8 @@ export const handlers = [
       const slot = db.slots.find((s) => s.id === params['id']);
       if (!slot) return outcome(request, 404, 'not-found');
       const ifMatch = request.headers.get('If-Match');
-      if (ifMatch && ifMatch !== `W/"${slot.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
+      if (!ifMatch) return outcome(request, 428, 'precondition-required');
+      if (ifMatch !== `W/"${slot.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
       const body = (await request.json()) as { reason?: string };
       const reason = body.reason?.trim() ?? '';
       if (reason.length < 1 || reason.length > 200) return outcome(request, 400, 'validation-failed');
@@ -484,7 +486,8 @@ export const handlers = [
       const slot = db.slots.find((s) => s.id === params['id']);
       if (!slot) return outcome(request, 404, 'not-found');
       const ifMatch = request.headers.get('If-Match');
-      if (ifMatch && ifMatch !== `W/"${slot.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
+      if (!ifMatch) return outcome(request, 428, 'precondition-required');
+      if (ifMatch !== `W/"${slot.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
       if (slot.status !== 'busy-unavailable') return outcome(request, 409, 'invalid-state-transition');
       slot.status = 'free';
       delete slot.comment;

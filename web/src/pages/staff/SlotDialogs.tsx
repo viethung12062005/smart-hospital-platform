@@ -5,9 +5,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { newIdempotencyKey } from '@/api/client';
-import { formatTime } from '@/api/fhir';
+import { ApiError, newIdempotencyKey } from '@/api/client';
 import { blockSlot, generateSlots, unblockSlot } from '@/api/scheduling';
+import { VN_TIMEZONE, vnTime } from '@/api/vnTime';
 import { ProblemAlert } from '@/components/ui';
 
 export const MAX_REASON_LENGTH = 200;
@@ -16,7 +16,8 @@ export const MAX_REASON_LENGTH = 200;
 export function GenerateSlotsModal(props: { scheduleId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const today = dayjs().startOf('day');
+  // The server checks `from >= today` in Vietnam time, so the defaults use the Vietnam day.
+  const today = dayjs().tz(VN_TIMEZONE).startOf('day');
   const [from, setFrom] = useState(today.format('YYYY-MM-DD'));
   const [to, setTo] = useState(today.add(30, 'day').format('YYYY-MM-DD'));
 
@@ -88,9 +89,19 @@ export function SlotModal(props: { slot: Slot; onClose: () => void }) {
     void queryClient.invalidateQueries({ queryKey: ['schedule'] });
     props.onClose();
   };
+  // 412: the slot changed since the calendar loaded it. Show the error, reload the calendar and close,
+  // so the next attempt starts from the fresh slot and its new version.
+  const onError = (e: Error) => {
+    if (e instanceof ApiError && e.status === 412) {
+      notifications.show({ color: 'red', message: e.message });
+      void queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      props.onClose();
+    }
+  };
   const blockMut = useMutation({
     mutationFn: () => blockSlot(slot, reason.trim(), key.current),
     onSuccess: () => done(t('schedule.slotBlocked')),
+    onError,
     onSettled: () => {
       key.current = newIdempotencyKey();
     },
@@ -98,6 +109,7 @@ export function SlotModal(props: { slot: Slot; onClose: () => void }) {
   const unblockMut = useMutation({
     mutationFn: () => unblockSlot(slot, key.current),
     onSuccess: () => done(t('schedule.slotUnblocked')),
+    onError,
     onSettled: () => {
       key.current = newIdempotencyKey();
     },
@@ -122,8 +134,8 @@ export function SlotModal(props: { slot: Slot; onClose: () => void }) {
       onClose={props.onClose}
       centered
       title={t('schedule.slotDialogTitle', {
-        time: `${formatTime(slot.start)}–${formatTime(slot.end)}`,
-        date: dayjs(slot.start).format('DD/MM/YYYY'),
+        time: `${vnTime(slot.start)}–${vnTime(slot.end)}`,
+        date: slot.start ? dayjs(slot.start).tz(VN_TIMEZONE).format('DD/MM/YYYY') : '',
       })}
     >
       <form noValidate onSubmit={submit}>
