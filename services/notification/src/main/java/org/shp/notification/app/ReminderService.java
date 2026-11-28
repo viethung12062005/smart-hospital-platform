@@ -127,7 +127,7 @@ public final class ReminderService {
     saveNew(
         List.of(
             reminder(
-                "Document/" + documentId,
+                "DocumentReference/" + documentId,
                 text(data, "patientId"),
                 ReminderKind.RESULT_AVAILABLE,
                 null,

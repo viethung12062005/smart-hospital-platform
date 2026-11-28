@@ -120,6 +120,10 @@ class ReminderConsumerIntegrationTest {
     assertThat(count()).isEqualTo(1);
     assertThat(reminder).isNotNull();
     assertThat(reminder.getString("kind")).isEqualTo("result-available");
+    // The reminders validator in contracts/db/mongo-notification-ml.js accepts only this form.
+    assertThat(reminder.getString("subjectRef"))
+        .isEqualTo("DocumentReference/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e08")
+        .matches("^(Appointment|DocumentReference)/[0-9a-f-]{36}$");
     assertThat(reminder.getString("patientId")).isEqualTo(PATIENT_ID);
     assertThat(reminder.getDate("dueAt").toInstant()).isEqualTo(NOW);
     assertThat(reminder.get("appointmentStart")).isNull();
@@ -253,7 +257,7 @@ class ReminderConsumerIntegrationTest {
     return CloudEvents.create(
         "document",
         ReminderService.DOCUMENT_RELEASED_TYPE,
-        "Document/" + documentId,
+        "DocumentReference/" + documentId,
         Map.of(
             "documentId",
             documentId,
