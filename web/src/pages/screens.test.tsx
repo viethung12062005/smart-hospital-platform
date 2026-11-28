@@ -1,7 +1,9 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockDb, resetMockDb } from '@/mocks/handlers';
+import { server } from '@/mocks/server';
 import { renderApp } from '@/test/render';
 
 // Wednesday 04/11/2026 09:00 system time: a workday with a slot tomorrow and today's queue.
@@ -172,6 +174,62 @@ describe('find a patient', () => {
 
     const row = (await screen.findByText('Nguyễn Thị Lan')).closest('tr')!;
     expect(within(row as HTMLElement).getByText('BN-2026-000001')).toBeInTheDocument();
+  });
+});
+
+describe('find a patient (US-031)', () => {
+  it('a doctor without a care relationship finds a patient without diacritics and sees only the birth year', async () => {
+    const user = userEvent.setup();
+    renderApp('/patients', 'doctor');
+
+    await user.type(await screen.findByLabelText('Tìm kiếm'), 'le hoang');
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+
+    const row = (await screen.findByText('Lê Hoàng Yến')).closest('tr')!;
+    expect(within(row as HTMLElement).getByText('2015')).toBeInTheDocument();
+    expect(within(row as HTMLElement).queryByText('27/01/2015')).not.toBeInTheDocument();
+  });
+
+  it('a doctor with a care relationship sees the full date of birth', async () => {
+    const user = userEvent.setup();
+    renderApp('/patients', 'doctor');
+
+    await user.type(await screen.findByLabelText('Tìm kiếm'), 'tran van');
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+
+    const row = (await screen.findByText('Trần Văn Bình')).closest('tr')!;
+    expect(within(row as HTMLElement).getByText('03/09/1956')).toBeInTheDocument();
+  });
+
+  it('finds a patient by phone and by MRN', async () => {
+    const user = userEvent.setup();
+    renderApp('/patients', 'nurse');
+    const phone = mockDb().patients[0]!.telecom![0]!.value!;
+    const box = await screen.findByLabelText('Tìm kiếm');
+
+    await user.type(box, phone);
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+    expect(await screen.findByText('Nguyễn Thị Lan')).toBeInTheDocument();
+
+    await user.clear(box);
+    await user.type(box, 'BN-2026-000001');
+    await user.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+    expect(await screen.findByText('Nguyễn Thị Lan')).toBeInTheDocument();
+  });
+
+  it('a doctor without a care relationship is told about break-glass access', async () => {
+    renderApp('/patients/p-003', 'doctor');
+    expect(await screen.findByText('Bạn không điều trị bệnh nhân này')).toBeInTheDocument();
+    expect(screen.getByText(/break-glass/)).toBeInTheDocument();
+  });
+
+  it('also treats 403 break-glass-required (15-authorization) as a missing care relationship', async () => {
+    server.use(
+      http.get('/fhir/Patient/:id', () => HttpResponse.json({ code: 'break-glass-required' }, { status: 403 })),
+    );
+    renderApp('/patients/p-002', 'doctor');
+    expect(await screen.findByText('Bạn không điều trị bệnh nhân này')).toBeInTheDocument();
+    expect(screen.getByText(/break-glass/)).toBeInTheDocument();
   });
 });
 
