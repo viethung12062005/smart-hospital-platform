@@ -61,6 +61,11 @@ const MESSAGES: Record<string, [string, string]> = {
   'not-found': ['Không tìm thấy.', 'Not found.'],
   unauthenticated: ['Chưa đăng nhập.', 'Not signed in.'],
   'validation-failed': ['Dữ liệu không hợp lệ.', 'Validation failed.'],
+  'slot-has-appointment': [
+    'Slot đã có lịch hẹn, hãy hủy hoặc đổi lịch hẹn trước.',
+    'The slot has an appointment; cancel or reschedule it first.',
+  ],
+  'schedule-inactive': ['Lịch làm việc không còn hoạt động.', 'The schedule is inactive.'],
 };
 
 function problemJson(request: Request, status: number, code: string) {
@@ -397,6 +402,97 @@ export const handlers = [
           (!isPatient || dayjs(s.start).isAfter(dayjs())),
       );
       return HttpResponse.json(bundle(slots));
+    }),
+  ),
+
+  http.post(
+    '/api/v1/scheduling/schedules/:id/slots\\:generate',
+    authed(async ({ request, params, me }) => {
+      if (!canManageSchedule(me)) return problemJson(request, 403, 'forbidden');
+      const schedule = db.schedules.find((x) => x.id === params['id']);
+      if (!schedule) return problemJson(request, 404, 'not-found');
+      if (!schedule.active) return problemJson(request, 422, 'schedule-inactive');
+      const body = (await request.json()) as { from?: string; to?: string };
+      const from = dayjs(body.from);
+      const to = dayjs(body.to);
+      const today = dayjs().startOf('day');
+      if (
+        !from.isValid() ||
+        !to.isValid() ||
+        from.isBefore(today) ||
+        to.isBefore(from) ||
+        to.diff(from, 'day') >= 31 ||
+        to.isAfter(today.add(30, 'day'))
+      ) {
+        return problemJson(request, 400, 'validation-failed');
+      }
+      const pid = schedule.actor?.[0]?.reference?.replace('Practitioner/', '') ?? '';
+      const specialty = schedule.specialty?.[0]?.coding?.[0]?.code;
+      let created = 0;
+      let skippedExisting = 0;
+      for (let d = from; !d.isAfter(to, 'day'); d = d.add(1, 'day')) {
+        for (const [h, m] of [
+          [8, 0],
+          [8, 30],
+        ] as const) {
+          const start = d.hour(h).minute(m).second(0).millisecond(0);
+          const id = `s-${pid}-${start.format('YYYYMMDDHHmm')}`;
+          if (db.slots.some((s) => s.id === id)) {
+            skippedExisting++;
+            continue;
+          }
+          db.slots.push({
+            resourceType: 'Slot',
+            id,
+            schedule: { reference: `Schedule/${schedule.id}`, display: schedule.actor?.[0]?.display },
+            serviceType: [{ coding: [{ code: specialty }] }],
+            status: 'free',
+            start: start.format(),
+            end: start.add(30, 'minute').format(),
+            meta: { versionId: '1' },
+          });
+          created++;
+        }
+      }
+      return HttpResponse.json({ created, skippedExisting });
+    }),
+  ),
+
+  http.post(
+    '/fhir/Slot/:id/$block',
+    authed(async ({ request, params, me }) => {
+      if (!canManageSchedule(me)) return outcome(request, 403, 'forbidden');
+      const slot = db.slots.find((s) => s.id === params['id']);
+      if (!slot) return outcome(request, 404, 'not-found');
+      const ifMatch = request.headers.get('If-Match');
+      if (!ifMatch) return outcome(request, 428, 'precondition-required');
+      if (ifMatch !== `W/"${slot.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
+      const body = (await request.json()) as { reason?: string };
+      const reason = body.reason?.trim() ?? '';
+      if (reason.length < 1 || reason.length > 200) return outcome(request, 400, 'validation-failed');
+      if (slot.status === 'busy') return outcome(request, 409, 'slot-has-appointment');
+      if (slot.status !== 'free') return outcome(request, 409, 'invalid-state-transition');
+      slot.status = 'busy-unavailable';
+      slot.comment = reason;
+      slot.meta = { versionId: String(Number(slot.meta?.versionId ?? '1') + 1) };
+      return withEtag(slot);
+    }),
+  ),
+
+  http.post(
+    '/fhir/Slot/:id/$unblock',
+    authed(({ request, params, me }) => {
+      if (!canManageSchedule(me)) return outcome(request, 403, 'forbidden');
+      const slot = db.slots.find((s) => s.id === params['id']);
+      if (!slot) return outcome(request, 404, 'not-found');
+      const ifMatch = request.headers.get('If-Match');
+      if (!ifMatch) return outcome(request, 428, 'precondition-required');
+      if (ifMatch !== `W/"${slot.meta?.versionId ?? '1'}"`) return outcome(request, 412, 'version-conflict');
+      if (slot.status !== 'busy-unavailable') return outcome(request, 409, 'invalid-state-transition');
+      slot.status = 'free';
+      delete slot.comment;
+      slot.meta = { versionId: String(Number(slot.meta?.versionId ?? '1') + 1) };
+      return withEtag(slot);
     }),
   ),
 

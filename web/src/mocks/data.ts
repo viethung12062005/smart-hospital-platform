@@ -213,6 +213,7 @@ export function createDb(now: Dayjs = dayjs()): MockDb {
           status: r === 0 ? 'busy-unavailable' : r <= 2 ? 'busy' : 'free',
           start: start.format(),
           end: start.add(30, 'minute').format(),
+          meta: { versionId: '1' },
         });
       }
     }
