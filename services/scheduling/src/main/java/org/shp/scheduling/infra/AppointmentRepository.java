@@ -95,6 +95,55 @@ public class AppointmentRepository {
   }
 
   /**
+   * Conditional status change from {@code booked} to {@code arrived} for {@code $check-in} (08 §4
+   * S16): succeeds only when the row still has {@code current.versionId()} and status {@code
+   * booked}. Writes the {@code resource_history} row of the new version too. Empty means nothing
+   * changed.
+   */
+  public Optional<AppointmentRecord> checkIn(
+      AppointmentRecord current, String changedBy, Instant now, String newContent) {
+    int newVersion = current.versionId() + 1;
+    int rows =
+        jdbc.sql(
+                """
+                UPDATE scheduling.appointment
+                   SET status = 'arrived', version_id = ?, last_updated = ?, content = ?::jsonb
+                 WHERE id = ? AND version_id = ? AND status = 'booked'
+                """)
+            .params(newVersion, Timestamp.from(now), newContent, current.id(), current.versionId())
+            .update();
+    if (rows == 0) {
+      return Optional.empty();
+    }
+    String stored =
+        jdbc.sql(
+                """
+                INSERT INTO scheduling.resource_history (
+                    resource_type, id, version_id, last_updated, operation, changed_by, content
+                ) VALUES ('Appointment', ?, ?, ?, 'update', ?, ?::jsonb)
+                RETURNING content::text
+                """)
+            .params(current.id(), newVersion, Timestamp.from(now), changedBy, newContent)
+            .query(String.class)
+            .single();
+    return Optional.of(
+        new AppointmentRecord(
+            current.id(),
+            newVersion,
+            now,
+            "arrived",
+            current.slotId(),
+            current.patientId(),
+            current.practitionerId(),
+            current.specialty(),
+            current.start(),
+            current.end(),
+            current.channel(),
+            current.bookedBy(),
+            stored));
+  }
+
+  /**
    * Selects and locks up to {@code limit} {@code booked} appointments whose {@code end_at} is
    * strictly before {@code endBefore}, skipping rows locked by concurrent replicas (02 §3.3).
    */

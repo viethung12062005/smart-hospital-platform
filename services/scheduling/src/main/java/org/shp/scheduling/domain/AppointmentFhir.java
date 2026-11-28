@@ -18,6 +18,18 @@ public final class AppointmentFhir {
   private AppointmentFhir() {}
 
   /**
+   * The stored resource {@code content} of a checked-in appointment: status {@code arrived}, and
+   * the new version and time in {@code meta}.
+   */
+  public static String arrived(String content, int versionId, Instant at) {
+    var resource = FhirJson.parse(content, Appointment.class);
+    resource.getMeta().setVersionId(Integer.toString(versionId));
+    resource.getMeta().setLastUpdated(Date.from(at));
+    resource.setStatus(Appointment.AppointmentStatus.ARRIVED);
+    return FhirJson.serialize(resource);
+  }
+
+  /**
    * The stored resource {@code content} of a no-show appointment: status {@code noshow}, and the
    * new version and time in {@code meta}.
    */

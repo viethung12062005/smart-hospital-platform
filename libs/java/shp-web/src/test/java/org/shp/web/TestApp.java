@@ -101,7 +101,7 @@ public class TestApp {
     return (req, vars, principal) -> {
       String id = vars.get("id");
       return ResourceContext.builder()
-          .patientId(id)
+          .linkedFrom(principal, id, Instant.now())
           .hasCareRelationship(
               principal.fhirUserId() != null && CARE.contains(principal.fhirUserId() + "|" + id))
           .build();

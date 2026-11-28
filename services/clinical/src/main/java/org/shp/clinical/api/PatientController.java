@@ -101,6 +101,7 @@ class PatientController {
             PreconditionInterceptor.expectedVersion(req),
             body,
             AuthzInterceptor.decision(req),
+            AuthzInterceptor.delegation(req),
             req.getRemoteAddr());
     return resource(updated, false);
   }
@@ -155,7 +156,11 @@ class PatientController {
             req.getHeader("User-Agent")));
   }
 
-  /** A refused reveal leaves a trace as well (matrix action {@code Patient: reveal}). */
+  /**
+   * A refused reveal leaves a trace as well (matrix action {@code Patient: reveal}). The read was
+   * allowed through {@code patientFacts}, so a guardian or proxy reaching a managed profile keeps
+   * {@code onBehalfOf} on the refusal.
+   */
   private void auditRevealDenied(
       Principal p, String id, AuthzDecision decision, HttpServletRequest req) {
     UUID patientId;
@@ -169,7 +174,7 @@ class PatientController {
             clock,
             "clinical",
             p,
-            "Practitioner",
+            AuthzAudit.fhirUserType(p),
             "reveal",
             "Patient/" + id,
             decision,
@@ -177,6 +182,8 @@ class PatientController {
             null,
             req.getRemoteAddr(),
             req.getHeader("User-Agent"),
-            null));
+            null,
+            null,
+            AuthzInterceptor.delegation(req)));
   }
 }

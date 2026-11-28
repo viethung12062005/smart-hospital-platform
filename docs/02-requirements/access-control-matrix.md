@@ -22,6 +22,7 @@
 | Appointment: cancel | Own (>= 2h before the visit) | No | Yes | No | No |
 | Appointment: view | Own | The doctor's own | Yes | No | No |
 | Appointment: view version history (`GET /fhir/Appointment/{id}/_history`) | No | No | Yes | Yes | No |
+| Appointment: check-in | No | No | Yes | No | No |
 | Encounter / Observation: read | Own (finished) | Care / BG | Yes | No | No |
 | Encounter: create / check-in | No | Care | Yes | No | No |
 | Condition (diagnosis): write | No | Care | No | No | No |

@@ -7,22 +7,22 @@
 | Metric | Value |
 |---|---|
 | Test case | 204 |
-| Automated or partially automated | 98 (48%) |
-| Fully automated | 62 |
-| P0 (security, patient data, patient safety) | 123, automated at least partially: 57 |
+| Automated or partially automated | 100 (49%) |
+| Fully automated | 64 |
+| P0 (security, patient data, patient safety) | 123, automated at least partially: 58 |
 
 ## By module and status
 
 | Module | Total | Automated | Partial | Planned | Manual |
 |---|---|---|---|---|---|
 | ai | 16 | 9 | 0 | 7 | 0 |
-| clinical | 44 | 17 | 6 | 21 | 0 |
+| clinical | 44 | 18 | 6 | 20 | 0 |
 | documents | 7 | 0 | 0 | 7 | 0 |
 | nfr | 62 | 7 | 16 | 35 | 4 |
 | privacy-admin | 15 | 4 | 0 | 11 | 0 |
 | scheduling | 21 | 14 | 3 | 4 | 0 |
 | security | 29 | 8 | 9 | 12 | 0 |
-| system | 10 | 3 | 2 | 5 | 0 |
+| system | 10 | 4 | 2 | 4 | 0 |
 
 ## By test level
 
@@ -30,8 +30,8 @@
 |---|---|---|---|---|---|
 | unit | 5 | 2 | 2 | 1 | 0 |
 | contract | 1 | 0 | 1 | 0 | 0 |
-| integration | 29 | 6 | 8 | 15 | 0 |
-| api | 90 | 31 | 12 | 47 | 0 |
+| integration | 29 | 7 | 8 | 14 | 0 |
+| api | 90 | 32 | 12 | 46 | 0 |
 | e2e | 10 | 1 | 3 | 6 | 0 |
 | security | 12 | 6 | 0 | 6 | 0 |
 | performance | 10 | 0 | 4 | 6 | 0 |
@@ -59,7 +59,6 @@
 | TC-AC-10.1-break-glass-alert | Waiting for the corresponding feature or environment to be implemented. | qnt124 |
 | TC-AC-AL.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-BG.3 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
-| TC-AC-CI.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CP.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-CS.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
 | TC-AC-EA.1 | Waiting for the corresponding feature or environment to be implemented. | Her55chers |
@@ -175,7 +174,7 @@
 | AC-BG.3 | TC-AC-BG.3 (api, P0) | planned |
 | AC-BG.3 | TC-SEC-25 (api, P0) | planned |
 | AC-BK.1 | TC-AC-BK.1 (integration, P0) | automated |
-| AC-CI.1 | TC-AC-CI.1 (api, P0) | planned |
+| AC-CI.1 | TC-AC-CI.1 (api, P0) | automated |
 | AC-CL.1 | TC-AC-CL.1 (api, P0) | automated |
 | AC-CL.2 | TC-AC-CL.2 (security, P0) | automated |
 | AC-CL.3 | TC-AC-CL.3 (security, P0) | automated |
@@ -210,7 +209,7 @@
 | AC-MA.1 | TC-AC-MA.1 (api, P0) | automated |
 | AC-MG.1 | TC-AC-MG.1 (api, P1) | automated |
 | AC-NP.1 | TC-AC-NP.1 (api, P1) | planned |
-| AC-NS.1 | TC-AC-NS.1 (integration, P1) | planned |
+| AC-NS.1 | TC-AC-NS.1 (integration, P1) | automated |
 | AC-PG.1 | TC-AC-PG.1 (integration, P0) | planned |
 | AC-PX.1 | TC-AC-PX.1 (security, P0) | planned |
 | AC-RE.1 | TC-AC-RE.1 (api, P0) | planned |

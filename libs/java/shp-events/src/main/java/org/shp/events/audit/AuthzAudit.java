@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.shp.authz.AuthzDecision;
 import org.shp.authz.Principal;
+import org.shp.authz.ResourceContext;
 
 /**
  * Turn an {@link AuthzDecision} into an audit record: both allows and denials are recorded, denials
@@ -25,6 +26,7 @@ public final class AuthzAudit {
           Map.entry("release", AuditActions.UPDATE),
           Map.entry("book", AuditActions.CREATE),
           Map.entry("cancel", AuditActions.UPDATE),
+          Map.entry("check-in", AuditActions.UPDATE),
           Map.entry("block", AuditActions.UPDATE),
           Map.entry("merge", AuditActions.UPDATE),
           Map.entry("manage", AuditActions.UPDATE),
@@ -43,6 +45,15 @@ public final class AuthzAudit {
       List.of("dpo", "admin", "doctor", "nurse", "patient");
 
   private AuthzAudit() {}
+
+  /**
+   * The FHIR type of the signed-in account's own resource, for the actor's {@code fhirUser}: {@code
+   * Patient} for a patient account (also when it acts for a managed profile), otherwise {@code
+   * Practitioner}.
+   */
+  public static String fhirUserType(Principal principal) {
+    return principal.roles().contains("patient") ? "Patient" : "Practitioner";
+  }
 
   /**
    * {@code errorOutcome} is non-null (usually {@code error}) when post-authorization processing
@@ -96,6 +107,44 @@ public final class AuthzAudit {
       String userAgent,
       String errorOutcome,
       String allowedReason) {
+    return fromDecision(
+        clock,
+        service,
+        principal,
+        fhirUserType,
+        action,
+        resource,
+        decision,
+        patientId,
+        traceId,
+        clientIp,
+        userAgent,
+        errorOutcome,
+        allowedReason,
+        null);
+  }
+
+  /**
+   * As above, for a decision taken while the caller acts for a managed profile (ADR-0018): {@code
+   * delegation} (from {@link ResourceContext#delegation(Principal)}) sets {@code onBehalfOf} to
+   * {@code Patient/<id>} and {@code relationship} to guardian/proxy, on allows and denials alike;
+   * the actor stays the signed-in account. Null means no delegation: neither key is written.
+   */
+  public static AuditRecord fromDecision(
+      Clock clock,
+      String service,
+      Principal principal,
+      String fhirUserType,
+      String action,
+      String resource,
+      AuthzDecision decision,
+      UUID patientId,
+      String traceId,
+      String clientIp,
+      String userAgent,
+      String errorOutcome,
+      String allowedReason,
+      ResourceContext.Delegation delegation) {
     String mapped = ACTION_MAP.get(action);
     if (mapped == null) {
       throw new IllegalArgumentException("Action has no audit mapping: " + action);
@@ -115,6 +164,8 @@ public final class AuthzAudit {
             ? (errorOutcome != null ? errorOutcome : AuditActions.SUCCESS)
             : AuditActions.DENIED,
         actor,
+        delegation == null ? null : "Patient/" + delegation.patientId(),
+        delegation == null ? null : delegation.relationship(),
         resource,
         patientId,
         decision.purpose(),

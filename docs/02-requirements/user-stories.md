@@ -87,7 +87,7 @@ Total: **79 stories** — Must 51, Should 25, Could 3.
 | [US-067](#us-067) | Restore data to a point in time | Administrator | Must | UC-16 | 3 | 12 |
 | [US-068](#us-068) | System handles slot-opening load at 07:00 | Project team | Must | UC-03 | 5 | 19 |
 | [US-069](#us-069) | System tolerates dependency failures | Project team | Must |  | 2 | 9 |
-| [US-070](#us-070) | Safe, approval-gated deployment | DevOps | Must |  | 41 | 150 |
+| [US-070](#us-070) | Safe, approval-gated deployment | DevOps | Must |  | 42 | 152 |
 
 ## Functional requirement acceptance criteria coverage
 
@@ -1905,6 +1905,7 @@ Every AC in [functional-requirements.md](functional-requirements.md) must belong
 | GOP-07 | Kyverno + policy | SA | 4 | W5 |
 | GOP-08 | NetworkPolicy default-deny + namespace | SA | 2 | W5 |
 | ENV-05 | G4 rehearsal | SA | 4 | W6 |
+| GOV-14 | Keep the tracker aligned with merged work | SA | 2 | W6 |
 | IAC-20 | Wire the data and identity modules (IAC-09..IAC-16) into both stacks | SA | 4 | W6 |
 | CIT-09 | Versioned template releases | SA | 2 | W7 |
 | CIT-10 | Internal Maven packaging for shared libraries | SA | 3 | W7 |
