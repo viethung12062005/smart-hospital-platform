@@ -1,0 +1,4 @@
+This is a reminder that you have an appointment in about 6 hours.
+
+Time: {startTime}
+Manage your appointment: {manageLink}

@@ -17,6 +17,7 @@ import org.shp.notification.domain.ReminderKind;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
 
@@ -32,6 +33,13 @@ public final class ReminderService {
   public static final String CONSUMER = "notification";
   public static final String BOOKED_TYPE = "shp.scheduling.appointment-booked.v1";
   public static final String NO_SHOW_SCORED_TYPE = "shp.ml.no-show-scored.v1";
+  public static final String DOCUMENT_RELEASED_TYPE = "shp.document.document-released.v1";
+  public static final String PATIENT_MERGED_TYPE = "shp.clinical.patient-merged.v1";
+
+  /** Collections that hold a patient id owned by this service (04-db-notification-ml §1.2). */
+  public static final String PREFERENCES = "preferences";
+
+  public static final String DEVICE_TOKENS = "device_tokens";
 
   private static final Duration T_24H = Duration.ofHours(24);
   private static final Duration T_6H = Duration.ofHours(6);
@@ -106,6 +114,95 @@ public final class ReminderService {
                 appointmentStart,
                 dueAt,
                 now)));
+  }
+
+  /**
+   * E9 {@code document-released}: one {@code result-available} reminder due now. The reminder
+   * carries no document type and no result detail; the message text is generic (13-events E9).
+   */
+  public void onDocumentReleased(CloudEvent event) {
+    JsonNode data = event.data();
+    String documentId = text(data, "documentId");
+    Instant now = clock.instant();
+    saveNew(
+        List.of(
+            reminder(
+                "DocumentReference/" + documentId,
+                text(data, "patientId"),
+                ReminderKind.RESULT_AVAILABLE,
+                null,
+                now,
+                now)));
+  }
+
+  /**
+   * E7 {@code patient-merged}: replace the source patient id with the target id in this service's
+   * own data. Idempotent: a second run matches nothing. A preference document is keyed by the
+   * patient id. When only the source has one, it moves to the target. When both have one, the more
+   * restrictive result is kept: a channel either profile left out stays out of the target, and the
+   * target keeps its other settings (locale, quiet hours, channel order). The source document is
+   * removed in the same transaction, so a later delivery finds nothing to merge.
+   */
+  public void onPatientMerged(CloudEvent event) {
+    JsonNode data = event.data();
+    String source = text(data, "sourcePatientId");
+    String target = text(data, "targetPatientId");
+    if (source.equals(target)) {
+      return;
+    }
+    Instant now = clock.instant();
+    MongoMessaging.inTransaction(
+        tx,
+        () -> {
+          mongo.updateMulti(
+              Query.query(Criteria.where("patientId").is(source)),
+              new Update().set("patientId", target).set("updatedAt", date(now)),
+              COLLECTION);
+          mongo.updateMulti(
+              Query.query(Criteria.where("ownerRef").is("Patient/" + source)),
+              new Update().set("ownerRef", "Patient/" + target),
+              DEVICE_TOKENS);
+          Document sourcePreferences = mongo.findById(source, Document.class, PREFERENCES);
+          if (sourcePreferences != null) {
+            Document targetPreferences = mongo.findById(target, Document.class, PREFERENCES);
+            if (targetPreferences == null) {
+              sourcePreferences.put("_id", target);
+              mongo.insert(sourcePreferences, PREFERENCES);
+            } else {
+              keepRestrictiveChannels(target, sourcePreferences, targetPreferences, now);
+            }
+            mongo.remove(Query.query(Criteria.where("_id").is(source)), PREFERENCES);
+          }
+          return null;
+        });
+  }
+
+  /**
+   * Narrow the target's channels to those the source also allows, in the target's order. The domain
+   * requires at least one channel, so when the two profiles share none the target keeps its own
+   * channels rather than storing an invalid document.
+   */
+  private void keepRestrictiveChannels(
+      String target, Document sourcePreferences, Document targetPreferences, Instant now) {
+    List<String> sourceChannels = sourcePreferences.getList("channels", String.class);
+    List<String> targetChannels = targetPreferences.getList("channels", String.class);
+    if (sourceChannels == null || targetChannels == null) {
+      if (sourceChannels != null) {
+        updatePreferenceChannels(target, sourceChannels, now);
+      }
+      return;
+    }
+    List<String> kept = targetChannels.stream().filter(sourceChannels::contains).toList();
+    if (!kept.isEmpty() && !kept.equals(targetChannels)) {
+      updatePreferenceChannels(target, kept, now);
+    }
+  }
+
+  private void updatePreferenceChannels(String target, List<String> channels, Instant now) {
+    mongo.updateFirst(
+        Query.query(Criteria.where("_id").is(target)),
+        new Update().set("channels", channels).set("updatedAt", date(now)).inc("version", 1),
+        PREFERENCES);
   }
 
   private void addIfFuture(
