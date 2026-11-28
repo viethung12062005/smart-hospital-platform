@@ -34,6 +34,7 @@ import org.shp.authz.AuthzMatrix;
 import org.shp.authz.AuthzRule;
 import org.shp.authz.AuthzTestCase;
 import org.shp.authz.AuthzTestGenerator;
+import org.shp.authz.LinkedProfile;
 import org.shp.scheduling.infra.FakePractitionerRoleClient;
 import org.shp.security.ShpAuthProperties;
 import org.shp.security.ShpJwt;
@@ -158,6 +159,9 @@ class SchedulingAuthzMatrixTest {
   /** An existing Schedule, so that fact resolution does not answer 404 before authorization. */
   String scheduleId;
 
+  /** The practitioner who owns the fixture Schedule. */
+  UUID schedulePractitioner;
+
   /** One guarded endpoint as Spring maps it. */
   record Guarded(String method, String pattern, String consumes, RequireShpAuthz meta) {
     @Override
@@ -180,6 +184,7 @@ class SchedulingAuthzMatrixTest {
     identityLinks.links.clear();
     practitionerRoles.clear();
     UUID practitioner = UUID.randomUUID();
+    schedulePractitioner = practitioner;
     practitionerRoles.register(practitioner, "cardiology");
     String body =
         """
@@ -259,6 +264,260 @@ class SchedulingAuthzMatrixTest {
     }
     assertThat(wrong).isEmpty();
     assertThat(calls).isPositive();
+  }
+
+  /**
+   * Conditional denials (15 §3): a role that has a rule for the endpoint, but only under a
+   * condition (own, linked, self-practitioner), is refused over HTTP when the condition fails, with
+   * the status the design gives, and every refusal is audited. The same request by the identity
+   * that meets the condition is not refused, so the refusal is the condition's and not a missing
+   * fixture's.
+   *
+   * <p>Every (endpoint, role) pair whose only rules carry a condition must be covered by a case
+   * below or listed in {@link #NARROWED_NOT_DENIED} with its reason, so an endpoint added later
+   * fails this test until its conditional denial is exercised.
+   */
+  @Test
+  void conditionalRulesAreRefusedOverHttpWhenTheConditionFailsWithAnAudit() throws Exception {
+    UUID patientA = UUID.randomUUID();
+    UUID patientB = UUID.randomUUID();
+    UUID appointmentOfA = insertAppointment(patientA, schedulePractitioner);
+    String foreignDoctor = UUID.randomUUID().toString();
+    // A patient whose linked profile is a third person: the link must not open B's data either.
+    List<LinkedProfile> linkedToSomeoneElse =
+        List.of(new LinkedProfile(UUID.randomUUID().toString(), "guardian", "full", null));
+
+    List<ConditionalCase> cases =
+        List.of(
+            new ConditionalCase(
+                "GET /fhir/Appointment/{id}",
+                "patient",
+                "own: another patient's appointment",
+                404,
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Appointment/" + appointmentOfA,
+                        tokenFor("patient", patientB.toString(), List.of()),
+                        null),
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Appointment/" + appointmentOfA,
+                        tokenFor("patient", patientA.toString(), List.of()),
+                        null)),
+            new ConditionalCase(
+                "GET /fhir/Appointment/{id}",
+                "patient",
+                "linked: the token's linked profile is someone else",
+                404,
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Appointment/" + appointmentOfA,
+                        tokenFor("patient", patientB.toString(), linkedToSomeoneElse),
+                        null),
+                null),
+            new ConditionalCase(
+                "GET /fhir/Appointment/{id}",
+                "doctor",
+                "self-practitioner: another practitioner's appointment",
+                404,
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Appointment/" + appointmentOfA,
+                        tokenFor("doctor", foreignDoctor, List.of()),
+                        null),
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Appointment/" + appointmentOfA,
+                        tokenFor("doctor", schedulePractitioner.toString(), List.of()),
+                        null)),
+            new ConditionalCase(
+                "POST /fhir/Appointment/$book",
+                "patient",
+                "own: booking for another patient",
+                403,
+                () ->
+                    request(
+                        "POST",
+                        "/fhir/Appointment/$book",
+                        tokenFor("patient", patientB.toString(), List.of()),
+                        bookingBody(patientA)),
+                () ->
+                    request(
+                        "POST",
+                        "/fhir/Appointment/$book",
+                        tokenFor("patient", patientA.toString(), List.of()),
+                        bookingBody(patientA))),
+            new ConditionalCase(
+                "POST /fhir/Appointment/$book",
+                "patient",
+                "linked: booking for a patient who is not the token's linked profile",
+                403,
+                () ->
+                    request(
+                        "POST",
+                        "/fhir/Appointment/$book",
+                        tokenFor("patient", patientB.toString(), linkedToSomeoneElse),
+                        bookingBody(patientA)),
+                null),
+            new ConditionalCase(
+                "GET /fhir/Schedule/{id}",
+                "doctor",
+                "self-practitioner: a schedule the doctor does not own",
+                403,
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Schedule/" + scheduleId,
+                        tokenFor("doctor", foreignDoctor, List.of()),
+                        null),
+                () ->
+                    request(
+                        "GET",
+                        "/fhir/Schedule/" + scheduleId,
+                        tokenFor("doctor", schedulePractitioner.toString(), List.of()),
+                        null)),
+            new ConditionalCase(
+                "GET /api/v1/scheduling/schedules/{id}/templates",
+                "doctor",
+                "self-practitioner: the templates of a schedule the doctor does not own",
+                403,
+                () ->
+                    request(
+                        "GET",
+                        "/api/v1/scheduling/schedules/" + scheduleId + "/templates",
+                        tokenFor("doctor", foreignDoctor, List.of()),
+                        null),
+                () ->
+                    request(
+                        "GET",
+                        "/api/v1/scheduling/schedules/" + scheduleId + "/templates",
+                        tokenFor("doctor", schedulePractitioner.toString(), List.of()),
+                        null)));
+
+    Set<String> required = new java.util.TreeSet<>();
+    for (Guarded g : guarded()) {
+      List<AuthzRule> rules = MATRIX.rulesFor(g.meta().resource(), g.meta().action());
+      for (String role : rules.stream().map(AuthzRule::role).collect(Collectors.toSet())) {
+        boolean onlyConditional =
+            rules.stream().filter(r -> r.role().equals(role)).noneMatch(r -> r.when().isEmpty());
+        if (onlyConditional) {
+          required.add(g.method() + " " + g.pattern() + " as " + role);
+        }
+      }
+    }
+    Set<String> covered =
+        cases.stream().map(c -> c.endpoint() + " as " + c.role()).collect(Collectors.toSet());
+    assertThat(required)
+        .as("conditional (endpoint, role) pairs without a denial case")
+        .allMatch(k -> covered.contains(k) || NARROWED_NOT_DENIED.containsKey(k));
+    assertThat(covered)
+        .as("cases for pairs the matrix no longer makes conditional")
+        .allMatch(required::contains);
+
+    List<String> wrong = new ArrayList<>();
+    for (ConditionalCase c : cases) {
+      String label = c.endpoint() + " as " + c.role() + " (" + c.failing() + ")";
+      int before = deniedAudits();
+      int status = send(c.denied().build()).statusCode();
+      if (status != c.expected()) {
+        wrong.add(label + " -> " + status + ", expected " + c.expected());
+      }
+      if (deniedAudits() <= before) {
+        wrong.add(label + " -> refusal not audited");
+      }
+      if (c.owner() != null) {
+        int ownerBefore = deniedAudits();
+        int ownerStatus = send(c.owner().build()).statusCode();
+        if (ownerStatus == 403
+            || ownerStatus == 401
+            || deniedAudits() > ownerBefore
+            || (c.expected() == 404 && ownerStatus != 200)) {
+          wrong.add(label + " -> the identity that meets the condition got " + ownerStatus);
+        }
+      }
+    }
+    assertThat(wrong).isEmpty();
+  }
+
+  /**
+   * Conditional pairs where the design narrows the request to the caller instead of refusing it, so
+   * there is no denial to provoke.
+   */
+  static final Map<String, String> NARROWED_NOT_DENIED =
+      Map.of(
+          "GET /fhir/Appointment as patient",
+          "S13 forces the patient filter to the caller (08 S13); it never refuses",
+          "GET /fhir/Appointment as doctor",
+          "S13 forces the practitioner filter to the caller (08 S13); it never refuses");
+
+  /** One conditional denial: the request that fails the condition and the one that meets it. */
+  record ConditionalCase(
+      String endpoint,
+      String role,
+      String failing,
+      int expected,
+      RequestFactory denied,
+      RequestFactory owner) {}
+
+  @FunctionalInterface
+  interface RequestFactory {
+    HttpRequest build() throws Exception;
+  }
+
+  HttpRequest request(String method, String path, String token, String body) {
+    var b =
+        HttpRequest.newBuilder(url(path))
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .header("Idempotency-Key", UUID.randomUUID().toString());
+    if (body == null) {
+      return b.method(method, HttpRequest.BodyPublishers.noBody()).build();
+    }
+    return b.header(HttpHeaders.CONTENT_TYPE, "application/fhir+json")
+        .method(method, HttpRequest.BodyPublishers.ofString(body))
+        .build();
+  }
+
+  static String bookingBody(UUID patient) {
+    return "{\"resourceType\":\"Parameters\",\"parameter\":["
+        + "{\"name\":\"slot\",\"valueReference\":{\"reference\":\"Slot/"
+        + UUID.randomUUID()
+        + "\"}},"
+        + "{\"name\":\"patient\",\"valueReference\":{\"reference\":\"Patient/"
+        + patient
+        + "\"}}]}";
+  }
+
+  /** A booked appointment of {@code patient} on the fixture Schedule, one day ahead. */
+  UUID insertAppointment(UUID patient, UUID practitioner) {
+    UUID slot = UUID.randomUUID();
+    UUID appointment = UUID.randomUUID();
+    Instant start = clock.instant().plus(java.time.Duration.ofDays(1));
+    Instant end = start.plus(java.time.Duration.ofMinutes(15));
+    jdbc.sql(
+            "INSERT INTO scheduling.slot (id, last_updated, schedule_id, practitioner_id, specialty, status, start_at, end_at, content) VALUES (?, now(), ?, ?, 'cardiology', 'busy', ?, ?, '{}'::jsonb)")
+        .params(
+            slot,
+            UUID.fromString(scheduleId),
+            practitioner,
+            java.sql.Timestamp.from(start),
+            java.sql.Timestamp.from(end))
+        .update();
+    jdbc.sql(
+            "INSERT INTO scheduling.appointment (id, last_updated, status, slot_id, patient_id, practitioner_id, specialty, start_at, end_at, channel, booked_by, content) VALUES (?, now(), 'booked', ?, ?, ?, 'cardiology', ?, ?, 'web', 'sch29-seed', '{}'::jsonb)")
+        .params(
+            appointment,
+            slot,
+            patient,
+            practitioner,
+            java.sql.Timestamp.from(start),
+            java.sql.Timestamp.from(end))
+        .update();
+    return appointment;
   }
 
   /** NFR-SEC2: the DPO has no rule on any scheduling resource. */
@@ -352,9 +611,14 @@ class SchedulingAuthzMatrixTest {
   }
 
   String tokenFor(String role) {
+    return tokenFor(role, UUID.randomUUID().toString(), List.of());
+  }
+
+  /** A token for a linked account with {@code role}, linked to {@code fhirUserId}. */
+  String tokenFor(String role, String fhirUserId, List<LinkedProfile> linkedProfiles) {
     String sub = "sch29-" + role + "-" + UUID.randomUUID();
     String type = "patient".equals(role) ? "Patient" : "Practitioner";
-    identityLinks.links.put(sub, new IdentityLink(type, UUID.randomUUID().toString(), false));
+    identityLinks.links.put(sub, new IdentityLink(type, fhirUserId, false, linkedProfiles));
     try {
       Instant now = Instant.now();
       var claims =
