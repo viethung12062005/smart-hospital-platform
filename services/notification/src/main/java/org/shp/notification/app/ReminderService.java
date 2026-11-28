@@ -179,6 +179,9 @@ public final class ReminderService {
         .append("kind", reminder.kind().value())
         .append("appointmentStart", date(reminder.appointmentStart()))
         .append("dueAt", date(reminder.dueAt()))
+        // Immutable original send time: retries move dueAt, the NFR-P8 latency is measured from
+        // this one.
+        .append("scheduledAt", date(reminder.dueAt()))
         .append("status", reminder.status())
         .append("attempts", reminder.attempts())
         .append("lockedUntil", date(reminder.lockedUntil()))

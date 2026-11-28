@@ -32,7 +32,8 @@ Common conventions (same as [03](03-db-clinical-document.md)): `_id` is a UUIDv7
   "_id": "0192f8a4-...", "subjectRef": "Appointment/0192...", "patientId": "0192...",
   "kind": "t-24h",                       // booking-confirmation | t-24h | t-6h-risk | t-2h | cancellation | result-available
   "appointmentStart": ISODate("2026-12-03T01:15:00Z"),   // null with result-available
-  "dueAt": ISODate("2026-12-02T01:15:00Z"),
+  "dueAt": ISODate("2026-12-02T01:15:00Z"),         // next attempt; a retry moves it by the backoff
+  "scheduledAt": ISODate("2026-12-02T01:15:00Z"),   // original send time, set once; NFR-P8 latency is measured from it
   "status": "scheduled",                 // scheduled | sending | sent | cancelled | dead-lettered
   "attempts": 0, "lockedUntil": null,
   "deliveries": [ { "attemptNo": 1, "channel": "push", "provider": "push", "outcome": "accepted",

@@ -1,6 +1,7 @@
 package org.shp.notification.app;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,6 +28,15 @@ public class ReminderSender {
 
   private static final Set<String> PERMANENT_ERRORS =
       Set.of("invalid-number", "invalid-recipient", "unregistered-token");
+
+  /** Histogram base name; exported as shp_notification_send_latency_seconds_bucket. */
+  static final String SEND_LATENCY_METRIC = "shp.notification.send.latency";
+
+  /**
+   * Terminal failures (dead-lettered after the last attempt or a permanent error), tagged like the
+   * latency histogram so the NFR-P8 compliance ratio can count them as misses.
+   */
+  static final String SEND_FAILED_METRIC = "shp.notification.send.failed";
 
   private final MongoReminderWorkQueue queue;
   private final Map<String, NotificationChannel> channels;
@@ -162,13 +172,66 @@ public class ReminderSender {
 
       if (!sent && (attempt == 5 || permanentFailure)) {
         metrics.counter("shp.notification.deadletter.total").increment();
+        recordSendFailure(claimed, deliveries.get(deliveries.size() - 1));
       }
 
       if (sent) {
         metrics.counter("shp.notification.sent.total").increment();
+        recordSendLatency(claimed, deliveries.get(deliveries.size() - 1));
       }
     }
 
     return persisted;
+  }
+
+  /**
+   * Records the time from the original scheduled send time to the accepted send (NFR-P8). Tags are
+   * the channel and the reminder kind only; no patient or contact data. Retries move {@code dueAt}
+   * forward, so the latency is measured from {@code scheduledAt}, which is set once when the
+   * reminder is created; a document written before that field existed falls back to {@code dueAt}.
+   */
+  private void recordSendLatency(Document claimed, Document delivery) {
+    java.util.Date scheduled = scheduledAt(claimed);
+    String kind = claimed.getString("kind");
+
+    if (scheduled == null || kind == null) {
+      return;
+    }
+
+    java.time.Duration latency = java.time.Duration.between(scheduled.toInstant(), clock.instant());
+
+    Timer.builder(SEND_LATENCY_METRIC)
+        .description("Time from the reminder's original scheduled time to the accepted send")
+        .tags("channel", delivery.getString("channel"), "kind", kind)
+        .publishPercentileHistogram()
+        .serviceLevelObjectives(
+            java.time.Duration.ofSeconds(30),
+            java.time.Duration.ofMinutes(1),
+            java.time.Duration.ofMinutes(5),
+            java.time.Duration.ofMinutes(15))
+        .minimumExpectedValue(java.time.Duration.ofSeconds(1))
+        .maximumExpectedValue(java.time.Duration.ofHours(1))
+        .register(metrics)
+        .record(latency.isNegative() ? java.time.Duration.ZERO : latency);
+  }
+
+  /** Counts a terminal failure; tags are the last channel tried and the kind only (no PII). */
+  private void recordSendFailure(Document claimed, Document lastDelivery) {
+    String kind = claimed.getString("kind");
+    metrics
+        .counter(
+            SEND_FAILED_METRIC,
+            "channel",
+            lastDelivery.getString("channel"),
+            "kind",
+            kind == null ? "unknown" : kind)
+        .increment();
+  }
+
+  private static java.util.Date scheduledAt(Document claimed) {
+    if (claimed.get("scheduledAt") instanceof java.util.Date scheduled) {
+      return scheduled;
+    }
+    return claimed.get("dueAt") instanceof java.util.Date due ? due : null;
   }
 }
