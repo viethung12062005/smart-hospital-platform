@@ -561,14 +561,15 @@ export const handlers = [
         if (mrn) return p.identifier?.some((i) => i.value === mrn);
         return false;
       });
-      // C6 answers an abbreviated Patient; a doctor without Care gets only the birth year.
+      // C6 answers an abbreviated Patient; a doctor without Care for that patient gets only the birth year.
+      const noCare = (id: string | undefined) => me.roles.includes('doctor') && NO_CARE_PATIENTS.includes(id ?? '');
       const abbreviated = list.map((p) => ({
         resourceType: 'Patient' as const,
         id: p.id,
         identifier: p.identifier?.filter((i) => i.system === 'urn:shp:mrn'),
         name: p.name,
         gender: p.gender,
-        birthDate: me.roles.includes('doctor') ? p.birthDate?.slice(0, 4) : p.birthDate,
+        birthDate: noCare(p.id) ? p.birthDate?.slice(0, 4) : p.birthDate,
       }));
       return HttpResponse.json(bundle(abbreviated));
     }),

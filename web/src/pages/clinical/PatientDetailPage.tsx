@@ -21,8 +21,11 @@ export function PatientDetailPage() {
   });
 
   if (patient.isLoading) return <Loading />;
-  // C4 403 no-care-relationship (AC-06.2): the doctor may find the patient but not open the record.
-  const noCare = patient.error instanceof ApiError && patient.error.code === 'no-care-relationship';
+  // C4 403 without a care relationship (AC-06.2): the doctor may find the patient but not open the record. 09 C4
+  // names the code no-care-relationship, 15-authorization §5 names it break-glass-required; both mean the same here.
+  const noCare =
+    patient.error instanceof ApiError &&
+    (patient.error.code === 'no-care-relationship' || patient.error.code === 'break-glass-required');
   if (noCare) {
     return (
       <div className="shp-page">
