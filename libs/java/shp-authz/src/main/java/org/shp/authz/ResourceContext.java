@@ -2,6 +2,7 @@ package org.shp.authz;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Facts about the resource being accessed. The service looks them up first (care relationship,
@@ -26,6 +27,29 @@ public record ResourceContext(
     boolean linkedProfile,
     boolean linkedRecords,
     boolean guardianLink) {
+
+  /**
+   * The caller acts for a managed profile (ADR-0018): {@code patientId} is the profile's Patient id
+   * (without the type), {@code relationship} is {@code guardian} or {@code proxy}.
+   */
+  public record Delegation(String patientId, String relationship) {}
+
+  /**
+   * The delegation behind this context, when its facts say the resource belongs to a profile the
+   * caller manages through a link ({@code linkedProfile}, {@code linkedRecords} or {@code
+   * guardianLink}) and that profile is not the caller's own. The relationship is {@code guardian}
+   * when {@code guardianLink} holds, otherwise {@code proxy}. Empty for the caller's own profile,
+   * an unknown patient and every decision without a link fact; the audit then records no {@code
+   * onBehalfOf} (15 §3, 05 §3).
+   */
+  public Optional<Delegation> delegation(Principal principal) {
+    if (patientId == null
+        || !(linkedProfile || linkedRecords || guardianLink)
+        || patientId.equals(principal.fhirUserId())) {
+      return Optional.empty();
+    }
+    return Optional.of(new Delegation(patientId, guardianLink ? LinkedProfile.GUARDIAN : "proxy"));
+  }
 
   public static ResourceContext empty() {
     return builder().build();

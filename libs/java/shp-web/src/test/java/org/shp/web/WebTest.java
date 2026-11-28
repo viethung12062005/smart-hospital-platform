@@ -354,4 +354,43 @@ class WebTest {
     assertThat(res.statusCode()).isEqualTo(200);
     assertThat(json(res).get("linkedPatientIds").get(0).asString()).isEqualTo(child);
   }
+
+  @Test
+  void readingALinkedProfileIsAuditedOnItsBehalfAndTheOwnProfileIsNot() throws Exception {
+    var child = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e0b";
+    var relative = "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e0c";
+    links.links.put(
+        "delegate-sub", // own subject: the resolver caches links for 60 s across tests
+        new IdentityLink(
+            "Patient",
+            PATIENT,
+            false,
+            List.of(
+                new org.shp.authz.LinkedProfile(child, "guardian", "full", null),
+                new org.shp.authz.LinkedProfile(relative, "proxy", "booking", null))));
+    var token = TestApp.token(List.of("patient"), "delegate-sub", List.of("pwd"));
+
+    assertThat(get("/api/v1/patients/" + child, token).statusCode()).isEqualTo(200);
+    var guardian = single();
+    assertThat(guardian.outcome()).isEqualTo("success");
+    assertThat(guardian.actor().subject()).isEqualTo("delegate-sub");
+    assertThat(guardian.actor().fhirUser()).isEqualTo("Patient/" + PATIENT);
+    assertThat(guardian.onBehalfOf()).isEqualTo("Patient/" + child);
+    assertThat(guardian.relationship()).isEqualTo("guardian");
+    assertThat(guardian.patientId()).hasToString(child);
+
+    audit.clear();
+    assertThat(get("/api/v1/patients/" + relative, token).statusCode()).isEqualTo(200);
+    assertThat(single().onBehalfOf()).isEqualTo("Patient/" + relative);
+    assertThat(audit.records().getFirst().relationship()).isEqualTo("proxy");
+
+    audit.clear();
+    assertThat(get("/api/v1/patients/" + PATIENT, token).statusCode()).isEqualTo(200);
+    var own = single();
+    assertThat(own.onBehalfOf()).isNull();
+    assertThat(own.relationship()).isNull();
+    assertThat(CloudEvents.toJson(own.toCloudEvent(java.time.Clock.systemUTC())))
+        .doesNotContain("\"onBehalfOf\"")
+        .doesNotContain("\"relationship\"");
+  }
 }

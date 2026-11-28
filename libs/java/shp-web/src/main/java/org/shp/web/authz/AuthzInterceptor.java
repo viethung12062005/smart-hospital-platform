@@ -25,7 +25,9 @@ import org.springframework.web.servlet.HandlerMapping;
  * Enforce {@link RequireShpAuthz}. Deny → audit {@code denied} + reason → 403 {@code
  * forbidden}/{@code no-care-relationship} (or 404). Allow → run the handler; then audit {@code
  * success} (including predictable 4xx business errors, unless the handler states another outcome
- * through {@link AuditContext}) or {@code error} (5xx).
+ * through {@link AuditContext}) or {@code error} (5xx). When the facts say the caller acts for a
+ * linked profile that is not its own, both records carry {@code onBehalfOf} and {@code
+ * relationship} ({@link ResourceContext#delegation(Principal)}).
  */
 public final class AuthzInterceptor implements HandlerInterceptor {
   static final String ATTR_DECISION = "shp.authz.decision";
@@ -110,7 +112,7 @@ public final class AuthzInterceptor implements HandlerInterceptor {
             clock,
             service,
             p.principal(),
-            p.principal().roles().contains("patient") ? "Patient" : "Practitioner",
+            AuthzAudit.fhirUserType(p.principal()),
             p.meta().action(),
             p.resource(),
             p.decision(),
@@ -119,13 +121,28 @@ public final class AuthzInterceptor implements HandlerInterceptor {
             req.getRemoteAddr(),
             req.getHeader("User-Agent"),
             errorOutcome,
-            p.decision().allowed() ? AuditContext.reason(req) : null));
+            p.decision().allowed() ? AuditContext.reason(req) : null,
+            p.ctx().delegation(p.principal()).orElse(null)));
   }
 
   /** Decision for the current request (so the handler can apply {@code fields}/{@code hide}). */
   public static AuthzDecision decision(HttpServletRequest req) {
     if (req.getAttribute(ATTR_DECISION) instanceof AuthzDecision d) {
       return d;
+    }
+    throw new IllegalStateException("Endpoint does not use @RequireShpAuthz");
+  }
+
+  /**
+   * The delegation behind the current request's allowed decision ({@link
+   * ResourceContext#delegation(Principal)} of the facts the interceptor resolved), or null when the
+   * caller does not act for a managed profile. A handler that writes its own audit record for a
+   * refusal after the matrix allowed the request (a field rule, a sub-action) passes it to {@code
+   * AuthzAudit.fromDecision} so the record keeps {@code onBehalfOf} and {@code relationship}.
+   */
+  public static ResourceContext.Delegation delegation(HttpServletRequest req) {
+    if (req.getAttribute(ATTR_PENDING) instanceof Pending p) {
+      return p.ctx().delegation(p.principal()).orElse(null);
     }
     throw new IllegalStateException("Endpoint does not use @RequireShpAuthz");
   }
