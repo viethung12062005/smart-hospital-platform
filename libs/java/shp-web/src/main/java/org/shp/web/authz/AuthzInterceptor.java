@@ -25,7 +25,9 @@ import org.springframework.web.servlet.HandlerMapping;
  * Enforce {@link RequireShpAuthz}. Deny → audit {@code denied} + reason → 403 {@code
  * forbidden}/{@code no-care-relationship} (or 404). Allow → run the handler; then audit {@code
  * success} (including predictable 4xx business errors, unless the handler states another outcome
- * through {@link AuditContext}) or {@code error} (5xx).
+ * through {@link AuditContext}) or {@code error} (5xx). When the facts say the caller acts for a
+ * linked profile that is not its own, both records carry {@code onBehalfOf} and {@code
+ * relationship} ({@link ResourceContext#delegation(Principal)}).
  */
 public final class AuthzInterceptor implements HandlerInterceptor {
   static final String ATTR_DECISION = "shp.authz.decision";
@@ -119,7 +121,8 @@ public final class AuthzInterceptor implements HandlerInterceptor {
             req.getRemoteAddr(),
             req.getHeader("User-Agent"),
             errorOutcome,
-            p.decision().allowed() ? AuditContext.reason(req) : null));
+            p.decision().allowed() ? AuditContext.reason(req) : null,
+            p.ctx().delegation(p.principal()).orElse(null)));
   }
 
   /** Decision for the current request (so the handler can apply {@code fields}/{@code hide}). */

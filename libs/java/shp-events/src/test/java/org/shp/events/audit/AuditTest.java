@@ -18,6 +18,7 @@ import org.shp.authz.AuthzDecision;
 import org.shp.authz.AuthzMatrix;
 import org.shp.authz.AuthzRule;
 import org.shp.authz.Principal;
+import org.shp.authz.ResourceContext;
 import org.shp.events.CloudEvents;
 import org.shp.events.EventSchemas;
 
@@ -321,5 +322,59 @@ class AuditTest {
         .isInstanceOf(IllegalArgumentException.class);
     assertThatThrownBy(() -> delegated(null, "guardian"))
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  static AuditRecord guardianDecision(
+      AuthzDecision decision, ResourceContext.Delegation delegation) {
+    var guardian =
+        new Principal("kc-guardian", Set.of("patient"), "0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01");
+    return AuthzAudit.fromDecision(
+        CLOCK,
+        "scheduling",
+        guardian,
+        "Patient",
+        "book",
+        "Appointment",
+        decision,
+        delegation == null ? PATIENT : CHILD,
+        null,
+        "10.0.0.5",
+        "ua",
+        null,
+        null,
+        delegation);
+  }
+
+  static final UUID CHILD = UUID.fromString("0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e0a");
+
+  @Test
+  void linkedProfileAllowAndDenyRecordOnBehalfOfAndKeepTheAccountAsActor() {
+    var delegation = new ResourceContext.Delegation(CHILD.toString(), "guardian");
+    var allow = new AuthzDecision(true, "APPT-BOOK-LINKED", null, List.of(), List.of(), null);
+    for (var decision : List.of(allow, AuthzDecision.deny("unmet-linked"))) {
+      var r = guardianDecision(decision, delegation);
+      assertThat(r.actor().subject()).isEqualTo("kc-guardian");
+      assertThat(r.actor().fhirUser()).isEqualTo("Patient/0192f8a4-6c1e-7b2a-9f00-1a2b3c4d5e01");
+      assertThat(r.onBehalfOf()).isEqualTo("Patient/" + CHILD);
+      assertThat(r.relationship()).isEqualTo("guardian");
+      assertThat(r.patientId()).isEqualTo(CHILD);
+      assertThat(EventSchemas.validate(r.toCloudEvent(CLOCK))).isEmpty();
+      assertThat(CloudEvents.toJson(r.toCloudEvent(CLOCK)))
+          .contains("\"onBehalfOf\":\"Patient/" + CHILD + "\"")
+          .contains("\"relationship\":\"guardian\"");
+    }
+    assertThat(guardianDecision(allow, delegation).outcome()).isEqualTo("success");
+    assertThat(guardianDecision(AuthzDecision.deny("x"), delegation).outcome()).isEqualTo("denied");
+  }
+
+  @Test
+  void ownProfileDecisionHasNoDelegationKeys() {
+    var allow = new AuthzDecision(true, "APPT-BOOK-OWN", null, List.of(), List.of(), null);
+    var r = guardianDecision(allow, null);
+    assertThat(r.onBehalfOf()).isNull();
+    assertThat(r.relationship()).isNull();
+    assertThat(CloudEvents.toJson(r.toCloudEvent(CLOCK)))
+        .doesNotContain("\"onBehalfOf\"")
+        .doesNotContain("\"relationship\"");
   }
 }

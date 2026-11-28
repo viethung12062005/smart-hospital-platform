@@ -205,6 +205,62 @@ class PatientApiTest extends ClinicalApiTestBase {
     assertThat(put(an, t, "W/\"1\"", body).statusCode()).isEqualTo(200);
   }
 
+  /**
+   * The newest audit record of {@code subject} on {@code Patient/<id>} with {@code outcome}; the
+   * success record of a request is written after its response, so wait for it.
+   */
+  Document auditOf(String subject, String id, String outcome) {
+    var found = new Document[1];
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .untilAsserted(() -> {
+          var matching =
+              auditRecords().stream()
+                  .filter(a -> subject.equals(a.get("actor", Document.class).getString("subject")))
+                  .filter(a -> ("Patient/" + id).equals(a.getString("resource")))
+                  .filter(a -> outcome.equals(a.getString("outcome")))
+                  .toList();
+          assertThat(matching).isNotEmpty();
+          found[0] = matching.getLast();
+        });
+    return found[0];
+  }
+
+  @Test
+  void accessThroughALinkIsAuditedOnBehalfOfTheManagedProfile() throws Exception {
+    mongo.save(
+        new Document("accountSub", subRel)
+            .append("patientId", an)
+            .append("status", "active")
+            .append("scope", "full")
+            .append("relationship", "guardian")
+            .append("expiresAt", Date.from(Instant.now().plus(30, ChronoUnit.DAYS))),
+        "profile_links");
+    String t = token(subRel, "patient");
+    get(an, t, 200);
+    Document read = auditOf(subRel, an, "success");
+    assertThat(read.getString("onBehalfOf")).isEqualTo("Patient/" + an);
+    assertThat(read.getString("relationship")).isEqualTo("guardian");
+    assertThat(read.get("actor", Document.class).getString("fhirUser")).isEqualTo("Patient/" + cam);
+    assertThat(read.getString("patientId")).isEqualTo(an);
+
+    // A proxy may read but not edit; the refused edit is still audited on the profile's behalf.
+    mongo.updateFirst(
+        Query.query(Criteria.where("accountSub").is(subRel)),
+        new Update().set("relationship", "proxy"),
+        "profile_links");
+    String body = edited(an, p -> setPhone(p, "+84901000098"));
+    assertThat(put(an, t, "W/\"1\"", body).statusCode()).isEqualTo(403);
+    Document refused = auditOf(subRel, an, "denied");
+    assertThat(refused.getString("onBehalfOf")).isEqualTo("Patient/" + an);
+    assertThat(refused.getString("relationship")).isEqualTo("proxy");
+    assertThat(refused.get("actor", Document.class).getString("subject")).isEqualTo(subRel);
+
+    get(an, token(subAn, "patient"), 200);
+    Document own = auditOf(subAn, an, "success");
+    assertThat(own).doesNotContainKey("onBehalfOf").doesNotContainKey("relationship");
+  }
+
   @Test
   void anExpiredOrRevokedLinkIsNotAccess() throws Exception {
     mongo.save(
